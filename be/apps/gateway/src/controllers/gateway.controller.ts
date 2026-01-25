@@ -9,9 +9,8 @@ export class GatewayController {
 
   @All('*path')
   forward(@Req() req: Request, @Res() res: Response) {
-    // Sử dụng req.path thay vì join params để giữ nguyên URL encoding
-    // Điều này quan trọng khi path chứa ký tự đặc biệt như / được encode thành %2F
-    const fullPath = req.path || '/';
+    const paths = req.params.path as unknown as string[];
+    const fullPath = '/' + (paths?.join('/') ?? '');
 
     // Get service configuration for this path
     const routeInfo = getServiceForPath(fullPath);
