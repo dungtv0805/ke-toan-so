@@ -306,8 +306,12 @@ export class NhatKyChungService {
       if (item.ghiChu !== undefined) {
         existingItem.ghiChu = item.ghiChu;
       }
-      existingItem.nguoiGiaoDich = item.nguoiGiaoDich;
-      existingItem.diaChi = item.diaChi;
+      if (item.nguoiGiaoDich !== undefined) {
+        existingItem.nguoiGiaoDich = item.nguoiGiaoDich;
+      }
+      if (item.diaChi !== undefined) {
+        existingItem.diaChi = item.diaChi;
+      }
 
       const saved = await this.chungTuRepository.save(existingItem);
       results.push(saved);

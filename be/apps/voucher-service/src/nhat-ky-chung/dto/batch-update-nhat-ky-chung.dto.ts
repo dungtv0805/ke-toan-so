@@ -8,7 +8,7 @@ import {
   Min,
   IsObject,
 } from 'class-validator';
-import { LoaiChungTu, DanhMuc } from '@app/entities';
+import type { LoaiChungTu, DanhMuc } from '@app/entities';
 
 export class BatchItemDto {
   @IsOptional()
