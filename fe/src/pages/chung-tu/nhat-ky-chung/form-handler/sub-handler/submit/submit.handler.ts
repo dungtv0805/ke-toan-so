@@ -1,6 +1,6 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
-import { nhatKyChungService, CreateEntryDto } from "@/services/nhatKyChungService";
+import { nhatKyChungService, CreateEntryDto, BatchItemDto } from "@/services/nhatKyChungService";
 import { message } from "antd";
 import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
@@ -68,23 +68,36 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
       const loaiChungTu = loaiChungTuList.find((lct) => lct.ma === header.loai);
       const loai: LoaiChungTu = loaiChungTu?.ma?.startsWith("CHI_") ? "PHIEU_CHI" : "PHIEU_THU";
 
-      // Build items for batch create/update
-      const items: CreateEntryDto[] = chiTietList.map((ct) => ({
-        loai,
-        ngay: header.ngay.format("YYYY-MM-DD"),
-        soTien: ct.soTien,
-        noiDung: ct.noiDung || header.dienGiaiChung || "",
-        nguoiGiaoDich: header.nguoiGiaoDich,
-        diaChi: header.diaChi,
-        ghiChu: header.ghiChu,
-        danhMuc: this.buildDanhMuc(ct, header),
-      }));
-
       if (isEditing && header.soPhieu) {
+        // Build items for batch update with id tracking
+        const items: BatchItemDto[] = chiTietList.map((ct) => ({
+          id: ct.id, // Include id for existing items (undefined for new)
+          loai,
+          ngay: header.ngay.format("YYYY-MM-DD"),
+          soTien: ct.soTien,
+          noiDung: ct.noiDung || header.dienGiaiChung || "",
+          nguoiGiaoDich: header.nguoiGiaoDich,
+          diaChi: header.diaChi,
+          ghiChu: header.ghiChu,
+          danhMuc: this.buildDanhMuc(ct, header),
+        }));
+
         // Update batch
         await nhatKyChungService.updateBatch(header.soPhieu, items);
         message.success("Cập nhật chứng từ thành công");
       } else {
+        // Build items for batch create (no id needed)
+        const items: CreateEntryDto[] = chiTietList.map((ct) => ({
+          loai,
+          ngay: header.ngay.format("YYYY-MM-DD"),
+          soTien: ct.soTien,
+          noiDung: ct.noiDung || header.dienGiaiChung || "",
+          nguoiGiaoDich: header.nguoiGiaoDich,
+          diaChi: header.diaChi,
+          ghiChu: header.ghiChu,
+          danhMuc: this.buildDanhMuc(ct, header),
+        }));
+
         // Create batch
         await nhatKyChungService.createBatch(items);
         message.success("Tạo chứng từ thành công");

@@ -14,6 +14,7 @@ import {
   NhatKyChungQueryDto,
   CreateNhatKyChungDto,
   UpdateNhatKyChungDto,
+  BatchItemDto,
   SummaryType,
   SUMMARY_TYPES,
 } from './dto';
@@ -85,7 +86,7 @@ export class NhatKyChungController {
   @Roles('ADMIN', 'KE_TOAN_QUY')
   async updateBatch(
     @Param('soPhieu') soPhieu: string,
-    @Body() items: CreateNhatKyChungDto[],
+    @Body() items: BatchItemDto[],
     @CurrentUser() user: UserPayload,
   ) {
     return this.nhatKyChungService.updateBatch(soPhieu, items, user.id);

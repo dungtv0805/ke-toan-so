@@ -46,6 +46,18 @@ export interface CreateEntryDto {
   danhMuc?: DanhMuc;
 }
 
+export interface BatchItemDto {
+  id?: string; // undefined = create new, string = update existing
+  loai: LoaiChungTu;
+  ngay: string;
+  soTien: number;
+  noiDung: string;
+  nguoiGiaoDich?: string;
+  diaChi?: string;
+  ghiChu?: string;
+  danhMuc?: DanhMuc;
+}
+
 export interface UpdateEntryDto {
   ngay?: string;
   soTien?: number;
@@ -274,8 +286,11 @@ class NhatKyChungService extends ServiceBase {
 
   /**
    * Update all entries of a soPhieu (batch update)
+   * - Items with id: UPDATE existing
+   * - Items without id: CREATE new with same soPhieu
+   * - Items in DB but not in request: DELETE
    */
-  async updateBatch(soPhieu: string, items: CreateEntryDto[]): Promise<NhatKyChung[]> {
+  async updateBatch(soPhieu: string, items: BatchItemDto[]): Promise<NhatKyChung[]> {
     const response = await this.patch<ChungTuResponse[]>(items, {
       endpoint: `/batch/${encodeURIComponent(soPhieu)}`
     });

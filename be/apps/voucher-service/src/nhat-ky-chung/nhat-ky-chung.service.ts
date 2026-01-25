@@ -13,6 +13,7 @@ import {
   NhatKyChungStatsResponse,
   CreateNhatKyChungDto,
   UpdateNhatKyChungDto,
+  BatchItemDto,
   SummaryType,
   SummaryItem,
   SummaryResponse,
@@ -251,18 +252,21 @@ export class NhatKyChungService {
 
   /**
    * Update all entries of a soPhieu (batch update)
+   * - Items with id: UPDATE existing
+   * - Items without id: CREATE new with same soPhieu
+   * - Items in DB but not in request: DELETE
    */
   async updateBatch(
     soPhieu: string,
-    items: CreateNhatKyChungDto[],
+    items: BatchItemDto[],
     nguoiTaoId: string,
   ): Promise<{ success: boolean; data: ChungTu[] }> {
-    // Get existing items by soPhieu
+    // 1. Get existing items by soPhieu
     const existing = await this.chungTuRepository.find({
       where: { soPhieu },
     });
 
-    // Check if any existing item is approved
+    // 2. Check if any existing item is approved
     const hasApproved = existing.some(
       (item) => (item as any).trangThai === 'DA_DUYET',
     );
@@ -270,49 +274,66 @@ export class NhatKyChungService {
       throw new ForbiddenException('Cannot modify approved entries');
     }
 
+    // 3. Separate items by operation type
+    const toCreate = items.filter((item) => !item.id);
+    const toUpdate = items.filter((item) => item.id);
+
+    // 4. Find items to delete (exist in DB but not in request)
+    const requestIds = new Set(toUpdate.map((item) => item.id));
+    const toDelete = existing.filter(
+      (item) => !requestIds.has(item._id.toString()),
+    );
+
     const results: ChungTu[] = [];
 
-    // Update existing or create new
-    for (let i = 0; i < items.length; i++) {
-      if (i < existing.length) {
-        // Update existing
-        const chungTu = existing[i];
-        chungTu.loai = items[i].loai;
-        chungTu.ngay = new Date(items[i].ngay);
-        chungTu.soTien = items[i].soTien;
-        chungTu.noiDung = items[i].noiDung;
-        if (items[i].danhMuc !== undefined) {
-          chungTu.danhMuc = items[i].danhMuc!;
-        }
-        if (items[i].ghiChu !== undefined) {
-          chungTu.ghiChu = items[i].ghiChu!;
-        }
-        chungTu.nguoiGiaoDich = items[i].nguoiGiaoDich;
-        chungTu.diaChi = items[i].diaChi;
-        const saved = await this.chungTuRepository.save(chungTu);
-        results.push(saved);
-      } else {
-        // Create new with same soPhieu
-        const chungTu = this.chungTuRepository.create({
-          loai: items[i].loai,
-          soTien: items[i].soTien,
-          noiDung: items[i].noiDung,
-          danhMuc: items[i].danhMuc,
-          ghiChu: items[i].ghiChu,
-          nguoiGiaoDich: items[i].nguoiGiaoDich,
-          diaChi: items[i].diaChi,
-          ngay: new Date(items[i].ngay),
-          soPhieu,
-          nguoiTaoId,
-        });
-        const saved = await this.chungTuRepository.save(chungTu);
-        results.push(saved);
+    // 5. UPDATE existing items
+    for (const item of toUpdate) {
+      const existingItem = existing.find(
+        (e) => e._id.toString() === item.id,
+      );
+      if (!existingItem) {
+        // Item ID not found in this soPhieu - skip
+        continue;
       }
+
+      existingItem.loai = item.loai;
+      existingItem.ngay = new Date(item.ngay);
+      existingItem.soTien = item.soTien;
+      existingItem.noiDung = item.noiDung;
+      if (item.danhMuc !== undefined) {
+        existingItem.danhMuc = item.danhMuc;
+      }
+      if (item.ghiChu !== undefined) {
+        existingItem.ghiChu = item.ghiChu;
+      }
+      existingItem.nguoiGiaoDich = item.nguoiGiaoDich;
+      existingItem.diaChi = item.diaChi;
+
+      const saved = await this.chungTuRepository.save(existingItem);
+      results.push(saved);
     }
 
-    // Delete extra items if new list is shorter
-    for (let i = items.length; i < existing.length; i++) {
-      await this.chungTuRepository.remove(existing[i]);
+    // 6. CREATE new items
+    for (const item of toCreate) {
+      const chungTu = this.chungTuRepository.create({
+        loai: item.loai,
+        soTien: item.soTien,
+        noiDung: item.noiDung,
+        danhMuc: item.danhMuc,
+        ghiChu: item.ghiChu,
+        nguoiGiaoDich: item.nguoiGiaoDich,
+        diaChi: item.diaChi,
+        ngay: new Date(item.ngay),
+        soPhieu, // Same soPhieu
+        nguoiTaoId,
+      });
+      const saved = await this.chungTuRepository.save(chungTu);
+      results.push(saved);
+    }
+
+    // 7. DELETE removed items
+    for (const item of toDelete) {
+      await this.chungTuRepository.remove(item);
     }
 
     return { success: true, data: results };
