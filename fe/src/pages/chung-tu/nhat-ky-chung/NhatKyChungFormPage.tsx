@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Card, Breadcrumb, Divider, Spin, Typography } from "antd";
-import { HomeOutlined, FileTextOutlined } from "@ant-design/icons";
+import { Card, Spin } from "antd";
 import {
   NhatKyChungFormHandlerProvider,
   useNhatKyChungFormHandler,
@@ -11,59 +10,35 @@ import { FormHeader } from "./form-components/form-header/FormHeader";
 import { ChiTietTable } from "./form-components/chi-tiet-table/ChiTietTable";
 import { FormActions } from "./form-components/form-actions/FormActions";
 
-const { Title } = Typography;
-
 function NhatKyChungFormPageInner() {
   const handler = useNhatKyChungFormHandler();
   const { soPhieu } = useParams<{ soPhieu?: string }>();
   const [loading] = useNhatKyChungFormState("loading", true);
-  const [isEditing] = useNhatKyChungFormState("isEditing", false);
 
   useEffect(() => {
     handler.executeEvent("init", { soPhieu });
   }, [handler, soPhieu]);
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          {
-            href: "/",
-            title: (
-              <>
-                <HomeOutlined /> Trang chủ
-              </>
-            ),
-          },
-          { title: "Chứng từ" },
-          { href: "/chung-tu/nhat-ky-chung", title: "Nhật ký chung" },
-          { title: isEditing ? `Sửa: ${soPhieu}` : "Tạo mới" },
-        ]}
-      />
-
-      {/* Page Header */}
-      <div className="flex items-center gap-3">
-        <FileTextOutlined className="text-2xl text-primary" />
-        <Title level={3} className="!mb-0">
-          {isEditing ? "Sửa chứng từ" : "Tạo chứng từ mới"}
-        </Title>
-      </div>
-
-      {/* Main Card */}
-      <Card className="shadow-sm">
-        <Spin spinning={loading}>
+    <div className="nkc-form-page">
+      <Spin spinning={loading}>
+        {/* Form Header Card */}
+        <Card className="shadow-sm" size="small">
           <FormHeader />
+        </Card>
 
-          <Divider orientation="left" className="!mt-2 !mb-4">
-            <span className="text-gray-600 font-medium">Chi tiết hạch toán</span>
-          </Divider>
+        {/* Chi tiết hạch toán - Excel style */}
+        <div className="excel-container mt-4">
+          {/* Toolbar */}
+          <div className="excel-toolbar">
+            <span className="text-gray-600 font-medium text-sm">Chi tiết hạch toán</span>
+          </div>
 
           <ChiTietTable />
+        </div>
 
-          <FormActions />
-        </Spin>
-      </Card>
+        <FormActions />
+      </Spin>
     </div>
   );
 }

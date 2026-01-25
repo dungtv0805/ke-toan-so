@@ -451,30 +451,14 @@ export function ChiTietTable() {
   };
 
   return (
-    <div ref={tableRef} className="excel-editable-table">
-      {/* Keyboard shortcuts hint */}
-      <div className="flex justify-end mb-2 text-xs text-gray-400">
-        <span className="mr-4">
-          <kbd className="px-1.5 py-0.5 bg-gray-100 border rounded text-[10px]">Ctrl</kbd>
-          +
-          <kbd className="px-1.5 py-0.5 bg-gray-100 border rounded text-[10px]">N</kbd>
-          {" "}Thêm dòng
-        </span>
-        <span>
-          <kbd className="px-1.5 py-0.5 bg-gray-100 border rounded text-[10px]">Ctrl</kbd>
-          +
-          <kbd className="px-1.5 py-0.5 bg-gray-100 border rounded text-[10px]">D</kbd>
-          {" "}Nhân bản
-        </span>
-      </div>
-
+    <div ref={tableRef} className="excel-tab-content excel-editable-table">
       <Table
         columns={columns}
         dataSource={chiTietList as ChungTuChiTiet[]}
         rowKey="key"
         pagination={false}
         size="small"
-        scroll={{ x: 1400 }}
+        scroll={{ x: 1400, y: "calc(100vh - 380px)" }}
         bordered
         className="excel-table resizable-table chi-tiet-excel-table"
         rowClassName={(_, index) =>
@@ -483,7 +467,7 @@ export function ChiTietTable() {
       />
 
       {/* Footer with add button and total */}
-      <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+      <div className="nkc-form-footer flex-col sm:flex-row gap-2 sm:gap-0">
         <Button
           type="dashed"
           size="small"
@@ -493,13 +477,13 @@ export function ChiTietTable() {
         >
           Thêm dòng (Ctrl+N)
         </Button>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
           <span className="text-gray-500 text-sm">
             {(chiTietList as ChungTuChiTiet[]).length} dòng
           </span>
           <div className="text-right">
-            <span className="text-gray-500 text-sm mr-2">Tổng cộng:</span>
-            <span className="text-lg font-bold text-green-600">
+            <span className="text-gray-500 text-xs sm:text-sm mr-2">Tổng cộng:</span>
+            <span className="text-base sm:text-lg font-bold text-green-600">
               {formatCurrency(total)}
             </span>
           </div>

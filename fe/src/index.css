@@ -637,6 +637,91 @@
   overflow: hidden;
 }
 
+/* NKC Form Page - đồng nhất với list page */
+.nkc-form-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.nkc-form-page .excel-container {
+  flex: 1;
+  min-height: 0;
+}
+
+.nkc-form-page .excel-tab-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Form table footer */
+.nkc-form-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 8px;
+  background: #fafafa;
+  border-top: 1px solid #e8e8e8;
+  flex-shrink: 0;
+}
+
+/* Mobile responsive for NKC Form Page */
+@media (max-width: 640px) {
+  .nkc-form-page {
+    gap: 8px;
+  }
+
+  .nkc-form-page .excel-container {
+    margin-top: 8px !important;
+  }
+
+  .nkc-form-page .excel-toolbar {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .nkc-form-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .nkc-form-footer > button {
+    width: 100%;
+  }
+
+  .nkc-form-page .ant-card-body {
+    padding: 12px !important;
+  }
+
+  /* Mobile responsive for Entry View Modal */
+  .entry-view-modal .ant-descriptions-item-label {
+    font-size: 12px !important;
+  }
+
+  .entry-view-modal .ant-descriptions-item-content {
+    font-size: 12px !important;
+  }
+
+  .entry-view-modal .ant-tag {
+    font-size: 11px !important;
+    padding: 0 4px !important;
+    margin: 0 !important;
+  }
+
+  .entry-view-modal .ant-modal-header {
+    padding: 12px 16px !important;
+  }
+
+  .entry-view-modal .ant-typography {
+    font-size: 12px !important;
+  }
+}
+
 /* Excel container */
 .excel-container {
   flex: 1;
@@ -998,19 +1083,40 @@ body.col-resizing .ant-table * {
   background: #fff2f0 !important;
 }
 
-/* Compact cell padding for editable table */
+/* Compact cell padding for editable table - đồng nhất với excel-table */
 .excel-editable-table .ant-table-thead > tr > th {
-  padding: 8px 6px !important;
-  font-size: 12px;
-  font-weight: 600;
-  background: #f5f5f5 !important;
+  padding: 6px 8px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  background: #f0f0f0 !important;
   white-space: nowrap;
+  border-bottom: 1px solid #d9d9d9 !important;
+  border-right: 1px solid #e8e8e8 !important;
+}
+
+.excel-editable-table .ant-table-thead > tr > th:last-child {
+  border-right: none !important;
 }
 
 .excel-editable-table .ant-table-tbody > tr > td {
-  padding: 2px 4px !important;
-  font-size: 12px;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
   vertical-align: middle;
+  border-bottom: 1px solid #e8e8e8 !important;
+  border-right: 1px solid #f0f0f0 !important;
+}
+
+.excel-editable-table .ant-table-tbody > tr > td:last-child {
+  border-right: none !important;
+}
+
+/* Zebra striping - đồng nhất với excel-table */
+.excel-editable-table .ant-table-tbody > tr:nth-child(even) > td {
+  background-color: #fafafa;
+}
+
+.excel-editable-table .ant-table-tbody > tr:nth-child(even):hover > td {
+  background-color: #e6f7ff !important;
 }
 
 /* Active row highlight */
@@ -1019,7 +1125,7 @@ body.col-resizing .ant-table * {
 }
 
 .excel-editable-table .ant-table-tbody > tr:hover > td {
-  background-color: #f0f7ff !important;
+  background-color: #e6f7ff !important;
 }
 
 /* STT column styling */

@@ -5,6 +5,7 @@ import {
   ArrowDownOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   useNhatKyChungState,
   useNhatKyChungHandler,
@@ -22,6 +23,7 @@ const formatCurrency = (value: number) => {
 
 export function EntryViewModal() {
   const handler = useNhatKyChungHandler();
+  const isMobile = useIsMobile();
   const [visible] = useNhatKyChungState("viewModalVisible", false);
   const [entry] = useNhatKyChungState("viewingEntry", null);
 
@@ -39,15 +41,31 @@ export function EntryViewModal() {
       title={
         <div className="flex items-center gap-2">
           <EyeOutlined className="text-primary" />
-          <span>Chi tiết bút toán</span>
+          <span className="text-sm sm:text-base">Chi tiết bút toán</span>
         </div>
       }
       open={visible}
       onCancel={handleClose}
       footer={null}
-      width={700}
+      width={isMobile ? "95%" : 700}
+      style={{ top: isMobile ? 10 : 20 }}
+      styles={{
+        body: {
+          maxHeight: isMobile ? "calc(100vh - 100px)" : "calc(100vh - 150px)",
+          overflowY: "auto",
+          padding: isMobile ? "8px 12px" : "12px 24px",
+        },
+      }}
+      className="entry-view-modal"
     >
-      <Descriptions bordered column={2} size="small" className="mt-4">
+      <Descriptions
+        bordered
+        column={isMobile ? 1 : 2}
+        size="small"
+        className="mt-2 sm:mt-4"
+        labelStyle={isMobile ? { width: "40%", padding: "6px 8px", fontSize: "12px" } : undefined}
+        contentStyle={isMobile ? { padding: "6px 8px", fontSize: "12px" } : undefined}
+      >
         <Descriptions.Item label="Số phiếu" span={1}>
           <Text
             strong

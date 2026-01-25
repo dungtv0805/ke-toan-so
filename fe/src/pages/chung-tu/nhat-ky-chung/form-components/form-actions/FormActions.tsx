@@ -1,4 +1,4 @@
-import { Button, Space } from "antd";
+import { Button } from "antd";
 import { SaveOutlined, CloseOutlined, PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import {
@@ -27,29 +27,33 @@ export function FormActions() {
   };
 
   return (
-    <div className="flex justify-end mt-6 pt-4 border-t">
-      <Space>
-        <Button icon={<CloseOutlined />} onClick={handleCancel}>
-          Hủy
-        </Button>
-        {!isEditing && (
-          <Button
-            icon={<PlusOutlined />}
-            onClick={handleSubmitAndNew}
-            loading={submitting}
-          >
-            Lưu & Tạo mới
-          </Button>
-        )}
+    <div className="flex flex-col-reverse sm:flex-row justify-end mt-4 pt-4 border-t gap-2 sm:gap-3">
+      <Button
+        icon={<CloseOutlined />}
+        onClick={handleCancel}
+        className="w-full sm:w-auto"
+      >
+        Hủy
+      </Button>
+      {!isEditing && (
         <Button
-          type="primary"
-          icon={<SaveOutlined />}
-          onClick={handleSubmit}
+          icon={<PlusOutlined />}
+          onClick={handleSubmitAndNew}
           loading={submitting}
+          className="w-full sm:w-auto"
         >
-          {isEditing ? "Cập nhật" : "Lưu"}
+          Lưu & Tạo mới
         </Button>
-      </Space>
+      )}
+      <Button
+        type="primary"
+        icon={<SaveOutlined />}
+        onClick={handleSubmit}
+        loading={submitting}
+        className="w-full sm:w-auto"
+      >
+        {isEditing ? "Cập nhật" : "Lưu"}
+      </Button>
     </div>
   );
 }

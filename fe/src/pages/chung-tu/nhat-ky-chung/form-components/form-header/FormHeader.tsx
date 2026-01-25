@@ -30,20 +30,20 @@ export function FormHeader() {
   };
 
   return (
-    <div className="mb-6">
-      <Row gutter={16}>
+    <div className="mb-4 sm:mb-6">
+      <Row gutter={[16, 8]}>
         {isEditing && header?.soPhieu && (
-          <Col span={6}>
-            <Form.Item label="Số phiếu" className="mb-3">
+          <Col xs={24} sm={12} md={6}>
+            <Form.Item label="Số phiếu" className="mb-2 sm:mb-3">
               <Input value={header.soPhieu} disabled className="font-semibold" />
             </Form.Item>
           </Col>
         )}
-        <Col span={isEditing ? 6 : 8}>
+        <Col xs={24} sm={12} md={isEditing ? 6 : 8}>
           <Form.Item
             label="Ngày chứng từ"
             required
-            className="mb-3"
+            className="mb-2 sm:mb-3"
             validateStatus={!header?.ngay ? "error" : ""}
             help={!header?.ngay ? "Vui lòng chọn ngày" : ""}
           >
@@ -56,11 +56,11 @@ export function FormHeader() {
             />
           </Form.Item>
         </Col>
-        <Col span={isEditing ? 12 : 16}>
+        <Col xs={24} sm={24} md={isEditing ? 12 : 16}>
           <Form.Item
             label="Nghiệp vụ"
             required
-            className="mb-3"
+            className="mb-2 sm:mb-3"
             validateStatus={!header?.loai ? "error" : ""}
             help={!header?.loai ? "Vui lòng chọn nghiệp vụ" : ""}
           >
@@ -80,7 +80,7 @@ export function FormHeader() {
         </Col>
       </Row>
 
-      <Form.Item label="Diễn giải chung" className="mb-3">
+      <Form.Item label="Diễn giải chung" className="mb-2 sm:mb-3">
         <Input.TextArea
           autoSize={{ minRows: 2, maxRows: 4 }}
           placeholder="Nhập diễn giải chung cho chứng từ"
@@ -102,9 +102,9 @@ export function FormHeader() {
             ),
             children: (
               <>
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Form.Item label="Người giao dịch" className="mb-3">
+                <Row gutter={[16, 8]}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item label="Người giao dịch" className="mb-2 sm:mb-3">
                       <Input
                         placeholder="Nhập tên người giao dịch"
                         value={header?.nguoiGiaoDich || ""}
@@ -114,8 +114,8 @@ export function FormHeader() {
                       />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
-                    <Form.Item label="Địa chỉ" className="mb-3">
+                  <Col xs={24} sm={12}>
+                    <Form.Item label="Địa chỉ" className="mb-2 sm:mb-3">
                       <Input
                         placeholder="Nhập địa chỉ"
                         value={header?.diaChi || ""}
