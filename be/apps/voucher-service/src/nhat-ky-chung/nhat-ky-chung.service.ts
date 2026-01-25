@@ -281,8 +281,12 @@ export class NhatKyChungService {
         chungTu.ngay = new Date(items[i].ngay);
         chungTu.soTien = items[i].soTien;
         chungTu.noiDung = items[i].noiDung;
-        chungTu.danhMuc = items[i].danhMuc;
-        chungTu.ghiChu = items[i].ghiChu;
+        if (items[i].danhMuc !== undefined) {
+          chungTu.danhMuc = items[i].danhMuc!;
+        }
+        if (items[i].ghiChu !== undefined) {
+          chungTu.ghiChu = items[i].ghiChu!;
+        }
         chungTu.nguoiGiaoDich = items[i].nguoiGiaoDich;
         chungTu.diaChi = items[i].diaChi;
         const saved = await this.chungTuRepository.save(chungTu);
