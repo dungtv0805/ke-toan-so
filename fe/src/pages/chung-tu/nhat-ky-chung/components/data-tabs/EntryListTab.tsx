@@ -33,9 +33,13 @@ import {
 import { FilterDrawer } from "../filter-drawer/FilterDrawer";
 import { EntryActions } from "../entry-actions/EntryActions";
 import { DetailPopover } from "./DetailPopover";
+import { EditableCell, SelectOption } from "../editable-cell";
 import dayjs from "dayjs";
 import type { TablePaginationConfig } from "antd/es/table";
 import type { ColumnType } from "antd/es/table";
+
+// Import inline-edit handler to register it
+import "../../handler/sub-handler/inline-edit/inline-edit.handler";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("vi-VN").format(value);
@@ -87,15 +91,43 @@ const DEFAULT_WIDTHS: Record<string, number> = {
   action: 70,
 };
 
+// Editable column configuration
+interface EditableColumnConfig {
+  editable: boolean;
+  inputType: "text" | "number" | "date" | "select";
+}
+
+const EDITABLE_COLUMNS: Record<string, EditableColumnConfig> = {
+  ngay: { editable: true, inputType: "date" },
+  dienGiai: { editable: true, inputType: "text" },
+  taiKhoanNo: { editable: true, inputType: "select" },
+  taiKhoanCo: { editable: true, inputType: "select" },
+  soTien: { editable: true, inputType: "number" },
+  nguoiGiaoDich: { editable: true, inputType: "text" },
+  diaChi: { editable: true, inputType: "text" },
+  ghiChu: { editable: true, inputType: "text" },
+};
+
 // Column definitions without width (static)
-const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
+const getColumnDefinitions = (
+  taiKhoanOptions: SelectOption[]
+): Omit<ColumnType<NhatKyChung>, "width">[] => [
   {
     title: "Ngày",
     dataIndex: "ngay",
     key: "ngay",
     sorter: (a: NhatKyChung, b: NhatKyChung) =>
       new Date(a.ngay).getTime() - new Date(b.ngay).getTime(),
-    render: (date: string) => dayjs(date).format("DD/MM/YY"),
+    render: (date: string, record: NhatKyChung) => (
+      <EditableCell
+        record={record}
+        dataIndex="ngay"
+        editable={true}
+        inputType="date"
+      >
+        {dayjs(date).format("DD/MM/YY")}
+      </EditableCell>
+    ),
   },
   {
     title: "Số CT",
@@ -104,9 +136,7 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
     render: (text: string, record: NhatKyChung) => (
       <span
         className={`font-semibold ${
-          record.loaiChungTu === "Phiếu thu"
-            ? "text-green-600"
-            : "text-red-600"
+          record.loaiChungTu === "Phiếu thu" ? "text-green-600" : "text-red-600"
         }`}
       >
         {text}
@@ -124,7 +154,10 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
     onFilter: (value: unknown, record: NhatKyChung) =>
       record.loaiChungTu === value,
     render: (loai: string) => (
-      <Tag color={loai === "Phiếu thu" ? "success" : "error"} className="excel-tag">
+      <Tag
+        color={loai === "Phiếu thu" ? "success" : "error"}
+        className="excel-tag"
+      >
         {loai === "Phiếu thu" ? "Thu" : "Chi"}
       </Tag>
     ),
@@ -147,7 +180,16 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
     title: "Diễn giải",
     dataIndex: "dienGiai",
     key: "dienGiai",
-    render: (text: string) => renderEllipsisText(text),
+    render: (text: string, record: NhatKyChung) => (
+      <EditableCell
+        record={record}
+        dataIndex="dienGiai"
+        editable={true}
+        inputType="text"
+      >
+        {renderEllipsisText(text)}
+      </EditableCell>
+    ),
   },
   {
     title: "TK Nợ",
@@ -156,11 +198,25 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
     align: "center" as const,
     render: (text: string, record: NhatKyChung) => {
       const data = record.danhMuc?.taiKhoanNo;
-      return data ? (
-        <DetailPopover type="taiKhoan" data={data}>
-          <span className="cursor-pointer text-orange-600 font-medium">{text}</span>
-        </DetailPopover>
-      ) : <span className="text-orange-600">{text}</span>;
+      return (
+        <EditableCell
+          record={record}
+          dataIndex="taiKhoanNo"
+          editable={true}
+          inputType="select"
+          selectOptions={taiKhoanOptions}
+        >
+          {data ? (
+            <DetailPopover type="taiKhoan" data={data}>
+              <span className="cursor-pointer text-orange-600 font-medium">
+                {text}
+              </span>
+            </DetailPopover>
+          ) : (
+            <span className="text-orange-600">{text}</span>
+          )}
+        </EditableCell>
+      );
     },
   },
   {
@@ -170,11 +226,25 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
     align: "center" as const,
     render: (text: string, record: NhatKyChung) => {
       const data = record.danhMuc?.taiKhoanCo;
-      return data ? (
-        <DetailPopover type="taiKhoan" data={data}>
-          <span className="cursor-pointer text-green-600 font-medium">{text}</span>
-        </DetailPopover>
-      ) : <span className="text-green-600">{text}</span>;
+      return (
+        <EditableCell
+          record={record}
+          dataIndex="taiKhoanCo"
+          editable={true}
+          inputType="select"
+          selectOptions={taiKhoanOptions}
+        >
+          {data ? (
+            <DetailPopover type="taiKhoan" data={data}>
+              <span className="cursor-pointer text-green-600 font-medium">
+                {text}
+              </span>
+            </DetailPopover>
+          ) : (
+            <span className="text-green-600">{text}</span>
+          )}
+        </EditableCell>
+      );
     },
   },
   {
@@ -183,7 +253,16 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
     key: "soTien",
     align: "right" as const,
     sorter: (a: NhatKyChung, b: NhatKyChung) => a.soTien - b.soTien,
-    render: (value: number) => <span className="font-medium">{formatCurrency(value)}</span>,
+    render: (value: number, record: NhatKyChung) => (
+      <EditableCell
+        record={record}
+        dataIndex="soTien"
+        editable={true}
+        inputType="number"
+      >
+        <span className="font-medium">{formatCurrency(value)}</span>
+      </EditableCell>
+    ),
   },
   {
     title: "Mã ĐT nợ",
@@ -195,7 +274,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="doiTuong" data={data}>
           <span className="cursor-pointer text-blue-600">{ma}</span>
         </DetailPopover>
-      ) : <span className="text-gray-400">-</span>;
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
     },
   },
   {
@@ -208,7 +289,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="doiTuong" data={data}>
           {renderEllipsisText(ten)}
         </DetailPopover>
-      ) : renderEllipsisText(ten);
+      ) : (
+        renderEllipsisText(ten)
+      );
     },
   },
   {
@@ -221,7 +304,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="doiTuong" data={data}>
           <span className="cursor-pointer text-blue-600">{ma}</span>
         </DetailPopover>
-      ) : <span className="text-gray-400">-</span>;
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
     },
   },
   {
@@ -234,7 +319,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="doiTuong" data={data}>
           {renderEllipsisText(ten)}
         </DetailPopover>
-      ) : renderEllipsisText(ten);
+      ) : (
+        renderEllipsisText(ten)
+      );
     },
   },
   {
@@ -242,15 +329,19 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
     key: "chuDauTuMa",
     render: (_: unknown, record: NhatKyChung) => {
       const ma = getNkcChuDauTuMa(record);
-      const data = record.danhMuc?.duAn ? {
-        ma: record.danhMuc.duAn.chuDauTuMa,
-        ten: record.danhMuc.duAn.chuDauTuTen,
-      } : null;
+      const data = record.danhMuc?.duAn
+        ? {
+            ma: record.danhMuc.duAn.chuDauTuMa,
+            ten: record.danhMuc.duAn.chuDauTuTen,
+          }
+        : null;
       return ma ? (
         <DetailPopover type="doiTuong" data={data}>
           <span className="cursor-pointer text-blue-600">{ma}</span>
         </DetailPopover>
-      ) : <span className="text-gray-400">-</span>;
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
     },
   },
   {
@@ -258,15 +349,19 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
     key: "chuDauTu",
     render: (_: unknown, record: NhatKyChung) => {
       const ten = getNkcChuDauTuTen(record);
-      const data = record.danhMuc?.duAn ? {
-        ma: record.danhMuc.duAn.chuDauTuMa,
-        ten: record.danhMuc.duAn.chuDauTuTen,
-      } : null;
+      const data = record.danhMuc?.duAn
+        ? {
+            ma: record.danhMuc.duAn.chuDauTuMa,
+            ten: record.danhMuc.duAn.chuDauTuTen,
+          }
+        : null;
       return data ? (
         <DetailPopover type="doiTuong" data={data}>
           {renderEllipsisText(ten)}
         </DetailPopover>
-      ) : renderEllipsisText(ten);
+      ) : (
+        renderEllipsisText(ten)
+      );
     },
   },
   {
@@ -279,7 +374,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="duAn" data={data}>
           <span className="cursor-pointer text-blue-600">{ma}</span>
         </DetailPopover>
-      ) : <span className="text-gray-400">-</span>;
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
     },
   },
   {
@@ -292,7 +389,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="duAn" data={data}>
           {renderEllipsisText(ten)}
         </DetailPopover>
-      ) : renderEllipsisText(ten);
+      ) : (
+        renderEllipsisText(ten)
+      );
     },
   },
   {
@@ -305,7 +404,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="sanPham" data={data}>
           <span className="cursor-pointer text-blue-600">{ma}</span>
         </DetailPopover>
-      ) : <span className="text-gray-400">-</span>;
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
     },
   },
   {
@@ -318,7 +419,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="sanPham" data={data}>
           {renderEllipsisText(ten)}
         </DetailPopover>
-      ) : renderEllipsisText(ten);
+      ) : (
+        renderEllipsisText(ten)
+      );
     },
   },
   {
@@ -331,7 +434,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="boPhan" data={data}>
           <span className="cursor-pointer text-blue-600">{ma}</span>
         </DetailPopover>
-      ) : <span className="text-gray-400">-</span>;
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
     },
   },
   {
@@ -344,7 +449,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="boPhan" data={data}>
           {renderEllipsisText(ten)}
         </DetailPopover>
-      ) : renderEllipsisText(ten);
+      ) : (
+        renderEllipsisText(ten)
+      );
     },
   },
   {
@@ -357,7 +464,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="boPhan" data={data}>
           <span className="cursor-pointer text-blue-600">{ma}</span>
         </DetailPopover>
-      ) : <span className="text-gray-400">-</span>;
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
     },
   },
   {
@@ -370,7 +479,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="boPhan" data={data}>
           {renderEllipsisText(ten)}
         </DetailPopover>
-      ) : renderEllipsisText(ten);
+      ) : (
+        renderEllipsisText(ten)
+      );
     },
   },
   {
@@ -383,7 +494,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="nhanVien" data={data}>
           <span className="cursor-pointer text-blue-600">{ma}</span>
         </DetailPopover>
-      ) : <span className="text-gray-400">-</span>;
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
     },
   },
   {
@@ -396,7 +509,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="nhanVien" data={data}>
           {renderEllipsisText(ten)}
         </DetailPopover>
-      ) : renderEllipsisText(ten);
+      ) : (
+        renderEllipsisText(ten)
+      );
     },
   },
   {
@@ -409,7 +524,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="dongTien" data={data}>
           <span className="cursor-pointer text-blue-600">{ma}</span>
         </DetailPopover>
-      ) : <span className="text-gray-400">-</span>;
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
     },
   },
   {
@@ -422,7 +539,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="dongTien" data={data}>
           {renderEllipsisText(ten)}
         </DetailPopover>
-      ) : renderEllipsisText(ten);
+      ) : (
+        renderEllipsisText(ten)
+      );
     },
   },
   {
@@ -435,7 +554,9 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="khoanMuc" data={data}>
           <span className="cursor-pointer text-blue-600">{ma}</span>
         </DetailPopover>
-      ) : <span className="text-gray-400">-</span>;
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
     },
   },
   {
@@ -448,40 +569,64 @@ const getColumnDefinitions = (): Omit<ColumnType<NhatKyChung>, 'width'>[] => [
         <DetailPopover type="khoanMuc" data={data}>
           {renderEllipsisText(ten)}
         </DetailPopover>
-      ) : renderEllipsisText(ten);
+      ) : (
+        renderEllipsisText(ten)
+      );
     },
   },
   {
     title: "Người GD",
     dataIndex: "nguoiGiaoDich",
     key: "nguoiGiaoDich",
-    render: (text: string) => renderEllipsisText(text),
+    render: (text: string, record: NhatKyChung) => (
+      <EditableCell
+        record={record}
+        dataIndex="nguoiGiaoDich"
+        editable={true}
+        inputType="text"
+      >
+        {renderEllipsisText(text)}
+      </EditableCell>
+    ),
   },
   {
     title: "Địa chỉ",
     dataIndex: "diaChi",
     key: "diaChi",
-    render: (text: string) => renderEllipsisText(text),
+    render: (text: string, record: NhatKyChung) => (
+      <EditableCell
+        record={record}
+        dataIndex="diaChi"
+        editable={true}
+        inputType="text"
+      >
+        {renderEllipsisText(text)}
+      </EditableCell>
+    ),
   },
   {
     title: "Ghi chú",
     dataIndex: "ghiChu",
     key: "ghiChu",
-    render: (text: string) => renderEllipsisText(text),
+    render: (text: string, record: NhatKyChung) => (
+      <EditableCell
+        record={record}
+        dataIndex="ghiChu"
+        editable={true}
+        inputType="text"
+      >
+        {renderEllipsisText(text)}
+      </EditableCell>
+    ),
   },
   {
     title: "",
     key: "action",
     align: "center" as const,
     fixed: "right" as const,
-    render: (_: unknown, record: NhatKyChung) => (
-      <EntryActions entry={record} />
-    ),
+    render: (_: unknown, record: NhatKyChung) => <EntryActions entry={record} />,
   },
 ];
-
-// Static column definitions (created once)
-const COLUMN_DEFINITIONS = getColumnDefinitions();
 
 // Calculate total width
 const TOTAL_WIDTH = Object.values(DEFAULT_WIDTHS).reduce((sum, w) => sum + w, 0);
@@ -497,22 +642,35 @@ export function EntryListTab() {
     limit: 50,
     totalPages: 0,
   });
+  const [taiKhoanList] = useNhatKyChungState("taiKhoanList", []);
+  const [editingRowId] = useNhatKyChungState("editingRowId", null);
 
   // Enable column resize via DOM manipulation (no React re-renders)
   useTableColumnResize("resizable-table");
+
+  // Convert taiKhoanList to select options
+  const taiKhoanOptions: SelectOption[] = useMemo(
+    () =>
+      (taiKhoanList || []).map((tk: { ma: string; ten: string }) => ({
+        value: tk.ma,
+        label: `${tk.ma} - ${tk.ten}`,
+      })),
+    [taiKhoanList]
+  );
 
   const handleTableChange = (paginationConfig: TablePaginationConfig) => {
     const { current = 1, pageSize = 50 } = paginationConfig;
     handler.executeEvent("loadPage", { page: current, limit: pageSize });
   };
 
-  // Memoize columns with widths
-  const columns = useMemo(() =>
-    COLUMN_DEFINITIONS.map((col) => ({
-      ...col,
-      width: DEFAULT_WIDTHS[col.key as string] || 100,
-    })),
-    []
+  // Memoize columns with widths - now depends on taiKhoanOptions
+  const columns = useMemo(
+    () =>
+      getColumnDefinitions(taiKhoanOptions).map((col) => ({
+        ...col,
+        width: DEFAULT_WIDTHS[col.key as string] || 100,
+      })),
+    [taiKhoanOptions]
   );
 
   const handleCreateEntry = () => {
@@ -520,7 +678,18 @@ export function EntryListTab() {
   };
 
   const handleRefresh = () => {
-    handler.executeEvent("loadPage", { page: pagination?.page || 1, limit: pagination?.limit || 50 });
+    handler.executeEvent("loadPage", {
+      page: pagination?.page || 1,
+      limit: pagination?.limit || 50,
+    });
+  };
+
+  // Row class name for highlighting editing row
+  const getRowClassName = (record: NhatKyChung) => {
+    if (editingRowId === record.id) {
+      return "editing-row";
+    }
+    return "";
   };
 
   return (
@@ -552,14 +721,14 @@ export function EntryListTab() {
         rowKey="id"
         loading={loading}
         className="excel-table resizable-table"
+        rowClassName={getRowClassName}
         pagination={{
           current: pagination?.page || 1,
           pageSize: pagination?.limit || 50,
           total: pagination?.total || 0,
           showSizeChanger: true,
           pageSizeOptions: ["25", "50", "100", "200", "500"],
-          showTotal: (total, range) =>
-            `${range[0]}-${range[1]} / ${total}`,
+          showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
           size: "small",
         }}
         onChange={handleTableChange}
@@ -567,7 +736,7 @@ export function EntryListTab() {
         bordered
         scroll={{
           x: TOTAL_WIDTH,
-          y: "calc(100vh - 230px)",
+          y: "calc(100vh - 250px)",
         }}
       />
     </div>
