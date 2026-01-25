@@ -72,6 +72,25 @@ export class NhatKyChungController {
     return this.nhatKyChungService.create(createDto, user.id);
   }
 
+  @Post('batch')
+  @Roles('ADMIN', 'KE_TOAN_QUY')
+  async createBatch(
+    @Body() items: CreateNhatKyChungDto[],
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.nhatKyChungService.createBatch(items, user.id);
+  }
+
+  @Patch('batch/:soPhieu')
+  @Roles('ADMIN', 'KE_TOAN_QUY')
+  async updateBatch(
+    @Param('soPhieu') soPhieu: string,
+    @Body() items: CreateNhatKyChungDto[],
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.nhatKyChungService.updateBatch(soPhieu, items, user.id);
+  }
+
   @Patch(':id')
   @Roles('ADMIN', 'KE_TOAN_QUY')
   async update(

@@ -1,5 +1,6 @@
 import { Space, Button, Tooltip, Popconfirm } from "antd";
 import { EyeOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 import { NhatKyChung } from "@/types";
 import { useNhatKyChungHandler } from "../../NhatKyChungHandlerContext";
 
@@ -8,6 +9,7 @@ interface EntryActionsProps {
 }
 
 export function EntryActions({ entry }: EntryActionsProps) {
+  const navigate = useNavigate();
   const handler = useNhatKyChungHandler();
 
   // Check if entry is approved (cannot edit/delete)
@@ -18,7 +20,8 @@ export function EntryActions({ entry }: EntryActionsProps) {
   };
 
   const handleEdit = () => {
-    handler.executeEvent("openEditModal", { entry });
+    // Navigate to edit page with soPhieu
+    navigate(`/chung-tu/nhat-ky-chung/${encodeURIComponent(entry.soPhieu)}/sua`);
   };
 
   const handleDelete = () => {

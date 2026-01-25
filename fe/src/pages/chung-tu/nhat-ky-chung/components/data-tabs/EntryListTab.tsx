@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Table, Tag, Button, Space, Tooltip } from "antd";
 import { PlusOutlined, ReloadOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 import { NhatKyChung } from "@/types";
 import { useTableColumnResize } from "@/hooks/useTableColumnResize";
 import {
@@ -486,6 +487,7 @@ const COLUMN_DEFINITIONS = getColumnDefinitions();
 const TOTAL_WIDTH = Object.values(DEFAULT_WIDTHS).reduce((sum, w) => sum + w, 0);
 
 export function EntryListTab() {
+  const navigate = useNavigate();
   const handler = useNhatKyChungHandler();
   const [data] = useNhatKyChungState("data", []);
   const [loading] = useNhatKyChungState("loading", false);
@@ -514,7 +516,7 @@ export function EntryListTab() {
   );
 
   const handleCreateEntry = () => {
-    handler.executeEvent("openCreateModal", {});
+    navigate("/chung-tu/nhat-ky-chung/tao-moi");
   };
 
   const handleRefresh = () => {

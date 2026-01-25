@@ -1,0 +1,202 @@
+import { HandlerDecorator, RegisterHandler } from "@/common";
+import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
+import { nhatKyChungService, CreateEntryDto } from "@/services/nhatKyChungService";
+import { message } from "antd";
+import dayjs from "dayjs";
+import { v4 as uuidv4 } from "uuid";
+import "./submit.event";
+import { NhatKyChungFormStates, NhatKyChungFormEvents } from "../../nhat-ky-chung-form.handler";
+import { ChungTuHeader, ChungTuChiTiet, TaiKhoanItem } from "../init/init.state";
+import { DanhMuc, LoaiChungTu } from "@/types";
+import { LoaiChungTuType } from "@/services/loaiChungTuService";
+
+@RegisterHandler("nhat-ky-chung-form")
+export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyChungFormStates> {
+  @HandlerDecorator("validateForm")
+  async validateForm(): Promise<{ valid: boolean; errors: string[] }> {
+    const header = this.getState("header") as ChungTuHeader | null;
+    const chiTietList = (this.getState("chiTietList") as ChungTuChiTiet[]) || [];
+    const errors: string[] = [];
+
+    // Validate header
+    if (!header?.ngay) {
+      errors.push("Vui lòng chọn ngày chứng từ");
+    }
+
+    if (!header?.loai) {
+      errors.push("Vui lòng chọn nghiệp vụ");
+    }
+
+    // Validate chi tiết
+    if (chiTietList.length === 0) {
+      errors.push("Vui lòng thêm ít nhất 1 dòng chi tiết");
+    }
+
+    chiTietList.forEach((item, index) => {
+      if (!item.taiKhoanNo) {
+        errors.push(`Dòng ${index + 1}: Vui lòng chọn TK Nợ`);
+      }
+      if (!item.taiKhoanCo) {
+        errors.push(`Dòng ${index + 1}: Vui lòng chọn TK Có`);
+      }
+      if (!item.soTien || item.soTien <= 0) {
+        errors.push(`Dòng ${index + 1}: Số tiền phải lớn hơn 0`);
+      }
+    });
+
+    return { valid: errors.length === 0, errors };
+  }
+
+  @HandlerDecorator("submitForm")
+  async submitForm(): Promise<void> {
+    // Validate first
+    const validation = await this.executeEvent("validateForm", {});
+    if (!validation.valid) {
+      validation.errors.forEach((err) => message.error(err));
+      return;
+    }
+
+    const header = this.getState("header") as ChungTuHeader;
+    const chiTietList = (this.getState("chiTietList") as ChungTuChiTiet[]) || [];
+    const isEditing = this.getState("isEditing") as boolean;
+    const loaiChungTuList = (this.getState("loaiChungTuList") as LoaiChungTuType[]) || [];
+
+    this.setState("submitting", true);
+
+    try {
+      // Determine loai (PHIEU_THU or PHIEU_CHI) from loaiChungTu
+      const loaiChungTu = loaiChungTuList.find((lct) => lct.ma === header.loai);
+      const loai: LoaiChungTu = loaiChungTu?.ma?.startsWith("CHI_") ? "PHIEU_CHI" : "PHIEU_THU";
+
+      // Build items for batch create/update
+      const items: CreateEntryDto[] = chiTietList.map((ct) => ({
+        loai,
+        ngay: header.ngay.format("YYYY-MM-DD"),
+        soTien: ct.soTien,
+        noiDung: ct.noiDung || header.dienGiaiChung || "",
+        nguoiGiaoDich: header.nguoiGiaoDich,
+        diaChi: header.diaChi,
+        ghiChu: header.ghiChu,
+        danhMuc: this.buildDanhMuc(ct, header),
+      }));
+
+      if (isEditing && header.soPhieu) {
+        // Update batch
+        await nhatKyChungService.updateBatch(header.soPhieu, items);
+        message.success("Cập nhật chứng từ thành công");
+      } else {
+        // Create batch
+        await nhatKyChungService.createBatch(items);
+        message.success("Tạo chứng từ thành công");
+      }
+
+      // Navigate back
+      window.history.back();
+    } catch (error) {
+      const err = error as { message?: string };
+      message.error(err.message || "Có lỗi xảy ra");
+    } finally {
+      this.setState("submitting", false);
+    }
+  }
+
+  @HandlerDecorator("resetForm")
+  async resetForm(): Promise<void> {
+    this.setState("header", {
+      ngay: dayjs(),
+      loai: undefined,
+      loaiTen: undefined,
+      dienGiaiChung: "",
+      nguoiGiaoDich: "",
+      diaChi: "",
+      ghiChu: "",
+    });
+
+    this.setState("chiTietList", [
+      {
+        key: uuidv4(),
+        taiKhoanNo: "",
+        taiKhoanCo: "",
+        soTien: 0,
+        noiDung: "",
+      },
+    ]);
+
+    this.setState("isEditing", false);
+  }
+
+  private buildDanhMuc(chiTiet: ChungTuChiTiet, header: ChungTuHeader): DanhMuc {
+    const taiKhoanList = (this.getState("taiKhoanList") as TaiKhoanItem[]) || [];
+    const loaiChungTuList = (this.getState("loaiChungTuList") as LoaiChungTuType[]) || [];
+
+    const danhMuc: DanhMuc = {};
+
+    // Tài khoản Nợ
+    if (chiTiet.taiKhoanNo) {
+      const tkNo = taiKhoanList.find((tk) => tk.ma === chiTiet.taiKhoanNo);
+      danhMuc.taiKhoanNo = {
+        ma: chiTiet.taiKhoanNo,
+        ten: tkNo?.ten || "",
+        loai: tkNo?.loai || "",
+        nhom: tkNo?.nhom || "",
+      };
+    }
+
+    // Tài khoản Có
+    if (chiTiet.taiKhoanCo) {
+      const tkCo = taiKhoanList.find((tk) => tk.ma === chiTiet.taiKhoanCo);
+      danhMuc.taiKhoanCo = {
+        ma: chiTiet.taiKhoanCo,
+        ten: tkCo?.ten || "",
+        loai: tkCo?.loai || "",
+        nhom: tkCo?.nhom || "",
+      };
+    }
+
+    // Loại chứng từ
+    if (header.loai) {
+      const loaiChungTu = loaiChungTuList.find((lct) => lct.ma === header.loai);
+      danhMuc.loaiChungTu = {
+        ma: header.loai,
+        ten: loaiChungTu?.ten || header.loaiTen || header.loai,
+      };
+    }
+
+    // Snapshots from chi tiết
+    if (chiTiet.doiTuongSnapshot) {
+      danhMuc.doiTuong = chiTiet.doiTuongSnapshot as DanhMuc["doiTuong"];
+    }
+    if (chiTiet.doiTuong2Snapshot) {
+      danhMuc.doiTuong2 = chiTiet.doiTuong2Snapshot as DanhMuc["doiTuong2"];
+    }
+    if (chiTiet.duAnSnapshot) {
+      danhMuc.duAn = chiTiet.duAnSnapshot as DanhMuc["duAn"];
+    }
+    if (chiTiet.boPhanSnapshot) {
+      danhMuc.boPhan = chiTiet.boPhanSnapshot as DanhMuc["boPhan"];
+    }
+    if (chiTiet.doiSnapshot) {
+      danhMuc.doi = chiTiet.doiSnapshot as DanhMuc["doi"];
+    }
+    if (chiTiet.nhanVienSnapshot) {
+      danhMuc.nhanVien = chiTiet.nhanVienSnapshot as DanhMuc["nhanVien"];
+    }
+    if (chiTiet.sanPhamSnapshot) {
+      danhMuc.sanPham = chiTiet.sanPhamSnapshot as DanhMuc["sanPham"];
+    }
+    if (chiTiet.dongTienSnapshot) {
+      danhMuc.dongTien = chiTiet.dongTienSnapshot as DanhMuc["dongTien"];
+    }
+    if (chiTiet.nhomKhuyenMaiSnapshot) {
+      danhMuc.nhomKhuyenMai = chiTiet.nhomKhuyenMaiSnapshot as DanhMuc["nhomKhuyenMai"];
+    }
+    if (chiTiet.nhomQuanLySnapshot) {
+      danhMuc.nhomQuanLy = chiTiet.nhomQuanLySnapshot as DanhMuc["nhomQuanLy"];
+    }
+    if (chiTiet.khoanMucSnapshot) {
+      danhMuc.khoanMuc = chiTiet.khoanMucSnapshot as DanhMuc["khoanMuc"];
+    }
+
+    return danhMuc;
+  }
+}

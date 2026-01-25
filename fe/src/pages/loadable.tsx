@@ -88,6 +88,10 @@ export const NhatKyChungPage = loadable(() => import('./chung-tu/nhat-ky-chung/N
   fallback: <PageLoader />
 });
 
+export const NhatKyChungFormPage = loadable(() => import('./chung-tu/nhat-ky-chung/NhatKyChungFormPage'), {
+  fallback: <PageLoader />
+});
+
 // Sổ quỹ
 export const SoQuyPage = loadable(() => import('./so-quy/SoQuyPage'), {
   fallback: <PageLoader />

@@ -254,6 +254,33 @@ class NhatKyChungService extends ServiceBase {
   async remove(id: string): Promise<{ message: string }> {
     return this.delete<{ message: string }>({ endpoint: `/${id}` });
   }
+
+  /**
+   * Get all entries by soPhieu (voucher number)
+   */
+  async getBySoPhieu(soPhieu: string): Promise<NhatKyChung[]> {
+    const response = await this.getEntries({ search: soPhieu, limit: 100 });
+    // Filter to ensure exact match on soPhieu
+    return response.data.filter((item) => item.soPhieu === soPhieu);
+  }
+
+  /**
+   * Create multiple entries with the same soPhieu (batch create)
+   */
+  async createBatch(items: CreateEntryDto[]): Promise<NhatKyChung[]> {
+    const response = await this.post<{ success: boolean; data: ChungTuResponse[] }>(items, { endpoint: '/batch' });
+    return response.data.map((item) => this.mapChungTuToNhatKyChung(item));
+  }
+
+  /**
+   * Update all entries of a soPhieu (batch update)
+   */
+  async updateBatch(soPhieu: string, items: CreateEntryDto[]): Promise<NhatKyChung[]> {
+    const response = await this.patch<{ success: boolean; data: ChungTuResponse[] }>(items, {
+      endpoint: `/batch/${encodeURIComponent(soPhieu)}`
+    });
+    return response.data.map((item) => this.mapChungTuToNhatKyChung(item));
+  }
 }
 
 export const nhatKyChungService = new NhatKyChungService();

@@ -31,6 +31,7 @@ import {
   PhieuThuPage,
   PhieuChiPage,
   NhatKyChungPage,
+  NhatKyChungFormPage,
   SoQuyPage,
   CongNoPhaiThuPage,
   CongNoPhaiTraPage,
@@ -130,6 +131,22 @@ const App = () => (
                     element={
                       <ProtectedRoute allowedRoles={routePermissions['/chung-tu/nhat-ky-chung']}>
                         <NhatKyChungPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="nhat-ky-chung/tao-moi"
+                    element={
+                      <ProtectedRoute allowedRoles={routePermissions['/chung-tu/nhat-ky-chung']}>
+                        <NhatKyChungFormPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="nhat-ky-chung/:soPhieu/sua"
+                    element={
+                      <ProtectedRoute allowedRoles={routePermissions['/chung-tu/nhat-ky-chung']}>
+                        <NhatKyChungFormPage />
                       </ProtectedRoute>
                     }
                   />

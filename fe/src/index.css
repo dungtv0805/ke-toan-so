@@ -956,3 +956,142 @@ body.col-resizing .ant-table * {
 .dark .col-resize-handle:hover {
   background: rgba(22, 119, 255, 0.5);
 }
+
+/* ========================================
+   EXCEL-LIKE EDITABLE TABLE STYLES
+   For inline editing forms (ChiTietTable)
+   ======================================== */
+
+.excel-editable-table {
+  width: 100%;
+}
+
+/* Borderless inputs in table cells - Excel-like feel */
+.excel-editable-table .excel-cell-input .ant-select-selector,
+.excel-editable-table .excel-cell-input.ant-input-number,
+.excel-editable-table .excel-cell-input.ant-input {
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: all 0.15s ease;
+}
+
+.excel-editable-table .excel-cell-input .ant-select-selector:hover,
+.excel-editable-table .excel-cell-input.ant-input-number:hover,
+.excel-editable-table .excel-cell-input.ant-input:hover {
+  border-color: #d9d9d9 !important;
+  background: #fafafa !important;
+}
+
+.excel-editable-table .excel-cell-input .ant-select-focused .ant-select-selector,
+.excel-editable-table .excel-cell-input.ant-input-number-focused,
+.excel-editable-table .excel-cell-input.ant-input:focus {
+  border-color: #1890ff !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.15) !important;
+}
+
+/* Error state for required fields */
+.excel-editable-table .ant-select-status-error .ant-select-selector,
+.excel-editable-table .ant-input-number-status-error,
+.excel-editable-table .ant-input-status-error {
+  background: #fff2f0 !important;
+}
+
+/* Compact cell padding for editable table */
+.excel-editable-table .ant-table-thead > tr > th {
+  padding: 8px 6px !important;
+  font-size: 12px;
+  font-weight: 600;
+  background: #f5f5f5 !important;
+  white-space: nowrap;
+}
+
+.excel-editable-table .ant-table-tbody > tr > td {
+  padding: 2px 4px !important;
+  font-size: 12px;
+  vertical-align: middle;
+}
+
+/* Active row highlight */
+.excel-editable-table .ant-table-tbody > tr.excel-row-active > td {
+  background-color: #e6f7ff !important;
+}
+
+.excel-editable-table .ant-table-tbody > tr:hover > td {
+  background-color: #f0f7ff !important;
+}
+
+/* STT column styling */
+.excel-editable-table .excel-stt-cell {
+  background: #fafafa !important;
+}
+
+/* Action column styling */
+.excel-editable-table .excel-action-cell {
+  background: #fafafa !important;
+}
+
+/* Fixed columns shadow */
+.excel-editable-table .ant-table-cell-fix-left,
+.excel-editable-table .ant-table-cell-fix-right {
+  z-index: 2;
+}
+
+.excel-editable-table .ant-table-cell-fix-left-last::after {
+  box-shadow: inset 10px 0 8px -8px rgba(0, 0, 0, 0.1);
+}
+
+.excel-editable-table .ant-table-cell-fix-right-first::after {
+  box-shadow: inset -10px 0 8px -8px rgba(0, 0, 0, 0.1);
+}
+
+/* Input number alignment */
+.excel-editable-table .ant-input-number {
+  width: 100%;
+}
+
+.excel-editable-table .ant-input-number-input {
+  text-align: right;
+  padding-right: 8px;
+}
+
+/* Select dropdown compact */
+.excel-editable-table .ant-select-selection-item {
+  font-size: 12px;
+}
+
+.excel-editable-table .ant-select-selection-placeholder {
+  font-size: 11px;
+  color: #bfbfbf;
+}
+
+/* Keyboard hint styling */
+.excel-editable-table kbd {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+}
+
+/* Dark mode support */
+.dark .excel-editable-table .ant-table-thead > tr > th {
+  background: hsl(var(--muted)) !important;
+}
+
+.dark .excel-editable-table .ant-table-tbody > tr.excel-row-active > td {
+  background-color: hsl(var(--primary) / 0.15) !important;
+}
+
+.dark .excel-editable-table .ant-table-tbody > tr:hover > td {
+  background-color: hsl(var(--primary) / 0.1) !important;
+}
+
+.dark .excel-editable-table .excel-cell-input .ant-select-selector:hover,
+.dark .excel-editable-table .excel-cell-input.ant-input-number:hover,
+.dark .excel-editable-table .excel-cell-input.ant-input:hover {
+  background: hsl(var(--muted) / 0.5) !important;
+}
+
+.dark .excel-editable-table .excel-stt-cell,
+.dark .excel-editable-table .excel-action-cell {
+  background: hsl(var(--muted) / 0.3) !important;
+}
+

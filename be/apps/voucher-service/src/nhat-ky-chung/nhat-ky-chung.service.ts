@@ -215,6 +215,106 @@ export class NhatKyChungService {
   }
 
   /**
+   * Create multiple entries with the same soPhieu (batch create)
+   */
+  async createBatch(
+    items: CreateNhatKyChungDto[],
+    nguoiTaoId: string,
+  ): Promise<{ success: boolean; data: ChungTu[] }> {
+    if (items.length === 0) {
+      return { success: true, data: [] };
+    }
+
+    // Generate ONE soPhieu for all items
+    const soPhieu = await this.voucherNumberService.generateVoucherNumber(
+      items[0].loai,
+    );
+
+    const chungTuList = items.map((item) =>
+      this.chungTuRepository.create({
+        loai: item.loai,
+        soTien: item.soTien,
+        noiDung: item.noiDung,
+        danhMuc: item.danhMuc,
+        ghiChu: item.ghiChu,
+        nguoiGiaoDich: item.nguoiGiaoDich,
+        diaChi: item.diaChi,
+        ngay: new Date(item.ngay),
+        soPhieu, // Same soPhieu for all
+        nguoiTaoId,
+      }),
+    );
+
+    const saved = await this.chungTuRepository.save(chungTuList);
+    return { success: true, data: saved };
+  }
+
+  /**
+   * Update all entries of a soPhieu (batch update)
+   */
+  async updateBatch(
+    soPhieu: string,
+    items: CreateNhatKyChungDto[],
+    nguoiTaoId: string,
+  ): Promise<{ success: boolean; data: ChungTu[] }> {
+    // Get existing items by soPhieu
+    const existing = await this.chungTuRepository.find({
+      where: { soPhieu },
+    });
+
+    // Check if any existing item is approved
+    const hasApproved = existing.some(
+      (item) => (item as any).trangThai === 'DA_DUYET',
+    );
+    if (hasApproved) {
+      throw new ForbiddenException('Cannot modify approved entries');
+    }
+
+    const results: ChungTu[] = [];
+
+    // Update existing or create new
+    for (let i = 0; i < items.length; i++) {
+      if (i < existing.length) {
+        // Update existing
+        const chungTu = existing[i];
+        chungTu.loai = items[i].loai;
+        chungTu.ngay = new Date(items[i].ngay);
+        chungTu.soTien = items[i].soTien;
+        chungTu.noiDung = items[i].noiDung;
+        chungTu.danhMuc = items[i].danhMuc;
+        chungTu.ghiChu = items[i].ghiChu;
+        chungTu.nguoiGiaoDich = items[i].nguoiGiaoDich;
+        chungTu.diaChi = items[i].diaChi;
+        const saved = await this.chungTuRepository.save(chungTu);
+        results.push(saved);
+      } else {
+        // Create new with same soPhieu
+        const chungTu = this.chungTuRepository.create({
+          loai: items[i].loai,
+          soTien: items[i].soTien,
+          noiDung: items[i].noiDung,
+          danhMuc: items[i].danhMuc,
+          ghiChu: items[i].ghiChu,
+          nguoiGiaoDich: items[i].nguoiGiaoDich,
+          diaChi: items[i].diaChi,
+          ngay: new Date(items[i].ngay),
+          soPhieu,
+          nguoiTaoId,
+        });
+        const saved = await this.chungTuRepository.save(chungTu);
+        results.push(saved);
+      }
+    }
+
+    // Delete extra items if new list is shorter
+    for (let i = items.length; i < existing.length; i++) {
+      await this.chungTuRepository.remove(existing[i]);
+    }
+
+    return { success: true, data: results };
+  }
+
+  /**
    * Get summary data grouped by specified type
    */
   async getSummary(
