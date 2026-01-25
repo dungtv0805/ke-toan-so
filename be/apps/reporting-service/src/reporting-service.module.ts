@@ -1,0 +1,21 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from '@app/auth';
+import { DatabaseModule } from '@app/database';
+import { ServiceClientModule } from '@app/service-client';
+import { SoCaiModule } from './so-cai/so-cai.module';
+import { BaoCaoModule } from './bao-cao/bao-cao.module';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    DatabaseModule.forRoot(),
+    AuthModule,
+    ServiceClientModule.forRoot(),
+    SoCaiModule,
+    BaoCaoModule,
+  ],
+})
+export class ReportingServiceModule {}

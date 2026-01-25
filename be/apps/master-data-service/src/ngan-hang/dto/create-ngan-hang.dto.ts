@@ -1,0 +1,37 @@
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsNumber,
+} from 'class-validator';
+import { NganHangLoai } from '@app/entities';
+
+export class CreateNganHangDto {
+  @IsString()
+  @IsNotEmpty()
+  ma: string;
+
+  @IsString()
+  @IsNotEmpty()
+  ten: string;
+
+  @IsEnum(NganHangLoai)
+  loai: NganHangLoai;
+
+  @IsNumber()
+  @IsOptional()
+  soDu?: number;
+
+  @IsString()
+  @IsOptional()
+  nganHang?: string;
+
+  @IsString()
+  @IsOptional()
+  soTaiKhoan?: string;
+
+  @IsString()
+  @IsOptional()
+  chiNhanh?: string;
+}

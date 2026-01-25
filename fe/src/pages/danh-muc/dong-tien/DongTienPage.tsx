@@ -1,0 +1,463 @@
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  Table,
+  Button,
+  Input,
+  Space,
+  Modal,
+  Form,
+  Select,
+  message,
+  Popconfirm,
+  Tooltip,
+  Typography,
+  Row,
+  Col,
+  Breadcrumb,
+  Statistic,
+  Tag,
+} from "antd";
+import {
+  PlusOutlined,
+  SearchOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  ExportOutlined,
+  ReloadOutlined,
+  HomeOutlined,
+  DollarOutlined,
+  BankOutlined,
+  LineChartOutlined,
+  FundOutlined,
+} from "@ant-design/icons";
+import { DongTien } from "@/types";
+import { dongTienService, DongTienStats } from "@/services/dongTienService";
+import { loaiDongTienOptions } from "@/mock-data/dong-tien";
+import { z } from "zod";
+
+const { Title, Text } = Typography;
+const { TextArea } = Input;
+
+// Validation schema
+const dongTienSchema = z.object({
+  ma: z
+    .string()
+    .trim()
+    .min(1, "Mã không được để trống")
+    .max(20, "Mã tối đa 20 ký tự"),
+  ten: z
+    .string()
+    .trim()
+    .min(1, "Tên không được để trống")
+    .max(200, "Tên tối đa 200 ký tự"),
+  loai: z.enum(["KINH_DOANH", "DAU_TU", "TAI_CHINH"], {
+    required_error: "Vui lòng chọn loại",
+  }),
+  moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").optional(),
+});
+
+const DongTienPage: React.FC = () => {
+  const [data, setData] = useState<DongTien[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<DongTien | null>(null);
+  const [form] = Form.useForm();
+  const [stats, setStats] = useState<DongTienStats>({
+    tongSo: 0,
+    kinhDoanh: 0,
+    dauTu: 0,
+    taiChinh: 0,
+  });
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 50,
+    total: 0,
+  });
+
+  const fetchData = async (
+    page = pagination.current,
+    pageSize = pagination.pageSize,
+    search = searchText
+  ) => {
+    setLoading(true);
+    try {
+      const [result, statsData] = await Promise.all([
+        dongTienService.getPaginated({
+          page,
+          limit: pageSize,
+          search: search || undefined,
+        }),
+        dongTienService.getStats(),
+      ]);
+      setData(result.data);
+      setPagination({
+        current: result.meta.page,
+        pageSize: result.meta.limit,
+        total: result.meta.total,
+      });
+      setStats(statsData);
+    } catch (error) {
+      message.error("Không thể tải dữ liệu");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData(1, pagination.pageSize, "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleTableChange = (paginationConfig: {
+    current?: number;
+    pageSize?: number;
+  }) => {
+    fetchData(
+      paginationConfig.current || 1,
+      paginationConfig.pageSize || 50,
+      searchText
+    );
+  };
+
+  const handleSearch = async (value: string) => {
+    setSearchText(value);
+  };
+
+  const handleAdd = () => {
+    setEditingRecord(null);
+    form.resetFields();
+    setModalVisible(true);
+  };
+
+  const handleEdit = (record: DongTien) => {
+    setEditingRecord(record);
+    form.setFieldsValue(record);
+    setModalVisible(true);
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+
+      // Validate with zod
+      const validated = dongTienSchema.parse(values);
+
+      // Check if ma already exists
+      const maExists = await dongTienService.checkMaExists(
+        validated.ma,
+        editingRecord?.id
+      );
+      if (maExists) {
+        message.error("Mã dòng tiền đã tồn tại");
+        return;
+      }
+
+      if (editingRecord) {
+        await dongTienService.update(editingRecord.id, validated);
+        message.success("Cập nhật dòng tiền thành công");
+      } else {
+        await dongTienService.create(validated as Omit<DongTien, "id">);
+        message.success("Thêm dòng tiền thành công");
+      }
+
+      setModalVisible(false);
+      fetchData(pagination.current, pagination.pageSize, searchText);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        error.errors.forEach((err) => message.error(err.message));
+      }
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await dongTienService.remove(id);
+      message.success("Xóa dòng tiền thành công");
+      fetchData(pagination.current, pagination.pageSize, searchText);
+    } catch (error) {
+      message.error("Không thể xóa dòng tiền");
+    }
+  };
+
+  const getLoaiInfo = (loai: string) => {
+    const info = loaiDongTienOptions.find((o) => o.value === loai);
+    return info || { label: loai, color: "default" };
+  };
+
+  const columns = [
+    {
+      title: "Mã",
+      dataIndex: "ma",
+      key: "ma",
+      width: 100,
+      sorter: (a: DongTien, b: DongTien) => a.ma.localeCompare(b.ma),
+      render: (text: string) => (
+        <Text strong className="text-primary">
+          {text}
+        </Text>
+      ),
+    },
+    {
+      title: "Tên dòng tiền",
+      dataIndex: "ten",
+      key: "ten",
+      ellipsis: true,
+      sorter: (a: DongTien, b: DongTien) => a.ten.localeCompare(b.ten),
+    },
+    {
+      title: "Loại hoạt động",
+      dataIndex: "loai",
+      key: "loai",
+      width: 180,
+      filters: loaiDongTienOptions.map((o) => ({
+        text: o.label,
+        value: o.value,
+      })),
+      onFilter: (value: any, record: DongTien) => record.loai === value,
+      render: (loai: string) => {
+        const info = getLoaiInfo(loai);
+        return <Tag color={info.color}>{info.label}</Tag>;
+      },
+    },
+    {
+      title: "Mô tả",
+      dataIndex: "moTa",
+      key: "moTa",
+      ellipsis: true,
+      width: 300,
+      render: (text: string) => (
+        <Tooltip title={text}>
+          <Text type="secondary" className="text-sm">
+            {text || "-"}
+          </Text>
+        </Tooltip>
+      ),
+    },
+    {
+      title: "Thao tác",
+      key: "actions",
+      width: 120,
+      fixed: "right" as const,
+      render: (_: unknown, record: DongTien) => (
+        <Space size="small">
+          <Tooltip title="Sửa">
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+              className="text-primary"
+            />
+          </Tooltip>
+          <Popconfirm
+            title="Xác nhận xóa"
+            description="Bạn có chắc chắn muốn xóa dòng tiền này?"
+            onConfirm={() => handleDelete(record.id)}
+            okText="Xóa"
+            cancelText="Hủy"
+            okButtonProps={{ danger: true }}
+          >
+            <Tooltip title="Xóa">
+              <Button type="text" icon={<DeleteOutlined />} danger />
+            </Tooltip>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { href: "/", title: <HomeOutlined /> },
+          { title: "Danh mục" },
+          { title: "Dòng tiền" },
+        ]}
+      />
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <Title level={3} className="!mb-1 flex items-center gap-2">
+            <DollarOutlined className="text-primary" />
+            Quản lý dòng tiền
+          </Title>
+          <Text type="secondary">
+            Phân loại các khoản thu chi theo hoạt động kinh doanh, đầu tư, tài
+            chính
+          </Text>
+        </div>
+        <Space>
+          <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => fetchData(1, pagination.pageSize, "")}
+          >
+            Làm mới
+          </Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            Thêm dòng tiền
+          </Button>
+        </Space>
+      </div>
+
+      {/* Stats Cards */}
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={6}>
+          <Card>
+            <Statistic
+              title="Tổng số"
+              value={stats.tongSo}
+              prefix={<DollarOutlined className="text-primary" />}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={6}>
+          <Card>
+            <Statistic
+              title="Kinh doanh"
+              value={stats.kinhDoanh}
+              prefix={<LineChartOutlined className="text-blue-500" />}
+              valueStyle={{ color: "#3b82f6" }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={6}>
+          <Card>
+            <Statistic
+              title="Đầu tư"
+              value={stats.dauTu}
+              prefix={<FundOutlined className="text-green-500" />}
+              valueStyle={{ color: "#22c55e" }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={6}>
+          <Card>
+            <Statistic
+              title="Tài chính"
+              value={stats.taiChinh}
+              prefix={<BankOutlined className="text-purple-500" />}
+              valueStyle={{ color: "#a855f7" }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Table */}
+      <Card>
+        <div className="mb-4">
+          <Input
+            placeholder="Tìm kiếm theo mã hoặc tên..."
+            prefix={<SearchOutlined className="text-muted-foreground" />}
+            value={searchText}
+            onChange={(e) => handleSearch(e.target.value)}
+            onPressEnter={() => fetchData(1, pagination.pageSize, searchText)}
+            allowClear
+            style={{ maxWidth: 400 }}
+          />
+        </div>
+
+        <Table
+          columns={columns}
+          dataSource={data}
+          rowKey="id"
+          loading={loading}
+          scroll={{ x: 800, y: "calc(100vh - 285px)" }}
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) =>
+              `${range[0]}-${range[1]} của ${total} dòng tiền`,
+            pageSizeOptions: ["10", "20", "50", "100"],
+          }}
+          onChange={(pag) =>
+            handleTableChange({ current: pag.current, pageSize: pag.pageSize })
+          }
+        />
+      </Card>
+
+      {/* Modal */}
+      <Modal
+        title={editingRecord ? "Sửa dòng tiền" : "Thêm dòng tiền mới"}
+        open={modalVisible}
+        onCancel={() => setModalVisible(false)}
+        onOk={handleSubmit}
+        okText={editingRecord ? "Cập nhật" : "Thêm mới"}
+        cancelText="Hủy"
+        width={550}
+        destroyOnClose
+      >
+        <Form form={form} layout="vertical" size="small" className="mt-2">
+          <Row gutter={12}>
+            <Col span={8}>
+              <Form.Item
+                name="ma"
+                label="Mã dòng tiền"
+                className="mb-3"
+                rules={[
+                  { required: true, message: "Vui lòng nhập mã" },
+                  { max: 20, message: "Mã tối đa 20 ký tự" },
+                ]}
+              >
+                <Input placeholder="VD: DT001" />
+              </Form.Item>
+            </Col>
+            <Col span={16}>
+              <Form.Item
+                name="ten"
+                label="Tên dòng tiền"
+                className="mb-3"
+                rules={[
+                  { required: true, message: "Vui lòng nhập tên" },
+                  { max: 200, message: "Tên tối đa 200 ký tự" },
+                ]}
+              >
+                <Input placeholder="Nhập tên dòng tiền" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item
+            name="loai"
+            label="Loại hoạt động"
+            className="mb-3"
+            rules={[
+              { required: true, message: "Vui lòng chọn loại hoạt động" },
+            ]}
+          >
+            <Select
+              placeholder="Chọn loại hoạt động"
+              options={loaiDongTienOptions.map((o) => ({
+                value: o.value,
+                label: o.label,
+              }))}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="moTa"
+            label="Mô tả"
+            className="mb-0"
+            rules={[{ max: 500, message: "Mô tả tối đa 500 ký tự" }]}
+          >
+            <TextArea
+              autoSize={{ minRows: 2, maxRows: 4 }}
+              placeholder="Nhập mô tả..."
+              showCount
+              maxLength={500}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
+  );
+};
+
+export default DongTienPage;

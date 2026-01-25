@@ -1,0 +1,526 @@
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  Table,
+  Button,
+  Input,
+  Space,
+  Tag,
+  Modal,
+  Form,
+  Select,
+  InputNumber,
+  message,
+  Popconfirm,
+  Tooltip,
+  Typography,
+  Row,
+  Col,
+  Breadcrumb,
+} from "antd";
+import {
+  PlusOutlined,
+  SearchOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  ExportOutlined,
+  ReloadOutlined,
+  BankOutlined,
+  HomeOutlined,
+} from "@ant-design/icons";
+import { TaiKhoan } from "@/types";
+import { taiKhoanService } from "@/services/taiKhoanService";
+import { loaiTaiKhoan, nhomTaiKhoan } from "@/mock-data/tai-khoan";
+import { z } from "zod";
+
+const { Text } = Typography;
+
+// Validation schema
+const taiKhoanSchema = z.object({
+  ma: z
+    .string()
+    .min(1, "Mã tài khoản không được để trống")
+    .max(20, "Mã tài khoản tối đa 20 ký tự"),
+  ten: z
+    .string()
+    .min(1, "Tên tài khoản không được để trống")
+    .max(200, "Tên tài khoản tối đa 200 ký tự"),
+  capDo: z.number().min(1).max(5),
+  loai: z.enum(["TAI_SAN", "NO_PHAI_TRA", "VON_CHU_SO_HUU", "DOANH_THU", "CHI_PHI", "THU_NHAP_KHAC", "CHI_PHI_KHAC", "XAC_DINH_KQKD"]),
+  nhom: z.enum(["NO", "CO", "LUONG_TINH", "KHONG_CO_SO_DU"]),
+  parentId: z.string().nullable().optional(),
+  moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").optional(),
+});
+
+const TaiKhoanPage: React.FC = () => {
+  const [data, setData] = useState<TaiKhoan[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [filterNhom, setFilterNhom] = useState<string | undefined>(undefined);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<TaiKhoan | null>(null);
+  const [parentAccounts, setParentAccounts] = useState<TaiKhoan[]>([]);
+  const [form] = Form.useForm();
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 100,
+    total: 0,
+  });
+
+  // Tính cấp độ dựa trên tài khoản cha
+  const calculateCapDo = (parentId: string | null | undefined): number => {
+    if (!parentId) return 1;
+    const parent = parentAccounts.find(p => p.id === parentId);
+    return parent ? parent.capDo + 1 : 1;
+  };
+
+  // Cập nhật cấp độ khi thay đổi tài khoản cha
+  const handleParentChange = (parentId: string | null) => {
+    const capDo = calculateCapDo(parentId);
+    form.setFieldsValue({ capDo });
+  };
+
+  const fetchData = async (
+    page = pagination.current,
+    pageSize = pagination.pageSize,
+    search = searchText,
+    nhom = filterNhom
+  ) => {
+    setLoading(true);
+    try {
+      const [result, parents] = await Promise.all([
+        taiKhoanService.getPaginated({
+          page,
+          limit: pageSize,
+          search: search || undefined,
+          nhom,
+        }),
+        taiKhoanService.getParentAccounts(),
+      ]);
+      setData(result.data);
+      setPagination({
+        current: result.meta.page,
+        pageSize: result.meta.limit,
+        total: result.meta.total,
+      });
+      setParentAccounts(parents);
+    } catch (error) {
+      message.error("Không thể tải dữ liệu");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData(1, pagination.pageSize, "", undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleFilterNhom = (value: string | undefined) => {
+    setFilterNhom(value);
+    fetchData(1, pagination.pageSize, searchText, value);
+  };
+
+  const handleTableChange = (paginationConfig: {
+    current?: number;
+    pageSize?: number;
+  }) => {
+    fetchData(
+      paginationConfig.current || 1,
+      paginationConfig.pageSize || 50,
+      searchText,
+      filterNhom
+    );
+  };
+
+  const openModal = (record?: TaiKhoan) => {
+    if (record) {
+      setEditingRecord(record);
+      form.setFieldsValue(record);
+    } else {
+      setEditingRecord(null);
+      form.resetFields();
+      form.setFieldsValue({ capDo: 1 });
+    }
+    setModalVisible(true);
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+
+      // Validate with zod
+      const validation = taiKhoanSchema.safeParse(values);
+      if (!validation.success) {
+        const errors = validation.error.errors;
+        message.error(errors[0].message);
+        return;
+      }
+
+      setLoading(true);
+      if (editingRecord) {
+        await taiKhoanService.update(editingRecord.id, values);
+        message.success("Cập nhật tài khoản thành công");
+      } else {
+        await taiKhoanService.create(values);
+        message.success("Thêm tài khoản thành công");
+      }
+      setModalVisible(false);
+      fetchData();
+    } catch (error: any) {
+      if (error.errorFields) {
+        // Form validation error
+        return;
+      }
+      message.error(error.message || "Có lỗi xảy ra");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      setLoading(true);
+      await taiKhoanService.remove(id);
+      message.success("Xóa tài khoản thành công");
+      fetchData();
+    } catch (error: any) {
+      message.error(error.message || "Không thể xóa tài khoản");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const columns = [
+    {
+      title: "Mã TK",
+      dataIndex: "ma",
+      key: "ma",
+      width: 120,
+      sorter: (a: TaiKhoan, b: TaiKhoan) => a.ma.localeCompare(b.ma),
+      render: (text: string, record: TaiKhoan) => (
+        <Text strong style={{ paddingLeft: (record.capDo - 1) * 16 }}>
+          {text}
+        </Text>
+      ),
+    },
+    {
+      title: "Tên tài khoản",
+      dataIndex: "ten",
+      key: "ten",
+      ellipsis: true,
+      render: (text: string, record: TaiKhoan) => (
+        <span style={{ paddingLeft: (record.capDo - 1) * 16 }}>
+          {record.capDo > 1 && (
+            <span className="text-muted-foreground mr-2">└</span>
+          )}
+          {text}
+        </span>
+      ),
+    },
+    {
+      title: "Cấp độ",
+      dataIndex: "capDo",
+      key: "capDo",
+      width: 80,
+      align: "center" as const,
+      render: (capDo: number) => (
+        <Tag color={capDo === 1 ? "blue" : "default"}>{capDo}</Tag>
+      ),
+    },
+    {
+      title: "Loại",
+      dataIndex: "loai",
+      key: "loai",
+      width: 150,
+      align: "center" as const,
+      render: (loai: string) => {
+        const loaiInfo = loaiTaiKhoan.find(l => l.value === loai);
+        return <Tag color="blue">{loaiInfo?.label || loai}</Tag>;
+      },
+    },
+    {
+      title: "Nhóm",
+      dataIndex: "nhom",
+      key: "nhom",
+      width: 180,
+      render: (nhom: string) => {
+        const nhomInfo = nhomTaiKhoan.find(n => n.value === nhom);
+        return <Text type="secondary">{nhomInfo?.label || nhom}</Text>;
+      },
+    },
+    {
+      title: "Mô tả",
+      dataIndex: "moTa",
+      key: "moTa",
+      ellipsis: true,
+      render: (moTa: string) => (
+        <Text type="secondary" className="text-sm">
+          {moTa || "-"}
+        </Text>
+      ),
+    },
+    {
+      title: "Thao tác",
+      key: "action",
+      width: 120,
+      align: "center" as const,
+      render: (_: any, record: TaiKhoan) => (
+        <Space size="small">
+          <Tooltip title="Sửa">
+            <Button
+              type="text"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => openModal(record)}
+              className="!text-primary hover:!bg-primary/10"
+            />
+          </Tooltip>
+          <Popconfirm
+            title="Xác nhận xóa"
+            description="Bạn có chắc chắn muốn xóa tài khoản này?"
+            onConfirm={() => handleDelete(record.id)}
+            okText="Xóa"
+            cancelText="Hủy"
+            okButtonProps={{ danger: true }}
+          >
+            <Tooltip title="Xóa">
+              <Button
+                type="text"
+                size="small"
+                icon={<DeleteOutlined />}
+                className="!text-destructive hover:!bg-destructive/10"
+              />
+            </Tooltip>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          {
+            href: "/",
+            title: (
+              <>
+                <HomeOutlined /> Trang chủ
+              </>
+            ),
+          },
+          { title: "Danh mục" },
+          { title: "Tài khoản kế toán" },
+        ]}
+      />
+
+      {/* Page Header */}
+      {/* <div className="page-header p-6 text-white">
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-2">
+            <BankOutlined className="text-2xl" />
+            <Title level={3} className="!text-white !mb-0">
+              Danh mục Tài khoản Kế toán
+            </Title>
+          </div>
+          <Text className="text-white/80">
+            Quản lý hệ thống tài khoản kế toán theo chuẩn Việt Nam
+          </Text>
+        </div>
+      </div> */}
+
+      {/* Main Card */}
+      <Card className="shadow-sm">
+        {/* Toolbar */}
+        <div className="mb-4">
+          <Row gutter={[16, 16]} align="middle" justify="space-between">
+            <Col xs={24} md={16}>
+              <Space wrap>
+                <Input
+                  placeholder="Tìm kiếm theo mã hoặc tên..."
+                  prefix={<SearchOutlined className="text-muted-foreground" />}
+                  value={searchText}
+                  onChange={(e) => {
+                    setSearchText(e.target.value);
+                  }}
+                  onPressEnter={() =>
+                    fetchData(1, pagination.pageSize, searchText, filterNhom)
+                  }
+                  style={{ width: 280 }}
+                  allowClear
+                />
+                <Select
+                  placeholder="Lọc theo nhóm"
+                  value={filterNhom}
+                  onChange={handleFilterNhom}
+                  style={{ width: 200 }}
+                  allowClear
+                  options={nhomTaiKhoan}
+                />
+                <Tooltip title="Làm mới">
+                  <Button
+                    icon={<ReloadOutlined />}
+                    onClick={() => {
+                      setSearchText("");
+                      setFilterNhom(undefined);
+                      fetchData(1, pagination.pageSize, "", undefined);
+                    }}
+                  />
+                </Tooltip>
+              </Space>
+            </Col>
+            <Col xs={24} md={8} className="text-right">
+              <Space>
+                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => openModal()}
+                >
+                  Thêm tài khoản
+                </Button>
+              </Space>
+            </Col>
+          </Row>
+        </div>
+
+        {/* Table */}
+        <Table
+          columns={columns}
+          dataSource={data}
+          rowKey="id"
+          loading={loading}
+          pagination={{
+            current: pagination.current,
+            total: pagination.total,
+            pageSize: pagination.pageSize,
+            showSizeChanger: true,
+            showTotal: (total) => `Tổng ${total} tài khoản`,
+            pageSizeOptions: ["25", "50", "100", "200"],
+          }}
+          onChange={(paginationConfig) => handleTableChange(paginationConfig)}
+          size="middle"
+          scroll={{ x: 900, y: "calc(100vh - 285px)" }}
+        />
+      </Card>
+
+      {/* Add/Edit Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2">
+            <BankOutlined className="text-primary" />
+            <span>
+              {editingRecord ? "Sửa tài khoản" : "Thêm tài khoản mới"}
+            </span>
+          </div>
+        }
+        open={modalVisible}
+        onCancel={() => setModalVisible(false)}
+        onOk={handleSubmit}
+        okText={editingRecord ? "Cập nhật" : "Thêm mới"}
+        cancelText="Hủy"
+        width={550}
+        confirmLoading={loading}
+      >
+        <Form form={form} layout="vertical" size="small" className="mt-2">
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item
+                name="ma"
+                label="Mã tài khoản"
+                className="mb-3"
+                rules={[
+                  { required: true, message: "Vui lòng nhập mã tài khoản" },
+                  { max: 20, message: "Tối đa 20 ký tự" },
+                ]}
+              >
+                <Input placeholder="VD: 111, 1111" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="parentId"
+                label="Tài khoản cha"
+                className="mb-3"
+              >
+                <Select
+                  placeholder="Không có (cấp 1)"
+                  allowClear
+                  showSearch
+                  optionFilterProp="label"
+                  onChange={handleParentChange}
+                  options={parentAccounts.map((p) => ({
+                    label: `${p.ma} - ${p.ten}`,
+                    value: p.id,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* Hidden field for capDo */}
+          <Form.Item name="capDo" hidden>
+            <InputNumber />
+          </Form.Item>
+
+          <Form.Item
+            name="ten"
+            label="Tên tài khoản"
+            className="mb-3"
+            rules={[
+              { required: true, message: "Vui lòng nhập tên tài khoản" },
+              { max: 200, message: "Tối đa 200 ký tự" },
+            ]}
+          >
+            <Input placeholder="VD: Tiền mặt" />
+          </Form.Item>
+
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item
+                name="loai"
+                label="Loại tài khoản"
+                className="mb-3"
+                rules={[{ required: true, message: "Vui lòng chọn loại" }]}
+              >
+                <Select
+                  placeholder="Chọn loại"
+                  options={loaiTaiKhoan}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="nhom"
+                label="Nhóm tài khoản"
+                className="mb-3"
+                rules={[{ required: true, message: "Vui lòng chọn nhóm" }]}
+              >
+                <Select
+                  placeholder="Chọn nhóm"
+                  options={nhomTaiKhoan}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item
+            name="moTa"
+            label="Mô tả"
+            className="mb-0"
+            rules={[{ max: 500, message: "Tối đa 500 ký tự" }]}
+          >
+            <Input.TextArea
+              autoSize={{ minRows: 2, maxRows: 4 }}
+              placeholder="Mô tả chi tiết về tài khoản"
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
+  );
+};
+
+export default TaiKhoanPage;

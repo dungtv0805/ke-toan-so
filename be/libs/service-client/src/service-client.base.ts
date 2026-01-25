@@ -1,0 +1,150 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as http from 'http';
+import {
+  ServiceClientConfig,
+  RequestOptions,
+  HttpMethod,
+} from './interfaces/service-client.interface';
+import {
+  ServiceResponse,
+  ServiceError,
+} from './interfaces/service-response.interface';
+
+@Injectable()
+export abstract class BaseServiceClient {
+  protected configs: Map<string, ServiceClientConfig> = new Map();
+  protected defaultTimeout = 30000;
+
+  constructor(protected readonly configService: ConfigService) {}
+
+  protected getServiceConfig(serviceName: string): ServiceClientConfig {
+    if (!this.configs.has(serviceName)) {
+      const config = this.loadServiceConfig(serviceName);
+      this.configs.set(serviceName, config);
+    }
+    return this.configs.get(serviceName)!;
+  }
+
+  protected loadServiceConfig(serviceName: string): ServiceClientConfig {
+    const envPrefix = serviceName.toUpperCase().replace(/-/g, '_');
+    return {
+      serviceName,
+      host:
+        this.configService.get<string>(`SERVICE_${envPrefix}_HOST`) ||
+        this.configService.get<string>(`${envPrefix}_SERVICE_HOST`) ||
+        'localhost',
+      port:
+        this.configService.get<number>(`SERVICE_${envPrefix}_PORT`) ||
+        this.configService.get<number>(`${envPrefix}_SERVICE_PORT`) ||
+        3000,
+      timeout:
+        this.configService.get<number>(`SERVICE_${envPrefix}_TIMEOUT`) ||
+        this.defaultTimeout,
+    };
+  }
+
+  protected async request<T>(
+    serviceName: string,
+    method: HttpMethod,
+    path: string,
+    options?: RequestOptions,
+  ): Promise<ServiceResponse<T>> {
+    const config = this.getServiceConfig(serviceName);
+    const queryString = this.buildQueryString(options?.query);
+    const fullPath = queryString ? `${path}?${queryString}` : path;
+
+    return new Promise((resolve) => {
+      const requestOptions: http.RequestOptions = {
+        hostname: config.host,
+        port: config.port,
+        path: fullPath,
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        },
+        timeout: options?.timeout || config.timeout,
+      };
+
+      const req = http.request(requestOptions, (res) => {
+        let data = '';
+        res.on('data', (chunk: Buffer) => (data += chunk.toString()));
+        res.on('end', () => {
+          try {
+            const response = JSON.parse(data) as ServiceResponse<T>;
+            if (res.statusCode && res.statusCode >= 400) {
+              resolve(
+                this.createErrorResponse<T>(
+                  `HTTP_ERROR_${res.statusCode}`,
+                  response.error?.message || `HTTP Error ${res.statusCode}`,
+                  response.error?.details,
+                ),
+              );
+            } else {
+              resolve(response);
+            }
+          } catch {
+            resolve(
+              this.createErrorResponse<T>(
+                'PARSE_ERROR',
+                'Failed to parse response',
+                data,
+              ),
+            );
+          }
+        });
+      });
+
+      req.on('error', (error: Error) => {
+        resolve(
+          this.createErrorResponse<T>(
+            'SERVICE_UNAVAILABLE',
+            `Service ${serviceName} unavailable: ${error.message}`,
+          ),
+        );
+      });
+
+      req.on('timeout', () => {
+        req.destroy();
+        resolve(
+          this.createErrorResponse<T>(
+            'REQUEST_TIMEOUT',
+            `Request to ${serviceName} timed out`,
+          ),
+        );
+      });
+
+      if (options?.body) {
+        req.write(JSON.stringify(options.body));
+      }
+
+      req.end();
+    });
+  }
+
+  protected buildQueryString(
+    query?: Record<string, string | number | boolean | undefined>,
+  ): string {
+    if (!query) return '';
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined) {
+        params.append(key, String(value));
+      }
+    }
+    return params.toString();
+  }
+
+  protected createErrorResponse<T>(
+    code: string,
+    message: string,
+    details?: unknown,
+  ): ServiceResponse<T> {
+    const error: ServiceError = { code, message };
+    if (details !== undefined) {
+      error.details = details;
+    }
+    return { success: false, error };
+  }
+}
