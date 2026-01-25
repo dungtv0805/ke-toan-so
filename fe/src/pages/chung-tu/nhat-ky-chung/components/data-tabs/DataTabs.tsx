@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { Card, Tabs } from "antd";
+import { Tabs } from "antd";
 import {
-  AuditOutlined,
+  TableOutlined,
   FilterOutlined,
   TeamOutlined,
   UserOutlined,
@@ -55,131 +55,71 @@ export function DataTabs() {
   }, [activeTab, handler]);
 
   return (
-    <Card
-      className="shadow-sm animate-fade-in-up"
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 10,
-        // maxHeight: "calc(150vh)",
-        display: "flex",
-        flexDirection: "column",
-      }}
-      styles={{
-        body: {
-          flex: 1,
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-        },
-      }}
-    >
+    <div className="excel-container">
       <Tabs
         activeKey={activeTab}
         onChange={setActiveTab}
+        size="small"
+        className="excel-tabs"
+        tabBarStyle={{
+          marginBottom: 0,
+          borderBottom: '1px solid #d9d9d9',
+          background: '#f5f5f5',
+          paddingLeft: 4,
+        }}
         items={[
           {
             key: "list",
-            label: (
-              <span>
-                <AuditOutlined className="mr-2" />
-                Danh sách bút toán
-              </span>
-            ),
+            label: <span><TableOutlined /> Bút toán</span>,
             children: <EntryListTab />,
           },
           {
             key: "summary",
-            label: (
-              <span>
-                <FilterOutlined className="mr-2" />
-                Tổng hợp theo TK
-              </span>
-            ),
+            label: <span><FilterOutlined /> Theo TK</span>,
             children: <SummaryTab />,
           },
           {
             key: "team",
-            label: (
-              <span>
-                <TeamOutlined className="mr-2" />
-                Phân bổ theo Đội
-              </span>
-            ),
+            label: <span><TeamOutlined /> Đội</span>,
             children: <TeamTab />,
           },
           {
             key: "employee",
-            label: (
-              <span>
-                <UserOutlined className="mr-2" />
-                Phân bổ theo NV
-              </span>
-            ),
+            label: <span><UserOutlined /> NV</span>,
             children: <EmployeeTab />,
           },
           {
             key: "project",
-            label: (
-              <span>
-                <ProjectOutlined className="mr-2" />
-                Phân bổ theo Dự án
-              </span>
-            ),
+            label: <span><ProjectOutlined /> Dự án</span>,
             children: <ProjectTab />,
           },
           {
             key: "chudautu",
-            label: (
-              <span>
-                <BankOutlined className="mr-2" />
-                Theo Chủ đầu tư
-              </span>
-            ),
+            label: <span><BankOutlined /> CĐT</span>,
             children: <ChuDauTuTab />,
           },
           {
             key: "sanpham",
-            label: (
-              <span>
-                <ShoppingOutlined className="mr-2" />
-                Theo Sản phẩm
-              </span>
-            ),
+            label: <span><ShoppingOutlined /> SP</span>,
             children: <SanPhamTab />,
           },
           {
             key: "dongtien",
-            label: (
-              <span>
-                <DollarOutlined className="mr-2" />
-                Theo Dòng tiền
-              </span>
-            ),
+            label: <span><DollarOutlined /> Dòng tiền</span>,
             children: <DongTienTab />,
           },
           {
             key: "nhomquanly",
-            label: (
-              <span>
-                <AppstoreOutlined className="mr-2" />
-                Theo Nhóm QL
-              </span>
-            ),
+            label: <span><AppstoreOutlined /> Nhóm QL</span>,
             children: <NhomQuanLyTab />,
           },
           {
             key: "nhomkm",
-            label: (
-              <span>
-                <GiftOutlined className="mr-2" />
-                Theo Nhóm KM
-              </span>
-            ),
+            label: <span><GiftOutlined /> Nhóm KM</span>,
             children: <NhomKhuyenMaiTab />,
           },
         ]}
       />
-    </Card>
+    </div>
   );
 }

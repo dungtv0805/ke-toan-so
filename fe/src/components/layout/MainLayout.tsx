@@ -271,7 +271,7 @@ const MainLayout: React.FC = () => {
     return [];
   };
 
-  const siderWidth = collapsed ? 72 : 260;
+  const siderWidth = collapsed ? 56 : 220;
 
   // Mobile Drawer Menu
   const MobileDrawer = () => (
@@ -323,8 +323,8 @@ const MainLayout: React.FC = () => {
           trigger={null}
           collapsible
           collapsed={collapsed}
-          width={260}
-          collapsedWidth={72}
+          width={220}
+          collapsedWidth={56}
           className={`!bg-sidebar ${collapsed ? "sidebar-collapsed" : ""}`}
           style={{
             overflow: "auto",
@@ -337,21 +337,21 @@ const MainLayout: React.FC = () => {
           }}
         >
           {/* Logo */}
-          <div className="h-16 flex items-center justify-center border-b border-sidebar-border">
+          <div className="h-12 flex items-center justify-center border-b border-sidebar-border">
             {collapsed ? (
-              <img 
-                src="/logo.jpg" 
-                alt="Master CEO" 
-                className="w-10 h-10 rounded-xl object-cover"
+              <img
+                src="/logo.jpg"
+                alt="Master CEO"
+                className="w-8 h-8 rounded-lg object-cover"
               />
             ) : (
-              <div className="flex items-center gap-3">
-                <img 
-                  src="/logo.jpg" 
-                  alt="Master CEO" 
-                  className="w-10 h-10 rounded-xl object-cover"
+              <div className="flex items-center gap-2">
+                <img
+                  src="/logo.jpg"
+                  alt="Master CEO"
+                  className="w-8 h-8 rounded-lg object-cover"
                 />
-                <span className="text-sidebar-foreground font-semibold text-lg">
+                <span className="text-sidebar-foreground font-semibold text-sm">
                   Master CEO
                 </span>
               </div>
@@ -366,13 +366,14 @@ const MainLayout: React.FC = () => {
             defaultOpenKeys={collapsed ? [] : getOpenKeys()}
             items={filteredMenuItems}
             onClick={handleMenuClick}
-            className="!bg-transparent border-r-0 mt-2"
+            className="!bg-transparent border-r-0 mt-1 compact-menu"
           />
 
           {/* Collapse button at bottom */}
-          <div className="absolute bottom-4 left-0 right-0 px-4">
+          <div className="absolute bottom-2 left-0 right-0 px-2">
             <Button
               type="text"
+              size="small"
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               onClick={() => setCollapsed(!collapsed)}
               className="w-full !text-sidebar-foreground/70 hover:!text-sidebar-foreground hover:!bg-sidebar-accent"
@@ -389,13 +390,14 @@ const MainLayout: React.FC = () => {
           minHeight: "100vh",
         }}
       >
-        {/* Header */}
+        {/* Header - Compact */}
         <Header
-          className="!px-3 sm:!px-6 flex items-center justify-between sticky top-0 z-50"
+          className="!px-3 sm:!px-4 flex items-center justify-between sticky top-0 z-50"
           style={{
             background: "hsl(var(--card))",
             borderBottom: "1px solid hsl(var(--border))",
-            height: 64,
+            height: 48,
+            minHeight: 48,
           }}
         >
           {/* Left: Mobile menu button or empty space */}
@@ -458,18 +460,15 @@ const MainLayout: React.FC = () => {
               placement="bottomRight"
               trigger={["click"]}
             >
-              <div className="flex items-center gap-2 cursor-pointer hover:bg-muted px-2 sm:px-3 py-1.5 rounded-lg transition-colors">
+              <div className="flex items-center gap-1.5 cursor-pointer hover:bg-muted px-2 py-1 rounded-md transition-colors">
                 <Avatar
-                  size={isMobile ? 28 : 32}
+                  size={24}
                   style={{ backgroundColor: roleInfo?.color || "#1890ff" }}
                   icon={<UserOutlined />}
                 />
-                <div className="hidden lg:block">
-                  <div className="text-sm font-medium text-foreground">
+                <div className="hidden md:block">
+                  <div className="text-xs font-medium text-foreground leading-tight">
                     {user?.hoTen}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {roleInfo?.label}
                   </div>
                 </div>
               </div>
@@ -479,13 +478,14 @@ const MainLayout: React.FC = () => {
 
         {/* Content */}
         <Content
-          className="p-3 sm:p-4 lg:p-6"
+          className="p-2 sm:p-3"
           style={{
             background: "hsl(var(--background))",
-            minHeight: "calc(100vh - 64px)",
+            height: "calc(100vh - 48px)",
+            overflow: "hidden",
           }}
         >
-          <div className="animate-fade-in-up">
+          <div className="h-full">
             <Outlet />
           </div>
         </Content>
