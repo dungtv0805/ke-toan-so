@@ -291,9 +291,10 @@ class NhatKyChungService extends ServiceBase {
    * - Items in DB but not in request: DELETE
    */
   async updateBatch(soPhieu: string, items: BatchItemDto[]): Promise<NhatKyChung[]> {
-    const response = await this.patch<ChungTuResponse[]>(items, {
-      endpoint: `/batch/${encodeURIComponent(soPhieu)}`
-    });
+    const response = await this.patch<ChungTuResponse[]>(
+      { soPhieu, items },
+      { endpoint: '/batch' }
+    );
     return response.map((item) => this.mapChungTuToNhatKyChung(item));
   }
 }

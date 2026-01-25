@@ -82,14 +82,13 @@ export class NhatKyChungController {
     return this.nhatKyChungService.createBatch(items, user.id);
   }
 
-  @Patch('batch/:soPhieu')
+  @Patch('batch')
   @Roles('ADMIN', 'KE_TOAN_QUY')
   async updateBatch(
-    @Param('soPhieu') soPhieu: string,
-    @Body() items: BatchItemDto[],
+    @Body() body: { soPhieu: string; items: BatchItemDto[] },
     @CurrentUser() user: UserPayload,
   ) {
-    return this.nhatKyChungService.updateBatch(soPhieu, items, user.id);
+    return this.nhatKyChungService.updateBatch(body.soPhieu, body.items, user.id);
   }
 
   @Patch(':id')
