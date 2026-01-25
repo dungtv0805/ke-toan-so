@@ -268,18 +268,18 @@ class NhatKyChungService extends ServiceBase {
    * Create multiple entries with the same soPhieu (batch create)
    */
   async createBatch(items: CreateEntryDto[]): Promise<NhatKyChung[]> {
-    const response = await this.post<{ success: boolean; data: ChungTuResponse[] }>(items, { endpoint: '/batch' });
-    return response.data.map((item) => this.mapChungTuToNhatKyChung(item));
+    const response = await this.post<ChungTuResponse[]>(items, { endpoint: '/batch' });
+    return response.map((item) => this.mapChungTuToNhatKyChung(item));
   }
 
   /**
    * Update all entries of a soPhieu (batch update)
    */
   async updateBatch(soPhieu: string, items: CreateEntryDto[]): Promise<NhatKyChung[]> {
-    const response = await this.patch<{ success: boolean; data: ChungTuResponse[] }>(items, {
+    const response = await this.patch<ChungTuResponse[]>(items, {
       endpoint: `/batch/${encodeURIComponent(soPhieu)}`
     });
-    return response.data.map((item) => this.mapChungTuToNhatKyChung(item));
+    return response.map((item) => this.mapChungTuToNhatKyChung(item));
   }
 }
 

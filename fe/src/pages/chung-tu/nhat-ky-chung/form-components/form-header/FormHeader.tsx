@@ -44,8 +44,6 @@ export function FormHeader() {
             label="Ngày chứng từ"
             required
             className="mb-2 sm:mb-3"
-            validateStatus={!header?.ngay ? "error" : ""}
-            help={!header?.ngay ? "Vui lòng chọn ngày" : ""}
           >
             <DatePicker
               format="DD/MM/YYYY"
@@ -61,8 +59,6 @@ export function FormHeader() {
             label="Nghiệp vụ"
             required
             className="mb-2 sm:mb-3"
-            validateStatus={!header?.loai ? "error" : ""}
-            help={!header?.loai ? "Vui lòng chọn nghiệp vụ" : ""}
           >
             <Select
               showSearch
