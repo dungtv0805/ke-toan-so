@@ -183,10 +183,22 @@ const MainLayout: React.FC = () => {
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
   }, [darkMode]);
 
+  // Helper function to check if current route is a form screen (create/edit)
+  const isFormScreen = (pathname: string): boolean => {
+    return pathname.includes('/tao-moi') || pathname.includes('/sua');
+  };
+
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  // Auto collapse sidebar when entering form screens (create/edit)
+  useEffect(() => {
+    if (!isMobile && isFormScreen(location.pathname)) {
+      setCollapsed(true);
+    }
+  }, [location.pathname, isMobile]);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
