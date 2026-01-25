@@ -195,10 +195,10 @@ const MainLayout: React.FC = () => {
 
   // Auto collapse sidebar when entering form screens (create/edit)
   useEffect(() => {
-    if (!isMobile && isFormScreen(location.pathname)) {
+    if (!isMobile && !collapsed && isFormScreen(location.pathname)) {
       setCollapsed(true);
     }
-  }, [location.pathname, isMobile]);
+  }, [location.pathname, isMobile, collapsed]);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
