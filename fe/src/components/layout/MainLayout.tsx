@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Layout,
   Menu,
@@ -116,8 +116,14 @@ const menuItems: MenuItem[] = [
   // ]),
 ];
 
+// Helper function to check if current route is a form screen (create/edit)
+const isFormScreen = (pathname: string): boolean => {
+  return pathname.includes('/tao-moi') || pathname.includes('/sua');
+};
+
 const MainLayout: React.FC = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  // Initialize collapsed based on current URL - if on form screen, start collapsed
+  const [collapsed, setCollapsed] = useState(() => isFormScreen(window.location.pathname));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
@@ -183,20 +189,22 @@ const MainLayout: React.FC = () => {
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
   }, [darkMode]);
 
-  // Helper function to check if current route is a form screen (create/edit)
-  const isFormScreen = (pathname: string): boolean => {
-    return pathname.includes('/tao-moi') || pathname.includes('/sua');
-  };
+  // Track previous pathname to detect navigation
+  const prevPathnameRef = useRef(location.pathname);
 
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
-  // Auto collapse sidebar when entering form screens (create/edit)
+  // Auto collapse sidebar when navigating to form screens (create/edit)
   useEffect(() => {
-    if (!isMobile && !collapsed && isFormScreen(location.pathname)) {
-      setCollapsed(true);
+    // Skip on initial render (when prev === current)
+    if (prevPathnameRef.current !== location.pathname) {
+      if (!isMobile && !collapsed && isFormScreen(location.pathname)) {
+        setCollapsed(true);
+      }
+      prevPathnameRef.current = location.pathname;
     }
   }, [location.pathname, isMobile, collapsed]);
 
