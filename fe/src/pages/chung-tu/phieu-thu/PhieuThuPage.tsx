@@ -47,7 +47,6 @@ import {
   DuAn,
   SanPham,
   DongTien,
-  TaiKhoan,
 } from "@/types";
 import {
   buildDoiTuongSnapshot,
