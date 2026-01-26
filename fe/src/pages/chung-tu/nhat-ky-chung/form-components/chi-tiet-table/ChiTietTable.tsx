@@ -507,9 +507,15 @@ export function ChiTietTable() {
           columns={columns}
           dataSource={chiTietList as ChungTuChiTiet[]}
           rowKey="key"
-          pagination={false}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
+            showTotal: (total, range) => `${range[0]}-${range[1]} / ${total} dòng`,
+            size: 'small',
+          }}
           size="small"
-          scroll={{ x: 1600, y: 'calc(100vh - 320px)' }}
+          scroll={{ x: 1600 }}
           bordered
           className="excel-table resizable-table chi-tiet-excel-table"
           rowClassName={(_, index) =>
@@ -530,9 +536,6 @@ export function ChiTietTable() {
           Thêm dòng (Ctrl+N)
         </Button>
         <div className="flex items-center gap-4">
-          <span className="text-gray-500 text-sm">
-            {(chiTietList as ChungTuChiTiet[]).length} dòng
-          </span>
           <div className="text-right">
             <span className="text-gray-500 text-xs sm:text-sm mr-2">Tổng cộng:</span>
             <span className="text-base sm:text-lg font-bold text-green-600">
