@@ -1536,3 +1536,105 @@ body.col-resizing .ant-table * {
 .nkc-form-page-layout > .nkc-form-actions {
   flex-shrink: 0;
 }
+
+/* ========================= */
+/* NKC Inline Header Styles */
+/* ========================= */
+
+.nkc-inline-header {
+  width: 100%;
+}
+
+.nkc-inline-header .ant-form-item {
+  margin-bottom: 0 !important;
+  margin-right: 0 !important;
+}
+
+.nkc-inline-header .ant-form-item-label {
+  padding: 0 !important;
+}
+
+.nkc-inline-header .ant-form-item-label > label {
+  font-size: 11px !important;
+  color: #8c8c8c !important;
+  height: 18px !important;
+  line-height: 18px !important;
+}
+
+.nkc-inline-header .ant-form-item-control-input {
+  min-height: 28px !important;
+}
+
+.nkc-inline-header .ant-input,
+.nkc-inline-header .ant-select-selector,
+.nkc-inline-header .ant-picker {
+  height: 28px !important;
+  font-size: 13px !important;
+}
+
+.nkc-inline-header .ant-select-selection-item,
+.nkc-inline-header .ant-select-selection-placeholder {
+  line-height: 26px !important;
+}
+
+.nkc-inline-header .ant-picker-input > input {
+  font-size: 13px !important;
+}
+
+/* Header card ultra compact */
+.nkc-header-card .ant-card-head {
+  min-height: 32px !important;
+  padding: 4px 12px !important;
+}
+
+.nkc-header-card .ant-card-head-title {
+  padding: 4px 0 !important;
+}
+
+.nkc-header-card .ant-card-body {
+  padding: 8px 12px !important;
+}
+
+/* Table scroll fix */
+.nkc-table-container {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+.nkc-table-container .ant-table-wrapper {
+  height: 100%;
+}
+
+.nkc-table-container .ant-table-wrapper .ant-spin-nested-loading {
+  height: 100%;
+}
+
+.nkc-table-container .ant-table-wrapper .ant-spin-nested-loading .ant-spin-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.nkc-table-container .ant-table {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.nkc-table-container .ant-table .ant-table-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.nkc-table-container .ant-table .ant-table-header {
+  flex-shrink: 0;
+  overflow: visible !important;
+}
+
+.nkc-table-container .ant-table .ant-table-body {
+  flex: 1;
+  overflow: auto !important;
+}

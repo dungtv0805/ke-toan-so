@@ -34,18 +34,17 @@ export function FormHeader() {
   };
 
   return (
-    <Form layout="vertical" className="compact-form nkc-compact-header">
-      {/* Row 1: Tất cả fields trên 1 hàng cho desktop */}
-      <Row gutter={[12, 0]}>
+    <Form layout="inline" className="nkc-inline-header">
+      <Row gutter={[8, 4]} className="w-full">
         {isEditing && header?.soPhieu && (
-          <Col xs={24} sm={8} md={4} lg={3}>
-            <Form.Item label="Số phiếu" className="mb-2">
+          <Col flex="120px">
+            <Form.Item label="Số phiếu" className="mb-0 w-full">
               <Input value={header.soPhieu} disabled className="font-semibold" size="small" />
             </Form.Item>
           </Col>
         )}
-        <Col xs={12} sm={8} md={isEditing ? 4 : 5} lg={isEditing ? 3 : 4}>
-          <Form.Item label="Ngày chứng từ" required className="mb-2">
+        <Col flex="140px">
+          <Form.Item label="Ngày CT" required className="mb-0 w-full">
             <DatePicker
               format="DD/MM/YYYY"
               className="w-full"
@@ -56,10 +55,10 @@ export function FormHeader() {
             />
           </Form.Item>
         </Col>
-        <Col xs={12} sm={8} md={isEditing ? 4 : 5} lg={isEditing ? 3 : 4}>
-          <Form.Item label="Loại giao dịch" required className="mb-2">
+        <Col flex="160px">
+          <Form.Item label="Loại GD" required className="mb-0 w-full">
             <Select
-              placeholder="Chọn loại giao dịch"
+              placeholder="Chọn loại"
               disabled={isEditing}
               value={header?.loaiGiaoDich}
               onChange={handleLoaiGiaoDichChange}
@@ -68,30 +67,30 @@ export function FormHeader() {
             />
           </Form.Item>
         </Col>
-        <Col xs={12} sm={8} md={isEditing ? 4 : 5} lg={isEditing ? 4 : 4}>
-          <Form.Item label="Người giao dịch" className="mb-2">
+        <Col flex="180px">
+          <Form.Item label="Người GD" className="mb-0 w-full">
             <Input
-              placeholder="Nhập người giao dịch"
+              placeholder="Người giao dịch"
               value={header?.nguoiGiaoDich || ""}
               onChange={(e) => handleFieldChange("nguoiGiaoDich", e.target.value)}
               size="small"
             />
           </Form.Item>
         </Col>
-        <Col xs={12} sm={8} md={isEditing ? 4 : 5} lg={isEditing ? 4 : 4}>
-          <Form.Item label="Địa chỉ" className="mb-2">
+        <Col flex="180px">
+          <Form.Item label="Địa chỉ" className="mb-0 w-full">
             <Input
-              placeholder="Nhập địa chỉ"
+              placeholder="Địa chỉ"
               value={header?.diaChi || ""}
               onChange={(e) => handleFieldChange("diaChi", e.target.value)}
               size="small"
             />
           </Form.Item>
         </Col>
-        <Col xs={24} sm={8} md={isEditing ? 4 : 4} lg={isEditing ? 7 : 8}>
-          <Form.Item label="Diễn giải chung" className="mb-2">
+        <Col flex="auto">
+          <Form.Item label="Diễn giải chung" className="mb-0 w-full">
             <Input
-              placeholder="Nhập diễn giải chung"
+              placeholder="Nhập diễn giải chung cho chứng từ"
               value={header?.dienGiaiChung || ""}
               onChange={(e) => handleFieldChange("dienGiaiChung", e.target.value)}
               size="small"

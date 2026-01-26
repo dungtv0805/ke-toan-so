@@ -435,6 +435,22 @@ export function ChiTietTable() {
       ),
     },
     {
+      title: "Ghi chú",
+      dataIndex: "ghiChu",
+      width: 150,
+      render: (value: string, record: ChungTuChiTiet, index: number) => (
+        <Input
+          size="small"
+          placeholder="Ghi chú"
+          value={value || ""}
+          onChange={(e) => handleUpdateField(record.key, "ghiChu", e.target.value)}
+          onFocus={() => { activeRowRef.current = index; }}
+          className="excel-cell-input"
+          variant="borderless"
+        />
+      ),
+    },
+    {
       title: "",
       width: 70,
       align: "center" as const,
@@ -493,7 +509,7 @@ export function ChiTietTable() {
           rowKey="key"
           pagination={false}
           size="small"
-          scroll={{ x: 1400 }}
+          scroll={{ x: 1600 }}
           bordered
           className="excel-table resizable-table chi-tiet-excel-table"
           rowClassName={(_, index) =>
