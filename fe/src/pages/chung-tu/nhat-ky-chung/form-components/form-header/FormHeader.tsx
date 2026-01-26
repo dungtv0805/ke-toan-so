@@ -1,10 +1,7 @@
 import {
-  Form,
   DatePicker,
   Select,
   Input,
-  Row,
-  Col,
 } from "antd";
 import {
   useNhatKyChungFormState,
@@ -34,70 +31,71 @@ export function FormHeader() {
   };
 
   return (
-    <Form layout="inline" className="nkc-inline-header">
-      <Row gutter={[8, 4]} className="w-full">
+    <div className="nkc-header-form">
+      {/* Row 1: Các field cơ bản */}
+      <div className="flex flex-wrap gap-3 mb-2">
         {isEditing && header?.soPhieu && (
-          <Col flex="120px">
-            <Form.Item label="Số phiếu" className="mb-0 w-full">
-              <Input value={header.soPhieu} disabled className="font-semibold" size="small" />
-            </Form.Item>
-          </Col>
+          <div className="nkc-field" style={{ width: 100 }}>
+            <label className="nkc-label">Số phiếu</label>
+            <Input value={header.soPhieu} disabled className="font-semibold" size="small" />
+          </div>
         )}
-        <Col flex="140px">
-          <Form.Item label="Ngày CT" required className="mb-0 w-full">
-            <DatePicker
-              format="DD/MM/YYYY"
-              className="w-full"
-              value={header?.ngay}
-              onChange={(date) => handleFieldChange("ngay", date)}
-              placeholder="Chọn ngày"
-              size="small"
-            />
-          </Form.Item>
-        </Col>
-        <Col flex="160px">
-          <Form.Item label="Loại GD" required className="mb-0 w-full">
-            <Select
-              placeholder="Chọn loại"
-              disabled={isEditing}
-              value={header?.loaiGiaoDich}
-              onChange={handleLoaiGiaoDichChange}
-              options={loaiGiaoDichOptions}
-              size="small"
-            />
-          </Form.Item>
-        </Col>
-        <Col flex="180px">
-          <Form.Item label="Người GD" className="mb-0 w-full">
-            <Input
-              placeholder="Người giao dịch"
-              value={header?.nguoiGiaoDich || ""}
-              onChange={(e) => handleFieldChange("nguoiGiaoDich", e.target.value)}
-              size="small"
-            />
-          </Form.Item>
-        </Col>
-        <Col flex="180px">
-          <Form.Item label="Địa chỉ" className="mb-0 w-full">
-            <Input
-              placeholder="Địa chỉ"
-              value={header?.diaChi || ""}
-              onChange={(e) => handleFieldChange("diaChi", e.target.value)}
-              size="small"
-            />
-          </Form.Item>
-        </Col>
-        <Col flex="auto">
-          <Form.Item label="Diễn giải chung" className="mb-0 w-full">
-            <Input
-              placeholder="Nhập diễn giải chung cho chứng từ"
-              value={header?.dienGiaiChung || ""}
-              onChange={(e) => handleFieldChange("dienGiaiChung", e.target.value)}
-              size="small"
-            />
-          </Form.Item>
-        </Col>
-      </Row>
-    </Form>
+        <div className="nkc-field" style={{ width: 120 }}>
+          <label className="nkc-label">
+            Ngày CT <span className="text-red-500">*</span>
+          </label>
+          <DatePicker
+            format="DD/MM/YYYY"
+            className="w-full"
+            value={header?.ngay}
+            onChange={(date) => handleFieldChange("ngay", date)}
+            placeholder="Chọn ngày"
+            size="small"
+          />
+        </div>
+        <div className="nkc-field" style={{ width: 140 }}>
+          <label className="nkc-label">
+            Loại GD <span className="text-red-500">*</span>
+          </label>
+          <Select
+            placeholder="Chọn loại"
+            disabled={isEditing}
+            value={header?.loaiGiaoDich}
+            onChange={handleLoaiGiaoDichChange}
+            options={loaiGiaoDichOptions}
+            size="small"
+            className="w-full"
+          />
+        </div>
+        <div className="nkc-field" style={{ width: 160 }}>
+          <label className="nkc-label">Người GD</label>
+          <Input
+            placeholder="Người giao dịch"
+            value={header?.nguoiGiaoDich || ""}
+            onChange={(e) => handleFieldChange("nguoiGiaoDich", e.target.value)}
+            size="small"
+          />
+        </div>
+        <div className="nkc-field" style={{ width: 160 }}>
+          <label className="nkc-label">Địa chỉ</label>
+          <Input
+            placeholder="Địa chỉ"
+            value={header?.diaChi || ""}
+            onChange={(e) => handleFieldChange("diaChi", e.target.value)}
+            size="small"
+          />
+        </div>
+        <div className="nkc-field flex-1" style={{ minWidth: 200 }}>
+          <label className="nkc-label">Diễn giải chung</label>
+          <Input.TextArea
+            placeholder="Nhập diễn giải chung cho chứng từ"
+            value={header?.dienGiaiChung || ""}
+            onChange={(e) => handleFieldChange("dienGiaiChung", e.target.value)}
+            autoSize={{ minRows: 1, maxRows: 2 }}
+            className="nkc-textarea"
+          />
+        </div>
+      </div>
+    </div>
   );
 }

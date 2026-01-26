@@ -1638,3 +1638,120 @@ body.col-resizing .ant-table * {
   flex: 1;
   overflow: auto !important;
 }
+
+/* ========================= */
+/* NKC Header Form - Custom */
+/* ========================= */
+
+.nkc-header-form {
+  width: 100%;
+}
+
+.nkc-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.nkc-label {
+  font-size: 11px;
+  color: #8c8c8c;
+  margin-bottom: 2px;
+  line-height: 1.2;
+}
+
+.nkc-textarea {
+  font-size: 13px !important;
+}
+
+.nkc-textarea textarea {
+  padding: 4px 8px !important;
+  min-height: 28px !important;
+}
+
+/* Fix table scroll - IMPORTANT */
+.nkc-chi-tiet-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nkc-table-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.nkc-table-container .ant-table-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nkc-table-container .ant-spin-nested-loading,
+.nkc-table-container .ant-spin-container {
+  height: 100%;
+}
+
+.nkc-table-container .ant-table {
+  height: 100%;
+}
+
+.nkc-table-container .ant-table-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.nkc-table-container .ant-table-header {
+  flex-shrink: 0;
+}
+
+.nkc-table-container .ant-table-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto !important;
+  max-height: none !important;
+}
+
+/* Detail card body */
+.nkc-detail-card > .ant-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+/* Form page layout */
+.nkc-form-page-layout {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 100px);
+  gap: 8px;
+  overflow: hidden;
+}
+
+.nkc-form-page-layout > .nkc-header-card {
+  flex-shrink: 0;
+}
+
+.nkc-form-page-layout > .nkc-detail-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.nkc-form-page-layout > .nkc-detail-section > .nkc-detail-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
