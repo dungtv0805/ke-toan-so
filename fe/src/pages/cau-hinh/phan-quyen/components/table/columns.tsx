@@ -123,18 +123,16 @@ export const createColumns = (handler: PhanQuyenHandler) => [
             onClick={() => handler.executeEvent("openModal", { record })}
           />
         </Tooltip>
-        <Tooltip title="Xóa">
-          <Popconfirm
-            title="Xác nhận xóa?"
-            description="Bạn có chắc muốn xóa người dùng này?"
-            onConfirm={() => handler.executeEvent("deleteNguoiDung", { id: record.id })}
-            okText="Xóa"
-            cancelText="Hủy"
-            okButtonProps={{ danger: true }}
-          >
-            <Button type="text" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Tooltip>
+        <Popconfirm
+          title="Xác nhận xóa?"
+          description="Bạn có chắc muốn xóa người dùng này?"
+          onConfirm={() => handler.executeEvent("deleteNguoiDung", { id: record.id })}
+          okText="Xóa"
+          cancelText="Hủy"
+          okButtonProps={{ danger: true }}
+        >
+          <Button type="text" danger icon={<DeleteOutlined />} />
+        </Popconfirm>
       </Space>
     ),
   },

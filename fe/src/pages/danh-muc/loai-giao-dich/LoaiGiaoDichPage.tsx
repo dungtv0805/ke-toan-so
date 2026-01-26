@@ -239,18 +239,16 @@ const LoaiGiaoDichPage: React.FC = () => {
               className="text-primary"
             />
           </Tooltip>
-          <Tooltip title="Xóa">
-            <Popconfirm
-              title="Xác nhận xóa"
-              description="Bạn có chắc chắn muốn xóa loại giao dịch này?"
-              onConfirm={() => handleDelete(record.id)}
-              okText="Xóa"
-              cancelText="Hủy"
-              okButtonProps={{ danger: true }}
-            >
-              <Button type="text" icon={<DeleteOutlined />} danger />
-            </Popconfirm>
-          </Tooltip>
+          <Popconfirm
+            title="Xác nhận xóa"
+            description="Bạn có chắc chắn muốn xóa loại giao dịch này?"
+            onConfirm={() => handleDelete(record.id)}
+            okText="Xóa"
+            cancelText="Hủy"
+            okButtonProps={{ danger: true }}
+          >
+            <Button type="text" icon={<DeleteOutlined />} danger />
+          </Popconfirm>
         </Space>
       ),
     },
