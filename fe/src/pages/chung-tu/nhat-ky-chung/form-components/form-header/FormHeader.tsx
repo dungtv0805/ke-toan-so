@@ -34,12 +34,12 @@ export function FormHeader() {
   };
 
   return (
-    <div className="mb-4 sm:mb-6">
+    <Form layout="vertical" className="compact-form">
       {/* Row 1: Số phiếu (nếu edit), Ngày chứng từ, Loại giao dịch */}
-      <Row gutter={[16, 8]}>
+      <Row gutter={[16, 0]}>
         {isEditing && header?.soPhieu && (
           <Col xs={24} sm={12} md={8}>
-            <Form.Item label="Số phiếu" className="mb-2 sm:mb-3">
+            <Form.Item label="Số phiếu" className="mb-3">
               <Input value={header.soPhieu} disabled className="font-semibold" />
             </Form.Item>
           </Col>
@@ -48,7 +48,7 @@ export function FormHeader() {
           <Form.Item
             label="Ngày chứng từ"
             required
-            className="mb-2 sm:mb-3"
+            className="mb-3"
           >
             <DatePicker
               format="DD/MM/YYYY"
@@ -63,7 +63,7 @@ export function FormHeader() {
           <Form.Item
             label="Loại giao dịch"
             required
-            className="mb-2 sm:mb-3"
+            className="mb-3"
           >
             <Select
               placeholder="Chọn loại giao dịch"
@@ -77,9 +77,9 @@ export function FormHeader() {
       </Row>
 
       {/* Row 2: Người giao dịch, Địa chỉ */}
-      <Row gutter={[16, 8]}>
+      <Row gutter={[16, 0]}>
         <Col xs={24} sm={12} md={12}>
-          <Form.Item label="Người giao dịch" className="mb-2 sm:mb-3">
+          <Form.Item label="Người giao dịch" className="mb-3">
             <Input
               placeholder="Nhập tên người giao dịch"
               value={header?.nguoiGiaoDich || ""}
@@ -90,7 +90,7 @@ export function FormHeader() {
           </Form.Item>
         </Col>
         <Col xs={24} sm={12} md={12}>
-          <Form.Item label="Địa chỉ" className="mb-2 sm:mb-3">
+          <Form.Item label="Địa chỉ" className="mb-3">
             <Input
               placeholder="Nhập địa chỉ"
               value={header?.diaChi || ""}
@@ -103,11 +103,11 @@ export function FormHeader() {
       </Row>
 
       {/* Row 3: Diễn giải chung và Ghi chú */}
-      <Row gutter={[16, 8]}>
+      <Row gutter={[16, 0]}>
         <Col xs={24} md={12}>
-          <Form.Item label="Diễn giải chung" className="mb-2 sm:mb-3">
+          <Form.Item label="Diễn giải chung" className="mb-0">
             <Input.TextArea
-              autoSize={{ minRows: 2, maxRows: 4 }}
+              autoSize={{ minRows: 2, maxRows: 3 }}
               placeholder="Nhập diễn giải chung cho chứng từ"
               value={header?.dienGiaiChung || ""}
               onChange={(e) => handleFieldChange("dienGiaiChung", e.target.value)}
@@ -115,9 +115,9 @@ export function FormHeader() {
           </Form.Item>
         </Col>
         <Col xs={24} md={12}>
-          <Form.Item label="Ghi chú" className="mb-2 sm:mb-3">
+          <Form.Item label="Ghi chú" className="mb-0">
             <Input.TextArea
-              autoSize={{ minRows: 2, maxRows: 4 }}
+              autoSize={{ minRows: 2, maxRows: 3 }}
               placeholder="Nhập ghi chú (nếu có)"
               value={header?.ghiChu || ""}
               onChange={(e) =>
@@ -127,6 +127,6 @@ export function FormHeader() {
           </Form.Item>
         </Col>
       </Row>
-    </div>
+    </Form>
   );
 }

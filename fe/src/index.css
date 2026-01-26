@@ -1201,3 +1201,64 @@ body.col-resizing .ant-table * {
   background: hsl(var(--muted) / 0.3) !important;
 }
 
+
+/* ========================= */
+/* Compact Form Styles */
+/* ========================= */
+
+/* Compact form - giảm khoảng cách và căn chỉnh label */
+.compact-form .ant-form-item {
+  margin-bottom: 12px;
+}
+
+.compact-form .ant-form-item-label {
+  padding-bottom: 4px;
+}
+
+.compact-form .ant-form-item-label > label {
+  font-size: 13px;
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+  height: auto;
+}
+
+.compact-form .ant-form-item-label > label::after {
+  display: none;
+}
+
+.compact-form .ant-form-item-required::before {
+  display: none !important;
+}
+
+.compact-form .ant-form-item-label > label.ant-form-item-required::after {
+  display: inline-block;
+  margin-inline-start: 4px;
+  color: #ff4d4f;
+  font-size: 12px;
+  content: '*';
+}
+
+/* Input styles trong compact form */
+.compact-form .ant-input,
+.compact-form .ant-select-selector,
+.compact-form .ant-picker {
+  height: 36px !important;
+}
+
+.compact-form .ant-select-selection-item,
+.compact-form .ant-select-selection-placeholder {
+  line-height: 34px !important;
+}
+
+.compact-form .ant-input-textarea textarea {
+  min-height: 60px !important;
+}
+
+/* NKC Form Page specific styles */
+.nkc-form-page .ant-card {
+  margin-bottom: 0;
+}
+
+.nkc-form-page .ant-card-body {
+  padding: 16px 20px;
+}
