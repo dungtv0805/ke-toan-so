@@ -422,16 +422,14 @@ export function ChiTietTable() {
             cancelText="Hủy"
             disabled={(chiTietList as ChungTuChiTiet[]).length <= 1}
           >
-            <Tooltip title="Xóa">
-              <Button
-                type="text"
-                size="small"
-                danger
-                icon={<DeleteOutlined />}
-                disabled={(chiTietList as ChungTuChiTiet[]).length <= 1}
-                className="!px-1.5"
-              />
-            </Tooltip>
+            <Button
+              type="text"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              disabled={(chiTietList as ChungTuChiTiet[]).length <= 1}
+              className="!px-1.5"
+            />
           </Popconfirm>
         </div>
       ),

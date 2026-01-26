@@ -615,14 +615,12 @@ const PhieuThuPage: React.FC = () => {
                 okText="Xóa"
                 cancelText="Hủy"
               >
-                <Tooltip title="Xóa">
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<DeleteOutlined />}
-                    className="!text-destructive"
-                  />
-                </Tooltip>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<DeleteOutlined />}
+                  className="!text-destructive"
+                />
               </Popconfirm>
             </>
           )}
