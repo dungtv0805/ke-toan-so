@@ -485,23 +485,25 @@ export function ChiTietTable() {
   };
 
   return (
-    <div ref={tableRef} className="excel-tab-content excel-editable-table">
-      <Table
-        columns={columns}
-        dataSource={chiTietList as ChungTuChiTiet[]}
-        rowKey="key"
-        pagination={false}
-        size="small"
-        scroll={{ x: 1400, y: "calc(100vh - 380px)" }}
-        bordered
-        className="excel-table resizable-table chi-tiet-excel-table"
-        rowClassName={(_, index) =>
-          index === activeRowRef.current ? "excel-row-active" : ""
-        }
-      />
+    <div ref={tableRef} className="excel-tab-content excel-editable-table nkc-chi-tiet-wrapper">
+      <div className="nkc-table-container">
+        <Table
+          columns={columns}
+          dataSource={chiTietList as ChungTuChiTiet[]}
+          rowKey="key"
+          pagination={false}
+          size="small"
+          scroll={{ x: 1400 }}
+          bordered
+          className="excel-table resizable-table chi-tiet-excel-table"
+          rowClassName={(_, index) =>
+            index === activeRowRef.current ? "excel-row-active" : ""
+          }
+        />
+      </div>
 
       {/* Footer with add button and total */}
-      <div className="nkc-form-footer flex-col sm:flex-row gap-2 sm:gap-0">
+      <div className="nkc-form-footer">
         <Button
           type="dashed"
           size="small"
@@ -511,7 +513,7 @@ export function ChiTietTable() {
         >
           Thêm dòng (Ctrl+N)
         </Button>
-        <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+        <div className="flex items-center gap-4">
           <span className="text-gray-500 text-sm">
             {(chiTietList as ChungTuChiTiet[]).length} dòng
           </span>

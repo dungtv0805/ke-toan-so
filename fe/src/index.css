@@ -1262,3 +1262,135 @@ body.col-resizing .ant-table * {
 .nkc-form-page .ant-card-body {
   padding: 16px 20px;
 }
+
+/* ========================= */
+/* NKC Form Page Layout */
+/* ========================= */
+
+/* Main layout - flex column với height cố định */
+.nkc-form-page-layout {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 120px);
+  gap: 12px;
+  overflow: hidden;
+}
+
+/* Header card - không co giãn */
+.nkc-header-card {
+  flex-shrink: 0;
+}
+
+.nkc-header-card .ant-collapse-header {
+  padding: 12px 16px !important;
+}
+
+.nkc-header-card .ant-collapse-content-box {
+  padding: 0 12px 12px 12px !important;
+}
+
+/* Detail section - chiếm phần còn lại và có scroll */
+.nkc-detail-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.nkc-detail-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.nkc-detail-card .ant-card-head {
+  flex-shrink: 0;
+  min-height: auto;
+  padding: 8px 16px !important;
+}
+
+.nkc-detail-card .ant-card-head-title {
+  padding: 0 !important;
+}
+
+.nkc-detail-card .ant-card-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Chi tiết wrapper */
+.nkc-chi-tiet-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Table container với scroll */
+.nkc-table-container {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.nkc-table-container .ant-table-wrapper {
+  height: 100%;
+}
+
+.nkc-table-container .ant-table {
+  height: 100%;
+}
+
+.nkc-table-container .ant-table-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.nkc-table-container .ant-table-body {
+  flex: 1;
+  overflow: auto !important;
+}
+
+/* Footer cố định ở dưới */
+.nkc-form-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #fafafa;
+  border-top: 1px solid hsl(var(--border));
+}
+
+/* Responsive cho mobile */
+@media (max-width: 640px) {
+  .nkc-form-page-layout {
+    height: auto;
+    min-height: calc(100vh - 120px);
+    overflow: visible;
+  }
+
+  .nkc-detail-section {
+    min-height: 300px;
+  }
+
+  .nkc-form-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .nkc-form-footer > div {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Khi header collapsed - table chiếm nhiều không gian hơn */
+.nkc-detail-section.header-collapsed {
+  flex: 1;
+}

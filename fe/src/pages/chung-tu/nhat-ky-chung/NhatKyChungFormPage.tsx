@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Card } from "antd";
+import { Card, Collapse } from "antd";
+import { DownOutlined } from "@ant-design/icons";
 import {
   NhatKyChungFormHandlerProvider,
   useNhatKyChungFormHandler,
@@ -19,6 +20,7 @@ function NhatKyChungFormPageInner() {
   const handler = useNhatKyChungFormHandler();
   const { soPhieu } = useParams<{ soPhieu?: string }>();
   const [loading] = useNhatKyChungFormState("loading", true);
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
 
   useEffect(() => {
     handler.executeEvent("init", { soPhieu });
@@ -35,20 +37,48 @@ function NhatKyChungFormPageInner() {
   }
 
   return (
-    <div className="nkc-form-page">
-      {/* Form Header Card */}
-      <Card className="shadow-sm" size="small">
-        <FormHeader />
+    <div className="nkc-form-page nkc-form-page-layout">
+      {/* Form Header Card with Collapse */}
+      <Card
+        className="shadow-sm nkc-header-card"
+        size="small"
+        bodyStyle={{ padding: 0 }}
+      >
+        <Collapse
+          ghost
+          defaultActiveKey={["header"]}
+          onChange={(keys) => setHeaderCollapsed(!keys.includes("header"))}
+          expandIcon={({ isActive }) => (
+            <DownOutlined rotate={isActive ? 0 : -90} className="text-gray-500" />
+          )}
+          items={[
+            {
+              key: "header",
+              label: (
+                <span className="font-medium text-gray-700">
+                  Thông tin chứng từ
+                </span>
+              ),
+              children: (
+                <div className="px-1">
+                  <FormHeader />
+                </div>
+              ),
+            },
+          ]}
+        />
       </Card>
 
       {/* Chi tiết hạch toán - Excel style */}
-      <div className="excel-container mt-4">
-        {/* Toolbar */}
-        <div className="excel-toolbar">
-          <span className="text-gray-600 font-medium text-sm">Chi tiết hạch toán</span>
-        </div>
-
-        <ChiTietTable />
+      <div className={`nkc-detail-section ${headerCollapsed ? 'header-collapsed' : ''}`}>
+        <Card
+          className="shadow-sm nkc-detail-card"
+          size="small"
+          title={<span className="text-gray-600 font-medium text-sm">Chi tiết hạch toán</span>}
+          bodyStyle={{ padding: 0 }}
+        >
+          <ChiTietTable />
+        </Card>
       </div>
 
       <FormActions />
