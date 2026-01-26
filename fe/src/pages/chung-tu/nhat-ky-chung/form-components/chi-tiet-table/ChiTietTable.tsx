@@ -545,7 +545,7 @@ export function ChiTietTable() {
             },
           }}
           size="small"
-          scroll={{ x: 1600 }}
+          scroll={{ x: 1600, y: 'calc(100vh - 380px)' }}
           bordered
           className="excel-table resizable-table chi-tiet-excel-table"
           rowClassName={(_, index) =>
