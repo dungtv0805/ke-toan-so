@@ -30,8 +30,10 @@ export const routePermissions: Record<string, VaiTro[]> = {
   '/bao-cao/so-cai': ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KIEM_SOAT'],
   '/bao-cao/bang-can-doi': ['ADMIN', 'GIAM_DOC', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT'],
   
+  // Danh mục - Quy chuẩn hạch toán
+  '/danh-muc/quy-chuan': ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP'],
+
   // Cấu hình - Admin only
-  '/cau-hinh/quy-chuan': ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP'],
   '/cau-hinh/phan-quyen': ['ADMIN'],
 };
 

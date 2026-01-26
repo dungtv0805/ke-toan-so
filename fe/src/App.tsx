@@ -106,6 +106,14 @@ const App = () => (
                   <Route path="nhom-quan-ly" element={<NhomQuanLyPage />} />
                   <Route path="loai-chung-tu" element={<LoaiChungTuPage />} />
                   <Route path="nhom-khoan-muc" element={<NhomKhoanMucPage />} />
+                  <Route
+                    path="quy-chuan"
+                    element={
+                      <ProtectedRoute allowedRoles={routePermissions['/danh-muc/quy-chuan']}>
+                        <QuyChaunPage />
+                      </ProtectedRoute>
+                    }
+                  />
                 </Route>
 
                 {/* Chứng từ */}
@@ -212,14 +220,6 @@ const App = () => (
 
                 {/* Cấu hình */}
                 <Route path="cau-hinh">
-                  <Route
-                    path="quy-chuan"
-                    element={
-                      <ProtectedRoute allowedRoles={routePermissions['/cau-hinh/quy-chuan']}>
-                        <QuyChaunPage />
-                      </ProtectedRoute>
-                    }
-                  />
                   <Route
                     path="phan-quyen"
                     element={

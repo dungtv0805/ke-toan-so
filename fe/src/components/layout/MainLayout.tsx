@@ -104,6 +104,7 @@ const menuItems: MenuItem[] = [
     getItem("Nhóm khuyến mại", "/danh-muc/nhom-khuyen-mai", <AppstoreOutlined />),
     getItem("Nhóm quản lý", "/danh-muc/nhom-quan-ly", <TeamOutlined />),
     getItem("Loại chứng từ", "/danh-muc/loai-chung-tu", <FileTextOutlined />),
+    getItem("Quy chuẩn hạch toán", "/danh-muc/quy-chuan", <AuditOutlined />),
   ]),
   // getItem("Quy chế - Chính sách", "/quy-che", <SafetyCertificateOutlined />, [
   //   // Sắp cập nhật
@@ -262,12 +263,6 @@ const MainLayout: React.FC = () => {
 
   // Settings menu items for gear icon dropdown
   const settingsMenuItems: MenuProps["items"] = [
-    {
-      key: "quy-chuan",
-      icon: <AuditOutlined />,
-      label: "Quy chuẩn hạch toán",
-      onClick: () => navigate("/cau-hinh/quy-chuan"),
-    },
     {
       key: "phan-quyen",
       icon: <SafetyCertificateOutlined />,

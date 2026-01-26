@@ -178,6 +178,22 @@ export function ChiTietTable() {
       ),
     },
     {
+      title: "Diễn giải",
+      dataIndex: "noiDung",
+      width: 180,
+      render: (value: string, record: ChungTuChiTiet, index: number) => (
+        <Input
+          size="small"
+          placeholder="Nhập diễn giải"
+          value={value || ""}
+          onChange={(e) => handleUpdateField(record.key, "noiDung", e.target.value)}
+          onFocus={() => { activeRowRef.current = index; }}
+          className="excel-cell-input"
+          variant="borderless"
+        />
+      ),
+    },
+    {
       title: (
         <span>
           TK Nợ <span className="text-red-500">*</span>
@@ -379,22 +395,6 @@ export function ChiTietTable() {
           className="w-full excel-cell-input"
           variant="borderless"
           popupMatchSelectWidth={250}
-        />
-      ),
-    },
-    {
-      title: "Diễn giải",
-      dataIndex: "noiDung",
-      width: 180,
-      render: (value: string, record: ChungTuChiTiet, index: number) => (
-        <Input
-          size="small"
-          placeholder="Nhập diễn giải"
-          value={value || ""}
-          onChange={(e) => handleUpdateField(record.key, "noiDung", e.target.value)}
-          onFocus={() => { activeRowRef.current = index; }}
-          className="excel-cell-input"
-          variant="borderless"
         />
       ),
     },

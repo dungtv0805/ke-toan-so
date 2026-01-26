@@ -120,7 +120,7 @@ export const BangCanDoiPage = loadable(() => import('./bao-cao/bang-can-doi/Bang
 });
 
 // Cấu hình
-export const QuyChaunPage = loadable(() => import('./cau-hinh/quy-chuan/QuyChaunPage'), {
+export const QuyChaunPage = loadable(() => import('./danh-muc/quy-chuan/QuyChaunPage'), {
   fallback: <PageLoader />
 });
 
