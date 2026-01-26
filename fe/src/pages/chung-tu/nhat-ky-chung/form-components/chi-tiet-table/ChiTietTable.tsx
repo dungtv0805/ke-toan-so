@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef, useState, useMemo } from "react";
 import { Table, Select, InputNumber, Input, Button, Tooltip, Popconfirm } from "antd";
 import { PlusOutlined, DeleteOutlined, CopyOutlined } from "@ant-design/icons";
 import {
@@ -32,6 +32,10 @@ export function ChiTietTable() {
   const [quyChaunList] = useNhatKyChungFormState("quyChaunList", []);
   const [header] = useNhatKyChungFormState("header", null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
   // Lọc nghiệp vụ theo loại giao dịch từ header
   const typedHeader = header as ChungTuHeader | null;
   const nghiepVuOptions = (quyChaunList as QuyChuan[])
@@ -40,6 +44,20 @@ export function ChiTietTable() {
       value: qc.nghiepVu,
       label: qc.nghiepVu,
     }));
+
+  // Tính toán trang cuối khi thêm mới
+  const totalItems = (chiTietList as ChungTuChiTiet[]).length;
+  const lastPage = useMemo(() => Math.ceil(totalItems / pageSize), [totalItems, pageSize]);
+
+  // Auto jump to last page when adding new item
+  const prevTotalRef = useRef(totalItems);
+  useEffect(() => {
+    if (totalItems > prevTotalRef.current) {
+      // Item was added, jump to last page
+      setCurrentPage(lastPage);
+    }
+    prevTotalRef.current = totalItems;
+  }, [totalItems, lastPage]);
 
   // Enable column resize
   useTableColumnResize("chi-tiet-excel-table");
@@ -508,11 +526,23 @@ export function ChiTietTable() {
           dataSource={chiTietList as ChungTuChiTiet[]}
           rowKey="key"
           pagination={{
-            pageSize: 10,
+            current: currentPage,
+            pageSize: pageSize,
             showSizeChanger: true,
-            pageSizeOptions: ['10', '20', '50', '100'],
+            pageSizeOptions: ['25', '50', '100', '200'],
             showTotal: (total, range) => `${range[0]}-${range[1]} / ${total} dòng`,
             size: 'small',
+            onChange: (page, size) => {
+              setCurrentPage(page);
+              if (size !== pageSize) {
+                setPageSize(size);
+                // Recalculate current page when page size changes
+                const newLastPage = Math.ceil(totalItems / size);
+                if (page > newLastPage) {
+                  setCurrentPage(newLastPage || 1);
+                }
+              }
+            },
           }}
           size="small"
           scroll={{ x: 1600 }}
