@@ -71,35 +71,7 @@ export function ChiTietTable() {
 
   // Track active row for keyboard navigation
   const tableRef = useRef<HTMLDivElement>(null);
-  const tableContainerRef = useRef<HTMLDivElement>(null);
   const activeRowRef = useRef<number>(0);
-
-  // Sync horizontal scroll between header and body
-  useEffect(() => {
-    const container = tableContainerRef.current;
-    if (!container) return;
-
-    // Antd Table structure: .ant-table-container > .ant-table-header + .ant-table-body
-    const tableBody = container.querySelector('.ant-table-body') as HTMLElement;
-    const tableHeader = container.querySelector('.ant-table-header') as HTMLElement;
-
-    if (!tableBody || !tableHeader) return;
-
-    const handleBodyScroll = () => {
-      if (tableHeader.scrollLeft !== tableBody.scrollLeft) {
-        tableHeader.scrollLeft = tableBody.scrollLeft;
-      }
-    };
-
-    // Initial sync
-    handleBodyScroll();
-
-    tableBody.addEventListener('scroll', handleBodyScroll, { passive: true });
-
-    return () => {
-      tableBody.removeEventListener('scroll', handleBodyScroll);
-    };
-  }, [paginatedData]); // Re-run when data changes to ensure elements exist
 
   // Keyboard shortcuts handler
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -555,22 +527,20 @@ export function ChiTietTable() {
   };
 
   return (
-    <div ref={tableRef} className="excel-tab-content excel-editable-table nkc-chi-tiet-wrapper">
-      <div ref={tableContainerRef} className="nkc-table-container">
-        <Table
-          columns={columns}
-          dataSource={paginatedData}
-          rowKey="key"
-          pagination={false}
-          size="small"
-          scroll={{ x: 1600, y: 'calc(100vh - 340px)' }}
-          bordered
-          className="resizable-table chi-tiet-excel-table"
-          rowClassName={(_, index) =>
-            index === activeRowRef.current ? "excel-row-active" : ""
-          }
-        />
-      </div>
+    <div ref={tableRef} className="excel-editable-table">
+      <Table
+        columns={columns}
+        dataSource={paginatedData}
+        rowKey="key"
+        pagination={false}
+        size="small"
+        scroll={{ x: 1600, y: 'calc(100vh - 380px)' }}
+        bordered
+        className="resizable-table chi-tiet-excel-table"
+        rowClassName={(_, index) =>
+          index === activeRowRef.current ? "excel-row-active" : ""
+        }
+      />
 
       {/* Footer with pagination, add button and total */}
       <div className="nkc-table-footer">
