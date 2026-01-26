@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Card, Collapse } from "antd";
-import { DownOutlined } from "@ant-design/icons";
+import { Card } from "antd";
 import {
   NhatKyChungFormHandlerProvider,
   useNhatKyChungFormHandler,
@@ -20,7 +19,6 @@ function NhatKyChungFormPageInner() {
   const handler = useNhatKyChungFormHandler();
   const { soPhieu } = useParams<{ soPhieu?: string }>();
   const [loading] = useNhatKyChungFormState("loading", true);
-  const [headerCollapsed, setHeaderCollapsed] = useState(false);
 
   useEffect(() => {
     handler.executeEvent("init", { soPhieu });
@@ -38,39 +36,18 @@ function NhatKyChungFormPageInner() {
 
   return (
     <div className="nkc-form-page nkc-form-page-layout">
-      {/* Form Header Card with Collapse */}
+      {/* Form Header Card - Compact */}
       <Card
         className="shadow-sm nkc-header-card"
         size="small"
-        bodyStyle={{ padding: 0 }}
+        title={<span className="text-gray-600 font-medium text-sm">Thông tin chứng từ</span>}
+        bodyStyle={{ padding: '8px 12px' }}
       >
-        <Collapse
-          ghost
-          defaultActiveKey={["header"]}
-          onChange={(keys) => setHeaderCollapsed(!keys.includes("header"))}
-          expandIcon={({ isActive }) => (
-            <DownOutlined rotate={isActive ? 0 : -90} className="text-gray-500" />
-          )}
-          items={[
-            {
-              key: "header",
-              label: (
-                <span className="font-medium text-gray-700">
-                  Thông tin chứng từ
-                </span>
-              ),
-              children: (
-                <div className="px-1">
-                  <FormHeader />
-                </div>
-              ),
-            },
-          ]}
-        />
+        <FormHeader />
       </Card>
 
-      {/* Chi tiết hạch toán - Excel style */}
-      <div className={`nkc-detail-section ${headerCollapsed ? 'header-collapsed' : ''}`}>
+      {/* Chi tiết hạch toán */}
+      <div className="nkc-detail-section">
         <Card
           className="shadow-sm nkc-detail-card"
           size="small"

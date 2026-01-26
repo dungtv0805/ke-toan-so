@@ -34,95 +34,67 @@ export function FormHeader() {
   };
 
   return (
-    <Form layout="vertical" className="compact-form">
-      {/* Row 1: Số phiếu (nếu edit), Ngày chứng từ, Loại giao dịch */}
-      <Row gutter={[16, 0]}>
+    <Form layout="vertical" className="compact-form nkc-compact-header">
+      {/* Row 1: Tất cả fields trên 1 hàng cho desktop */}
+      <Row gutter={[12, 0]}>
         {isEditing && header?.soPhieu && (
-          <Col xs={24} sm={12} md={8}>
-            <Form.Item label="Số phiếu" className="mb-3">
-              <Input value={header.soPhieu} disabled className="font-semibold" />
+          <Col xs={24} sm={8} md={4} lg={3}>
+            <Form.Item label="Số phiếu" className="mb-2">
+              <Input value={header.soPhieu} disabled className="font-semibold" size="small" />
             </Form.Item>
           </Col>
         )}
-        <Col xs={24} sm={12} md={isEditing ? 8 : 12}>
-          <Form.Item
-            label="Ngày chứng từ"
-            required
-            className="mb-3"
-          >
+        <Col xs={12} sm={8} md={isEditing ? 4 : 5} lg={isEditing ? 3 : 4}>
+          <Form.Item label="Ngày chứng từ" required className="mb-2">
             <DatePicker
               format="DD/MM/YYYY"
               className="w-full"
               value={header?.ngay}
               onChange={(date) => handleFieldChange("ngay", date)}
               placeholder="Chọn ngày"
+              size="small"
             />
           </Form.Item>
         </Col>
-        <Col xs={24} sm={12} md={isEditing ? 8 : 12}>
-          <Form.Item
-            label="Loại giao dịch"
-            required
-            className="mb-3"
-          >
+        <Col xs={12} sm={8} md={isEditing ? 4 : 5} lg={isEditing ? 3 : 4}>
+          <Form.Item label="Loại giao dịch" required className="mb-2">
             <Select
               placeholder="Chọn loại giao dịch"
               disabled={isEditing}
               value={header?.loaiGiaoDich}
               onChange={handleLoaiGiaoDichChange}
               options={loaiGiaoDichOptions}
+              size="small"
             />
           </Form.Item>
         </Col>
-      </Row>
-
-      {/* Row 2: Người giao dịch, Địa chỉ */}
-      <Row gutter={[16, 0]}>
-        <Col xs={24} sm={12} md={12}>
-          <Form.Item label="Người giao dịch" className="mb-3">
+        <Col xs={12} sm={8} md={isEditing ? 4 : 5} lg={isEditing ? 4 : 4}>
+          <Form.Item label="Người giao dịch" className="mb-2">
             <Input
-              placeholder="Nhập tên người giao dịch"
+              placeholder="Nhập người giao dịch"
               value={header?.nguoiGiaoDich || ""}
-              onChange={(e) =>
-                handleFieldChange("nguoiGiaoDich", e.target.value)
-              }
+              onChange={(e) => handleFieldChange("nguoiGiaoDich", e.target.value)}
+              size="small"
             />
           </Form.Item>
         </Col>
-        <Col xs={24} sm={12} md={12}>
-          <Form.Item label="Địa chỉ" className="mb-3">
+        <Col xs={12} sm={8} md={isEditing ? 4 : 5} lg={isEditing ? 4 : 4}>
+          <Form.Item label="Địa chỉ" className="mb-2">
             <Input
               placeholder="Nhập địa chỉ"
               value={header?.diaChi || ""}
-              onChange={(e) =>
-                handleFieldChange("diaChi", e.target.value)
-              }
+              onChange={(e) => handleFieldChange("diaChi", e.target.value)}
+              size="small"
             />
           </Form.Item>
         </Col>
-      </Row>
-
-      {/* Row 3: Diễn giải chung và Ghi chú */}
-      <Row gutter={[16, 0]}>
-        <Col xs={24} md={12}>
-          <Form.Item label="Diễn giải chung" className="mb-0">
-            <Input.TextArea
-              autoSize={{ minRows: 2, maxRows: 3 }}
-              placeholder="Nhập diễn giải chung cho chứng từ"
+        <Col xs={24} sm={8} md={isEditing ? 4 : 4} lg={isEditing ? 7 : 8}>
+          <Form.Item label="Diễn giải chung" className="mb-2">
+            <Input
+              placeholder="Nhập diễn giải chung"
               value={header?.dienGiaiChung || ""}
               onChange={(e) => handleFieldChange("dienGiaiChung", e.target.value)}
-            />
-          </Form.Item>
-        </Col>
-        <Col xs={24} md={12}>
-          <Form.Item label="Ghi chú" className="mb-0">
-            <Input.TextArea
-              autoSize={{ minRows: 2, maxRows: 3 }}
-              placeholder="Nhập ghi chú (nếu có)"
-              value={header?.ghiChu || ""}
-              onChange={(e) =>
-                handleFieldChange("ghiChu", e.target.value)
-              }
+              size="small"
             />
           </Form.Item>
         </Col>

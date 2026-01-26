@@ -1394,3 +1394,145 @@ body.col-resizing .ant-table * {
 .nkc-detail-section.header-collapsed {
   flex: 1;
 }
+
+/* ========================= */
+/* NKC Compact Header Styles */
+/* ========================= */
+
+.nkc-compact-header .ant-form-item {
+  margin-bottom: 8px !important;
+}
+
+.nkc-compact-header .ant-form-item-label {
+  padding-bottom: 2px !important;
+}
+
+.nkc-compact-header .ant-form-item-label > label {
+  font-size: 12px !important;
+  height: auto !important;
+}
+
+.nkc-compact-header .ant-input,
+.nkc-compact-header .ant-select-selector,
+.nkc-compact-header .ant-picker {
+  height: 28px !important;
+  font-size: 13px !important;
+}
+
+.nkc-compact-header .ant-select-selection-item,
+.nkc-compact-header .ant-select-selection-placeholder {
+  line-height: 26px !important;
+  font-size: 13px !important;
+}
+
+.nkc-compact-header .ant-picker-input > input {
+  font-size: 13px !important;
+}
+
+/* Header card compact */
+.nkc-header-card .ant-collapse-header {
+  padding: 8px 12px !important;
+}
+
+.nkc-header-card .ant-collapse-content-box {
+  padding: 8px 12px 4px 12px !important;
+}
+
+/* Detail card - chiếm toàn bộ không gian còn lại */
+.nkc-detail-section {
+  flex: 1 1 auto;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.nkc-detail-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.nkc-detail-card > .ant-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+/* Chi tiết wrapper - flex layout */
+.nkc-chi-tiet-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Table container - scrollable */
+.nkc-table-container {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+.nkc-table-container .ant-table-wrapper,
+.nkc-table-container .ant-spin-nested-loading,
+.nkc-table-container .ant-spin-container {
+  height: 100%;
+}
+
+.nkc-table-container .ant-table {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.nkc-table-container .ant-table-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.nkc-table-container .ant-table-header {
+  flex-shrink: 0;
+}
+
+.nkc-table-container .ant-table-body {
+  flex: 1;
+  overflow: auto !important;
+  min-height: 100px;
+}
+
+/* Footer - fixed at bottom */
+.nkc-form-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #fafafa;
+  border-top: 1px solid #e8e8e8;
+}
+
+/* Form page layout - tối ưu height */
+.nkc-form-page-layout {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 100px);
+  gap: 8px;
+  overflow: hidden;
+}
+
+/* Header card không co giãn */
+.nkc-form-page-layout > .nkc-header-card {
+  flex-shrink: 0;
+}
+
+/* FormActions */
+.nkc-form-page-layout > .nkc-form-actions {
+  flex-shrink: 0;
+}
