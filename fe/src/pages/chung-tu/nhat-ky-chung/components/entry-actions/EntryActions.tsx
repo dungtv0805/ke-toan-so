@@ -117,14 +117,15 @@ onClick={handleEdit}
         />
       )}
 
-      <Popconfirm
-        title="Xác nhận xóa bút toán này?"
-        onConfirm={handleDelete}
-        okText="Xóa"
-        cancelText="Hủy"
-        disabled={isApproved || isOtherRowEditing}
-      >
-        <Tooltip title={isApproved ? "Không thể xóa bút toán đã duyệt" : "Xóa"}>
+      <Tooltip title={isApproved ? "Không thể xóa bút toán đã duyệt" : "Xóa"}>
+        <Popconfirm
+          title="Xác nhận xóa bút toán này?"
+          onConfirm={handleDelete}
+          okText="Xóa"
+          cancelText="Hủy"
+          disabled={isApproved || isOtherRowEditing}
+          okButtonProps={{ danger: true }}
+        >
           <Button
             type="text"
             size="small"
@@ -132,8 +133,8 @@ onClick={handleEdit}
             disabled={isApproved || isOtherRowEditing}
             className={isApproved || isOtherRowEditing ? "" : "!text-destructive"}
           />
-        </Tooltip>
-      </Popconfirm>
+        </Popconfirm>
+      </Tooltip>
     </Space>
   );
 }

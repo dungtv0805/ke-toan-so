@@ -276,23 +276,23 @@ const TaiKhoanPage: React.FC = () => {
               className="!text-primary hover:!bg-primary/10"
             />
           </Tooltip>
-          <Popconfirm
-            title="Xác nhận xóa"
-            description="Bạn có chắc chắn muốn xóa tài khoản này?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-            okButtonProps={{ danger: true }}
-          >
-            <Tooltip title="Xóa">
+          <Tooltip title="Xóa">
+            <Popconfirm
+              title="Xác nhận xóa"
+              description="Bạn có chắc chắn muốn xóa tài khoản này?"
+              onConfirm={() => handleDelete(record.id)}
+              okText="Xóa"
+              cancelText="Hủy"
+              okButtonProps={{ danger: true }}
+            >
               <Button
                 type="text"
                 size="small"
                 icon={<DeleteOutlined />}
                 className="!text-destructive hover:!bg-destructive/10"
               />
-            </Tooltip>
-          </Popconfirm>
+            </Popconfirm>
+          </Tooltip>
         </Space>
       ),
     },

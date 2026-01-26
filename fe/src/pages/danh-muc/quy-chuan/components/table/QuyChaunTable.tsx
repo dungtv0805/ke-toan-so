@@ -138,16 +138,17 @@ export const QuyChaunTable: React.FC = () => {
               onClick={() => handleEdit(record)}
             />
           </Tooltip>
-          <Popconfirm
-            title="Xác nhận xóa quy chuẩn này?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-          >
-            <Tooltip title="Xóa">
+          <Tooltip title="Xóa">
+            <Popconfirm
+              title="Xác nhận xóa quy chuẩn này?"
+              onConfirm={() => handleDelete(record.id)}
+              okText="Xóa"
+              cancelText="Hủy"
+              okButtonProps={{ danger: true }}
+            >
               <Button type="text" danger icon={<DeleteOutlined />} />
-            </Tooltip>
-          </Popconfirm>
+            </Popconfirm>
+          </Tooltip>
         </Space>
       ),
     },
