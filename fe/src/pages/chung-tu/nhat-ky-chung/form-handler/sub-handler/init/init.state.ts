@@ -22,8 +22,9 @@ export interface KhoanMucItem {
 export interface ChungTuHeader {
   soPhieu?: string;
   ngay: Dayjs;
-  loai?: string;
-  loaiTen?: string;
+  loaiGiaoDich?: string;  // PHIEU_THU | PHIEU_CHI | BAO_CO | BAO_NO
+  loai?: string;          // nghiepVu code
+  loaiTen?: string;       // nghiepVu name
   dienGiaiChung?: string;
   nguoiGiaoDich?: string;
   diaChi?: string;
@@ -85,6 +86,9 @@ export interface InitFormStates extends BaseStates {
   loaiChungTuList: LoaiChungTuType[];
   nhomKhuyenMaiList: NhomKhuyenMai[];
   nhomQuanLyList: NhomQuanLy[];
+
+  // Filtered list - nghiệp vụ theo loại giao dịch
+  filteredNghiepVuList: Array<{ value: string; label: string }>;
 
   // UI state
   loading: boolean;

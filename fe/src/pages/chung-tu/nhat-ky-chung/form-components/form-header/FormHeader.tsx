@@ -12,17 +12,21 @@ import {
   useNhatKyChungFormState,
   useNhatKyChungFormHandler,
 } from "../../NhatKyChungFormHandlerContext";
-import { LoaiChungTuType } from "@/services/loaiChungTuService";
+import { loaiGiaoDichOptions } from "@/services/quyChaunService";
 import { ChungTuHeader } from "../../form-handler/sub-handler/init/init.state";
 
 export function FormHeader() {
   const handler = useNhatKyChungFormHandler();
   const [header] = useNhatKyChungFormState("header", null);
   const [isEditing] = useNhatKyChungFormState("isEditing", false);
-  const [loaiChungTuList] = useNhatKyChungFormState("loaiChungTuList", []);
+  const [filteredNghiepVuList] = useNhatKyChungFormState("filteredNghiepVuList", []);
 
   const handleFieldChange = (field: keyof ChungTuHeader, value: unknown) => {
     handler.executeEvent("updateHeader", { field, value });
+  };
+
+  const handleLoaiGiaoDichChange = (value: string) => {
+    handler.executeEvent("handleLoaiGiaoDichChange", { loaiGiaoDich: value });
   };
 
   const handleLoaiChange = (value: string) => {
@@ -33,13 +37,13 @@ export function FormHeader() {
     <div className="mb-4 sm:mb-6">
       <Row gutter={[16, 8]}>
         {isEditing && header?.soPhieu && (
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={4}>
             <Form.Item label="Số phiếu" className="mb-2 sm:mb-3">
               <Input value={header.soPhieu} disabled className="font-semibold" />
             </Form.Item>
           </Col>
         )}
-        <Col xs={24} sm={12} md={isEditing ? 6 : 8}>
+        <Col xs={24} sm={12} md={isEditing ? 4 : 6}>
           <Form.Item
             label="Ngày chứng từ"
             required
@@ -54,7 +58,22 @@ export function FormHeader() {
             />
           </Form.Item>
         </Col>
-        <Col xs={24} sm={24} md={isEditing ? 12 : 16}>
+        <Col xs={24} sm={12} md={isEditing ? 4 : 6}>
+          <Form.Item
+            label="Loại giao dịch"
+            required
+            className="mb-2 sm:mb-3"
+          >
+            <Select
+              placeholder="Chọn loại giao dịch"
+              disabled={isEditing}
+              value={header?.loaiGiaoDich}
+              onChange={handleLoaiGiaoDichChange}
+              options={loaiGiaoDichOptions}
+            />
+          </Form.Item>
+        </Col>
+        <Col xs={24} sm={24} md={isEditing ? 12 : 12}>
           <Form.Item
             label="Nghiệp vụ"
             required
@@ -63,14 +82,11 @@ export function FormHeader() {
             <Select
               showSearch
               placeholder="Chọn nghiệp vụ"
-              disabled={isEditing}
+              disabled={!header?.loaiGiaoDich || isEditing}
               optionFilterProp="label"
               value={header?.loai}
               onChange={handleLoaiChange}
-              options={(loaiChungTuList as LoaiChungTuType[])?.map((lct) => ({
-                value: lct.ma,
-                label: lct.ten,
-              }))}
+              options={filteredNghiepVuList}
             />
           </Form.Item>
         </Col>

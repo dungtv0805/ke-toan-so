@@ -146,5 +146,6 @@ export class InitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyCh
     this.setState("loaiChungTuList", []);
     this.setState("nhomKhuyenMaiList", []);
     this.setState("nhomQuanLyList", []);
+    this.setState("filteredNghiepVuList", []);
   }
 }

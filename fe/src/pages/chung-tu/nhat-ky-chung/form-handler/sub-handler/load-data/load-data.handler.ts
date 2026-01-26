@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 import "./load-data.event";
 import { NhatKyChungFormStates, NhatKyChungFormEvents } from "../../nhat-ky-chung-form.handler";
 import { ChungTuHeader, ChungTuChiTiet } from "../init/init.state";
-import { NhatKyChung, DoiTuong, DuAn, BoPhan, SanPham, DongTien, NhomKhuyenMai, NhomQuanLy, KhoanMuc } from "@/types";
+import { NhatKyChung, DoiTuong, DuAn, BoPhan, SanPham, DongTien, NhomKhuyenMai, NhomQuanLy, QuyChuan } from "@/types";
 import { KhoanMucItem } from "../init/init.state";
 
 @RegisterHandler("nhat-ky-chung-form")
@@ -21,10 +21,18 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
       if (items.length > 0) {
         // Header từ item đầu tiên
         const first = items[0];
+
+        // Lấy loaiGiaoDich từ quyChaunList dựa trên nghiệp vụ
+        const quyChaunList = (this.getState("quyChaunList") as QuyChuan[]) || [];
+        const nghiepVu = first.danhMuc?.loaiChungTu?.ma || first.danhMuc?.loaiGiaoDich?.ma;
+        const quyChuan = quyChaunList.find((qc) => qc.nghiepVu === nghiepVu);
+        const loaiGiaoDich = quyChuan?.loaiGiaoDich || first.danhMuc?.loaiGiaoDich?.ma;
+
         const header: ChungTuHeader = {
           soPhieu: first.soPhieu,
           ngay: dayjs(first.ngay),
-          loai: first.danhMuc?.loaiChungTu?.ma || first.danhMuc?.loaiGiaoDich?.ma,
+          loaiGiaoDich: loaiGiaoDich,
+          loai: nghiepVu,
           loaiTen: first.danhMuc?.loaiChungTu?.ten || first.danhMuc?.loaiGiaoDich?.ten || first.loaiChungTu,
           dienGiaiChung: first.dienGiai,
           nguoiGiaoDich: first.nguoiGiaoDich,
@@ -32,6 +40,17 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
           ghiChu: first.ghiChu,
         };
         this.setState("header", header);
+
+        // Lọc nghiệp vụ theo loại giao dịch để hiển thị đúng trong dropdown
+        if (loaiGiaoDich) {
+          const filtered = quyChaunList
+            .filter((qc) => qc.loaiGiaoDich === loaiGiaoDich)
+            .map((qc) => ({
+              value: qc.nghiepVu,
+              label: qc.nghiepVu,
+            }));
+          this.setState("filteredNghiepVuList", filtered);
+        }
 
         // Chi tiết từ tất cả items
         const chiTietList: ChungTuChiTiet[] = items.map((item) => this.mapItemToChiTiet(item));

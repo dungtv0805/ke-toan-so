@@ -19,6 +19,33 @@ export class HeaderFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
     });
   }
 
+  @HandlerDecorator("handleLoaiGiaoDichChange")
+  async handleLoaiGiaoDichChange(params: { loaiGiaoDich: string }): Promise<void> {
+    const { loaiGiaoDich } = params;
+    const header = this.getState("header") as ChungTuHeader | null;
+    const quyChaunList = (this.getState("quyChaunList") as QuyChuan[]) || [];
+
+    if (!header) return;
+
+    // Reset nghiệp vụ khi đổi loại giao dịch
+    this.setState("header", {
+      ...header,
+      loaiGiaoDich,
+      loai: undefined,
+      loaiTen: undefined,
+    });
+
+    // Lọc nghiệp vụ theo loại giao dịch từ quyChaunList
+    const filtered = quyChaunList
+      .filter((qc) => qc.loaiGiaoDich === loaiGiaoDich)
+      .map((qc) => ({
+        value: qc.nghiepVu,
+        label: qc.nghiepVu,
+      }));
+
+    this.setState("filteredNghiepVuList", filtered);
+  }
+
   @HandlerDecorator("handleLoaiChange")
   async handleLoaiChange(params: { loaiMa: string }): Promise<void> {
     const { loaiMa } = params;
