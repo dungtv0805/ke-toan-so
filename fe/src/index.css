@@ -1708,6 +1708,8 @@ body.col-resizing .ant-table * {
 
 .nkc-table-container .ant-table-header {
   flex-shrink: 0;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
 }
 
 .nkc-table-container .ant-table-body {
@@ -1715,6 +1717,16 @@ body.col-resizing .ant-table * {
   min-height: 0;
   overflow: auto !important;
   max-height: none !important;
+}
+
+/* Sync horizontal scroll between header and body */
+.nkc-table-container .ant-table-header::-webkit-scrollbar {
+  display: none;
+}
+
+.nkc-table-container .ant-table-header {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Detail card body */

@@ -73,6 +73,26 @@ export function ChiTietTable() {
   const tableRef = useRef<HTMLDivElement>(null);
   const activeRowRef = useRef<number>(0);
 
+  // Sync horizontal scroll between header and body
+  useEffect(() => {
+    if (!tableRef.current) return;
+
+    const tableBody = tableRef.current.querySelector('.ant-table-body') as HTMLElement;
+    const tableHeader = tableRef.current.querySelector('.ant-table-header') as HTMLElement;
+
+    if (!tableBody || !tableHeader) return;
+
+    const handleBodyScroll = () => {
+      tableHeader.scrollLeft = tableBody.scrollLeft;
+    };
+
+    tableBody.addEventListener('scroll', handleBodyScroll);
+
+    return () => {
+      tableBody.removeEventListener('scroll', handleBodyScroll);
+    };
+  }, []);
+
   // Keyboard shortcuts handler
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     // Ctrl+N or Alt+N: Add new row
