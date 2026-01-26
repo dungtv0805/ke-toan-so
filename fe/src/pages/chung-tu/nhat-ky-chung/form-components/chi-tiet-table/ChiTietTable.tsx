@@ -565,7 +565,7 @@ export function ChiTietTable() {
           size="small"
           scroll={{ x: 1600, y: 'calc(100vh - 340px)' }}
           bordered
-          className="excel-table resizable-table chi-tiet-excel-table"
+          className="resizable-table chi-tiet-excel-table"
           rowClassName={(_, index) =>
             index === activeRowRef.current ? "excel-row-active" : ""
           }
