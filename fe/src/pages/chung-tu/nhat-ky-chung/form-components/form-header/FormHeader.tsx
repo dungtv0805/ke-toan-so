@@ -33,7 +33,7 @@ export function FormHeader() {
   return (
     <div className="nkc-header-form">
       {/* Row 1: Các field cơ bản */}
-      <div className="flex flex-wrap gap-3 mb-2">
+      <div className="flex flex-wrap gap-3 items-end mb-2">
         {isEditing && header?.soPhieu && (
           <div className="nkc-field" style={{ width: 100 }}>
             <label className="nkc-label">Số phiếu</label>
@@ -85,16 +85,17 @@ export function FormHeader() {
             size="small"
           />
         </div>
-        <div className="nkc-field flex-1" style={{ minWidth: 200 }}>
-          <label className="nkc-label">Diễn giải chung</label>
-          <Input.TextArea
-            placeholder="Nhập diễn giải chung cho chứng từ"
-            value={header?.dienGiaiChung || ""}
-            onChange={(e) => handleFieldChange("dienGiaiChung", e.target.value)}
-            autoSize={{ minRows: 1, maxRows: 2 }}
-            className="nkc-textarea"
-          />
-        </div>
+      </div>
+      {/* Row 2: Diễn giải chung - full width */}
+      <div className="nkc-field w-full">
+        <label className="nkc-label">Diễn giải chung</label>
+        <Input.TextArea
+          placeholder="Nhập diễn giải chung cho chứng từ"
+          value={header?.dienGiaiChung || ""}
+          onChange={(e) => handleFieldChange("dienGiaiChung", e.target.value)}
+          autoSize={{ minRows: 2, maxRows: 5 }}
+          className="nkc-textarea"
+        />
       </div>
     </div>
   );

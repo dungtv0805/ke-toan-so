@@ -245,7 +245,7 @@ export function ChiTietTable() {
       dataIndex: "noiDung",
       width: 180,
       render: (value: string, record: ChungTuChiTiet, index: number) => (
-        <Input
+        <Input.TextArea
           size="small"
           placeholder="Nhập diễn giải"
           value={value || ""}
@@ -253,6 +253,7 @@ export function ChiTietTable() {
           onFocus={() => { activeRowRef.current = index; }}
           className="excel-cell-input"
           variant="borderless"
+          autoSize={{ minRows: 1, maxRows: 3 }}
         />
       ),
     },
