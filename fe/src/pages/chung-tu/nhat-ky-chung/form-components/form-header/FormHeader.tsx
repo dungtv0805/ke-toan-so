@@ -35,16 +35,16 @@ export function FormHeader() {
 
   return (
     <div className="mb-4 sm:mb-6">
-      {/* Row 1: Số phiếu, Ngày chứng từ, Loại giao dịch */}
+      {/* Row 1: Số phiếu (nếu edit), Ngày chứng từ, Loại giao dịch */}
       <Row gutter={[16, 8]}>
         {isEditing && header?.soPhieu && (
-          <Col xs={24} sm={12} md={6} lg={4}>
+          <Col xs={24} sm={12} md={8}>
             <Form.Item label="Số phiếu" className="mb-2 sm:mb-3">
               <Input value={header.soPhieu} disabled className="font-semibold" />
             </Form.Item>
           </Col>
         )}
-        <Col xs={24} sm={12} md={isEditing ? 6 : 8} lg={isEditing ? 4 : 6}>
+        <Col xs={24} sm={12} md={isEditing ? 8 : 12}>
           <Form.Item
             label="Ngày chứng từ"
             required
@@ -59,7 +59,7 @@ export function FormHeader() {
             />
           </Form.Item>
         </Col>
-        <Col xs={24} sm={12} md={isEditing ? 6 : 8} lg={isEditing ? 4 : 6}>
+        <Col xs={24} sm={12} md={isEditing ? 8 : 12}>
           <Form.Item
             label="Loại giao dịch"
             required
@@ -74,7 +74,11 @@ export function FormHeader() {
             />
           </Form.Item>
         </Col>
-        <Col xs={24} sm={12} md={isEditing ? 6 : 8} lg={isEditing ? 4 : 6}>
+      </Row>
+
+      {/* Row 2: Người giao dịch, Địa chỉ */}
+      <Row gutter={[16, 8]}>
+        <Col xs={24} sm={12} md={12}>
           <Form.Item label="Người giao dịch" className="mb-2 sm:mb-3">
             <Input
               placeholder="Nhập tên người giao dịch"
@@ -85,7 +89,7 @@ export function FormHeader() {
             />
           </Form.Item>
         </Col>
-        <Col xs={24} sm={12} md={isEditing ? 6 : 8} lg={isEditing ? 8 : 6}>
+        <Col xs={24} sm={12} md={12}>
           <Form.Item label="Địa chỉ" className="mb-2 sm:mb-3">
             <Input
               placeholder="Nhập địa chỉ"
@@ -98,7 +102,7 @@ export function FormHeader() {
         </Col>
       </Row>
 
-      {/* Row 2: Diễn giải chung và Ghi chú */}
+      {/* Row 3: Diễn giải chung và Ghi chú */}
       <Row gutter={[16, 8]}>
         <Col xs={24} md={12}>
           <Form.Item label="Diễn giải chung" className="mb-2 sm:mb-3">
