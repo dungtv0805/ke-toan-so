@@ -12,6 +12,7 @@ import './nhom-khuyen-mai.entity';
 import './nhom-quan-ly.entity';
 import './loai-chung-tu.entity';
 import './nhom-khoan-muc.entity';
+import './loai-giao-dich.entity';
 
 // Re-export all entities
 export * from './tai-khoan.entity';
@@ -27,3 +28,4 @@ export * from './nhom-khuyen-mai.entity';
 export * from './nhom-quan-ly.entity';
 export * from './loai-chung-tu.entity';
 export * from './nhom-khoan-muc.entity';
+export * from './loai-giao-dich.entity';

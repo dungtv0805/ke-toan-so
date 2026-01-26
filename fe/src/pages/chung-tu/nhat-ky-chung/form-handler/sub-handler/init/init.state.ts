@@ -1,5 +1,5 @@
 import { BaseStates } from "@/common/c-handler/core/actions/c-state.action";
-import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, QuyChuan, NhomKhuyenMai, NhomQuanLy } from "@/types";
+import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, QuyChuan, NhomKhuyenMai, NhomQuanLy, LoaiGiaoDich } from "@/types";
 import { LoaiChungTuType } from "@/services/loaiChungTuService";
 import { Dayjs } from "dayjs";
 
@@ -84,6 +84,7 @@ export interface InitFormStates extends BaseStates {
   dongTienList: DongTien[];
   quyChaunList: QuyChuan[];
   loaiChungTuList: LoaiChungTuType[];
+  loaiGiaoDichList: LoaiGiaoDich[];
   nhomKhuyenMaiList: NhomKhuyenMai[];
   nhomQuanLyList: NhomQuanLy[];
 

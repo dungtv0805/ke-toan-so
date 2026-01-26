@@ -12,14 +12,21 @@ import {
   useNhatKyChungFormState,
   useNhatKyChungFormHandler,
 } from "../../NhatKyChungFormHandlerContext";
-import { loaiGiaoDichOptions } from "@/services/quyChaunService";
 import { ChungTuHeader } from "../../form-handler/sub-handler/init/init.state";
+import { LoaiGiaoDich } from "@/types";
 
 export function FormHeader() {
   const handler = useNhatKyChungFormHandler();
   const [header] = useNhatKyChungFormState("header", null);
   const [isEditing] = useNhatKyChungFormState("isEditing", false);
   const [filteredNghiepVuList] = useNhatKyChungFormState("filteredNghiepVuList", []);
+  const [loaiGiaoDichList] = useNhatKyChungFormState("loaiGiaoDichList", [] as LoaiGiaoDich[]);
+
+  // Convert loaiGiaoDichList to options format
+  const loaiGiaoDichOptions = loaiGiaoDichList.map((lgd: LoaiGiaoDich) => ({
+    value: lgd.ma,
+    label: lgd.ten,
+  }));
 
   const handleFieldChange = (field: keyof ChungTuHeader, value: unknown) => {
     handler.executeEvent("updateHeader", { field, value });

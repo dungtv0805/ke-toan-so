@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { quyChauanService } from '@/services/quyChaunService';
 import { taiKhoanService } from '@/services/taiKhoanService';
 import { useQuyChaunHandler, useQuyChaunState } from '../../QuyChaunHandlerContext';
+import { LoaiGiaoDich } from '@/types';
 import './QuyChaunForm.state';
 
 const quyChaunSchema = z.object({
@@ -19,7 +20,7 @@ export const QuyChaunForm: React.FC = () => {
   const [modalVisible] = useQuyChaunState('modalVisible', false);
   const [editingRecord] = useQuyChaunState('editingRecord', null);
   const [formLoading] = useQuyChaunState('formLoading', false);
-  const [loaiChungTuList] = useQuyChaunState('loaiChungTuList', []);
+  const [loaiGiaoDichList] = useQuyChaunState('loaiGiaoDichList', [] as LoaiGiaoDich[]);
   const [form] = Form.useForm();
   const [taiKhoanOptions, setTaiKhoanOptions] = useState<{ value: string; label: string }[]>([]);
 
@@ -79,8 +80,8 @@ export const QuyChaunForm: React.FC = () => {
     }
   };
 
-  // Build options from loaiChungTuList
-  const loaiGiaoDichOptions = loaiChungTuList.map(item => ({
+  // Build options from loaiGiaoDichList
+  const loaiGiaoDichOptions = loaiGiaoDichList.map((item: LoaiGiaoDich) => ({
     value: item.ma,
     label: item.ten,
   }));

@@ -1,5 +1,5 @@
 import { BaseStates } from "@/common/c-handler/core/actions/c-state.action";
-import { QuyChuan } from "@/types";
+import { QuyChuan, LoaiGiaoDich } from "@/types";
 
 export interface PaginationMeta {
   total: number;
@@ -13,6 +13,7 @@ export interface QuyChaunTableStates extends BaseStates {
   loading: boolean;
   activeTab: string;
   pagination: PaginationMeta;
+  loaiGiaoDichList: LoaiGiaoDich[];
 }
 
 declare module "../../quyChaunHandler" {

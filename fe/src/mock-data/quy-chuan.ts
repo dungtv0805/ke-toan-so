@@ -32,10 +32,3 @@ export const mockQuyChuan: QuyChuan[] = [
   { id: '22', loaiGiaoDich: 'BAO_NO', nghiepVu: 'Chi lương qua CK', taiKhoanNo: '334', taiKhoanCo: '112', moTa: 'Chuyển khoản trả lương nhân viên' },
   { id: '23', loaiGiaoDich: 'BAO_NO', nghiepVu: 'Chi phí ngân hàng', taiKhoanNo: '642', taiKhoanCo: '112', moTa: 'Phí dịch vụ ngân hàng' },
 ];
-
-export const loaiGiaoDichOptions = [
-  { value: 'PHIEU_THU', label: 'Phiếu thu', color: 'green' },
-  { value: 'PHIEU_CHI', label: 'Phiếu chi', color: 'red' },
-  { value: 'BAO_CO', label: 'Báo có ngân hàng', color: 'blue' },
-  { value: 'BAO_NO', label: 'Báo nợ ngân hàng', color: 'orange' },
-];

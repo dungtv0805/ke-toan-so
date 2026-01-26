@@ -39,6 +39,7 @@ import {
   CloseOutlined,
   SafetyCertificateOutlined,
   TagOutlined,
+  SwapOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import type { MenuProps } from "antd";
@@ -104,6 +105,7 @@ const menuItems: MenuItem[] = [
     getItem("Nhóm khuyến mại", "/danh-muc/nhom-khuyen-mai", <AppstoreOutlined />),
     getItem("Nhóm quản lý", "/danh-muc/nhom-quan-ly", <TeamOutlined />),
     getItem("Loại chứng từ", "/danh-muc/loai-chung-tu", <FileTextOutlined />),
+    getItem("Loại giao dịch", "/danh-muc/loai-giao-dich", <SwapOutlined />),
     getItem("Quy chuẩn hạch toán", "/danh-muc/quy-chuan", <AuditOutlined />),
   ]),
   // getItem("Quy chế - Chính sách", "/quy-che", <SafetyCertificateOutlined />, [

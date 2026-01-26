@@ -99,6 +99,14 @@ export interface NhomQuanLy {
   moTa?: string;
 }
 
+export interface LoaiGiaoDich {
+  id: string;
+  ma: string;
+  ten: string;
+  color?: string;
+  moTa?: string;
+}
+
 // ===== DANH MỤC DTO (New Backend Structure) =====
 
 export type LoaiChungTu = 'PHIEU_THU' | 'PHIEU_CHI';

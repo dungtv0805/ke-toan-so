@@ -28,6 +28,7 @@ import {
   NhomQuanLyPage,
   LoaiChungTuPage,
   NhomKhoanMucPage,
+  LoaiGiaoDichPage,
   PhieuThuPage,
   PhieuChiPage,
   NhatKyChungPage,
@@ -106,6 +107,7 @@ const App = () => (
                   <Route path="nhom-quan-ly" element={<NhomQuanLyPage />} />
                   <Route path="loai-chung-tu" element={<LoaiChungTuPage />} />
                   <Route path="nhom-khoan-muc" element={<NhomKhoanMucPage />} />
+                  <Route path="loai-giao-dich" element={<LoaiGiaoDichPage />} />
                   <Route
                     path="quy-chuan"
                     element={

@@ -36,13 +36,6 @@ export interface QuyChaunPaginatedResponse {
   };
 }
 
-export const loaiGiaoDichOptions = [
-  { value: 'PHIEU_THU', label: 'Phiếu thu', color: 'green' },
-  { value: 'PHIEU_CHI', label: 'Phiếu chi', color: 'red' },
-  { value: 'BAO_CO', label: 'Báo có ngân hàng', color: 'blue' },
-  { value: 'BAO_NO', label: 'Báo nợ ngân hàng', color: 'orange' },
-];
-
 class QuyChaunService extends ServiceBase {
   constructor() {
     super({ endpoint: '/config/quy-chuan' });
@@ -131,10 +124,6 @@ class QuyChaunService extends ServiceBase {
 
   async remove(id: string): Promise<void> {
     await this.delete({ endpoint: `/${id}` });
-  }
-
-  getLoaiGiaoDichOptions() {
-    return loaiGiaoDichOptions;
   }
 }
 

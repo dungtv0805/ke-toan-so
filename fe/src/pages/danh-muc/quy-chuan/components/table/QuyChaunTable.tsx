@@ -2,8 +2,7 @@ import React, { useMemo, useCallback } from "react";
 import { Table, Tag, Space, Button, Popconfirm, Tabs, Tooltip } from "antd";
 import { EditOutlined, DeleteOutlined, SwapOutlined } from "@ant-design/icons";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
-import { QuyChuan } from "@/types";
-import { loaiGiaoDichOptions } from "@/services/quyChaunService";
+import { QuyChuan, LoaiGiaoDich } from "@/types";
 import {
   useQuyChaunHandler,
   useQuyChaunState,
@@ -25,6 +24,15 @@ export const QuyChaunTable: React.FC = () => {
   const [pagination] = useQuyChaunState("pagination", DEFAULT_PAGINATION);
   const [activeTab] = useQuyChaunState("activeTab", "all");
   const [searchText] = useQuyChaunState("searchText", "");
+  const [loaiGiaoDichList] = useQuyChaunState("loaiGiaoDichList", [] as LoaiGiaoDich[]);
+
+  // Convert loaiGiaoDichList to options format with color
+  const loaiGiaoDichOptions = useMemo(() =>
+    loaiGiaoDichList.map((lgd: LoaiGiaoDich) => ({
+      value: lgd.ma,
+      label: lgd.ten,
+      color: lgd.color || 'default',
+    })), [loaiGiaoDichList]);
 
   const handleEdit = (record: QuyChuan) => {
     handler.executeEvent("openModal", { record });
