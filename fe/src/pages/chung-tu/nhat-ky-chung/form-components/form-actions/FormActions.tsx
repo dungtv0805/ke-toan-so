@@ -27,11 +27,11 @@ export function FormActions() {
   };
 
   return (
-    <div className="flex flex-col-reverse sm:flex-row justify-end mt-4 pt-4 border-t gap-2 sm:gap-3">
+    <div className="nkc-actions-bar">
       <Button
         icon={<CloseOutlined />}
         onClick={handleCancel}
-        className="w-full sm:w-auto"
+        size="small"
       >
         Hủy
       </Button>
@@ -40,7 +40,7 @@ export function FormActions() {
           icon={<PlusOutlined />}
           onClick={handleSubmitAndNew}
           loading={submitting}
-          className="w-full sm:w-auto"
+          size="small"
         >
           Lưu & Tạo mới
         </Button>
@@ -50,7 +50,7 @@ export function FormActions() {
         icon={<SaveOutlined />}
         onClick={handleSubmit}
         loading={submitting}
-        className="w-full sm:w-auto"
+        size="small"
       >
         {isEditing ? "Cập nhật" : "Lưu"}
       </Button>
