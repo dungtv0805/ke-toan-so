@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef, useState, useMemo } from "react";
-import { Table, Select, InputNumber, Input, Button, Tooltip, Popconfirm } from "antd";
+import { Table, Select, InputNumber, Input, Button, Tooltip, Popconfirm, Pagination } from "antd";
 import { PlusOutlined, DeleteOutlined, CopyOutlined } from "@ant-design/icons";
 import {
   useNhatKyChungFormState,
@@ -45,9 +45,16 @@ export function ChiTietTable() {
       label: qc.nghiepVu,
     }));
 
+  // Tính toán data cho trang hiện tại
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return (chiTietList as ChungTuChiTiet[]).slice(startIndex, endIndex);
+  }, [chiTietList, currentPage, pageSize]);
+
   // Tính toán trang cuối khi thêm mới
   const totalItems = (chiTietList as ChungTuChiTiet[]).length;
-  const lastPage = useMemo(() => Math.ceil(totalItems / pageSize), [totalItems, pageSize]);
+  const lastPage = useMemo(() => Math.ceil(totalItems / pageSize) || 1, [totalItems, pageSize]);
 
   // Auto jump to last page when adding new item
   const prevTotalRef = useRef(totalItems);
@@ -523,29 +530,11 @@ export function ChiTietTable() {
       <div className="nkc-table-container">
         <Table
           columns={columns}
-          dataSource={chiTietList as ChungTuChiTiet[]}
+          dataSource={paginatedData}
           rowKey="key"
-          pagination={{
-            current: currentPage,
-            pageSize: pageSize,
-            showSizeChanger: true,
-            pageSizeOptions: ['25', '50', '100', '200'],
-            showTotal: (total, range) => `${range[0]}-${range[1]} / ${total} dòng`,
-            size: 'small',
-            onChange: (page, size) => {
-              setCurrentPage(page);
-              if (size !== pageSize) {
-                setPageSize(size);
-                // Recalculate current page when page size changes
-                const newLastPage = Math.ceil(totalItems / size);
-                if (page > newLastPage) {
-                  setCurrentPage(newLastPage || 1);
-                }
-              }
-            },
-          }}
+          pagination={false}
           size="small"
-          scroll={{ x: 1600, y: 'calc(100vh - 380px)' }}
+          scroll={{ x: 1600, y: 'calc(100vh - 340px)' }}
           bordered
           className="excel-table resizable-table chi-tiet-excel-table"
           rowClassName={(_, index) =>
@@ -554,24 +543,47 @@ export function ChiTietTable() {
         />
       </div>
 
-      {/* Footer with add button and total */}
-      <div className="nkc-form-footer">
-        <Button
-          type="dashed"
-          size="small"
-          icon={<PlusOutlined />}
-          onClick={() => handler.executeEvent("addChiTiet", {})}
-          className="text-xs"
-        >
-          Thêm dòng (Ctrl+N)
-        </Button>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <span className="text-gray-500 text-xs sm:text-sm mr-2">Tổng cộng:</span>
-            <span className="text-base sm:text-lg font-bold text-green-600">
-              {formatCurrency(total)}
-            </span>
-          </div>
+      {/* Footer with pagination, add button and total */}
+      <div className="nkc-table-footer">
+        <div className="nkc-footer-left">
+          <Button
+            type="dashed"
+            size="small"
+            icon={<PlusOutlined />}
+            onClick={() => handler.executeEvent("addChiTiet", {})}
+          >
+            Thêm dòng
+          </Button>
+          <span className="text-gray-500 text-xs ml-2">Ctrl+N</span>
+        </div>
+
+        <div className="nkc-footer-center">
+          <Pagination
+            current={currentPage}
+            pageSize={pageSize}
+            total={totalItems}
+            showSizeChanger
+            pageSizeOptions={['25', '50', '100', '200']}
+            size="small"
+            showTotal={(total, range) => `${range[0]}-${range[1]}/${total}`}
+            onChange={(page, size) => {
+              setCurrentPage(page);
+              if (size !== pageSize) {
+                setPageSize(size);
+                const newLastPage = Math.ceil(totalItems / size) || 1;
+                if (page > newLastPage) {
+                  setCurrentPage(newLastPage);
+                }
+              }
+            }}
+          />
+        </div>
+
+        <div className="nkc-footer-right">
+          <span className="text-gray-500 text-xs mr-2">Tổng:</span>
+          <span className="text-sm font-bold text-green-600">
+            {formatCurrency(total)}
+          </span>
         </div>
       </div>
     </div>
