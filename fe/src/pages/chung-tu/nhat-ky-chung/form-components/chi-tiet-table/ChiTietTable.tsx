@@ -205,7 +205,6 @@ export function ChiTietTable() {
         <Select
           size="small"
           showSearch
-          allowClear
           placeholder="Chọn TK"
           optionFilterProp="label"
           value={value || undefined}
@@ -234,7 +233,6 @@ export function ChiTietTable() {
         <Select
           size="small"
           showSearch
-          allowClear
           placeholder="Chọn TK"
           optionFilterProp="label"
           value={value || undefined}
