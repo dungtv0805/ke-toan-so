@@ -8,8 +8,9 @@ import {
 import {
   ChungTuChiTiet,
   TaiKhoanItem,
+  ChungTuHeader,
 } from "../../form-handler/sub-handler/init/init.state";
-import { DoiTuong, DuAn, BoPhan, SanPham, DongTien } from "@/types";
+import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, QuyChuan } from "@/types";
 import {
   buildDoiTuongSnapshot,
   buildDuAnSnapshot,
@@ -28,6 +29,17 @@ export function ChiTietTable() {
   const [boPhanList] = useNhatKyChungFormState("boPhanList", []);
   const [sanPhamList] = useNhatKyChungFormState("sanPhamList", []);
   const [dongTienList] = useNhatKyChungFormState("dongTienList", []);
+  const [quyChaunList] = useNhatKyChungFormState("quyChaunList", []);
+  const [header] = useNhatKyChungFormState("header", null);
+
+  // Lọc nghiệp vụ theo loại giao dịch từ header
+  const typedHeader = header as ChungTuHeader | null;
+  const nghiepVuOptions = (quyChaunList as QuyChuan[])
+    .filter((qc) => !typedHeader?.loaiGiaoDich || qc.loaiGiaoDich === typedHeader.loaiGiaoDich)
+    .map((qc) => ({
+      value: qc.nghiepVu,
+      label: qc.nghiepVu,
+    }));
 
   // Enable column resize
   useTableColumnResize("chi-tiet-excel-table");
@@ -175,6 +187,32 @@ export function ChiTietTable() {
       className: "excel-stt-cell",
       render: (_: unknown, __: unknown, index: number) => (
         <span className="font-medium text-gray-500">{index + 1}</span>
+      ),
+    },
+    {
+      title: (
+        <span>
+          Nghiệp vụ <span className="text-red-500">*</span>
+        </span>
+      ),
+      dataIndex: "nghiepVu",
+      width: 180,
+      render: (value: string, record: ChungTuChiTiet, index: number) => (
+        <Select
+          size="small"
+          showSearch
+          placeholder="Chọn nghiệp vụ"
+          optionFilterProp="label"
+          value={value || undefined}
+          onChange={(v) => handler.executeEvent("handleNghiepVuChange", { key: record.key, nghiepVu: v })}
+          onFocus={() => { activeRowRef.current = index; }}
+          options={nghiepVuOptions}
+          className="w-full excel-cell-input"
+          variant="borderless"
+          status={!value ? "error" : ""}
+          popupMatchSelectWidth={280}
+          disabled={!typedHeader?.loaiGiaoDich}
+        />
       ),
     },
     {

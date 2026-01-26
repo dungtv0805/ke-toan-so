@@ -8,7 +8,6 @@ import "./submit.event";
 import { NhatKyChungFormStates, NhatKyChungFormEvents } from "../../nhat-ky-chung-form.handler";
 import { ChungTuHeader, ChungTuChiTiet, TaiKhoanItem } from "../init/init.state";
 import { DanhMuc, LoaiChungTu } from "@/types";
-import { LoaiChungTuType } from "@/services/loaiChungTuService";
 
 @RegisterHandler("nhat-ky-chung-form")
 export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyChungFormStates> {
@@ -23,8 +22,8 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
       errors.push("Vui lòng chọn ngày chứng từ");
     }
 
-    if (!header?.loai) {
-      errors.push("Vui lòng chọn nghiệp vụ");
+    if (!header?.loaiGiaoDich) {
+      errors.push("Vui lòng chọn loại giao dịch");
     }
 
     // Validate chi tiết
@@ -33,6 +32,9 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
     }
 
     chiTietList.forEach((item, index) => {
+      if (!item.nghiepVu) {
+        errors.push(`Dòng ${index + 1}: Vui lòng chọn nghiệp vụ`);
+      }
       if (!item.taiKhoanNo) {
         errors.push(`Dòng ${index + 1}: Vui lòng chọn TK Nợ`);
       }
@@ -59,14 +61,14 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
     const header = this.getState("header") as ChungTuHeader;
     const chiTietList = (this.getState("chiTietList") as ChungTuChiTiet[]) || [];
     const isEditing = this.getState("isEditing") as boolean;
-    const loaiChungTuList = (this.getState("loaiChungTuList") as LoaiChungTuType[]) || [];
 
     this.setState("submitting", true);
 
     try {
-      // Determine loai (PHIEU_THU or PHIEU_CHI) from loaiChungTu
-      const loaiChungTu = loaiChungTuList.find((lct) => lct.ma === header.loai);
-      const loai: LoaiChungTu = loaiChungTu?.ma?.startsWith("CHI_") ? "PHIEU_CHI" : "PHIEU_THU";
+      // Determine loai (PHIEU_THU or PHIEU_CHI) from loaiGiaoDich
+      const loai: LoaiChungTu = header.loaiGiaoDich === "PHIEU_CHI" || header.loaiGiaoDich === "BAO_NO"
+        ? "PHIEU_CHI"
+        : "PHIEU_THU";
 
       if (isEditing && header.soPhieu) {
         // Build items for batch update with id tracking
@@ -117,6 +119,7 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
   async resetForm(): Promise<void> {
     this.setState("header", {
       ngay: dayjs(),
+      loaiGiaoDich: undefined,
       loai: undefined,
       loaiTen: undefined,
       dienGiaiChung: "",
@@ -132,6 +135,8 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
         taiKhoanCo: "",
         soTien: 0,
         noiDung: "",
+        nghiepVu: undefined,
+        nghiepVuTen: undefined,
       },
     ]);
 
@@ -140,7 +145,6 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
 
   private buildDanhMuc(chiTiet: ChungTuChiTiet, header: ChungTuHeader): DanhMuc {
     const taiKhoanList = (this.getState("taiKhoanList") as TaiKhoanItem[]) || [];
-    const loaiChungTuList = (this.getState("loaiChungTuList") as LoaiChungTuType[]) || [];
 
     const danhMuc: DanhMuc = {};
 
@@ -166,12 +170,19 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
       };
     }
 
-    // Loại chứng từ
-    if (header.loai) {
-      const loaiChungTu = loaiChungTuList.find((lct) => lct.ma === header.loai);
+    // Loại chứng từ - lấy từ nghiệp vụ của từng dòng chi tiết
+    if (chiTiet.nghiepVu) {
       danhMuc.loaiChungTu = {
-        ma: header.loai,
-        ten: loaiChungTu?.ten || header.loaiTen || header.loai,
+        ma: chiTiet.nghiepVu,
+        ten: chiTiet.nghiepVuTen || chiTiet.nghiepVu,
+      };
+    }
+
+    // Loại giao dịch từ header
+    if (header.loaiGiaoDich) {
+      danhMuc.loaiGiaoDich = {
+        ma: header.loaiGiaoDich,
+        ten: header.loaiGiaoDich,
       };
     }
 

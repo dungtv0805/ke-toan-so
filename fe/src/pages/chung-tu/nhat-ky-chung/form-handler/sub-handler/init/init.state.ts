@@ -40,6 +40,10 @@ export interface ChungTuChiTiet {
   soTien: number;
   noiDung?: string;
 
+  // Nghiệp vụ cho từng dòng
+  nghiepVu?: string;
+  nghiepVuTen?: string;
+
   // Phân bổ
   doiTuongId?: string;
   doiTuong2Id?: string;

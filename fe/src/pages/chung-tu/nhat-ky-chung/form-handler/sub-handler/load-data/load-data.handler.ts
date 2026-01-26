@@ -87,6 +87,10 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
     const nhomQuanLy = danhMuc?.nhomQuanLy ? nhomQuanLyList.find((n) => n.ma === danhMuc.nhomQuanLy?.ma) : undefined;
     const khoanMuc = danhMuc?.khoanMuc ? khoanMucList.find((k) => k.ma === danhMuc.khoanMuc?.ma) : undefined;
 
+    // Lấy nghiệp vụ từ danhMuc của từng dòng
+    const nghiepVu = danhMuc?.loaiChungTu?.ma;
+    const nghiepVuTen = danhMuc?.loaiChungTu?.ten;
+
     return {
       key: item.id,
       id: item.id,
@@ -94,6 +98,10 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
       taiKhoanCo: item.taiKhoanCo || "",
       soTien: item.soTien,
       noiDung: item.dienGiai,
+
+      // Nghiệp vụ cho từng dòng
+      nghiepVu: nghiepVu,
+      nghiepVuTen: nghiepVuTen,
 
       // IDs
       doiTuongId: doiTuong?.id,

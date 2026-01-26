@@ -35,6 +35,7 @@ export class InitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyCh
       // Tạo mới - khởi tạo header và 1 dòng chi tiết mặc định
       this.setState("header", {
         ngay: dayjs(),
+        loaiGiaoDich: undefined,
         loai: undefined,
         loaiTen: undefined,
         dienGiaiChung: "",
@@ -50,6 +51,8 @@ export class InitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyCh
           taiKhoanCo: "",
           soTien: 0,
           noiDung: "",
+          nghiepVu: undefined,
+          nghiepVuTen: undefined,
         },
       ]);
 
