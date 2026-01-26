@@ -35,12 +35,12 @@ export function FormHeader() {
       {/* Row 1: Các field cơ bản */}
       <div className="flex flex-wrap gap-3 items-end mb-2">
         {isEditing && header?.soPhieu && (
-          <div className="nkc-field" style={{ width: 100 }}>
+          <div className="nkc-field flex-1" style={{ minWidth: 80 }}>
             <label className="nkc-label">Số phiếu</label>
-            <Input value={header.soPhieu} disabled className="font-semibold" size="small" />
+            <Input value={header.soPhieu} disabled className="font-semibold w-full" size="small" />
           </div>
         )}
-        <div className="nkc-field" style={{ width: 120 }}>
+        <div className="nkc-field flex-1" style={{ minWidth: 100 }}>
           <label className="nkc-label">
             Ngày CT <span className="text-red-500">*</span>
           </label>
@@ -53,7 +53,7 @@ export function FormHeader() {
             size="small"
           />
         </div>
-        <div className="nkc-field" style={{ width: 140 }}>
+        <div className="nkc-field flex-1" style={{ minWidth: 120 }}>
           <label className="nkc-label">
             Loại GD <span className="text-red-500">*</span>
           </label>
@@ -67,22 +67,24 @@ export function FormHeader() {
             className="w-full"
           />
         </div>
-        <div className="nkc-field" style={{ width: 160 }}>
+        <div className="nkc-field flex-[2]" style={{ minWidth: 150 }}>
           <label className="nkc-label">Người GD</label>
           <Input
             placeholder="Người giao dịch"
             value={header?.nguoiGiaoDich || ""}
             onChange={(e) => handleFieldChange("nguoiGiaoDich", e.target.value)}
             size="small"
+            className="w-full"
           />
         </div>
-        <div className="nkc-field" style={{ width: 160 }}>
+        <div className="nkc-field flex-[2]" style={{ minWidth: 150 }}>
           <label className="nkc-label">Địa chỉ</label>
           <Input
             placeholder="Địa chỉ"
             value={header?.diaChi || ""}
             onChange={(e) => handleFieldChange("diaChi", e.target.value)}
             size="small"
+            className="w-full"
           />
         </div>
       </div>
