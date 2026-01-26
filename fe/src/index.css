@@ -826,7 +826,18 @@
 }
 
 .excel-table .ant-table-header {
-  overflow: hidden !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
+/* Hide scrollbar on header - scroll is synced from body */
+.excel-table .ant-table-header::-webkit-scrollbar {
+  display: none;
+}
+
+.excel-table .ant-table-header {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .excel-table .ant-table-body {
