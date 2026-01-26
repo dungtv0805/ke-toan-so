@@ -12,7 +12,6 @@ import {
 import { QuyChuan_Service } from './quy-chuan.service';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
 import { CreateQuyChuan_Dto, UpdateQuyChuan_Dto } from './dto';
-import { LoaiGiaoDich } from '@app/entities';
 
 @Controller('quy-chuan')
 @UseGuards(JwtGuard, RoleGuard)
@@ -31,7 +30,7 @@ export class QuyChuan_Controller {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('keyword') keyword?: string,
-    @Query('loaiGiaoDich') loaiGiaoDich?: LoaiGiaoDich,
+    @Query('loaiGiaoDich') loaiGiaoDich?: string,
   ) {
     // If pagination params provided, return paginated result
     if (page || limit) {
@@ -68,7 +67,7 @@ export class QuyChuan_Controller {
     @Query('keyword') keyword: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
-    @Query('loaiGiaoDich') loaiGiaoDich?: LoaiGiaoDich,
+    @Query('loaiGiaoDich') loaiGiaoDich?: string,
   ) {
     // If pagination params provided, use paginated method
     if (page || limit) {
@@ -94,7 +93,7 @@ export class QuyChuan_Controller {
     'KE_TOAN_CONG_NO',
     'MANAGER',
   )
-  async findByLoaiGiaoDich(@Param('loai') loai: LoaiGiaoDich) {
+  async findByLoaiGiaoDich(@Param('loai') loai: string) {
     const data = await this.quyChuan_Service.findByLoaiGiaoDich(loai);
     return { success: true, data };
   }
@@ -108,7 +107,7 @@ export class QuyChuan_Controller {
     'MANAGER',
   )
   async getSuggestedAccounts(
-    @Query('loaiGiaoDich') loaiGiaoDich: LoaiGiaoDich,
+    @Query('loaiGiaoDich') loaiGiaoDich: string,
     @Query('nghiepVu') nghiepVu: string,
   ) {
     const data = await this.quyChuan_Service.getSuggestedAccounts(
@@ -121,7 +120,7 @@ export class QuyChuan_Controller {
   @Get('duplicate-check')
   @Roles('ADMIN', 'KE_TOAN_TONG_HOP', 'MANAGER')
   async duplicateCheck(
-    @Query('loaiGiaoDich') loaiGiaoDich: LoaiGiaoDich,
+    @Query('loaiGiaoDich') loaiGiaoDich: string,
     @Query('nghiepVu') nghiepVu: string,
     @Query('excludeId') excludeId?: string,
   ) {
