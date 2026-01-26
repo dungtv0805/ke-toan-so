@@ -71,27 +71,35 @@ export function ChiTietTable() {
 
   // Track active row for keyboard navigation
   const tableRef = useRef<HTMLDivElement>(null);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
   const activeRowRef = useRef<number>(0);
 
   // Sync horizontal scroll between header and body
   useEffect(() => {
-    if (!tableRef.current) return;
+    const container = tableContainerRef.current;
+    if (!container) return;
 
-    const tableBody = tableRef.current.querySelector('.ant-table-body') as HTMLElement;
-    const tableHeader = tableRef.current.querySelector('.ant-table-header') as HTMLElement;
+    // Antd Table structure: .ant-table-container > .ant-table-header + .ant-table-body
+    const tableBody = container.querySelector('.ant-table-body') as HTMLElement;
+    const tableHeader = container.querySelector('.ant-table-header') as HTMLElement;
 
     if (!tableBody || !tableHeader) return;
 
     const handleBodyScroll = () => {
-      tableHeader.scrollLeft = tableBody.scrollLeft;
+      if (tableHeader.scrollLeft !== tableBody.scrollLeft) {
+        tableHeader.scrollLeft = tableBody.scrollLeft;
+      }
     };
 
-    tableBody.addEventListener('scroll', handleBodyScroll);
+    // Initial sync
+    handleBodyScroll();
+
+    tableBody.addEventListener('scroll', handleBodyScroll, { passive: true });
 
     return () => {
       tableBody.removeEventListener('scroll', handleBodyScroll);
     };
-  }, []);
+  }, [paginatedData]); // Re-run when data changes to ensure elements exist
 
   // Keyboard shortcuts handler
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -548,7 +556,7 @@ export function ChiTietTable() {
 
   return (
     <div ref={tableRef} className="excel-tab-content excel-editable-table nkc-chi-tiet-wrapper">
-      <div className="nkc-table-container">
+      <div ref={tableContainerRef} className="nkc-table-container">
         <Table
           columns={columns}
           dataSource={paginatedData}
