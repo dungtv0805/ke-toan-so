@@ -183,7 +183,7 @@ const keToAnMenuItems: MenuItem[] = [
   getItem("Trung tâm dữ liệu", "/trung-tam-du-lieu", <DatabaseOutlined />, [
     getMenuItem("Kế hoạch", "/trung-tam-du-lieu/ke-hoach", <ScheduleOutlined />),
     getMenuItem("Dự báo", "/trung-tam-du-lieu/du-bao", <RiseOutlined />),
-    getMenuItem("Nhật ký chung", "/chung-tu/nhat-ky-chung", <AuditOutlined />),
+    getMenuItem("Dữ liệu tổng hợp", "/chung-tu/nhat-ky-chung", <AuditOutlined />),
     getMenuItem("Quản lý Tài sản", "/trung-tam-du-lieu/tai-san", <CarOutlined />),
     getMenuItem("Quản lý Hàng hóa", "/trung-tam-du-lieu/hang-hoa", <AppstoreOutlined />),
     getMenuItem("Quản lý Nguyên liệu", "/trung-tam-du-lieu/nguyen-lieu", <ContainerOutlined />),
