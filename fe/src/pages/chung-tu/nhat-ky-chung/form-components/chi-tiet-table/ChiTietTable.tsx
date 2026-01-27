@@ -9,14 +9,20 @@ import {
   ChungTuChiTiet,
   TaiKhoanItem,
   ChungTuHeader,
+  KhoanMucItem,
 } from "../../form-handler/sub-handler/init/init.state";
-import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, QuyChuan } from "@/types";
+import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, QuyChuan, NhomKhuyenMai, NhomQuanLy, KhoanMuc } from "@/types";
 import {
   buildDoiTuongSnapshot,
   buildDuAnSnapshot,
   buildBoPhanSnapshot,
+  buildDoiSnapshot,
+  buildNhanVienSnapshot,
   buildSanPhamSnapshot,
   buildDongTienSnapshot,
+  buildKhoanMucSnapshot,
+  buildNhomKhuyenMaiSnapshot,
+  buildNhomQuanLySnapshot,
 } from "@/utils/snapshotBuilder";
 import { useTableColumnResize } from "@/hooks/useTableColumnResize";
 
@@ -29,6 +35,9 @@ export function ChiTietTable() {
   const [boPhanList] = useNhatKyChungFormState("boPhanList", []);
   const [sanPhamList] = useNhatKyChungFormState("sanPhamList", []);
   const [dongTienList] = useNhatKyChungFormState("dongTienList", []);
+  const [khoanMucList] = useNhatKyChungFormState("khoanMucList", []);
+  const [nhomKhuyenMaiList] = useNhatKyChungFormState("nhomKhuyenMaiList", []);
+  const [nhomQuanLyList] = useNhatKyChungFormState("nhomQuanLyList", []);
   const [quyChaunList] = useNhatKyChungFormState("quyChaunList", []);
   const [header] = useNhatKyChungFormState("header", null);
 
@@ -203,6 +212,126 @@ export function ChiTietTable() {
     }
   };
 
+  const handleDoiTuong2Change = (key: string, doiTuong2Id: string | undefined) => {
+    handleUpdateField(key, "doiTuong2Id", doiTuong2Id);
+    if (doiTuong2Id) {
+      const doiTuong2 = (doiTuongList as DoiTuong[]).find((d) => d.id === doiTuong2Id);
+      if (doiTuong2) {
+        handler.executeEvent("updateChiTietSnapshot", {
+          key,
+          snapshotField: "doiTuong2Snapshot",
+          snapshot: buildDoiTuongSnapshot(doiTuong2),
+        });
+      }
+    } else {
+      handler.executeEvent("updateChiTietSnapshot", {
+        key,
+        snapshotField: "doiTuong2Snapshot",
+        snapshot: {},
+      });
+    }
+  };
+
+  const handleDoiChange = (key: string, doiId: string | undefined) => {
+    handleUpdateField(key, "doiId", doiId);
+    if (doiId) {
+      const doi = (boPhanList as BoPhan[]).find((bp) => bp.id === doiId);
+      if (doi) {
+        handler.executeEvent("updateChiTietSnapshot", {
+          key,
+          snapshotField: "doiSnapshot",
+          snapshot: buildDoiSnapshot(doi),
+        });
+      }
+    } else {
+      handler.executeEvent("updateChiTietSnapshot", {
+        key,
+        snapshotField: "doiSnapshot",
+        snapshot: {},
+      });
+    }
+  };
+
+  const handleNhanVienChange = (key: string, nhanVienId: string | undefined) => {
+    handleUpdateField(key, "nhanVienId", nhanVienId);
+    if (nhanVienId) {
+      const nhanVien = (doiTuongList as DoiTuong[]).find((d) => d.id === nhanVienId);
+      if (nhanVien) {
+        handler.executeEvent("updateChiTietSnapshot", {
+          key,
+          snapshotField: "nhanVienSnapshot",
+          snapshot: buildNhanVienSnapshot(nhanVien),
+        });
+      }
+    } else {
+      handler.executeEvent("updateChiTietSnapshot", {
+        key,
+        snapshotField: "nhanVienSnapshot",
+        snapshot: {},
+      });
+    }
+  };
+
+  const handleKhoanMucChange = (key: string, khoanMucId: string | undefined) => {
+    handleUpdateField(key, "khoanMucId", khoanMucId);
+    if (khoanMucId) {
+      const khoanMuc = (khoanMucList as KhoanMucItem[]).find((km) => km.id === khoanMucId);
+      if (khoanMuc) {
+        handler.executeEvent("updateChiTietSnapshot", {
+          key,
+          snapshotField: "khoanMucSnapshot",
+          snapshot: buildKhoanMucSnapshot(khoanMuc as KhoanMuc),
+        });
+      }
+    } else {
+      handler.executeEvent("updateChiTietSnapshot", {
+        key,
+        snapshotField: "khoanMucSnapshot",
+        snapshot: {},
+      });
+    }
+  };
+
+  const handleNhomKhuyenMaiChange = (key: string, nhomKhuyenMaiId: string | undefined) => {
+    handleUpdateField(key, "nhomKhuyenMaiId", nhomKhuyenMaiId);
+    if (nhomKhuyenMaiId) {
+      const nhomKhuyenMai = (nhomKhuyenMaiList as NhomKhuyenMai[]).find((nkm) => nkm.id === nhomKhuyenMaiId);
+      if (nhomKhuyenMai) {
+        handler.executeEvent("updateChiTietSnapshot", {
+          key,
+          snapshotField: "nhomKhuyenMaiSnapshot",
+          snapshot: buildNhomKhuyenMaiSnapshot(nhomKhuyenMai),
+        });
+      }
+    } else {
+      handler.executeEvent("updateChiTietSnapshot", {
+        key,
+        snapshotField: "nhomKhuyenMaiSnapshot",
+        snapshot: {},
+      });
+    }
+  };
+
+  const handleNhomQuanLyChange = (key: string, nhomQuanLyId: string | undefined) => {
+    handleUpdateField(key, "nhomQuanLyId", nhomQuanLyId);
+    if (nhomQuanLyId) {
+      const nhomQuanLy = (nhomQuanLyList as NhomQuanLy[]).find((nql) => nql.id === nhomQuanLyId);
+      if (nhomQuanLy) {
+        handler.executeEvent("updateChiTietSnapshot", {
+          key,
+          snapshotField: "nhomQuanLySnapshot",
+          snapshot: buildNhomQuanLySnapshot(nhomQuanLy),
+        });
+      }
+    } else {
+      handler.executeEvent("updateChiTietSnapshot", {
+        key,
+        snapshotField: "nhomQuanLySnapshot",
+        snapshot: {},
+      });
+    }
+  };
+
   const columns = [
     {
       title: "STT",
@@ -337,7 +466,7 @@ export function ChiTietTable() {
       ),
     },
     {
-      title: "Đối tượng",
+      title: "Đối tượng nợ",
       dataIndex: "doiTuongId",
       width: 150,
       render: (value: string, record: ChungTuChiTiet, index: number) => (
@@ -349,6 +478,32 @@ export function ChiTietTable() {
           optionFilterProp="label"
           value={value || undefined}
           onChange={(v) => handleDoiTuongChange(record.key, v)}
+          onFocus={() => { activeRowRef.current = index; }}
+          options={(doiTuongList as DoiTuong[])
+            .filter((d) => d.loai !== "NHAN_VIEN")
+            .map((d) => ({
+              value: d.id,
+              label: `${d.ma} - ${d.ten}`,
+            }))}
+          className="w-full excel-cell-input"
+          variant="borderless"
+          popupMatchSelectWidth={280}
+        />
+      ),
+    },
+    {
+      title: "Đối tượng có",
+      dataIndex: "doiTuong2Id",
+      width: 150,
+      render: (value: string, record: ChungTuChiTiet, index: number) => (
+        <Select
+          size="small"
+          showSearch
+          allowClear
+          placeholder="Chọn"
+          optionFilterProp="label"
+          value={value || undefined}
+          onChange={(v) => handleDoiTuong2Change(record.key, v)}
           onFocus={() => { activeRowRef.current = index; }}
           options={(doiTuongList as DoiTuong[])
             .filter((d) => d.loai !== "NHAN_VIEN")
@@ -413,6 +568,58 @@ export function ChiTietTable() {
       ),
     },
     {
+      title: "Đội thi công",
+      dataIndex: "doiId",
+      width: 130,
+      render: (value: string, record: ChungTuChiTiet, index: number) => (
+        <Select
+          size="small"
+          showSearch
+          allowClear
+          placeholder="Chọn"
+          optionFilterProp="label"
+          value={value || undefined}
+          onChange={(v) => handleDoiChange(record.key, v)}
+          onFocus={() => { activeRowRef.current = index; }}
+          options={(boPhanList as BoPhan[])
+            .filter((bp) => bp.ten.toLowerCase().includes("đội"))
+            .map((bp) => ({
+              value: bp.id,
+              label: `${bp.ma} - ${bp.ten}`,
+            }))}
+          className="w-full excel-cell-input"
+          variant="borderless"
+          popupMatchSelectWidth={250}
+        />
+      ),
+    },
+    {
+      title: "Nhân viên",
+      dataIndex: "nhanVienId",
+      width: 130,
+      render: (value: string, record: ChungTuChiTiet, index: number) => (
+        <Select
+          size="small"
+          showSearch
+          allowClear
+          placeholder="Chọn"
+          optionFilterProp="label"
+          value={value || undefined}
+          onChange={(v) => handleNhanVienChange(record.key, v)}
+          onFocus={() => { activeRowRef.current = index; }}
+          options={(doiTuongList as DoiTuong[])
+            .filter((d) => d.loai === "NHAN_VIEN")
+            .map((nv) => ({
+              value: nv.id,
+              label: `${nv.ma} - ${nv.ten}`,
+            }))}
+          className="w-full excel-cell-input"
+          variant="borderless"
+          popupMatchSelectWidth={250}
+        />
+      ),
+    },
+    {
       title: "Sản phẩm",
       dataIndex: "sanPhamId",
       width: 130,
@@ -453,6 +660,78 @@ export function ChiTietTable() {
           options={(dongTienList as DongTien[]).map((dt) => ({
             value: dt.id,
             label: `${dt.ma} - ${dt.ten}`,
+          }))}
+          className="w-full excel-cell-input"
+          variant="borderless"
+          popupMatchSelectWidth={250}
+        />
+      ),
+    },
+    {
+      title: "Khoản mục",
+      dataIndex: "khoanMucId",
+      width: 130,
+      render: (value: string, record: ChungTuChiTiet, index: number) => (
+        <Select
+          size="small"
+          showSearch
+          allowClear
+          placeholder="Chọn"
+          optionFilterProp="label"
+          value={value || undefined}
+          onChange={(v) => handleKhoanMucChange(record.key, v)}
+          onFocus={() => { activeRowRef.current = index; }}
+          options={(khoanMucList as KhoanMucItem[]).map((km) => ({
+            value: km.id,
+            label: `${km.ma} - ${km.ten}`,
+          }))}
+          className="w-full excel-cell-input"
+          variant="borderless"
+          popupMatchSelectWidth={250}
+        />
+      ),
+    },
+    {
+      title: "Nhóm KM",
+      dataIndex: "nhomKhuyenMaiId",
+      width: 130,
+      render: (value: string, record: ChungTuChiTiet, index: number) => (
+        <Select
+          size="small"
+          showSearch
+          allowClear
+          placeholder="Chọn"
+          optionFilterProp="label"
+          value={value || undefined}
+          onChange={(v) => handleNhomKhuyenMaiChange(record.key, v)}
+          onFocus={() => { activeRowRef.current = index; }}
+          options={(nhomKhuyenMaiList as NhomKhuyenMai[]).map((nkm) => ({
+            value: nkm.id,
+            label: `${nkm.ma} - ${nkm.ten}`,
+          }))}
+          className="w-full excel-cell-input"
+          variant="borderless"
+          popupMatchSelectWidth={250}
+        />
+      ),
+    },
+    {
+      title: "Nhóm QL",
+      dataIndex: "nhomQuanLyId",
+      width: 130,
+      render: (value: string, record: ChungTuChiTiet, index: number) => (
+        <Select
+          size="small"
+          showSearch
+          allowClear
+          placeholder="Chọn"
+          optionFilterProp="label"
+          value={value || undefined}
+          onChange={(v) => handleNhomQuanLyChange(record.key, v)}
+          onFocus={() => { activeRowRef.current = index; }}
+          options={(nhomQuanLyList as NhomQuanLy[]).map((nql) => ({
+            value: nql.id,
+            label: `${nql.ma} - ${nql.ten}`,
           }))}
           className="w-full excel-cell-input"
           variant="borderless"
@@ -534,7 +813,7 @@ export function ChiTietTable() {
         rowKey="key"
         pagination={false}
         size="small"
-        scroll={{ x: 1600, y: 'calc(100vh - 380px)' }}
+        scroll={{ x: 2400, y: 'calc(100vh - 380px)' }}
         bordered
         className="resizable-table chi-tiet-excel-table"
         rowClassName={(_, index) =>

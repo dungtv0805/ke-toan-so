@@ -157,3 +157,21 @@ export const getNkcKhoanMucMa = (nkc: NhatKyChung): string | undefined => {
 export const getNkcKhoanMucTen = (nkc: NhatKyChung): string | undefined => {
   return nkc.danhMuc?.khoanMuc?.ten;
 };
+
+// Nhóm khuyến mại
+export const getNkcNhomKhuyenMaiMa = (nkc: NhatKyChung): string | undefined => {
+  return nkc.danhMuc?.nhomKhuyenMai?.ma;
+};
+
+export const getNkcNhomKhuyenMaiTen = (nkc: NhatKyChung): string | undefined => {
+  return nkc.danhMuc?.nhomKhuyenMai?.ten;
+};
+
+// Nhóm quản lý
+export const getNkcNhomQuanLyMa = (nkc: NhatKyChung): string | undefined => {
+  return nkc.danhMuc?.nhomQuanLy?.ma;
+};
+
+export const getNkcNhomQuanLyTen = (nkc: NhatKyChung): string | undefined => {
+  return nkc.danhMuc?.nhomQuanLy?.ten;
+};

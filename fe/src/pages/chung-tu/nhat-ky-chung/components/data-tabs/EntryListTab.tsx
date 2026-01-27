@@ -25,6 +25,10 @@ import {
   getNkcDongTienTen,
   getNkcKhoanMucMa,
   getNkcKhoanMucTen,
+  getNkcNhomKhuyenMaiMa,
+  getNkcNhomKhuyenMaiTen,
+  getNkcNhomQuanLyMa,
+  getNkcNhomQuanLyTen,
 } from "@/utils/snapshotDisplay";
 import {
   useNhatKyChungState,
@@ -85,6 +89,10 @@ const DEFAULT_WIDTHS: Record<string, number> = {
   dongTien: 100,
   khoanMucMa: 55,
   khoanMuc: 100,
+  nhomKhuyenMaiMa: 55,
+  nhomKhuyenMai: 100,
+  nhomQuanLyMa: 55,
+  nhomQuanLy: 100,
   nguoiGiaoDich: 100,
   diaChi: 120,
   ghiChu: 120,
@@ -567,6 +575,66 @@ const getColumnDefinitions = (
       const data = record.danhMuc?.khoanMuc;
       return data ? (
         <DetailPopover type="khoanMuc" data={data}>
+          {renderEllipsisText(ten)}
+        </DetailPopover>
+      ) : (
+        renderEllipsisText(ten)
+      );
+    },
+  },
+  {
+    title: "Mã NKM",
+    key: "nhomKhuyenMaiMa",
+    render: (_: unknown, record: NhatKyChung) => {
+      const ma = getNkcNhomKhuyenMaiMa(record);
+      const data = record.danhMuc?.nhomKhuyenMai;
+      return ma ? (
+        <DetailPopover type="nhomKhuyenMai" data={data}>
+          <span className="cursor-pointer text-blue-600">{ma}</span>
+        </DetailPopover>
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
+    },
+  },
+  {
+    title: "Nhóm KM",
+    key: "nhomKhuyenMai",
+    render: (_: unknown, record: NhatKyChung) => {
+      const ten = getNkcNhomKhuyenMaiTen(record);
+      const data = record.danhMuc?.nhomKhuyenMai;
+      return data ? (
+        <DetailPopover type="nhomKhuyenMai" data={data}>
+          {renderEllipsisText(ten)}
+        </DetailPopover>
+      ) : (
+        renderEllipsisText(ten)
+      );
+    },
+  },
+  {
+    title: "Mã NQL",
+    key: "nhomQuanLyMa",
+    render: (_: unknown, record: NhatKyChung) => {
+      const ma = getNkcNhomQuanLyMa(record);
+      const data = record.danhMuc?.nhomQuanLy;
+      return ma ? (
+        <DetailPopover type="nhomQuanLy" data={data}>
+          <span className="cursor-pointer text-blue-600">{ma}</span>
+        </DetailPopover>
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
+    },
+  },
+  {
+    title: "Nhóm QL",
+    key: "nhomQuanLy",
+    render: (_: unknown, record: NhatKyChung) => {
+      const ten = getNkcNhomQuanLyTen(record);
+      const data = record.danhMuc?.nhomQuanLy;
+      return data ? (
+        <DetailPopover type="nhomQuanLy" data={data}>
           {renderEllipsisText(ten)}
         </DetailPopover>
       ) : (
