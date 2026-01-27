@@ -212,6 +212,7 @@
 .ant-menu-submenu-popup .ant-menu-item {
   color: hsl(var(--sidebar-foreground) / 0.8) !important;
   margin: 4px 8px !important;
+  padding-left: 12px !important;
   border-radius: calc(var(--radius) * 0.5) !important;
 }
 
@@ -227,6 +228,32 @@
 
 .ant-menu-submenu-popup .ant-menu-submenu-title {
   color: hsl(var(--sidebar-foreground) / 0.8) !important;
+  padding-left: 12px !important;
+}
+
+/* Fix popup submenu padding khi collapsed */
+.ant-menu-submenu-popup .ant-menu-vertical,
+.ant-menu-submenu-popup .ant-menu-vertical-left {
+  padding: 4px 0 !important;
+}
+
+.ant-menu-submenu-popup .ant-menu-vertical .ant-menu-item,
+.ant-menu-submenu-popup .ant-menu-vertical-left .ant-menu-item {
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  margin: 2px 8px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+}
+
+.ant-menu-submenu-popup .ant-menu-vertical .ant-menu-item .anticon,
+.ant-menu-submenu-popup .ant-menu-vertical-left .ant-menu-item .anticon {
+  margin-right: 8px !important;
+}
+
+/* Fix submenu title trong popup */
+.ant-menu-submenu-popup .ant-menu-title-content {
+  margin-left: 0 !important;
 }
 
 /* Tooltip popup title styling */

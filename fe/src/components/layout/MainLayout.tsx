@@ -507,25 +507,36 @@ const MainLayout: React.FC = () => {
             flexDirection: "column",
           }}
         >
-          {/* Logo */}
-          <div className="h-12 flex items-center justify-center border-b border-sidebar-border flex-shrink-0">
+          {/* Logo & Collapse Button */}
+          <div className="h-12 flex items-center justify-between px-3 border-b border-sidebar-border flex-shrink-0">
             {collapsed ? (
-              <img
-                src="/logo.jpg"
-                alt="Master CEO"
-                className="w-8 h-8 rounded-lg object-cover"
+              <Button
+                type="text"
+                size="small"
+                icon={<MenuUnfoldOutlined />}
+                onClick={() => setCollapsed(!collapsed)}
+                className="!text-sidebar-foreground/70 hover:!text-sidebar-foreground hover:!bg-sidebar-accent mx-auto"
               />
             ) : (
-              <div className="flex items-center gap-2">
-                <img
-                  src="/logo.jpg"
-                  alt="Master CEO"
-                  className="w-8 h-8 rounded-lg object-cover"
+              <>
+                <div className="flex items-center gap-2">
+                  <img
+                    src="/logo.jpg"
+                    alt="Master CEO"
+                    className="w-8 h-8 rounded-lg object-cover"
+                  />
+                  <span className="text-sidebar-foreground font-semibold text-sm">
+                    Master CEO
+                  </span>
+                </div>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<MenuFoldOutlined />}
+                  onClick={() => setCollapsed(!collapsed)}
+                  className="!text-sidebar-foreground/70 hover:!text-sidebar-foreground hover:!bg-sidebar-accent"
                 />
-                <span className="text-sidebar-foreground font-semibold text-sm">
-                  Master CEO
-                </span>
-              </div>
+              </>
             )}
           </div>
 
@@ -566,17 +577,6 @@ const MainLayout: React.FC = () => {
                 className="!bg-transparent border-r-0 sidebar-menu"
               />
             </div>
-          </div>
-
-          {/* Collapse button at bottom */}
-          <div className="flex-shrink-0 p-2 border-t border-sidebar-border">
-            <Button
-              type="text"
-              size="small"
-              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              onClick={() => setCollapsed(!collapsed)}
-              className="w-full !text-sidebar-foreground/70 hover:!text-sidebar-foreground hover:!bg-sidebar-accent"
-            />
           </div>
         </Sider>
       )}
