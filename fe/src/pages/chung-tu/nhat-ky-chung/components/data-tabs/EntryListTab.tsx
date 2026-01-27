@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Table, Tag, Button, Space, Tooltip } from "antd";
+import { Table, Button, Space, Tooltip } from "antd";
 import { PlusOutlined, ReloadOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { NhatKyChung } from "@/types";
@@ -63,7 +63,7 @@ const renderEllipsisText = (text: string | undefined | null) => {
 const DEFAULT_WIDTHS: Record<string, number> = {
   ngay: 85,
   soPhieu: 90,
-  loaiChungTu: 70,
+  loaiGiaoDich: 120,
   nghiepVu: 150,
   dienGiai: 150,
   taiKhoanNo: 55,
@@ -152,23 +152,18 @@ const getColumnDefinitions = (
     ),
   },
   {
-    title: "Loại",
-    dataIndex: "loaiChungTu",
-    key: "loaiChungTu",
-    filters: [
-      { text: "Thu", value: "Phiếu thu" },
-      { text: "Chi", value: "Phiếu chi" },
-    ],
-    onFilter: (value: unknown, record: NhatKyChung) =>
-      record.loaiChungTu === value,
-    render: (loai: string) => (
-      <Tag
-        color={loai === "Phiếu thu" ? "success" : "error"}
-        className="excel-tag"
-      >
-        {loai === "Phiếu thu" ? "Thu" : "Chi"}
-      </Tag>
-    ),
+    title: "Loại GD",
+    key: "loaiGiaoDich",
+    render: (_: unknown, record: NhatKyChung) => {
+      const loaiGD = record.danhMuc?.loaiGiaoDich?.ten;
+      return loaiGD ? (
+        <Tooltip title={loaiGD}>
+          <span className="excel-cell-text">{loaiGD}</span>
+        </Tooltip>
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
+    },
   },
   {
     title: "Nghiệp vụ",
