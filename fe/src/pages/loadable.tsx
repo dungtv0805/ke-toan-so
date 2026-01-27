@@ -137,6 +137,10 @@ export const PlaceholderPage = loadable(() => import('./PlaceholderPage'), {
   fallback: <PageLoader />
 });
 
+export const ComingSoonPage = loadable(() => import('./ComingSoon'), {
+  fallback: <PageLoader />
+});
+
 export const NotFound = loadable(() => import('./NotFound'), {
   fallback: <PageLoader />
 });

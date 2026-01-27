@@ -41,6 +41,7 @@ import {
   BangCanDoiPage,
   QuyChaunPage,
   PhanQuyenPage,
+  ComingSoonPage,
   NotFound
 } from "./pages/loadable";
 
@@ -116,6 +117,9 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
+                  {/* Coming Soon */}
+                  <Route path="hop-dong" element={<ComingSoonPage />} />
+                  <Route path="kho" element={<ComingSoonPage />} />
                 </Route>
 
                 {/* Chứng từ */}
@@ -160,6 +164,16 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
+                  {/* Coming Soon */}
+                  <Route path="phieu-nhap" element={<ComingSoonPage />} />
+                  <Route path="phieu-xuat" element={<ComingSoonPage />} />
+                  <Route path="phieu-luong" element={<ComingSoonPage />} />
+                  <Route path="bang-tinh-luong" element={<ComingSoonPage />} />
+                  <Route path="bang-cham-cong" element={<ComingSoonPage />} />
+                  <Route path="cham-cong-lam-them" element={<ComingSoonPage />} />
+                  <Route path="phan-bo-khau-hao" element={<ComingSoonPage />} />
+                  <Route path="phieu-ke-toan" element={<ComingSoonPage />} />
+                  <Route path="de-nghi-thanh-toan" element={<ComingSoonPage />} />
                 </Route>
 
                 {/* Sổ quỹ */}
@@ -218,7 +232,43 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
+                  {/* Coming Soon */}
+                  <Route path="tai-chinh" element={<ComingSoonPage />} />
+                  <Route path="so-chi-tiet-tai-khoan" element={<ComingSoonPage />} />
+                  <Route path="so-chi-tiet-cong-no" element={<ComingSoonPage />} />
+                  <Route path="so-chi-tiet-phat-sinh" element={<ComingSoonPage />} />
+                  <Route path="bang-tong-hop" element={<ComingSoonPage />} />
                 </Route>
+
+                {/* Phân tích - Coming Soon */}
+                <Route path="phan-tich">
+                  <Route path="bao-cao-tai-chinh" element={<ComingSoonPage />} />
+                  <Route path="ban-hang" element={<ComingSoonPage />} />
+                  <Route path="mua-hang" element={<ComingSoonPage />} />
+                  <Route path="cong-no" element={<ComingSoonPage />} />
+                  <Route path="dong-tien" element={<ComingSoonPage />} />
+                  <Route path="ton-kho" element={<ComingSoonPage />} />
+                  <Route path="thanh-khoan" element={<ComingSoonPage />} />
+                </Route>
+
+                {/* Trung tâm dữ liệu - Coming Soon */}
+                <Route path="trung-tam-du-lieu">
+                  <Route path="ke-hoach" element={<ComingSoonPage />} />
+                  <Route path="du-bao" element={<ComingSoonPage />} />
+                  <Route path="tai-san" element={<ComingSoonPage />} />
+                  <Route path="hang-hoa" element={<ComingSoonPage />} />
+                  <Route path="nguyen-lieu" element={<ComingSoonPage />} />
+                  <Route path="dung-cu" element={<ComingSoonPage />} />
+                  <Route path="hop-dong" element={<ComingSoonPage />} />
+                  <Route path="nhan-su" element={<ComingSoonPage />} />
+                  <Route path="luong-bhxh" element={<ComingSoonPage />} />
+                </Route>
+
+                {/* Thư viện - Coming Soon */}
+                <Route path="quy-trinh" element={<ComingSoonPage />} />
+                <Route path="chinh-sach" element={<ComingSoonPage />} />
+                <Route path="bieu-mau" element={<ComingSoonPage />} />
+                <Route path="huong-dan" element={<ComingSoonPage />} />
 
                 {/* Cấu hình */}
                 <Route path="cau-hinh">

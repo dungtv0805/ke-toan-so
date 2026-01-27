@@ -112,9 +112,9 @@ const createLabel = (text: string, path: string) => {
   const isComingSoon = !existingRoutes.has(path);
   if (isComingSoon) {
     return (
-      <span className="menu-coming-soon">
-        {text}
-        <span className="coming-soon-badge">Sắp ra mắt</span>
+      <span className="menu-coming-soon" title={`${text} - Sắp ra mắt`}>
+        <span className="menu-text">{text}</span>
+        <span className="coming-soon-dot" />
       </span>
     );
   }

@@ -619,18 +619,32 @@
 .menu-coming-soon {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex: 1;
   min-width: 0;
   overflow: hidden;
 }
 
-.menu-coming-soon > span:first-child {
+.menu-coming-soon .menu-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
+/* Coming soon dot indicator */
+.coming-soon-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: hsl(38 92% 50%);
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 4px hsl(38 92% 50% / 0.5);
+}
+
+/* Old badge style - keep for reference */
 .coming-soon-badge {
   display: inline-flex;
   align-items: center;
@@ -648,8 +662,9 @@
   line-height: 14px;
 }
 
-/* Hide badge in collapsed state */
-.sidebar-collapsed .coming-soon-badge {
+/* Hide badge/dot in collapsed state */
+.sidebar-collapsed .coming-soon-badge,
+.sidebar-collapsed .coming-soon-dot {
   display: none;
 }
 
