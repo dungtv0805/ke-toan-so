@@ -4,9 +4,7 @@ import {
   Menu,
   Avatar,
   Dropdown,
-  Badge,
   Button,
-  Input,
   Tooltip,
   Tag,
   message,
@@ -20,7 +18,6 @@ import {
   TeamOutlined,
   BarChartOutlined,
   SettingOutlined,
-  BellOutlined,
   UserOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
@@ -30,16 +27,42 @@ import {
   AppstoreOutlined,
   DollarOutlined,
   AuditOutlined,
-  FundOutlined,
-  SearchOutlined,
-  MoonOutlined,
-  SunOutlined,
   QuestionCircleOutlined,
   MenuOutlined,
   CloseOutlined,
   SafetyCertificateOutlined,
   TagOutlined,
   SwapOutlined,
+  LineChartOutlined,
+  ShoppingCartOutlined,
+  ShoppingOutlined,
+  StockOutlined,
+  CalculatorOutlined,
+  CarOutlined,
+  ToolOutlined,
+  ContainerOutlined,
+  SolutionOutlined,
+  InsuranceOutlined,
+  FormOutlined,
+  FileProtectOutlined,
+  DatabaseOutlined,
+  ScheduleOutlined,
+  RiseOutlined,
+  InboxOutlined,
+  ReconciliationOutlined,
+  ProfileOutlined,
+  FileDoneOutlined,
+  TableOutlined,
+  ClockCircleOutlined,
+  FieldTimeOutlined,
+  PartitionOutlined,
+  CreditCardOutlined,
+  FileSearchOutlined,
+  AccountBookOutlined,
+  PieChartOutlined,
+  SnippetsOutlined,
+  NodeIndexOutlined,
+  FileAddOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import type { MenuProps } from "antd";
@@ -57,66 +80,147 @@ function getItem(
   label: React.ReactNode,
   key: string,
   icon?: React.ReactNode,
-  children?: MenuItem[]
+  children?: MenuItem[],
+  type?: "group"
 ): MenuItem {
   return {
     key,
     icon,
     children,
     label,
+    type,
   } as MenuItem;
 }
 
-// Main sidebar menu items - organized into 3 groups
-const menuItems: MenuItem[] = [
-  // ===== NHÓM 1: TỔNG QUAN =====
-  getItem("Tổng quan", "/", <DashboardOutlined />),
+// ===== KẾ TOÁN - Main accounting menu =====
+const keToAnMenuItems: MenuItem[] = [
+  // 5. Tổng quan
+  getItem(
+    <span className="menu-section-label">5</span>,
+    "section-5",
+    null,
+    [getItem("Tổng quan", "/", <DashboardOutlined />)],
+    "group"
+  ),
 
-  // ===== NHÓM 2: LÀM VIỆC THƯỜNG XUYÊN =====
-  getItem("Chứng từ", "/chung-tu", <FileTextOutlined />, [
-    getItem("Dữ liệu tổng hợp", "/chung-tu/nhat-ky-chung", <AuditOutlined />),
-  ]),
-  getItem("Trung tâm dữ liệu", "/trung-tam-du-lieu", <FundOutlined />, [
-    getItem("Sổ quỹ", "/so-quy", <WalletOutlined />),
-    getItem("Công nợ phải thu", "/cong-no/phai-thu", <FundOutlined />),
-    getItem("Công nợ phải trả", "/cong-no/phai-tra", <FundOutlined />),
-  ]),
-  getItem("Báo cáo", "/bao-cao", <BarChartOutlined />, [
-    getItem("Báo cáo P&L", "/bao-cao/pnl", <BarChartOutlined />),
-    getItem("Sổ cái", "/bao-cao/so-cai", <BookOutlined />),
-    getItem("Bảng cân đối", "/bao-cao/bang-can-doi", <BarChartOutlined />),
-  ]),
-  // getItem("Phân tích", "/phan-tich", <LineChartOutlined />, [
-  //   // Sắp cập nhật
-  // ]),
+  // 4. Phân tích
+  getItem(
+    <span className="menu-section-label">4</span>,
+    "section-4",
+    null,
+    [
+      getItem("Phân tích", "/phan-tich", <LineChartOutlined />, [
+        getItem("Báo cáo tài chính", "/phan-tich/bao-cao-tai-chinh", <PieChartOutlined />),
+        getItem("Bán hàng", "/phan-tich/ban-hang", <ShoppingCartOutlined />),
+        getItem("Mua hàng", "/phan-tich/mua-hang", <ShoppingOutlined />),
+        getItem("Công nợ", "/phan-tich/cong-no", <ReconciliationOutlined />),
+        getItem("Dòng tiền", "/phan-tich/dong-tien", <DollarOutlined />),
+        getItem("Tồn kho", "/phan-tich/ton-kho", <InboxOutlined />),
+        getItem("Khả năng thanh khoản", "/phan-tich/thanh-khoan", <StockOutlined />),
+      ]),
+    ],
+    "group"
+  ),
 
-  // ===== NHÓM 3: NHẬP 1 LẦN =====
+  // 3. Báo cáo
+  getItem(
+    <span className="menu-section-label">3</span>,
+    "section-3",
+    null,
+    [
+      getItem("Báo cáo", "/bao-cao", <BarChartOutlined />, [
+        getItem("Báo cáo tài chính", "/bao-cao/tai-chinh", <PieChartOutlined />),
+        getItem("Sổ chi tiết tài khoản", "/bao-cao/so-chi-tiet-tai-khoan", <AccountBookOutlined />),
+        getItem("Sổ chi tiết công nợ", "/bao-cao/so-chi-tiet-cong-no", <FileSearchOutlined />),
+        getItem("Sổ chi tiết phát sinh", "/bao-cao/so-chi-tiet-phat-sinh", <ProfileOutlined />),
+        getItem("Bảng tổng hợp", "/bao-cao/bang-tong-hop", <TableOutlined />),
+      ]),
+    ],
+    "group"
+  ),
+
+  // 2. Trung tâm dữ liệu
+  getItem(
+    <span className="menu-section-label">2</span>,
+    "section-2",
+    null,
+    [
+      getItem("Trung tâm dữ liệu", "/trung-tam-du-lieu", <DatabaseOutlined />, [
+        getItem("Kế hoạch", "/trung-tam-du-lieu/ke-hoach", <ScheduleOutlined />),
+        getItem("Dự báo", "/trung-tam-du-lieu/du-bao", <RiseOutlined />),
+        getItem("Nhật ký chung", "/chung-tu/nhat-ky-chung", <AuditOutlined />),
+        getItem("Quản lý Tài sản", "/trung-tam-du-lieu/tai-san", <CarOutlined />),
+        getItem("Quản lý Hàng hóa", "/trung-tam-du-lieu/hang-hoa", <AppstoreOutlined />),
+        getItem("Quản lý Nguyên liệu", "/trung-tam-du-lieu/nguyen-lieu", <ContainerOutlined />),
+        getItem("Quản lý Dụng cụ", "/trung-tam-du-lieu/dung-cu", <ToolOutlined />),
+        getItem("Quản lý Hợp đồng", "/trung-tam-du-lieu/hop-dong", <FileProtectOutlined />),
+        getItem("Quản lý nhân sự", "/trung-tam-du-lieu/nhan-su", <SolutionOutlined />),
+        getItem("Lương & BHXH", "/trung-tam-du-lieu/luong-bhxh", <InsuranceOutlined />),
+      ]),
+    ],
+    "group"
+  ),
+
+  // 1. Chứng từ
+  getItem(
+    <span className="menu-section-label">1</span>,
+    "section-1",
+    null,
+    [
+      getItem("Chứng từ", "/chung-tu", <FileTextOutlined />, [
+        getItem("Phiếu thu", "/chung-tu/phieu-thu", <CreditCardOutlined />),
+        getItem("Phiếu chi", "/chung-tu/phieu-chi", <WalletOutlined />),
+        getItem("Phiếu nhập", "/chung-tu/phieu-nhap", <FileAddOutlined />),
+        getItem("Phiếu xuất", "/chung-tu/phieu-xuat", <FileDoneOutlined />),
+        getItem("Phiếu lương", "/chung-tu/phieu-luong", <SnippetsOutlined />),
+        getItem("Bảng tính lương", "/chung-tu/bang-tinh-luong", <CalculatorOutlined />),
+        getItem("Bảng chấm công", "/chung-tu/bang-cham-cong", <ClockCircleOutlined />),
+        getItem("Bảng chấm công làm thêm giờ", "/chung-tu/cham-cong-lam-them", <FieldTimeOutlined />),
+        getItem("Bảng phân bổ khấu hao TSCĐ", "/chung-tu/phan-bo-khau-hao", <PartitionOutlined />),
+        getItem("Phiếu kế toán", "/chung-tu/phieu-ke-toan", <AuditOutlined />),
+        getItem("Đề nghị thanh toán", "/chung-tu/de-nghi-thanh-toan", <FormOutlined />),
+      ]),
+    ],
+    "group"
+  ),
+];
+
+// ===== THƯ VIỆN - Library menu =====
+const thuVienMenuItems: MenuItem[] = [
+  // Danh mục
   getItem("Danh mục", "/danh-muc", <BookOutlined />, [
-    getItem("Tài khoản kế toán", "/danh-muc/tai-khoan", <BankOutlined />),
+    getItem("Tài khoản", "/danh-muc/tai-khoan", <BankOutlined />),
     getItem("Đối tượng", "/danh-muc/doi-tuong", <TeamOutlined />),
     getItem("Dự án", "/danh-muc/du-an", <ProjectOutlined />),
-    getItem("Chủ đầu tư", "/danh-muc/chu-dau-tu", <UserOutlined />),
     getItem("Sản phẩm", "/danh-muc/san-pham", <AppstoreOutlined />),
+    getItem("Hợp đồng", "/danh-muc/hop-dong", <FileProtectOutlined />),
     getItem("Bộ phận", "/danh-muc/bo-phan", <TeamOutlined />),
     getItem("Khoản mục", "/danh-muc/khoan-muc", <DollarOutlined />),
-    getItem("Nhóm khoản mục", "/danh-muc/nhom-khoan-muc", <TagOutlined />),
-    getItem("Ngân hàng & Quỹ", "/danh-muc/ngan-hang", <BankOutlined />),
-    getItem("Dòng tiền", "/danh-muc/dong-tien", <DollarOutlined />),
-    getItem("Nhóm khuyến mại", "/danh-muc/nhom-khuyen-mai", <AppstoreOutlined />),
-    getItem("Nhóm quản lý", "/danh-muc/nhom-quan-ly", <TeamOutlined />),
-    getItem("Loại chứng từ", "/danh-muc/loai-chung-tu", <FileTextOutlined />),
-    getItem("Loại giao dịch", "/danh-muc/loai-giao-dich", <SwapOutlined />),
-    getItem("Quy chuẩn hạch toán", "/danh-muc/quy-chuan", <AuditOutlined />),
+    getItem("Kho", "/danh-muc/kho", <InboxOutlined />),
+    getItem("Khác", "/danh-muc/khac", <AppstoreOutlined />, [
+      getItem("Chủ đầu tư", "/danh-muc/chu-dau-tu", <UserOutlined />),
+      getItem("Nhóm khoản mục", "/danh-muc/nhom-khoan-muc", <TagOutlined />),
+      getItem("Ngân hàng & Quỹ", "/danh-muc/ngan-hang", <BankOutlined />),
+      getItem("Dòng tiền", "/danh-muc/dong-tien", <DollarOutlined />),
+      getItem("Nhóm khuyến mại", "/danh-muc/nhom-khuyen-mai", <AppstoreOutlined />),
+      getItem("Nhóm quản lý", "/danh-muc/nhom-quan-ly", <TeamOutlined />),
+      getItem("Loại chứng từ", "/danh-muc/loai-chung-tu", <FileTextOutlined />),
+      getItem("Loại giao dịch", "/danh-muc/loai-giao-dich", <SwapOutlined />),
+      getItem("Quy chuẩn hạch toán", "/danh-muc/quy-chuan", <AuditOutlined />),
+    ]),
   ]),
-  // getItem("Quy chế - Chính sách", "/quy-che", <SafetyCertificateOutlined />, [
-  //   // Sắp cập nhật
-  // ]),
-  // getItem("Biểu mẫu", "/bieu-mau", <FormOutlined />, [
-  //   // Sắp cập nhật
-  // ]),
-  // getItem("Hướng dẫn", "/huong-dan", <QuestionCircleOutlined />, [
-  //   // Sắp cập nhật
-  // ]),
+
+  // Quy trình
+  getItem("Quy trình", "/quy-trinh", <NodeIndexOutlined />),
+
+  // Chính sách
+  getItem("Chính sách", "/chinh-sach", <SafetyCertificateOutlined />),
+
+  // Biểu mẫu
+  getItem("Biểu mẫu", "/bieu-mau", <FormOutlined />),
+
+  // Hướng dẫn
+  getItem("Hướng dẫn", "/huong-dan", <QuestionCircleOutlined />),
 ];
 
 // Helper function to check if current route is a form screen (create/edit)
@@ -181,7 +285,9 @@ const MainLayout: React.FC = () => {
       .filter(Boolean) as MenuItem[];
   };
 
-  const filteredMenuItems = user ? filterMenuItems(menuItems, user.vaiTro) : [];
+  // Filter both menu sections
+  const filteredKeToAnMenu = user ? filterMenuItems(keToAnMenuItems, user.vaiTro) : [];
+  const filteredThuVienMenu = user ? filterMenuItems(thuVienMenuItems, user.vaiTro) : [];
 
   useEffect(() => {
     if (darkMode) {
@@ -288,16 +394,16 @@ const MainLayout: React.FC = () => {
     return [];
   };
 
-  const siderWidth = collapsed ? 56 : 220;
+  const siderWidth = collapsed ? 56 : 240;
 
   // Mobile Drawer Menu
   const MobileDrawer = () => (
     <Drawer
       title={
         <div className="flex items-center gap-3">
-          <img 
-            src="/logo.jpg" 
-            alt="Master CEO" 
+          <img
+            src="/logo.jpg"
+            alt="Master CEO"
             className="w-8 h-8 rounded-lg object-cover"
           />
           <span className="font-semibold">Master CEO</span>
@@ -306,10 +412,10 @@ const MainLayout: React.FC = () => {
       placement="left"
       onClose={() => setMobileMenuOpen(false)}
       open={mobileMenuOpen}
-      width={280}
+      width={300}
       closeIcon={<CloseOutlined />}
       styles={{
-        body: { padding: 0, background: "hsl(var(--sidebar-background))" },
+        body: { padding: 0, background: "hsl(var(--sidebar-background))", overflowY: "auto" },
         header: {
           background: "hsl(var(--sidebar-background))",
           borderBottom: "1px solid hsl(var(--sidebar-border))",
@@ -317,15 +423,37 @@ const MainLayout: React.FC = () => {
         },
       }}
     >
-      <Menu
-        theme="dark"
-        mode="inline"
-        selectedKeys={getSelectedKeys()}
-        defaultOpenKeys={getOpenKeys()}
-        items={filteredMenuItems}
-        onClick={handleMenuClick}
-        className="!bg-transparent border-r-0"
-      />
+      {/* KẾ TOÁN Section */}
+      <div className="sidebar-section">
+        <div className="sidebar-section-header">
+          <span className="sidebar-section-title">KẾ TOÁN</span>
+        </div>
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={getSelectedKeys()}
+          defaultOpenKeys={getOpenKeys()}
+          items={filteredKeToAnMenu}
+          onClick={handleMenuClick}
+          className="!bg-transparent border-r-0 sidebar-menu"
+        />
+      </div>
+
+      {/* THƯ VIỆN Section */}
+      <div className="sidebar-section">
+        <div className="sidebar-section-header">
+          <span className="sidebar-section-title">THƯ VIỆN</span>
+        </div>
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={getSelectedKeys()}
+          defaultOpenKeys={getOpenKeys()}
+          items={filteredThuVienMenu}
+          onClick={handleMenuClick}
+          className="!bg-transparent border-r-0 sidebar-menu"
+        />
+      </div>
     </Drawer>
   );
 
@@ -340,21 +468,23 @@ const MainLayout: React.FC = () => {
           trigger={null}
           collapsible
           collapsed={collapsed}
-          width={220}
+          width={240}
           collapsedWidth={56}
           className={`!bg-sidebar ${collapsed ? "sidebar-collapsed" : ""}`}
           style={{
-            overflow: "auto",
+            overflow: "hidden",
             height: "100vh",
             position: "fixed",
             left: 0,
             top: 0,
             bottom: 0,
             zIndex: 100,
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           {/* Logo */}
-          <div className="h-12 flex items-center justify-center border-b border-sidebar-border">
+          <div className="h-12 flex items-center justify-center border-b border-sidebar-border flex-shrink-0">
             {collapsed ? (
               <img
                 src="/logo.jpg"
@@ -375,19 +505,47 @@ const MainLayout: React.FC = () => {
             )}
           </div>
 
-          {/* Menu */}
-          <Menu
-            theme="dark"
-            mode="inline"
-            selectedKeys={getSelectedKeys()}
-            defaultOpenKeys={collapsed ? [] : getOpenKeys()}
-            items={filteredMenuItems}
-            onClick={handleMenuClick}
-            className="!bg-transparent border-r-0 mt-1 compact-menu"
-          />
+          {/* Scrollable Menu Container */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll">
+            {/* KẾ TOÁN Section */}
+            <div className="sidebar-section">
+              {!collapsed && (
+                <div className="sidebar-section-header">
+                  <span className="sidebar-section-title">KẾ TOÁN</span>
+                </div>
+              )}
+              <Menu
+                theme="dark"
+                mode="inline"
+                selectedKeys={getSelectedKeys()}
+                defaultOpenKeys={collapsed ? [] : getOpenKeys()}
+                items={filteredKeToAnMenu}
+                onClick={handleMenuClick}
+                className="!bg-transparent border-r-0 sidebar-menu"
+              />
+            </div>
+
+            {/* THƯ VIỆN Section */}
+            <div className="sidebar-section">
+              {!collapsed && (
+                <div className="sidebar-section-header">
+                  <span className="sidebar-section-title">THƯ VIỆN</span>
+                </div>
+              )}
+              <Menu
+                theme="dark"
+                mode="inline"
+                selectedKeys={getSelectedKeys()}
+                defaultOpenKeys={collapsed ? [] : getOpenKeys()}
+                items={filteredThuVienMenu}
+                onClick={handleMenuClick}
+                className="!bg-transparent border-r-0 sidebar-menu"
+              />
+            </div>
+          </div>
 
           {/* Collapse button at bottom */}
-          <div className="absolute bottom-2 left-0 right-0 px-2">
+          <div className="flex-shrink-0 p-2 border-t border-sidebar-border">
             <Button
               type="text"
               size="small"
