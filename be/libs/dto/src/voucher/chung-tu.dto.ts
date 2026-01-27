@@ -68,6 +68,11 @@ export interface DanhMucLoaiGiaoDich {
   ten: string;
 }
 
+export interface DanhMucNghiepVu {
+  ma: string;
+  ten: string;
+}
+
 export interface DanhMuc {
   doiTuong?: DanhMucDoiTuong;
   doiTuong2?: DanhMucDoiTuong;
@@ -81,6 +86,7 @@ export interface DanhMuc {
   sanPham?: DanhMucSanPham;
   dongTien?: DanhMucDongTien;
   loaiGiaoDich?: DanhMucLoaiGiaoDich;
+  nghiepVu?: DanhMucNghiepVu;
 }
 
 export interface ChungTuResponse {

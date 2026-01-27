@@ -175,3 +175,12 @@ export const getNkcNhomQuanLyMa = (nkc: NhatKyChung): string | undefined => {
 export const getNkcNhomQuanLyTen = (nkc: NhatKyChung): string | undefined => {
   return nkc.danhMuc?.nhomQuanLy?.ten;
 };
+
+// Nghiệp vụ
+export const getNkcNghiepVuMa = (nkc: NhatKyChung): string | undefined => {
+  return nkc.danhMuc?.nghiepVu?.ma;
+};
+
+export const getNkcNghiepVuTen = (nkc: NhatKyChung): string | undefined => {
+  return nkc.danhMuc?.nghiepVu?.ten;
+};

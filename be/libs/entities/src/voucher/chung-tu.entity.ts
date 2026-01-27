@@ -80,6 +80,11 @@ export interface DanhMucNhomQuanLy {
   ten: string;
 }
 
+export interface DanhMucNghiepVu {
+  ma: string;
+  ten: string;
+}
+
 // Gộp tất cả danh mục vào 1 field
 export interface DanhMuc {
   doiTuong?: DanhMucDoiTuong;
@@ -96,6 +101,7 @@ export interface DanhMuc {
   chuDauTu?: DanhMucChuDauTu;
   nhomKhuyenMai?: DanhMucNhomKhuyenMai;
   nhomQuanLy?: DanhMucNhomQuanLy;
+  nghiepVu?: DanhMucNghiepVu;
 }
 
 @Entity('chung_tu')

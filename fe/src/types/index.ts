@@ -197,6 +197,11 @@ export interface DanhMucNhomQuanLy {
   ten: string;
 }
 
+export interface DanhMucNghiepVu {
+  ma: string;
+  ten: string;
+}
+
 // Main DanhMuc interface containing all category references
 export interface DanhMuc {
   doiTuong?: DanhMucDoiTuong;
@@ -215,6 +220,7 @@ export interface DanhMuc {
   chuDauTu?: DanhMucChuDauTu;
   nhomKhuyenMai?: DanhMucNhomKhuyenMai;
   nhomQuanLy?: DanhMucNhomQuanLy;
+  nghiepVu?: DanhMucNghiepVu;
 }
 
 // Backend response type for ChungTu (taiKhoanNo/taiKhoanCo now inside danhMuc)

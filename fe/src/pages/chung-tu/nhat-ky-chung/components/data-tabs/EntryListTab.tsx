@@ -64,7 +64,7 @@ const DEFAULT_WIDTHS: Record<string, number> = {
   ngay: 85,
   soPhieu: 90,
   loaiChungTu: 70,
-  loaiGiaoDich: 90,
+  nghiepVu: 150,
   dienGiai: 150,
   taiKhoanNo: 55,
   taiKhoanCo: 55,
@@ -172,12 +172,12 @@ const getColumnDefinitions = (
   },
   {
     title: "Nghiệp vụ",
-    key: "loaiGiaoDich",
+    key: "nghiepVu",
     render: (_: unknown, record: NhatKyChung) => {
-      const loaiGD = record.danhMuc?.loaiGiaoDich?.ten;
-      return loaiGD ? (
-        <Tooltip title={loaiGD}>
-          <span className="excel-cell-text">{loaiGD}</span>
+      const nghiepVu = record.danhMuc?.nghiepVu?.ten;
+      return nghiepVu ? (
+        <Tooltip title={nghiepVu}>
+          <span className="excel-cell-text">{nghiepVu}</span>
         </Tooltip>
       ) : (
         <span className="text-gray-400">-</span>
