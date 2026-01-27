@@ -76,6 +76,51 @@ const { Header, Sider, Content } = Layout;
 
 type MenuItem = Required<MenuProps>["items"][number];
 
+// Danh sách các routes đã có component
+const existingRoutes = new Set([
+  "/",
+  "/profile",
+  "/danh-muc/tai-khoan",
+  "/danh-muc/doi-tuong",
+  "/danh-muc/du-an",
+  "/danh-muc/san-pham",
+  "/danh-muc/bo-phan",
+  "/danh-muc/khoan-muc",
+  "/danh-muc/ngan-hang",
+  "/danh-muc/dong-tien",
+  "/danh-muc/chu-dau-tu",
+  "/danh-muc/nhom-khuyen-mai",
+  "/danh-muc/nhom-quan-ly",
+  "/danh-muc/loai-chung-tu",
+  "/danh-muc/nhom-khoan-muc",
+  "/danh-muc/loai-giao-dich",
+  "/danh-muc/quy-chuan",
+  "/chung-tu/phieu-thu",
+  "/chung-tu/phieu-chi",
+  "/chung-tu/nhat-ky-chung",
+  "/so-quy",
+  "/cong-no/phai-thu",
+  "/cong-no/phai-tra",
+  "/bao-cao/pnl",
+  "/bao-cao/so-cai",
+  "/bao-cao/bang-can-doi",
+  "/cau-hinh/phan-quyen",
+]);
+
+// Helper để tạo label với badge "Sắp ra mắt"
+const createLabel = (text: string, path: string) => {
+  const isComingSoon = !existingRoutes.has(path);
+  if (isComingSoon) {
+    return (
+      <span className="menu-coming-soon">
+        {text}
+        <span className="coming-soon-badge">Sắp ra mắt</span>
+      </span>
+    );
+  }
+  return text;
+};
+
 function getItem(
   label: React.ReactNode,
   key: string,
@@ -92,135 +137,114 @@ function getItem(
   } as MenuItem;
 }
 
+// Helper để tạo menu item với check coming soon
+function getMenuItem(
+  text: string,
+  path: string,
+  icon?: React.ReactNode,
+  children?: MenuItem[]
+): MenuItem {
+  const isComingSoon = !existingRoutes.has(path) && !children;
+  return {
+    key: path,
+    icon,
+    children,
+    label: createLabel(text, path),
+    className: isComingSoon ? "menu-item-coming-soon" : undefined,
+  } as MenuItem;
+}
+
 // ===== KẾ TOÁN - Main accounting menu =====
 const keToAnMenuItems: MenuItem[] = [
-  // 5. Tổng quan
-  getItem(
-    <span className="menu-section-label">5</span>,
-    "section-5",
-    null,
-    [getItem("Tổng quan", "/", <DashboardOutlined />)],
-    "group"
-  ),
+  // Tổng quan
+  getMenuItem("Tổng quan", "/", <DashboardOutlined />),
 
-  // 4. Phân tích
-  getItem(
-    <span className="menu-section-label">4</span>,
-    "section-4",
-    null,
-    [
-      getItem("Phân tích", "/phan-tich", <LineChartOutlined />, [
-        getItem("Báo cáo tài chính", "/phan-tich/bao-cao-tai-chinh", <PieChartOutlined />),
-        getItem("Bán hàng", "/phan-tich/ban-hang", <ShoppingCartOutlined />),
-        getItem("Mua hàng", "/phan-tich/mua-hang", <ShoppingOutlined />),
-        getItem("Công nợ", "/phan-tich/cong-no", <ReconciliationOutlined />),
-        getItem("Dòng tiền", "/phan-tich/dong-tien", <DollarOutlined />),
-        getItem("Tồn kho", "/phan-tich/ton-kho", <InboxOutlined />),
-        getItem("Khả năng thanh khoản", "/phan-tich/thanh-khoan", <StockOutlined />),
-      ]),
-    ],
-    "group"
-  ),
+  // Phân tích
+  getItem("Phân tích", "/phan-tich", <LineChartOutlined />, [
+    getMenuItem("Báo cáo tài chính", "/phan-tich/bao-cao-tai-chinh", <PieChartOutlined />),
+    getMenuItem("Bán hàng", "/phan-tich/ban-hang", <ShoppingCartOutlined />),
+    getMenuItem("Mua hàng", "/phan-tich/mua-hang", <ShoppingOutlined />),
+    getMenuItem("Công nợ", "/phan-tich/cong-no", <ReconciliationOutlined />),
+    getMenuItem("Dòng tiền", "/phan-tich/dong-tien", <DollarOutlined />),
+    getMenuItem("Tồn kho", "/phan-tich/ton-kho", <InboxOutlined />),
+    getMenuItem("Khả năng thanh khoản", "/phan-tich/thanh-khoan", <StockOutlined />),
+  ]),
 
-  // 3. Báo cáo
-  getItem(
-    <span className="menu-section-label">3</span>,
-    "section-3",
-    null,
-    [
-      getItem("Báo cáo", "/bao-cao", <BarChartOutlined />, [
-        getItem("Báo cáo tài chính", "/bao-cao/tai-chinh", <PieChartOutlined />),
-        getItem("Sổ chi tiết tài khoản", "/bao-cao/so-chi-tiet-tai-khoan", <AccountBookOutlined />),
-        getItem("Sổ chi tiết công nợ", "/bao-cao/so-chi-tiet-cong-no", <FileSearchOutlined />),
-        getItem("Sổ chi tiết phát sinh", "/bao-cao/so-chi-tiet-phat-sinh", <ProfileOutlined />),
-        getItem("Bảng tổng hợp", "/bao-cao/bang-tong-hop", <TableOutlined />),
-      ]),
-    ],
-    "group"
-  ),
+  // Báo cáo
+  getItem("Báo cáo", "/bao-cao", <BarChartOutlined />, [
+    getMenuItem("Báo cáo tài chính", "/bao-cao/tai-chinh", <PieChartOutlined />),
+    getMenuItem("Sổ chi tiết tài khoản", "/bao-cao/so-chi-tiet-tai-khoan", <AccountBookOutlined />),
+    getMenuItem("Sổ chi tiết công nợ", "/bao-cao/so-chi-tiet-cong-no", <FileSearchOutlined />),
+    getMenuItem("Sổ chi tiết phát sinh", "/bao-cao/so-chi-tiet-phat-sinh", <ProfileOutlined />),
+    getMenuItem("Bảng tổng hợp", "/bao-cao/bang-tong-hop", <TableOutlined />),
+  ]),
 
-  // 2. Trung tâm dữ liệu
-  getItem(
-    <span className="menu-section-label">2</span>,
-    "section-2",
-    null,
-    [
-      getItem("Trung tâm dữ liệu", "/trung-tam-du-lieu", <DatabaseOutlined />, [
-        getItem("Kế hoạch", "/trung-tam-du-lieu/ke-hoach", <ScheduleOutlined />),
-        getItem("Dự báo", "/trung-tam-du-lieu/du-bao", <RiseOutlined />),
-        getItem("Nhật ký chung", "/chung-tu/nhat-ky-chung", <AuditOutlined />),
-        getItem("Quản lý Tài sản", "/trung-tam-du-lieu/tai-san", <CarOutlined />),
-        getItem("Quản lý Hàng hóa", "/trung-tam-du-lieu/hang-hoa", <AppstoreOutlined />),
-        getItem("Quản lý Nguyên liệu", "/trung-tam-du-lieu/nguyen-lieu", <ContainerOutlined />),
-        getItem("Quản lý Dụng cụ", "/trung-tam-du-lieu/dung-cu", <ToolOutlined />),
-        getItem("Quản lý Hợp đồng", "/trung-tam-du-lieu/hop-dong", <FileProtectOutlined />),
-        getItem("Quản lý nhân sự", "/trung-tam-du-lieu/nhan-su", <SolutionOutlined />),
-        getItem("Lương & BHXH", "/trung-tam-du-lieu/luong-bhxh", <InsuranceOutlined />),
-      ]),
-    ],
-    "group"
-  ),
+  // Trung tâm dữ liệu
+  getItem("Trung tâm dữ liệu", "/trung-tam-du-lieu", <DatabaseOutlined />, [
+    getMenuItem("Kế hoạch", "/trung-tam-du-lieu/ke-hoach", <ScheduleOutlined />),
+    getMenuItem("Dự báo", "/trung-tam-du-lieu/du-bao", <RiseOutlined />),
+    getMenuItem("Nhật ký chung", "/chung-tu/nhat-ky-chung", <AuditOutlined />),
+    getMenuItem("Quản lý Tài sản", "/trung-tam-du-lieu/tai-san", <CarOutlined />),
+    getMenuItem("Quản lý Hàng hóa", "/trung-tam-du-lieu/hang-hoa", <AppstoreOutlined />),
+    getMenuItem("Quản lý Nguyên liệu", "/trung-tam-du-lieu/nguyen-lieu", <ContainerOutlined />),
+    getMenuItem("Quản lý Dụng cụ", "/trung-tam-du-lieu/dung-cu", <ToolOutlined />),
+    getMenuItem("Quản lý Hợp đồng", "/trung-tam-du-lieu/hop-dong", <FileProtectOutlined />),
+    getMenuItem("Quản lý nhân sự", "/trung-tam-du-lieu/nhan-su", <SolutionOutlined />),
+    getMenuItem("Lương & BHXH", "/trung-tam-du-lieu/luong-bhxh", <InsuranceOutlined />),
+  ]),
 
-  // 1. Chứng từ
-  getItem(
-    <span className="menu-section-label">1</span>,
-    "section-1",
-    null,
-    [
-      getItem("Chứng từ", "/chung-tu", <FileTextOutlined />, [
-        getItem("Phiếu thu", "/chung-tu/phieu-thu", <CreditCardOutlined />),
-        getItem("Phiếu chi", "/chung-tu/phieu-chi", <WalletOutlined />),
-        getItem("Phiếu nhập", "/chung-tu/phieu-nhap", <FileAddOutlined />),
-        getItem("Phiếu xuất", "/chung-tu/phieu-xuat", <FileDoneOutlined />),
-        getItem("Phiếu lương", "/chung-tu/phieu-luong", <SnippetsOutlined />),
-        getItem("Bảng tính lương", "/chung-tu/bang-tinh-luong", <CalculatorOutlined />),
-        getItem("Bảng chấm công", "/chung-tu/bang-cham-cong", <ClockCircleOutlined />),
-        getItem("Bảng chấm công làm thêm giờ", "/chung-tu/cham-cong-lam-them", <FieldTimeOutlined />),
-        getItem("Bảng phân bổ khấu hao TSCĐ", "/chung-tu/phan-bo-khau-hao", <PartitionOutlined />),
-        getItem("Phiếu kế toán", "/chung-tu/phieu-ke-toan", <AuditOutlined />),
-        getItem("Đề nghị thanh toán", "/chung-tu/de-nghi-thanh-toan", <FormOutlined />),
-      ]),
-    ],
-    "group"
-  ),
+  // Chứng từ
+  getItem("Chứng từ", "/chung-tu", <FileTextOutlined />, [
+    getMenuItem("Phiếu thu", "/chung-tu/phieu-thu", <CreditCardOutlined />),
+    getMenuItem("Phiếu chi", "/chung-tu/phieu-chi", <WalletOutlined />),
+    getMenuItem("Phiếu nhập", "/chung-tu/phieu-nhap", <FileAddOutlined />),
+    getMenuItem("Phiếu xuất", "/chung-tu/phieu-xuat", <FileDoneOutlined />),
+    getMenuItem("Phiếu lương", "/chung-tu/phieu-luong", <SnippetsOutlined />),
+    getMenuItem("Bảng tính lương", "/chung-tu/bang-tinh-luong", <CalculatorOutlined />),
+    getMenuItem("Bảng chấm công", "/chung-tu/bang-cham-cong", <ClockCircleOutlined />),
+    getMenuItem("Bảng chấm công làm thêm giờ", "/chung-tu/cham-cong-lam-them", <FieldTimeOutlined />),
+    getMenuItem("Bảng phân bổ khấu hao TSCĐ", "/chung-tu/phan-bo-khau-hao", <PartitionOutlined />),
+    getMenuItem("Phiếu kế toán", "/chung-tu/phieu-ke-toan", <AuditOutlined />),
+    getMenuItem("Đề nghị thanh toán", "/chung-tu/de-nghi-thanh-toan", <FormOutlined />),
+  ]),
 ];
 
 // ===== THƯ VIỆN - Library menu =====
 const thuVienMenuItems: MenuItem[] = [
   // Danh mục
   getItem("Danh mục", "/danh-muc", <BookOutlined />, [
-    getItem("Tài khoản", "/danh-muc/tai-khoan", <BankOutlined />),
-    getItem("Đối tượng", "/danh-muc/doi-tuong", <TeamOutlined />),
-    getItem("Dự án", "/danh-muc/du-an", <ProjectOutlined />),
-    getItem("Sản phẩm", "/danh-muc/san-pham", <AppstoreOutlined />),
-    getItem("Hợp đồng", "/danh-muc/hop-dong", <FileProtectOutlined />),
-    getItem("Bộ phận", "/danh-muc/bo-phan", <TeamOutlined />),
-    getItem("Khoản mục", "/danh-muc/khoan-muc", <DollarOutlined />),
-    getItem("Kho", "/danh-muc/kho", <InboxOutlined />),
+    getMenuItem("Tài khoản", "/danh-muc/tai-khoan", <BankOutlined />),
+    getMenuItem("Đối tượng", "/danh-muc/doi-tuong", <TeamOutlined />),
+    getMenuItem("Dự án", "/danh-muc/du-an", <ProjectOutlined />),
+    getMenuItem("Sản phẩm", "/danh-muc/san-pham", <AppstoreOutlined />),
+    getMenuItem("Hợp đồng", "/danh-muc/hop-dong", <FileProtectOutlined />),
+    getMenuItem("Bộ phận", "/danh-muc/bo-phan", <TeamOutlined />),
+    getMenuItem("Khoản mục", "/danh-muc/khoan-muc", <DollarOutlined />),
+    getMenuItem("Kho", "/danh-muc/kho", <InboxOutlined />),
     getItem("Khác", "/danh-muc/khac", <AppstoreOutlined />, [
-      getItem("Chủ đầu tư", "/danh-muc/chu-dau-tu", <UserOutlined />),
-      getItem("Nhóm khoản mục", "/danh-muc/nhom-khoan-muc", <TagOutlined />),
-      getItem("Ngân hàng & Quỹ", "/danh-muc/ngan-hang", <BankOutlined />),
-      getItem("Dòng tiền", "/danh-muc/dong-tien", <DollarOutlined />),
-      getItem("Nhóm khuyến mại", "/danh-muc/nhom-khuyen-mai", <AppstoreOutlined />),
-      getItem("Nhóm quản lý", "/danh-muc/nhom-quan-ly", <TeamOutlined />),
-      getItem("Loại chứng từ", "/danh-muc/loai-chung-tu", <FileTextOutlined />),
-      getItem("Loại giao dịch", "/danh-muc/loai-giao-dich", <SwapOutlined />),
-      getItem("Quy chuẩn hạch toán", "/danh-muc/quy-chuan", <AuditOutlined />),
+      getMenuItem("Chủ đầu tư", "/danh-muc/chu-dau-tu", <UserOutlined />),
+      getMenuItem("Nhóm khoản mục", "/danh-muc/nhom-khoan-muc", <TagOutlined />),
+      getMenuItem("Ngân hàng & Quỹ", "/danh-muc/ngan-hang", <BankOutlined />),
+      getMenuItem("Dòng tiền", "/danh-muc/dong-tien", <DollarOutlined />),
+      getMenuItem("Nhóm khuyến mại", "/danh-muc/nhom-khuyen-mai", <AppstoreOutlined />),
+      getMenuItem("Nhóm quản lý", "/danh-muc/nhom-quan-ly", <TeamOutlined />),
+      getMenuItem("Loại chứng từ", "/danh-muc/loai-chung-tu", <FileTextOutlined />),
+      getMenuItem("Loại giao dịch", "/danh-muc/loai-giao-dich", <SwapOutlined />),
+      getMenuItem("Quy chuẩn hạch toán", "/danh-muc/quy-chuan", <AuditOutlined />),
     ]),
   ]),
 
   // Quy trình
-  getItem("Quy trình", "/quy-trinh", <NodeIndexOutlined />),
+  getMenuItem("Quy trình", "/quy-trinh", <NodeIndexOutlined />),
 
   // Chính sách
-  getItem("Chính sách", "/chinh-sach", <SafetyCertificateOutlined />),
+  getMenuItem("Chính sách", "/chinh-sach", <SafetyCertificateOutlined />),
 
   // Biểu mẫu
-  getItem("Biểu mẫu", "/bieu-mau", <FormOutlined />),
+  getMenuItem("Biểu mẫu", "/bieu-mau", <FormOutlined />),
 
   // Hướng dẫn
-  getItem("Hướng dẫn", "/huong-dan", <QuestionCircleOutlined />),
+  getMenuItem("Hướng dẫn", "/huong-dan", <QuestionCircleOutlined />),
 ];
 
 // Helper function to check if current route is a form screen (create/edit)

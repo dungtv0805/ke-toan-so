@@ -598,6 +598,63 @@
   margin-right: 4px;
 }
 
+/* ========================= */
+/* Coming Soon Menu Styles   */
+/* ========================= */
+
+/* Coming soon menu item styling */
+.menu-item-coming-soon {
+  opacity: 0.5 !important;
+}
+
+.menu-item-coming-soon .anticon {
+  color: hsl(var(--sidebar-foreground) / 0.4) !important;
+}
+
+.menu-item-coming-soon:hover {
+  opacity: 0.7 !important;
+}
+
+/* Coming soon label with badge */
+.menu-coming-soon {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.coming-soon-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: hsl(38 92% 50%);
+  background: hsl(38 92% 50% / 0.15);
+  border: 1px solid hsl(38 92% 50% / 0.3);
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Hide badge in collapsed state */
+.sidebar-collapsed .coming-soon-badge {
+  display: none;
+}
+
+/* Submenu coming soon items */
+.ant-menu-sub .menu-item-coming-soon {
+  color: hsl(var(--sidebar-foreground) / 0.4) !important;
+}
+
+.ant-menu-sub .menu-item-coming-soon:hover {
+  color: hsl(var(--sidebar-foreground) / 0.6) !important;
+  background: hsl(var(--sidebar-accent) / 0.5) !important;
+}
+
 /* Sidebar menu compact styling */
 .sidebar-menu .ant-menu-item-group-title {
   padding: 8px 12px 4px 12px !important;
