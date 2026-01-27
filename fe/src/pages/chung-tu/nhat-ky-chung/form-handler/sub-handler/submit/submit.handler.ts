@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 import "./submit.event";
 import { NhatKyChungFormStates, NhatKyChungFormEvents } from "../../nhat-ky-chung-form.handler";
 import { ChungTuHeader, ChungTuChiTiet, TaiKhoanItem } from "../init/init.state";
-import { DanhMuc, LoaiChungTu } from "@/types";
+import { DanhMuc, LoaiChungTu, LoaiGiaoDich } from "@/types";
 
 @RegisterHandler("nhat-ky-chung-form")
 export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyChungFormStates> {
@@ -145,6 +145,7 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
 
   private buildDanhMuc(chiTiet: ChungTuChiTiet, header: ChungTuHeader): DanhMuc {
     const taiKhoanList = (this.getState("taiKhoanList") as TaiKhoanItem[]) || [];
+    const loaiGiaoDichList = (this.getState("loaiGiaoDichList") as LoaiGiaoDich[]) || [];
 
     const danhMuc: DanhMuc = {};
 
@@ -170,19 +171,20 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
       };
     }
 
-    // Loại chứng từ - lấy từ nghiệp vụ của từng dòng chi tiết
-    if (chiTiet.nghiepVu) {
-      danhMuc.loaiChungTu = {
-        ma: chiTiet.nghiepVu,
-        ten: chiTiet.nghiepVuTen || chiTiet.nghiepVu,
+    // Loại giao dịch từ header - lấy tên từ loaiGiaoDichList
+    if (header.loaiGiaoDich) {
+      const loaiGD = loaiGiaoDichList.find((lgd) => lgd.ma === header.loaiGiaoDich);
+      danhMuc.loaiGiaoDich = {
+        ma: header.loaiGiaoDich,
+        ten: loaiGD?.ten || header.loaiGiaoDich,
       };
     }
 
-    // Loại giao dịch từ header
-    if (header.loaiGiaoDich) {
-      danhMuc.loaiGiaoDich = {
-        ma: header.loaiGiaoDich,
-        ten: header.loaiGiaoDich,
+    // Nghiệp vụ từ chi tiết
+    if (chiTiet.nghiepVu) {
+      danhMuc.nghiepVu = {
+        ma: chiTiet.nghiepVu,
+        ten: chiTiet.nghiepVuTen || chiTiet.nghiepVu,
       };
     }
 
