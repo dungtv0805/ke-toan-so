@@ -49,7 +49,7 @@ const taiKhoanSchema = z.object({
   loai: z.enum(["TAI_SAN", "NO_PHAI_TRA", "VON_CHU_SO_HUU", "DOANH_THU", "CHI_PHI", "THU_NHAP_KHAC", "CHI_PHI_KHAC", "XAC_DINH_KQKD"]),
   nhom: z.enum(["NO", "CO", "LUONG_TINH", "KHONG_CO_SO_DU"]),
   parentId: z.string().nullable().optional(),
-  moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").optional(),
+  moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").nullable().optional(),
 });
 
 const TaiKhoanPage: React.FC = () => {
@@ -136,11 +136,14 @@ const TaiKhoanPage: React.FC = () => {
   const openModal = (record?: TaiKhoan) => {
     if (record) {
       setEditingRecord(record);
-      form.setFieldsValue(record);
+      form.setFieldsValue({
+        ...record,
+        moTa: record.moTa || '', // Ensure empty string instead of null
+      });
     } else {
       setEditingRecord(null);
       form.resetFields();
-      form.setFieldsValue({ capDo: 1 });
+      form.setFieldsValue({ capDo: 1, moTa: '' });
     }
     setModalVisible(true);
   };
@@ -157,12 +160,18 @@ const TaiKhoanPage: React.FC = () => {
         return;
       }
 
+      // Transform null/empty moTa to undefined before sending to API
+      const payload = {
+        ...validation.data,
+        moTa: validation.data.moTa || undefined,
+      };
+
       setLoading(true);
       if (editingRecord) {
-        await taiKhoanService.update(editingRecord.id, values);
+        await taiKhoanService.update(editingRecord.id, payload);
         message.success("Cập nhật tài khoản thành công");
       } else {
-        await taiKhoanService.create(values);
+        await taiKhoanService.create(payload);
         message.success("Thêm tài khoản thành công");
       }
       setModalVisible(false);

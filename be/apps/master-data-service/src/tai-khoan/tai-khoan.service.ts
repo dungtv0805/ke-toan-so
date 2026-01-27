@@ -72,6 +72,7 @@ export class TaiKhoanService {
         where: searchWhere,
         skip,
         take: limit,
+        order: { ma: 'ASC' },
       });
     } else {
       // Use findAndCount for accurate total with MongoDB
@@ -79,11 +80,9 @@ export class TaiKhoanService {
         where: baseWhere,
         skip,
         take: limit,
+        order: { ma: 'ASC' },
       });
     }
-
-    // Sort by ma for hierarchical display
-    data.sort((a, b) => a.ma.localeCompare(b.ma));
 
     return {
       data,
