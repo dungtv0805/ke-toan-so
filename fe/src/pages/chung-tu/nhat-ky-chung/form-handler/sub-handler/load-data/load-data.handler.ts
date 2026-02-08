@@ -100,6 +100,7 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
       taiKhoanCo: item.taiKhoanCo || "",
       soTien: item.soTien,
       noiDung: item.dienGiai,
+      soTaiKhoan: item.soTaiKhoan,
 
       // Nghiệp vụ cho từng dòng
       nghiepVu: nghiepVu,

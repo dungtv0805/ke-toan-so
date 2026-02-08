@@ -786,6 +786,22 @@ export function ChiTietTable() {
       ),
     },
     {
+      title: "Số TK",
+      dataIndex: "soTaiKhoan",
+      width: 120,
+      render: (value: string, record: ChungTuChiTiet, index: number) => (
+        <Input
+          size="small"
+          placeholder="Số tài khoản"
+          value={value || ""}
+          onChange={(e) => handleUpdateField(record.key, "soTaiKhoan", e.target.value)}
+          onFocus={() => { activeRowRef.current = index; }}
+          className="excel-cell-input"
+          variant="borderless"
+        />
+      ),
+    },
+    {
       title: "Ghi chú",
       dataIndex: "ghiChu",
       width: 150,

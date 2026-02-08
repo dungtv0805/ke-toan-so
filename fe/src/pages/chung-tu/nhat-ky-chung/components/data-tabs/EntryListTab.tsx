@@ -97,6 +97,7 @@ const DEFAULT_WIDTHS: Record<string, number> = {
   nhomQuanLy: 100,
   hopDongSo: 80,
   hopDong: 120,
+  soTaiKhoan: 100,
   nguoiGiaoDich: 100,
   diaChi: 120,
   ghiChu: 120,
@@ -670,6 +671,12 @@ const getColumnDefinitions = (
         renderEllipsisText(ten)
       );
     },
+  },
+  {
+    title: "Số TK",
+    dataIndex: "soTaiKhoan",
+    key: "soTaiKhoan",
+    render: (text: string) => renderEllipsisText(text),
   },
   {
     title: "Người GD",
