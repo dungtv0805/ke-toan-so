@@ -1,0 +1,17 @@
+# Serena project configuration
+# Documentation: https://oraios.github.io/serena/
+
+language: python
+root_path: .
+
+# Exclude patterns (optional)
+exclude_patterns:
+  - node_modules
+  - .git
+  - __pycache__
+  - .venv
+  - venv
+  - dist
+  - build
+  - .next
+  - coverage
