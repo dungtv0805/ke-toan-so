@@ -3,17 +3,18 @@ import { useState } from "react";
 
 const { Text } = Typography;
 
-type DetailType = 
-  | "doiTuong" 
-  | "duAn" 
-  | "boPhan" 
-  | "sanPham" 
-  | "dongTien" 
+type DetailType =
+  | "doiTuong"
+  | "duAn"
+  | "boPhan"
+  | "sanPham"
+  | "dongTien"
   | "nhanVien"
   | "nhomKhuyenMai"
   | "nhomQuanLy"
   | "taiKhoan"
-  | "khoanMuc";
+  | "khoanMuc"
+  | "hopDong";
 
 interface DetailData {
   ma?: string;
@@ -40,6 +41,7 @@ const typeLabels: Record<DetailType, string> = {
   nhomQuanLy: "Nhóm quản lý",
   taiKhoan: "Tài khoản",
   khoanMuc: "Khoản mục",
+  hopDong: "Hợp đồng",
 };
 
 // Render specific fields based on type
@@ -94,6 +96,12 @@ const renderDetailContent = (type: DetailType, data: AnyDetailData) => {
       { label: "Loại", value: data.loai },
       { label: "Nhóm", value: data.nhom },
     ],
+    hopDong: [
+      { label: "Số HĐ", value: data.soHopDong },
+      { label: "Công trình", value: data.tenCongTrinh },
+      { label: "Giá trị", value: data.giaTriSauThue ? new Intl.NumberFormat('vi-VN').format(data.giaTriSauThue as number) + ' đ' : undefined },
+      { label: "Trạng thái", value: data.trangThai },
+    ],
   };
 
   const items = [...commonItems, ...specificItems[type]].filter(item => item.value);
@@ -117,7 +125,7 @@ const renderDetailContent = (type: DetailType, data: AnyDetailData) => {
 export function DetailPopover({ type, data, children }: DetailPopoverProps) {
   const [open, setOpen] = useState(false);
 
-  if (!data || (!data.ma && !data.ten)) {
+  if (!data || (!data.ma && !data.ten && !data.soHopDong)) {
     return <>{children}</>;
   }
 
@@ -132,7 +140,7 @@ export function DetailPopover({ type, data, children }: DetailPopoverProps) {
       content={content}
       title={
         <Text strong className="text-primary">
-          {typeLabels[type]}: {data.ten || data.ma}
+          {typeLabels[type]}: {data.ten || data.tenCongTrinh || data.ma || data.soHopDong}
         </Text>
       }
       trigger="click"

@@ -184,3 +184,12 @@ export const getNkcNghiepVuMa = (nkc: NhatKyChung): string | undefined => {
 export const getNkcNghiepVuTen = (nkc: NhatKyChung): string | undefined => {
   return nkc.danhMuc?.nghiepVu?.ten;
 };
+
+// Hợp đồng
+export const getNkcHopDongSo = (nkc: NhatKyChung): string | undefined => {
+  return nkc.danhMuc?.hopDong?.soHopDong;
+};
+
+export const getNkcHopDongTen = (nkc: NhatKyChung): string | undefined => {
+  return nkc.danhMuc?.hopDong?.tenCongTrinh;
+};

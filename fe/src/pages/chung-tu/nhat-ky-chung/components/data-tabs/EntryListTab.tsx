@@ -29,6 +29,8 @@ import {
   getNkcNhomKhuyenMaiTen,
   getNkcNhomQuanLyMa,
   getNkcNhomQuanLyTen,
+  getNkcHopDongSo,
+  getNkcHopDongTen,
 } from "@/utils/snapshotDisplay";
 import {
   useNhatKyChungState,
@@ -93,6 +95,8 @@ const DEFAULT_WIDTHS: Record<string, number> = {
   nhomKhuyenMai: 100,
   nhomQuanLyMa: 55,
   nhomQuanLy: 100,
+  hopDongSo: 80,
+  hopDong: 120,
   nguoiGiaoDich: 100,
   diaChi: 120,
   ghiChu: 120,
@@ -630,6 +634,36 @@ const getColumnDefinitions = (
       const data = record.danhMuc?.nhomQuanLy;
       return data ? (
         <DetailPopover type="nhomQuanLy" data={data}>
+          {renderEllipsisText(ten)}
+        </DetailPopover>
+      ) : (
+        renderEllipsisText(ten)
+      );
+    },
+  },
+  {
+    title: "Số HĐ",
+    key: "hopDongSo",
+    render: (_: unknown, record: NhatKyChung) => {
+      const so = getNkcHopDongSo(record);
+      const data = record.danhMuc?.hopDong;
+      return so ? (
+        <DetailPopover type="hopDong" data={data}>
+          <span className="cursor-pointer text-blue-600">{so}</span>
+        </DetailPopover>
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
+    },
+  },
+  {
+    title: "Hợp đồng",
+    key: "hopDong",
+    render: (_: unknown, record: NhatKyChung) => {
+      const ten = getNkcHopDongTen(record);
+      const data = record.danhMuc?.hopDong;
+      return data ? (
+        <DetailPopover type="hopDong" data={data}>
           {renderEllipsisText(ten)}
         </DetailPopover>
       ) : (
