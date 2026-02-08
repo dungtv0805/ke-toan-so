@@ -145,6 +145,6 @@ export const buildHopDongSnapshot = (hopDong: HopDong): HopDongSnapshot => ({
   id: hopDong.id,
   soHopDong: hopDong.soHopDong,
   tenCongTrinh: hopDong.tenCongTrinh,
-  giaTriHopDong: hopDong.giaTriHopDong,
+  giaTriSauThue: hopDong.giaTriSauThue,
   trangThai: hopDong.trangThai,
 });

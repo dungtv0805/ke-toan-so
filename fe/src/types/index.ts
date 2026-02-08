@@ -99,18 +99,6 @@ export interface NhomQuanLy {
   moTa?: string;
 }
 
-export interface HopDong {
-  id: string;
-  soHopDong: string;
-  tenCongTrinh: string;
-  ngayKy?: string;
-  ngayBatDau?: string;
-  ngayKetThuc?: string;
-  giaTriHopDong?: number;
-  trangThai?: 'DANG_THUC_HIEN' | 'HOAN_THANH' | 'TAM_DUNG' | 'HUY';
-  moTa?: string;
-}
-
 // ===== HỢP ĐỒNG =====
 
 export enum TrangThaiHopDong {
@@ -386,8 +374,8 @@ export interface HopDongSnapshot {
   id: string;
   soHopDong: string;
   tenCongTrinh: string;
-  giaTriHopDong?: number;
-  trangThai?: 'DANG_THUC_HIEN' | 'HOAN_THANH' | 'TAM_DUNG' | 'HUY';
+  giaTriSauThue?: number;
+  trangThai?: TrangThaiHopDong;
 }
 
 // ===== CHỨNG TỪ =====

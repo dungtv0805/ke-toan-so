@@ -6,6 +6,13 @@ interface HopDongResponse extends Omit<HopDong, 'id'> {
   id?: string;
 }
 
+export interface HopDongStats {
+  total: number;
+  hdGoc: number;
+  hdPhotoScan: number;
+  chuaCoHd: number;
+}
+
 class HopDongService extends ServiceBase {
   constructor() {
     super({ endpoint: '/master-data/hop-dong' });
@@ -58,6 +65,10 @@ class HopDongService extends ServiceBase {
       params: { keyword, limit: String(limit) },
     });
     return data.map((item) => this.mapHopDong(item));
+  }
+
+  async getStats(): Promise<HopDongStats> {
+    return this.get<HopDongStats>({ endpoint: '/stats' });
   }
 }
 
