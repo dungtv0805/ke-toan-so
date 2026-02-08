@@ -44,8 +44,8 @@ export class HopDongService {
       const searchLower = search.toLowerCase();
       filteredItems = filteredItems.filter(
         (item) =>
-          item.soHopDong.toLowerCase().includes(searchLower) ||
-          item.tenCongTrinh.toLowerCase().includes(searchLower),
+          item.soHopDong?.toLowerCase().includes(searchLower) ||
+          item.tenCongTrinh?.toLowerCase().includes(searchLower),
       );
     }
 
@@ -133,8 +133,8 @@ export class HopDongService {
     return allItems
       .filter(
         (item) =>
-          item.soHopDong.toLowerCase().includes(searchLower) ||
-          item.tenCongTrinh.toLowerCase().includes(searchLower),
+          item.soHopDong?.toLowerCase().includes(searchLower) ||
+          item.tenCongTrinh?.toLowerCase().includes(searchLower),
       )
       .slice(0, limit);
   }
