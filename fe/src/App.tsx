@@ -29,6 +29,7 @@ import {
   LoaiChungTuPage,
   NhomKhoanMucPage,
   LoaiGiaoDichPage,
+  HopDongPage,
   PhieuThuPage,
   PhieuChiPage,
   NhatKyChungPage,
@@ -109,6 +110,7 @@ const App = () => (
                   <Route path="loai-chung-tu" element={<LoaiChungTuPage />} />
                   <Route path="nhom-khoan-muc" element={<NhomKhoanMucPage />} />
                   <Route path="loai-giao-dich" element={<LoaiGiaoDichPage />} />
+                  <Route path="hop-dong" element={<HopDongPage />} />
                   <Route
                     path="quy-chuan"
                     element={
@@ -118,7 +120,6 @@ const App = () => (
                     }
                   />
                   {/* Coming Soon */}
-                  <Route path="hop-dong" element={<ComingSoonPage />} />
                   <Route path="kho" element={<ComingSoonPage />} />
                 </Route>
 

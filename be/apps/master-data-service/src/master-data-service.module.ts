@@ -15,6 +15,7 @@ import { NhomQuanLyModule } from './nhom-quan-ly/nhom-quan-ly.module';
 import { LoaiChungTuModule } from './loai-chung-tu/loai-chung-tu.module';
 import { NhomKhoanMucModule } from './nhom-khoan-muc/nhom-khoan-muc.module';
 import { LoaiGiaoDichModule } from './loai-giao-dich/loai-giao-dich.module';
+import { HopDongModule } from './hop-dong/hop-dong.module';
 import {
   TaiKhoan,
   DoiTuong,
@@ -30,6 +31,7 @@ import {
   LoaiChungTuMaster,
   NhomKhoanMuc,
   LoaiGiaoDich,
+  HopDong,
 } from '@app/entities';
 
 @Module({
@@ -51,6 +53,7 @@ import {
       LoaiChungTuMaster,
       NhomKhoanMuc,
       LoaiGiaoDich,
+      HopDong,
     ]),
     TaiKhoanModule,
     DoiTuongModule,
@@ -66,6 +69,7 @@ import {
     LoaiChungTuModule,
     NhomKhoanMucModule,
     LoaiGiaoDichModule,
+    HopDongModule,
   ],
 })
 export class MasterDataServiceModule {}

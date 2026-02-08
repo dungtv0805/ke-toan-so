@@ -79,6 +79,10 @@ export const LoaiGiaoDichPage = loadable(() => import('./danh-muc/loai-giao-dich
   fallback: <PageLoader />
 });
 
+export const HopDongPage = loadable(() => import('./danh-muc/hop-dong/HopDongPage'), {
+  fallback: <PageLoader />
+});
+
 // Chứng từ
 export const PhieuThuPage = loadable(() => import('./chung-tu/phieu-thu/PhieuThuPage'), {
   fallback: <PageLoader />

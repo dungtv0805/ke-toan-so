@@ -1,6 +1,6 @@
 import { Form, Select, Row, Col, Input, Tooltip } from "antd";
 import { ExclamationCircleOutlined, DeleteOutlined } from "@ant-design/icons";
-import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, NhomKhuyenMai, NhomQuanLy, KhoanMuc } from "@/types";
+import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, NhomKhuyenMai, NhomQuanLy, KhoanMuc, HopDong } from "@/types";
 import {
   buildDoiTuongSnapshot,
   buildDuAnSnapshot,
@@ -12,6 +12,7 @@ import {
   buildNhomKhuyenMaiSnapshot,
   buildNhomQuanLySnapshot,
   buildKhoanMucSnapshot,
+  buildHopDongSnapshot,
 } from "@/utils/snapshotBuilder";
 import {
   useNhatKyChungState,
@@ -63,6 +64,7 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
   const [nhomKhuyenMaiList] = useNhatKyChungState("nhomKhuyenMaiList", []);
   const [nhomQuanLyList] = useNhatKyChungState("nhomQuanLyList", []);
   const [khoanMucList] = useNhatKyChungState("khoanMucList", []);
+  const [hopDongList] = useNhatKyChungState("hopDongList", []);
   const [masterDataChanges] = useNhatKyChungState("masterDataChanges", {});
 
   const handleDoiTuongChange = (value: string | undefined) => {
@@ -205,6 +207,18 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
     const khoanMuc = khoanMucList?.find((km: KhoanMucItem) => km.id === value);
     if (khoanMuc) {
       form.setFieldsValue({ khoanMucSnapshot: buildKhoanMucSnapshot(khoanMuc as KhoanMuc) });
+    }
+  };
+
+  const handleHopDongChange = (value: string | undefined) => {
+    handler.executeEvent("clearFieldChange", { field: "hopDong" });
+    if (!value) {
+      form.setFieldsValue({ hopDongSnapshot: undefined });
+      return;
+    }
+    const hopDong = hopDongList?.find((hd: HopDong) => hd.id === value);
+    if (hopDong) {
+      form.setFieldsValue({ hopDongSnapshot: buildHopDongSnapshot(hopDong) });
     }
   };
 
@@ -469,7 +483,7 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
             <Form.Item
               name="nhomQuanLyId"
               label={renderLabel("Nhóm quản lý", "nhomQuanLy")}
-              className={`mb-0 ${getFieldClassName(masterDataChanges, "nhomQuanLy")}`}
+              className={`mb-2 ${getFieldClassName(masterDataChanges, "nhomQuanLy")}`}
             >
               <Select
                 showSearch
@@ -480,6 +494,25 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
                 options={nhomQuanLyList?.map((nql: NhomQuanLy) => ({
                   value: nql.id,
                   label: `${nql.ma} - ${nql.ten}`,
+                }))}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="hopDongId"
+              label={renderLabel("Hợp đồng", "hopDong")}
+              className={`mb-0 ${getFieldClassName(masterDataChanges, "hopDong")}`}
+            >
+              <Select
+                showSearch
+                allowClear
+                placeholder="Chọn hợp đồng"
+                optionFilterProp="label"
+                onChange={handleHopDongChange}
+                options={hopDongList?.map((hd: HopDong) => ({
+                  value: hd.id,
+                  label: `${hd.soHopDong} - ${hd.tenCongTrinh}`,
                 }))}
               />
             </Form.Item>
@@ -518,6 +551,9 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
         <Input />
       </Form.Item>
       <Form.Item name="khoanMucSnapshot" hidden>
+        <Input />
+      </Form.Item>
+      <Form.Item name="hopDongSnapshot" hidden>
         <Input />
       </Form.Item>
     </>
