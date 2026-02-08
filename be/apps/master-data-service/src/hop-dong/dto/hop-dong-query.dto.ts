@@ -5,7 +5,7 @@ import { TrangThaiHopDong } from '@app/entities/master-data/hop-dong.entity';
 export class HopDongQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsEnum(TrangThaiHopDong)
-  trangThai?: TrangThaiHopDong;
+  declare trangThai?: TrangThaiHopDong;
 
   @IsOptional()
   @IsMongoId()
