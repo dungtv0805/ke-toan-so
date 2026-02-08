@@ -1,14 +1,9 @@
-import { HopDong, TrangThaiHopDong } from '@/types';
+import { HopDong } from '@/types';
 import { ServiceBase, PaginatedResponse, PaginationParams } from './base/service-base';
 
 interface HopDongResponse extends Omit<HopDong, 'id'> {
   _id?: string;
   id?: string;
-}
-
-interface HopDongStats {
-  total: number;
-  byTrangThai: Record<TrangThaiHopDong, number>;
 }
 
 class HopDongService extends ServiceBase {
@@ -63,18 +58,6 @@ class HopDongService extends ServiceBase {
       params: { keyword, limit: String(limit) },
     });
     return data.map((item) => this.mapHopDong(item));
-  }
-
-  async checkSoHopDongExists(soHopDong: string, excludeId?: string): Promise<boolean> {
-    const result = await this.get<{ exists: boolean }>({
-      endpoint: '/check-so-hop-dong',
-      params: { soHopDong, excludeId },
-    });
-    return result.exists;
-  }
-
-  async getStats(): Promise<HopDongStats> {
-    return this.get<HopDongStats>({ endpoint: '/stats' });
   }
 }
 

@@ -8,6 +8,7 @@ import {
   DongTien,
   NhomKhuyenMai,
   NhomQuanLy,
+  HopDong,
   DoiTuongSnapshot,
   DuAnSnapshot,
   BoPhanSnapshot,
@@ -17,6 +18,7 @@ import {
   KhoanMucSnapshot,
   SanPhamSnapshot,
   DongTienSnapshot,
+  HopDongSnapshot,
   DanhMucNhomKhuyenMai,
   DanhMucNhomQuanLy,
 } from '@/types';
@@ -134,4 +136,15 @@ export const buildNhomKhuyenMaiSnapshot = (nhomKhuyenMai: NhomKhuyenMai): DanhMu
 export const buildNhomQuanLySnapshot = (nhomQuanLy: NhomQuanLy): DanhMucNhomQuanLy => ({
   ma: nhomQuanLy.ma,
   ten: nhomQuanLy.ten,
+});
+
+/**
+ * Build HopDongSnapshot from HopDong master data
+ */
+export const buildHopDongSnapshot = (hopDong: HopDong): HopDongSnapshot => ({
+  id: hopDong.id,
+  soHopDong: hopDong.soHopDong,
+  tenCongTrinh: hopDong.tenCongTrinh,
+  giaTriHopDong: hopDong.giaTriHopDong,
+  trangThai: hopDong.trangThai,
 });
