@@ -8,6 +8,7 @@ import {
   ValidateNested,
   IsInt,
   Min,
+  IsMongoId,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TrangThaiHopDong } from '@app/entities/master-data/hop-dong.entity';
@@ -97,7 +98,7 @@ export class CreateHopDongDto {
   phuLuc2?: PhuLucDto;
 
   @IsOptional()
-  @IsString()
+  @IsMongoId()
   doiTuongId?: string;
 
   @IsOptional()
