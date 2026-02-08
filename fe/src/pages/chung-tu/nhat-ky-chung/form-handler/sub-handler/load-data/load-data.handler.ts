@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 import "./load-data.event";
 import { NhatKyChungFormStates, NhatKyChungFormEvents } from "../../nhat-ky-chung-form.handler";
 import { ChungTuHeader, ChungTuChiTiet } from "../init/init.state";
-import { NhatKyChung, DoiTuong, DuAn, BoPhan, SanPham, DongTien, NhomKhuyenMai, NhomQuanLy, QuyChuan } from "@/types";
+import { NhatKyChung, DoiTuong, DuAn, BoPhan, SanPham, DongTien, NhomKhuyenMai, NhomQuanLy, QuyChuan, HopDong } from "@/types";
 import { KhoanMucItem } from "../init/init.state";
 
 @RegisterHandler("nhat-ky-chung-form")
@@ -24,7 +24,7 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
 
         // Lấy loaiGiaoDich từ quyChaunList dựa trên nghiệp vụ
         const quyChaunList = (this.getState("quyChaunList") as QuyChuan[]) || [];
-        const nghiepVu = first.danhMuc?.loaiChungTu?.ma || first.danhMuc?.loaiGiaoDich?.ma;
+        const nghiepVu = first.danhMuc?.nghiepVu?.ma || first.danhMuc?.loaiChungTu?.ma || first.danhMuc?.loaiGiaoDich?.ma;
         const quyChuan = quyChaunList.find((qc) => qc.nghiepVu === nghiepVu);
         const loaiGiaoDich = quyChuan?.loaiGiaoDich || first.danhMuc?.loaiGiaoDich?.ma;
 
@@ -33,7 +33,7 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
           ngay: dayjs(first.ngay),
           loaiGiaoDich: loaiGiaoDich,
           loai: nghiepVu,
-          loaiTen: first.danhMuc?.loaiChungTu?.ten || first.danhMuc?.loaiGiaoDich?.ten || first.loaiChungTu,
+          loaiTen: first.danhMuc?.nghiepVu?.ten || first.danhMuc?.loaiChungTu?.ten || first.danhMuc?.loaiGiaoDich?.ten || first.loaiChungTu,
           dienGiaiChung: first.dienGiai,
           nguoiGiaoDich: first.nguoiGiaoDich,
           diaChi: first.diaChi,
@@ -73,6 +73,7 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
     const nhomKhuyenMaiList = (this.getState("nhomKhuyenMaiList") as NhomKhuyenMai[]) || [];
     const nhomQuanLyList = (this.getState("nhomQuanLyList") as NhomQuanLy[]) || [];
     const khoanMucList = (this.getState("khoanMucList") as KhoanMucItem[]) || [];
+    const hopDongList = (this.getState("hopDongList") as HopDong[]) || [];
 
     // Find IDs from master data based on danhMuc snapshots
     const doiTuong = danhMuc?.doiTuong ? doiTuongList.find((d) => d.ma === danhMuc.doiTuong?.ma) : undefined;
@@ -86,10 +87,11 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
     const nhomKhuyenMai = danhMuc?.nhomKhuyenMai ? nhomKhuyenMaiList.find((n) => n.ma === danhMuc.nhomKhuyenMai?.ma) : undefined;
     const nhomQuanLy = danhMuc?.nhomQuanLy ? nhomQuanLyList.find((n) => n.ma === danhMuc.nhomQuanLy?.ma) : undefined;
     const khoanMuc = danhMuc?.khoanMuc ? khoanMucList.find((k) => k.ma === danhMuc.khoanMuc?.ma) : undefined;
+    const hopDong = danhMuc?.hopDong ? hopDongList.find((h) => h.soHopDong === danhMuc.hopDong?.soHopDong) : undefined;
 
-    // Lấy nghiệp vụ từ danhMuc của từng dòng
-    const nghiepVu = danhMuc?.loaiChungTu?.ma;
-    const nghiepVuTen = danhMuc?.loaiChungTu?.ten;
+    // Lấy nghiệp vụ từ danhMuc của từng dòng (nghiepVu hoặc loaiChungTu cho backward compatibility)
+    const nghiepVu = danhMuc?.nghiepVu?.ma || danhMuc?.loaiChungTu?.ma;
+    const nghiepVuTen = danhMuc?.nghiepVu?.ten || danhMuc?.loaiChungTu?.ten;
 
     return {
       key: item.id,
@@ -115,6 +117,7 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
       nhomKhuyenMaiId: nhomKhuyenMai?.id,
       nhomQuanLyId: nhomQuanLy?.id,
       khoanMucId: khoanMuc?.id,
+      hopDongId: hopDong?.id,
 
       // Snapshots
       doiTuongSnapshot: danhMuc?.doiTuong as Record<string, unknown>,
@@ -128,6 +131,7 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
       nhomKhuyenMaiSnapshot: danhMuc?.nhomKhuyenMai as Record<string, unknown>,
       nhomQuanLySnapshot: danhMuc?.nhomQuanLy as Record<string, unknown>,
       khoanMucSnapshot: danhMuc?.khoanMuc as Record<string, unknown>,
+      hopDongSnapshot: danhMuc?.hopDong as Record<string, unknown>,
     };
   }
 }

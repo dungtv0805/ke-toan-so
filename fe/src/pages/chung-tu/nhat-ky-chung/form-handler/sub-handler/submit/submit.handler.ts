@@ -222,6 +222,9 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
     if (chiTiet.khoanMucSnapshot) {
       danhMuc.khoanMuc = chiTiet.khoanMucSnapshot as DanhMuc["khoanMuc"];
     }
+    if (chiTiet.hopDongSnapshot) {
+      danhMuc.hopDong = chiTiet.hopDongSnapshot as DanhMuc["hopDong"];
+    }
 
     return danhMuc;
   }
