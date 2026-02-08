@@ -497,7 +497,6 @@ const MainLayout: React.FC = () => {
           collapsedWidth={56}
           className={`!bg-sidebar ${collapsed ? "sidebar-collapsed" : ""}`}
           style={{
-            overflow: "hidden",
             height: "100vh",
             position: "fixed",
             left: 0,

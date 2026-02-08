@@ -146,7 +146,7 @@ const PhieuChiPage: React.FC = () => {
       ] = await Promise.all([
         phieuChiService.getAll({ page, limit: pageSize }),
         doiTuongService.getAll(),
-        taiKhoanService.getAll(),
+        taiKhoanService.getLeafAccounts(),
         phieuChiService.getStats(),
         quyChauanService.getByLoaiGiaoDich("PHIEU_CHI"),
         boPhanService.getAll(),

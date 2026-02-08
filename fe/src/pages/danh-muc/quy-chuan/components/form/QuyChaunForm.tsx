@@ -12,7 +12,7 @@ const quyChaunSchema = z.object({
   nghiepVu: z.string().min(1, 'Vui lòng nhập nghiệp vụ').max(100, 'Nghiệp vụ không quá 100 ký tự'),
   taiKhoanNo: z.string().min(1, 'Vui lòng chọn tài khoản Nợ'),
   taiKhoanCo: z.string().min(1, 'Vui lòng chọn tài khoản Có'),
-  moTa: z.string().max(255, 'Mô tả không quá 255 ký tự').optional(),
+  moTa: z.string().max(255, 'Mô tả không quá 255 ký tự').optional().nullable(),
 });
 
 export const QuyChaunForm: React.FC = () => {
