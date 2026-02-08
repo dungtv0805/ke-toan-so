@@ -99,6 +99,57 @@ export interface NhomQuanLy {
   moTa?: string;
 }
 
+// ===== HỢP ĐỒNG =====
+
+export enum TrangThaiHopDong {
+  CHUA_CO_HD = 'CHUA_CO_HD',
+  HD_CHUA_KY = 'HD_CHUA_KY',
+  HD_PHOTO_SCAN = 'HD_PHOTO_SCAN',
+  HD_GOC = 'HD_GOC',
+}
+
+export interface PhuLuc {
+  giaTri?: number;
+  ngayKy?: string;
+}
+
+export interface DieuKhoanThanhToan {
+  tamUng?: string;
+  thanhToanGiaiDoan?: string;
+  quyetToan?: string;
+}
+
+export interface BaoHanh {
+  giaTri?: number;
+  thoiGian?: string;
+  hinhThuc?: string;
+}
+
+export interface TienDoThiCong {
+  soNgay?: number;
+  tuNgay?: string;
+  denNgay?: string;
+}
+
+export interface HopDong {
+  id: string;
+  soHopDong: string;
+  tenCongTrinh: string;
+  giaTriSauThue?: number;
+  ngayKy?: string;
+  phuLuc1?: PhuLuc;
+  phuLuc2?: PhuLuc;
+  doiTuongId?: string;
+  nguoiKy?: string;
+  chucVu?: string;
+  nguoiGiaoDich?: string;
+  dieuKhoanThanhToan?: DieuKhoanThanhToan;
+  baoHanh?: BaoHanh;
+  tienDoThiCong?: TienDoThiCong;
+  trangThai?: TrangThaiHopDong;
+  soLuongLuu?: number;
+}
+
 export interface LoaiGiaoDich {
   id: string;
   ma: string;
@@ -202,6 +253,13 @@ export interface DanhMucNghiepVu {
   ten: string;
 }
 
+export interface DanhMucHopDong {
+  ma: string;
+  ten: string;
+  soHopDong: string;
+  tenCongTrinh: string;
+}
+
 // Main DanhMuc interface containing all category references
 export interface DanhMuc {
   doiTuong?: DanhMucDoiTuong;
@@ -221,6 +279,7 @@ export interface DanhMuc {
   nhomKhuyenMai?: DanhMucNhomKhuyenMai;
   nhomQuanLy?: DanhMucNhomQuanLy;
   nghiepVu?: DanhMucNghiepVu;
+  hopDong?: DanhMucHopDong;
 }
 
 // Backend response type for ChungTu (taiKhoanNo/taiKhoanCo now inside danhMuc)
