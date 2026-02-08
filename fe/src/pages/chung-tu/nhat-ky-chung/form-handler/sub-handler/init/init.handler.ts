@@ -12,6 +12,7 @@ import { nhomKhuyenMaiService } from "@/services/nhomKhuyenMaiService";
 import { nhomQuanLyService } from "@/services/nhomQuanLyService";
 import { loaiChungTuService } from "@/services/loaiChungTuService";
 import { loaiGiaoDichService } from "@/services/loaiGiaoDichService";
+import { hopDongService } from "@/services/hopDongService";
 import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
 import "./init.event";
@@ -83,6 +84,7 @@ export class InitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyCh
         nhomQuanLy,
         loaiChungTu,
         loaiGiaoDich,
+        hopDong,
       ] = await Promise.all([
         taiKhoanService.getLeafAccounts(),
         khoanMucService.getPaginated({ limit: 500 }),
@@ -96,6 +98,7 @@ export class InitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyCh
         nhomQuanLyService.getAll(),
         loaiChungTuService.getAll(),
         loaiGiaoDichService.getAll(),
+        hopDongService.getAll(),
       ]);
 
       this.setState(
@@ -129,6 +132,7 @@ export class InitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyCh
       this.setState("nhomQuanLyList", nhomQuanLy);
       this.setState("loaiChungTuList", loaiChungTu);
       this.setState("loaiGiaoDichList", loaiGiaoDich);
+      this.setState("hopDongList", hopDong);
       this.setState("masterDataLoaded", true);
     } catch (error) {
       console.error("Error loading master data:", error);
@@ -154,6 +158,7 @@ export class InitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyCh
     this.setState("loaiGiaoDichList", []);
     this.setState("nhomKhuyenMaiList", []);
     this.setState("nhomQuanLyList", []);
+    this.setState("hopDongList", []);
     this.setState("filteredNghiepVuList", []);
   }
 }

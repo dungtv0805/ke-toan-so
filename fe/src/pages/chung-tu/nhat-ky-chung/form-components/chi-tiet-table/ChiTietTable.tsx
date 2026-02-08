@@ -11,7 +11,7 @@ import {
   ChungTuHeader,
   KhoanMucItem,
 } from "../../form-handler/sub-handler/init/init.state";
-import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, QuyChuan, NhomKhuyenMai, NhomQuanLy, KhoanMuc } from "@/types";
+import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, QuyChuan, NhomKhuyenMai, NhomQuanLy, KhoanMuc, HopDong } from "@/types";
 import {
   buildDoiTuongSnapshot,
   buildDuAnSnapshot,
@@ -23,6 +23,7 @@ import {
   buildKhoanMucSnapshot,
   buildNhomKhuyenMaiSnapshot,
   buildNhomQuanLySnapshot,
+  buildHopDongSnapshot,
 } from "@/utils/snapshotBuilder";
 import { useTableColumnResize } from "@/hooks/useTableColumnResize";
 
@@ -38,6 +39,7 @@ export function ChiTietTable() {
   const [khoanMucList] = useNhatKyChungFormState("khoanMucList", []);
   const [nhomKhuyenMaiList] = useNhatKyChungFormState("nhomKhuyenMaiList", []);
   const [nhomQuanLyList] = useNhatKyChungFormState("nhomQuanLyList", []);
+  const [hopDongList] = useNhatKyChungFormState("hopDongList", []);
   const [quyChaunList] = useNhatKyChungFormState("quyChaunList", []);
   const [header] = useNhatKyChungFormState("header", null);
 
@@ -327,6 +329,26 @@ export function ChiTietTable() {
       handler.executeEvent("updateChiTietSnapshot", {
         key,
         snapshotField: "nhomQuanLySnapshot",
+        snapshot: {},
+      });
+    }
+  };
+
+  const handleHopDongChange = (key: string, hopDongId: string | undefined) => {
+    handleUpdateField(key, "hopDongId", hopDongId);
+    if (hopDongId) {
+      const hopDong = (hopDongList as HopDong[]).find((hd) => hd.id === hopDongId);
+      if (hopDong) {
+        handler.executeEvent("updateChiTietSnapshot", {
+          key,
+          snapshotField: "hopDongSnapshot",
+          snapshot: buildHopDongSnapshot(hopDong),
+        });
+      }
+    } else {
+      handler.executeEvent("updateChiTietSnapshot", {
+        key,
+        snapshotField: "hopDongSnapshot",
         snapshot: {},
       });
     }
@@ -736,6 +758,30 @@ export function ChiTietTable() {
           className="w-full excel-cell-input"
           variant="borderless"
           popupMatchSelectWidth={250}
+        />
+      ),
+    },
+    {
+      title: "Hợp đồng",
+      dataIndex: "hopDongId",
+      width: 150,
+      render: (value: string, record: ChungTuChiTiet, index: number) => (
+        <Select
+          size="small"
+          showSearch
+          allowClear
+          placeholder="Chọn"
+          optionFilterProp="label"
+          value={value || undefined}
+          onChange={(v) => handleHopDongChange(record.key, v)}
+          onFocus={() => { activeRowRef.current = index; }}
+          options={(hopDongList as HopDong[]).map((hd) => ({
+            value: hd.id,
+            label: `${hd.soHopDong} - ${hd.tenCongTrinh}`,
+          }))}
+          className="w-full excel-cell-input"
+          variant="borderless"
+          popupMatchSelectWidth={300}
         />
       ),
     },
