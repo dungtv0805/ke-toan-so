@@ -258,6 +258,27 @@ export interface DanhMucHopDong {
   ten: string;
   soHopDong: string;
   tenCongTrinh: string;
+  giaTriSauThue?: number;
+  ngayKy?: string;
+  phuLuc1GiaTri?: number;
+  phuLuc1NgayKy?: string;
+  phuLuc2GiaTri?: number;
+  phuLuc2NgayKy?: string;
+  chuDauTuTen?: string;
+  nguoiKy?: string;
+  chucVu?: string;
+  nguoiGiaoDich?: string;
+  tamUng?: string;
+  thanhToanGiaiDoan?: string;
+  quyetToan?: string;
+  baoHanhGiaTri?: number;
+  baoHanhThoiGian?: string;
+  baoHanhHinhThuc?: string;
+  tienDoSoNgay?: number;
+  tienDoTuNgay?: string;
+  tienDoDenNgay?: string;
+  trangThai?: TrangThaiHopDong;
+  soLuongLuu?: number;
 }
 
 // Main DanhMuc interface containing all category references
@@ -375,7 +396,26 @@ export interface HopDongSnapshot {
   soHopDong: string;
   tenCongTrinh: string;
   giaTriSauThue?: number;
+  ngayKy?: string;
+  phuLuc1GiaTri?: number;
+  phuLuc1NgayKy?: string;
+  phuLuc2GiaTri?: number;
+  phuLuc2NgayKy?: string;
+  chuDauTuTen?: string;
+  nguoiKy?: string;
+  chucVu?: string;
+  nguoiGiaoDich?: string;
+  tamUng?: string;
+  thanhToanGiaiDoan?: string;
+  quyetToan?: string;
+  baoHanhGiaTri?: number;
+  baoHanhThoiGian?: string;
+  baoHanhHinhThuc?: string;
+  tienDoSoNgay?: number;
+  tienDoTuNgay?: string;
+  tienDoDenNgay?: string;
   trangThai?: TrangThaiHopDong;
+  soLuongLuu?: number;
 }
 
 // ===== CHỨNG TỪ =====

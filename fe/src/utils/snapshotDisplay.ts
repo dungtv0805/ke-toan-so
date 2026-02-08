@@ -193,3 +193,23 @@ export const getNkcHopDongSo = (nkc: NhatKyChung): string | undefined => {
 export const getNkcHopDongTen = (nkc: NhatKyChung): string | undefined => {
   return nkc.danhMuc?.hopDong?.tenCongTrinh;
 };
+
+export const getNkcHopDongGiaTri = (nkc: NhatKyChung): number | undefined => {
+  return nkc.danhMuc?.hopDong?.giaTriSauThue;
+};
+
+export const getNkcHopDongNgayKy = (nkc: NhatKyChung): string | undefined => {
+  return nkc.danhMuc?.hopDong?.ngayKy;
+};
+
+export const getNkcHopDongTrangThai = (nkc: NhatKyChung): string | undefined => {
+  return nkc.danhMuc?.hopDong?.trangThai;
+};
+
+export const getNkcHopDongNguoiKy = (nkc: NhatKyChung): string | undefined => {
+  return nkc.danhMuc?.hopDong?.nguoiKy;
+};
+
+export const getNkcHopDongChuDauTu = (nkc: NhatKyChung): string | undefined => {
+  return nkc.danhMuc?.hopDong?.chuDauTuTen;
+};
