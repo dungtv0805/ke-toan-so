@@ -54,7 +54,7 @@ const dongTienSchema = z.object({
   loai: z.enum(["KINH_DOANH", "DAU_TU", "TAI_CHINH"], {
     required_error: "Vui lòng chọn loại",
   }),
-  moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").optional(),
+  moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").optional().nullable(),
 });
 
 const DongTienPage: React.FC = () => {

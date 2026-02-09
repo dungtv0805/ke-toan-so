@@ -43,7 +43,7 @@ const loaiChungTuSchema = z.object({
     .trim()
     .min(1, "Tên không được để trống")
     .max(200, "Tên tối đa 200 ký tự"),
-  moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").optional(),
+  moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").optional().nullable(),
 });
 
 const LoaiChungTuPage: React.FC = () => {

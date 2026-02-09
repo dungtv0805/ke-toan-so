@@ -49,8 +49,8 @@ const doiTuongSchema = z.object({
     .string()
     .min(1, "Tên không được để trống")
     .max(200, "Tên tối đa 200 ký tự"),
-  diaChi: z.string().max(500, "Địa chỉ tối đa 500 ký tự").optional(),
-  soDienThoai: z.string().max(20, "SĐT tối đa 20 ký tự").optional(),
+  diaChi: z.string().max(500, "Địa chỉ tối đa 500 ký tự").optional().nullable(),
+  soDienThoai: z.string().max(20, "SĐT tối đa 20 ký tự").optional().nullable(),
   email: z
     .string()
     .email("Email không hợp lệ")

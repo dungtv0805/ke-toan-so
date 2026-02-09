@@ -58,7 +58,7 @@ const duAnSchema = z.object({
     .trim()
     .min(1, "Tên không được để trống")
     .max(200, "Tên tối đa 200 ký tự"),
-  chuDauTuId: z.string().optional(),
+  chuDauTuId: z.string().optional().nullable(),
   trangThai: z.enum(["DANG_THUC_HIEN", "HOAN_THANH", "TAM_DUNG"]),
 });
 

@@ -54,8 +54,8 @@ const taiKhoanNHSchema = z.object({
     .max(200, "Tên tối đa 200 ký tự"),
   loai: z.enum(["TIEN_MAT", "NGAN_HANG"]),
   soDu: z.number().min(0, "Số dư không được âm"),
-  nganHang: z.string().optional(),
-  soTaiKhoan: z.string().max(30, "Số tài khoản tối đa 30 ký tự").optional(),
+  nganHang: z.string().optional().nullable(),
+  soTaiKhoan: z.string().max(30, "Số tài khoản tối đa 30 ký tự").optional().nullable(),
 });
 
 const NganHangPage: React.FC = () => {
