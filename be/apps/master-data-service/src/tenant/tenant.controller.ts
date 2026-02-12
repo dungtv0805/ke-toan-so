@@ -23,6 +23,12 @@ export class TenantController {
     return { success: true, data };
   }
 
+  @Get('users')
+  async getAllUsers() {
+    const data = await this.tenantService.getAllUsers();
+    return { success: true, data };
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const data = await this.tenantService.findOne(id);

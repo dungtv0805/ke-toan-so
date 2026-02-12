@@ -129,7 +129,39 @@ export class TenantService {
 
     // Create admin user if provided
     let adminUser: Partial<User> | undefined;
-    if (createDto.admin) {
+
+    // Option 1: Use existing user by ID
+    if (createDto.adminUserId) {
+      const { ObjectId } = await import('mongodb');
+      const existingUser = await this.userRepository.findOne({
+        where: { _id: new ObjectId(createDto.adminUserId) as any },
+      });
+
+      if (existingUser) {
+        // Check if user already has membership in this tenant
+        const existingMembership = await this.userTenantRepository.findOne({
+          where: {
+            userId: existingUser._id.toString(),
+            tenantId: savedTenant._id.toString(),
+          },
+        });
+
+        if (!existingMembership) {
+          // Create new membership
+          const userTenant = this.userTenantRepository.create({
+            userId: existingUser._id.toString(),
+            tenantId: savedTenant._id.toString(),
+            role: UserRole.ADMIN,
+            isActive: true,
+          });
+          await this.userTenantRepository.save(userTenant);
+        }
+
+        adminUser = { _id: existingUser._id, email: existingUser.email, hoTen: existingUser.hoTen };
+      }
+    }
+    // Option 2: Create new user with admin info
+    else if (createDto.admin) {
       // Check if user with email already exists
       const existingUser = await this.userRepository.findOne({
         where: { email: createDto.admin.email.toLowerCase() },
@@ -216,5 +248,17 @@ export class TenantService {
   async hardDelete(id: string): Promise<void> {
     const tenant = await this.findOne(id);
     await this.tenantRepository.remove(tenant);
+  }
+
+  async getAllUsers(): Promise<Array<{ id: string; email: string; hoTen: string }>> {
+    const users = await this.userRepository.find({
+      where: { isActive: true },
+    });
+
+    return users.map((u) => ({
+      id: u._id.toString(),
+      email: u.email,
+      hoTen: u.hoTen,
+    }));
   }
 }

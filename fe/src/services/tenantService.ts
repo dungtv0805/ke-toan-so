@@ -25,12 +25,19 @@ export interface CreateTenantDto {
     hoTen: string;
     password?: string;
   };
+  adminUserId?: string; // Use existing user as admin
 }
 
 export interface UpdateTenantDto {
   name?: string;
   slug?: string;
   isActive?: boolean;
+}
+
+export interface UserOption {
+  id: string;
+  email: string;
+  hoTen: string;
 }
 
 export interface CreateTenantResponse {
@@ -72,6 +79,15 @@ class TenantService extends ServiceBase {
 
   async delete(id: string): Promise<void> {
     await this.remove({ endpoint: `/${id}` });
+  }
+
+  async getAllUsers(): Promise<UserOption[]> {
+    const response = await this.get<Array<Record<string, unknown>>>({ endpoint: '/users' });
+    return response.map((u) => ({
+      id: (u._id as string) || (u.id as string),
+      email: u.email as string,
+      hoTen: u.hoTen as string,
+    }));
   }
 
   private transformTenant(tenant: Record<string, unknown>): Tenant {

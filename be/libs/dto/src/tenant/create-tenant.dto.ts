@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, Matches, IsEmail, ValidateNested } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean, Matches, IsEmail, ValidateNested, IsMongoId } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class TenantAdminDto {
@@ -35,4 +35,8 @@ export class CreateTenantDto {
   @Type(() => TenantAdminDto)
   @IsOptional()
   admin?: TenantAdminDto;
+
+  @IsMongoId()
+  @IsOptional()
+  adminUserId?: string; // Use existing user as admin
 }

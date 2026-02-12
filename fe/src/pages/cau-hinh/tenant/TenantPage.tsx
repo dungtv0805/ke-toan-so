@@ -1,17 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, Switch, message, Space, Tag, Popconfirm, Divider, Tooltip } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons';
+import { Table, Button, Modal, Form, Input, Switch, message, Space, Tag, Popconfirm, Divider, Tooltip, Radio, Select } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UserOutlined, UserAddOutlined } from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { tenantService, Tenant, CreateTenantDto, UpdateTenantDto } from '@/services/tenantService';
 
 const DEFAULT_PASSWORD = '123456';
 
+interface UserOption {
+  id: string;
+  email: string;
+  hoTen: string;
+}
+
+type AdminMode = 'existing' | 'new';
+
 const TenantPage = () => {
   const { user } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [users, setUsers] = useState<UserOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
+  const [adminMode, setAdminMode] = useState<AdminMode>('new');
   const [form] = Form.useForm();
 
   // Only super admin can access this page
@@ -37,16 +47,28 @@ const TenantPage = () => {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const data = await tenantService.getAllUsers();
+      setUsers(data);
+    } catch (error) {
+      console.error('Không thể tải danh sách người dùng', error);
+    }
+  };
+
   useEffect(() => {
     fetchTenants();
+    fetchUsers();
   }, []);
 
   const handleCreate = () => {
     setEditingTenant(null);
+    setAdminMode('new');
     form.resetFields();
     form.setFieldsValue({
       isActive: true,
-      adminPassword: DEFAULT_PASSWORD, // Auto fill default password
+      adminPassword: DEFAULT_PASSWORD,
+      adminMode: 'new',
     });
     setModalVisible(true);
   };
@@ -83,9 +105,14 @@ const TenantPage = () => {
           isActive: values.isActive,
         };
 
-        // Add admin info if provided
+        // Add admin info based on mode
         const formValues = form.getFieldsValue(true);
-        if (formValues.adminEmail && formValues.adminHoTen) {
+
+        if (adminMode === 'existing' && formValues.existingUserId) {
+          // Use existing user
+          createData.adminUserId = formValues.existingUserId;
+        } else if (adminMode === 'new' && formValues.adminEmail && formValues.adminHoTen) {
+          // Create new user
           createData.admin = {
             email: formValues.adminEmail,
             hoTen: formValues.adminHoTen,
@@ -96,11 +123,25 @@ const TenantPage = () => {
         const result = await tenantService.create(createData);
 
         if (result.admin) {
+          const selectedUser = adminMode === 'existing'
+            ? users.find(u => u.id === formValues.existingUserId)
+            : null;
+
           message.success(
             <span>
               Đã tạo công ty <strong>{result.tenant.name}</strong> với Admin: <strong>{result.admin.email}</strong>
-              <br />
-              <span className="text-gray-500">Mật khẩu: {formValues.adminPassword || DEFAULT_PASSWORD}</span>
+              {adminMode === 'new' && (
+                <>
+                  <br />
+                  <span className="text-gray-500">Mật khẩu: {formValues.adminPassword || DEFAULT_PASSWORD}</span>
+                </>
+              )}
+              {adminMode === 'existing' && selectedUser && (
+                <>
+                  <br />
+                  <span className="text-gray-500">Đã gán user {selectedUser.hoTen} làm Admin</span>
+                </>
+              )}
             </span>,
             5
           );
@@ -255,36 +296,87 @@ const TenantPage = () => {
                 </span>
               </Divider>
 
-              <p className="text-gray-500 text-sm mb-4">
-                Tạo tài khoản Admin để quản lý công ty này. Admin có thể tạo thêm người dùng sau.
-              </p>
-
-              <Form.Item
-                name="adminHoTen"
-                label="Họ tên Admin"
-                rules={[{ required: true, message: 'Vui lòng nhập họ tên Admin' }]}
-              >
-                <Input placeholder="VD: Nguyễn Văn A" />
+              <Form.Item name="adminMode" label="Chọn cách thêm Admin">
+                <Radio.Group
+                  value={adminMode}
+                  onChange={(e) => setAdminMode(e.target.value)}
+                >
+                  <Radio.Button value="existing">
+                    <UserOutlined /> Chọn user có sẵn
+                  </Radio.Button>
+                  <Radio.Button value="new">
+                    <UserAddOutlined /> Tạo user mới
+                  </Radio.Button>
+                </Radio.Group>
               </Form.Item>
 
-              <Form.Item
-                name="adminEmail"
-                label="Email Admin"
-                rules={[
-                  { required: true, message: 'Vui lòng nhập email Admin' },
-                  { type: 'email', message: 'Email không hợp lệ' },
-                ]}
-              >
-                <Input placeholder="VD: admin@congty.com" />
-              </Form.Item>
+              {adminMode === 'existing' ? (
+                <>
+                  <p className="text-gray-500 text-sm mb-4">
+                    Chọn một user có sẵn trong hệ thống để làm Admin cho công ty này.
+                  </p>
 
-              <Form.Item
-                name="adminPassword"
-                label="Mật khẩu"
-                extra={`Mật khẩu mặc định: ${DEFAULT_PASSWORD}`}
-              >
-                <Input.Password placeholder="Nhập mật khẩu" />
-              </Form.Item>
+                  <Form.Item
+                    name="existingUserId"
+                    label="Chọn User"
+                    rules={[{ required: true, message: 'Vui lòng chọn user' }]}
+                  >
+                    <Select
+                      showSearch
+                      placeholder="Tìm và chọn user..."
+                      optionFilterProp="children"
+                      filterOption={(input, option) =>
+                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase()) ||
+                        (option?.email ?? '').toLowerCase().includes(input.toLowerCase())
+                      }
+                      options={users.map((u) => ({
+                        value: u.id,
+                        label: u.hoTen,
+                        email: u.email,
+                      }))}
+                      optionRender={(option) => (
+                        <div className="flex flex-col">
+                          <span>{option.data.label}</span>
+                          <span className="text-xs text-gray-400">{option.data.email}</span>
+                        </div>
+                      )}
+                    />
+                  </Form.Item>
+                </>
+              ) : (
+                <>
+                  <p className="text-gray-500 text-sm mb-4">
+                    Tạo tài khoản Admin mới để quản lý công ty này.
+                  </p>
+
+                  <Form.Item
+                    name="adminHoTen"
+                    label="Họ tên Admin"
+                    rules={[{ required: true, message: 'Vui lòng nhập họ tên Admin' }]}
+                  >
+                    <Input placeholder="VD: Nguyễn Văn A" />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="adminEmail"
+                    label="Email Admin"
+                    rules={[
+                      { required: true, message: 'Vui lòng nhập email Admin' },
+                      { type: 'email', message: 'Email không hợp lệ' },
+                    ]}
+                  >
+                    <Input placeholder="VD: admin@congty.com" />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="adminPassword"
+                    label="Mật khẩu"
+                    extra={`Mật khẩu mặc định: ${DEFAULT_PASSWORD}`}
+                  >
+                    <Input.Password placeholder="Nhập mật khẩu" />
+                  </Form.Item>
+                </>
+              )}
             </>
           )}
 
