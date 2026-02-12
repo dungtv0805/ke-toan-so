@@ -1,4 +1,4 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { TenantContextService, TenantContext } from './tenant-context.service';
 import * as jwt from 'jsonwebtoken';
@@ -12,14 +12,18 @@ interface JwtPayload {
 
 @Injectable()
 export class TenantMiddleware implements NestMiddleware {
+  private readonly logger = new Logger(TenantMiddleware.name);
+
   constructor(private readonly tenantContextService: TenantContextService) {}
 
   use(req: Request, _res: Response, next: NextFunction) {
     const context = this.extractTenantContext(req);
 
     if (context) {
+      this.logger.debug(`Tenant context: tenantId=${context.tenantId}, userId=${context.userId}`);
       this.tenantContextService.run(context, () => next());
     } else {
+      this.logger.debug('No tenant context found');
       next();
     }
   }
@@ -35,6 +39,7 @@ export class TenantMiddleware implements NestMiddleware {
     try {
       const decoded = jwt.decode(token) as JwtPayload | null;
       if (decoded) {
+        this.logger.debug(`Decoded JWT: ${JSON.stringify(decoded)}`);
         return {
           tenantId: decoded.tenantId || '',
           userId: decoded.sub ?? decoded.userId ?? '',

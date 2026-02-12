@@ -2,9 +2,15 @@ import { NhatKyChungQueryDto } from '../dto';
 
 export function buildMongoQuery(
   query: NhatKyChungQueryDto,
+  tenantId?: string,
 ): Record<string, unknown> {
   const { search, startDate, endDate, loai } = query;
   const mongoQuery: Record<string, unknown> = {};
+
+  // Add tenantId filter if provided
+  if (tenantId) {
+    mongoQuery.tenantId = tenantId;
+  }
 
   // Filter by loai (voucher type)
   if (loai) {

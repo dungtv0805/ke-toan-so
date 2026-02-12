@@ -1,4 +1,4 @@
-import { DynamicModule, Module, Scope } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions, getRepositoryToken } from '@nestjs/typeorm';
 import { TenantModule, TenantContextService, TENANT_EXEMPT_ENTITIES } from '@app/core';
 import { TenantSubscriber } from './tenant.subscriber';
@@ -30,7 +30,7 @@ function createTenantAwareProxy<T extends ObjectLiteral>(
       }
 
       // Methods that need tenant filtering on WHERE clause
-      const filterMethods = ['find', 'findOne', 'findBy', 'findOneBy', 'count', 'countBy', 'exist'];
+      const filterMethods = ['find', 'findOne', 'findBy', 'findOneBy', 'count', 'countBy', 'exist', 'findAndCount', 'findAndCountBy'];
 
       // Methods that need tenant injection on entity
       const injectMethods = ['save', 'insert', 'create'];
@@ -171,7 +171,6 @@ export class DatabaseModule {
       .filter((entity) => !TENANT_EXEMPT_ENTITIES.includes(entity.name))
       .map((entity) => ({
         provide: getRepositoryToken(entity),
-        scope: Scope.REQUEST,
         useFactory: (dataSource: DataSource, tenantContext: TenantContextService) => {
           const repository = dataSource.getRepository(entity);
           return createTenantAwareProxy(repository, tenantContext);
