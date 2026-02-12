@@ -1,12 +1,19 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { NguoiDung, VaiTro } from '@/types';
+import { NguoiDung, VaiTro, TenantInfo } from '@/types';
 import { authService } from '@/services/authService';
-import { setAuthToken, getAuthToken, clearAuthToken } from '@/services/base/service-base';
+import { setAuthToken, getAuthToken, clearAuthToken, setCurrentTenant, getCurrentTenant, clearCurrentTenant } from '@/services/base/service-base';
 import { ApiError, ApiErrorType } from '@/config/api';
 
 // Permission mapping by role
 const quyenHanTheoVaiTro: Record<VaiTro, string[]> = {
-  ADMIN: ['*'], // All permissions
+  ADMIN: ['*'], // All permissions within tenant
+  GIAM_DOC: ['*'], // Director has all permissions within tenant
+  KE_TOAN_TRUONG: [
+    'xem_so_cai', 'xem_nhat_ky_chung', 'xem_bao_cao',
+    'quan_ly_tai_khoan', 'quan_ly_danh_muc',
+    'xem_phieu_thu', 'xem_phieu_chi',
+    'xem_cong_no', 'xem_so_quy', 'duyet_phieu'
+  ],
   KE_TOAN_TONG_HOP: [
     'xem_so_cai', 'xem_nhat_ky_chung', 'xem_bao_cao',
     'quan_ly_tai_khoan', 'quan_ly_danh_muc',
@@ -28,7 +35,7 @@ const quyenHanTheoVaiTro: Record<VaiTro, string[]> = {
     'xem_phieu_thu', 'xem_phieu_chi',
     'xem_cong_no', 'xem_so_quy', 'xem_so_cai'
   ],
-  AUDITOR: [
+  KIEM_SOAT: [
     'xem_so_cai', 'xem_nhat_ky_chung', 'xem_bao_cao',
     'xem_phieu_thu', 'xem_phieu_chi',
     'xem_cong_no', 'xem_so_quy', 'xem_danh_muc'
@@ -39,9 +46,13 @@ interface AuthContextType {
   user: NguoiDung | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  needsTenantSelection: boolean;
+  availableTenants: TenantInfo[];
+  currentTenant: TenantInfo | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  selectTenant: (tenantId: string) => Promise<void>;
   hasRole: (roles: VaiTro[]) => boolean;
   hasPermission: (permission: string) => boolean;
 }
@@ -51,6 +62,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<NguoiDung | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [availableTenants, setAvailableTenants] = useState<TenantInfo[]>([]);
+  const [currentTenant, setCurrentTenantState] = useState<TenantInfo | null>(null);
+  const [needsTenantSelection, setNeedsTenantSelection] = useState(false);
+  const [tempToken, setTempToken] = useState<string | null>(null);
 
   // Check for existing token and fetch user on mount
   useEffect(() => {
@@ -58,11 +73,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const token = getAuthToken();
       if (token) {
         try {
-          const userData = await authService.getMe();
-          setUser(userData);
+          const response = await authService.getMe();
+          setUser(response.user);
+
+          // Set current tenant from response
+          if (response.tenant) {
+            setCurrentTenant(response.tenant);
+            setCurrentTenantState(response.tenant);
+            setNeedsTenantSelection(false);
+          }
+
+          // Set available tenants if provided
+          if (response.availableTenants && response.availableTenants.length > 0) {
+            setAvailableTenants(response.availableTenants);
+          }
         } catch (error) {
           // Token invalid or expired
           clearAuthToken();
+          clearCurrentTenant();
           console.error('Failed to restore session:', error);
         }
       }
@@ -87,6 +115,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await authService.login({ email, password });
       setUser(response.user);
+
+      // Handle tenant from login response
+      if (response.accessToken && response.tenant) {
+        // Single tenant - auto set (token already saved by authService.login)
+        setCurrentTenant(response.tenant);
+        setCurrentTenantState(response.tenant);
+        setNeedsTenantSelection(false);
+        setTempToken(null);
+      } else if (response.tempToken && response.tenants && response.tenants.length > 0) {
+        // Multiple tenants - need selection, save tempToken for later
+        setTempToken(response.tempToken);
+        setAvailableTenants(response.tenants);
+        setNeedsTenantSelection(true);
+      } else if (response.accessToken && !response.tenant) {
+        // SUPER_ADMIN with no tenants - can proceed without tenant
+        setNeedsTenantSelection(false);
+        setTempToken(null);
+      }
+
       return { success: true };
     } catch (error) {
       if (error instanceof ApiError) {
@@ -112,9 +159,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Logout error:', error);
     } finally {
       setUser(null);
+      setCurrentTenantState(null);
+      setAvailableTenants([]);
+      setNeedsTenantSelection(false);
+      setTempToken(null);
       clearAuthToken();
+      clearCurrentTenant();
     }
   }, []);
+
+  const selectTenant = useCallback(async (tenantId: string) => {
+    if (!tempToken) {
+      console.error('No temp token available for tenant selection');
+      return;
+    }
+
+    try {
+      // Call API to exchange tempToken + tenantId for accessToken
+      const response = await authService.selectTenant(tempToken, tenantId);
+
+      // Update state with response
+      setUser(response.user);
+      setCurrentTenant(response.tenant);
+      setCurrentTenantState(response.tenant);
+      setNeedsTenantSelection(false);
+      setTempToken(null);
+      setAvailableTenants([]);
+    } catch (error) {
+      console.error('Failed to select tenant:', error);
+      throw error;
+    }
+  }, [tempToken]);
 
   const refreshUser = useCallback(async () => {
     try {
@@ -127,16 +202,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasRole = useCallback((roles: VaiTro[]) => {
     if (!user) return false;
-    return roles.includes(user.vaiTro);
-  }, [user]);
+    // Super admin has all roles
+    if (user.isSuperAdmin) return true;
+    if (!currentTenant) return false;
+    return roles.includes(currentTenant.role as VaiTro);
+  }, [user, currentTenant]);
 
   const hasPermission = useCallback((permission: string) => {
     if (!user) return false;
-    const permissions = quyenHanTheoVaiTro[user.vaiTro] || [];
+    // Super admin has all permissions
+    if (user.isSuperAdmin) return true;
+    if (!currentTenant) return false;
+    const role = currentTenant.role as VaiTro;
+    const permissions = quyenHanTheoVaiTro[role] || [];
     // Admin has all permissions
     if (permissions.includes('*')) return true;
     return permissions.includes(permission);
-  }, [user]);
+  }, [user, currentTenant]);
 
   return (
     <AuthContext.Provider
@@ -144,9 +226,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         isAuthenticated: !!user,
         isLoading,
+        needsTenantSelection,
+        availableTenants,
+        currentTenant,
         login,
         logout,
         refreshUser,
+        selectTenant,
         hasRole,
         hasPermission,
       }}

@@ -2,14 +2,16 @@ import { Module } from '@nestjs/common';
 import { AuthServiceController } from './auth-service.controller';
 import { AuthServiceService } from './auth-service.service';
 import { AuthModule } from '@app/auth';
+import { TenantModule } from '@app/core';
 import { DatabaseModule } from '@app/database';
-import { User, UserCredential } from '@app/entities';
+import { User, UserCredential, Tenant, UserTenant } from '@app/entities';
 
 @Module({
   imports: [
+    TenantModule,
     AuthModule,
     DatabaseModule.forRoot(),
-    DatabaseModule.forFeature([User, UserCredential]),
+    DatabaseModule.forFeature([User, UserCredential, Tenant, UserTenant]),
   ],
   controllers: [AuthServiceController],
   providers: [AuthServiceService],

@@ -44,14 +44,15 @@ const passwordSchema = z.object({
 });
 
 const ProfilePage = () => {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, currentTenant } = useAuth();
   const [profileForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
   const [profileLoading, setProfileLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
 
-  const roleInfo = vaiTroOptions.find(v => v.value === user?.vaiTro);
-  const permissions = user ? quyenHanTheoVaiTro[user.vaiTro] || [] : [];
+  const currentRole = currentTenant?.role as VaiTro | undefined;
+  const roleInfo = vaiTroOptions.find(v => v.value === currentRole);
+  const permissions = currentRole ? quyenHanTheoVaiTro[currentRole] || [] : [];
 
   const handleProfileSubmit = async (values: { hoTen: string }) => {
     try {

@@ -44,6 +44,7 @@ describe('JwtGuard', () => {
           fc.record({
             id: fc.uuid(),
             email: fc.emailAddress(),
+            tenantId: fc.uuid(),
             vaiTro: fc.constantFrom(
               'ADMIN',
               'KE_TOAN_QUY',
@@ -77,6 +78,7 @@ describe('JwtGuard', () => {
             expect(request.user).toBeDefined();
             expect(request.user.id).toBe(userPayload.id);
             expect(request.user.email).toBe(userPayload.email);
+            expect(request.user.tenantId).toBe(userPayload.tenantId);
             expect(request.user.vaiTro).toBe(userPayload.vaiTro);
             expect(request.user.permissions).toEqual(userPayload.permissions);
           },

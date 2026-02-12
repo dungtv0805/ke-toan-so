@@ -68,6 +68,7 @@ import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import type { MenuProps } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
 import { vaiTroOptions } from "@/mock-data/nguoi-dung";
+import { TenantSwitcher } from "./TenantSwitcher";
 import { routePermissions } from "@/config/routePermissions";
 import { VaiTro } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -263,13 +264,17 @@ const MainLayout: React.FC = () => {
   });
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, currentTenant } = useAuth();
+  const currentRole = currentTenant?.role as VaiTro | undefined;
+  const isSuperAdmin = user?.isSuperAdmin || false;
   const isMobile = useIsMobile();
 
-  const roleInfo = vaiTroOptions.find((v) => v.value === user?.vaiTro);
+  const roleInfo = currentRole ? vaiTroOptions.find((v) => v.value === currentRole) : null;
 
   // Filter menu items based on user role
   const canAccessRoute = (path: string, userRole: VaiTro): boolean => {
+    // Super admin can access all routes
+    if (isSuperAdmin) return true;
     const allowedRoles = routePermissions[path];
     if (!allowedRoles) return true; // No restriction defined = accessible
     return allowedRoles.includes(userRole);
@@ -311,8 +316,13 @@ const MainLayout: React.FC = () => {
   };
 
   // Filter both menu sections
-  const filteredKeToAnMenu = user ? filterMenuItems(keToAnMenuItems, user.vaiTro) : [];
-  const filteredThuVienMenu = user ? filterMenuItems(thuVienMenuItems, user.vaiTro) : [];
+  // Super admin sees all menus, regular users filter by role
+  const filteredKeToAnMenu = isSuperAdmin
+    ? keToAnMenuItems
+    : (currentRole ? filterMenuItems(keToAnMenuItems, currentRole) : []);
+  const filteredThuVienMenu = isSuperAdmin
+    ? thuVienMenuItems
+    : (currentRole ? filterMenuItems(thuVienMenuItems, currentRole) : []);
 
   useEffect(() => {
     if (darkMode) {
@@ -402,6 +412,13 @@ const MainLayout: React.FC = () => {
       label: "Phân quyền",
       onClick: () => navigate("/cau-hinh/phan-quyen"),
     },
+    // Only show Tenant management for super admin
+    ...(user?.isSuperAdmin ? [{
+      key: "tenant",
+      icon: <TeamOutlined />,
+      label: "Quản lý Công ty",
+      onClick: () => navigate("/cau-hinh/tenant"),
+    }] : []),
   ];
 
   const getSelectedKeys = () => {
@@ -637,8 +654,11 @@ const MainLayout: React.FC = () => {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-1 sm:gap-2">
+            {/* Tenant Switcher */}
+            <TenantSwitcher />
+
             {/* Settings dropdown with gear icon */}
-            {user && (user.vaiTro === 'ADMIN' || user.vaiTro === 'KE_TOAN_TRUONG' || user.vaiTro === 'KE_TOAN_TONG_HOP') && (
+            {user && (isSuperAdmin || currentRole === 'ADMIN' || currentRole === 'KE_TOAN_TRUONG' || currentRole === 'KE_TOAN_TONG_HOP') && (
               <Dropdown
                 menu={{ items: settingsMenuItems }}
                 placement="bottomRight"
@@ -681,7 +701,7 @@ const MainLayout: React.FC = () => {
           style={{
             background: "hsl(var(--background))",
             height: "calc(100vh - 48px)",
-            overflow: "hidden",
+            overflow: "auto",
           }}
         >
           <div className="h-full">

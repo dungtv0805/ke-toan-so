@@ -8,11 +8,11 @@ interface ProtectedRouteProps {
   allowedRoles?: VaiTro[];
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  children, 
-  allowedRoles 
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  allowedRoles
 }) => {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, currentTenant } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -27,13 +27,20 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (allowedRoles && user && !allowedRoles.includes(user.vaiTro)) {
+  // Super admin bypasses all role checks
+  if (user?.isSuperAdmin) {
+    return <>{children}</>;
+  }
+
+  const currentRole = currentTenant?.role as VaiTro | undefined;
+
+  if (allowedRoles && currentRole && !allowedRoles.includes(currentRole)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Result
           status="403"
           title="Không có quyền truy cập"
-          subTitle={`Vai trò "${user.vaiTro}" không được phép truy cập trang này.`}
+          subTitle={`Vai trò "${currentRole}" không được phép truy cập trang này.`}
           extra={
             <Button type="primary" onClick={() => window.history.back()}>
               Quay lại

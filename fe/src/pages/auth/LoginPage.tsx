@@ -4,6 +4,7 @@ import { Form, Input, Button, Card, Typography, Alert, Divider, Tag, Space } fro
 import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { vaiTroOptions } from '@/mock-data/nguoi-dung';
+import { TenantSelector } from '@/components/auth';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -16,30 +17,36 @@ const LoginPage = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, needsTenantSelection } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !needsTenantSelection) {
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, from]);
+  }, [isAuthenticated, needsTenantSelection, navigate, from]);
+
+  // Show tenant selector if user is authenticated but needs to select tenant
+  if (isAuthenticated && needsTenantSelection) {
+    return <TenantSelector />;
+  }
 
   const handleSubmit = async (values: LoginForm) => {
     setLoading(true);
     setError(null);
 
     const result = await login(values.email, values.password);
-    
+
     if (result.success) {
-      navigate(from, { replace: true });
+      // Don't navigate here - let useEffect handle it after state updates
+      // This allows needsTenantSelection to be checked properly
     } else {
       setError(result.error || 'Đăng nhập thất bại');
     }
-    
+
     setLoading(false);
   };
 

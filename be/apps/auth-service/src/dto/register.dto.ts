@@ -4,7 +4,6 @@ import {
   IsString,
   MinLength,
   IsEnum,
-  IsArray,
   IsOptional,
 } from 'class-validator';
 import { UserRole } from '@app/entities';
@@ -23,12 +22,11 @@ export class RegisterDto {
   @IsNotEmpty()
   hoTen: string;
 
+  @IsString()
+  @IsOptional()
+  tenantId?: string;
+
   @IsEnum(UserRole)
   @IsOptional()
-  vaiTro?: UserRole;
-
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  permissions?: string[];
+  role?: UserRole;
 }

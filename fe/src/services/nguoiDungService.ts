@@ -30,8 +30,10 @@ const transformUser = (user: Record<string, unknown>): NguoiDung => ({
   id: (user._id as string) || (user.id as string),
   hoTen: user.hoTen as string,
   email: user.email as string,
-  vaiTro: user.vaiTro as VaiTro,
+  isSuperAdmin: (user.isSuperAdmin as boolean) || false,
+  tenants: (user.tenants as NguoiDung['tenants']) || [],
   trangThai: user.trangThai as 'HOAT_DONG' | 'KHOA',
+  isActive: user.isActive as boolean,
 });
 
 class NguoiDungService extends ServiceBase {

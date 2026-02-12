@@ -64,6 +64,40 @@ export function clearAuthToken(): void {
   localStorage.removeItem(API_CONFIG.AUTH_TOKEN_KEY);
 }
 
+// Tenant management
+const TENANT_STORAGE_KEY = 'current_tenant';
+
+import type { TenantInfo } from '@/types';
+
+/**
+ * Set the current tenant
+ */
+export function setCurrentTenant(tenant: TenantInfo): void {
+  localStorage.setItem(TENANT_STORAGE_KEY, JSON.stringify(tenant));
+}
+
+/**
+ * Get the current tenant
+ */
+export function getCurrentTenant(): TenantInfo | null {
+  const stored = localStorage.getItem(TENANT_STORAGE_KEY);
+  if (stored) {
+    try {
+      return JSON.parse(stored) as TenantInfo;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/**
+ * Clear the current tenant
+ */
+export function clearCurrentTenant(): void {
+  localStorage.removeItem(TENANT_STORAGE_KEY);
+}
+
 export class ServiceBase {
   private client: AxiosInstance;
   protected baseUrl: string;

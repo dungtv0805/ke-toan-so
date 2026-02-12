@@ -4,19 +4,27 @@ import {
   ConflictException,
   InternalServerErrorException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User, UserCredential, UserRole, UserStatus } from '@app/entities';
+import { User, UserCredential, Tenant, UserRole, UserStatus, UserTenant, SUPER_ADMIN_EMAIL } from '@app/entities';
 import {
   LoginDto,
   RegisterDto,
   VerifyTokenDto,
   UpdateProfileDto,
   ChangePasswordDto,
+  SelectTenantDto,
 } from './dto';
 import { JwtService, UserPayload } from '@app/auth';
+import {
+  TenantInfo,
+  LoginResponse,
+  SelectTenantResponse,
+  AuthUserResponse,
+} from '@app/dto';
 
 const SALT_ROUNDS = 10;
 
@@ -27,16 +35,53 @@ export class AuthServiceService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(UserCredential)
     private readonly userCredentialRepository: Repository<UserCredential>,
+    @InjectRepository(Tenant)
+    private readonly tenantRepository: Repository<Tenant>,
+    @InjectRepository(UserTenant)
+    private readonly userTenantRepository: Repository<UserTenant>,
     private readonly jwtService: JwtService,
   ) {}
 
   /**
-   * Login with email and password
-   * Returns JWT token if credentials are valid
+   * Check if user is super admin by email
    */
-  async login(
-    loginDto: LoginDto,
-  ): Promise<{ token: string; user: Partial<User> }> {
+  private isSuperAdmin(user: User): boolean {
+    return user.email === SUPER_ADMIN_EMAIL;
+  }
+
+  /**
+   * Build TenantInfo from UserTenant and Tenant entity
+   */
+  private buildTenantInfo(
+    userTenant: UserTenant,
+    tenant: Tenant,
+  ): TenantInfo {
+    return {
+      tenantId: tenant._id.toString(),
+      tenantName: tenant.name,
+      tenantSlug: tenant.slug,
+      role: userTenant.role,
+    };
+  }
+
+  /**
+   * Build AuthUserResponse from User entity
+   */
+  private buildUserResponse(user: User): AuthUserResponse {
+    return {
+      id: user._id.toString(),
+      email: user.email,
+      hoTen: user.hoTen,
+      isSuperAdmin: this.isSuperAdmin(user),
+    };
+  }
+
+  /**
+   * Login with email and password - 2-step flow
+   * Case 1: User có 1 tenant - trả về accessToken luôn
+   * Case 2: User có nhiều tenants - trả về tempToken + danh sách tenants
+   */
+  async login(loginDto: LoginDto): Promise<LoginResponse> {
     const { email, password } = loginDto;
 
     const user = await this.userRepository.findOne({ where: { email } });
@@ -68,24 +113,231 @@ export class AuthServiceService {
     credential.lastLoginAt = new Date();
     await this.userCredentialRepository.save(credential);
 
-    const payload: UserPayload = {
-      id: user.id,
-      email: user.email,
-      vaiTro: user.vaiTro,
-      permissions: user.permissions,
-    };
+    const userResponse = this.buildUserResponse(user);
 
-    const token = this.jwtService.sign(payload);
+    // Super admin can login without tenant
+    if (this.isSuperAdmin(user)) {
+      // Get all tenants for super admin to choose
+      const allTenants = await this.tenantRepository.find({
+        where: { isActive: true },
+      });
+
+      if (allTenants.length === 0) {
+        // Super admin with no tenants - create token without tenantId
+        const payload: UserPayload = {
+          id: user._id.toString(),
+          email: user.email,
+          tenantId: '', // Empty for super admin without tenant
+          vaiTro: 'SUPER_ADMIN',
+          permissions: ['*'],
+        };
+
+        const accessToken = this.jwtService.sign(payload);
+
+        return {
+          accessToken,
+          user: userResponse,
+        };
+      }
+
+      // Super admin with tenants - let them choose
+      const tenantInfoList: TenantInfo[] = allTenants.map((tenant) => ({
+        tenantId: tenant._id.toString(),
+        tenantName: tenant.name,
+        tenantSlug: tenant.slug,
+        role: 'SUPER_ADMIN',
+      }));
+
+      if (tenantInfoList.length === 1) {
+        const tenantInfo = tenantInfoList[0];
+        const payload: UserPayload = {
+          id: user._id.toString(),
+          email: user.email,
+          tenantId: tenantInfo.tenantId,
+          vaiTro: 'SUPER_ADMIN',
+          permissions: ['*'],
+        };
+
+        const accessToken = this.jwtService.sign(payload);
+
+        return {
+          accessToken,
+          tenant: tenantInfo,
+          user: userResponse,
+        };
+      }
+
+      // Multiple tenants - return tempToken
+      const tempPayload = {
+        id: user._id.toString(),
+        email: user.email,
+      };
+
+      const tempToken = this.jwtService.signTempToken(tempPayload);
+
+      return {
+        tempToken,
+        tenants: tenantInfoList,
+        user: userResponse,
+      };
+    }
+
+    // Get user's tenant memberships from UserTenant table
+    const userTenants = await this.userTenantRepository.find({
+      where: { userId: user._id.toString(), isActive: true },
+    });
+
+    if (userTenants.length === 0) {
+      throw new ForbiddenException('User has no tenant assigned');
+    }
+
+    // Fetch tenant details
+    const { ObjectId } = await import('mongodb');
+    const tenantIds = userTenants.map((ut) => new ObjectId(ut.tenantId));
+    const tenants = await this.tenantRepository.find({
+      where: {
+        _id: { $in: tenantIds } as any,
+        isActive: true,
+      },
+    });
+
+    if (tenants.length === 0) {
+      throw new ForbiddenException('No active tenant found');
+    }
+
+    // Build tenant info list
+    const tenantInfoList: TenantInfo[] = tenants.map((tenant) => {
+      const userTenant = userTenants.find(
+        (ut) => ut.tenantId === tenant._id.toString(),
+      );
+      return this.buildTenantInfo(userTenant!, tenant);
+    });
+
+    // Case 1: Single tenant - return accessToken directly
+    if (tenantInfoList.length === 1) {
+      const tenantInfo = tenantInfoList[0];
+      const payload: UserPayload = {
+        id: user._id.toString(),
+        email: user.email,
+        tenantId: tenantInfo.tenantId,
+        vaiTro: tenantInfo.role,
+        permissions: [], // TODO: Load permissions from tenant role
+      };
+
+      const accessToken = this.jwtService.sign(payload);
+
+      return {
+        accessToken,
+        tenant: tenantInfo,
+        user: userResponse,
+      };
+    }
+
+    // Case 2: Multiple tenants - return tempToken + tenants list
+    const tempToken = this.jwtService.signTempToken({
+      id: user._id.toString(),
+      email: user.email,
+    });
 
     return {
-      token,
-      user: {
-        _id: user._id,
+      tempToken,
+      tenants: tenantInfoList,
+      user: userResponse,
+    };
+  }
+
+  /**
+   * Select tenant after login (step 2 of 2-step flow)
+   */
+  async selectTenant(dto: SelectTenantDto): Promise<SelectTenantResponse> {
+    // Verify temp token
+    let decoded;
+    try {
+      decoded = this.jwtService.verifyTempToken(dto.tempToken);
+    } catch (error) {
+      throw new UnauthorizedException((error as Error).message);
+    }
+
+    const { ObjectId } = await import('mongodb');
+
+    // Get user
+    const user = await this.userRepository.findOne({
+      where: { _id: new ObjectId(decoded.sub) as any },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (user.trangThai !== UserStatus.HOAT_DONG) {
+      throw new UnauthorizedException('Account is inactive');
+    }
+
+    // Get tenant details
+    const tenant = await this.tenantRepository.findOne({
+      where: { _id: new ObjectId(dto.tenantId) as any, isActive: true },
+    });
+
+    if (!tenant) {
+      throw new ForbiddenException('Tenant not found or inactive');
+    }
+
+    // Super admin can access any tenant
+    if (this.isSuperAdmin(user)) {
+      const tenantInfo: TenantInfo = {
+        tenantId: tenant._id.toString(),
+        tenantName: tenant.name,
+        tenantSlug: tenant.slug,
+        role: 'SUPER_ADMIN',
+      };
+
+      const payload: UserPayload = {
+        id: user._id.toString(),
         email: user.email,
-        hoTen: user.hoTen,
-        vaiTro: user.vaiTro,
-        permissions: user.permissions,
+        tenantId: tenantInfo.tenantId,
+        vaiTro: 'SUPER_ADMIN',
+        permissions: ['*'],
+      };
+
+      const accessToken = this.jwtService.sign(payload);
+
+      return {
+        accessToken,
+        tenant: tenantInfo,
+        user: this.buildUserResponse(user),
+      };
+    }
+
+    // Regular user - check if belongs to tenant via UserTenant table
+    const userTenant = await this.userTenantRepository.findOne({
+      where: {
+        userId: user._id.toString(),
+        tenantId: dto.tenantId,
+        isActive: true,
       },
+    });
+
+    if (!userTenant) {
+      throw new ForbiddenException('User does not belong to this tenant');
+    }
+
+    const tenantInfo = this.buildTenantInfo(userTenant, tenant);
+
+    // Create access token with tenantId
+    const payload: UserPayload = {
+      id: user._id.toString(),
+      email: user.email,
+      tenantId: tenantInfo.tenantId,
+      vaiTro: tenantInfo.role,
+      permissions: [], // TODO: Load permissions from tenant role
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+
+    return {
+      accessToken,
+      tenant: tenantInfo,
+      user: this.buildUserResponse(user),
     };
   }
 
@@ -93,7 +345,7 @@ export class AuthServiceService {
    * Register a new user
    */
   async register(registerDto: RegisterDto): Promise<Partial<User>> {
-    const { email, password, hoTen, vaiTro, permissions } = registerDto;
+    const { email, password, hoTen, tenantId, role } = registerDto;
 
     // Check if user already exists
     const existingUser = await this.userRepository.findOne({
@@ -106,12 +358,10 @@ export class AuthServiceService {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-    // Create user without password
+    // Create user
     const user = this.userRepository.create({
       email,
       hoTen,
-      vaiTro: vaiTro || UserRole.KIEM_SOAT,
-      permissions: permissions || [],
       trangThai: UserStatus.HOAT_DONG,
     });
 
@@ -126,12 +376,21 @@ export class AuthServiceService {
 
     await this.userCredentialRepository.save(credential);
 
+    // Create UserTenant membership if tenantId provided
+    if (tenantId) {
+      const userTenant = this.userTenantRepository.create({
+        userId: savedUser._id.toString(),
+        tenantId,
+        role: role || UserRole.KIEM_SOAT,
+        isActive: true,
+      });
+      await this.userTenantRepository.save(userTenant);
+    }
+
     return {
       _id: savedUser._id,
       email: savedUser.email,
       hoTen: savedUser.hoTen,
-      vaiTro: savedUser.vaiTro,
-      permissions: savedUser.permissions,
     };
   }
 
@@ -144,6 +403,7 @@ export class AuthServiceService {
       return {
         id: decoded.sub,
         email: decoded.email,
+        tenantId: decoded.tenantId,
         vaiTro: decoded.vaiTro,
         permissions: decoded.permissions,
       };
@@ -153,9 +413,12 @@ export class AuthServiceService {
   }
 
   /**
-   * Get current user profile by ID
+   * Get current user profile with tenant info
    */
-  async getMe(userId: string): Promise<Partial<User>> {
+  async getMe(userId: string, tenantId: string): Promise<{
+    user: AuthUserResponse;
+    tenant?: TenantInfo;
+  }> {
     const { ObjectId } = await import('mongodb');
     const user = await this.userRepository.findOne({
       where: { _id: new ObjectId(userId) as any },
@@ -165,14 +428,58 @@ export class AuthServiceService {
       throw new UnauthorizedException('User not found');
     }
 
+    // Super admin without tenant
+    if (this.isSuperAdmin(user) && !tenantId) {
+      return {
+        user: this.buildUserResponse(user),
+      };
+    }
+
+    // Super admin with tenant - get tenant info directly
+    if (this.isSuperAdmin(user) && tenantId) {
+      const tenant = await this.tenantRepository.findOne({
+        where: { _id: new ObjectId(tenantId) as any },
+      });
+
+      if (!tenant) {
+        throw new ForbiddenException('Tenant not found');
+      }
+
+      return {
+        user: this.buildUserResponse(user),
+        tenant: {
+          tenantId: tenant._id.toString(),
+          tenantName: tenant.name,
+          tenantSlug: tenant.slug,
+          role: 'SUPER_ADMIN',
+        },
+      };
+    }
+
+    // Regular user - check tenant membership via UserTenant table
+    const userTenant = await this.userTenantRepository.findOne({
+      where: {
+        userId: user._id.toString(),
+        tenantId,
+        isActive: true,
+      },
+    });
+
+    if (!userTenant) {
+      throw new ForbiddenException('User does not belong to this tenant');
+    }
+
+    const tenant = await this.tenantRepository.findOne({
+      where: { _id: new ObjectId(tenantId) as any },
+    });
+
+    if (!tenant) {
+      throw new ForbiddenException('Tenant not found');
+    }
+
     return {
-      _id: user._id,
-      email: user.email,
-      hoTen: user.hoTen,
-      vaiTro: user.vaiTro,
-      permissions: user.permissions,
-      trangThai: user.trangThai,
-      createdAt: user.createdAt,
+      user: this.buildUserResponse(user),
+      tenant: this.buildTenantInfo(userTenant, tenant),
     };
   }
 
@@ -212,8 +519,6 @@ export class AuthServiceService {
       _id: savedUser._id,
       email: savedUser.email,
       hoTen: savedUser.hoTen,
-      vaiTro: savedUser.vaiTro,
-      permissions: savedUser.permissions,
       trangThai: savedUser.trangThai,
     };
   }

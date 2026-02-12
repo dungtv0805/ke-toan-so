@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '@app/auth';
+import { TenantModule as CoreTenantModule } from '@app/core';
 import { DatabaseModule } from '@app/database';
 import { TaiKhoanModule } from './tai-khoan/tai-khoan.module';
 import { DoiTuongModule } from './doi-tuong/doi-tuong.module';
@@ -16,6 +17,7 @@ import { LoaiChungTuModule } from './loai-chung-tu/loai-chung-tu.module';
 import { NhomKhoanMucModule } from './nhom-khoan-muc/nhom-khoan-muc.module';
 import { LoaiGiaoDichModule } from './loai-giao-dich/loai-giao-dich.module';
 import { HopDongModule } from './hop-dong/hop-dong.module';
+import { TenantModule } from './tenant/tenant.module';
 import {
   TaiKhoan,
   DoiTuong,
@@ -36,6 +38,7 @@ import {
 
 @Module({
   imports: [
+    CoreTenantModule,
     AuthModule,
     DatabaseModule.forRoot(),
     DatabaseModule.forFeature([
@@ -70,6 +73,7 @@ import {
     NhomKhoanMucModule,
     LoaiGiaoDichModule,
     HopDongModule,
+    TenantModule,
   ],
 })
 export class MasterDataServiceModule {}

@@ -1,16 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
-import { DecodedToken, UserPayload } from '../interfaces';
+import { DecodedToken, UserPayload, TempTokenPayload, DecodedTempToken } from '../interfaces';
 
 @Injectable()
 export class JwtService {
   private readonly secret: string;
   private readonly expiresIn: string;
+  private readonly tempTokenExpiresIn: string;
 
   constructor() {
     this.secret =
       process.env.JWT_SECRET || 'your-secret-key-change-in-production';
     this.expiresIn = process.env.JWT_EXPIRES_IN || '24h';
+    this.tempTokenExpiresIn = process.env.JWT_TEMP_EXPIRES_IN || '5m';
   }
 
   /**
@@ -43,6 +45,7 @@ export class JwtService {
     const tokenPayload = {
       sub: payload.id,
       email: payload.email,
+      tenantId: payload.tenantId,
       vaiTro: payload.vaiTro,
       permissions: payload.permissions,
     };
@@ -50,6 +53,47 @@ export class JwtService {
     return jwt.sign(tokenPayload, this.secret, {
       expiresIn: expiresIn || this.expiresIn,
     });
+  }
+
+  /**
+   * Sign a temporary token for tenant selection (no tenantId)
+   * @param payload - Temp token payload
+   * @returns JWT temp token string
+   */
+  signTempToken(payload: TempTokenPayload): string {
+    const tokenPayload = {
+      sub: payload.id,
+      email: payload.email,
+      type: 'temp',
+    };
+
+    return jwt.sign(tokenPayload, this.secret, {
+      expiresIn: this.tempTokenExpiresIn,
+    });
+  }
+
+  /**
+   * Verify and decode a temporary token
+   * @param token - JWT temp token string
+   * @returns Decoded temp token payload
+   * @throws Error if token is invalid, expired, or not a temp token
+   */
+  verifyTempToken(token: string): DecodedTempToken {
+    try {
+      const decoded = jwt.verify(token, this.secret) as DecodedTempToken;
+      if (decoded.type !== 'temp') {
+        throw new Error('Invalid token type');
+      }
+      return decoded;
+    } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new Error('Temp token has expired');
+      }
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new Error('Invalid temp token');
+      }
+      throw new Error(`Temp token verification failed: ${(error as Error).message}`);
+    }
   }
 
   /**
@@ -63,5 +107,23 @@ export class JwtService {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Alias for verify() - used by guards
+   * @param token - JWT token string
+   * @returns Decoded token payload
+   */
+  verifyToken(token: string): DecodedToken {
+    return this.verify(token);
+  }
+
+  /**
+   * Check if decoded token is a temp token (no tenantId)
+   * @param decoded - Decoded token
+   * @returns true if temp token
+   */
+  isTempToken(decoded: DecodedToken | DecodedTempToken): boolean {
+    return 'type' in decoded && decoded.type === 'temp';
   }
 }

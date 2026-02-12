@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { HopDong } from '@app/entities';
+import { DatabaseModule } from '@app/database';
 import { HopDongService } from './hop-dong.service';
 import { HopDongController } from './hop-dong.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([HopDong])],
+  imports: [DatabaseModule.forFeature([HopDong])],
   controllers: [HopDongController],
   providers: [HopDongService],
   exports: [HopDongService],

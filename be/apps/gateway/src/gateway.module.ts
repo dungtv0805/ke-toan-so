@@ -1,10 +1,17 @@
 import { Module } from '@nestjs/common';
-import { CoreModule } from '@app/core';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { CoreModule, TenantModule } from '@app/core';
 import { controllers } from './controllers';
+import { TenantHeaderInterceptor } from './interceptors';
 
 @Module({
-  imports: [CoreModule],
+  imports: [CoreModule, TenantModule],
   controllers,
-  providers: [],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TenantHeaderInterceptor,
+    },
+  ],
 })
 export class GatewayModule {}

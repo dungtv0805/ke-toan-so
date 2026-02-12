@@ -21,6 +21,7 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
+    "typeRoots": ["./node_modules/@types", "./libs/auth/src/types"],
     "paths": {
       "@app/service-client": ["libs/service-client/src"],
       "@app/service-client/*": ["libs/service-client/src/*"],

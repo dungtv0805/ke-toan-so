@@ -1,11 +1,8 @@
-import { Entity, Column, ObjectIdColumn } from 'typeorm';
-import { ObjectId } from 'mongodb';
+import { Entity, Column } from 'typeorm';
+import { BaseEntity } from '../base.entity';
 
 @Entity('voucher_sequences')
-export class VoucherSequence {
-  @ObjectIdColumn()
-  _id: ObjectId;
-
+export class VoucherSequence extends BaseEntity {
   @Column()
   loai: string;
 
@@ -14,10 +11,6 @@ export class VoucherSequence {
 
   @Column({ default: 0 })
   lastSequence: number;
-
-  get id(): string {
-    return this._id.toString();
-  }
 }
 
 export interface VoucherSequenceEntities {

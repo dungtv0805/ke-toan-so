@@ -7,3 +7,4 @@ export * from './voucher';
 export * from './auth';
 export * from './payable';
 export * from './config';
+export * from './tenant';

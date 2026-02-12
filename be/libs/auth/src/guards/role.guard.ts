@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { ROLES_KEY } from '../decorators/roles.decorator';
+import { SUPER_ADMIN_EMAIL } from '@app/entities';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
@@ -28,6 +29,11 @@ export class RoleGuard implements CanActivate {
 
     if (!user) {
       throw new ForbiddenException('User not found in request');
+    }
+
+    // Super admin (by email) has access to all resources
+    if (user.email === SUPER_ADMIN_EMAIL) {
+      return true;
     }
 
     const hasRole = requiredRoles.includes(user.vaiTro);

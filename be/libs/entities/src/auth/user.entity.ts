@@ -1,6 +1,9 @@
 import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '../base.entity';
 
+// Email cố định để xác định Super Admin
+export const SUPER_ADMIN_EMAIL = 'admin@company.com';
+
 export enum UserRole {
   ADMIN = 'ADMIN',
   GIAM_DOC = 'GIAM_DOC',
@@ -25,17 +28,16 @@ export class User extends BaseEntity {
   @Column()
   hoTen: string;
 
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.KIEM_SOAT })
-  vaiTro: UserRole;
-
-  @Column('array', { default: [] })
-  permissions: string[];
-
   @Column({ type: 'enum', enum: UserStatus, default: UserStatus.HOAT_DONG })
   trangThai: UserStatus;
 
   @Column({ default: true })
   isActive: boolean;
+
+  // Helper method to check if user is super admin
+  get isSuperAdmin(): boolean {
+    return this.email === SUPER_ADMIN_EMAIL;
+  }
 }
 
 export interface UserEntities {

@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { NganHang } from '@app/entities';
+import { DatabaseModule } from '@app/database';
 import { NganHangService } from './ngan-hang.service';
 import { NganHangController } from './ngan-hang.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([NganHang])],
+  imports: [DatabaseModule.forFeature([NganHang])],
   controllers: [NganHangController],
   providers: [NganHangService],
   exports: [NganHangService],

@@ -565,6 +565,10 @@ export interface SoCai {
   soDuCo: number;
 }
 
+// ===== TENANT =====
+
+export * from './tenant';
+
 // ===== USER & PHÂN QUYỀN =====
 
 export type VaiTro = 'ADMIN' | 'GIAM_DOC' | 'KE_TOAN_TRUONG' | 'KE_TOAN_QUY' | 'KE_TOAN_CONG_NO' | 'KE_TOAN_TONG_HOP' | 'MANAGER' | 'KIEM_SOAT';
@@ -573,8 +577,10 @@ export interface NguoiDung {
   id: string;
   hoTen: string;
   email: string;
-  vaiTro: VaiTro;
+  isSuperAdmin?: boolean;
+  tenants: import('./tenant').UserTenant[];
   trangThai: 'HOAT_DONG' | 'KHOA';
+  isActive: boolean;
 }
 
 // ===== DASHBOARD =====

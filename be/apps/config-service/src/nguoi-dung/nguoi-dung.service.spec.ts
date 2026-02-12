@@ -17,14 +17,13 @@ describe('NguoiDung_Service - Property Tests', () => {
     id: 'mock-id',
     email: 'test@example.com',
     hoTen: 'Test User',
-    vaiTro: UserRole.AUDITOR,
+    tenants: [{ tenantId: 'test-tenant-id', role: UserRole.KIEM_SOAT }],
     trangThai: UserStatus.HOAT_DONG,
-    permissions: [],
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
-  });
+  } as User);
 
   beforeEach(async () => {
     mockRepo = {
@@ -148,20 +147,13 @@ describe('NguoiDung_Service - Property Tests', () => {
                 createMockUser({
                   _id: { toString: () => `${role}-${i}` } as any,
                   email: `${role.toLowerCase()}${i}@example.com`,
-                  vaiTro: role,
+                  tenants: [{ tenantId: 'test-tenant', role }],
                 }),
               ),
             );
 
-            // Mock repo to return filtered results (simulating DB filter)
-            mockRepo.find.mockImplementation(({ where }) => {
-              if (where.vaiTro) {
-                return Promise.resolve(
-                  mockUsers.filter((u) => u.vaiTro === where.vaiTro),
-                );
-              }
-              return Promise.resolve(mockUsers);
-            });
+            // Mock repo to return all users (filtering happens in service)
+            mockRepo.find.mockResolvedValue(mockUsers);
 
             const result = await service.findAll({
               page: 1,
@@ -169,9 +161,12 @@ describe('NguoiDung_Service - Property Tests', () => {
               vaiTro: filterVaiTro,
             });
 
-            // All returned users should have the filtered vaiTro
+            // All returned users should have the filtered vaiTro in their tenants
             result.data.forEach((user) => {
-              expect(user.vaiTro).toBe(filterVaiTro);
+              const hasRole = (user.tenants || []).some(
+                (t) => t.role === filterVaiTro,
+              );
+              expect(hasRole).toBe(true);
             });
 
             return true;

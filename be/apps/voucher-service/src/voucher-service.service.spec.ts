@@ -1,7 +1,10 @@
 import * as fc from 'fast-check';
 import { VoucherNumberService } from './shared/voucher-number.service';
 import { ChungTuService } from './chung-tu/chung-tu.service';
-import { LoaiChungTu, TrangThaiChungTu } from '@app/entities';
+import { LoaiChungTu } from '@app/entities';
+
+// Define TrangThaiChungTu locally for tests (not exported from entities)
+type TrangThaiChungTu = 'NHAP' | 'CHO_DUYET' | 'DA_DUYET' | 'TU_CHOI';
 
 describe('VoucherService Property Tests', () => {
   /**

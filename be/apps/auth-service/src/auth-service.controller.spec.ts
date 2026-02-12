@@ -22,6 +22,7 @@ describe('AuthController - Token Properties', () => {
           fc.record({
             id: fc.uuid(),
             email: fc.emailAddress(),
+            tenantId: fc.uuid(),
             vaiTro: fc.constantFrom(
               'ADMIN',
               'KE_TOAN_QUY',
@@ -51,6 +52,7 @@ describe('AuthController - Token Properties', () => {
             expect(decoded).not.toBeNull();
             expect(decoded?.sub).toBe(userPayload.id);
             expect(decoded?.email).toBe(userPayload.email);
+            expect(decoded?.tenantId).toBe(userPayload.tenantId);
             expect(decoded?.vaiTro).toBe(userPayload.vaiTro);
             expect(decoded?.permissions).toEqual(userPayload.permissions);
 
@@ -78,6 +80,7 @@ describe('AuthController - Token Properties', () => {
           fc.record({
             id: fc.uuid(),
             email: fc.emailAddress(),
+            tenantId: fc.uuid(),
             vaiTro: fc.constantFrom(
               'ADMIN',
               'KE_TOAN_QUY',
@@ -104,6 +107,7 @@ describe('AuthController - Token Properties', () => {
             // Verify round-trip preserves data
             expect(verified.sub).toBe(originalPayload.id);
             expect(verified.email).toBe(originalPayload.email);
+            expect(verified.tenantId).toBe(originalPayload.tenantId);
             expect(verified.vaiTro).toBe(originalPayload.vaiTro);
             expect(verified.permissions).toEqual(originalPayload.permissions);
           },
@@ -116,6 +120,7 @@ describe('AuthController - Token Properties', () => {
       const payload = {
         id: 'user-123',
         email: 'test@example.com',
+        tenantId: 'tenant-123',
         vaiTro: 'ADMIN',
         permissions: ['view_phieu_thu'],
       };

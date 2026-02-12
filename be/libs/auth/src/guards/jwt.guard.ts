@@ -20,16 +20,28 @@ export class JwtGuard implements CanActivate {
     }
 
     try {
-      const decoded = this.jwtService.verify(token);
+      const decoded = this.jwtService.verifyToken(token);
+
+      // Reject temp tokens - they don't have tenantId
+      if (this.jwtService.isTempToken(decoded)) {
+        throw new UnauthorizedException(
+          'Access token required. Temp token is not allowed for this endpoint.',
+        );
+      }
+
       // Attach decoded user to request
-      (request as any).user = {
+      (request as Request & { user: unknown }).user = {
         id: decoded.sub,
         email: decoded.email,
+        tenantId: decoded.tenantId,
         vaiTro: decoded.vaiTro,
         permissions: decoded.permissions,
       };
       return true;
     } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
       throw new UnauthorizedException((error as Error).message);
     }
   }

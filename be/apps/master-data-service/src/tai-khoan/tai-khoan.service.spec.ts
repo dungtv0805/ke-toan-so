@@ -1,5 +1,5 @@
 import * as fc from 'fast-check';
-import { AccountType } from '@app/entities';
+import { NhomTaiKhoan, LoaiTaiKhoan } from '@app/entities';
 
 /**
  * **Feature: backend-migration, Property 9: Master Data CRUD Consistency**
@@ -19,22 +19,16 @@ describe('Property 9: Master Data CRUD Consistency', () => {
             ma: fc.stringMatching(/^[0-9]{3,6}$/),
             ten: fc.string({ minLength: 3, maxLength: 100 }),
             capDo: fc.integer({ min: 1, max: 5 }),
-            loai: fc.constantFrom(AccountType.NO, AccountType.CO),
-            nhom: fc.constantFrom(
-              'TAI_SAN',
-              'NGUON_VON',
-              'DOANH_THU',
-              'CHI_PHI',
-            ),
+            loai: fc.constantFrom(...Object.values(LoaiTaiKhoan)),
+            nhom: fc.constantFrom(...Object.values(NhomTaiKhoan)),
           }),
           (taiKhoanData) => {
             // Verify data structure is valid
             expect(taiKhoanData.ma).toMatch(/^[0-9]{3,6}$/);
             expect(taiKhoanData.capDo).toBeGreaterThanOrEqual(1);
             expect(taiKhoanData.capDo).toBeLessThanOrEqual(5);
-            expect([AccountType.NO, AccountType.CO]).toContain(
-              taiKhoanData.loai,
-            );
+            expect(Object.values(LoaiTaiKhoan)).toContain(taiKhoanData.loai);
+            expect(Object.values(NhomTaiKhoan)).toContain(taiKhoanData.nhom);
           },
         ),
         { numRuns: 100 },

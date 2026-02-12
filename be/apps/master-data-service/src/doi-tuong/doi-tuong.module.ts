@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { DoiTuong } from '@app/entities';
+import { DatabaseModule } from '@app/database';
 import { DoiTuongService } from './doi-tuong.service';
 import { DoiTuongController } from './doi-tuong.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DoiTuong])],
+  imports: [DatabaseModule.forFeature([DoiTuong])],
   controllers: [DoiTuongController],
   providers: [DoiTuongService],
   exports: [DoiTuongService],

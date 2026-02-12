@@ -42,6 +42,7 @@ import {
   BangCanDoiPage,
   QuyChaunPage,
   PhanQuyenPage,
+  TenantPage,
   ComingSoonPage,
   NotFound
 } from "./pages/loadable";
@@ -280,6 +281,10 @@ const App = () => (
                         <PhanQuyenPage />
                       </ProtectedRoute>
                     }
+                  />
+                  <Route
+                    path="tenant"
+                    element={<TenantPage />}
                   />
                 </Route>
               </Route>

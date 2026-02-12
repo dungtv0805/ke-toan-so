@@ -29,8 +29,10 @@ export class GatewayController {
 
     const { service, targetPath } = routeInfo;
 
-    // Extract and forward Authorization header (without verification)
+    // Extract headers for forwarding
     const authHeader = req.headers.authorization;
+    const tenantId = req.headers['x-tenant-id'];
+    const userId = req.headers['x-user-id'];
 
     // Include query string in the target path
     const queryString = req.url?.includes('?')
@@ -48,6 +50,9 @@ export class GatewayController {
         host: `${service.host}:${service.port}`,
         // Forward Authorization header unchanged
         ...(authHeader ? { authorization: authHeader } : {}),
+        // Forward tenant context headers
+        ...(tenantId ? { 'x-tenant-id': tenantId } : {}),
+        ...(userId ? { 'x-user-id': userId } : {}),
       },
     };
 

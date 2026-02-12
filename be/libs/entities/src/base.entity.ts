@@ -1,9 +1,12 @@
-import { ObjectIdColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { ObjectIdColumn, CreateDateColumn, UpdateDateColumn, Column } from 'typeorm';
 import { ObjectId } from 'mongodb';
 
 export abstract class BaseEntity {
   @ObjectIdColumn()
   _id: ObjectId;
+
+  @Column({ nullable: true })
+  tenantId: string;
 
   @CreateDateColumn()
   createdAt: Date;

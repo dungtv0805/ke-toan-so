@@ -15,6 +15,7 @@ import {
   VerifyTokenDto,
   UpdateProfileDto,
   ChangePasswordDto,
+  SelectTenantDto,
 } from './dto';
 import { JwtGuard, CurrentUser } from '@app/auth';
 import type { UserPayload } from '@app/auth';
@@ -25,12 +26,29 @@ export class AuthServiceController {
 
   /**
    * POST /login
-   * Authenticate user and return JWT token
+   * Authenticate user and return JWT token or tempToken + tenants list
+   * - Case 1: User có 1 tenant → accessToken + tenant
+   * - Case 2: User có nhiều tenants → tempToken + tenants[]
    */
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto) {
     const result = await this.authService.login(loginDto);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  /**
+   * POST /select-tenant
+   * Select tenant after login (step 2 of 2-step flow)
+   * Returns accessToken with selected tenantId
+   */
+  @Post('select-tenant')
+  @HttpCode(HttpStatus.OK)
+  async selectTenant(@Body() selectTenantDto: SelectTenantDto) {
+    const result = await this.authService.selectTenant(selectTenantDto);
     return {
       success: true,
       data: result,
@@ -67,12 +85,12 @@ export class AuthServiceController {
 
   /**
    * GET /me
-   * Get current user profile (requires authentication)
+   * Get current user profile with tenant info (requires authentication)
    */
   @Get('me')
   @UseGuards(JwtGuard)
   async getMe(@CurrentUser() user: UserPayload) {
-    const profile = await this.authService.getMe(user.id);
+    const profile = await this.authService.getMe(user.id, user.tenantId);
     return {
       success: true,
       data: profile,

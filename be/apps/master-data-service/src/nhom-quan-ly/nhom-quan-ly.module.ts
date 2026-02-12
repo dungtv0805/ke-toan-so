@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { NhomQuanLy } from '@app/entities';
+import { DatabaseModule } from '@app/database';
 import { NhomQuanLyService } from './nhom-quan-ly.service';
 import { NhomQuanLyController } from './nhom-quan-ly.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([NhomQuanLy])],
+  imports: [DatabaseModule.forFeature([NhomQuanLy])],
   controllers: [NhomQuanLyController],
   providers: [NhomQuanLyService],
   exports: [NhomQuanLyService],

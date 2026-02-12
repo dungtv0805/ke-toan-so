@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User, UserCredential } from '@app/entities';
+import { User, UserCredential, UserTenant } from '@app/entities';
+import { DatabaseModule } from '@app/database';
+import { TenantModule } from '@app/core';
 import { NguoiDung_Controller } from './nguoi-dung.controller';
 import { NguoiDung_Service } from './nguoi-dung.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, UserCredential])],
+  imports: [DatabaseModule.forFeature([User, UserCredential, UserTenant]), TenantModule],
   controllers: [NguoiDung_Controller],
   providers: [NguoiDung_Service],
   exports: [NguoiDung_Service],
