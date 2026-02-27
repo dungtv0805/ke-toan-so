@@ -445,6 +445,10 @@ export class AuthServiceService {
         throw new ForbiddenException('Tenant not found');
       }
 
+      if (!tenant.isActive) {
+        throw new ForbiddenException('Công ty đã bị vô hiệu hoá');
+      }
+
       return {
         user: this.buildUserResponse(user),
         tenant: {
@@ -475,6 +479,10 @@ export class AuthServiceService {
 
     if (!tenant) {
       throw new ForbiddenException('Tenant not found');
+    }
+
+    if (!tenant.isActive) {
+      throw new ForbiddenException('Công ty đã bị vô hiệu hoá');
     }
 
     return {

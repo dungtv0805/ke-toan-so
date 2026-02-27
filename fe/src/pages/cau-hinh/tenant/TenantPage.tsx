@@ -3,6 +3,7 @@ import { Table, Button, Modal, Form, Input, Switch, message, Space, Tag, Popconf
 import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UserOutlined, UserAddOutlined } from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { tenantService, Tenant, CreateTenantDto, UpdateTenantDto } from '@/services/tenantService';
+import TenantMembersModal from './TenantMembersModal';
 
 const DEFAULT_PASSWORD = '123456';
 
@@ -21,6 +22,7 @@ const TenantPage = () => {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
+  const [membersTenant, setMembersTenant] = useState<Tenant | null>(null);
   const [adminMode, setAdminMode] = useState<AdminMode>('new');
   const [form] = Form.useForm();
 
@@ -204,6 +206,13 @@ const TenantPage = () => {
       key: 'actions',
       render: (_: unknown, record: Tenant) => (
         <Space>
+          <Tooltip title="Quản lý thành viên">
+            <Button
+              type="text"
+              icon={<TeamOutlined />}
+              onClick={() => setMembersTenant(record)}
+            />
+          </Tooltip>
           <Button
             type="text"
             icon={<EditOutlined />}
@@ -390,6 +399,12 @@ const TenantPage = () => {
           </Form.Item>
         </Form>
       </Modal>
+
+      <TenantMembersModal
+        tenant={membersTenant}
+        open={!!membersTenant}
+        onClose={() => setMembersTenant(null)}
+      />
     </div>
   );
 };

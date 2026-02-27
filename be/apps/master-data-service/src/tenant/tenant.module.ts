@@ -3,6 +3,7 @@ import { Tenant, User, UserCredential, UserTenant } from '@app/entities';
 import { DatabaseModule } from '@app/database';
 import { TenantService } from './tenant.service';
 import { TenantController } from './tenant.controller';
+import { TenantAdminGuard } from '@app/auth';
 
 @Module({
   imports: [
@@ -10,7 +11,7 @@ import { TenantController } from './tenant.controller';
     DatabaseModule.forFeatureRaw([Tenant, User, UserCredential, UserTenant]),
   ],
   controllers: [TenantController],
-  providers: [TenantService],
+  providers: [TenantService, TenantAdminGuard],
   exports: [TenantService],
 })
 export class TenantModule {}

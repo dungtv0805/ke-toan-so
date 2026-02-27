@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Tenant, User, UserCredential, UserTenant, UserRole, UserStatus } from '@app/entities';
-import { CreateTenantDto, UpdateTenantDto } from '@app/dto';
+import { CreateTenantDto, UpdateTenantDto, AddUserToTenantDto, UpdateTenantMemberDto } from '@app/dto';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 import * as bcrypt from 'bcrypt';
 
@@ -243,6 +243,18 @@ export class TenantService {
     const tenant = await this.findOne(id);
     tenant.isActive = false;
     await this.tenantRepository.save(tenant);
+
+    // Deactivate tất cả UserTenant membership của tenant này
+    const memberships = await this.userTenantRepository.find({
+      where: { tenantId: id, isActive: true },
+    });
+
+    if (memberships.length > 0) {
+      for (const membership of memberships) {
+        membership.isActive = false;
+      }
+      await this.userTenantRepository.save(memberships);
+    }
   }
 
   async hardDelete(id: string): Promise<void> {
@@ -260,5 +272,162 @@ export class TenantService {
       email: u.email,
       hoTen: u.hoTen,
     }));
+  }
+
+  async getTenantMembers(tenantId: string): Promise<Array<{
+    id: string;
+    email: string;
+    hoTen: string;
+    role: UserRole;
+    isActive: boolean;
+    membershipId: string;
+  }>> {
+    // Verify tenant exists
+    await this.findOne(tenantId);
+
+    const memberships = await this.userTenantRepository.find({
+      where: { tenantId },
+    });
+
+    if (memberships.length === 0) return [];
+
+    const { ObjectId } = await import('mongodb');
+    const userIds = memberships.map((m) => new ObjectId(m.userId));
+    const users = await this.userRepository.find({
+      where: { _id: { $in: userIds } as any },
+    });
+
+    const userMap = new Map(users.map((u) => [u._id.toString(), u]));
+
+    return memberships
+      .map((m) => {
+        const user = userMap.get(m.userId);
+        if (!user) return null;
+        return {
+          id: user._id.toString(),
+          email: user.email,
+          hoTen: user.hoTen,
+          role: m.role,
+          isActive: m.isActive,
+          membershipId: m._id.toString(),
+        };
+      })
+      .filter((m): m is NonNullable<typeof m> => m !== null);
+  }
+
+  async addUserToTenant(tenantId: string, dto: AddUserToTenantDto): Promise<{
+    user: { id: string; email: string; hoTen: string };
+    role: UserRole;
+    isNew: boolean;
+  }> {
+    // Verify tenant exists
+    await this.findOne(tenantId);
+
+    let user: User;
+    let isNew = false;
+
+    if (dto.userId) {
+      // Use existing user by ID
+      const { ObjectId } = await import('mongodb');
+      const found = await this.userRepository.findOne({
+        where: { _id: new ObjectId(dto.userId) as any },
+      });
+      if (!found) {
+        throw new NotFoundException(`User with ID ${dto.userId} not found`);
+      }
+      user = found;
+    } else if (dto.email) {
+      // Find by email or create new
+      const existing = await this.userRepository.findOne({
+        where: { email: dto.email.toLowerCase() },
+      });
+
+      if (existing) {
+        user = existing;
+      } else {
+        // Create new user
+        const password = dto.password || DEFAULT_PASSWORD;
+        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+        const newUser = this.userRepository.create({
+          email: dto.email.toLowerCase(),
+          hoTen: dto.hoTen!,
+          trangThai: UserStatus.HOAT_DONG,
+          isActive: true,
+        });
+        user = await this.userRepository.save(newUser);
+
+        const credential = this.credentialRepository.create({
+          userId: user._id.toString(),
+          password: hashedPassword,
+          isActive: true,
+        });
+        await this.credentialRepository.save(credential);
+        isNew = true;
+      }
+    } else {
+      throw new ConflictException('Phải cung cấp userId hoặc email');
+    }
+
+    // Check existing membership
+    const existingMembership = await this.userTenantRepository.findOne({
+      where: { userId: user._id.toString(), tenantId },
+    });
+
+    if (existingMembership) {
+      if (existingMembership.isActive) {
+        throw new ConflictException('User đã là thành viên của công ty này');
+      }
+      // Reactivate inactive membership
+      existingMembership.isActive = true;
+      existingMembership.role = dto.role;
+      await this.userTenantRepository.save(existingMembership);
+    } else {
+      const userTenant = this.userTenantRepository.create({
+        userId: user._id.toString(),
+        tenantId,
+        role: dto.role,
+        isActive: true,
+      });
+      await this.userTenantRepository.save(userTenant);
+    }
+
+    return {
+      user: { id: user._id.toString(), email: user.email, hoTen: user.hoTen },
+      role: dto.role,
+      isNew,
+    };
+  }
+
+  async updateTenantMember(
+    tenantId: string,
+    userId: string,
+    dto: UpdateTenantMemberDto,
+  ): Promise<void> {
+    const membership = await this.userTenantRepository.findOne({
+      where: { tenantId, userId },
+    });
+
+    if (!membership) {
+      throw new NotFoundException('Không tìm thấy thành viên trong công ty này');
+    }
+
+    if (dto.role !== undefined) membership.role = dto.role;
+    if (dto.isActive !== undefined) membership.isActive = dto.isActive;
+
+    await this.userTenantRepository.save(membership);
+  }
+
+  async removeTenantMember(tenantId: string, userId: string): Promise<void> {
+    const membership = await this.userTenantRepository.findOne({
+      where: { tenantId, userId },
+    });
+
+    if (!membership) {
+      throw new NotFoundException('Không tìm thấy thành viên trong công ty này');
+    }
+
+    membership.isActive = false;
+    await this.userTenantRepository.save(membership);
   }
 }

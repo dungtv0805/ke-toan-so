@@ -45,6 +45,28 @@ export interface CreateTenantResponse {
   admin?: TenantAdmin;
 }
 
+export interface TenantMember {
+  id: string;
+  email: string;
+  hoTen: string;
+  role: string;
+  isActive: boolean;
+  membershipId: string;
+}
+
+export interface AddMemberDto {
+  userId?: string;
+  email?: string;
+  hoTen?: string;
+  password?: string;
+  role: string;
+}
+
+export interface UpdateMemberDto {
+  role?: string;
+  isActive?: boolean;
+}
+
 class TenantService extends ServiceBase {
   constructor() {
     super({ endpoint: '/master-data/tenants' });
@@ -88,6 +110,30 @@ class TenantService extends ServiceBase {
       email: u.email as string,
       hoTen: u.hoTen as string,
     }));
+  }
+
+  async getMembers(tenantId: string): Promise<TenantMember[]> {
+    const response = await this.get<Array<Record<string, unknown>>>({ endpoint: `/${tenantId}/members` });
+    return response.map((m) => ({
+      id: (m._id as string) || (m.id as string),
+      email: m.email as string,
+      hoTen: m.hoTen as string,
+      role: m.role as string,
+      isActive: m.isActive as boolean,
+      membershipId: m.membershipId as string,
+    }));
+  }
+
+  async addMember(tenantId: string, data: AddMemberDto): Promise<{ user: { id: string; email: string; hoTen: string }; role: string; isNew: boolean }> {
+    return this.post(data, { endpoint: `/${tenantId}/members` });
+  }
+
+  async updateMember(tenantId: string, userId: string, data: UpdateMemberDto): Promise<void> {
+    await this.put(data, { endpoint: `/${tenantId}/members/${userId}` });
+  }
+
+  async removeMember(tenantId: string, userId: string): Promise<void> {
+    await this.remove({ endpoint: `/${tenantId}/members/${userId}` });
   }
 
   private transformTenant(tenant: Record<string, unknown>): Tenant {

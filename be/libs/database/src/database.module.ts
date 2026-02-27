@@ -1,6 +1,8 @@
 import { DynamicModule, Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule, TypeOrmModuleOptions, getRepositoryToken } from '@nestjs/typeorm';
 import { TenantModule, TenantContextService, TENANT_EXEMPT_ENTITIES } from '@app/core';
+import { TenantActiveGuard } from '@app/auth';
 import { TenantSubscriber } from './tenant.subscriber';
 import { DataSource, ObjectLiteral, Repository } from 'typeorm';
 
@@ -156,7 +158,13 @@ export class DatabaseModule {
       module: DatabaseModule,
       global: true,
       imports: [TypeOrmModule.forRoot(typeOrmOptions), TenantModule],
-      providers: [TenantSubscriber],
+      providers: [
+        TenantSubscriber,
+        {
+          provide: APP_GUARD,
+          useClass: TenantActiveGuard,
+        },
+      ],
       exports: [TypeOrmModule, TenantSubscriber],
     };
   }
