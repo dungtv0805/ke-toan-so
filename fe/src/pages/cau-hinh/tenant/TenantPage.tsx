@@ -403,7 +403,10 @@ const TenantPage = () => {
       <TenantMembersModal
         tenant={membersTenant}
         open={!!membersTenant}
-        onClose={() => setMembersTenant(null)}
+        onClose={() => {
+          setMembersTenant(null);
+          fetchTenants();
+        }}
       />
     </div>
   );

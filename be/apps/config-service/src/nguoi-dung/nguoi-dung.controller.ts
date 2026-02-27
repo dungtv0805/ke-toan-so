@@ -15,6 +15,7 @@ import {
   CreateNguoiDungDto,
   UpdateNguoiDungDto,
   PaginationQueryDto,
+  AddExistingUserDto,
 } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
 
@@ -34,6 +35,20 @@ export class NguoiDung_Controller {
   @Roles('ADMIN')
   async getStats() {
     const data = await this.nguoiDungService.getStats();
+    return { success: true, data };
+  }
+
+  @Get('available-users')
+  @Roles('ADMIN')
+  async getAvailableUsers(@Query('search') search?: string) {
+    const data = await this.nguoiDungService.searchUsersNotInTenant(search);
+    return { success: true, data };
+  }
+
+  @Post('add-existing')
+  @Roles('ADMIN')
+  async addExistingUser(@Body() dto: AddExistingUserDto) {
+    const data = await this.nguoiDungService.addExistingUser(dto);
     return { success: true, data };
   }
 

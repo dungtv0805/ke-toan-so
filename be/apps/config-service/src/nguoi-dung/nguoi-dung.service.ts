@@ -12,6 +12,7 @@ import {
   CreateNguoiDungDto,
   UpdateNguoiDungDto,
   PaginationQueryDto,
+  AddExistingUserDto,
 } from './dto';
 
 const SALT_ROUNDS = 10;
@@ -281,6 +282,91 @@ export class NguoiDung_Service {
         ? UserStatus.KHOA
         : UserStatus.HOAT_DONG;
     return this.repo.save(item);
+  }
+
+  async addExistingUser(dto: AddExistingUserDto): Promise<UserWithTenant> {
+    const { ObjectId } = await import('mongodb');
+    const user = await this.repo.findOne({
+      where: { _id: new ObjectId(dto.userId) as any, isActive: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    if (!tenantId) {
+      throw new ConflictException('Không xác định được công ty hiện tại');
+    }
+
+    // Check existing membership
+    const existingMembership = await this.userTenantRepo.findOne({
+      where: { userId: user._id.toString(), tenantId },
+    });
+
+    if (existingMembership) {
+      if (existingMembership.isActive) {
+        throw new ConflictException('Người dùng đã là thành viên của công ty này');
+      }
+      // Reactivate inactive membership
+      existingMembership.isActive = true;
+      existingMembership.role = dto.vaiTro;
+      await this.userTenantRepo.save(existingMembership);
+    } else {
+      const userTenant = this.userTenantRepo.create({
+        userId: user._id.toString(),
+        tenantId,
+        role: dto.vaiTro,
+        isActive: true,
+      });
+      await this.userTenantRepo.save(userTenant);
+    }
+
+    return {
+      _id: user._id.toString(),
+      id: user._id.toString(),
+      email: user.email,
+      hoTen: user.hoTen,
+      trangThai: user.trangThai,
+      isActive: user.isActive,
+      isSuperAdmin: user.isSuperAdmin,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      tenantRole: dto.vaiTro,
+    };
+  }
+
+  async searchUsersNotInTenant(search?: string): Promise<Array<{ id: string; email: string; hoTen: string }>> {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    if (!tenantId) return [];
+
+    // Get user IDs already in this tenant
+    const existingMemberships = await this.userTenantRepo.find({
+      where: { tenantId, isActive: true },
+    });
+    const existingUserIds = new Set(existingMemberships.map((m) => m.userId));
+
+    // Get all active users
+    let allUsers = await this.repo.find({ where: { isActive: true } });
+
+    // Filter out users already in tenant
+    allUsers = allUsers.filter((u) => !existingUserIds.has(u._id.toString()));
+
+    // Filter by search
+    if (search) {
+      const searchLower = search.toLowerCase();
+      allUsers = allUsers.filter(
+        (u) =>
+          u.hoTen.toLowerCase().includes(searchLower) ||
+          u.email.toLowerCase().includes(searchLower),
+      );
+    }
+
+    return allUsers.map((u) => ({
+      id: u._id.toString(),
+      email: u.email,
+      hoTen: u.hoTen,
+    }));
   }
 
   async getStats(): Promise<NguoiDungStats> {

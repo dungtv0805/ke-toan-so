@@ -7,6 +7,26 @@ import "./crud.event";
 
 @RegisterHandler("phan-quyen-context")
 export class CrudHandler extends CSubHanlder {
+  @HandlerDecorator("addExistingUser")
+  async addExistingUser(params: { userId: string; vaiTro: string }): Promise<NguoiDung> {
+    try {
+      const result = await nguoiDungService.addExistingUser(params.userId, params.vaiTro);
+      message.success("Thêm người dùng vào công ty thành công!");
+
+      // Refresh data
+      const pagination = this.getState("pagination") as { page: number; limit: number };
+      await this.executeEvent("fetchData", { page: pagination?.page || 1, limit: pagination?.limit || 10 });
+      await this.executeEvent("fetchStats", {});
+
+      this.setState("modalVisible", false);
+      return result;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Lỗi khi thêm người dùng vào công ty";
+      message.error(errorMessage);
+      throw error;
+    }
+  }
+
   @HandlerDecorator("createNguoiDung")
   async createNguoiDung(data: Omit<NguoiDung, "id">): Promise<NguoiDung> {
     try {

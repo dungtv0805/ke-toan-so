@@ -109,6 +109,21 @@ class NguoiDungService extends ServiceBase {
     }
   }
 
+  async getAvailableUsers(search?: string): Promise<Array<{ id: string; email: string; hoTen: string }>> {
+    const queryParams = search ? `?search=${encodeURIComponent(search)}` : '';
+    const response = await this.get<Array<Record<string, unknown>>>({ endpoint: `/available-users${queryParams}` });
+    return response.map((u) => ({
+      id: (u._id as string) || (u.id as string),
+      email: u.email as string,
+      hoTen: u.hoTen as string,
+    }));
+  }
+
+  async addExistingUser(userId: string, vaiTro: string): Promise<NguoiDung> {
+    const response = await this.post<Record<string, unknown>>({ userId, vaiTro }, { endpoint: '/add-existing' });
+    return transformUser(response);
+  }
+
   getVaiTroOptions() {
     return vaiTroOptions;
   }
