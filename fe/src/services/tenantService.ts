@@ -99,8 +99,8 @@ class TenantService extends ServiceBase {
     return this.transformTenant(response);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.remove({ endpoint: `/${id}` });
+  async deleteTenant(id: string): Promise<void> {
+    await super.delete({ endpoint: `/${id}` });
   }
 
   async getAllUsers(): Promise<UserOption[]> {
@@ -133,7 +133,7 @@ class TenantService extends ServiceBase {
   }
 
   async removeMember(tenantId: string, userId: string): Promise<void> {
-    await this.remove({ endpoint: `/${tenantId}/members/${userId}` });
+    await super.delete({ endpoint: `/${tenantId}/members/${userId}` });
   }
 
   private transformTenant(tenant: Record<string, unknown>): Tenant {

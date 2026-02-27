@@ -87,7 +87,7 @@ const TenantPage = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      await tenantService.delete(id);
+      await tenantService.deleteTenant(id);
       message.success('Đã xóa công ty');
       fetchTenants();
     } catch (error) {

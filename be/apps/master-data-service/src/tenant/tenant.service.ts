@@ -286,7 +286,7 @@ export class TenantService {
     await this.findOne(tenantId);
 
     const memberships = await this.userTenantRepository.find({
-      where: { tenantId },
+      where: { tenantId, isActive: true },
     });
 
     if (memberships.length === 0) return [];
