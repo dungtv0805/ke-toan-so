@@ -116,7 +116,7 @@ export class TaiKhoanService {
   }
 
   async findByMa(ma: string): Promise<TaiKhoan | null> {
-    return this.taiKhoanRepository.findOne({ where: { ma } });
+    return this.taiKhoanRepository.findOne({ where: { ma, isActive: true } });
   }
 
   async create(createDto: CreateTaiKhoanDto): Promise<TaiKhoan> {

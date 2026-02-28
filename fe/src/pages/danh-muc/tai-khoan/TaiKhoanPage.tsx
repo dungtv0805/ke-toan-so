@@ -52,25 +52,68 @@ const taiKhoanSchema = z.object({
   moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").nullable().optional(),
 });
 
+// Sắp xếp tài khoản theo hierarchy: cha trước, con ngay sau cha (DFS)
+const sortHierarchy = (accounts: TaiKhoan[]): TaiKhoan[] => {
+  const childrenMap = new Map<string, TaiKhoan[]>();
+  const roots: TaiKhoan[] = [];
+
+  for (const acc of accounts) {
+    if (acc.parentId) {
+      const siblings = childrenMap.get(acc.parentId) ?? [];
+      siblings.push(acc);
+      childrenMap.set(acc.parentId, siblings);
+    } else {
+      roots.push(acc);
+    }
+  }
+
+  // Sort siblings theo mã tài khoản
+  const sortByMa = (a: TaiKhoan, b: TaiKhoan) => a.ma.localeCompare(b.ma);
+  roots.sort(sortByMa);
+  childrenMap.forEach((children) => children.sort(sortByMa));
+
+  const result: TaiKhoan[] = [];
+  const traverse = (items: TaiKhoan[]) => {
+    for (const item of items) {
+      result.push(item);
+      const children = childrenMap.get(item.id);
+      if (children) traverse(children);
+    }
+  };
+  traverse(roots);
+
+  return result;
+};
+
 const TaiKhoanPage: React.FC = () => {
-  const [data, setData] = useState<TaiKhoan[]>([]);
+  const [allData, setAllData] = useState<TaiKhoan[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [filterNhom, setFilterNhom] = useState<string | undefined>(undefined);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<TaiKhoan | null>(null);
-  const [parentAccounts, setParentAccounts] = useState<TaiKhoan[]>([]);
   const [form] = Form.useForm();
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 100,
-    total: 0,
-  });
+  const [pageSize, setPageSize] = useState(100);
+
+  // Filter + sort hierarchy từ toàn bộ data
+  const filteredData = React.useMemo(() => {
+    let result = allData;
+    if (filterNhom) {
+      result = result.filter(acc => acc.nhom === filterNhom);
+    }
+    if (searchText) {
+      const keyword = searchText.toLowerCase();
+      result = result.filter(
+        acc => acc.ma.toLowerCase().includes(keyword) || acc.ten.toLowerCase().includes(keyword)
+      );
+    }
+    return sortHierarchy(result);
+  }, [allData, filterNhom, searchText]);
 
   // Tính cấp độ dựa trên tài khoản cha
   const calculateCapDo = (parentId: string | null | undefined): number => {
     if (!parentId) return 1;
-    const parent = parentAccounts.find(p => p.id === parentId);
+    const parent = allData.find(p => p.id === parentId);
     return parent ? parent.capDo + 1 : 1;
   };
 
@@ -80,30 +123,11 @@ const TaiKhoanPage: React.FC = () => {
     form.setFieldsValue({ capDo });
   };
 
-  const fetchData = async (
-    page = pagination.current,
-    pageSize = pagination.pageSize,
-    search = searchText,
-    nhom = filterNhom
-  ) => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const [result, parents] = await Promise.all([
-        taiKhoanService.getPaginated({
-          page,
-          limit: pageSize,
-          search: search || undefined,
-          nhom,
-        }),
-        taiKhoanService.getParentAccounts(),
-      ]);
-      setData(result.data);
-      setPagination({
-        current: result.meta.page,
-        pageSize: result.meta.limit,
-        total: result.meta.total,
-      });
-      setParentAccounts(parents);
+      const accounts = await taiKhoanService.getHierarchy();
+      setAllData(accounts);
     } catch (error) {
       message.error("Không thể tải dữ liệu");
     } finally {
@@ -112,26 +136,8 @@ const TaiKhoanPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchData(1, pagination.pageSize, "", undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchData();
   }, []);
-
-  const handleFilterNhom = (value: string | undefined) => {
-    setFilterNhom(value);
-    fetchData(1, pagination.pageSize, searchText, value);
-  };
-
-  const handleTableChange = (paginationConfig: {
-    current?: number;
-    pageSize?: number;
-  }) => {
-    fetchData(
-      paginationConfig.current || 1,
-      paginationConfig.pageSize || 50,
-      searchText,
-      filterNhom
-    );
-  };
 
   const openModal = (record?: TaiKhoan) => {
     if (record) {
@@ -206,7 +212,6 @@ const TaiKhoanPage: React.FC = () => {
       dataIndex: "ma",
       key: "ma",
       width: 120,
-      sorter: (a: TaiKhoan, b: TaiKhoan) => a.ma.localeCompare(b.ma),
       render: (text: string, record: TaiKhoan) => (
         <Text strong style={{ paddingLeft: (record.capDo - 1) * 16 }}>
           {text}
@@ -349,19 +354,14 @@ const TaiKhoanPage: React.FC = () => {
                   placeholder="Tìm kiếm theo mã hoặc tên..."
                   prefix={<SearchOutlined className="text-muted-foreground" />}
                   value={searchText}
-                  onChange={(e) => {
-                    setSearchText(e.target.value);
-                  }}
-                  onPressEnter={() =>
-                    fetchData(1, pagination.pageSize, searchText, filterNhom)
-                  }
+                  onChange={(e) => setSearchText(e.target.value)}
                   style={{ width: 280 }}
                   allowClear
                 />
                 <Select
                   placeholder="Lọc theo nhóm"
                   value={filterNhom}
-                  onChange={handleFilterNhom}
+                  onChange={(value) => setFilterNhom(value)}
                   style={{ width: 200 }}
                   allowClear
                   options={nhomTaiKhoan}
@@ -372,7 +372,7 @@ const TaiKhoanPage: React.FC = () => {
                     onClick={() => {
                       setSearchText("");
                       setFilterNhom(undefined);
-                      fetchData(1, pagination.pageSize, "", undefined);
+                      fetchData();
                     }}
                   />
                 </Tooltip>
@@ -396,18 +396,16 @@ const TaiKhoanPage: React.FC = () => {
         {/* Table */}
         <Table
           columns={columns}
-          dataSource={data}
+          dataSource={filteredData}
           rowKey="id"
           loading={loading}
           pagination={{
-            current: pagination.current,
-            total: pagination.total,
-            pageSize: pagination.pageSize,
+            pageSize,
             showSizeChanger: true,
             showTotal: (total) => `Tổng ${total} tài khoản`,
             pageSizeOptions: ["25", "50", "100", "200"],
+            onChange: (_page, newPageSize) => setPageSize(newPageSize),
           }}
-          onChange={(paginationConfig) => handleTableChange(paginationConfig)}
           size="middle"
           scroll={{ x: 900, y: "calc(100vh - 285px)" }}
         />
@@ -458,10 +456,12 @@ const TaiKhoanPage: React.FC = () => {
                   showSearch
                   optionFilterProp="label"
                   onChange={handleParentChange}
-                  options={parentAccounts.map((p) => ({
-                    label: `${p.ma} - ${p.ten}`,
-                    value: p.id,
-                  }))}
+                  options={allData
+                    .filter((p) => p.capDo < 5 && (!editingRecord || p.id !== editingRecord.id))
+                    .map((p) => ({
+                      label: `${p.ma} - ${p.ten}`,
+                      value: p.id,
+                    }))}
                 />
               </Form.Item>
             </Col>

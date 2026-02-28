@@ -5,8 +5,8 @@ export interface TaiKhoan {
   ma: string;
   ten: string;
   capDo: number;
-  loai: 'NO' | 'CO';
-  nhom: string;
+  loai: 'TAI_SAN' | 'NO_PHAI_TRA' | 'VON_CHU_SO_HUU' | 'DOANH_THU' | 'CHI_PHI' | 'THU_NHAP_KHAC' | 'CHI_PHI_KHAC' | 'XAC_DINH_KQKD';
+  nhom: 'NO' | 'CO' | 'LUONG_TINH' | 'KHONG_CO_SO_DU';
   parentId?: string;
   moTa?: string;
 }
@@ -364,8 +364,8 @@ export interface TaiKhoanSnapshot {
   id: string;
   ma: string;
   ten: string;
-  loai: 'NO' | 'CO';
-  nhom: string;
+  loai: 'TAI_SAN' | 'NO_PHAI_TRA' | 'VON_CHU_SO_HUU' | 'DOANH_THU' | 'CHI_PHI' | 'THU_NHAP_KHAC' | 'CHI_PHI_KHAC' | 'XAC_DINH_KQKD';
+  nhom: 'NO' | 'CO' | 'LUONG_TINH' | 'KHONG_CO_SO_DU';
 }
 
 export interface KhoanMucSnapshot {
