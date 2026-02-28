@@ -40,6 +40,7 @@ import {
   PnLPage,
   SoCaiPage,
   BangCanDoiPage,
+  BaoCaoTaiChinhPage,
   QuyChaunPage,
   PhanQuyenPage,
   TenantPage,
@@ -128,19 +129,11 @@ const App = () => (
                 <Route path="chung-tu">
                   <Route
                     path="phieu-thu"
-                    element={
-                      <ProtectedRoute allowedRoles={routePermissions['/chung-tu/phieu-thu']}>
-                        <PhieuThuPage />
-                      </ProtectedRoute>
-                    }
+                    element={<ComingSoonPage />}
                   />
                   <Route
                     path="phieu-chi"
-                    element={
-                      <ProtectedRoute allowedRoles={routePermissions['/chung-tu/phieu-chi']}>
-                        <PhieuChiPage />
-                      </ProtectedRoute>
-                    }
+                    element={<ComingSoonPage />}
                   />
                   <Route
                     path="nhat-ky-chung"
@@ -235,7 +228,14 @@ const App = () => (
                     }
                   />
                   {/* Coming Soon */}
-                  <Route path="tai-chinh" element={<ComingSoonPage />} />
+                  <Route
+                    path="tai-chinh"
+                    element={
+                      <ProtectedRoute allowedRoles={routePermissions['/bao-cao/tai-chinh']}>
+                        <BaoCaoTaiChinhPage />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route path="so-chi-tiet-tai-khoan" element={<ComingSoonPage />} />
                   <Route path="so-chi-tiet-cong-no" element={<ComingSoonPage />} />
                   <Route path="so-chi-tiet-phat-sinh" element={<ComingSoonPage />} />

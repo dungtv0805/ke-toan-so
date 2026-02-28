@@ -1,117 +1,139 @@
-import { BaoCaoPnL } from '@/types';
-import { mockPnLData, pnlCategories, monthlyPnLData, MonthlyPnL, PnLCategory } from '@/mock-data/bao-cao';
+import { ServiceBase } from './base/service-base';
+
+// ============ BE Response Types ============
+
+interface PnLEntryResponse {
+  ma: string;
+  ten: string;
+  soTien: number;
+}
+
+interface PnLResponse {
+  doanhThu: PnLEntryResponse[];
+  chiPhi: PnLEntryResponse[];
+  tongDoanhThu: number;
+  tongChiPhi: number;
+  loiNhuan: number;
+}
+
+// ============ FE Display Types ============
 
 export interface PnLSummary {
   tongDoanhThu: number;
-  tongGiaVon: number;
-  loiNhuanGop: number;
-  tongChiPhiBanHang: number;
-  tongChiPhiQuanLy: number;
-  tongChiPhiTaiChinh: number;
+  tongChiPhi: number;
   loiNhuanTruocThue: number;
   thue: number;
   loiNhuanSauThue: number;
-  tyLeLoiNhuanGop: number;
   tyLeLoiNhuanRong: number;
 }
 
-export interface PnLGroupedData {
-  category: PnLCategory;
-  items: BaoCaoPnL[];
-  subtotal: {
-    thangTruoc: number;
-    thangNay: number;
-    luyKe: number;
-    keHoach: number;
-    chenhLech: number;
-  };
+export interface PnLItem {
+  ma: string;
+  ten: string;
+  soTien: number;
 }
 
-export const pnlService = {
-  getPnLData: async (): Promise<BaoCaoPnL[]> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return mockPnLData;
-  },
+export interface PnLGroupedData {
+  category: { key: string; name: string; type: 'revenue' | 'expense' };
+  items: PnLItem[];
+  subtotal: number;
+}
 
-  getGroupedPnLData: async (): Promise<PnLGroupedData[]> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    return pnlCategories.map(category => {
-      const items = mockPnLData.filter(item => category.items.includes(item.khoanMuc));
-      const subtotal = items.reduce((acc, item) => ({
-        thangTruoc: acc.thangTruoc + item.thangTruoc,
-        thangNay: acc.thangNay + item.thangNay,
-        luyKe: acc.luyKe + item.luyKe,
-        keHoach: acc.keHoach + item.keHoach,
-        chenhLech: acc.chenhLech + item.chenhLech,
-      }), { thangTruoc: 0, thangNay: 0, luyKe: 0, keHoach: 0, chenhLech: 0 });
-      
-      return { category, items, subtotal };
+export interface PnLData {
+  doanhThu: PnLItem[];
+  chiPhi: PnLItem[];
+  tongDoanhThu: number;
+  tongChiPhi: number;
+  loiNhuan: number;
+}
+
+// ============ Helpers ============
+
+function getDateRange(period: 'thangNay' | 'thangTruoc' | 'luyKe'): { startDate: string; endDate: string } {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  switch (period) {
+    case 'thangNay':
+      return {
+        startDate: new Date(year, month, 1).toISOString(),
+        endDate: now.toISOString(),
+      };
+    case 'thangTruoc':
+      return {
+        startDate: new Date(year, month - 1, 1).toISOString(),
+        endDate: new Date(year, month, 0).toISOString(),
+      };
+    case 'luyKe':
+      return {
+        startDate: new Date(year, 0, 1).toISOString(),
+        endDate: now.toISOString(),
+      };
+  }
+}
+
+// ============ Service ============
+
+class PnLServiceImpl extends ServiceBase {
+  constructor() {
+    super({ endpoint: '/reporting/bao-cao' });
+  }
+
+  private async fetchPnL(startDate: string, endDate: string): Promise<PnLResponse> {
+    return this.get<PnLResponse>({
+      endpoint: '/pnl',
+      params: { startDate, endDate },
     });
-  },
+  }
 
-  getMonthlyPnL: async (): Promise<MonthlyPnL[]> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return monthlyPnLData;
-  },
+  async getPnLData(period: 'thangNay' | 'thangTruoc' | 'luyKe' = 'thangNay'): Promise<PnLData> {
+    const { startDate, endDate } = getDateRange(period);
+    const res = await this.fetchPnL(startDate, endDate);
 
-  getSummary: async (period: 'thangNay' | 'thangTruoc' | 'luyKe'): Promise<PnLSummary> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const revenueCategories = pnlCategories.filter(c => c.type === 'revenue');
-    const giaVonCategory = pnlCategories.find(c => c.key === 'gia_von');
-    const chiPhiBanHangCategory = pnlCategories.find(c => c.key === 'chi_phi_ban_hang');
-    const chiPhiQuanLyCategory = pnlCategories.find(c => c.key === 'chi_phi_quan_ly');
-    const chiPhiTaiChinhCategory = pnlCategories.find(c => c.key === 'chi_phi_tai_chinh');
-    
-    const getTotal = (items: string[]) => {
-      return mockPnLData
-        .filter(item => items.includes(item.khoanMuc))
-        .reduce((sum, item) => sum + item[period], 0);
+    return {
+      doanhThu: res.doanhThu.map(e => ({ ma: e.ma, ten: e.ten, soTien: e.soTien })),
+      chiPhi: res.chiPhi.map(e => ({ ma: e.ma, ten: e.ten, soTien: e.soTien })),
+      tongDoanhThu: res.tongDoanhThu,
+      tongChiPhi: res.tongChiPhi,
+      loiNhuan: res.loiNhuan,
     };
-    
-    const tongDoanhThu = revenueCategories.reduce((sum, cat) => sum + getTotal(cat.items), 0);
-    const tongGiaVon = Math.abs(getTotal(giaVonCategory?.items || []));
-    const loiNhuanGop = tongDoanhThu - tongGiaVon;
-    const tongChiPhiBanHang = Math.abs(getTotal(chiPhiBanHangCategory?.items || []));
-    const tongChiPhiQuanLy = Math.abs(getTotal(chiPhiQuanLyCategory?.items || []));
-    const tongChiPhiTaiChinh = Math.abs(getTotal(chiPhiTaiChinhCategory?.items || []));
-    const loiNhuanTruocThue = loiNhuanGop - tongChiPhiBanHang - tongChiPhiQuanLy - tongChiPhiTaiChinh;
+  }
+
+  async getGroupedPnLData(period: 'thangNay' | 'thangTruoc' | 'luyKe' = 'thangNay'): Promise<PnLGroupedData[]> {
+    const data = await this.getPnLData(period);
+
+    return [
+      {
+        category: { key: 'doanh_thu', name: 'DOANH THU', type: 'revenue' },
+        items: data.doanhThu,
+        subtotal: data.tongDoanhThu,
+      },
+      {
+        category: { key: 'chi_phi', name: 'CHI PHÍ', type: 'expense' },
+        items: data.chiPhi,
+        subtotal: data.tongChiPhi,
+      },
+    ];
+  }
+
+  async getSummary(period: 'thangNay' | 'thangTruoc' | 'luyKe' = 'thangNay'): Promise<PnLSummary> {
+    const { startDate, endDate } = getDateRange(period);
+    const res = await this.fetchPnL(startDate, endDate);
+
+    const loiNhuanTruocThue = res.loiNhuan;
     const thue = loiNhuanTruocThue > 0 ? loiNhuanTruocThue * 0.2 : 0;
     const loiNhuanSauThue = loiNhuanTruocThue - thue;
-    
+
     return {
-      tongDoanhThu,
-      tongGiaVon,
-      loiNhuanGop,
-      tongChiPhiBanHang,
-      tongChiPhiQuanLy,
-      tongChiPhiTaiChinh,
+      tongDoanhThu: res.tongDoanhThu,
+      tongChiPhi: res.tongChiPhi,
       loiNhuanTruocThue,
       thue,
       loiNhuanSauThue,
-      tyLeLoiNhuanGop: tongDoanhThu > 0 ? (loiNhuanGop / tongDoanhThu) * 100 : 0,
-      tyLeLoiNhuanRong: tongDoanhThu > 0 ? (loiNhuanSauThue / tongDoanhThu) * 100 : 0,
-    };
-  },
-
-  getYTDSummary: async (): Promise<{
-    tongDoanhThu: number;
-    tongChiPhi: number;
-    loiNhuan: number;
-    soThang: number;
-  }> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const tongDoanhThu = monthlyPnLData.reduce((sum, m) => sum + m.doanhThu, 0);
-    const tongChiPhi = monthlyPnLData.reduce((sum, m) => sum + m.giaVon + m.chiPhiBanHang + m.chiPhiQuanLy + m.chiPhiTaiChinh, 0);
-    const loiNhuan = monthlyPnLData.reduce((sum, m) => sum + m.loiNhuanSauThue, 0);
-    
-    return {
-      tongDoanhThu,
-      tongChiPhi,
-      loiNhuan,
-      soThang: monthlyPnLData.length
+      tyLeLoiNhuanRong: res.tongDoanhThu > 0 ? (loiNhuanSauThue / res.tongDoanhThu) * 100 : 0,
     };
   }
-};
+}
+
+export const pnlService = new PnLServiceImpl();

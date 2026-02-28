@@ -19,7 +19,6 @@ const pathTitles: Record<string, string> = {
   "/phan-tich/thanh-khoan": "Phân tích Khả năng thanh khoản",
 
   // Báo cáo
-  "/bao-cao/tai-chinh": "Báo cáo tài chính",
   "/bao-cao/so-chi-tiet-tai-khoan": "Sổ chi tiết tài khoản",
   "/bao-cao/so-chi-tiet-cong-no": "Sổ chi tiết công nợ",
   "/bao-cao/so-chi-tiet-phat-sinh": "Sổ chi tiết phát sinh",
@@ -37,6 +36,8 @@ const pathTitles: Record<string, string> = {
   "/trung-tam-du-lieu/luong-bhxh": "Lương & BHXH",
 
   // Chứng từ
+  "/chung-tu/phieu-thu": "Phiếu thu",
+  "/chung-tu/phieu-chi": "Phiếu chi",
   "/chung-tu/phieu-nhap": "Phiếu nhập",
   "/chung-tu/phieu-xuat": "Phiếu xuất",
   "/chung-tu/phieu-luong": "Phiếu lương",

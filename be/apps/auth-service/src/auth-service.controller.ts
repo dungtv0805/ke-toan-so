@@ -16,6 +16,7 @@ import {
   UpdateProfileDto,
   ChangePasswordDto,
   SelectTenantDto,
+  SwitchTenantDto,
 } from './dto';
 import { JwtGuard, CurrentUser } from '@app/auth';
 import type { UserPayload } from '@app/auth';
@@ -49,6 +50,27 @@ export class AuthServiceController {
   @HttpCode(HttpStatus.OK)
   async selectTenant(@Body() selectTenantDto: SelectTenantDto) {
     const result = await this.authService.selectTenant(selectTenantDto);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  /**
+   * POST /switch-tenant
+   * Switch to a different tenant without re-login (requires authentication)
+   */
+  @Post('switch-tenant')
+  @UseGuards(JwtGuard)
+  @HttpCode(HttpStatus.OK)
+  async switchTenant(
+    @CurrentUser() user: UserPayload,
+    @Body() switchTenantDto: SwitchTenantDto,
+  ) {
+    const result = await this.authService.switchTenant(
+      user.id,
+      switchTenantDto.tenantId,
+    );
     return {
       success: true,
       data: result,

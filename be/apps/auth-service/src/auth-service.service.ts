@@ -418,6 +418,7 @@ export class AuthServiceService {
   async getMe(userId: string, tenantId: string): Promise<{
     user: AuthUserResponse;
     tenant?: TenantInfo;
+    availableTenants: TenantInfo[];
   }> {
     const { ObjectId } = await import('mongodb');
     const user = await this.userRepository.findOne({
@@ -428,25 +429,29 @@ export class AuthServiceService {
       throw new UnauthorizedException('User not found');
     }
 
-    // Super admin without tenant
-    if (this.isSuperAdmin(user) && !tenantId) {
-      return {
-        user: this.buildUserResponse(user),
-      };
-    }
-
-    // Super admin with tenant - get tenant info directly
-    if (this.isSuperAdmin(user) && tenantId) {
-      const tenant = await this.tenantRepository.findOne({
-        where: { _id: new ObjectId(tenantId) as any },
+    // Super admin - get all active tenants
+    if (this.isSuperAdmin(user)) {
+      const allTenants = await this.tenantRepository.find({
+        where: { isActive: true },
       });
 
-      if (!tenant) {
-        throw new ForbiddenException('Tenant not found');
+      const availableTenants: TenantInfo[] = allTenants.map((t) => ({
+        tenantId: t._id.toString(),
+        tenantName: t.name,
+        tenantSlug: t.slug,
+        role: 'SUPER_ADMIN',
+      }));
+
+      if (!tenantId) {
+        return {
+          user: this.buildUserResponse(user),
+          availableTenants,
+        };
       }
 
-      if (!tenant.isActive) {
-        throw new ForbiddenException('Công ty đã bị vô hiệu hoá');
+      const tenant = allTenants.find((t) => t._id.toString() === tenantId);
+      if (!tenant) {
+        throw new ForbiddenException('Tenant not found');
       }
 
       return {
@@ -457,10 +462,103 @@ export class AuthServiceService {
           tenantSlug: tenant.slug,
           role: 'SUPER_ADMIN',
         },
+        availableTenants,
       };
     }
 
-    // Regular user - check tenant membership via UserTenant table
+    // Regular user - get all memberships for availableTenants
+    const allUserTenants = await this.userTenantRepository.find({
+      where: { userId: user._id.toString(), isActive: true },
+    });
+
+    const tenantIds = allUserTenants.map((ut) => new ObjectId(ut.tenantId));
+    const allTenants = tenantIds.length > 0
+      ? await this.tenantRepository.find({
+          where: { _id: { $in: tenantIds } as any, isActive: true },
+        })
+      : [];
+
+    const availableTenants: TenantInfo[] = allTenants.map((t) => {
+      const ut = allUserTenants.find((m) => m.tenantId === t._id.toString());
+      return {
+        tenantId: t._id.toString(),
+        tenantName: t.name,
+        tenantSlug: t.slug,
+        role: ut?.role || 'KIEM_SOAT',
+      };
+    });
+
+    // Current tenant info
+    const currentUserTenant = allUserTenants.find((ut) => ut.tenantId === tenantId);
+    if (!currentUserTenant) {
+      throw new ForbiddenException('User does not belong to this tenant');
+    }
+
+    const currentTenant = allTenants.find((t) => t._id.toString() === tenantId);
+    if (!currentTenant) {
+      throw new ForbiddenException('Tenant not found');
+    }
+
+    return {
+      user: this.buildUserResponse(user),
+      tenant: this.buildTenantInfo(currentUserTenant, currentTenant),
+      availableTenants,
+    };
+  }
+
+  /**
+   * Switch tenant for an already-authenticated user (no re-login needed)
+   */
+  async switchTenant(userId: string, tenantId: string): Promise<SelectTenantResponse> {
+    const { ObjectId } = await import('mongodb');
+
+    const user = await this.userRepository.findOne({
+      where: { _id: new ObjectId(userId) as any },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (user.trangThai !== UserStatus.HOAT_DONG) {
+      throw new UnauthorizedException('Account is inactive');
+    }
+
+    const tenant = await this.tenantRepository.findOne({
+      where: { _id: new ObjectId(tenantId) as any, isActive: true },
+    });
+
+    if (!tenant) {
+      throw new ForbiddenException('Tenant not found or inactive');
+    }
+
+    // Super admin can access any tenant
+    if (this.isSuperAdmin(user)) {
+      const tenantInfo: TenantInfo = {
+        tenantId: tenant._id.toString(),
+        tenantName: tenant.name,
+        tenantSlug: tenant.slug,
+        role: 'SUPER_ADMIN',
+      };
+
+      const payload: UserPayload = {
+        id: user._id.toString(),
+        email: user.email,
+        tenantId: tenantInfo.tenantId,
+        vaiTro: 'SUPER_ADMIN',
+        permissions: ['*'],
+      };
+
+      const accessToken = this.jwtService.sign(payload);
+
+      return {
+        accessToken,
+        tenant: tenantInfo,
+        user: this.buildUserResponse(user),
+      };
+    }
+
+    // Regular user - verify membership
     const userTenant = await this.userTenantRepository.findOne({
       where: {
         userId: user._id.toString(),
@@ -473,21 +571,22 @@ export class AuthServiceService {
       throw new ForbiddenException('User does not belong to this tenant');
     }
 
-    const tenant = await this.tenantRepository.findOne({
-      where: { _id: new ObjectId(tenantId) as any },
-    });
+    const tenantInfo = this.buildTenantInfo(userTenant, tenant);
 
-    if (!tenant) {
-      throw new ForbiddenException('Tenant not found');
-    }
+    const payload: UserPayload = {
+      id: user._id.toString(),
+      email: user.email,
+      tenantId: tenantInfo.tenantId,
+      vaiTro: tenantInfo.role,
+      permissions: [],
+    };
 
-    if (!tenant.isActive) {
-      throw new ForbiddenException('Công ty đã bị vô hiệu hoá');
-    }
+    const accessToken = this.jwtService.sign(payload);
 
     return {
+      accessToken,
+      tenant: tenantInfo,
       user: this.buildUserResponse(user),
-      tenant: this.buildTenantInfo(userTenant, tenant),
     };
   }
 

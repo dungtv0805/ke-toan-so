@@ -1,4 +1,43 @@
-import { mockBalanceSheetData, BalanceSheetData, BalanceSheetItem } from '@/mock-data/balance-sheet';
+import { ServiceBase } from './base/service-base';
+
+// ============ BE Response Types ============
+
+interface BalanceSheetEntryResponse {
+  ma: string;
+  ten: string;
+  soTien: number;
+}
+
+interface BalanceSheetResponse {
+  taiSan: BalanceSheetEntryResponse[];
+  nguonVon: BalanceSheetEntryResponse[];
+  tongTaiSan: number;
+  tongNguonVon: number;
+  ratios: {
+    currentRatio: number;
+    debtToEquity: number;
+  };
+}
+
+// ============ FE Display Types ============
+
+export interface BalanceSheetItem {
+  ma: string;
+  tenChiTieu: string;
+  dauNam: number;
+  cuoiKy: number;
+  level: number;
+  isSection?: boolean;
+  isTotal?: boolean;
+}
+
+export interface BalanceSheetData {
+  taiSan: BalanceSheetItem[];
+  nguonVon: BalanceSheetItem[];
+  tongTaiSan: { dauNam: number; cuoiKy: number };
+  tongNguonVon: { dauNam: number; cuoiKy: number };
+  canDoi: boolean;
+}
 
 export interface BalanceSheetStats {
   tongTaiSan: number;
@@ -10,151 +49,110 @@ export interface BalanceSheetStats {
   tyLeNoTrenVon: number;
   tyLeTaiSanNganHan: number;
   canDoi: boolean;
+  ratios: {
+    currentRatio: number;
+    debtToEquity: number;
+  };
 }
 
-export interface BalanceSheetComparison {
-  chiTieu: string;
-  dauNam: number;
-  cuoiKy: number;
-  chenhLech: number;
-  tyLe: number;
+// ============ Helpers ============
+
+function mapEntriesToItems(entries: BalanceSheetEntryResponse[], groupLabel: string, groupMa: string): BalanceSheetItem[] {
+  const items: BalanceSheetItem[] = [];
+
+  // Section header
+  items.push({
+    ma: groupMa,
+    tenChiTieu: groupLabel,
+    dauNam: 0,
+    cuoiKy: entries.reduce((sum, e) => sum + e.soTien, 0),
+    level: 0,
+    isSection: true,
+  });
+
+  // Individual accounts
+  for (const entry of entries) {
+    items.push({
+      ma: entry.ma,
+      tenChiTieu: `${entry.ma} - ${entry.ten}`,
+      dauNam: 0, // BE chưa trả dauNam, mặc định 0
+      cuoiKy: entry.soTien,
+      level: 1,
+    });
+  }
+
+  return items;
 }
 
-export const balanceSheetService = {
-  getData: async (): Promise<BalanceSheetData> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return mockBalanceSheetData;
-  },
+// ============ Service ============
 
-  getStats: async (): Promise<BalanceSheetStats> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const data = mockBalanceSheetData;
-    
-    // Find section totals
-    const taiSanNganHan = data.taiSan.find(i => i.ma === 'A')?.cuoiKy || 0;
-    const taiSanDaiHan = data.taiSan.find(i => i.ma === 'B')?.cuoiKy || 0;
-    const noPhaiTra = data.nguonVon.find(i => i.ma === 'C')?.cuoiKy || 0;
-    const vonChuSoHuu = data.nguonVon.find(i => i.ma === 'D')?.cuoiKy || 0;
-    
+class BalanceSheetServiceImpl extends ServiceBase {
+  constructor() {
+    super({ endpoint: '/reporting/bao-cao' });
+  }
+
+  async getData(): Promise<BalanceSheetData> {
+    const res = await this.get<BalanceSheetResponse>({
+      endpoint: '/balance-sheet',
+      params: { asOfDate: new Date().toISOString() },
+    });
+
+    const taiSanNganHan = res.taiSan.filter(a => a.ma.startsWith('1'));
+    const taiSanDaiHan = res.taiSan.filter(a => a.ma.startsWith('2'));
+    const noPhaiTra = res.nguonVon.filter(a => a.ma.startsWith('3'));
+    const vonChuSoHuu = res.nguonVon.filter(a => a.ma.startsWith('4'));
+
+    const taiSanItems = [
+      ...mapEntriesToItems(taiSanNganHan, 'A - TÀI SẢN NGẮN HẠN', 'A'),
+      ...mapEntriesToItems(taiSanDaiHan, 'B - TÀI SẢN DÀI HẠN', 'B'),
+    ];
+
+    const nguonVonItems = [
+      ...mapEntriesToItems(noPhaiTra, 'C - NỢ PHẢI TRẢ', 'C'),
+      ...mapEntriesToItems(vonChuSoHuu, 'D - VỐN CHỦ SỞ HỮU', 'D'),
+    ];
+
     return {
-      tongTaiSan: data.tongTaiSan.cuoiKy,
-      tongNguonVon: data.tongNguonVon.cuoiKy,
+      taiSan: taiSanItems,
+      nguonVon: nguonVonItems,
+      tongTaiSan: { dauNam: 0, cuoiKy: res.tongTaiSan },
+      tongNguonVon: { dauNam: 0, cuoiKy: res.tongNguonVon },
+      canDoi: Math.abs(res.tongTaiSan - res.tongNguonVon) < 1,
+    };
+  }
+
+  async getStats(): Promise<BalanceSheetStats> {
+    const res = await this.get<BalanceSheetResponse>({
+      endpoint: '/balance-sheet',
+      params: { asOfDate: new Date().toISOString() },
+    });
+
+    const taiSanNganHan = res.taiSan
+      .filter(a => a.ma.startsWith('1'))
+      .reduce((sum, e) => sum + e.soTien, 0);
+    const taiSanDaiHan = res.taiSan
+      .filter(a => a.ma.startsWith('2'))
+      .reduce((sum, e) => sum + e.soTien, 0);
+    const noPhaiTra = res.nguonVon
+      .filter(a => a.ma.startsWith('3'))
+      .reduce((sum, e) => sum + e.soTien, 0);
+    const vonChuSoHuu = res.nguonVon
+      .filter(a => a.ma.startsWith('4'))
+      .reduce((sum, e) => sum + e.soTien, 0);
+
+    return {
+      tongTaiSan: res.tongTaiSan,
+      tongNguonVon: res.tongNguonVon,
       taiSanNganHan,
       taiSanDaiHan,
       noPhaiTra,
       vonChuSoHuu,
       tyLeNoTrenVon: vonChuSoHuu > 0 ? (noPhaiTra / vonChuSoHuu) * 100 : 0,
-      tyLeTaiSanNganHan: data.tongTaiSan.cuoiKy > 0 ? (taiSanNganHan / data.tongTaiSan.cuoiKy) * 100 : 0,
-      canDoi: data.canDoi,
+      tyLeTaiSanNganHan: res.tongTaiSan > 0 ? (taiSanNganHan / res.tongTaiSan) * 100 : 0,
+      canDoi: Math.abs(res.tongTaiSan - res.tongNguonVon) < 1,
+      ratios: res.ratios,
     };
-  },
+  }
+}
 
-  getComparison: async (): Promise<BalanceSheetComparison[]> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const data = mockBalanceSheetData;
-    
-    const taiSanNganHanDauNam = data.taiSan.find(i => i.ma === 'A')?.dauNam || 0;
-    const taiSanNganHanCuoiKy = data.taiSan.find(i => i.ma === 'A')?.cuoiKy || 0;
-    const taiSanDaiHanDauNam = data.taiSan.find(i => i.ma === 'B')?.dauNam || 0;
-    const taiSanDaiHanCuoiKy = data.taiSan.find(i => i.ma === 'B')?.cuoiKy || 0;
-    const noPhaiTraDauNam = data.nguonVon.find(i => i.ma === 'C')?.dauNam || 0;
-    const noPhaiTraCuoiKy = data.nguonVon.find(i => i.ma === 'C')?.cuoiKy || 0;
-    const vonChuSoHuuDauNam = data.nguonVon.find(i => i.ma === 'D')?.dauNam || 0;
-    const vonChuSoHuuCuoiKy = data.nguonVon.find(i => i.ma === 'D')?.cuoiKy || 0;
-    
-    const items: BalanceSheetComparison[] = [
-      {
-        chiTieu: 'Tài sản ngắn hạn',
-        dauNam: taiSanNganHanDauNam,
-        cuoiKy: taiSanNganHanCuoiKy,
-        chenhLech: taiSanNganHanCuoiKy - taiSanNganHanDauNam,
-        tyLe: taiSanNganHanDauNam > 0 ? ((taiSanNganHanCuoiKy - taiSanNganHanDauNam) / taiSanNganHanDauNam) * 100 : 0,
-      },
-      {
-        chiTieu: 'Tài sản dài hạn',
-        dauNam: taiSanDaiHanDauNam,
-        cuoiKy: taiSanDaiHanCuoiKy,
-        chenhLech: taiSanDaiHanCuoiKy - taiSanDaiHanDauNam,
-        tyLe: taiSanDaiHanDauNam > 0 ? ((taiSanDaiHanCuoiKy - taiSanDaiHanDauNam) / taiSanDaiHanDauNam) * 100 : 0,
-      },
-      {
-        chiTieu: 'Tổng tài sản',
-        dauNam: data.tongTaiSan.dauNam,
-        cuoiKy: data.tongTaiSan.cuoiKy,
-        chenhLech: data.tongTaiSan.cuoiKy - data.tongTaiSan.dauNam,
-        tyLe: data.tongTaiSan.dauNam > 0 ? ((data.tongTaiSan.cuoiKy - data.tongTaiSan.dauNam) / data.tongTaiSan.dauNam) * 100 : 0,
-      },
-      {
-        chiTieu: 'Nợ phải trả',
-        dauNam: noPhaiTraDauNam,
-        cuoiKy: noPhaiTraCuoiKy,
-        chenhLech: noPhaiTraCuoiKy - noPhaiTraDauNam,
-        tyLe: noPhaiTraDauNam > 0 ? ((noPhaiTraCuoiKy - noPhaiTraDauNam) / noPhaiTraDauNam) * 100 : 0,
-      },
-      {
-        chiTieu: 'Vốn chủ sở hữu',
-        dauNam: vonChuSoHuuDauNam,
-        cuoiKy: vonChuSoHuuCuoiKy,
-        chenhLech: vonChuSoHuuCuoiKy - vonChuSoHuuDauNam,
-        tyLe: vonChuSoHuuDauNam > 0 ? ((vonChuSoHuuCuoiKy - vonChuSoHuuDauNam) / vonChuSoHuuDauNam) * 100 : 0,
-      },
-      {
-        chiTieu: 'Tổng nguồn vốn',
-        dauNam: data.tongNguonVon.dauNam,
-        cuoiKy: data.tongNguonVon.cuoiKy,
-        chenhLech: data.tongNguonVon.cuoiKy - data.tongNguonVon.dauNam,
-        tyLe: data.tongNguonVon.dauNam > 0 ? ((data.tongNguonVon.cuoiKy - data.tongNguonVon.dauNam) / data.tongNguonVon.dauNam) * 100 : 0,
-      },
-    ];
-    
-    return items;
-  },
-
-  getFinancialRatios: async (): Promise<Array<{
-    name: string;
-    value: number;
-    description: string;
-    status: 'good' | 'warning' | 'bad';
-  }>> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const stats = await balanceSheetService.getStats();
-    const data = mockBalanceSheetData;
-    
-    // Get current assets and liabilities for ratios
-    const tienVaTuongDuong = (data.taiSan.find(i => i.ma === 'I')?.cuoiKy || 0);
-    const noNganHan = (data.nguonVon.find(i => i.ma === 'I.C')?.cuoiKy || 0);
-    const taiSanNganHan = stats.taiSanNganHan;
-    
-    return [
-      {
-        name: 'Hệ số thanh toán hiện hành',
-        value: noNganHan > 0 ? taiSanNganHan / noNganHan : 0,
-        description: 'Tài sản ngắn hạn / Nợ ngắn hạn',
-        status: (taiSanNganHan / noNganHan) >= 1.5 ? 'good' : (taiSanNganHan / noNganHan) >= 1 ? 'warning' : 'bad',
-      },
-      {
-        name: 'Hệ số thanh toán nhanh',
-        value: noNganHan > 0 ? tienVaTuongDuong / noNganHan : 0,
-        description: 'Tiền và tương đương tiền / Nợ ngắn hạn',
-        status: (tienVaTuongDuong / noNganHan) >= 1 ? 'good' : (tienVaTuongDuong / noNganHan) >= 0.5 ? 'warning' : 'bad',
-      },
-      {
-        name: 'Tỷ lệ nợ trên vốn chủ sở hữu',
-        value: stats.tyLeNoTrenVon,
-        description: 'Nợ phải trả / Vốn chủ sở hữu (%)',
-        status: stats.tyLeNoTrenVon <= 50 ? 'good' : stats.tyLeNoTrenVon <= 100 ? 'warning' : 'bad',
-      },
-      {
-        name: 'Tỷ lệ tự tài trợ',
-        value: stats.tongTaiSan > 0 ? (stats.vonChuSoHuu / stats.tongTaiSan) * 100 : 0,
-        description: 'Vốn chủ sở hữu / Tổng tài sản (%)',
-        status: (stats.vonChuSoHuu / stats.tongTaiSan) >= 0.5 ? 'good' : (stats.vonChuSoHuu / stats.tongTaiSan) >= 0.3 ? 'warning' : 'bad',
-      },
-    ];
-  },
-};
-
-export type { BalanceSheetItem, BalanceSheetData };
+export const balanceSheetService = new BalanceSheetServiceImpl();

@@ -24,6 +24,11 @@ export interface TenantWithAdmin {
   id: string;
   name: string;
   slug: string;
+  maSoThue?: string;
+  diaChi?: string;
+  dienThoai?: string;
+  email?: string;
+  nguoiDaiDien?: string;
   isActive: boolean;
   tenantId?: string;
   createdAt: Date;
@@ -84,6 +89,11 @@ export class TenantService {
           id: tenant._id.toString(),
           name: tenant.name,
           slug: tenant.slug,
+          maSoThue: tenant.maSoThue,
+          diaChi: tenant.diaChi,
+          dienThoai: tenant.dienThoai,
+          email: tenant.email,
+          nguoiDaiDien: tenant.nguoiDaiDien,
           isActive: tenant.isActive,
           tenantId: tenant.tenantId,
           createdAt: tenant.createdAt,
@@ -123,6 +133,11 @@ export class TenantService {
     const tenant = this.tenantRepository.create({
       name: createDto.name,
       slug: createDto.slug,
+      maSoThue: createDto.maSoThue,
+      diaChi: createDto.diaChi,
+      dienThoai: createDto.dienThoai,
+      email: createDto.email,
+      nguoiDaiDien: createDto.nguoiDaiDien,
       isActive: createDto.isActive ?? true,
     });
     const savedTenant = await this.tenantRepository.save(tenant);

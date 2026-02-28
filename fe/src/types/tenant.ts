@@ -2,6 +2,11 @@ export interface Tenant {
   id: string;
   name: string;
   slug: string;
+  maSoThue?: string;
+  diaChi?: string;
+  dienThoai?: string;
+  email?: string;
+  nguoiDaiDien?: string;
   isActive: boolean;
 }
 

@@ -80,6 +80,11 @@ const TenantPage = () => {
     form.setFieldsValue({
       name: tenant.name,
       slug: tenant.slug,
+      maSoThue: tenant.maSoThue,
+      diaChi: tenant.diaChi,
+      dienThoai: tenant.dienThoai,
+      email: tenant.email,
+      nguoiDaiDien: tenant.nguoiDaiDien,
       isActive: tenant.isActive,
     });
     setModalVisible(true);
@@ -101,14 +106,19 @@ const TenantPage = () => {
         await tenantService.update(editingTenant.id, values);
         message.success('Đã cập nhật công ty');
       } else {
+        // Add admin info based on mode
+        const formValues = form.getFieldsValue(true);
+
         const createData: CreateTenantDto = {
           name: values.name!,
           slug: values.slug!,
+          maSoThue: formValues.maSoThue,
+          diaChi: formValues.diaChi,
+          dienThoai: formValues.dienThoai,
+          email: formValues.email,
+          nguoiDaiDien: formValues.nguoiDaiDien,
           isActive: values.isActive,
         };
-
-        // Add admin info based on mode
-        const formValues = form.getFieldsValue(true);
 
         if (adminMode === 'existing' && formValues.existingUserId) {
           // Use existing user
@@ -163,6 +173,19 @@ const TenantPage = () => {
       title: 'Tên công ty',
       dataIndex: 'name',
       key: 'name',
+    },
+    {
+      title: 'Mã số thuế',
+      dataIndex: 'maSoThue',
+      key: 'maSoThue',
+      render: (mst: string) => mst || <span className="text-gray-400">-</span>,
+    },
+    {
+      title: 'Địa chỉ',
+      dataIndex: 'diaChi',
+      key: 'diaChi',
+      ellipsis: true,
+      render: (dc: string) => dc || <span className="text-gray-400">-</span>,
     },
     {
       title: 'Slug',
@@ -286,6 +309,34 @@ const TenantPage = () => {
             extra="Slug dùng để định danh công ty, VD: cong-ty-abc"
           >
             <Input placeholder="VD: cong-ty-abc" />
+          </Form.Item>
+
+          <Form.Item
+            name="maSoThue"
+            label="Mã số thuế"
+            rules={[{ required: true, message: 'Vui lòng nhập mã số thuế' }]}
+          >
+            <Input placeholder="VD: 0123456789" />
+          </Form.Item>
+
+          <Form.Item
+            name="diaChi"
+            label="Địa chỉ"
+            rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}
+          >
+            <Input placeholder="VD: 123 Nguyễn Huệ, Q.1, TP.HCM" />
+          </Form.Item>
+
+          <Form.Item name="dienThoai" label="Số điện thoại">
+            <Input placeholder="VD: 028 1234 5678" />
+          </Form.Item>
+
+          <Form.Item name="email" label="Email công ty">
+            <Input placeholder="VD: info@congty.com" />
+          </Form.Item>
+
+          <Form.Item name="nguoiDaiDien" label="Người đại diện pháp luật">
+            <Input placeholder="VD: Nguyễn Văn A" />
           </Form.Item>
 
           <Form.Item

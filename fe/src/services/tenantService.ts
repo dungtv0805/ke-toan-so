@@ -10,6 +10,11 @@ export interface Tenant {
   id: string;
   name: string;
   slug: string;
+  maSoThue?: string;
+  diaChi?: string;
+  dienThoai?: string;
+  email?: string;
+  nguoiDaiDien?: string;
   isActive: boolean;
   admins?: TenantAdmin[];
   createdAt?: string;
@@ -19,18 +24,28 @@ export interface Tenant {
 export interface CreateTenantDto {
   name: string;
   slug: string;
+  maSoThue?: string;
+  diaChi?: string;
+  dienThoai?: string;
+  email?: string;
+  nguoiDaiDien?: string;
   isActive?: boolean;
   admin?: {
     email: string;
     hoTen: string;
     password?: string;
   };
-  adminUserId?: string; // Use existing user as admin
+  adminUserId?: string;
 }
 
 export interface UpdateTenantDto {
   name?: string;
   slug?: string;
+  maSoThue?: string;
+  diaChi?: string;
+  dienThoai?: string;
+  email?: string;
+  nguoiDaiDien?: string;
   isActive?: boolean;
 }
 
@@ -142,6 +157,11 @@ class TenantService extends ServiceBase {
       id: (tenant._id as string) || (tenant.id as string),
       name: tenant.name as string,
       slug: tenant.slug as string,
+      maSoThue: tenant.maSoThue as string | undefined,
+      diaChi: tenant.diaChi as string | undefined,
+      dienThoai: tenant.dienThoai as string | undefined,
+      email: tenant.email as string | undefined,
+      nguoiDaiDien: tenant.nguoiDaiDien as string | undefined,
       isActive: tenant.isActive as boolean,
       admins: admins?.map((a) => ({
         id: (a._id as string) || (a.id as string),

@@ -53,6 +53,7 @@ interface AuthContextType {
   logout: () => void;
   refreshUser: () => Promise<void>;
   selectTenant: (tenantId: string) => Promise<void>;
+  switchTenant: (tenantId: string) => Promise<void>;
   hasRole: (roles: VaiTro[]) => boolean;
   hasPermission: (permission: string) => boolean;
 }
@@ -184,12 +185,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentTenantState(response.tenant);
       setNeedsTenantSelection(false);
       setTempToken(null);
-      setAvailableTenants([]);
     } catch (error) {
       console.error('Failed to select tenant:', error);
       throw error;
     }
   }, [tempToken]);
+
+  const switchTenant = useCallback(async (tenantId: string) => {
+    try {
+      const response = await authService.switchTenant(tenantId);
+
+      setUser(response.user);
+      setCurrentTenant(response.tenant);
+      setCurrentTenantState(response.tenant);
+
+      // Update the role in availableTenants if needed
+      setAvailableTenants((prev) =>
+        prev.map((t) =>
+          t.tenantId === response.tenant.tenantId
+            ? { ...t, role: response.tenant.role }
+            : t,
+        ),
+      );
+
+      // Reload page to refresh all data for the new tenant
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to switch tenant:', error);
+      throw error;
+    }
+  }, []);
 
   const refreshUser = useCallback(async () => {
     try {
@@ -233,6 +258,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         refreshUser,
         selectTenant,
+        switchTenant,
         hasRole,
         hasPermission,
       }}
