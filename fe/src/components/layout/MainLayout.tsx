@@ -155,14 +155,14 @@ function getMenuItem(
   } as MenuItem;
 }
 
-// ===== KẾ TOÁN - Main accounting menu =====
+// ===== ĐIỀU HÀNH - Main accounting menu =====
 const keToAnMenuItems: MenuItem[] = [
   // Tổng quan
   getMenuItem("Tổng quan", "/", <DashboardOutlined />),
 
   // Phân tích
   getItem("Phân tích", "/phan-tich", <LineChartOutlined />, [
-    getMenuItem("Báo cáo tài chính", "/phan-tich/bao-cao-tai-chinh", <PieChartOutlined />),
+    getMenuItem("Kế toán", "/phan-tich/bao-cao-tai-chinh", <PieChartOutlined />),
     getMenuItem("Bán hàng", "/phan-tich/ban-hang", <ShoppingCartOutlined />),
     getMenuItem("Mua hàng", "/phan-tich/mua-hang", <ShoppingOutlined />),
     getMenuItem("Công nợ", "/phan-tich/cong-no", <ReconciliationOutlined />),
@@ -173,7 +173,7 @@ const keToAnMenuItems: MenuItem[] = [
 
   // Báo cáo
   getItem("Báo cáo", "/bao-cao", <BarChartOutlined />, [
-    getMenuItem("Báo cáo tài chính", "/bao-cao/tai-chinh", <PieChartOutlined />),
+    getMenuItem("Kế toán", "/bao-cao/tai-chinh", <PieChartOutlined />),
     getMenuItem("Sổ chi tiết tài khoản", "/bao-cao/so-chi-tiet-tai-khoan", <AccountBookOutlined />),
     getMenuItem("Sổ chi tiết công nợ", "/bao-cao/so-chi-tiet-cong-no", <FileSearchOutlined />),
     getMenuItem("Sổ chi tiết phát sinh", "/bao-cao/so-chi-tiet-phat-sinh", <ProfileOutlined />),
@@ -464,10 +464,10 @@ const MainLayout: React.FC = () => {
         },
       }}
     >
-      {/* KẾ TOÁN Section */}
+      {/* ĐIỀU HÀNH Section */}
       <div className="sidebar-section">
         <div className="sidebar-section-header">
-          <span className="sidebar-section-title">KẾ TOÁN</span>
+          <span className="sidebar-section-title">ĐIỀU HÀNH</span>
         </div>
         <Menu
           theme="dark"
@@ -558,11 +558,11 @@ const MainLayout: React.FC = () => {
 
           {/* Scrollable Menu Container */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll">
-            {/* KẾ TOÁN Section */}
+            {/* ĐIỀU HÀNH Section */}
             <div className="sidebar-section">
               {!collapsed && (
                 <div className="sidebar-section-header">
-                  <span className="sidebar-section-title">KẾ TOÁN</span>
+                  <span className="sidebar-section-title">ĐIỀU HÀNH</span>
                 </div>
               )}
               <Menu
