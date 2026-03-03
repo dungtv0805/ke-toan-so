@@ -1,3 +1,4 @@
+import { sanitizeUpdateDto } from '@app/core';
 import {
   Injectable,
   NotFoundException,
@@ -250,7 +251,7 @@ export class TenantService {
       }
     }
 
-    Object.assign(tenant, updateDto);
+    Object.assign(tenant, sanitizeUpdateDto(updateDto));
     return this.tenantRepository.save(tenant);
   }
 

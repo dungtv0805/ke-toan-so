@@ -1,3 +1,4 @@
+import { sanitizeUpdateDto } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -112,7 +113,7 @@ export class HopDongService {
       }
     }
 
-    Object.assign(hopDong, updateDto);
+    Object.assign(hopDong, sanitizeUpdateDto(updateDto));
     return this.hopDongRepository.save(hopDong);
   }
 

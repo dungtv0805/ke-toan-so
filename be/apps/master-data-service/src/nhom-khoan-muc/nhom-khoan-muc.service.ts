@@ -1,3 +1,4 @@
+import { sanitizeUpdateDto } from '@app/core';
 import { PaginatedResult, PaginationQueryDto } from '@app/dto';
 import { NhomKhoanMuc, NhomKhoanMucLoai } from '@app/entities';
 import {
@@ -116,7 +117,7 @@ export class NhomKhoanMucService {
         throw new ConflictException(`Mã ${updateDto.ma} đã tồn tại`);
       }
     }
-    Object.assign(nhomKhoanMuc, updateDto);
+    Object.assign(nhomKhoanMuc, sanitizeUpdateDto(updateDto));
     return this.nhomKhoanMucRepository.save(nhomKhoanMuc);
   }
 

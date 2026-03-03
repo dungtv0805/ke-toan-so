@@ -1,3 +1,4 @@
+import { sanitizeUpdateDto } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -116,7 +117,7 @@ export class BoPhanService {
       }
     }
 
-    Object.assign(boPhan, updateDto);
+    Object.assign(boPhan, sanitizeUpdateDto(updateDto));
     return this.boPhanRepository.save(boPhan);
   }
 

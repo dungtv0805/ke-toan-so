@@ -1,3 +1,4 @@
+import { sanitizeUpdateDto } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -184,7 +185,7 @@ export class DuAnService {
       }
     }
 
-    Object.assign(duAn, updateDto);
+    Object.assign(duAn, sanitizeUpdateDto(updateDto));
     return this.duAnRepository.save(duAn);
   }
 

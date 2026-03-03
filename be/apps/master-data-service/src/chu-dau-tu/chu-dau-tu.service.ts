@@ -1,3 +1,4 @@
+import { sanitizeUpdateDto } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -93,7 +94,7 @@ export class ChuDauTuService {
       }
     }
 
-    Object.assign(chuDauTu, updateDto);
+    Object.assign(chuDauTu, sanitizeUpdateDto(updateDto));
     return this.chuDauTuRepository.save(chuDauTu);
   }
 

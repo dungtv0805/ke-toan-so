@@ -1,3 +1,4 @@
+import { sanitizeUpdateDto } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -140,7 +141,7 @@ export class DoiTuongService {
       }
     }
 
-    Object.assign(doiTuong, updateDto);
+    Object.assign(doiTuong, sanitizeUpdateDto(updateDto));
     return this.doiTuongRepository.save(doiTuong);
   }
 

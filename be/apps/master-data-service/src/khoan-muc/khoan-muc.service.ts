@@ -1,3 +1,4 @@
+import { sanitizeUpdateDto } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -144,7 +145,7 @@ export class KhoanMucService {
       }
     }
 
-    Object.assign(khoanMuc, updateDto);
+    Object.assign(khoanMuc, sanitizeUpdateDto(updateDto));
     return this.khoanMucRepository.save(khoanMuc);
   }
 

@@ -1,3 +1,4 @@
+import { sanitizeUpdateDto } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -140,7 +141,7 @@ export class NganHangService {
       }
     }
 
-    Object.assign(nganHang, updateDto);
+    Object.assign(nganHang, sanitizeUpdateDto(updateDto));
     return this.nganHangRepository.save(nganHang);
   }
 

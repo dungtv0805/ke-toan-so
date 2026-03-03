@@ -166,10 +166,9 @@ const TaiKhoanPage: React.FC = () => {
         return;
       }
 
-      // Transform null/empty moTa to undefined before sending to API
+      // Send empty string as-is so BE sanitizeUpdateDto can convert to null
       const payload = {
         ...validation.data,
-        moTa: validation.data.moTa || undefined,
       };
 
       setLoading(true);

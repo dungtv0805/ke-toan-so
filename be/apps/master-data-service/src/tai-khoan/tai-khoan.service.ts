@@ -1,3 +1,4 @@
+import { sanitizeUpdateDto } from '@app/core';
 import { PaginatedResult, PaginationQueryDto } from '@app/dto';
 import { TaiKhoan } from '@app/entities';
 import {
@@ -148,7 +149,7 @@ export class TaiKhoanService {
       }
     }
 
-    Object.assign(taiKhoan, updateDto);
+    Object.assign(taiKhoan, sanitizeUpdateDto(updateDto));
     return this.taiKhoanRepository.save(taiKhoan);
   }
 

@@ -1,3 +1,4 @@
+import { sanitizeUpdateDto } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -116,7 +117,7 @@ export class LoaiGiaoDichService {
       }
     }
 
-    Object.assign(loaiGiaoDich, updateDto);
+    Object.assign(loaiGiaoDich, sanitizeUpdateDto(updateDto));
     return this.loaiGiaoDichRepository.save(loaiGiaoDich);
   }
 

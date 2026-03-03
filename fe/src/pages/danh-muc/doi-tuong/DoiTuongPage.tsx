@@ -57,7 +57,7 @@ const doiTuongSchema = z.object({
     .max(100, "Email tối đa 100 ký tự")
     .optional()
     .or(z.literal("")),
-  maSoThue: z.string().min(1, "MST không được để trống").max(20, "MST tối đa 20 ký tự"),
+  maSoThue: z.string().max(20, "MST tối đa 20 ký tự").optional().or(z.literal("")),
   nguoiLienHe: z
     .string()
     .max(100, "Tên người liên hệ tối đa 100 ký tự")
@@ -190,10 +190,7 @@ const DoiTuongPage: React.FC = () => {
     try {
       const values = await form.validateFields();
 
-      // Clean empty strings
-      Object.keys(values).forEach((key) => {
-        if (values[key] === "") values[key] = undefined;
-      });
+      // Keep empty strings as-is - BE sanitizeUpdateDto will convert "" to null
 
       const validation = doiTuongSchema.safeParse(values);
       if (!validation.success) {
@@ -646,7 +643,6 @@ const DoiTuongPage: React.FC = () => {
                 name="maSoThue"
                 label="Mã số thuế"
                 rules={[
-                  { required: true, message: "Vui lòng nhập MST" },
                   { max: 20, message: "Tối đa 20 ký tự" },
                 ]}
                 className="mb-0"

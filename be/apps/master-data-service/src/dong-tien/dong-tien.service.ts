@@ -1,3 +1,4 @@
+import { sanitizeUpdateDto } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -140,7 +141,7 @@ export class DongTienService {
       }
     }
 
-    Object.assign(dongTien, updateDto);
+    Object.assign(dongTien, sanitizeUpdateDto(updateDto));
     return this.dongTienRepository.save(dongTien);
   }
 

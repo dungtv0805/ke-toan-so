@@ -32,8 +32,8 @@ export class CreateDoiTuongDto {
   email?: string;
 
   @IsString()
-  @IsNotEmpty()
-  maSoThue: string;
+  @IsOptional()
+  maSoThue?: string;
 
   @IsString()
   @IsOptional()
