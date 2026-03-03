@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Form, Input, Button, Card, Typography, Alert, Divider, Tag, Space } from 'antd';
+import { Form, Input, Button, Card, Typography, Alert } from 'antd';
 import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
-import { vaiTroOptions } from '@/mock-data/nguoi-dung';
 import { TenantSelector } from '@/components/auth';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 interface LoginForm {
   email: string;
@@ -50,16 +49,6 @@ const LoginPage = () => {
     setLoading(false);
   };
 
-  const handleQuickLogin = (email: string) => {
-    form.setFieldsValue({ email, password: 'Password123!' });
-  };
-
-  const demoAccounts = [
-    { email: 'admin@company.com', role: 'ADMIN', label: 'Quản trị viên' },
-    { email: 'ketoanquy@company.com', role: 'KE_TOAN_QUY', label: 'Kế toán quỹ' },
-    { email: 'ketoancongno@company.com', role: 'KE_TOAN_CONG_NO', label: 'Kế toán công nợ' },
-    { email: 'manager@company.com', role: 'MANAGER', label: 'Quản lý' },
-  ];
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
@@ -132,35 +121,6 @@ const LoginPage = () => {
               </Button>
             </Form.Item>
           </Form>
-
-          <Divider plain>
-            <Text type="secondary" className="text-xs">Đăng nhập nhanh (Demo)</Text>
-          </Divider>
-
-          <div className="space-y-2">
-            {demoAccounts.map((account) => {
-              const roleInfo = vaiTroOptions.find(v => v.value === account.role);
-              return (
-                <Button
-                  key={account.email}
-                  type="dashed"
-                  block
-                  size="small"
-                  onClick={() => handleQuickLogin(account.email)}
-                  className="text-left flex items-center justify-between"
-                >
-                  <Space>
-                    <Tag color={roleInfo?.color} className="m-0">{account.label}</Tag>
-                  </Space>
-                  <Text type="secondary" className="text-xs">{account.email}</Text>
-                </Button>
-              );
-            })}
-          </div>
-
-          <Paragraph type="secondary" className="text-center text-xs mt-4 !mb-0">
-            Mật khẩu mặc định: <Text code>Password123!</Text>
-          </Paragraph>
         </Card>
       </div>
     </div>
