@@ -1,4 +1,4 @@
-import { sanitizeUpdateDto } from '@app/core';
+import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -15,7 +15,13 @@ export class NganHangService {
   constructor(
     @InjectRepository(NganHang)
     private readonly nganHangRepository: Repository<NganHang>,
+    private readonly tenantContext: TenantContextService,
   ) {}
+
+  private getTenantFilter() {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    return tenantId ? { tenantId } : {};
+  }
 
   /**
    * Get total count using DB query
@@ -26,6 +32,7 @@ export class NganHangService {
       return this.nganHangRepository.count({
         where: {
           isActive: true,
+          ...this.getTenantFilter(),
           $or: [
             { ma: { $regex: searchRegex } },
             { ten: { $regex: searchRegex } },
@@ -33,7 +40,7 @@ export class NganHangService {
         } as any,
       });
     }
-    return this.nganHangRepository.count({ where: { isActive: true } });
+    return this.nganHangRepository.count({ where: { isActive: true, ...this.getTenantFilter() } });
   }
 
   async findAllPaginated(
@@ -43,7 +50,7 @@ export class NganHangService {
     const skip = (page - 1) * limit;
 
     // Get all items first, then filter and paginate (MongoDB count workaround)
-    const allItems = await this.nganHangRepository.find();
+    const allItems = await this.nganHangRepository.find({ where: this.getTenantFilter() as any });
     let filteredItems = allItems.filter((item) => item.isActive !== false);
 
     if (loai) {
@@ -79,7 +86,7 @@ export class NganHangService {
   async search(keyword: string, limit = 20): Promise<NganHang[]> {
     if (!keyword) {
       return this.nganHangRepository.find({
-        where: { isActive: true },
+        where: { isActive: true, ...this.getTenantFilter() },
         take: limit,
       });
     }
@@ -88,6 +95,7 @@ export class NganHangService {
     return this.nganHangRepository.find({
       where: {
         isActive: true,
+        ...this.getTenantFilter(),
         $or: [
           { ma: { $regex: searchRegex } },
           { ten: { $regex: searchRegex } },
@@ -98,7 +106,7 @@ export class NganHangService {
   }
 
   async findAll(): Promise<NganHang[]> {
-    return this.nganHangRepository.find({ where: { isActive: true } });
+    return this.nganHangRepository.find({ where: { isActive: true, ...this.getTenantFilter() } });
   }
 
   async findOne(id: string): Promise<NganHang> {
@@ -115,7 +123,7 @@ export class NganHangService {
   }
 
   async findByMa(ma: string): Promise<NganHang | null> {
-    return this.nganHangRepository.findOne({ where: { ma } });
+    return this.nganHangRepository.findOne({ where: { ma, isActive: true, ...this.getTenantFilter() } });
   }
 
   async create(createDto: CreateNganHangDto): Promise<NganHang> {
@@ -169,7 +177,7 @@ export class NganHangService {
     nganHang: number;
     tienMat: number;
   }> {
-    const allItems = await this.nganHangRepository.find();
+    const allItems = await this.nganHangRepository.find({ where: this.getTenantFilter() as any });
     const activeItems = allItems.filter((item) => item.isActive !== false);
 
     const tongNganHang = activeItems.length;

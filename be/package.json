@@ -55,6 +55,8 @@
     "rollback:credentials:dry-run": "env-cmd -e db -- node scripts/rollback-user-credentials.js --dry-run",
     "unset:password-fields": "env-cmd -e db -- node scripts/unset-user-password-fields.js",
     "unset:password-fields:dry-run": "env-cmd -e db -- node scripts/unset-user-password-fields.js --dry-run",
+    "migrate:drop-unique-indexes": "env-cmd -e db -- node scripts/drop-unique-indexes-on-ma.js",
+    "migrate:drop-unique-indexes:dry-run": "env-cmd -e db -- node scripts/drop-unique-indexes-on-ma.js --dry-run",
     "migrate:tenant": "env-cmd -e db -- ts-node scripts/migrations/add-default-tenant.ts",
     "migrate:tenant:dry-run": "env-cmd -e db -- ts-node scripts/migrations/add-default-tenant.ts --dry-run"
   },

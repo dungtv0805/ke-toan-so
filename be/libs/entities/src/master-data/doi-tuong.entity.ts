@@ -13,7 +13,7 @@ export class DoiTuong extends BaseEntity {
   @Column({ type: 'enum', enum: DoiTuongType })
   loai: DoiTuongType;
 
-  @Column({ unique: true })
+  @Column()
   ma: string;
 
   @Column()

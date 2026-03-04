@@ -1,4 +1,4 @@
-import { sanitizeUpdateDto } from '@app/core';
+import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -15,7 +15,13 @@ export class LoaiChungTuService {
   constructor(
     @InjectRepository(LoaiChungTuMaster)
     private readonly loaiChungTuRepository: Repository<LoaiChungTuMaster>,
+    private readonly tenantContext: TenantContextService,
   ) {}
+
+  private getTenantFilter() {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    return tenantId ? { tenantId } : {};
+  }
 
   async getTotal(search?: string): Promise<number> {
     if (search) {
@@ -23,6 +29,7 @@ export class LoaiChungTuService {
       return this.loaiChungTuRepository.count({
         where: {
           isActive: true,
+          ...this.getTenantFilter(),
           $or: [
             { ma: { $regex: searchRegex } },
             { ten: { $regex: searchRegex } },
@@ -30,7 +37,7 @@ export class LoaiChungTuService {
         } as any,
       });
     }
-    return this.loaiChungTuRepository.count({ where: { isActive: true } });
+    return this.loaiChungTuRepository.count({ where: { isActive: true, ...this.getTenantFilter() } });
   }
 
   async findAllPaginated(
@@ -39,7 +46,7 @@ export class LoaiChungTuService {
     const { page = 1, limit = 10, search } = query;
     const skip = (page - 1) * limit;
 
-    const allItems = await this.loaiChungTuRepository.find();
+    const allItems = await this.loaiChungTuRepository.find({ where: this.getTenantFilter() as any });
     let filteredItems = allItems.filter((item) => item.isActive !== false);
 
     if (search) {
@@ -68,7 +75,7 @@ export class LoaiChungTuService {
   async search(keyword: string, limit = 20): Promise<LoaiChungTuMaster[]> {
     if (!keyword) {
       return this.loaiChungTuRepository.find({
-        where: { isActive: true },
+        where: { isActive: true, ...this.getTenantFilter() },
         take: limit,
       });
     }
@@ -77,6 +84,7 @@ export class LoaiChungTuService {
     return this.loaiChungTuRepository.find({
       where: {
         isActive: true,
+        ...this.getTenantFilter(),
         $or: [
           { ma: { $regex: searchRegex } },
           { ten: { $regex: searchRegex } },
@@ -87,7 +95,7 @@ export class LoaiChungTuService {
   }
 
   async findAll(): Promise<LoaiChungTuMaster[]> {
-    return this.loaiChungTuRepository.find({ where: { isActive: true } });
+    return this.loaiChungTuRepository.find({ where: { isActive: true, ...this.getTenantFilter() } });
   }
 
   async findOne(id: string): Promise<LoaiChungTuMaster> {
@@ -104,7 +112,7 @@ export class LoaiChungTuService {
   }
 
   async findByMa(ma: string): Promise<LoaiChungTuMaster | null> {
-    const result = await this.loaiChungTuRepository.findOne({ where: { ma } });
+    const result = await this.loaiChungTuRepository.findOne({ where: { ma, isActive: true, ...this.getTenantFilter() } });
     return result ?? null;
   }
 

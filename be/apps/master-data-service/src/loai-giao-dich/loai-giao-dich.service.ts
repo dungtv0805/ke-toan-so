@@ -1,4 +1,4 @@
-import { sanitizeUpdateDto } from '@app/core';
+import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -15,7 +15,13 @@ export class LoaiGiaoDichService {
   constructor(
     @InjectRepository(LoaiGiaoDich)
     private readonly loaiGiaoDichRepository: Repository<LoaiGiaoDich>,
+    private readonly tenantContext: TenantContextService,
   ) {}
+
+  private getTenantFilter() {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    return tenantId ? { tenantId } : {};
+  }
 
   /**
    * Get total count using DB query
@@ -26,6 +32,7 @@ export class LoaiGiaoDichService {
       return this.loaiGiaoDichRepository.count({
         where: {
           isActive: true,
+          ...this.getTenantFilter(),
           $or: [
             { ma: { $regex: searchRegex } },
             { ten: { $regex: searchRegex } },
@@ -33,7 +40,7 @@ export class LoaiGiaoDichService {
         } as any,
       });
     }
-    return this.loaiGiaoDichRepository.count({ where: { isActive: true } });
+    return this.loaiGiaoDichRepository.count({ where: { isActive: true, ...this.getTenantFilter() } });
   }
 
   async findAllPaginated(
@@ -43,7 +50,7 @@ export class LoaiGiaoDichService {
     const skip = (page - 1) * limit;
 
     // Get all items first, then filter and paginate (MongoDB count workaround)
-    const allItems = await this.loaiGiaoDichRepository.find();
+    const allItems = await this.loaiGiaoDichRepository.find({ where: this.getTenantFilter() as any });
     let filteredItems = allItems.filter((item) => item.isActive !== false);
 
     if (search) {
@@ -70,7 +77,7 @@ export class LoaiGiaoDichService {
   }
 
   async findAll(): Promise<LoaiGiaoDich[]> {
-    return this.loaiGiaoDichRepository.find({ where: { isActive: true } });
+    return this.loaiGiaoDichRepository.find({ where: { isActive: true, ...this.getTenantFilter() } });
   }
 
   async findOne(id: string): Promise<LoaiGiaoDich> {
@@ -87,7 +94,7 @@ export class LoaiGiaoDichService {
   }
 
   async findByMa(ma: string): Promise<LoaiGiaoDich | null> {
-    return this.loaiGiaoDichRepository.findOne({ where: { ma } });
+    return this.loaiGiaoDichRepository.findOne({ where: { ma, isActive: true, ...this.getTenantFilter() } });
   }
 
   async create(createDto: CreateLoaiGiaoDichDto): Promise<LoaiGiaoDich> {
@@ -133,7 +140,7 @@ export class LoaiGiaoDichService {
   async search(keyword: string, limit = 20): Promise<LoaiGiaoDich[]> {
     if (!keyword) {
       return this.loaiGiaoDichRepository.find({
-        where: { isActive: true },
+        where: { isActive: true, ...this.getTenantFilter() },
         take: limit,
       });
     }
@@ -142,6 +149,7 @@ export class LoaiGiaoDichService {
     return this.loaiGiaoDichRepository.find({
       where: {
         isActive: true,
+        ...this.getTenantFilter(),
         $or: [
           { ma: { $regex: searchRegex } },
           { ten: { $regex: searchRegex } },
@@ -167,7 +175,7 @@ export class LoaiGiaoDichService {
   async getStats(): Promise<{
     tongLoaiGiaoDich: number;
   }> {
-    const allItems = await this.loaiGiaoDichRepository.find();
+    const allItems = await this.loaiGiaoDichRepository.find({ where: this.getTenantFilter() as any });
     const activeItems = allItems.filter((item) => item.isActive !== false);
 
     return {

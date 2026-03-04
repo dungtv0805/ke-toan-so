@@ -3,7 +3,7 @@ import { BaseEntity } from '../base.entity';
 
 @Entity('loai_chung_tu')
 export class LoaiChungTuMaster extends BaseEntity {
-  @Column({ unique: true })
+  @Column()
   ma: string;
 
   @Column()

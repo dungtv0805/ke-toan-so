@@ -1,4 +1,4 @@
-import { sanitizeUpdateDto } from '@app/core';
+import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -21,13 +21,19 @@ export class DuAnService {
     private readonly duAnRepository: Repository<DuAn>,
     @Inject(forwardRef(() => ChuDauTuService))
     private readonly chuDauTuService: ChuDauTuService,
+    private readonly tenantContext: TenantContextService,
   ) {}
+
+  private getTenantFilter() {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    return tenantId ? { tenantId } : {};
+  }
 
   /**
    * Build query conditions for filtering
    */
   private buildWhereConditions(search?: string, trangThai?: DuAnStatus): any {
-    const where: any = { isActive: true };
+    const where: any = { isActive: true, ...this.getTenantFilter() };
     if (trangThai) {
       where.trangThai = trangThai;
     }
@@ -68,7 +74,7 @@ export class DuAnService {
     const skip = (page - 1) * limit;
 
     // Get all items first, then filter and paginate (MongoDB count workaround)
-    const allItems = await this.duAnRepository.find();
+    const allItems = await this.duAnRepository.find({ where: this.getTenantFilter() as any });
     let filteredItems = allItems.filter((item) => item.isActive !== false);
 
     if (trangThai) {
@@ -105,7 +111,7 @@ export class DuAnService {
    * Find all with optional filter - use sparingly, prefer paginated
    */
   async findAll(trangThai?: DuAnStatus): Promise<DuAn[]> {
-    const where: any = { isActive: true };
+    const where: any = { isActive: true, ...this.getTenantFilter() };
     if (trangThai) {
       where.trangThai = trangThai;
     }
@@ -126,7 +132,7 @@ export class DuAnService {
   }
 
   async findByMa(ma: string): Promise<DuAn | null> {
-    return this.duAnRepository.findOne({ where: { ma } });
+    return this.duAnRepository.findOne({ where: { ma, isActive: true, ...this.getTenantFilter() } });
   }
 
   async create(createDto: CreateDuAnDto): Promise<DuAn> {
@@ -207,7 +213,7 @@ export class DuAnService {
   async search(keyword: string, limit = 20): Promise<DuAn[]> {
     if (!keyword) {
       return this.duAnRepository.find({
-        where: { isActive: true },
+        where: { isActive: true, ...this.getTenantFilter() },
         take: limit,
       });
     }
@@ -216,6 +222,7 @@ export class DuAnService {
     return this.duAnRepository.find({
       where: {
         isActive: true,
+        ...this.getTenantFilter(),
         $or: [
           { ma: { $regex: searchRegex } },
           { ten: { $regex: searchRegex } },
@@ -245,7 +252,7 @@ export class DuAnService {
     hoanThanh: number;
     tamDung: number;
   }> {
-    const allItems = await this.duAnRepository.find();
+    const allItems = await this.duAnRepository.find({ where: this.getTenantFilter() as any });
     const activeItems = allItems.filter((item) => item.isActive !== false);
 
     const tongDuAn = activeItems.length;

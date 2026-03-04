@@ -1,4 +1,4 @@
-import { sanitizeUpdateDto } from '@app/core';
+import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -15,7 +15,13 @@ export class KhoanMucService {
   constructor(
     @InjectRepository(KhoanMuc)
     private readonly khoanMucRepository: Repository<KhoanMuc>,
+    private readonly tenantContext: TenantContextService,
   ) {}
+
+  private getTenantFilter() {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    return tenantId ? { tenantId } : {};
+  }
 
   /**
    * Get total count using DB query
@@ -26,6 +32,7 @@ export class KhoanMucService {
       return this.khoanMucRepository.count({
         where: {
           isActive: true,
+          ...this.getTenantFilter(),
           $or: [
             { ma: { $regex: searchRegex } },
             { ten: { $regex: searchRegex } },
@@ -33,7 +40,7 @@ export class KhoanMucService {
         } as any,
       });
     }
-    return this.khoanMucRepository.count({ where: { isActive: true } });
+    return this.khoanMucRepository.count({ where: { isActive: true, ...this.getTenantFilter() } });
   }
 
   async findAllPaginated(
@@ -43,7 +50,7 @@ export class KhoanMucService {
     const skip = (page - 1) * limit;
 
     // Get all items first, then filter and paginate
-    const allItems = await this.khoanMucRepository.find();
+    const allItems = await this.khoanMucRepository.find({ where: this.getTenantFilter() as any });
     let filteredItems = allItems.filter((item) => item.isActive !== false);
 
     if (loai) {
@@ -79,7 +86,7 @@ export class KhoanMucService {
   async search(keyword: string, limit = 20): Promise<KhoanMuc[]> {
     if (!keyword) {
       return this.khoanMucRepository.find({
-        where: { isActive: true },
+        where: { isActive: true, ...this.getTenantFilter() },
         take: limit,
       });
     }
@@ -88,6 +95,7 @@ export class KhoanMucService {
     return this.khoanMucRepository.find({
       where: {
         isActive: true,
+        ...this.getTenantFilter(),
         $or: [
           { ma: { $regex: searchRegex } },
           { ten: { $regex: searchRegex } },
@@ -98,7 +106,7 @@ export class KhoanMucService {
   }
 
   async findAll(): Promise<KhoanMuc[]> {
-    return this.khoanMucRepository.find({ where: { isActive: true } });
+    return this.khoanMucRepository.find({ where: { isActive: true, ...this.getTenantFilter() } });
   }
 
   async findOne(id: string): Promise<KhoanMuc> {
@@ -115,7 +123,7 @@ export class KhoanMucService {
   }
 
   async findByMa(ma: string): Promise<KhoanMuc | null> {
-    return this.khoanMucRepository.findOne({ where: { ma } });
+    return this.khoanMucRepository.findOne({ where: { ma, isActive: true, ...this.getTenantFilter() } });
   }
 
   async create(createDto: CreateKhoanMucDto): Promise<KhoanMuc> {
@@ -159,7 +167,7 @@ export class KhoanMucService {
    * Find by loai using DB query
    */
   async findByLoai(loai: string, limit = 100): Promise<KhoanMuc[]> {
-    const allItems = await this.khoanMucRepository.find();
+    const allItems = await this.khoanMucRepository.find({ where: this.getTenantFilter() as any });
     return allItems
       .filter((item) => item.isActive !== false && item.loai === loai)
       .slice(0, limit);
@@ -183,7 +191,7 @@ export class KhoanMucService {
     chiPhi: number;
     doanhThu: number;
   }> {
-    const allItems = await this.khoanMucRepository.find();
+    const allItems = await this.khoanMucRepository.find({ where: this.getTenantFilter() as any });
     const activeItems = allItems.filter((item) => item.isActive !== false);
 
     const tongKhoanMuc = activeItems.length;

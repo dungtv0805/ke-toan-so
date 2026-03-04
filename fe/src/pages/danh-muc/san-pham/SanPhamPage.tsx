@@ -52,7 +52,7 @@ const sanPhamSchema = z.object({
     .min(1, "Tên không được để trống")
     .max(200, "Tên tối đa 200 ký tự"),
   donVi: z.string().optional().nullable(),
-  giaBan: z.number().min(0, "Giá bán không được âm").optional(),
+  giaBan: z.number().min(0, "Giá bán không được âm").optional().nullable(),
   moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").optional().nullable(),
 });
 

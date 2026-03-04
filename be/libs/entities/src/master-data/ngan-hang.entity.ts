@@ -8,7 +8,7 @@ export enum NganHangLoai {
 
 @Entity('ngan_hang')
 export class NganHang extends BaseEntity {
-  @Column({ unique: true })
+  @Column()
   ma: string;
 
   @Column()

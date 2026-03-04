@@ -9,7 +9,7 @@ export enum DongTienLoai {
 
 @Entity('dong_tien')
 export class DongTien extends BaseEntity {
-  @Column({ unique: true })
+  @Column()
   ma: string;
 
   @Column()

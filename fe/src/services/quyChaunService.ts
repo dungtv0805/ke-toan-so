@@ -26,6 +26,11 @@ export interface QuyChaunPaginationParams {
   loaiGiaoDich?: string;
 }
 
+interface QuyChaunResponse extends Omit<QuyChuan, 'id'> {
+  _id?: string;
+  id?: string;
+}
+
 export interface QuyChaunPaginatedResponse {
   data: QuyChuan[];
   meta: {
@@ -41,48 +46,67 @@ class QuyChaunService extends ServiceBase {
     super({ endpoint: '/config/quy-chuan' });
   }
 
+  private mapQuyChuan(item: QuyChaunResponse): QuyChuan {
+    return {
+      ...item,
+      id: item._id || item.id || '',
+    } as QuyChuan;
+  }
+
   async getAll(): Promise<QuyChuan[]> {
-    return this.get<QuyChuan[]>();
+    const data = await this.get<QuyChaunResponse[]>();
+    return data.map((item) => this.mapQuyChuan(item));
   }
 
   async getAllPaginated(params: QuyChaunPaginationParams): Promise<QuyChaunPaginatedResponse> {
     const queryParams: Record<string, string> = {};
-    
+
     if (params.page) queryParams.page = params.page.toString();
     if (params.limit) queryParams.limit = params.limit.toString();
     if (params.keyword) queryParams.keyword = params.keyword;
     if (params.loaiGiaoDich) queryParams.loaiGiaoDich = params.loaiGiaoDich;
 
-    return this.get<QuyChaunPaginatedResponse>({ params: queryParams });
+    const response = await this.get<{ data: QuyChaunResponse[]; meta: QuyChaunPaginatedResponse['meta'] }>({ params: queryParams });
+    return {
+      data: response.data.map((item) => this.mapQuyChuan(item)),
+      meta: response.meta,
+    };
   }
 
   async getById(id: string): Promise<QuyChuan> {
-    return this.get<QuyChuan>({ endpoint: `/${id}` });
+    const data = await this.get<QuyChaunResponse>({ endpoint: `/${id}` });
+    return this.mapQuyChuan(data);
   }
 
   async getByLoaiGiaoDich(loai: string): Promise<QuyChuan[]> {
-    return this.get<QuyChuan[]>({ endpoint: `/by-loai/${loai}` });
+    const data = await this.get<QuyChaunResponse[]>({ endpoint: `/by-loai/${loai}` });
+    return data.map((item) => this.mapQuyChuan(item));
   }
 
   async search(keyword: string): Promise<QuyChuan[]> {
-    return this.get<QuyChuan[]>({ 
+    const data = await this.get<QuyChaunResponse[]>({
       endpoint: '/search',
       params: { keyword }
     });
+    return data.map((item) => this.mapQuyChuan(item));
   }
 
   async searchPaginated(params: QuyChaunPaginationParams): Promise<QuyChaunPaginatedResponse> {
     const queryParams: Record<string, string> = {};
-    
+
     if (params.page) queryParams.page = params.page.toString();
     if (params.limit) queryParams.limit = params.limit.toString();
     if (params.keyword) queryParams.keyword = params.keyword;
     if (params.loaiGiaoDich) queryParams.loaiGiaoDich = params.loaiGiaoDich;
 
-    return this.get<QuyChaunPaginatedResponse>({ 
+    const response = await this.get<{ data: QuyChaunResponse[]; meta: QuyChaunPaginatedResponse['meta'] }>({
       endpoint: '/search',
-      params: queryParams 
+      params: queryParams
     });
+    return {
+      data: response.data.map((item) => this.mapQuyChuan(item)),
+      meta: response.meta,
+    };
   }
 
   async getStats(keyword?: string): Promise<QuyChaunStats> {
@@ -115,11 +139,13 @@ class QuyChaunService extends ServiceBase {
   }
 
   async create(data: CreateQuyChaunDto): Promise<QuyChuan> {
-    return this.post<QuyChuan>(data);
+    const result = await this.post<QuyChaunResponse>(data);
+    return this.mapQuyChuan(result);
   }
 
   async update(id: string, data: UpdateQuyChaunDto): Promise<QuyChuan> {
-    return this.put<QuyChuan>(data, { endpoint: `/${id}` });
+    const result = await this.put<QuyChaunResponse>(data, { endpoint: `/${id}` });
+    return this.mapQuyChuan(result);
   }
 
   async remove(id: string): Promise<void> {

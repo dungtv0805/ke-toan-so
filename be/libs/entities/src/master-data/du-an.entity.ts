@@ -9,7 +9,7 @@ export enum DuAnStatus {
 
 @Entity('du_an')
 export class DuAn extends BaseEntity {
-  @Column({ unique: true })
+  @Column()
   ma: string;
 
   @Column()

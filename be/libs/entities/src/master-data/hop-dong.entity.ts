@@ -33,7 +33,7 @@ export interface TienDoThiCong {
 
 @Entity('hop_dong')
 export class HopDong extends BaseEntity {
-  @Column({ unique: true })
+  @Column()
   soHopDong: string;
 
   @Column()

@@ -1,4 +1,4 @@
-import { sanitizeUpdateDto } from '@app/core';
+import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -15,7 +15,13 @@ export class BoPhanService {
   constructor(
     @InjectRepository(BoPhan)
     private readonly boPhanRepository: Repository<BoPhan>,
+    private readonly tenantContext: TenantContextService,
   ) {}
+
+  private getTenantFilter() {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    return tenantId ? { tenantId } : {};
+  }
 
   /**
    * Get total count using DB query
@@ -26,6 +32,7 @@ export class BoPhanService {
       return this.boPhanRepository.count({
         where: {
           isActive: true,
+          ...this.getTenantFilter(),
           $or: [
             { ma: { $regex: searchRegex } },
             { ten: { $regex: searchRegex } },
@@ -33,7 +40,7 @@ export class BoPhanService {
         } as any,
       });
     }
-    return this.boPhanRepository.count({ where: { isActive: true } });
+    return this.boPhanRepository.count({ where: { isActive: true, ...this.getTenantFilter() } });
   }
 
   async findAllPaginated(
@@ -43,7 +50,7 @@ export class BoPhanService {
     const skip = (page - 1) * limit;
 
     // Get all items first, then filter and paginate (MongoDB count workaround)
-    const allItems = await this.boPhanRepository.find();
+    const allItems = await this.boPhanRepository.find({ where: this.getTenantFilter() as any });
     let filteredItems = allItems.filter((item) => item.isActive !== false);
 
     if (search) {
@@ -70,7 +77,7 @@ export class BoPhanService {
   }
 
   async findAll(): Promise<BoPhan[]> {
-    return this.boPhanRepository.find({ where: { isActive: true } });
+    return this.boPhanRepository.find({ where: { isActive: true, ...this.getTenantFilter() } });
   }
 
   async findOne(id: string): Promise<BoPhan> {
@@ -87,7 +94,7 @@ export class BoPhanService {
   }
 
   async findByMa(ma: string): Promise<BoPhan | null> {
-    return this.boPhanRepository.findOne({ where: { ma } });
+    return this.boPhanRepository.findOne({ where: { ma, isActive: true, ...this.getTenantFilter() } });
   }
 
   async create(createDto: CreateBoPhanDto): Promise<BoPhan> {
@@ -133,7 +140,7 @@ export class BoPhanService {
   async search(keyword: string, limit = 20): Promise<BoPhan[]> {
     if (!keyword) {
       return this.boPhanRepository.find({
-        where: { isActive: true },
+        where: { isActive: true, ...this.getTenantFilter() },
         take: limit,
       });
     }
@@ -142,6 +149,7 @@ export class BoPhanService {
     return this.boPhanRepository.find({
       where: {
         isActive: true,
+        ...this.getTenantFilter(),
         $or: [
           { ma: { $regex: searchRegex } },
           { ten: { $regex: searchRegex } },
@@ -167,7 +175,7 @@ export class BoPhanService {
   async getStats(): Promise<{
     tongBoPhan: number;
   }> {
-    const allItems = await this.boPhanRepository.find();
+    const allItems = await this.boPhanRepository.find({ where: this.getTenantFilter() as any });
     const activeItems = allItems.filter((item) => item.isActive !== false);
 
     return {

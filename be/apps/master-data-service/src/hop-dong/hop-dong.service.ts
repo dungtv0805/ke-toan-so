@@ -1,4 +1,4 @@
-import { sanitizeUpdateDto } from '@app/core';
+import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -15,7 +15,13 @@ export class HopDongService {
   constructor(
     @InjectRepository(HopDong)
     private readonly hopDongRepository: Repository<HopDong>,
+    private readonly tenantContext: TenantContextService,
   ) {}
+
+  private getTenantFilter() {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    return tenantId ? { tenantId } : {};
+  }
 
   async findAllPaginated(
     query: HopDongQueryDto,
@@ -23,7 +29,7 @@ export class HopDongService {
     const { page = 1, limit = 10, search, trangThai, doiTuongId } = query;
     const skip = (page - 1) * limit;
 
-    const allItems = await this.hopDongRepository.find();
+    const allItems = await this.hopDongRepository.find({ where: this.getTenantFilter() as any });
     let filteredItems = allItems.filter((item) => item.isActive !== false);
 
     // Filter by trangThai
@@ -65,7 +71,7 @@ export class HopDongService {
   }
 
   async findAll(): Promise<HopDong[]> {
-    const allItems = await this.hopDongRepository.find();
+    const allItems = await this.hopDongRepository.find({ where: this.getTenantFilter() as any });
     return allItems.filter((item) => item.isActive !== false);
   }
 
@@ -83,7 +89,7 @@ export class HopDongService {
   }
 
   async findBySoHopDong(soHopDong: string): Promise<HopDong | null> {
-    return this.hopDongRepository.findOne({ where: { soHopDong } });
+    return this.hopDongRepository.findOne({ where: { soHopDong, isActive: true, ...this.getTenantFilter() } });
   }
 
   async create(createDto: CreateHopDongDto): Promise<HopDong> {

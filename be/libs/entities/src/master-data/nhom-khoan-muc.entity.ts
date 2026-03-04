@@ -8,7 +8,7 @@ export enum NhomKhoanMucLoai {
 
 @Entity('nhom_khoan_muc')
 export class NhomKhoanMuc extends BaseEntity {
-  @Column({ unique: true })
+  @Column()
   ma: string;
 
   @Column()

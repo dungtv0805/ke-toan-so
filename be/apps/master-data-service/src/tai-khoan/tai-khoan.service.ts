@@ -1,4 +1,4 @@
-import { sanitizeUpdateDto } from '@app/core';
+import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import { PaginatedResult, PaginationQueryDto } from '@app/dto';
 import { TaiKhoan } from '@app/entities';
 import {
@@ -15,13 +15,19 @@ export class TaiKhoanService {
   constructor(
     @InjectRepository(TaiKhoan)
     private readonly taiKhoanRepository: Repository<TaiKhoan>,
+    private readonly tenantContext: TenantContextService,
   ) {}
+
+  private getTenantFilter() {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    return tenantId ? { tenantId } : {};
+  }
 
   /**
    * Get total count using DB query
    */
   async getTotal(search?: string, nhom?: string): Promise<number> {
-    const baseWhere: any = { isActive: true };
+    const baseWhere: any = { isActive: true, ...this.getTenantFilter() };
     if (nhom) {
       baseWhere.nhom = nhom;
     }
@@ -50,7 +56,7 @@ export class TaiKhoanService {
     const { search, nhom } = query;
     const skip = (page - 1) * limit;
 
-    const baseWhere: any = { isActive: true };
+    const baseWhere: any = { isActive: true, ...this.getTenantFilter() };
     if (nhom) {
       baseWhere.nhom = nhom;
     }
@@ -98,7 +104,7 @@ export class TaiKhoanService {
 
   async findAll(): Promise<TaiKhoan[]> {
     const accounts = await this.taiKhoanRepository.find({
-      where: { isActive: true },
+      where: { isActive: true, ...this.getTenantFilter() },
     });
     return accounts.sort((a, b) => a.ma.localeCompare(b.ma));
   }
@@ -117,7 +123,7 @@ export class TaiKhoanService {
   }
 
   async findByMa(ma: string): Promise<TaiKhoan | null> {
-    return this.taiKhoanRepository.findOne({ where: { ma, isActive: true } });
+    return this.taiKhoanRepository.findOne({ where: { ma, isActive: true, ...this.getTenantFilter() } });
   }
 
   async create(createDto: CreateTaiKhoanDto): Promise<TaiKhoan> {
@@ -172,7 +178,7 @@ export class TaiKhoanService {
   async search(keyword: string, limit = 20): Promise<TaiKhoan[]> {
     if (!keyword) {
       return this.taiKhoanRepository.find({
-        where: { isActive: true },
+        where: { isActive: true, ...this.getTenantFilter() },
         take: limit,
       });
     }
@@ -181,6 +187,7 @@ export class TaiKhoanService {
     return this.taiKhoanRepository.find({
       where: {
         isActive: true,
+        ...this.getTenantFilter(),
         $or: [
           { ma: { $regex: searchRegex } },
           { ten: { $regex: searchRegex } },
@@ -195,7 +202,7 @@ export class TaiKhoanService {
    */
   async findByNhom(nhom: string): Promise<TaiKhoan[]> {
     return this.taiKhoanRepository.find({
-      where: { nhom: nhom as any, isActive: true },
+      where: { nhom: nhom as any, isActive: true, ...this.getTenantFilter() },
     });
   }
 
@@ -204,7 +211,7 @@ export class TaiKhoanService {
    */
   async findParents(): Promise<TaiKhoan[]> {
     const parents = await this.taiKhoanRepository.find({
-      where: { capDo: 1, isActive: true },
+      where: { capDo: 1, isActive: true, ...this.getTenantFilter() },
     });
     return parents.sort((a, b) => a.ma.localeCompare(b.ma));
   }
@@ -216,7 +223,7 @@ export class TaiKhoanService {
    */
   async findLeafAccounts(): Promise<TaiKhoan[]> {
     const allAccounts = await this.taiKhoanRepository.find({
-      where: { isActive: true },
+      where: { isActive: true, ...this.getTenantFilter() },
     });
 
     // Get all parent IDs (accounts that have children)

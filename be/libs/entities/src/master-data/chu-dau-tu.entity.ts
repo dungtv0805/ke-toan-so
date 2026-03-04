@@ -3,7 +3,7 @@ import { BaseEntity } from '../base.entity';
 
 @Entity('chu_dau_tu')
 export class ChuDauTu extends BaseEntity {
-  @Column({ unique: true })
+  @Column()
   ma: string;
 
   @Column()

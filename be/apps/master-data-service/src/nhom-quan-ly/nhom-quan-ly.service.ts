@@ -1,4 +1,4 @@
-import { sanitizeUpdateDto } from '@app/core';
+import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -19,7 +19,13 @@ export class NhomQuanLyService {
   constructor(
     @InjectRepository(NhomQuanLy)
     private readonly nhomQuanLyRepository: Repository<NhomQuanLy>,
+    private readonly tenantContext: TenantContextService,
   ) {}
+
+  private getTenantFilter() {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    return tenantId ? { tenantId } : {};
+  }
 
   async findAllPaginated(
     query: NhomQuanLyQueryDto,
@@ -27,7 +33,7 @@ export class NhomQuanLyService {
     const { page = 1, limit = 10, search } = query;
     const skip = (page - 1) * limit;
 
-    const allItems = await this.nhomQuanLyRepository.find();
+    const allItems = await this.nhomQuanLyRepository.find({ where: this.getTenantFilter() as any });
     let filteredItems = allItems.filter((item) => item.isActive !== false);
 
     if (search) {
@@ -54,7 +60,7 @@ export class NhomQuanLyService {
   }
 
   async findAll(): Promise<NhomQuanLy[]> {
-    const allItems = await this.nhomQuanLyRepository.find();
+    const allItems = await this.nhomQuanLyRepository.find({ where: this.getTenantFilter() as any });
     return allItems.filter((item) => item.isActive !== false);
   }
 
@@ -72,7 +78,7 @@ export class NhomQuanLyService {
   }
 
   async findByMa(ma: string): Promise<NhomQuanLy | null> {
-    return this.nhomQuanLyRepository.findOne({ where: { ma } });
+    return this.nhomQuanLyRepository.findOne({ where: { ma, isActive: true, ...this.getTenantFilter() } });
   }
 
   async create(createDto: CreateNhomQuanLyDto): Promise<NhomQuanLy> {

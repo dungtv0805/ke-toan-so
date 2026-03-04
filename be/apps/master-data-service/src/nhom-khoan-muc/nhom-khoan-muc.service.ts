@@ -1,4 +1,4 @@
-import { sanitizeUpdateDto } from '@app/core';
+import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import { PaginatedResult, PaginationQueryDto } from '@app/dto';
 import { NhomKhoanMuc, NhomKhoanMucLoai } from '@app/entities';
 import {
@@ -15,7 +15,13 @@ export class NhomKhoanMucService {
   constructor(
     @InjectRepository(NhomKhoanMuc)
     private readonly nhomKhoanMucRepository: Repository<NhomKhoanMuc>,
+    private readonly tenantContext: TenantContextService,
   ) {}
+
+  private getTenantFilter() {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    return tenantId ? { tenantId } : {};
+  }
 
   async findAllPaginated(
     query: PaginationQueryDto & { loai?: string },
@@ -25,7 +31,7 @@ export class NhomKhoanMucService {
     const { search, loai } = query;
     const skip = (page - 1) * limit;
 
-    const baseWhere: any = { isActive: true };
+    const baseWhere: any = { isActive: true, ...this.getTenantFilter() };
     if (loai) {
       baseWhere.loai = loai;
     }
@@ -69,7 +75,7 @@ export class NhomKhoanMucService {
   }
 
   async findAll(loai?: NhomKhoanMucLoai): Promise<NhomKhoanMuc[]> {
-    const where: any = { isActive: true };
+    const where: any = { isActive: true, ...this.getTenantFilter() };
     if (loai) {
       where.loai = loai;
     }
@@ -90,7 +96,7 @@ export class NhomKhoanMucService {
 
   async findByMa(ma: string): Promise<NhomKhoanMuc | null> {
     return this.nhomKhoanMucRepository.findOne({
-      where: { ma, isActive: true },
+      where: { ma, isActive: true, ...this.getTenantFilter() },
     });
   }
 
@@ -133,7 +139,7 @@ export class NhomKhoanMucService {
     doanhThu: number;
   }> {
     const all = await this.nhomKhoanMucRepository.find({
-      where: { isActive: true },
+      where: { isActive: true, ...this.getTenantFilter() },
     });
     return {
       tongNhomKhoanMuc: all.length,

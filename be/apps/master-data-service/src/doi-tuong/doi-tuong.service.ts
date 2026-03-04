@@ -1,4 +1,4 @@
-import { sanitizeUpdateDto } from '@app/core';
+import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -16,13 +16,19 @@ export class DoiTuongService {
   constructor(
     @InjectRepository(DoiTuong)
     private readonly doiTuongRepository: Repository<DoiTuong>,
+    private readonly tenantContext: TenantContextService,
   ) {}
+
+  private getTenantFilter() {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    return tenantId ? { tenantId } : {};
+  }
 
   /**
    * Build where conditions for queries
    */
   private buildWhereConditions(search?: string, loai?: DoiTuongType): any {
-    const where: any = { isActive: true };
+    const where: any = { isActive: true, ...this.getTenantFilter() };
     if (loai) {
       where.loai = loai;
     }
@@ -59,7 +65,7 @@ export class DoiTuongService {
     const skip = (page - 1) * limit;
 
     // Get all items first, then filter and paginate (MongoDB count workaround)
-    const allItems = await this.doiTuongRepository.find();
+    const allItems = await this.doiTuongRepository.find({ where: this.getTenantFilter() as any });
     let filteredItems = allItems.filter((item) => item.isActive !== false);
 
     if (loai) {
@@ -93,7 +99,7 @@ export class DoiTuongService {
   }
 
   async findAll(loai?: DoiTuongType): Promise<DoiTuong[]> {
-    const where: any = { isActive: true };
+    const where: any = { isActive: true, ...this.getTenantFilter() };
     if (loai) {
       where.loai = loai;
     }
@@ -114,7 +120,7 @@ export class DoiTuongService {
   }
 
   async findByMa(ma: string): Promise<DoiTuong | null> {
-    return this.doiTuongRepository.findOne({ where: { ma } });
+    return this.doiTuongRepository.findOne({ where: { ma, isActive: true, ...this.getTenantFilter() } });
   }
 
   async create(createDto: CreateDoiTuongDto): Promise<DoiTuong> {
@@ -159,7 +165,7 @@ export class DoiTuongService {
     loai?: DoiTuongType,
     limit = 20,
   ): Promise<DoiTuong[]> {
-    const baseWhere: any = { isActive: true };
+    const baseWhere: any = { isActive: true, ...this.getTenantFilter() };
     if (loai) {
       baseWhere.loai = loai;
     }
@@ -206,7 +212,7 @@ export class DoiTuongService {
     nhanVien: number;
     nhaThau: number;
   }> {
-    const allItems = await this.doiTuongRepository.find();
+    const allItems = await this.doiTuongRepository.find({ where: this.getTenantFilter() as any });
     const activeItems = allItems.filter((item) => item.isActive !== false);
 
     const tongDoiTuong = activeItems.length;

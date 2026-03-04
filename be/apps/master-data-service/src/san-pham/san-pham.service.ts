@@ -1,4 +1,4 @@
-import { sanitizeUpdateDto } from '@app/core';
+import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -15,7 +15,13 @@ export class SanPhamService {
   constructor(
     @InjectRepository(SanPham)
     private readonly sanPhamRepository: Repository<SanPham>,
+    private readonly tenantContext: TenantContextService,
   ) {}
+
+  private getTenantFilter() {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    return tenantId ? { tenantId } : {};
+  }
 
   /**
    * Get total count using DB query
@@ -26,6 +32,7 @@ export class SanPhamService {
       return this.sanPhamRepository.count({
         where: {
           isActive: true,
+          ...this.getTenantFilter(),
           $or: [
             { ma: { $regex: searchRegex } },
             { ten: { $regex: searchRegex } },
@@ -33,7 +40,7 @@ export class SanPhamService {
         } as any,
       });
     }
-    return this.sanPhamRepository.count({ where: { isActive: true } });
+    return this.sanPhamRepository.count({ where: { isActive: true, ...this.getTenantFilter() } });
   }
 
   async findAllPaginated(
@@ -43,7 +50,7 @@ export class SanPhamService {
     const skip = (page - 1) * limit;
 
     // Get all items first, then filter and paginate (MongoDB count workaround)
-    const allItems = await this.sanPhamRepository.find();
+    const allItems = await this.sanPhamRepository.find({ where: this.getTenantFilter() as any });
     let filteredItems = allItems.filter((item) => item.isActive !== false);
 
     if (search) {
@@ -70,7 +77,7 @@ export class SanPhamService {
   }
 
   async findAll(): Promise<SanPham[]> {
-    return this.sanPhamRepository.find({ where: { isActive: true } });
+    return this.sanPhamRepository.find({ where: { isActive: true, ...this.getTenantFilter() } });
   }
 
   async findOne(id: string): Promise<SanPham> {
@@ -87,7 +94,7 @@ export class SanPhamService {
   }
 
   async findByMa(ma: string): Promise<SanPham | null> {
-    return this.sanPhamRepository.findOne({ where: { ma } });
+    return this.sanPhamRepository.findOne({ where: { ma, isActive: true, ...this.getTenantFilter() } });
   }
 
   async create(createDto: CreateSanPhamDto): Promise<SanPham> {
@@ -133,7 +140,7 @@ export class SanPhamService {
   async search(keyword: string, limit = 20): Promise<SanPham[]> {
     if (!keyword) {
       return this.sanPhamRepository.find({
-        where: { isActive: true },
+        where: { isActive: true, ...this.getTenantFilter() },
         take: limit,
       });
     }
@@ -142,6 +149,7 @@ export class SanPhamService {
     return this.sanPhamRepository.find({
       where: {
         isActive: true,
+        ...this.getTenantFilter(),
         $or: [
           { ma: { $regex: searchRegex } },
           { ten: { $regex: searchRegex } },
@@ -169,7 +177,7 @@ export class SanPhamService {
     coGiaBan: number;
     chuaCoGia: number;
   }> {
-    const allItems = await this.sanPhamRepository.find();
+    const allItems = await this.sanPhamRepository.find({ where: this.getTenantFilter() as any });
     const activeItems = allItems.filter((item) => item.isActive !== false);
 
     const tongSanPham = activeItems.length;

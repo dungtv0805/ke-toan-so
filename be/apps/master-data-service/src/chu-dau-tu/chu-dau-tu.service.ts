@@ -1,4 +1,4 @@
-import { sanitizeUpdateDto } from '@app/core';
+import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -15,7 +15,13 @@ export class ChuDauTuService {
   constructor(
     @InjectRepository(ChuDauTu)
     private readonly chuDauTuRepository: Repository<ChuDauTu>,
+    private readonly tenantContext: TenantContextService,
   ) {}
+
+  private getTenantFilter() {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    return tenantId ? { tenantId } : {};
+  }
 
   async findAllPaginated(
     query: ChuDauTuQueryDto,
@@ -23,7 +29,7 @@ export class ChuDauTuService {
     const { page = 1, limit = 10, search } = query;
     const skip = (page - 1) * limit;
 
-    const allItems = await this.chuDauTuRepository.find();
+    const allItems = await this.chuDauTuRepository.find({ where: this.getTenantFilter() as any });
     let filteredItems = allItems.filter((item) => item.isActive !== false);
 
     if (search) {
@@ -50,7 +56,7 @@ export class ChuDauTuService {
   }
 
   async findAll(): Promise<ChuDauTu[]> {
-    const allItems = await this.chuDauTuRepository.find();
+    const allItems = await this.chuDauTuRepository.find({ where: this.getTenantFilter() as any });
     return allItems.filter((item) => item.isActive !== false);
   }
 
@@ -68,7 +74,7 @@ export class ChuDauTuService {
   }
 
   async findByMa(ma: string): Promise<ChuDauTu | null> {
-    return this.chuDauTuRepository.findOne({ where: { ma } });
+    return this.chuDauTuRepository.findOne({ where: { ma, isActive: true, ...this.getTenantFilter() } });
   }
 
   async create(createDto: CreateChuDauTuDto): Promise<ChuDauTu> {

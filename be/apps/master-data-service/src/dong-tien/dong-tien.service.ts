@@ -1,4 +1,4 @@
-import { sanitizeUpdateDto } from '@app/core';
+import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -15,7 +15,13 @@ export class DongTienService {
   constructor(
     @InjectRepository(DongTien)
     private readonly dongTienRepository: Repository<DongTien>,
+    private readonly tenantContext: TenantContextService,
   ) {}
+
+  private getTenantFilter() {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    return tenantId ? { tenantId } : {};
+  }
 
   /**
    * Get total count using DB query
@@ -26,6 +32,7 @@ export class DongTienService {
       return this.dongTienRepository.count({
         where: {
           isActive: true,
+          ...this.getTenantFilter(),
           $or: [
             { ma: { $regex: searchRegex } },
             { ten: { $regex: searchRegex } },
@@ -33,7 +40,7 @@ export class DongTienService {
         } as any,
       });
     }
-    return this.dongTienRepository.count({ where: { isActive: true } });
+    return this.dongTienRepository.count({ where: { isActive: true, ...this.getTenantFilter() } });
   }
 
   async findAllPaginated(
@@ -43,7 +50,7 @@ export class DongTienService {
     const skip = (page - 1) * limit;
 
     // Get all items first, then filter and paginate
-    const allItems = await this.dongTienRepository.find();
+    const allItems = await this.dongTienRepository.find({ where: this.getTenantFilter() as any });
     let filteredItems = allItems.filter((item) => item.isActive !== false);
 
     if (search) {
@@ -75,7 +82,7 @@ export class DongTienService {
   async search(keyword: string, limit = 20): Promise<DongTien[]> {
     if (!keyword) {
       return this.dongTienRepository.find({
-        where: { isActive: true },
+        where: { isActive: true, ...this.getTenantFilter() },
         take: limit,
       });
     }
@@ -84,6 +91,7 @@ export class DongTienService {
     return this.dongTienRepository.find({
       where: {
         isActive: true,
+        ...this.getTenantFilter(),
         $or: [
           { ma: { $regex: searchRegex } },
           { ten: { $regex: searchRegex } },
@@ -94,7 +102,7 @@ export class DongTienService {
   }
 
   async findAll(): Promise<DongTien[]> {
-    return this.dongTienRepository.find({ where: { isActive: true } });
+    return this.dongTienRepository.find({ where: { isActive: true, ...this.getTenantFilter() } });
   }
 
   async findOne(id: string): Promise<DongTien> {
@@ -111,7 +119,7 @@ export class DongTienService {
   }
 
   async findByMa(ma: string): Promise<DongTien | null> {
-    return this.dongTienRepository.findOne({ where: { ma } });
+    return this.dongTienRepository.findOne({ where: { ma, isActive: true, ...this.getTenantFilter() } });
   }
 
   async create(createDto: CreateDongTienDto): Promise<DongTien> {
@@ -156,7 +164,7 @@ export class DongTienService {
    */
   async findByLoai(loai: string, limit = 100): Promise<DongTien[]> {
     return this.dongTienRepository.find({
-      where: { isActive: true, loai } as any,
+      where: { isActive: true, loai, ...this.getTenantFilter() } as any,
       take: limit,
     });
   }
@@ -181,7 +189,7 @@ export class DongTienService {
     taiChinh: number;
   }> {
     // Use countBy for simpler queries or count all and filter
-    const allItems = await this.dongTienRepository.find();
+    const allItems = await this.dongTienRepository.find({ where: this.getTenantFilter() as any });
     const activeItems = allItems.filter((item) => item.isActive !== false);
 
     const tongSo = activeItems.length;

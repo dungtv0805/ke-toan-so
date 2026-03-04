@@ -3,7 +3,7 @@ import { BaseEntity } from '../base.entity';
 
 @Entity('san_pham')
 export class SanPham extends BaseEntity {
-  @Column({ unique: true })
+  @Column()
   ma: string;
 
   @Column()

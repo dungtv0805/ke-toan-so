@@ -1,4 +1,4 @@
-import { sanitizeUpdateDto } from '@app/core';
+import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -19,7 +19,13 @@ export class NhomKhuyenMaiService {
   constructor(
     @InjectRepository(NhomKhuyenMai)
     private readonly nhomKhuyenMaiRepository: Repository<NhomKhuyenMai>,
+    private readonly tenantContext: TenantContextService,
   ) {}
+
+  private getTenantFilter() {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    return tenantId ? { tenantId } : {};
+  }
 
   async findAllPaginated(
     query: NhomKhuyenMaiQueryDto,
@@ -27,7 +33,7 @@ export class NhomKhuyenMaiService {
     const { page = 1, limit = 10, search } = query;
     const skip = (page - 1) * limit;
 
-    const allItems = await this.nhomKhuyenMaiRepository.find();
+    const allItems = await this.nhomKhuyenMaiRepository.find({ where: this.getTenantFilter() as any });
     let filteredItems = allItems.filter((item) => item.isActive !== false);
 
     if (search) {
@@ -54,7 +60,7 @@ export class NhomKhuyenMaiService {
   }
 
   async findAll(): Promise<NhomKhuyenMai[]> {
-    const allItems = await this.nhomKhuyenMaiRepository.find();
+    const allItems = await this.nhomKhuyenMaiRepository.find({ where: this.getTenantFilter() as any });
     return allItems.filter((item) => item.isActive !== false);
   }
 
@@ -72,7 +78,7 @@ export class NhomKhuyenMaiService {
   }
 
   async findByMa(ma: string): Promise<NhomKhuyenMai | null> {
-    return this.nhomKhuyenMaiRepository.findOne({ where: { ma } });
+    return this.nhomKhuyenMaiRepository.findOne({ where: { ma, isActive: true, ...this.getTenantFilter() } });
   }
 
   async create(createDto: CreateNhomKhuyenMaiDto): Promise<NhomKhuyenMai> {

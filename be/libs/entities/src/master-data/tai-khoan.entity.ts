@@ -21,7 +21,7 @@ export enum NhomTaiKhoan {
 
 @Entity('tai_khoan')
 export class TaiKhoan extends BaseEntity {
-  @Column({ unique: true })
+  @Column()
   ma: string;
 
   @Column()

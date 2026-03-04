@@ -3,7 +3,7 @@ import { BaseEntity } from '../base.entity';
 
 @Entity('nhom_quan_ly')
 export class NhomQuanLy extends BaseEntity {
-  @Column({ unique: true })
+  @Column()
   ma: string;
 
   @Column()
