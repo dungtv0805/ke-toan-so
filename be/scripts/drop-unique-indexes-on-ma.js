@@ -1,9 +1,11 @@
 /**
- * Migration Script: Drop unique indexes on 'ma' column for master-data collections
+ * Migration Script: Replace global unique indexes on 'ma' with per-tenant compound unique indexes
  *
  * In a multi-tenant system, the unique index on 'ma' is global (not per-tenant),
  * which prevents different tenants from having the same 'ma' value.
- * This script removes those unique indexes so tenantId-based filtering handles uniqueness instead.
+ * This script:
+ *   1. Drops the old global unique index on 'ma'
+ *   2. Creates a new compound unique index on { ma: 1, tenantId: 1 }
  *
  * Usage:
  *   env-cmd -e db node scripts/drop-unique-indexes-on-ma.js [--dry-run]
@@ -46,7 +48,7 @@ const SO_HOP_DONG_COLLECTIONS = [
   { collection: 'hop_dong', field: 'soHopDong' },
 ];
 
-async function dropUniqueIndexes() {
+async function migrateIndexes() {
   const args = process.argv.slice(2);
   const isDryRun = args.includes('--dry-run');
 
@@ -62,27 +64,35 @@ async function dropUniqueIndexes() {
 
     const db = client.db(MONGODB_DATABASE);
 
-    let dropped = 0;
-    let skipped = 0;
-    let errors = 0;
+    const stats = { dropped: 0, created: 0, skippedDrop: 0, skippedCreate: 0, errors: 0 };
 
-    // Process 'ma' field collections
+    console.log('=== STEP 1: Drop old global unique indexes ===\n');
+
     for (const colName of MA_COLLECTIONS) {
-      await processCollection(db, colName, 'ma', isDryRun, { dropped: () => dropped++, skipped: () => skipped++, error: () => errors++ });
+      await dropOldIndex(db, colName, 'ma', isDryRun, stats);
+    }
+    for (const { collection, field } of SO_HOP_DONG_COLLECTIONS) {
+      await dropOldIndex(db, collection, field, isDryRun, stats);
     }
 
-    // Process 'soHopDong' field collections
+    console.log('\n=== STEP 2: Create compound unique indexes { field, tenantId } ===\n');
+
+    for (const colName of MA_COLLECTIONS) {
+      await createCompoundIndex(db, colName, 'ma', isDryRun, stats);
+    }
     for (const { collection, field } of SO_HOP_DONG_COLLECTIONS) {
-      await processCollection(db, collection, field, isDryRun, { dropped: () => dropped++, skipped: () => skipped++, error: () => errors++ });
+      await createCompoundIndex(db, collection, field, isDryRun, stats);
     }
 
     console.log('\n==================================================');
     console.log('📊 SUMMARY');
     console.log('==================================================');
-    console.log(`✅ Dropped: ${dropped}`);
-    console.log(`⏭️  Skipped (no unique index): ${skipped}`);
-    console.log(`❌ Errors: ${errors}`);
-    console.log(`📦 Total collections checked: ${MA_COLLECTIONS.length + SO_HOP_DONG_COLLECTIONS.length}`);
+    console.log(`✅ Old indexes dropped: ${stats.dropped}`);
+    console.log(`⏭️  Drop skipped (no old index): ${stats.skippedDrop}`);
+    console.log(`✅ Compound indexes created: ${stats.created}`);
+    console.log(`⏭️  Create skipped (already exists): ${stats.skippedCreate}`);
+    console.log(`❌ Errors: ${stats.errors}`);
+    console.log(`📦 Total collections: ${MA_COLLECTIONS.length + SO_HOP_DONG_COLLECTIONS.length}`);
     if (isDryRun) {
       console.log('\n🔍 This was a DRY RUN. Run without --dry-run to apply changes.');
     }
@@ -97,35 +107,80 @@ async function dropUniqueIndexes() {
   }
 }
 
-async function processCollection(db, colName, field, isDryRun, counters) {
+async function dropOldIndex(db, colName, field, isDryRun, stats) {
   try {
     const collection = db.collection(colName);
     const indexes = await collection.indexes();
 
-    // Find unique index on the target field
+    // Find single-field unique index on the target field (not compound)
     const uniqueIndex = indexes.find(
-      (idx) => idx.unique && idx.key && idx.key[field] !== undefined && idx.name !== '_id_'
+      (idx) =>
+        idx.unique &&
+        idx.key &&
+        idx.key[field] !== undefined &&
+        Object.keys(idx.key).length === 1 &&
+        idx.name !== '_id_'
     );
 
     if (!uniqueIndex) {
-      console.log(`⏭️  ${colName}: No unique index on '${field}' — skipping`);
-      counters.skipped();
+      console.log(`⏭️  ${colName}: No single-field unique index on '${field}' — skipping`);
+      stats.skippedDrop++;
       return;
     }
 
     if (isDryRun) {
       console.log(`🔍 ${colName}: Would drop index '${uniqueIndex.name}' (unique on '${field}')`);
-      counters.dropped();
+      stats.dropped++;
       return;
     }
 
     await collection.dropIndex(uniqueIndex.name);
     console.log(`✅ ${colName}: Dropped index '${uniqueIndex.name}' (unique on '${field}')`);
-    counters.dropped();
+    stats.dropped++;
   } catch (error) {
-    console.error(`❌ ${colName}: Error — ${error.message}`);
-    counters.error();
+    console.error(`❌ ${colName}: Drop error — ${error.message}`);
+    stats.errors++;
   }
 }
 
-dropUniqueIndexes();
+async function createCompoundIndex(db, colName, field, isDryRun, stats) {
+  try {
+    const collection = db.collection(colName);
+    const indexes = await collection.indexes();
+
+    // Check if compound index { field: 1, tenantId: 1 } already exists
+    const compoundExists = indexes.find(
+      (idx) =>
+        idx.unique &&
+        idx.key &&
+        idx.key[field] !== undefined &&
+        idx.key['tenantId'] !== undefined
+    );
+
+    if (compoundExists) {
+      console.log(`⏭️  ${colName}: Compound unique index on { ${field}, tenantId } already exists — skipping`);
+      stats.skippedCreate++;
+      return;
+    }
+
+    const indexName = `${field}_tenantId_unique`;
+
+    if (isDryRun) {
+      console.log(`🔍 ${colName}: Would create index '${indexName}' (unique on { ${field}: 1, tenantId: 1 })`);
+      stats.created++;
+      return;
+    }
+
+    await collection.createIndex(
+      { [field]: 1, tenantId: 1 },
+      { unique: true, name: indexName }
+    );
+    console.log(`✅ ${colName}: Created index '${indexName}' (unique on { ${field}: 1, tenantId: 1 })`);
+    stats.created++;
+  } catch (error) {
+    console.error(`❌ ${colName}: Create error — ${error.message}`);
+    stats.errors++;
+  }
+}
+
+migrateIndexes();
