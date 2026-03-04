@@ -99,7 +99,7 @@ export class ChungTuService {
     });
 
     if (!chungTu) {
-      throw new NotFoundException(`ChungTu with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy chứng từ với ID ${id}`);
     }
 
     return chungTu;

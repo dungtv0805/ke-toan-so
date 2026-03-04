@@ -20,7 +20,7 @@ export class TempTokenGuard implements CanActivate {
     const token = this.extractToken(request);
 
     if (!token) {
-      throw new UnauthorizedException('Authorization token is required');
+      throw new UnauthorizedException('Yêu cầu token xác thực');
     }
 
     try {
@@ -29,7 +29,7 @@ export class TempTokenGuard implements CanActivate {
       // Only accept temp tokens
       if (!this.jwtService.isTempToken(decoded)) {
         throw new UnauthorizedException(
-          'Temp token required. Access token is not allowed for this endpoint.',
+          'Yêu cầu token tạm thời. Token truy cập không được phép cho endpoint này.',
         );
       }
 

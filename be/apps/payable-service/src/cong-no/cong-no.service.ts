@@ -46,7 +46,7 @@ export class CongNoService {
     });
 
     if (!congNo) {
-      throw new NotFoundException(`CongNo with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy công nợ với ID ${id}`);
     }
 
     return congNo;

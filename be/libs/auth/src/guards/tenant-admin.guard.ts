@@ -27,7 +27,7 @@ export class TenantAdminGuard implements CanActivate {
     const user = (request as any).user;
 
     if (!user) {
-      throw new ForbiddenException('User not found in request');
+      throw new ForbiddenException('Không tìm thấy thông tin người dùng');
     }
 
     // Super Admin bypass
@@ -37,7 +37,7 @@ export class TenantAdminGuard implements CanActivate {
 
     const tenantId = request.params.id;
     if (!tenantId) {
-      throw new ForbiddenException('Tenant ID not found in request');
+      throw new ForbiddenException('Không tìm thấy mã công ty');
     }
 
     // Check if user is ADMIN in this tenant

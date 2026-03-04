@@ -87,7 +87,7 @@ export class LoaiGiaoDichService {
     });
 
     if (!loaiGiaoDich) {
-      throw new NotFoundException(`LoaiGiaoDich with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy LoaiGiaoDich với ID ${id}`);
     }
 
     return loaiGiaoDich;

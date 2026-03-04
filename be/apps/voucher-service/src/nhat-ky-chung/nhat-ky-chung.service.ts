@@ -127,7 +127,7 @@ export class NhatKyChungService {
     });
 
     if (!chungTu) {
-      throw new NotFoundException(`Entry with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy bút toán với ID ${id}`);
     }
 
     return { success: true, data: chungTu };
@@ -168,11 +168,11 @@ export class NhatKyChungService {
     });
 
     if (!chungTu) {
-      throw new NotFoundException(`Entry with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy bút toán với ID ${id}`);
     }
 
     if ((chungTu as any).trangThai === 'DA_DUYET') {
-      throw new ForbiddenException('Cannot modify approved entry');
+      throw new ForbiddenException('Không thể sửa bút toán đã duyệt');
     }
 
     if (updateDto.ngay) {
@@ -208,15 +208,15 @@ export class NhatKyChungService {
     });
 
     if (!chungTu) {
-      throw new NotFoundException(`Entry with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy bút toán với ID ${id}`);
     }
 
     if ((chungTu as any).trangThai === 'DA_DUYET') {
-      throw new ForbiddenException('Cannot delete approved entry');
+      throw new ForbiddenException('Không thể xóa bút toán đã duyệt');
     }
 
     await this.chungTuRepository.remove(chungTu);
-    return { success: true, message: 'Entry deleted successfully' };
+    return { success: true, message: 'Xóa bút toán thành công' };
   }
 
   /**
@@ -275,7 +275,7 @@ export class NhatKyChungService {
       (item) => (item as any).trangThai === 'DA_DUYET',
     );
     if (hasApproved) {
-      throw new ForbiddenException('Cannot modify approved entries');
+      throw new ForbiddenException('Không thể sửa các bút toán đã duyệt');
     }
 
     // 3. Separate items by operation type

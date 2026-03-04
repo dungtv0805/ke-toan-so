@@ -8,7 +8,7 @@ export class UpdateTenantDto {
   @IsString()
   @IsOptional()
   @Matches(/^[a-z0-9-]+$/, {
-    message: 'Slug must contain only lowercase letters, numbers, and hyphens',
+    message: 'Slug chỉ được chứa chữ thường, số và dấu gạch ngang',
   })
   slug?: string;
 

@@ -87,7 +87,7 @@ export class SanPhamService {
     });
 
     if (!sanPham) {
-      throw new NotFoundException(`SanPham with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy SanPham với ID ${id}`);
     }
 
     return sanPham;
@@ -101,7 +101,7 @@ export class SanPhamService {
     const existing = await this.findByMa(createDto.ma);
     if (existing) {
       throw new ConflictException(
-        `Product code ${createDto.ma} already exists`,
+        `Mã sản phẩm ${createDto.ma} đã tồn tại`,
       );
     }
 
@@ -119,7 +119,7 @@ export class SanPhamService {
       const existing = await this.findByMa(updateDto.ma);
       if (existing) {
         throw new ConflictException(
-          `Product code ${updateDto.ma} already exists`,
+          `Mã sản phẩm ${updateDto.ma} đã tồn tại`,
         );
       }
     }

@@ -26,12 +26,12 @@ export class JwtService {
       return jwt.verify(token, this.secret) as DecodedToken;
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
-        throw new Error('Token has expired');
+        throw new Error('Token đã hết hạn');
       }
       if (error instanceof jwt.JsonWebTokenError) {
-        throw new Error('Invalid token');
+        throw new Error('Token không hợp lệ');
       }
-      throw new Error(`Token verification failed: ${(error as Error).message}`);
+      throw new Error(`Xác thực token thất bại: ${(error as Error).message}`);
     }
   }
 
@@ -82,17 +82,17 @@ export class JwtService {
     try {
       const decoded = jwt.verify(token, this.secret) as DecodedTempToken;
       if (decoded.type !== 'temp') {
-        throw new Error('Invalid token type');
+        throw new Error('Loại token không hợp lệ');
       }
       return decoded;
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
-        throw new Error('Temp token has expired');
+        throw new Error('Token tạm thời đã hết hạn');
       }
       if (error instanceof jwt.JsonWebTokenError) {
-        throw new Error('Invalid temp token');
+        throw new Error('Token tạm thời không hợp lệ');
       }
-      throw new Error(`Temp token verification failed: ${(error as Error).message}`);
+      throw new Error(`Xác thực token tạm thời thất bại: ${(error as Error).message}`);
     }
   }
 

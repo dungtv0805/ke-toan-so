@@ -25,7 +25,7 @@ export class PhanQuyen_Service {
     });
 
     if (!item) {
-      throw new NotFoundException(`PhanQuyen with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy phân quyền với ID ${id}`);
     }
 
     return item;

@@ -71,7 +71,7 @@ export class NhomKhuyenMaiService {
     });
 
     if (!nhomKhuyenMai) {
-      throw new NotFoundException(`NhomKhuyenMai with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy NhomKhuyenMai với ID ${id}`);
     }
 
     return nhomKhuyenMai;

@@ -136,6 +136,6 @@ export class NhomKhuyenMaiController {
   @Roles('ADMIN')
   async delete(@Param('id') id: string) {
     await this.nhomKhuyenMaiService.delete(id);
-    return { success: true, message: 'Deleted successfully' };
+    return { success: true, message: 'Xóa thành công' };
   }
 }

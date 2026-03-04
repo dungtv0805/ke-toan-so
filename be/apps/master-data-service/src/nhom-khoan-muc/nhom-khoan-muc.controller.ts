@@ -111,6 +111,6 @@ export class NhomKhoanMucController {
   @Roles('ADMIN', 'KE_TOAN_TRUONG')
   async delete(@Param('id') id: string) {
     await this.nhomKhoanMucService.delete(id);
-    return { success: true, message: 'Deleted successfully' };
+    return { success: true, message: 'Xóa thành công' };
   }
 }

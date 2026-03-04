@@ -57,7 +57,7 @@ export class TenantController {
   @UseGuards(JwtGuard, SuperAdminGuard)
   async delete(@Param('id') id: string) {
     await this.tenantService.delete(id);
-    return { success: true, message: 'Tenant deleted successfully' };
+    return { success: true, message: 'Xóa công ty thành công' };
   }
 
   // ===== Tenant Members (Super Admin + Tenant Admin) =====

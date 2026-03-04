@@ -136,6 +136,6 @@ export class NhomQuanLyController {
   @Roles('ADMIN')
   async delete(@Param('id') id: string) {
     await this.nhomQuanLyService.delete(id);
-    return { success: true, message: 'Deleted successfully' };
+    return { success: true, message: 'Xóa thành công' };
   }
 }

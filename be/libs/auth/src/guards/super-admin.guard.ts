@@ -14,11 +14,11 @@ export class SuperAdminGuard implements CanActivate {
     const user = (request as any).user;
 
     if (!user) {
-      throw new ForbiddenException('User not found in request');
+      throw new ForbiddenException('Không tìm thấy thông tin người dùng');
     }
 
     if (user.email !== SUPER_ADMIN_EMAIL) {
-      throw new ForbiddenException('Only Super Admin can access this resource');
+      throw new ForbiddenException('Chỉ Super Admin mới có quyền truy cập');
     }
 
     return true;

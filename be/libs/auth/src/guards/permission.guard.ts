@@ -27,7 +27,7 @@ export class PermissionGuard implements CanActivate {
     const user = (request as any).user;
 
     if (!user) {
-      throw new ForbiddenException('User not found in request');
+      throw new ForbiddenException('Không tìm thấy thông tin người dùng');
     }
 
     const userPermissions = user.permissions || [];
@@ -40,7 +40,7 @@ export class PermissionGuard implements CanActivate {
         (permission) => !userPermissions.includes(permission),
       );
       throw new ForbiddenException(
-        `You do not have required permissions: ${missingPermissions.join(', ')}`,
+        `Bạn không có quyền cần thiết: ${missingPermissions.join(', ')}`,
       );
     }
 

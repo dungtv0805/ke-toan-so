@@ -89,7 +89,7 @@ export class NhomKhoanMucService {
       where: { _id: new ObjectId(id) as any },
     });
     if (!nhomKhoanMuc) {
-      throw new NotFoundException(`NhomKhoanMuc with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy NhomKhoanMuc với ID ${id}`);
     }
     return nhomKhoanMuc;
   }

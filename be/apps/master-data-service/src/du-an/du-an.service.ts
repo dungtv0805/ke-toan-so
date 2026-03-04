@@ -125,7 +125,7 @@ export class DuAnService {
     });
 
     if (!duAn) {
-      throw new NotFoundException(`DuAn with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy DuAn với ID ${id}`);
     }
 
     return duAn;
@@ -139,7 +139,7 @@ export class DuAnService {
     const existing = await this.findByMa(createDto.ma);
     if (existing) {
       throw new ConflictException(
-        `Project code ${createDto.ma} already exists`,
+        `Mã dự án ${createDto.ma} đã tồn tại`,
       );
     }
 
@@ -176,7 +176,7 @@ export class DuAnService {
     if (dto.ma && dto.ma !== duAn.ma) {
       const existing = await this.findByMa(dto.ma);
       if (existing) {
-        throw new ConflictException(`Project code ${dto.ma} already exists`);
+        throw new ConflictException(`Mã dự án ${dto.ma} đã tồn tại`);
       }
     }
 

@@ -82,7 +82,7 @@ export class HopDongService {
     });
 
     if (!hopDong) {
-      throw new NotFoundException(`HopDong with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy HopDong với ID ${id}`);
     }
 
     return hopDong;

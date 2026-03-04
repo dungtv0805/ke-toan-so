@@ -116,7 +116,7 @@ export class TaiKhoanService {
     });
 
     if (!taiKhoan) {
-      throw new NotFoundException(`TaiKhoan with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy TaiKhoan với ID ${id}`);
     }
 
     return taiKhoan;
@@ -131,7 +131,7 @@ export class TaiKhoanService {
     const existing = await this.findByMa(createDto.ma);
     if (existing) {
       throw new ConflictException(
-        `Account code ${createDto.ma} already exists`,
+        `Mã tài khoản ${createDto.ma} đã tồn tại`,
       );
     }
 
@@ -150,7 +150,7 @@ export class TaiKhoanService {
       const existing = await this.findByMa(updateDto.ma);
       if (existing) {
         throw new ConflictException(
-          `Account code ${updateDto.ma} already exists`,
+          `Mã tài khoản ${updateDto.ma} đã tồn tại`,
         );
       }
     }

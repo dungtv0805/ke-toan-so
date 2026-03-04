@@ -16,7 +16,7 @@ export class JwtGuard implements CanActivate {
     const token = this.extractToken(request);
 
     if (!token) {
-      throw new UnauthorizedException('Authorization token is required');
+      throw new UnauthorizedException('Yêu cầu token xác thực');
     }
 
     try {

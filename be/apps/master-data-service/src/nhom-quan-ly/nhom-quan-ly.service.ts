@@ -71,7 +71,7 @@ export class NhomQuanLyService {
     });
 
     if (!nhomQuanLy) {
-      throw new NotFoundException(`NhomQuanLy with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy NhomQuanLy với ID ${id}`);
     }
 
     return nhomQuanLy;

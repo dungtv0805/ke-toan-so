@@ -28,7 +28,7 @@ export class RoleGuard implements CanActivate {
     const user = (request as any).user;
 
     if (!user) {
-      throw new ForbiddenException('User not found in request');
+      throw new ForbiddenException('Không tìm thấy thông tin người dùng');
     }
 
     // Super admin (by email) has access to all resources
@@ -40,7 +40,7 @@ export class RoleGuard implements CanActivate {
 
     if (!hasRole) {
       throw new ForbiddenException(
-        `Your role (${user.vaiTro}) does not have access to this resource. Required: ${requiredRoles.join(', ')}`,
+        `Vai trò của bạn (${user.vaiTro}) không có quyền truy cập. Yêu cầu: ${requiredRoles.join(', ')}`,
       );
     }
 

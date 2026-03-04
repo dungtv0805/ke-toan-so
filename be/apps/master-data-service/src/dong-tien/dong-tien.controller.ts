@@ -158,6 +158,6 @@ export class DongTienController {
   @Roles('ADMIN')
   async delete(@Param('id') id: string) {
     await this.dongTienService.delete(id);
-    return { success: true, message: 'Deleted successfully' };
+    return { success: true, message: 'Xóa thành công' };
   }
 }

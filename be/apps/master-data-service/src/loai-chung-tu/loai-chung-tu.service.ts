@@ -105,7 +105,7 @@ export class LoaiChungTuService {
     });
 
     if (!loaiChungTu) {
-      throw new NotFoundException(`LoaiChungTu with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy LoaiChungTu với ID ${id}`);
     }
 
     return loaiChungTu;

@@ -87,7 +87,7 @@ export class BoPhanService {
     });
 
     if (!boPhan) {
-      throw new NotFoundException(`BoPhan with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy BoPhan với ID ${id}`);
     }
 
     return boPhan;
@@ -101,7 +101,7 @@ export class BoPhanService {
     const existing = await this.findByMa(createDto.ma);
     if (existing) {
       throw new ConflictException(
-        `Department code ${createDto.ma} already exists`,
+        `Mã bộ phận ${createDto.ma} đã tồn tại`,
       );
     }
 
@@ -119,7 +119,7 @@ export class BoPhanService {
       const existing = await this.findByMa(updateDto.ma);
       if (existing) {
         throw new ConflictException(
-          `Department code ${updateDto.ma} already exists`,
+          `Mã bộ phận ${updateDto.ma} đã tồn tại`,
         );
       }
     }

@@ -67,7 +67,7 @@ export class ChuDauTuService {
     });
 
     if (!chuDauTu) {
-      throw new NotFoundException(`ChuDauTu with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy ChuDauTu với ID ${id}`);
     }
 
     return chuDauTu;

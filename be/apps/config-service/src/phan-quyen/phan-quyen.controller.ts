@@ -62,6 +62,6 @@ export class PhanQuyen_Controller {
   @Roles('ADMIN')
   async delete(@Param('id') id: string) {
     await this.phanQuyen_Service.delete(id);
-    return { success: true, message: 'Deleted successfully' };
+    return { success: true, message: 'Xóa thành công' };
   }
 }

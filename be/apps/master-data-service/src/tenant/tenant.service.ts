@@ -114,7 +114,7 @@ export class TenantService {
     });
 
     if (!tenant) {
-      throw new NotFoundException(`Tenant with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy công ty với ID ${id}`);
     }
 
     return tenant;
@@ -127,7 +127,7 @@ export class TenantService {
   async create(createDto: CreateTenantDto): Promise<{ tenant: Tenant; admin?: Partial<User> }> {
     const existing = await this.findBySlug(createDto.slug);
     if (existing) {
-      throw new ConflictException(`Tenant with slug ${createDto.slug} already exists`);
+      throw new ConflictException(`Công ty với slug ${createDto.slug} đã tồn tại`);
     }
 
     // Create tenant
@@ -247,7 +247,7 @@ export class TenantService {
     if (updateDto.slug && updateDto.slug !== tenant.slug) {
       const existing = await this.findBySlug(updateDto.slug);
       if (existing) {
-        throw new ConflictException(`Tenant with slug ${updateDto.slug} already exists`);
+        throw new ConflictException(`Công ty với slug ${updateDto.slug} đã tồn tại`);
       }
     }
 
@@ -349,7 +349,7 @@ export class TenantService {
         where: { _id: new ObjectId(dto.userId) as any },
       });
       if (!found) {
-        throw new NotFoundException(`User with ID ${dto.userId} not found`);
+        throw new NotFoundException(`Không tìm thấy người dùng với ID ${dto.userId}`);
       }
       user = found;
     } else if (dto.email) {

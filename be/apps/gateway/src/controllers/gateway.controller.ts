@@ -21,7 +21,7 @@ export class GatewayController {
         success: false,
         error: {
           code: 'ROUTE_NOT_FOUND',
-          message: `No service configured for path: ${fullPath}`,
+          message: `Không tìm thấy dịch vụ cho đường dẫn: ${fullPath}`,
         },
       });
       return;
@@ -79,7 +79,7 @@ export class GatewayController {
         success: false,
         error: {
           code: 'BAD_GATEWAY',
-          message: `Service unavailable: ${err.message}`,
+          message: `Dịch vụ không khả dụng: ${err.message}`,
         },
       });
     });

@@ -116,7 +116,7 @@ export class NganHangService {
     });
 
     if (!nganHang) {
-      throw new NotFoundException(`NganHang with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy NganHang với ID ${id}`);
     }
 
     return nganHang;
@@ -129,7 +129,7 @@ export class NganHangService {
   async create(createDto: CreateNganHangDto): Promise<NganHang> {
     const existing = await this.findByMa(createDto.ma);
     if (existing) {
-      throw new ConflictException(`Bank code ${createDto.ma} already exists`);
+      throw new ConflictException(`Mã ngân hàng ${createDto.ma} đã tồn tại`);
     }
 
     const nganHang = this.nganHangRepository.create({
@@ -145,7 +145,7 @@ export class NganHangService {
     if (updateDto.ma && updateDto.ma !== nganHang.ma) {
       const existing = await this.findByMa(updateDto.ma);
       if (existing) {
-        throw new ConflictException(`Bank code ${updateDto.ma} already exists`);
+        throw new ConflictException(`Mã ngân hàng ${updateDto.ma} đã tồn tại`);
       }
     }
 

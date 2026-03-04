@@ -87,11 +87,11 @@ export class AuthServiceService {
     const user = await this.userRepository.findOne({ where: { email } });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Thông tin đăng nhập không hợp lệ');
     }
 
     if (user.trangThai !== UserStatus.HOAT_DONG) {
-      throw new UnauthorizedException('Account is inactive');
+      throw new UnauthorizedException('Tài khoản đã bị khóa');
     }
 
     // Lookup UserCredential by userId
@@ -100,13 +100,13 @@ export class AuthServiceService {
     });
 
     if (!credential) {
-      throw new InternalServerErrorException('User credential not found');
+      throw new InternalServerErrorException('Không tìm thấy thông tin xác thực');
     }
 
     const isPasswordValid = await bcrypt.compare(password, credential.password);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Thông tin đăng nhập không hợp lệ');
     }
 
     // Update lastLoginAt
@@ -188,7 +188,7 @@ export class AuthServiceService {
     });
 
     if (userTenants.length === 0) {
-      throw new ForbiddenException('User has no tenant assigned');
+      throw new ForbiddenException('Người dùng chưa được gán công ty');
     }
 
     // Fetch tenant details
@@ -202,7 +202,7 @@ export class AuthServiceService {
     });
 
     if (tenants.length === 0) {
-      throw new ForbiddenException('No active tenant found');
+      throw new ForbiddenException('Không tìm thấy công ty hoạt động');
     }
 
     // Build tenant info list
@@ -266,11 +266,11 @@ export class AuthServiceService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Không tìm thấy người dùng');
     }
 
     if (user.trangThai !== UserStatus.HOAT_DONG) {
-      throw new UnauthorizedException('Account is inactive');
+      throw new UnauthorizedException('Tài khoản đã bị khóa');
     }
 
     // Get tenant details
@@ -279,7 +279,7 @@ export class AuthServiceService {
     });
 
     if (!tenant) {
-      throw new ForbiddenException('Tenant not found or inactive');
+      throw new ForbiddenException('Không tìm thấy công ty hoặc công ty đã ngừng hoạt động');
     }
 
     // Super admin can access any tenant
@@ -318,7 +318,7 @@ export class AuthServiceService {
     });
 
     if (!userTenant) {
-      throw new ForbiddenException('User does not belong to this tenant');
+      throw new ForbiddenException('Người dùng không thuộc công ty này');
     }
 
     const tenantInfo = this.buildTenantInfo(userTenant, tenant);
@@ -426,7 +426,7 @@ export class AuthServiceService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Không tìm thấy người dùng');
     }
 
     // Super admin - get all active tenants
@@ -451,7 +451,7 @@ export class AuthServiceService {
 
       const tenant = allTenants.find((t) => t._id.toString() === tenantId);
       if (!tenant) {
-        throw new ForbiddenException('Tenant not found');
+        throw new ForbiddenException('Không tìm thấy công ty');
       }
 
       return {
@@ -491,12 +491,12 @@ export class AuthServiceService {
     // Current tenant info
     const currentUserTenant = allUserTenants.find((ut) => ut.tenantId === tenantId);
     if (!currentUserTenant) {
-      throw new ForbiddenException('User does not belong to this tenant');
+      throw new ForbiddenException('Người dùng không thuộc công ty này');
     }
 
     const currentTenant = allTenants.find((t) => t._id.toString() === tenantId);
     if (!currentTenant) {
-      throw new ForbiddenException('Tenant not found');
+      throw new ForbiddenException('Không tìm thấy công ty');
     }
 
     return {
@@ -517,11 +517,11 @@ export class AuthServiceService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Không tìm thấy người dùng');
     }
 
     if (user.trangThai !== UserStatus.HOAT_DONG) {
-      throw new UnauthorizedException('Account is inactive');
+      throw new UnauthorizedException('Tài khoản đã bị khóa');
     }
 
     const tenant = await this.tenantRepository.findOne({
@@ -529,7 +529,7 @@ export class AuthServiceService {
     });
 
     if (!tenant) {
-      throw new ForbiddenException('Tenant not found or inactive');
+      throw new ForbiddenException('Không tìm thấy công ty hoặc công ty đã ngừng hoạt động');
     }
 
     // Super admin can access any tenant
@@ -568,7 +568,7 @@ export class AuthServiceService {
     });
 
     if (!userTenant) {
-      throw new ForbiddenException('User does not belong to this tenant');
+      throw new ForbiddenException('Người dùng không thuộc công ty này');
     }
 
     const tenantInfo = this.buildTenantInfo(userTenant, tenant);
@@ -596,7 +596,7 @@ export class AuthServiceService {
   logout(userId: string): { message: string } {
     // In a production system, you would add the token to a blacklist
     // For now, we just return success
-    return { message: 'Logged out successfully' };
+    return { message: 'Đăng xuất thành công' };
   }
 
   /**
@@ -612,7 +612,7 @@ export class AuthServiceService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Không tìm thấy người dùng');
     }
 
     // Update fields
@@ -643,7 +643,7 @@ export class AuthServiceService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Không tìm thấy người dùng');
     }
 
     // Get user credential
@@ -652,7 +652,7 @@ export class AuthServiceService {
     });
 
     if (!credential) {
-      throw new InternalServerErrorException('User credential not found');
+      throw new InternalServerErrorException('Không tìm thấy thông tin xác thực');
     }
 
     // Verify current password

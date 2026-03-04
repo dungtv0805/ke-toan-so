@@ -112,7 +112,7 @@ export class DongTienService {
     });
 
     if (!dongTien) {
-      throw new NotFoundException(`DongTien with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy DongTien với ID ${id}`);
     }
 
     return dongTien;
@@ -126,7 +126,7 @@ export class DongTienService {
     const existing = await this.findByMa(createDto.ma);
     if (existing) {
       throw new ConflictException(
-        `Cash flow code ${createDto.ma} already exists`,
+        `Mã dòng tiền ${createDto.ma} đã tồn tại`,
       );
     }
 
@@ -144,7 +144,7 @@ export class DongTienService {
       const existing = await this.findByMa(updateDto.ma);
       if (existing) {
         throw new ConflictException(
-          `Cash flow code ${updateDto.ma} already exists`,
+          `Mã dòng tiền ${updateDto.ma} đã tồn tại`,
         );
       }
     }

@@ -113,7 +113,7 @@ export class DoiTuongService {
     });
 
     if (!doiTuong) {
-      throw new NotFoundException(`DoiTuong with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy DoiTuong với ID ${id}`);
     }
 
     return doiTuong;
@@ -126,7 +126,7 @@ export class DoiTuongService {
   async create(createDto: CreateDoiTuongDto): Promise<DoiTuong> {
     const existing = await this.findByMa(createDto.ma);
     if (existing) {
-      throw new ConflictException(`Entity code ${createDto.ma} already exists`);
+      throw new ConflictException(`Mã đối tượng ${createDto.ma} đã tồn tại`);
     }
 
     const doiTuong = this.doiTuongRepository.create({
@@ -143,7 +143,7 @@ export class DoiTuongService {
     if (dto.ma && dto.ma !== doiTuong.ma) {
       const existing = await this.findByMa(dto.ma);
       if (existing) {
-        throw new ConflictException(`Entity code ${dto.ma} already exists`);
+        throw new ConflictException(`Mã đối tượng ${dto.ma} đã tồn tại`);
       }
     }
 

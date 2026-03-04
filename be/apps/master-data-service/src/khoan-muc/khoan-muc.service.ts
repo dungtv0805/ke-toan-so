@@ -116,7 +116,7 @@ export class KhoanMucService {
     });
 
     if (!khoanMuc) {
-      throw new NotFoundException(`KhoanMuc with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy KhoanMuc với ID ${id}`);
     }
 
     return khoanMuc;
@@ -130,7 +130,7 @@ export class KhoanMucService {
     const existing = await this.findByMa(createDto.ma);
     if (existing) {
       throw new ConflictException(
-        `Category code ${createDto.ma} already exists`,
+        `Mã khoản mục ${createDto.ma} đã tồn tại`,
       );
     }
 
@@ -148,7 +148,7 @@ export class KhoanMucService {
       const existing = await this.findByMa(updateDto.ma);
       if (existing) {
         throw new ConflictException(
-          `Category code ${updateDto.ma} already exists`,
+          `Mã khoản mục ${updateDto.ma} đã tồn tại`,
         );
       }
     }

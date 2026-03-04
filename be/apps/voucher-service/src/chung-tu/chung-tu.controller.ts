@@ -122,6 +122,6 @@ export class ChungTuController {
   @Roles('ADMIN', 'KE_TOAN_QUY')
   async delete(@Param('id') id: string) {
     await this.chungTuService.delete(id);
-    return { success: true, message: 'Deleted successfully' };
+    return { success: true, message: 'Xóa thành công' };
   }
 }

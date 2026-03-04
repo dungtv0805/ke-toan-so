@@ -99,7 +99,7 @@ export class QuyChuan_Service {
     });
 
     if (!item) {
-      throw new NotFoundException(`QuyChuan with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy quy chuẩn với ID ${id}`);
     }
 
     return item;
