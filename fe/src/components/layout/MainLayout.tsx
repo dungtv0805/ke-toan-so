@@ -155,12 +155,10 @@ function getMenuItem(
   } as MenuItem;
 }
 
-// ===== ĐIỀU HÀNH - Main accounting menu =====
-const keToAnMenuItems: MenuItem[] = [
-  // Tổng quan
+// ===== ĐIỀU HÀNH =====
+const dieuHanhMenuItems: MenuItem[] = [
   getMenuItem("Tổng quan", "/", <DashboardOutlined />),
 
-  // Phân tích
   getItem("Phân tích", "/phan-tich", <LineChartOutlined />, [
     getMenuItem("Kế toán", "/phan-tich/bao-cao-tai-chinh", <PieChartOutlined />),
     getMenuItem("Bán hàng", "/phan-tich/ban-hang", <ShoppingCartOutlined />),
@@ -170,8 +168,10 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Tồn kho", "/phan-tich/ton-kho", <InboxOutlined />),
     getMenuItem("Khả năng thanh khoản", "/phan-tich/thanh-khoan", <StockOutlined />),
   ]),
+];
 
-  // Báo cáo
+// ===== KẾ TOÁN =====
+const keToAnMenuItems: MenuItem[] = [
   getItem("Báo cáo", "/bao-cao", <BarChartOutlined />, [
     getMenuItem("Kế toán", "/bao-cao/tai-chinh", <PieChartOutlined />),
     getMenuItem("Sổ chi tiết tài khoản", "/bao-cao/so-chi-tiet-tai-khoan", <AccountBookOutlined />),
@@ -180,7 +180,6 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Bảng tổng hợp", "/bao-cao/bang-tong-hop", <TableOutlined />),
   ]),
 
-  // Trung tâm dữ liệu
   getItem("Trung tâm dữ liệu", "/trung-tam-du-lieu", <DatabaseOutlined />, [
     getMenuItem("Kế hoạch", "/trung-tam-du-lieu/ke-hoach", <ScheduleOutlined />),
     getMenuItem("Dự báo", "/trung-tam-du-lieu/du-bao", <RiseOutlined />),
@@ -194,7 +193,6 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Lương & BHXH", "/trung-tam-du-lieu/luong-bhxh", <InsuranceOutlined />),
   ]),
 
-  // Chứng từ
   getItem("Chứng từ", "/chung-tu", <FileTextOutlined />, [
     getMenuItem("Phiếu thu", "/chung-tu/phieu-thu", <CreditCardOutlined />),
     getMenuItem("Phiếu chi", "/chung-tu/phieu-chi", <WalletOutlined />),
@@ -314,8 +312,11 @@ const MainLayout: React.FC = () => {
       .filter(Boolean) as MenuItem[];
   };
 
-  // Filter both menu sections
+  // Filter menu sections
   // Super admin sees all menus, regular users filter by role
+  const filteredDieuHanhMenu = isSuperAdmin
+    ? dieuHanhMenuItems
+    : (currentRole ? filterMenuItems(dieuHanhMenuItems, currentRole) : []);
   const filteredKeToAnMenu = isSuperAdmin
     ? keToAnMenuItems
     : (currentRole ? filterMenuItems(keToAnMenuItems, currentRole) : []);
@@ -474,6 +475,22 @@ const MainLayout: React.FC = () => {
           mode="inline"
           selectedKeys={getSelectedKeys()}
           defaultOpenKeys={getOpenKeys()}
+          items={filteredDieuHanhMenu}
+          onClick={handleMenuClick}
+          className="!bg-transparent border-r-0 sidebar-menu"
+        />
+      </div>
+
+      {/* KẾ TOÁN Section */}
+      <div className="sidebar-section">
+        <div className="sidebar-section-header">
+          <span className="sidebar-section-title">KẾ TOÁN</span>
+        </div>
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={getSelectedKeys()}
+          defaultOpenKeys={getOpenKeys()}
           items={filteredKeToAnMenu}
           onClick={handleMenuClick}
           className="!bg-transparent border-r-0 sidebar-menu"
@@ -563,6 +580,24 @@ const MainLayout: React.FC = () => {
               {!collapsed && (
                 <div className="sidebar-section-header">
                   <span className="sidebar-section-title">ĐIỀU HÀNH</span>
+                </div>
+              )}
+              <Menu
+                theme="dark"
+                mode="inline"
+                selectedKeys={getSelectedKeys()}
+                defaultOpenKeys={collapsed ? [] : getOpenKeys()}
+                items={filteredDieuHanhMenu}
+                onClick={handleMenuClick}
+                className="!bg-transparent border-r-0 sidebar-menu"
+              />
+            </div>
+
+            {/* KẾ TOÁN Section */}
+            <div className="sidebar-section">
+              {!collapsed && (
+                <div className="sidebar-section-header">
+                  <span className="sidebar-section-title">KẾ TOÁN</span>
                 </div>
               )}
               <Menu
