@@ -173,7 +173,7 @@ const dieuHanhMenuItems: MenuItem[] = [
 // ===== KẾ TOÁN =====
 const keToAnMenuItems: MenuItem[] = [
   getItem("Báo cáo", "/bao-cao", <BarChartOutlined />, [
-    getMenuItem("Kế toán", "/bao-cao/tai-chinh", <PieChartOutlined />),
+    getMenuItem("Báo cáo tài chính", "/bao-cao/tai-chinh", <PieChartOutlined />),
     getMenuItem("Sổ chi tiết tài khoản", "/bao-cao/so-chi-tiet-tai-khoan", <AccountBookOutlined />),
     getMenuItem("Sổ chi tiết công nợ", "/bao-cao/so-chi-tiet-cong-no", <FileSearchOutlined />),
     getMenuItem("Sổ chi tiết phát sinh", "/bao-cao/so-chi-tiet-phat-sinh", <ProfileOutlined />),
