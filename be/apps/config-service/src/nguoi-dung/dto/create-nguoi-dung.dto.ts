@@ -15,10 +15,6 @@ export class CreateNguoiDungDto {
   @IsEmail({}, { message: 'Email không hợp lệ' })
   email: string;
 
-  @IsString()
-  @IsOptional()
-  tenantId?: string;
-
   @IsEnum(UserRole, { message: 'Vai trò không hợp lệ' })
   vaiTro: UserRole;
 

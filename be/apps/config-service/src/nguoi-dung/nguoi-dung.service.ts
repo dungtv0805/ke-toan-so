@@ -168,12 +168,7 @@ export class NguoiDung_Service {
     // Hash default password
     const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, SALT_ROUNDS);
 
-    const isSuperAdmin = this.tenantContext.isSuperAdmin();
-
-    // SUPER_ADMIN must provide tenantId in DTO, regular user gets from context
-    const tenantId = isSuperAdmin
-      ? dto.tenantId
-      : (dto.tenantId || this.tenantContext.getCurrentTenantId());
+    const tenantId = this.tenantContext.getCurrentTenantId();
 
     // Create user
     const item = this.repo.create({
