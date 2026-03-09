@@ -17,6 +17,12 @@ export class UserCredential extends BaseEntity {
 
   @Column({ default: true })
   isActive: boolean;
+
+  @Column({ nullable: true })
+  resetToken?: string;
+
+  @Column({ nullable: true })
+  resetTokenExpiry?: Date;
 }
 
 export interface UserCredentialEntities {

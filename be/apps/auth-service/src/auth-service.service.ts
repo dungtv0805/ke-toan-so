@@ -5,10 +5,12 @@ import {
   InternalServerErrorException,
   BadRequestException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { User, UserCredential, Tenant, UserRole, UserStatus, UserTenant, SUPER_ADMIN_EMAIL } from '@app/entities';
 import {
   LoginDto,
@@ -17,6 +19,8 @@ import {
   UpdateProfileDto,
   ChangePasswordDto,
   SelectTenantDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
 } from './dto';
 import { JwtService, UserPayload } from '@app/auth';
 import {
@@ -25,11 +29,16 @@ import {
   SelectTenantResponse,
   AuthUserResponse,
 } from '@app/dto';
+import { MailService } from './mail/mail.service';
 
 const SALT_ROUNDS = 10;
+const RESET_TOKEN_EXPIRY_MS = 3600000; // 1 hour
+const RESET_TOKEN_COOLDOWN_MS = 120000; // 2 minutes
 
 @Injectable()
 export class AuthServiceService {
+  private readonly logger = new Logger(AuthServiceService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -40,6 +49,7 @@ export class AuthServiceService {
     @InjectRepository(UserTenant)
     private readonly userTenantRepository: Repository<UserTenant>,
     private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
   ) {}
 
   /**
@@ -674,6 +684,117 @@ export class AuthServiceService {
     await this.userCredentialRepository.save(credential);
 
     return { message: 'Đổi mật khẩu thành công' };
+  }
+
+  /**
+   * Request password reset - sends email with reset link
+   * Always returns success to prevent user enumeration
+   */
+  async forgotPassword(
+    forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<{ message: string }> {
+    const successMessage =
+      'Nếu email tồn tại trong hệ thống, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu.';
+
+    const user = await this.userRepository.findOne({
+      where: { email: forgotPasswordDto.email },
+    });
+
+    if (!user) {
+      return { message: successMessage };
+    }
+
+    const credential = await this.userCredentialRepository.findOne({
+      where: { userId: user._id.toString(), isActive: true },
+    });
+
+    if (!credential) {
+      return { message: successMessage };
+    }
+
+    // Rate limiting: skip if token was created less than 2 minutes ago
+    if (
+      credential.resetTokenExpiry &&
+      credential.resetTokenExpiry.getTime() >
+        Date.now() - RESET_TOKEN_COOLDOWN_MS + RESET_TOKEN_EXPIRY_MS
+    ) {
+      return { message: successMessage };
+    }
+
+    // Generate reset token
+    const plainToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(plainToken)
+      .digest('hex');
+
+    // Save hashed token and expiry
+    credential.resetToken = hashedToken;
+    credential.resetTokenExpiry = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS);
+    await this.userCredentialRepository.save(credential);
+
+    // Send email
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetLink = `${frontendUrl}/reset-password?token=${plainToken}`;
+
+    try {
+      await this.mailService.sendResetPasswordEmail(
+        user.email,
+        user.hoTen,
+        resetLink,
+      );
+    } catch (error) {
+      this.logger.error(
+        'Failed to send reset password email',
+        (error as Error).stack,
+      );
+      throw new InternalServerErrorException(
+        'Có lỗi xảy ra, vui lòng thử lại sau',
+      );
+    }
+
+    return { message: successMessage };
+  }
+
+  /**
+   * Reset password using token from email
+   */
+  async resetPassword(
+    resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(resetPasswordDto.token)
+      .digest('hex');
+
+    const credential = await this.userCredentialRepository.findOne({
+      where: { resetToken: hashedToken, isActive: true },
+    });
+
+    if (
+      !credential ||
+      !credential.resetTokenExpiry ||
+      credential.resetTokenExpiry.getTime() < Date.now()
+    ) {
+      throw new BadRequestException(
+        'Token không hợp lệ hoặc đã hết hạn',
+      );
+    }
+
+    // Hash new password and clear reset token
+    credential.password = await bcrypt.hash(
+      resetPasswordDto.newPassword,
+      SALT_ROUNDS,
+    );
+    credential.resetToken = undefined;
+    credential.resetTokenExpiry = undefined;
+    credential.updatedAt = new Date();
+    await this.userCredentialRepository.save(credential);
+
+    return {
+      message:
+        'Đặt lại mật khẩu thành công. Vui lòng đăng nhập với mật khẩu mới.',
+    };
   }
 
   /**

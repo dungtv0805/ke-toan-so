@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Form, Input, Button, Card, Typography, Alert } from 'antd';
 import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
@@ -107,6 +107,12 @@ const LoginPage = () => {
                 size="large"
               />
             </Form.Item>
+
+            <div className="text-right mb-4">
+              <Link to="/forgot-password" className="text-primary hover:underline text-sm">
+                Quên mật khẩu?
+              </Link>
+            </div>
 
             <Form.Item className="mb-2">
               <Button

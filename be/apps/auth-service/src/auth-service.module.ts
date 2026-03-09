@@ -5,6 +5,7 @@ import { AuthModule } from '@app/auth';
 import { TenantModule } from '@app/core';
 import { DatabaseModule } from '@app/database';
 import { User, UserCredential, Tenant, UserTenant } from '@app/entities';
+import { MailService } from './mail/mail.service';
 
 @Module({
   imports: [
@@ -14,6 +15,6 @@ import { User, UserCredential, Tenant, UserTenant } from '@app/entities';
     DatabaseModule.forFeature([User, UserCredential, Tenant, UserTenant]),
   ],
   controllers: [AuthServiceController],
-  providers: [AuthServiceService],
+  providers: [AuthServiceService, MailService],
 })
 export class AuthServiceModule {}

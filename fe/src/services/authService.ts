@@ -106,6 +106,14 @@ class AuthService extends ServiceBase {
     }
   }
 
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    return this.post<{ message: string }>({ email }, { endpoint: '/forgot-password' });
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    return this.post<{ message: string }>({ token, newPassword }, { endpoint: '/reset-password' });
+  }
+
   async verify(token: string): Promise<NguoiDung> {
     return this.post<NguoiDung>({ token }, { endpoint: '/verify' });
   }

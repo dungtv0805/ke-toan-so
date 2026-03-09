@@ -12,6 +12,14 @@ export const LoginPage = loadable(() => import('./auth/LoginPage'), {
   fallback: <PageLoader />
 });
 
+export const ForgotPasswordPage = loadable(() => import('./auth/ForgotPasswordPage'), {
+  fallback: <PageLoader />
+});
+
+export const ResetPasswordPage = loadable(() => import('./auth/ResetPasswordPage'), {
+  fallback: <PageLoader />
+});
+
 // Dashboard
 export const Dashboard = loadable(() => import('./dashboard/Dashboard'), {
   fallback: <PageLoader />

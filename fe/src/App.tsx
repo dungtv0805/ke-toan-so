@@ -13,6 +13,8 @@ import { routePermissions } from "./config/routePermissions";
 import MainLayout from "./components/layout/MainLayout";
 import {
   LoginPage,
+  ForgotPasswordPage,
+  ResetPasswordPage,
   Dashboard,
   ProfilePage,
   TaiKhoanPage,
@@ -67,8 +69,10 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <Routes>
-              {/* Public route */}
+              {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
 
               {/* Protected routes */}
               <Route

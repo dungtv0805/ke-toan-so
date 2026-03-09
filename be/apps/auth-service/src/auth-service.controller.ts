@@ -17,6 +17,8 @@ import {
   ChangePasswordDto,
   SelectTenantDto,
   SwitchTenantDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
 } from './dto';
 import { JwtGuard, CurrentUser } from '@app/auth';
 import type { UserPayload } from '@app/auth';
@@ -151,6 +153,34 @@ export class AuthServiceController {
       user.id,
       changePasswordDto,
     );
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  /**
+   * POST /forgot-password
+   * Request password reset - sends email with reset link
+   */
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    const result = await this.authService.forgotPassword(forgotPasswordDto);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  /**
+   * POST /reset-password
+   * Reset password using token from email
+   */
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    const result = await this.authService.resetPassword(resetPasswordDto);
     return {
       success: true,
       data: result,
