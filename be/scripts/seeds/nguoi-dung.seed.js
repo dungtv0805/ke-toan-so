@@ -14,7 +14,9 @@ const rawData = [
   { hoTen: 'Lê Văn Công Nợ', email: 'ketoancongno@company.com', vaiTro: 'KE_TOAN_CONG_NO', trangThai: 'HOAT_DONG' },
   { hoTen: 'Phạm Thị Tổng Hợp', email: 'ketoantonghop@company.com', vaiTro: 'KE_TOAN_TONG_HOP', trangThai: 'HOAT_DONG' },
   { hoTen: 'Hoàng Văn Quản Lý', email: 'manager@company.com', vaiTro: 'MANAGER', trangThai: 'HOAT_DONG' },
-  { hoTen: 'Vũ Thị Kiểm Toán', email: 'auditor@company.com', vaiTro: 'AUDITOR', trangThai: 'KHOA' },
+  { hoTen: 'Nguyễn Văn Giám Đốc', email: 'giamdoc@company.com', vaiTro: 'GIAM_DOC', trangThai: 'HOAT_DONG' },
+  { hoTen: 'Trần Thị Kế Toán Trưởng', email: 'ketoantruong@company.com', vaiTro: 'KE_TOAN_TRUONG', trangThai: 'HOAT_DONG' },
+  { hoTen: 'Vũ Thị Kiểm Soát', email: 'kiemsoat@company.com', vaiTro: 'KIEM_SOAT', trangThai: 'HOAT_DONG' },
 ];
 
 // Default password for all seed users

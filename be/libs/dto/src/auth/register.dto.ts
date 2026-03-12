@@ -1,10 +1,11 @@
 // Register DTOs
 export type UserRole =
   | 'ADMIN'
+  | 'GIAM_DOC'
   | 'KE_TOAN_TRUONG'
+  | 'KE_TOAN_QUY'
+  | 'KE_TOAN_CONG_NO'
   | 'KE_TOAN_TONG_HOP'
-  | 'KE_TOAN_VIEN'
-  | 'THU_QUY'
   | 'MANAGER'
   | 'KIEM_SOAT';
 

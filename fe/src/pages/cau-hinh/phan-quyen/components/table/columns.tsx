@@ -25,7 +25,11 @@ export const getVaiTroIcon = (vaiTro: VaiTro) => {
       return <SafetyCertificateOutlined style={{ color: "#722ed1" }} />;
     case "MANAGER":
       return <TeamOutlined style={{ color: "#52c41a" }} />;
-    case "AUDITOR":
+    case "GIAM_DOC":
+      return <SafetyCertificateOutlined style={{ color: "#faad14" }} />;
+    case "KE_TOAN_TRUONG":
+      return <SafetyCertificateOutlined style={{ color: "#eb2f96" }} />;
+    case "KIEM_SOAT":
       return <SafetyCertificateOutlined style={{ color: "#13c2c2" }} />;
     default:
       return <UserOutlined />;

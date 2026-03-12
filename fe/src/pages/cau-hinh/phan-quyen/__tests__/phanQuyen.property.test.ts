@@ -94,7 +94,7 @@ describe('PhanQuyen Property Tests', () => {
     });
 
     it('should include vaiTro filter when provided', async () => {
-      const vaiTroValues = ['ADMIN', 'KE_TOAN_QUY', 'KE_TOAN_CONG_NO', 'KE_TOAN_TONG_HOP', 'MANAGER', 'AUDITOR'] as const;
+      const vaiTroValues = ['ADMIN', 'GIAM_DOC', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_CONG_NO', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT'] as const;
 
       await fc.assert(
         fc.asyncProperty(

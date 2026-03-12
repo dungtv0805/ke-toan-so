@@ -13,7 +13,7 @@ type AddMode = "new" | "existing";
 const nguoiDungSchema = z.object({
   hoTen: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự"),
   email: z.string().email("Email không hợp lệ"),
-  vaiTro: z.enum(["ADMIN", "KE_TOAN_QUY", "KE_TOAN_CONG_NO", "KE_TOAN_TONG_HOP", "MANAGER", "AUDITOR"]),
+  vaiTro: z.enum(["ADMIN", "GIAM_DOC", "KE_TOAN_TRUONG", "KE_TOAN_QUY", "KE_TOAN_CONG_NO", "KE_TOAN_TONG_HOP", "MANAGER", "KIEM_SOAT"]),
   trangThai: z.enum(["HOAT_DONG", "KHOA"]),
 });
 
