@@ -6,6 +6,7 @@ import { DatabaseModule } from '@app/database';
 import { QuyChuan_Module } from './quy-chuan/quy-chuan.module';
 import { PhanQuyen_Module } from './phan-quyen/phan-quyen.module';
 import { NguoiDung_Module } from './nguoi-dung/nguoi-dung.module';
+import { EmailConfig_Module } from './email-config/email-config.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { NguoiDung_Module } from './nguoi-dung/nguoi-dung.module';
     QuyChuan_Module,
     PhanQuyen_Module,
     NguoiDung_Module,
+    EmailConfig_Module,
   ],
 })
 export class ConfigServiceModule {}
