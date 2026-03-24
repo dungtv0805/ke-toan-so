@@ -128,7 +128,6 @@ function createTenantAwareProxy<T extends ObjectLiteral>(
               pipeline.unshift({ $match: { tenantId } });
             }
           }
-
           return original.apply(target, args);
         };
       }
@@ -147,6 +146,15 @@ function createTenantAwareProxy<T extends ObjectLiteral>(
  */
 export const RAW_REPOSITORY_TOKEN_PREFIX = 'RAW_';
 
+/**
+ * Separate module class for forFeature() to avoid global module merge issue
+ * DatabaseModule.forRoot() is global, so using the same class in forFeature()
+ * causes NestJS to merge providers into the global scope, letting TypeORM's
+ * repository provider override our custom tenant-aware proxy.
+ */
+@Module({})
+export class TenantRepositoryModule {}
+
 @Module({})
 export class DatabaseModule {
   /**
@@ -161,8 +169,6 @@ export class DatabaseModule {
     const logging = options?.logging ?? process.env.NODE_ENV === 'development';
     const user = options?.user || process.env.MONGODB_USER;
     const pwd = options?.pwd || process.env.MONGODB_PWD;
-    console.log(uri, user, pwd);
-
     const typeOrmOptions: TypeOrmModuleOptions = {
       type: 'mongodb',
       url: `${uri}`,
@@ -207,7 +213,7 @@ export class DatabaseModule {
       }));
 
     return {
-      module: DatabaseModule,
+      module: TenantRepositoryModule,
       imports: [
         TypeOrmModule.forFeature(entities),
         TenantModule,
@@ -233,7 +239,7 @@ export class DatabaseModule {
     }));
 
     return {
-      module: DatabaseModule,
+      module: TenantRepositoryModule,
       imports: [TypeOrmModule.forFeature(entities)],
       providers: rawProviders,
       exports: rawProviders.map((p) => p.provide),
