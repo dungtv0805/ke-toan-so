@@ -200,7 +200,7 @@ export class DatabaseModule {
       .map((entity) => ({
         provide: getRepositoryToken(entity),
         useFactory: (dataSource: DataSource, tenantContext: TenantContextService) => {
-          const repository = dataSource.getRepository(entity);
+          const repository = dataSource.getMongoRepository(entity);
           return createTenantAwareProxy(repository, tenantContext);
         },
         inject: [DataSource, TenantContextService],
