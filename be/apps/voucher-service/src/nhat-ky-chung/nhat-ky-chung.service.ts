@@ -7,7 +7,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { ChungTu } from '@app/entities';
 import { PaginatedResult } from '@app/dto';
-import { TenantContextService } from '@app/core';
 import {
   NhatKyChungQueryDto,
   NhatKyChungStats,
@@ -28,7 +27,6 @@ export class NhatKyChungService {
     @InjectRepository(ChungTu)
     private readonly chungTuRepository: MongoRepository<ChungTu>,
     private readonly voucherNumberService: VoucherNumberService,
-    private readonly tenantContext: TenantContextService,
   ) {}
 
   async getEntries(query: NhatKyChungQueryDto): Promise<{
@@ -38,9 +36,7 @@ export class NhatKyChungService {
   }> {
     const { page = 1, limit = 15, search } = query;
     const skip = (page - 1) * limit;
-    const tenantId = this.tenantContext.getCurrentTenantId();
-
-    const mongoQuery = buildMongoQuery(query, tenantId);
+    const mongoQuery = buildMongoQuery(query);
 
     const aggregationPipeline: object[] = [{ $match: mongoQuery }];
 
@@ -77,8 +73,7 @@ export class NhatKyChungService {
   async getStats(
     query: NhatKyChungQueryDto,
   ): Promise<NhatKyChungStatsResponse> {
-    const tenantId = this.tenantContext.getCurrentTenantId();
-    const mongoQuery = buildMongoQuery(query, tenantId);
+    const mongoQuery = buildMongoQuery(query);
 
     const aggregationPipeline: object[] = [
       { $match: mongoQuery },
@@ -354,8 +349,7 @@ export class NhatKyChungService {
     type: SummaryType,
     query: NhatKyChungQueryDto,
   ): Promise<SummaryResponse> {
-    const tenantId = this.tenantContext.getCurrentTenantId();
-    const mongoQuery = buildMongoQuery(query, tenantId);
+    const mongoQuery = buildMongoQuery(query);
     const aggregationPipeline = buildSummaryAggregation(type, mongoQuery);
 
     const result = await this.chungTuRepository

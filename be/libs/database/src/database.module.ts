@@ -113,6 +113,26 @@ function createTenantAwareProxy<T extends ObjectLiteral>(
         };
       }
 
+      // Wrap aggregate to auto-inject tenantId into $match at the start of pipeline
+      if (prop === 'aggregate') {
+        return function (...args: any[]) {
+          const tenantId = tenantContext.getCurrentTenantId();
+          if (!tenantId) return original.apply(target, args);
+
+          const [pipeline] = args;
+          if (Array.isArray(pipeline)) {
+            const first = pipeline[0];
+            if (first && '$match' in first) {
+              first.$match = { ...first.$match, tenantId };
+            } else {
+              pipeline.unshift({ $match: { tenantId } });
+            }
+          }
+
+          return original.apply(target, args);
+        };
+      }
+
       // Return original for other methods
       return original.bind(target);
     },
