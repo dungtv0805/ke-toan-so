@@ -51,12 +51,17 @@ export function FilterDrawer() {
     "filterBoPhan",
     undefined
   );
+  const [filterTaiKhoanCo, setFilterTaiKhoanCo] = useNhatKyChungState(
+    "filterTaiKhoanCo",
+    undefined
+  );
 
   // Data lists for selects
   const [taiKhoanList] = useNhatKyChungState("taiKhoanList", []);
   const [doiTuongList] = useNhatKyChungState("doiTuongList", []);
   const [duAnList] = useNhatKyChungState("duAnList", []);
   const [boPhanList] = useNhatKyChungState("boPhanList", []);
+  const [loaiGiaoDichList] = useNhatKyChungState("loaiGiaoDichList", []);
 
   // Count active filters
   const activeFilterCount = [
@@ -67,11 +72,20 @@ export function FilterDrawer() {
     filterDoiTuong,
     filterDuAn,
     filterBoPhan,
+    filterTaiKhoanCo,
   ].filter(Boolean).length;
 
-  const handleSearch = () => {
-    handler.executeEvent("search", { text: searchText });
-    handler.executeEvent("applyFilters", {});
+  const handleApply = () => {
+    handler.executeEvent("applyDrawerFilters", {
+      searchText,
+      dateRange,
+      filterAccount,
+      filterLoaiChungTu,
+      filterDoiTuong,
+      filterDuAn,
+      filterBoPhan,
+      filterTaiKhoanCo,
+    });
     setOpen(false);
   };
 
@@ -83,17 +97,8 @@ export function FilterDrawer() {
     setFilterDoiTuong(undefined);
     setFilterDuAn(undefined);
     setFilterBoPhan(undefined);
+    setFilterTaiKhoanCo(undefined);
     handler.executeEvent("resetFilters", {});
-  };
-
-  const handleDateRangeChange = (dates: [dayjs.Dayjs, dayjs.Dayjs] | null) => {
-    setDateRange(dates);
-    handler.executeEvent("filterByDate", { dates });
-  };
-
-  const handleAccountFilter = (value: string | undefined) => {
-    setFilterAccount(value);
-    handler.executeEvent("filterByAccount", { account: value });
   };
 
   const selectProps = {
@@ -155,7 +160,7 @@ export function FilterDrawer() {
               type="primary"
               size="small"
               icon={<SearchOutlined />}
-              onClick={handleSearch}
+              onClick={handleApply}
             >
               Áp dụng
             </Button>
@@ -172,7 +177,7 @@ export function FilterDrawer() {
               prefix={<SearchOutlined className="text-gray-300" />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              onPressEnter={handleSearch}
+              onPressEnter={handleApply}
               allowClear
             />
           </div>
@@ -185,25 +190,27 @@ export function FilterDrawer() {
               format="DD/MM/YYYY"
               value={dateRange}
               onChange={(dates) =>
-                handleDateRangeChange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)
+                setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)
               }
               placeholder={["Từ ngày", "Đến ngày"]}
               style={{ width: "100%" }}
             />
           </div>
 
-          {/* Loại chứng từ */}
+          {/* Loại giao dịch */}
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">Loại chứng từ</label>
+            <label className="text-xs text-gray-500 mb-1 block">Loại giao dịch</label>
             <Select
               {...selectProps}
               placeholder="Tất cả"
               value={filterLoaiChungTu}
               onChange={setFilterLoaiChungTu}
-              options={[
-                { value: "Phiếu thu", label: "Phiếu thu" },
-                { value: "Phiếu chi", label: "Phiếu chi" },
-              ]}
+              options={
+                loaiGiaoDichList?.map((lgd: { ma: string; ten: string }) => ({
+                  value: lgd.ma,
+                  label: lgd.ten,
+                })) || []
+              }
             />
           </div>
 
@@ -215,7 +222,7 @@ export function FilterDrawer() {
                 {...selectProps}
                 placeholder="Chọn"
                 value={filterAccount}
-                onChange={handleAccountFilter}
+                onChange={(value) => setFilterAccount(value)}
                 options={
                   taiKhoanList?.map((tk: { ma: string; ten: string }) => ({
                     value: tk.ma,
@@ -229,6 +236,8 @@ export function FilterDrawer() {
               <Select
                 {...selectProps}
                 placeholder="Chọn"
+                value={filterTaiKhoanCo}
+                onChange={(value) => setFilterTaiKhoanCo(value)}
                 options={
                   taiKhoanList?.map((tk: { ma: string; ten: string }) => ({
                     value: tk.ma,

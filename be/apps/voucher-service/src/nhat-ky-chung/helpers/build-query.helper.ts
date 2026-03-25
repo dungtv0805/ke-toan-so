@@ -1,14 +1,18 @@
 import { NhatKyChungQueryDto } from '../dto';
 
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function buildMongoQuery(
   query: NhatKyChungQueryDto,
 ): Record<string, unknown> {
-  const { search, startDate, endDate, loai } = query;
+  const { search, startDate, endDate, loai, doiTuong, duAn, boPhan, taiKhoanNo, taiKhoanCo } = query;
   const mongoQuery: Record<string, unknown> = {};
 
-  // Filter by loai (voucher type)
+  // Filter by loai (loại giao dịch - stored in danhMuc.loaiGiaoDich.ma)
   if (loai) {
-    mongoQuery.loai = loai;
+    mongoQuery['danhMuc.loaiGiaoDich.ma'] = loai;
   }
 
   // Filter by date range
@@ -26,9 +30,40 @@ export function buildMongoQuery(
     }
   }
 
-  // Use MongoDB text search if search keyword provided
+  // Search by regex on nghiepVu field
   if (search) {
-    mongoQuery.$text = { $search: search };
+    const escaped = escapeRegex(search);
+    mongoQuery.$or = [
+      { 'danhMuc.nghiepVu.ten': { $regex: escaped, $options: 'i' } },
+      { 'danhMuc.nghiepVu.ma': { $regex: escaped, $options: 'i' } },
+      { noiDung: { $regex: escaped, $options: 'i' } },
+      { soPhieu: { $regex: escaped, $options: 'i' } },
+    ];
+  }
+
+  // Filter by đối tượng
+  if (doiTuong) {
+    mongoQuery['danhMuc.doiTuong.ma'] = doiTuong;
+  }
+
+  // Filter by dự án
+  if (duAn) {
+    mongoQuery['danhMuc.duAn.ma'] = duAn;
+  }
+
+  // Filter by bộ phận
+  if (boPhan) {
+    mongoQuery['danhMuc.boPhan.ma'] = boPhan;
+  }
+
+  // Filter by tài khoản nợ
+  if (taiKhoanNo) {
+    mongoQuery['danhMuc.taiKhoanNo.ma'] = taiKhoanNo;
+  }
+
+  // Filter by tài khoản có
+  if (taiKhoanCo) {
+    mongoQuery['danhMuc.taiKhoanCo.ma'] = taiKhoanCo;
   }
 
   return mongoQuery;

@@ -5,10 +5,8 @@ import {
   Max,
   IsString,
   IsDateString,
-  IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import type { LoaiChungTu } from '@app/entities';
 
 export class NhatKyChungQueryDto {
   @IsOptional()
@@ -37,6 +35,26 @@ export class NhatKyChungQueryDto {
   endDate?: string;
 
   @IsOptional()
-  @IsIn(['PHIEU_THU', 'PHIEU_CHI'])
-  loai?: LoaiChungTu;
+  @IsString()
+  loai?: string;
+
+  @IsOptional()
+  @IsString()
+  doiTuong?: string;
+
+  @IsOptional()
+  @IsString()
+  duAn?: string;
+
+  @IsOptional()
+  @IsString()
+  boPhan?: string;
+
+  @IsOptional()
+  @IsString()
+  taiKhoanNo?: string;
+
+  @IsOptional()
+  @IsString()
+  taiKhoanCo?: string;
 }

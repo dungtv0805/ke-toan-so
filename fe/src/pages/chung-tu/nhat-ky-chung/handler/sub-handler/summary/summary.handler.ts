@@ -70,6 +70,12 @@ export class SummaryHandler extends CSubHanlder<NhatKyChungEvents, NhatKyChungSt
     const dateRange = this.getState("dateRange") as
       | [{ format: (f: string) => string }, { format: (f: string) => string }]
       | null;
+    const filterLoaiChungTu = this.getState("filterLoaiChungTu") as string | undefined;
+    const filterAccount = this.getState("filterAccount") as string | undefined;
+    const filterTaiKhoanCo = this.getState("filterTaiKhoanCo") as string | undefined;
+    const filterDoiTuong = this.getState("filterDoiTuong") as string | undefined;
+    const filterDuAn = this.getState("filterDuAn") as string | undefined;
+    const filterBoPhan = this.getState("filterBoPhan") as string | undefined;
 
     const params: GetEntriesParams = {};
 
@@ -78,6 +84,12 @@ export class SummaryHandler extends CSubHanlder<NhatKyChungEvents, NhatKyChungSt
       params.startDate = dateRange[0].format("YYYY-MM-DD");
       params.endDate = dateRange[1].format("YYYY-MM-DD");
     }
+    if (filterLoaiChungTu) params.loai = filterLoaiChungTu as GetEntriesParams["loai"];
+    if (filterAccount) params.taiKhoanNo = filterAccount;
+    if (filterTaiKhoanCo) params.taiKhoanCo = filterTaiKhoanCo;
+    if (filterDoiTuong) params.doiTuong = filterDoiTuong;
+    if (filterDuAn) params.duAn = filterDuAn;
+    if (filterBoPhan) params.boPhan = filterBoPhan;
 
     return params;
   }

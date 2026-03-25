@@ -9,6 +9,11 @@ export class ResetHandler extends CSubHanlder {
     this.setState("searchText", "");
     this.setState("dateRange", null);
     this.setState("filterAccount", undefined);
+    this.setState("filterLoaiChungTu", undefined);
+    this.setState("filterDoiTuong", undefined);
+    this.setState("filterDuAn", undefined);
+    this.setState("filterBoPhan", undefined);
+    this.setState("filterTaiKhoanCo", undefined);
     this.executeEvent("refresh", {});
   }
 }

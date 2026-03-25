@@ -24,6 +24,7 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
       this.loadEntries({ page: 1, limit: DEFAULT_PAGE_SIZE }),
       this.loadTaiKhoanList(),
       this.loadKhoanMucList(),
+      this.executeEvent("loadMasterData", {}),
     ]);
   }
 
@@ -87,6 +88,12 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
     const dateRange = this.getState("dateRange") as
       | [{ format: (f: string) => string }, { format: (f: string) => string }]
       | null;
+    const filterLoaiChungTu = this.getState("filterLoaiChungTu") as string | undefined;
+    const filterAccount = this.getState("filterAccount") as string | undefined;
+    const filterTaiKhoanCo = this.getState("filterTaiKhoanCo") as string | undefined;
+    const filterDoiTuong = this.getState("filterDoiTuong") as string | undefined;
+    const filterDuAn = this.getState("filterDuAn") as string | undefined;
+    const filterBoPhan = this.getState("filterBoPhan") as string | undefined;
 
     const params: GetEntriesParams = {};
 
@@ -95,6 +102,12 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
       params.startDate = dateRange[0].format("YYYY-MM-DD");
       params.endDate = dateRange[1].format("YYYY-MM-DD");
     }
+    if (filterLoaiChungTu) params.loai = filterLoaiChungTu as GetEntriesParams["loai"];
+    if (filterAccount) params.taiKhoanNo = filterAccount;
+    if (filterTaiKhoanCo) params.taiKhoanCo = filterTaiKhoanCo;
+    if (filterDoiTuong) params.doiTuong = filterDoiTuong;
+    if (filterDuAn) params.duAn = filterDuAn;
+    if (filterBoPhan) params.boPhan = filterBoPhan;
 
     return params;
   }
@@ -157,6 +170,21 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
     }
     if (!this.hasState("filterAccount")) {
       this.setState("filterAccount", undefined);
+    }
+    if (!this.hasState("filterLoaiChungTu")) {
+      this.setState("filterLoaiChungTu", undefined);
+    }
+    if (!this.hasState("filterDoiTuong")) {
+      this.setState("filterDoiTuong", undefined);
+    }
+    if (!this.hasState("filterDuAn")) {
+      this.setState("filterDuAn", undefined);
+    }
+    if (!this.hasState("filterBoPhan")) {
+      this.setState("filterBoPhan", undefined);
+    }
+    if (!this.hasState("filterTaiKhoanCo")) {
+      this.setState("filterTaiKhoanCo", undefined);
     }
     if (!this.hasState("taiKhoanList")) {
       this.setState("taiKhoanList", []);

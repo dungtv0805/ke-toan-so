@@ -98,6 +98,11 @@ export interface InitStates extends BaseStates {
   searchText: string;
   dateRange: [dayjs.Dayjs, dayjs.Dayjs] | null;
   filterAccount: string | undefined;
+  filterLoaiChungTu: string | undefined;
+  filterDoiTuong: string | undefined;
+  filterDuAn: string | undefined;
+  filterBoPhan: string | undefined;
+  filterTaiKhoanCo: string | undefined;
   // UI states
   activeTab: string;
   statsCollapsed: boolean;

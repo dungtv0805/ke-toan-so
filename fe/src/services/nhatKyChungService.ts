@@ -33,6 +33,11 @@ export interface GetEntriesParams {
   startDate?: string;
   endDate?: string;
   loai?: LoaiChungTu;
+  doiTuong?: string;
+  duAn?: string;
+  boPhan?: string;
+  taiKhoanNo?: string;
+  taiKhoanCo?: string;
 }
 
 export interface CreateEntryDto {
@@ -126,6 +131,11 @@ class NhatKyChungService extends ServiceBase {
     if (params.startDate) queryParams.startDate = params.startDate;
     if (params.endDate) queryParams.endDate = params.endDate;
     if (params.loai) queryParams.loai = params.loai;
+    if (params.doiTuong) queryParams.doiTuong = params.doiTuong;
+    if (params.duAn) queryParams.duAn = params.duAn;
+    if (params.boPhan) queryParams.boPhan = params.boPhan;
+    if (params.taiKhoanNo) queryParams.taiKhoanNo = params.taiKhoanNo;
+    if (params.taiKhoanCo) queryParams.taiKhoanCo = params.taiKhoanCo;
 
     const response = await this.get<PaginatedResponse<ChungTuResponse>>({ params: queryParams });
     
@@ -179,15 +189,20 @@ class NhatKyChungService extends ServiceBase {
 
   async getStats(params: GetEntriesParams = {}): Promise<NhatKyChungStats> {
     const queryParams: Record<string, string> = {};
-    
+
     if (params.search) queryParams.search = params.search;
     if (params.startDate) queryParams.startDate = params.startDate;
     if (params.endDate) queryParams.endDate = params.endDate;
     if (params.loai) queryParams.loai = params.loai;
+    if (params.doiTuong) queryParams.doiTuong = params.doiTuong;
+    if (params.duAn) queryParams.duAn = params.duAn;
+    if (params.boPhan) queryParams.boPhan = params.boPhan;
+    if (params.taiKhoanNo) queryParams.taiKhoanNo = params.taiKhoanNo;
+    if (params.taiKhoanCo) queryParams.taiKhoanCo = params.taiKhoanCo;
 
-    return this.get<NhatKyChungStats>({ 
+    return this.get<NhatKyChungStats>({
       endpoint: '/stats',
-      params: queryParams 
+      params: queryParams
     });
   }
 
@@ -224,10 +239,16 @@ class NhatKyChungService extends ServiceBase {
    */
   async getSummary(type: SummaryType, params: GetEntriesParams = {}): Promise<SummaryItem[]> {
     const queryParams: Record<string, string> = {};
-    
+
     if (params.search) queryParams.search = params.search;
     if (params.startDate) queryParams.startDate = params.startDate;
     if (params.endDate) queryParams.endDate = params.endDate;
+    if (params.loai) queryParams.loai = params.loai;
+    if (params.doiTuong) queryParams.doiTuong = params.doiTuong;
+    if (params.duAn) queryParams.duAn = params.duAn;
+    if (params.boPhan) queryParams.boPhan = params.boPhan;
+    if (params.taiKhoanNo) queryParams.taiKhoanNo = params.taiKhoanNo;
+    if (params.taiKhoanCo) queryParams.taiKhoanCo = params.taiKhoanCo;
 
     // parseResponse in service-base already extracts data from { success, data } format
     return this.get<SummaryItem[]>({ 

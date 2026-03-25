@@ -34,24 +34,15 @@ export class NhatKyChungService {
     data: ChungTu[];
     meta: PaginatedResult<ChungTu>['meta'];
   }> {
-    const { page = 1, limit = 15, search } = query;
+    const { page = 1, limit = 15 } = query;
     const skip = (page - 1) * limit;
     const mongoQuery = buildMongoQuery(query);
 
     const aggregationPipeline: object[] = [{ $match: mongoQuery }];
 
-    if (search) {
-      aggregationPipeline.push({
-        $addFields: { score: { $meta: 'textScore' } },
-      });
-      aggregationPipeline.push({
-        $sort: { score: -1, ngay: -1, createdAt: -1 },
-      });
-    } else {
-      aggregationPipeline.push({
-        $sort: { ngay: -1, createdAt: -1 },
-      });
-    }
+    aggregationPipeline.push({
+      $sort: { ngay: -1, createdAt: -1 },
+    });
 
     aggregationPipeline.push({ $skip: skip });
     aggregationPipeline.push({ $limit: limit });
