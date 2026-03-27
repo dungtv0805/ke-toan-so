@@ -227,12 +227,16 @@ export class TaiKhoanService {
     });
 
     // Get all parent IDs (accounts that have children)
+    // parentId can be either ObjectId or ma (account code), so collect both
     const parentIds = new Set(
       allAccounts.filter((acc) => acc.parentId).map((acc) => acc.parentId),
     );
 
     // Filter to only leaf accounts (accounts that are not parents)
-    const leafAccounts = allAccounts.filter((acc) => !parentIds.has(acc.id));
+    // Check both id and ma since parentId can reference either
+    const leafAccounts = allAccounts.filter(
+      (acc) => !parentIds.has(acc.id) && !parentIds.has(acc.ma),
+    );
 
     return leafAccounts.sort((a, b) => a.ma.localeCompare(b.ma));
   }

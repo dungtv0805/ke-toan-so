@@ -49,7 +49,37 @@ const data = [
 ];
 
 async function seed(db, options = {}) {
-  return seedCollection(db, collectionName, data, options);
+  // Pre-generate ObjectIds and build ma->_id map for parentId resolution
+  const { transformBatch } = require('./utils');
+  const documents = transformBatch(data);
+  const maToId = new Map();
+  documents.forEach(doc => {
+    maToId.set(doc.ma, doc._id.toString());
+  });
+
+  // Resolve parentId from ma to ObjectId
+  documents.forEach(doc => {
+    if (doc.parentId && maToId.has(doc.parentId)) {
+      doc.parentId = maToId.get(doc.parentId);
+    }
+  });
+
+  const { clearBefore = false, dryRun = false } = options;
+  const collection = db.collection(collectionName);
+
+  if (clearBefore && !dryRun) {
+    await collection.deleteMany({});
+    console.log(`🗑️  ${collectionName}: Cleared existing data`);
+  }
+
+  if (dryRun) {
+    console.log(`🔍 ${collectionName}: Would insert ${documents.length} records (dry run)`);
+    return { inserted: 0, dryRun: true };
+  }
+
+  const result = await collection.insertMany(documents);
+  console.log(`📦 ${collectionName}: Inserted ${result.insertedCount} records`);
+  return { inserted: result.insertedCount };
 }
 
 async function clear(db) {
