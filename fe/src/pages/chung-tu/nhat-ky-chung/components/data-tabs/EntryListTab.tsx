@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Table, Button, Space, Tooltip } from "antd";
-import { PlusOutlined, ReloadOutlined } from "@ant-design/icons";
+import { PlusOutlined, ReloadOutlined, FileExcelOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { NhatKyChung } from "@/types";
 import { useTableColumnResize } from "@/hooks/useTableColumnResize";
@@ -748,6 +748,7 @@ export function EntryListTab() {
   });
   const [taiKhoanList] = useNhatKyChungState("taiKhoanList", []);
   const [editingRowId] = useNhatKyChungState("editingRowId", null);
+  const [exportingExcel] = useNhatKyChungState("exportingExcel", false);
 
   // Enable column resize via DOM manipulation (no React re-renders)
   useTableColumnResize("resizable-table");
@@ -809,6 +810,14 @@ export function EntryListTab() {
           Thêm mới
         </Button>
         <Space size="small">
+          <Button
+            size="small"
+            icon={<FileExcelOutlined />}
+            loading={exportingExcel}
+            onClick={() => handler.executeEvent("exportExcel", {})}
+          >
+            Xuất Excel
+          </Button>
           <Button
             size="small"
             icon={<ReloadOutlined />}
