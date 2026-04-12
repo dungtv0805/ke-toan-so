@@ -41,6 +41,7 @@ import {
   SoCaiPage,
   BangCanDoiPage,
   BaoCaoTaiChinhPage,
+  KqkdPage,
   QuyChaunPage,
   PhanQuyenPage,
   TenantPage,
@@ -224,6 +225,14 @@ const App = () => (
                     element={
                       <ProtectedRoute allowedRoles={routePermissions['/bao-cao/bang-can-doi']}>
                         <BangCanDoiPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="kqkd"
+                    element={
+                      <ProtectedRoute allowedRoles={routePermissions['/bao-cao/kqkd']}>
+                        <KqkdPage />
                       </ProtectedRoute>
                     }
                   />

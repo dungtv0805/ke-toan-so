@@ -7,6 +7,7 @@ import './master-data';
 import './common';
 import './tenant';
 import './user';
+import './reporting';
 
 // Re-export all types
 export * from './auth';
@@ -15,3 +16,4 @@ export * from './master-data';
 export * from './common';
 export * from './tenant';
 export * from './user';
+export * from './reporting';
