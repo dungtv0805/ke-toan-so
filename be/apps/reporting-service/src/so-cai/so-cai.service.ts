@@ -245,15 +245,16 @@ export class SoCaiService {
   }
 
   /**
-   * Generate trial balance report
+   * Generate trial balance report using DB aggregation
+   * 1 HTTP call to voucher-service instead of fetching all raw records
    */
   async getTrialBalance(
     startDate: Date,
     endDate: Date,
     authToken?: string,
   ): Promise<{ entries: TrialBalanceEntry[]; totals: TrialBalanceEntry }> {
-    const [vouchersRes, accountsRes] = await Promise.all([
-      this.serviceClient.getNhatKyChung(
+    const [aggRes, accountsRes] = await Promise.all([
+      this.serviceClient.aggregateBalance(
         startDate.toISOString(),
         endDate.toISOString(),
         authToken,
@@ -261,66 +262,63 @@ export class SoCaiService {
       this.serviceClient.getTaiKhoan(authToken),
     ]);
 
-    const vouchers = vouchersRes.success ? vouchersRes.data || [] : [];
+    const aggData = aggRes.success ? aggRes.data || [] : [];
     const accounts = accountsRes.success ? accountsRes.data || [] : [];
 
-    const balances = new Map<
-      string,
-      { no: number; co: number; account: TaiKhoanResponse }
-    >();
+    // Build account lookup map
+    const accountMap = new Map(accounts.map((a) => [a.ma, a]));
+    const aggMap = new Map(aggData.map((a) => [a.ma, a]));
 
-    // Initialize all accounts
-    for (const account of accounts) {
-      balances.set(account.ma, { no: 0, co: 0, account });
-    }
-
-    // Aggregate voucher amounts
-    for (const v of vouchers) {
-      const tkNo = getTaiKhoanNo(v);
-      const tkCo = getTaiKhoanCo(v);
-
-      if (tkNo) {
-        const noBalance = balances.get(tkNo);
-        if (noBalance) {
-          noBalance.no += v.soTien;
-        }
+    // Helper: tính dư Nợ/Có từ tổng Nợ - Có, dựa vào loại TK
+    const calcBalance = (no: number, co: number, loai: string): { duNo: number; duCo: number } => {
+      if (loai === 'NO') {
+        const net = no - co;
+        return net >= 0 ? { duNo: net, duCo: 0 } : { duNo: 0, duCo: -net };
+      } else {
+        const net = co - no;
+        return net >= 0 ? { duNo: 0, duCo: net } : { duNo: -net, duCo: 0 };
       }
+    };
 
-      if (tkCo) {
-        const coBalance = balances.get(tkCo);
-        if (coBalance) {
-          coBalance.co += v.soTien;
-        }
-      }
-    }
-
-    // Build trial balance entries
     const entries: TrialBalanceEntry[] = [];
-    let totalNo = 0;
-    let totalCo = 0;
+    let totalNoDauKy = 0, totalCoDauKy = 0;
+    let totalNoPhatSinh = 0, totalCoPhatSinh = 0;
+    let totalNoCuoiKy = 0, totalCoCuoiKy = 0;
 
-    for (const [ma, data] of balances) {
-      if (data.no === 0 && data.co === 0) continue;
+    // Process all accounts that have aggregation data
+    const processedMas = new Set<string>();
 
-      const noCuoiKy = data.account.loai === 'NO' ? data.no - data.co : 0;
-      const coCuoiKy = data.account.loai === 'CO' ? data.co - data.no : 0;
+    for (const [ma, agg] of aggMap) {
+      processedMas.add(ma);
+      const account = accountMap.get(ma);
+      if (!account) continue;
+
+      const dauKy = calcBalance(agg.priorNo, agg.priorCo, account.loai);
+      const cuoiKy = calcBalance(
+        agg.priorNo + agg.periodNo,
+        agg.priorCo + agg.periodCo,
+        account.loai,
+      );
 
       entries.push({
         ma,
-        ten: data.account.ten,
-        noDauKy: 0,
-        coDauKy: 0,
-        noPhatSinh: data.no,
-        coPhatSinh: data.co,
-        noCuoiKy: Math.max(0, noCuoiKy),
-        coCuoiKy: Math.max(0, coCuoiKy),
+        ten: account.ten,
+        noDauKy: dauKy.duNo,
+        coDauKy: dauKy.duCo,
+        noPhatSinh: agg.periodNo,
+        coPhatSinh: agg.periodCo,
+        noCuoiKy: cuoiKy.duNo,
+        coCuoiKy: cuoiKy.duCo,
       });
 
-      totalNo += data.no;
-      totalCo += data.co;
+      totalNoDauKy += dauKy.duNo;
+      totalCoDauKy += dauKy.duCo;
+      totalNoPhatSinh += agg.periodNo;
+      totalCoPhatSinh += agg.periodCo;
+      totalNoCuoiKy += cuoiKy.duNo;
+      totalCoCuoiKy += cuoiKy.duCo;
     }
 
-    // Sort by account code
     entries.sort((a, b) => a.ma.localeCompare(b.ma));
 
     return {
@@ -328,12 +326,12 @@ export class SoCaiService {
       totals: {
         ma: '',
         ten: 'Tổng cộng',
-        noDauKy: 0,
-        coDauKy: 0,
-        noPhatSinh: totalNo,
-        coPhatSinh: totalCo,
-        noCuoiKy: totalNo,
-        coCuoiKy: totalCo,
+        noDauKy: totalNoDauKy,
+        coDauKy: totalCoDauKy,
+        noPhatSinh: totalNoPhatSinh,
+        coPhatSinh: totalCoPhatSinh,
+        noCuoiKy: totalNoCuoiKy,
+        coCuoiKy: totalCoCuoiKy,
       },
     };
   }

@@ -105,7 +105,7 @@ const existingRoutes = new Set([
   "/bao-cao/pnl",
   "/bao-cao/so-cai",
   "/bao-cao/bang-can-doi",
-  "/bao-cao/kqkd",
+
   "/cau-hinh/phan-quyen",
 ]);
 
@@ -175,7 +175,6 @@ const dieuHanhMenuItems: MenuItem[] = [
 const keToAnMenuItems: MenuItem[] = [
   getItem("Báo cáo", "/bao-cao", <BarChartOutlined />, [
     getMenuItem("Báo cáo tài chính", "/bao-cao/tai-chinh", <PieChartOutlined />),
-    getMenuItem("Kết quả kinh doanh", "/bao-cao/kqkd", <BarChartOutlined />),
     getMenuItem("Sổ chi tiết tài khoản", "/bao-cao/so-chi-tiet-tai-khoan", <AccountBookOutlined />),
     getMenuItem("Sổ chi tiết công nợ", "/bao-cao/so-chi-tiet-cong-no", <FileSearchOutlined />),
     getMenuItem("Sổ chi tiết phát sinh", "/bao-cao/so-chi-tiet-phat-sinh", <ProfileOutlined />),

@@ -106,6 +106,105 @@ export class NhatKyChungService {
     };
   }
 
+  /**
+   * Aggregate account balances directly in MongoDB.
+   * Returns prior period (before startDate) and current period totals per account.
+   * Used by reporting-service instead of fetching all raw records.
+   */
+  async aggregateBalance(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<{
+    success: boolean;
+    data: Array<{
+      ma: string;
+      priorNo: number;
+      priorCo: number;
+      periodNo: number;
+      periodCo: number;
+    }>;
+  }> {
+    const pipeline: object[] = [
+      {
+        $match: {
+          ngay: { $lte: endDate },
+        },
+      },
+      {
+        $facet: {
+          noEntries: [
+            { $match: { 'danhMuc.taiKhoanNo.ma': { $exists: true, $ne: null } } },
+            {
+              $group: {
+                _id: '$danhMuc.taiKhoanNo.ma',
+                priorNo: {
+                  $sum: { $cond: [{ $lt: ['$ngay', startDate] }, '$soTien', 0] },
+                },
+                periodNo: {
+                  $sum: {
+                    $cond: [
+                      { $and: [{ $gte: ['$ngay', startDate] }, { $lte: ['$ngay', endDate] }] },
+                      '$soTien',
+                      0,
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+          coEntries: [
+            { $match: { 'danhMuc.taiKhoanCo.ma': { $exists: true, $ne: null } } },
+            {
+              $group: {
+                _id: '$danhMuc.taiKhoanCo.ma',
+                priorCo: {
+                  $sum: { $cond: [{ $lt: ['$ngay', startDate] }, '$soTien', 0] },
+                },
+                periodCo: {
+                  $sum: {
+                    $cond: [
+                      { $and: [{ $gte: ['$ngay', startDate] }, { $lte: ['$ngay', endDate] }] },
+                      '$soTien',
+                      0,
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    ];
+
+    const result = await this.chungTuRepository.aggregate(pipeline).toArray();
+    const facet = result[0] || { noEntries: [], coEntries: [] };
+
+    // Merge Nợ + Có per account
+    const map = new Map<string, { priorNo: number; priorCo: number; periodNo: number; periodCo: number }>();
+
+    for (const e of facet.noEntries) {
+      map.set(e._id, {
+        priorNo: e.priorNo,
+        priorCo: 0,
+        periodNo: e.periodNo,
+        periodCo: 0,
+      });
+    }
+
+    for (const e of facet.coEntries) {
+      const existing = map.get(e._id) || { priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 0 };
+      existing.priorCo = e.priorCo;
+      existing.periodCo = e.periodCo;
+      map.set(e._id, existing);
+    }
+
+    const accounts = Array.from(map.entries())
+      .map(([ma, d]) => ({ ma, ...d }))
+      .sort((a, b) => a.ma.localeCompare(b.ma));
+
+    return { success: true, data: accounts };
+  }
+
   async findById(id: string): Promise<{ success: boolean; data: ChungTu }> {
     const { ObjectId } = await import('mongodb');
     const chungTu = await this.chungTuRepository.findOne({

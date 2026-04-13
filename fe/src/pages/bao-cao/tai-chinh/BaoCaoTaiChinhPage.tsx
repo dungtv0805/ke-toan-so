@@ -36,12 +36,10 @@ import {
   BalanceSheetItem,
   BalanceSheetStats,
 } from '@/services/balanceSheetService';
-import {
-  pnlService,
-  PnLSummary,
-  PnLGroupedData,
-  PnLItem,
-} from '@/services/pnlService';
+import { pnlService, PnLComparisonData } from '@/services/pnlService';
+import { PeriodFilter, PeriodFilterParams } from '@/components/shared/PeriodFilter';
+import { kqkdService, KqkdReport } from '@/services/kqkdService';
+import { KqkdTable } from '@/pages/bao-cao/kqkd/components/KqkdTable';
 
 // ============ TYPES ============
 
@@ -53,11 +51,6 @@ interface TrialBalanceState {
 interface BalanceSheetState {
   data: BalanceSheetData | null;
   stats: BalanceSheetStats | null;
-}
-
-interface PnLState {
-  groupedData: PnLGroupedData[];
-  summary: PnLSummary | null;
 }
 
 // ============ HELPERS ============
@@ -86,11 +79,35 @@ const CurrencyCell: React.FC<{ value: number; bold?: boolean }> = ({ value, bold
   </span>
 );
 
+const getPeriodLabel = (params: PeriodFilterParams): string => {
+  const start = new Date(params.startDate);
+  const end = new Date(params.endDate);
+  switch (params.periodType) {
+    case 'thang':
+      return `Tháng ${start.getMonth() + 1}/${start.getFullYear()}`;
+    case 'quy': {
+      const q = Math.floor(start.getMonth() / 3) + 1;
+      return `Quý ${q}/${start.getFullYear()}`;
+    }
+    case 'nam':
+      return `Năm ${start.getFullYear()}`;
+    case 'tuyChon':
+      return `${start.toLocaleDateString('vi-VN')} - ${end.toLocaleDateString('vi-VN')}`;
+  }
+};
+
 // ============ MAIN COMPONENT ============
 
 const BaoCaoTaiChinhPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('1');
   const [loading, setLoading] = useState(false);
+
+  const [filterParams, setFilterParams] = useState<PeriodFilterParams>(() => {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
+    return { periodType: 'thang' as const, startDate, endDate };
+  });
 
   const [tbState, setTbState] = useState<TrialBalanceState>({
     trialBalance: [],
@@ -102,35 +119,51 @@ const BaoCaoTaiChinhPage: React.FC = () => {
     stats: null,
   });
 
-  const [pnlState, setPnlState] = useState<PnLState>({
-    groupedData: [],
-    summary: null,
-  });
+  const [kqkdData, setKqkdData] = useState<KqkdReport | null>(null);
+  const [pnlComparison, setPnlComparison] = useState<PnLComparisonData | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [trial, stats, bsData, bsStats, grouped, summary] = await Promise.all([
-        soCaiService.getTrialBalance(),
-        soCaiService.getStats(),
-        balanceSheetService.getData(),
-        balanceSheetService.getStats(),
-        pnlService.getGroupedPnLData(),
-        pnlService.getSummary('thangNay'),
+      const { startDate, endDate, periodType } = filterParams;
+      const [trial, stats, bsData, bsStats, kqkd, pnlComp] = await Promise.all([
+        soCaiService.getTrialBalance(startDate, endDate),
+        soCaiService.getStats(startDate, endDate),
+        balanceSheetService.getData(endDate),
+        balanceSheetService.getStats(endDate),
+        kqkdService.getData({ startDate, endDate, periodType }),
+        pnlService.getComparison(startDate, endDate, periodType),
       ]);
       setTbState({ trialBalance: trial, soCaiStats: stats });
       setBsState({ data: bsData, stats: bsStats });
-      setPnlState({ groupedData: grouped, summary });
+      setKqkdData(kqkd);
+      setPnlComparison(pnlComp);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filterParams]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handleFilter = (params: PeriodFilterParams) => {
+    setFilterParams(params);
+  };
+
+  // ============ DASHBOARD STATS ============
+
+  const doanhThu = kqkdData?.chiTieu.find((c) => c.ma === '10')?.kyHienTai
+    ?? pnlComparison?.tongDoanhThu ?? 0;
+
+  const loiNhuanSauThue = kqkdData?.chiTieu.find((c) => c.ma === '60')?.kyHienTai ?? (() => {
+    if (!pnlComparison) return 0;
+    const lntt = pnlComparison.loiNhuan;
+    const thue = lntt > 0 ? lntt * 0.2 : 0;
+    return lntt - thue;
+  })();
 
   // ============ TAB 1: CÂN ĐỐI TÀI KHOẢN ============
 
@@ -193,47 +226,92 @@ const BaoCaoTaiChinhPage: React.FC = () => {
     },
   ];
 
-  // ============ TAB 3: KẾT QUẢ KINH DOANH ============
+  // ============ TAB 4: SO SÁNH LÃI LỖ ============
 
-  type PnLRow = { key: string; khoanMuc: string; soTien: number; isCategory?: boolean; isSummary?: boolean };
+  type PnLCompRow = {
+    key: string;
+    khoanMuc: string;
+    kyHienTai: number;
+    kyTruoc: number;
+    bienDong: number;
+    phanTramBienDong: number | null;
+    isCategory?: boolean;
+    isSummary?: boolean;
+  };
 
-  const buildPnLTableData = (): PnLRow[] => {
-    const rows: PnLRow[] = [];
+  const buildPnLComparisonData = (): PnLCompRow[] => {
+    if (!pnlComparison) return [];
+    const rows: PnLCompRow[] = [];
+    const prev = pnlComparison.kyTruoc;
 
-    pnlState.groupedData.forEach((group, gIndex) => {
-      rows.push({ key: `cat-${gIndex}`, khoanMuc: group.category.name, soTien: group.subtotal, isCategory: true });
-      group.items.forEach((item: PnLItem, iIndex: number) => {
-        rows.push({ key: `item-${gIndex}-${iIndex}`, khoanMuc: `   ${item.ma} - ${item.ten}`, soTien: item.soTien });
-      });
+    const makeRow = (key: string, name: string, cur: number, pre: number, opts?: { isCategory?: boolean; isSummary?: boolean }): PnLCompRow => {
+      const diff = cur - pre;
+      const pct = pre !== 0 ? (diff / Math.abs(pre)) * 100 : (cur !== 0 ? 100 : null);
+      return { key, khoanMuc: name, kyHienTai: cur, kyTruoc: pre, bienDong: diff, phanTramBienDong: pct, ...opts };
+    };
+
+    // Doanh thu
+    rows.push(makeRow('cat-dt', 'DOANH THU', pnlComparison.tongDoanhThu, prev.tongDoanhThu, { isCategory: true }));
+    pnlComparison.doanhThu.forEach((item, i) => {
+      const prevItem = prev.doanhThu.find((p) => p.ma === item.ma);
+      rows.push(makeRow(`dt-${i}`, `   ${item.ma} - ${item.ten}`, item.soTien, prevItem?.soTien ?? 0));
     });
 
-    const loiNhuanTruocThue = pnlState.summary?.loiNhuanTruocThue ?? 0;
-    const thue = pnlState.summary?.thue ?? 0;
-    const loiNhuanSauThue = pnlState.summary?.loiNhuanSauThue ?? 0;
+    // Chi phí
+    rows.push(makeRow('cat-cp', 'CHI PHÍ', pnlComparison.tongChiPhi, prev.tongChiPhi, { isCategory: true }));
+    pnlComparison.chiPhi.forEach((item, i) => {
+      const prevItem = prev.chiPhi.find((p) => p.ma === item.ma);
+      rows.push(makeRow(`cp-${i}`, `   ${item.ma} - ${item.ten}`, item.soTien, prevItem?.soTien ?? 0));
+    });
 
-    rows.push({ key: 'profit-before-tax', khoanMuc: 'LỢI NHUẬN TRƯỚC THUẾ', soTien: loiNhuanTruocThue, isSummary: true });
-    rows.push({ key: 'tax', khoanMuc: '   Thuế TNDN (20%)', soTien: -thue });
-    rows.push({ key: 'net-profit', khoanMuc: 'LỢI NHUẬN SAU THUẾ', soTien: loiNhuanSauThue, isSummary: true });
+    // Lợi nhuận
+    const lnttCur = pnlComparison.loiNhuan;
+    const lnttPrev = prev.loiNhuan;
+    rows.push(makeRow('lntt', 'LỢI NHUẬN TRƯỚC THUẾ', lnttCur, lnttPrev, { isSummary: true }));
+
+    const thueCur = lnttCur > 0 ? lnttCur * 0.2 : 0;
+    const thuePrev = lnttPrev > 0 ? lnttPrev * 0.2 : 0;
+    rows.push(makeRow('thue', '   Thuế TNDN (20%)', -thueCur, -thuePrev));
+
+    rows.push(makeRow('lnst', 'LỢI NHUẬN SAU THUẾ', lnttCur - thueCur, lnttPrev - thuePrev, { isSummary: true }));
 
     return rows;
   };
 
-  const pnlColumns: ColumnsType<PnLRow> = [
+  const pnlCompColumns: ColumnsType<PnLCompRow> = [
     {
-      title: 'Khoản mục', dataIndex: 'khoanMuc', key: 'khoanMuc', width: 400,
-      render: (text: string, record: PnLRow) => (
+      title: 'Khoản mục', dataIndex: 'khoanMuc', key: 'khoanMuc', width: 350,
+      render: (text: string, record: PnLCompRow) => (
         <span style={{ fontWeight: record.isCategory || record.isSummary ? 600 : 400, color: record.isSummary ? '#1890ff' : 'inherit' }}>{text}</span>
       ),
     },
     {
-      title: 'Số tiền', dataIndex: 'soTien', key: 'soTien', width: 200, align: 'right',
-      render: (value: number, record: PnLRow) => <CurrencyCell value={value} bold={record.isCategory || record.isSummary} />,
+      title: 'Kỳ hiện tại', dataIndex: 'kyHienTai', key: 'kyHienTai', width: 160, align: 'right',
+      render: (v: number, r: PnLCompRow) => <CurrencyCell value={v} bold={r.isCategory || r.isSummary} />,
+    },
+    {
+      title: 'Kỳ trước', dataIndex: 'kyTruoc', key: 'kyTruoc', width: 160, align: 'right',
+      render: (v: number, r: PnLCompRow) => <CurrencyCell value={v} bold={r.isCategory || r.isSummary} />,
+    },
+    {
+      title: 'Biến động', dataIndex: 'bienDong', key: 'bienDong', width: 150, align: 'right',
+      render: (v: number) => (
+        <Space>
+          <span style={{ color: v >= 0 ? '#52c41a' : '#ff4d4f' }}>{formatCurrencyShort(v)}</span>
+          {v !== 0 && (v > 0 ? <RiseOutlined style={{ color: '#52c41a' }} /> : <FallOutlined style={{ color: '#ff4d4f' }} />)}
+        </Space>
+      ),
+    },
+    {
+      title: '% Biến động', dataIndex: 'phanTramBienDong', key: 'phanTramBienDong', width: 120, align: 'right',
+      render: (v: number | null) => {
+        if (v === null) return '-';
+        return <span style={{ color: v >= 0 ? '#52c41a' : '#ff4d4f' }}>{v >= 0 ? '+' : ''}{v.toFixed(1)}%</span>;
+      },
     },
   ];
 
   // ============ RENDER ============
-
-  const currentYear = new Date().getFullYear();
 
   return (
     <div style={{ padding: 24 }}>
@@ -246,12 +324,16 @@ const BaoCaoTaiChinhPage: React.FC = () => {
         style={{ marginBottom: 16 }}
       />
 
+      <Card style={{ marginBottom: 16 }}>
+        <PeriodFilter onFilter={handleFilter} loading={loading} />
+      </Card>
+
       <Card
         title={
           <Space>
             <FileTextOutlined style={{ fontSize: 20, color: '#1890ff' }} />
             <span style={{ fontSize: 18, fontWeight: 600 }}>Báo cáo tài chính</span>
-            <Tag color="blue">Năm {currentYear}</Tag>
+            <Tag color="blue">{getPeriodLabel(filterParams)}</Tag>
           </Space>
         }
         extra={
@@ -271,17 +353,17 @@ const BaoCaoTaiChinhPage: React.FC = () => {
           </Col>
           <Col span={6}>
             <Card size="small">
-              <Statistic title="Doanh thu" value={pnlState.summary?.tongDoanhThu ?? 0} formatter={(val) => formatCurrencyShort(val as number)} prefix={<DollarOutlined style={{ color: '#52c41a' }} />} />
+              <Statistic title="Doanh thu" value={doanhThu} formatter={(val) => formatCurrencyShort(val as number)} prefix={<DollarOutlined style={{ color: '#52c41a' }} />} />
             </Card>
           </Col>
           <Col span={6}>
             <Card size="small">
               <Statistic
                 title="Lợi nhuận sau thuế"
-                value={pnlState.summary?.loiNhuanSauThue ?? 0}
+                value={loiNhuanSauThue}
                 formatter={(val) => formatCurrencyShort(val as number)}
-                valueStyle={{ color: (pnlState.summary?.loiNhuanSauThue ?? 0) >= 0 ? '#52c41a' : '#ff4d4f' }}
-                prefix={(pnlState.summary?.loiNhuanSauThue ?? 0) >= 0 ? <RiseOutlined /> : <FallOutlined />}
+                valueStyle={{ color: loiNhuanSauThue >= 0 ? '#52c41a' : '#ff4d4f' }}
+                prefix={loiNhuanSauThue >= 0 ? <RiseOutlined /> : <FallOutlined />}
               />
             </Card>
           </Col>
@@ -365,10 +447,15 @@ const BaoCaoTaiChinhPage: React.FC = () => {
           {
             key: '3',
             label: 'Kết quả kinh doanh',
+            children: <KqkdTable data={kqkdData?.chiTieu ?? []} loading={loading} />,
+          },
+          {
+            key: '4',
+            label: 'So sánh lãi lỗ',
             children: (
               <Table
-                columns={pnlColumns}
-                dataSource={buildPnLTableData()}
+                columns={pnlCompColumns}
+                dataSource={buildPnLComparisonData()}
                 rowKey="key"
                 loading={loading}
                 bordered

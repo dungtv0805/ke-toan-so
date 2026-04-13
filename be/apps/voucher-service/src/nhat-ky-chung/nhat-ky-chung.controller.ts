@@ -44,6 +44,18 @@ export class NhatKyChungController {
     return this.nhatKyChungService.getStats(query);
   }
 
+  @Get('aggregate-balance')
+  @Roles('ADMIN', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async aggregateBalance(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return this.nhatKyChungService.aggregateBalance(
+      new Date(startDate),
+      new Date(endDate),
+    );
+  }
+
   @Get('summary/:type')
   @Roles('ADMIN', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getSummary(

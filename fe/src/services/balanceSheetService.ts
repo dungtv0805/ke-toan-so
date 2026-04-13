@@ -91,10 +91,10 @@ class BalanceSheetServiceImpl extends ServiceBase {
     super({ endpoint: '/reporting/bao-cao' });
   }
 
-  async getData(): Promise<BalanceSheetData> {
+  async getData(asOfDate?: string): Promise<BalanceSheetData> {
     const res = await this.get<BalanceSheetResponse>({
       endpoint: '/balance-sheet',
-      params: { asOfDate: new Date().toISOString() },
+      params: { asOfDate: asOfDate || new Date().toISOString() },
     });
 
     const taiSanNganHan = res.taiSan.filter(a => a.ma.startsWith('1'));
@@ -121,10 +121,10 @@ class BalanceSheetServiceImpl extends ServiceBase {
     };
   }
 
-  async getStats(): Promise<BalanceSheetStats> {
+  async getStats(asOfDate?: string): Promise<BalanceSheetStats> {
     const res = await this.get<BalanceSheetResponse>({
       endpoint: '/balance-sheet',
-      params: { asOfDate: new Date().toISOString() },
+      params: { asOfDate: asOfDate || new Date().toISOString() },
     });
 
     const taiSanNganHan = res.taiSan

@@ -8,12 +8,18 @@ export interface PnLEntry {
   soTien: number;
 }
 
-export interface PnLReport {
+export interface PnLPeriodData {
   doanhThu: PnLEntry[];
   chiPhi: PnLEntry[];
   tongDoanhThu: number;
   tongChiPhi: number;
   loiNhuan: number;
+}
+
+export interface PnLReport extends PnLPeriodData {
+  kyTruoc: PnLPeriodData;
+  kyHienTai: { startDate: string; endDate: string };
+  kyTruocPeriod: { startDate: string; endDate: string };
 }
 
 export interface BalanceSheetEntry {
@@ -43,53 +49,79 @@ export class BaoCaoService {
   async getPnL(
     startDate: Date,
     endDate: Date,
+    periodType: 'thang' | 'quy' | 'nam' | 'tuyChon',
     authToken?: string,
+    tenantId?: string,
   ): Promise<PnLReport> {
-    const [vouchersRes, accountsRes] = await Promise.all([
+    const prevPeriod = this.getPreviousPeriod(startDate, endDate, periodType);
+
+    const [vouchersHTRes, vouchersKTRes, accountsRes] = await Promise.all([
       this.serviceClient.getNhatKyChung(
         startDate.toISOString(),
         endDate.toISOString(),
         authToken,
+        tenantId,
       ),
-      this.serviceClient.getTaiKhoan(authToken),
+      this.serviceClient.getNhatKyChung(
+        prevPeriod.startDate.toISOString(),
+        prevPeriod.endDate.toISOString(),
+        authToken,
+        tenantId,
+      ),
+      this.serviceClient.getTaiKhoan(authToken, tenantId),
     ]);
 
-    const vouchers = vouchersRes.success ? vouchersRes.data || [] : [];
+    const vouchersHT = vouchersHTRes.success ? vouchersHTRes.data || [] : [];
+    const vouchersKT = vouchersKTRes.success ? vouchersKTRes.data || [] : [];
     const accounts = accountsRes.success ? accountsRes.data || [] : [];
 
-    // Revenue accounts typically start with 5xx
-    // Expense accounts typically start with 6xx
     const revenueAccounts = accounts.filter((a) => a.ma.startsWith('5'));
     const expenseAccounts = accounts.filter((a) => a.ma.startsWith('6'));
 
-    const doanhThu: PnLEntry[] = [];
-    const chiPhi: PnLEntry[] = [];
+    const buildPeriodData = (vouchers: NhatKyChungEntry[]): PnLPeriodData => {
+      const doanhThu: PnLEntry[] = [];
+      const chiPhi: PnLEntry[] = [];
 
-    // Calculate revenue
-    for (const account of revenueAccounts) {
-      const amount = this.calculateAccountBalance(vouchers, account.ma, 'CO');
-      if (amount !== 0) {
-        doanhThu.push({ ma: account.ma, ten: account.ten, soTien: amount });
+      for (const account of revenueAccounts) {
+        const amount = this.calculateAccountBalance(vouchers, account.ma, 'CO');
+        if (amount !== 0) {
+          doanhThu.push({ ma: account.ma, ten: account.ten, soTien: amount });
+        }
       }
-    }
 
-    // Calculate expenses
-    for (const account of expenseAccounts) {
-      const amount = this.calculateAccountBalance(vouchers, account.ma, 'NO');
-      if (amount !== 0) {
-        chiPhi.push({ ma: account.ma, ten: account.ten, soTien: amount });
+      for (const account of expenseAccounts) {
+        const amount = this.calculateAccountBalance(vouchers, account.ma, 'NO');
+        if (amount !== 0) {
+          chiPhi.push({ ma: account.ma, ten: account.ten, soTien: amount });
+        }
       }
-    }
 
-    const tongDoanhThu = doanhThu.reduce((sum, e) => sum + e.soTien, 0);
-    const tongChiPhi = chiPhi.reduce((sum, e) => sum + e.soTien, 0);
+      const tongDoanhThu = doanhThu.reduce((sum, e) => sum + e.soTien, 0);
+      const tongChiPhi = chiPhi.reduce((sum, e) => sum + e.soTien, 0);
+
+      return {
+        doanhThu,
+        chiPhi,
+        tongDoanhThu,
+        tongChiPhi,
+        loiNhuan: tongDoanhThu - tongChiPhi,
+      };
+    };
+
+    const currentData = buildPeriodData(vouchersHT);
+    const previousData = buildPeriodData(vouchersKT);
 
     return {
-      doanhThu,
-      chiPhi,
-      tongDoanhThu,
-      tongChiPhi,
-      loiNhuan: tongDoanhThu - tongChiPhi,
+      ...currentData,
+      kyTruoc: previousData,
+      kyHienTai: {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+      },
+      kyTruocPeriod: {
+        startDate: prevPeriod.startDate.toISOString(),
+        endDate: prevPeriod.endDate.toISOString(),
+      },
     };
   }
 
@@ -99,14 +131,16 @@ export class BaoCaoService {
   async getBalanceSheet(
     asOfDate: Date,
     authToken?: string,
+    tenantId?: string,
   ): Promise<BalanceSheetReport> {
     const [vouchersRes, accountsRes] = await Promise.all([
       this.serviceClient.getNhatKyChung(
         '2000-01-01',
         asOfDate.toISOString(),
         authToken,
+        tenantId,
       ),
-      this.serviceClient.getTaiKhoan(authToken),
+      this.serviceClient.getTaiKhoan(authToken, tenantId),
     ]);
 
     const vouchers = vouchersRes.success ? vouchersRes.data || [] : [];
@@ -179,6 +213,7 @@ export class BaoCaoService {
     endDate: Date,
     periodType: 'thang' | 'quy' | 'nam' | 'tuyChon',
     authToken?: string,
+    tenantId?: string,
   ): Promise<KqkdReport> {
     const prevPeriod = this.getPreviousPeriod(startDate, endDate, periodType);
 
@@ -187,11 +222,13 @@ export class BaoCaoService {
         startDate.toISOString(),
         endDate.toISOString(),
         authToken,
+        tenantId,
       ),
       this.serviceClient.getNhatKyChung(
         prevPeriod.startDate.toISOString(),
         prevPeriod.endDate.toISOString(),
         authToken,
+        tenantId,
       ),
     ]);
 
@@ -372,10 +409,13 @@ export class BaoCaoService {
     let balance = 0;
 
     for (const v of vouchers) {
-      if (v.taiKhoanNo === maTaiKhoan) {
+      const maTKNo = v.danhMuc?.taiKhoanNo?.ma ?? v.taiKhoanNo;
+      const maTKCo = v.danhMuc?.taiKhoanCo?.ma ?? v.taiKhoanCo;
+
+      if (maTKNo === maTaiKhoan) {
         balance += type === 'NO' ? v.soTien : -v.soTien;
       }
-      if (v.taiKhoanCo === maTaiKhoan) {
+      if (maTKCo === maTaiKhoan) {
         balance += type === 'CO' ? v.soTien : -v.soTien;
       }
     }

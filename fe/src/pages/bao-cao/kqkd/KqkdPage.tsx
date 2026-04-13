@@ -6,8 +6,8 @@ import type { KqkdReport } from "@/services/kqkdService";
 
 function KqkdPageInner() {
   const handler = useKqkdHandler();
-  const kqkdData = useKqkdState("kqkdData") as KqkdReport | null;
-  const loading = useKqkdState("loading") as boolean;
+  const [kqkdData] = useKqkdState("kqkdData") as [KqkdReport | null, unknown];
+  const [loading] = useKqkdState("loading") as [boolean, unknown];
 
   useEffect(() => {
     handler.executeEvent("init", {});
@@ -31,7 +31,7 @@ function KqkdPageInner() {
 
       <KqkdFilter onFilter={handleFilter} loading={loading} />
 
-      {kqkdData && (
+      {kqkdData?.kyHienTai && kqkdData?.kyTruoc && (
         <div className="flex gap-4 text-sm text-muted-foreground">
           <span>
             Kỳ hiện tại: {formatDate(kqkdData.kyHienTai.startDate)} –{" "}

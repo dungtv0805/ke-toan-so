@@ -1,6 +1,6 @@
 import { Controller, Get, Query, UseGuards, Headers, BadRequestException } from '@nestjs/common';
 import { BaoCaoService } from './bao-cao.service';
-import { JwtGuard, RoleGuard, Roles } from '@app/auth';
+import { JwtGuard, RoleGuard, Roles, CurrentUser, type UserPayload } from '@app/auth';
 
 @Controller('bao-cao')
 @UseGuards(JwtGuard, RoleGuard)
@@ -12,12 +12,23 @@ export class BaoCaoController {
   async getPnL(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
+    @Query('periodType') periodType: string = 'thang',
     @Headers('authorization') authToken: string,
+    @CurrentUser() user: UserPayload,
   ) {
+    const validPeriodTypes = ['thang', 'quy', 'nam', 'tuyChon'];
+    if (!validPeriodTypes.includes(periodType)) {
+      throw new BadRequestException(
+        `periodType phải là một trong: ${validPeriodTypes.join(', ')}`,
+      );
+    }
+
     const data = await this.baoCaoService.getPnL(
       new Date(startDate),
       new Date(endDate),
+      periodType as 'thang' | 'quy' | 'nam' | 'tuyChon',
       authToken,
+      user.tenantId,
     );
     return { success: true, data };
   }
@@ -27,10 +38,12 @@ export class BaoCaoController {
   async getBalanceSheet(
     @Query('asOfDate') asOfDate: string,
     @Headers('authorization') authToken: string,
+    @CurrentUser() user: UserPayload,
   ) {
     const data = await this.baoCaoService.getBalanceSheet(
       new Date(asOfDate),
       authToken,
+      user.tenantId,
     );
     return { success: true, data };
   }
@@ -42,6 +55,7 @@ export class BaoCaoController {
     @Query('endDate') endDate: string,
     @Query('periodType') periodType: string = 'thang',
     @Headers('authorization') authToken: string,
+    @CurrentUser() user: UserPayload,
   ) {
     const validPeriodTypes = ['thang', 'quy', 'nam', 'tuyChon'];
     if (!validPeriodTypes.includes(periodType)) {
@@ -53,8 +67,9 @@ export class BaoCaoController {
     const data = await this.baoCaoService.getKqkd(
       new Date(startDate),
       new Date(endDate),
-      periodType,
+      periodType as 'thang' | 'quy' | 'nam' | 'tuyChon',
       authToken,
+      user.tenantId,
     );
     return { success: true, data };
   }

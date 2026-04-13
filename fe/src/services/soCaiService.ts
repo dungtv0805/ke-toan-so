@@ -161,19 +161,20 @@ class SoCaiService extends ServiceBase {
     }));
   }
 
-  async getStats(): Promise<SoCaiStats> {
-    return this.get<SoCaiStats>({ endpoint: '/stats' });
+  async getStats(startDate?: string, endDate?: string): Promise<SoCaiStats> {
+    const params: Record<string, string> = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    return this.get<SoCaiStats>({ endpoint: '/stats', params });
   }
 
-  async getTrialBalance(): Promise<TrialBalance[]> {
+  async getTrialBalance(startDate?: string, endDate?: string): Promise<TrialBalance[]> {
     const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const sd = startDate || new Date(now.getFullYear(), 0, 1).toISOString();
+    const ed = endDate || now.toISOString();
     const data = await this.get<TrialBalanceResponse>({
       endpoint: '/trial-balance',
-      params: {
-        startDate: startOfYear.toISOString(),
-        endDate: now.toISOString(),
-      },
+      params: { startDate: sd, endDate: ed },
     });
 
     return data.entries.map((item) => ({

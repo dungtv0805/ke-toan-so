@@ -47,6 +47,23 @@ export interface PnLData {
   loiNhuan: number;
 }
 
+export interface PnLComparisonData {
+  doanhThu: PnLItem[];
+  chiPhi: PnLItem[];
+  tongDoanhThu: number;
+  tongChiPhi: number;
+  loiNhuan: number;
+  kyTruoc: {
+    doanhThu: PnLItem[];
+    chiPhi: PnLItem[];
+    tongDoanhThu: number;
+    tongChiPhi: number;
+    loiNhuan: number;
+  };
+  kyHienTai: { startDate: string; endDate: string };
+  kyTruocPeriod: { startDate: string; endDate: string };
+}
+
 // ============ Helpers ============
 
 function getDateRange(period: 'thangNay' | 'thangTruoc' | 'luyKe'): { startDate: string; endDate: string } {
@@ -117,9 +134,18 @@ class PnLServiceImpl extends ServiceBase {
     ];
   }
 
-  async getSummary(period: 'thangNay' | 'thangTruoc' | 'luyKe' = 'thangNay'): Promise<PnLSummary> {
-    const { startDate, endDate } = getDateRange(period);
-    const res = await this.fetchPnL(startDate, endDate);
+  async getComparison(startDate: string, endDate: string, periodType: string): Promise<PnLComparisonData> {
+    return this.get<PnLComparisonData>({
+      endpoint: '/pnl',
+      params: { startDate, endDate, periodType },
+    });
+  }
+
+  async getSummary(period: 'thangNay' | 'thangTruoc' | 'luyKe' = 'thangNay', startDate?: string, endDate?: string): Promise<PnLSummary> {
+    const range = getDateRange(period);
+    const sd = startDate || range.startDate;
+    const ed = endDate || range.endDate;
+    const res = await this.fetchPnL(sd, ed);
 
     const loiNhuanTruocThue = res.loiNhuan;
     const thue = loiNhuanTruocThue > 0 ? loiNhuanTruocThue * 0.2 : 0;

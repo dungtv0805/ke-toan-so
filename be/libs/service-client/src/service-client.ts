@@ -60,10 +60,37 @@ export class ServiceClient extends BaseServiceClient {
 
   async getTaiKhoan(
     authToken?: string,
+    tenantId?: string,
   ): Promise<ServiceResponse<TaiKhoanResponse[]>> {
-    return this.get<TaiKhoanResponse[]>('master-data', '/tai-khoan', {
-      headers: authToken ? { Authorization: authToken } : undefined,
-    });
+    const headers: Record<string, string> = {};
+    if (authToken) headers['Authorization'] = authToken;
+    if (tenantId) headers['x-tenant-id'] = tenantId;
+
+    const allAccounts: TaiKhoanResponse[] = [];
+    let page = 1;
+    const limit = 100;
+
+    while (true) {
+      const response = await this.get<TaiKhoanResponse[]>('master-data', '/tai-khoan', {
+        headers: Object.keys(headers).length ? headers : undefined,
+        query: {
+          limit: String(limit),
+          page: String(page),
+        },
+      });
+
+      if (!response.success) {
+        return { success: false, data: allAccounts };
+      }
+
+      const accounts = Array.isArray(response.data) ? response.data : [];
+      allAccounts.push(...accounts);
+
+      if (accounts.length < limit) break;
+      page++;
+    }
+
+    return { success: true, data: allAccounts };
   }
 
   async getTaiKhoanByMa(
@@ -140,24 +167,62 @@ export class ServiceClient extends BaseServiceClient {
     startDate?: string,
     endDate?: string,
     authToken?: string,
+    tenantId?: string,
   ): Promise<ServiceResponse<NhatKyChungEntry[]>> {
-    // Use high limit to get all entries for backward compatibility
-    const response = await this.get<{
-      data: NhatKyChungEntry[];
-      meta: { total: number; page: number; limit: number; totalPages: number };
-    }>('voucher', '/nhat-ky-chung', {
-      headers: authToken ? { Authorization: authToken } : undefined,
-      query: {
-        startDate: startDate || '2000-01-01',
-        endDate: endDate || '2100-12-31',
-        limit: '10000',
-      },
-    });
+    const headers: Record<string, string> = {};
+    if (authToken) headers['Authorization'] = authToken;
+    if (tenantId) headers['x-tenant-id'] = tenantId;
 
-    // Extract data array from paginated response
-    return {
-      success: response.success,
-      data: response.data?.data || [],
-    };
+    const allEntries: NhatKyChungEntry[] = [];
+    let page = 1;
+    const limit = 100;
+
+    while (true) {
+      const response = await this.get<NhatKyChungEntry[]>('voucher', '/nhat-ky-chung', {
+        headers: Object.keys(headers).length ? headers : undefined,
+        query: {
+          startDate: startDate || '2000-01-01',
+          endDate: endDate || '2100-12-31',
+          limit: String(limit),
+          page: String(page),
+        },
+      });
+
+      if (!response.success) {
+        return { success: false, data: allEntries };
+      }
+
+      const entries = Array.isArray(response.data) ? response.data : [];
+      allEntries.push(...entries);
+
+      if (entries.length < limit) break;
+      page++;
+    }
+
+    return { success: true, data: allEntries };
+  }
+
+  // ============ Voucher Service - Aggregation Methods ============
+
+  async aggregateBalance(
+    startDate: string,
+    endDate: string,
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<ServiceResponse<Array<{
+    ma: string;
+    priorNo: number;
+    priorCo: number;
+    periodNo: number;
+    periodCo: number;
+  }>>> {
+    const headers: Record<string, string> = {};
+    if (authToken) headers['Authorization'] = authToken;
+    if (tenantId) headers['x-tenant-id'] = tenantId;
+
+    return this.get('voucher', '/nhat-ky-chung/aggregate-balance', {
+      headers: Object.keys(headers).length ? headers : undefined,
+      query: { startDate, endDate },
+    });
   }
 }
