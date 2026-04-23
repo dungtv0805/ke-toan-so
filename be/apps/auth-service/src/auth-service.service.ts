@@ -9,7 +9,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User, UserCredential, Tenant, UserRole, UserStatus, UserTenant, SUPER_ADMIN_EMAIL } from '@app/entities';
+import { User, UserCredential, Tenant, UserRole, UserStatus, UserTenant, PhanQuyen, SUPER_ADMIN_EMAIL } from '@app/entities';
 import {
   LoginDto,
   RegisterDto,
@@ -39,8 +39,18 @@ export class AuthServiceService {
     private readonly tenantRepository: Repository<Tenant>,
     @InjectRepository(UserTenant)
     private readonly userTenantRepository: Repository<UserTenant>,
+    @InjectRepository(PhanQuyen)
+    private readonly phanQuyenRepo: Repository<PhanQuyen>,
     private readonly jwtService: JwtService,
   ) {}
+
+  /**
+   * Load permissions from PhanQuyen entity by role name
+   */
+  private async loadPermissions(vaiTro: string): Promise<string[]> {
+    const phanQuyen = await this.phanQuyenRepo.findOne({ where: { vaiTro, isActive: true } });
+    return phanQuyen?.permissions || [];
+  }
 
   /**
    * Check if user is super admin by email
@@ -221,7 +231,7 @@ export class AuthServiceService {
         email: user.email,
         tenantId: tenantInfo.tenantId,
         vaiTro: tenantInfo.role,
-        permissions: [], // TODO: Load permissions from tenant role
+        permissions: await this.loadPermissions(tenantInfo.role),
       };
 
       const accessToken = this.jwtService.sign(payload);
@@ -329,7 +339,7 @@ export class AuthServiceService {
       email: user.email,
       tenantId: tenantInfo.tenantId,
       vaiTro: tenantInfo.role,
-      permissions: [], // TODO: Load permissions from tenant role
+      permissions: await this.loadPermissions(tenantInfo.role),
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -419,6 +429,7 @@ export class AuthServiceService {
     user: AuthUserResponse;
     tenant?: TenantInfo;
     availableTenants: TenantInfo[];
+    permissions: string[];
   }> {
     const { ObjectId } = await import('mongodb');
     const user = await this.userRepository.findOne({
@@ -446,6 +457,7 @@ export class AuthServiceService {
         return {
           user: this.buildUserResponse(user),
           availableTenants,
+          permissions: ['*'],
         };
       }
 
@@ -463,6 +475,7 @@ export class AuthServiceService {
           role: 'SUPER_ADMIN',
         },
         availableTenants,
+        permissions: ['*'],
       };
     }
 
@@ -503,6 +516,7 @@ export class AuthServiceService {
       user: this.buildUserResponse(user),
       tenant: this.buildTenantInfo(currentUserTenant, currentTenant),
       availableTenants,
+      permissions: await this.loadPermissions(currentUserTenant.role),
     };
   }
 
@@ -578,7 +592,7 @@ export class AuthServiceService {
       email: user.email,
       tenantId: tenantInfo.tenantId,
       vaiTro: tenantInfo.role,
-      permissions: [],
+      permissions: await this.loadPermissions(tenantInfo.role),
     };
 
     const accessToken = this.jwtService.sign(payload);

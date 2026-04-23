@@ -12,7 +12,8 @@ interface LoginResponse {
   accessToken?: string;
   user: NguoiDung;
   tenant?: TenantInfo;
-  
+  permissions?: string[];
+
   // Case 2: Multiple tenants - need selection
   tempToken?: string;
   tenants?: TenantInfo[];
@@ -27,6 +28,7 @@ interface SelectTenantResponse {
   accessToken: string;
   user: NguoiDung;
   tenant: TenantInfo;
+  permissions?: string[];
 }
 
 interface RegisterRequest {
@@ -48,6 +50,7 @@ interface GetMeResponse {
   user: NguoiDung;
   tenant: TenantInfo;
   availableTenants: TenantInfo[];
+  permissions?: string[];
 }
 
 class AuthService extends ServiceBase {

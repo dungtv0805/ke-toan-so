@@ -70,7 +70,7 @@ export const mockNguoiDung: NguoiDung[] = [
   },
 ];
 
-export const quyenHanTheoVaiTro: Record<VaiTro, string[]> = {
+export const moTaQuyenTheoVaiTro: Record<VaiTro, string[]> = {
   ADMIN: [
     'Quản lý người dùng',
     'Cấu hình hệ thống',

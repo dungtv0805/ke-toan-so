@@ -3,7 +3,7 @@ import { Alert, Descriptions, Form, Input, Modal, Radio, Select, Space, Tag, mes
 import { CheckCircleOutlined, UserOutlined, InfoCircleOutlined, UserAddOutlined } from "@ant-design/icons";
 import { z } from "zod";
 import { usePhanQuyenHandler, usePhanQuyenState } from "../../PhanQuyenHandlerContext";
-import { vaiTroOptions, quyenHanTheoVaiTro } from "@/mock-data/nguoi-dung";
+import { vaiTroOptions, moTaQuyenTheoVaiTro } from "@/mock-data/nguoi-dung";
 import { VaiTro } from "@/types";
 import { nguoiDungService } from "@/services/nguoiDungService";
 import "./PhanQuyenModal.state";
@@ -238,7 +238,7 @@ export function PhanQuyenModal() {
             const vaiTro = getFieldValue("vaiTro") as VaiTro;
             if (!vaiTro) return null;
 
-            const quyenHan = quyenHanTheoVaiTro[vaiTro] || [];
+            const quyenHan = moTaQuyenTheoVaiTro[vaiTro] || [];
             return (
               <Descriptions title="Quyền hạn được cấp" bordered size="small" column={1}>
                 {quyenHan.map((qh, index) => (

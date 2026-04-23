@@ -577,6 +577,7 @@ export interface NguoiDung {
   id: string;
   hoTen: string;
   email: string;
+  vaiTro: VaiTro;
   isSuperAdmin?: boolean;
   tenants: import('./tenant').UserTenant[];
   trangThai: 'HOAT_DONG' | 'KHOA';

@@ -10,7 +10,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { NguoiDung, VaiTro } from "@/types";
-import { vaiTroOptions, quyenHanTheoVaiTro } from "@/mock-data/nguoi-dung";
+import { vaiTroOptions, moTaQuyenTheoVaiTro } from "@/mock-data/nguoi-dung";
 import { PhanQuyenHandler } from "../../phanQuyenHandler";
 
 export const getVaiTroIcon = (vaiTro: VaiTro) => {
@@ -94,7 +94,7 @@ export const createColumns = (handler: PhanQuyenHandler) => [
     title: "Quyền hạn",
     key: "quyenHan",
     render: (_: unknown, record: NguoiDung) => {
-      const quyenHan = quyenHanTheoVaiTro[record.vaiTro] || [];
+      const quyenHan = moTaQuyenTheoVaiTro[record.vaiTro] || [];
       return (
         <Tooltip
           title={

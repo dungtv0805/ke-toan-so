@@ -25,7 +25,7 @@ import {
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { authService } from '@/services/authService';
-import { vaiTroOptions, quyenHanTheoVaiTro } from '@/mock-data/nguoi-dung';
+import { vaiTroOptions, moTaQuyenTheoVaiTro } from '@/mock-data/nguoi-dung';
 
 const { Title, Text } = Typography;
 
@@ -52,7 +52,7 @@ const ProfilePage = () => {
 
   const currentRole = currentTenant?.role as VaiTro | undefined;
   const roleInfo = vaiTroOptions.find(v => v.value === currentRole);
-  const permissions = currentRole ? quyenHanTheoVaiTro[currentRole] || [] : [];
+  const permissions = currentRole ? moTaQuyenTheoVaiTro[currentRole] || [] : [];
 
   const handleProfileSubmit = async (values: { hoTen: string }) => {
     try {

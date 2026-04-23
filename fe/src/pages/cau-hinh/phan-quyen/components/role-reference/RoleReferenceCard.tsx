@@ -1,6 +1,6 @@
 import { Card, Col, List, Row, Space, Tag } from "antd";
 import { CheckCircleOutlined } from "@ant-design/icons";
-import { vaiTroOptions, quyenHanTheoVaiTro } from "@/mock-data/nguoi-dung";
+import { vaiTroOptions, moTaQuyenTheoVaiTro } from "@/mock-data/nguoi-dung";
 import { getVaiTroIcon } from "../table/columns";
 
 export function RoleReferenceCard() {
@@ -22,7 +22,7 @@ export function RoleReferenceCard() {
               <p className="text-muted-foreground text-sm mb-2">{vt.description}</p>
               <List
                 size="small"
-                dataSource={quyenHanTheoVaiTro[vt.value]}
+                dataSource={moTaQuyenTheoVaiTro[vt.value]}
                 renderItem={(item) => (
                   <List.Item style={{ padding: "4px 0", border: "none" }}>
                     <Space>

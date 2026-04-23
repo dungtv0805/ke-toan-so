@@ -67,6 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentTenant, setCurrentTenantState] = useState<TenantInfo | null>(null);
   const [needsTenantSelection, setNeedsTenantSelection] = useState(false);
   const [tempToken, setTempToken] = useState<string | null>(null);
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
 
   // Check for existing token and fetch user on mount
   useEffect(() => {
@@ -82,6 +83,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setCurrentTenant(response.tenant);
             setCurrentTenantState(response.tenant);
             setNeedsTenantSelection(false);
+          }
+
+          // Set permissions from BE
+          if (response.permissions) {
+            setUserPermissions(response.permissions);
           }
 
           // Set available tenants if provided
@@ -135,6 +141,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setTempToken(null);
       }
 
+      // Save BE permissions if available
+      if (response.permissions) {
+        setUserPermissions(response.permissions);
+      }
+
       return { success: true };
     } catch (error) {
       if (error instanceof ApiError) {
@@ -164,6 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAvailableTenants([]);
       setNeedsTenantSelection(false);
       setTempToken(null);
+      setUserPermissions([]);
       clearAuthToken();
       clearCurrentTenant();
     }
@@ -185,6 +197,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentTenantState(response.tenant);
       setNeedsTenantSelection(false);
       setTempToken(null);
+      if (response.permissions) {
+        setUserPermissions(response.permissions);
+      }
     } catch (error) {
       console.error('Failed to select tenant:', error);
       throw error;
@@ -198,6 +213,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(response.user);
       setCurrentTenant(response.tenant);
       setCurrentTenantState(response.tenant);
+      if (response.permissions) {
+        setUserPermissions(response.permissions);
+      }
 
       // Update the role in availableTenants if needed
       setAvailableTenants((prev) =>
@@ -218,8 +236,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUser = useCallback(async () => {
     try {
-      const userData = await authService.getMe();
-      setUser(userData);
+      const response = await authService.getMe();
+      setUser(response.user);
+      if (response.permissions) {
+        setUserPermissions(response.permissions);
+      }
     } catch (error) {
       console.error('Failed to refresh user:', error);
     }
@@ -238,12 +259,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Super admin has all permissions
     if (user.isSuperAdmin) return true;
     if (!currentTenant) return false;
+
+    // Use BE permissions if available
+    if (userPermissions.length > 0) {
+      if (userPermissions.includes('*')) return true;
+      return userPermissions.includes(permission);
+    }
+
+    // Fallback: hardcoded map
     const role = currentTenant.role as VaiTro;
     const permissions = quyenHanTheoVaiTro[role] || [];
     // Admin has all permissions
     if (permissions.includes('*')) return true;
     return permissions.includes(permission);
-  }, [user, currentTenant]);
+  }, [user, currentTenant, userPermissions]);
 
   return (
     <AuthContext.Provider

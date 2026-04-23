@@ -25,6 +25,7 @@ const seeds = [
   { name: 'ngan-hang', module: require('./ngan-hang.seed') },
   { name: 'san-pham', module: require('./san-pham.seed') },
   { name: 'tai-khoan', module: require('./tai-khoan.seed') },
+  { name: 'phan-quyen', module: require('./phan-quyen.seed') },
   { name: 'nguoi-dung', module: require('./nguoi-dung.seed') },
   { name: 'loai-giao-dich', module: require('./loai-giao-dich.seed') },
   { name: 'quy-chuan', module: require('./quy-chuan.seed') },

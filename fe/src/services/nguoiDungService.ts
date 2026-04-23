@@ -1,6 +1,6 @@
 import { NguoiDung, VaiTro } from '@/types';
 import { ServiceBase } from './base/service-base';
-import { vaiTroOptions, quyenHanTheoVaiTro } from '@/mock-data/nguoi-dung';
+import { vaiTroOptions, moTaQuyenTheoVaiTro } from '@/mock-data/nguoi-dung';
 
 export interface NguoiDungStats {
   tongNguoiDung: number;
@@ -30,6 +30,7 @@ const transformUser = (user: Record<string, unknown>): NguoiDung => ({
   id: (user._id as string) || (user.id as string),
   hoTen: user.hoTen as string,
   email: user.email as string,
+  vaiTro: (user.tenantRole as VaiTro) || (user.vaiTro as VaiTro),
   isSuperAdmin: (user.isSuperAdmin as boolean) || false,
   tenants: (user.tenants as NguoiDung['tenants']) || [],
   trangThai: user.trangThai as 'HOAT_DONG' | 'KHOA',
@@ -129,7 +130,7 @@ class NguoiDungService extends ServiceBase {
   }
 
   getQuyenHanTheoVaiTro(vaiTro: VaiTro) {
-    return quyenHanTheoVaiTro[vaiTro] || [];
+    return moTaQuyenTheoVaiTro[vaiTro] || [];
   }
 }
 
