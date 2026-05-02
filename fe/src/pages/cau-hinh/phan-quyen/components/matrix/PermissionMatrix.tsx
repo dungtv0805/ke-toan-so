@@ -6,24 +6,8 @@ import {
   PermissionModule,
   PermissionAction,
 } from "../../constants/permissionModules";
+import { ModulePermission, collectLeafModules } from "../../utils/permissionConverter";
 import "./PermissionMatrix.state";
-
-interface ModulePermission {
-  moduleKey: string;
-  actions: Record<PermissionAction, boolean>;
-}
-
-function collectLeafKeys(modules: PermissionModule[]): string[] {
-  const keys: string[] = [];
-  for (const mod of modules) {
-    if (mod.children) {
-      keys.push(...collectLeafKeys(mod.children));
-    } else {
-      keys.push(mod.key);
-    }
-  }
-  return keys;
-}
 
 function getActionState(
   permissions: ModulePermission[],
@@ -98,7 +82,7 @@ function ParentRow({
   handler: ReturnType<typeof usePhanQuyenHandler>;
   depth: number;
 }) {
-  const leafKeys = collectLeafKeys([mod]);
+  const leafKeys = collectLeafModules([mod]);
   const allState = getAllState(permissions, leafKeys);
 
   return (

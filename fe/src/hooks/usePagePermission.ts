@@ -11,12 +11,13 @@ interface PagePermissions {
 
 export function usePagePermission(moduleKey: string): PagePermissions {
   const { hasPermission } = useAuth();
+  const normalizedKey = moduleKey.startsWith('/') ? moduleKey : `/${moduleKey}`;
 
   return useMemo(() => ({
-    canView: hasPermission(`${moduleKey}:xem`),
-    canCreate: hasPermission(`${moduleKey}:them`),
-    canEdit: hasPermission(`${moduleKey}:sua`),
-    canDelete: hasPermission(`${moduleKey}:xoa`),
-    canExport: hasPermission(`${moduleKey}:xuat`),
-  }), [moduleKey, hasPermission]);
+    canView: hasPermission(`${normalizedKey}:xem`),
+    canCreate: hasPermission(`${normalizedKey}:them`),
+    canEdit: hasPermission(`${normalizedKey}:sua`),
+    canDelete: hasPermission(`${normalizedKey}:xoa`),
+    canExport: hasPermission(`${normalizedKey}:xuat`),
+  }), [normalizedKey, hasPermission]);
 }

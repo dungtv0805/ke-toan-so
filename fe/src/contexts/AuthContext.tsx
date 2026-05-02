@@ -4,43 +4,6 @@ import { authService } from '@/services/authService';
 import { setAuthToken, getAuthToken, clearAuthToken, setCurrentTenant, getCurrentTenant, clearCurrentTenant } from '@/services/base/service-base';
 import { ApiError, ApiErrorType } from '@/config/api';
 
-// Permission mapping by role
-const quyenHanTheoVaiTro: Record<VaiTro, string[]> = {
-  ADMIN: ['*'], // All permissions within tenant
-  GIAM_DOC: ['*'], // Director has all permissions within tenant
-  KE_TOAN_TRUONG: [
-    'xem_so_cai', 'xem_nhat_ky_chung', 'xem_bao_cao',
-    'quan_ly_tai_khoan', 'quan_ly_danh_muc',
-    'xem_phieu_thu', 'xem_phieu_chi',
-    'xem_cong_no', 'xem_so_quy', 'duyet_phieu'
-  ],
-  KE_TOAN_TONG_HOP: [
-    'xem_so_cai', 'xem_nhat_ky_chung', 'xem_bao_cao',
-    'quan_ly_tai_khoan', 'quan_ly_danh_muc',
-    'xem_phieu_thu', 'xem_phieu_chi',
-    'xem_cong_no', 'xem_so_quy'
-  ],
-  KE_TOAN_QUY: [
-    'xem_so_quy', 'tao_phieu_thu', 'tao_phieu_chi',
-    'xem_phieu_thu', 'xem_phieu_chi', 'sua_phieu',
-    'xem_danh_muc'
-  ],
-  KE_TOAN_CONG_NO: [
-    'xem_cong_no', 'quan_ly_cong_no',
-    'xem_phai_thu', 'xem_phai_tra',
-    'xem_danh_muc', 'xem_doi_tuong'
-  ],
-  MANAGER: [
-    'duyet_phieu', 'xem_bao_cao', 'xem_tong_quan',
-    'xem_phieu_thu', 'xem_phieu_chi',
-    'xem_cong_no', 'xem_so_quy', 'xem_so_cai'
-  ],
-  KIEM_SOAT: [
-    'xem_so_cai', 'xem_nhat_ky_chung', 'xem_bao_cao',
-    'xem_phieu_thu', 'xem_phieu_chi',
-    'xem_cong_no', 'xem_so_quy', 'xem_danh_muc'
-  ],
-};
 
 interface AuthContextType {
   user: NguoiDung | null;
@@ -256,22 +219,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasPermission = useCallback((permission: string) => {
     if (!user) return false;
-    // Super admin has all permissions
     if (user.isSuperAdmin) return true;
     if (!currentTenant) return false;
-
-    // Use BE permissions if available
-    if (userPermissions.length > 0) {
-      if (userPermissions.includes('*')) return true;
-      return userPermissions.includes(permission);
-    }
-
-    // Fallback: hardcoded map
-    const role = currentTenant.role as VaiTro;
-    const permissions = quyenHanTheoVaiTro[role] || [];
-    // Admin has all permissions
-    if (permissions.includes('*')) return true;
-    return permissions.includes(permission);
+    if (userPermissions.includes('*')) return true;
+    return userPermissions.includes(permission);
   }, [user, currentTenant, userPermissions]);
 
   return (

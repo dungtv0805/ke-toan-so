@@ -5,7 +5,7 @@ export interface ModulePermission {
   actions: Record<PermissionAction, boolean>;
 }
 
-function collectLeafModules(modules: PermissionModule[]): string[] {
+export function collectLeafModules(modules: PermissionModule[]): string[] {
   const keys: string[] = [];
   for (const mod of modules) {
     if (mod.children) {

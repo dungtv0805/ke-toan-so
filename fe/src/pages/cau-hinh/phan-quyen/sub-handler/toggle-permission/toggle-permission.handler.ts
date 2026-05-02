@@ -6,24 +6,8 @@ import {
   permissionModules,
   PermissionModule,
 } from "../../constants/permissionModules";
+import { ModulePermission, collectLeafModules } from "../../utils/permissionConverter";
 import "./toggle-permission.event";
-
-interface ModulePermission {
-  moduleKey: string;
-  actions: Record<PermissionAction, boolean>;
-}
-
-function collectLeafKeys(modules: PermissionModule[]): string[] {
-  const keys: string[] = [];
-  for (const mod of modules) {
-    if (mod.children) {
-      keys.push(...collectLeafKeys(mod.children));
-    } else {
-      keys.push(mod.key);
-    }
-  }
-  return keys;
-}
 
 function findModuleByKey(
   modules: PermissionModule[],
@@ -52,7 +36,7 @@ export class TogglePermissionHandler extends CSubHanlder {
 
     const targetModule = findModuleByKey(permissionModules, moduleKey);
     const targetKeys = targetModule?.children
-      ? collectLeafKeys([targetModule])
+      ? collectLeafModules([targetModule])
       : [moduleKey];
 
     if (action === "all") {

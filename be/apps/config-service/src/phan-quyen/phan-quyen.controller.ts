@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { PhanQuyen_Service } from './phan-quyen.service';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
+import { UpsertPermissionsDto } from './upsert-permissions.dto';
 
 @Controller('phan-quyen')
 @UseGuards(JwtGuard, RoleGuard)
@@ -48,7 +49,7 @@ export class PhanQuyen_Controller {
   @Roles('ADMIN')
   async upsertPermissions(
     @Param('vaiTro') vaiTro: string,
-    @Body() body: { permissions: string[] },
+    @Body() body: UpsertPermissionsDto,
   ) {
     const data = await this.phanQuyen_Service.upsertPermissions(
       vaiTro,

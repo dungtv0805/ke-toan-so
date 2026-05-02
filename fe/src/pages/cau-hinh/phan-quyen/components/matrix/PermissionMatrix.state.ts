@@ -1,11 +1,4 @@
-import { BaseStates } from "@/common/c-handler/core/actions/c-state.action";
-
-type PermissionAction = 'xem' | 'them' | 'sua' | 'xoa' | 'xuat';
-
-interface ModulePermission {
-  moduleKey: string;
-  actions: Record<PermissionAction, boolean>;
-}
+import { ModulePermission } from "../../utils/permissionConverter";
 
 declare module "../../phanQuyenHandler" {
   interface PhanQuyenStates {
