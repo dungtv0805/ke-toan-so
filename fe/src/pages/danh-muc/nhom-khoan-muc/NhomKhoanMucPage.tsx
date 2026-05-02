@@ -32,6 +32,7 @@ import {
 } from "@ant-design/icons";
 import { nhomKhoanMucService, NhomKhoanMuc, NhomKhoanMucStats } from "@/services/nhomKhoanMucService";
 import { z } from "zod";
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 const { Title, Text } = Typography;
 
@@ -48,6 +49,7 @@ const nhomKhoanMucSchema = z.object({
 });
 
 const NhomKhoanMucPage: React.FC = () => {
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/nhom-khoan-muc");
   const [data, setData] = useState<NhomKhoanMuc[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -193,10 +195,10 @@ const NhomKhoanMucPage: React.FC = () => {
       fixed: "right" as const,
       render: (_: unknown, record: NhomKhoanMuc) => (
         <Space size="small">
-          <Tooltip title="Sửa">
+          {canEdit && (<Tooltip title="Sửa">
             <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} className="text-primary" />
-          </Tooltip>
-          <Popconfirm
+          </Tooltip>)}
+          {canDelete && (<Popconfirm
             title="Xác nhận xóa"
             description="Bạn có chắc chắn muốn xóa nhóm khoản mục này?"
             onConfirm={() => handleDelete(record.id)}
@@ -207,7 +209,7 @@ const NhomKhoanMucPage: React.FC = () => {
             <Tooltip title="Xóa">
               <Button type="text" icon={<DeleteOutlined />} danger />
             </Tooltip>
-          </Popconfirm>
+          </Popconfirm>)}
         </Space>
       ),
     },
@@ -232,9 +234,11 @@ const NhomKhoanMucPage: React.FC = () => {
           <Text type="secondary">Quản lý danh sách nhóm khoản mục chi phí và doanh thu</Text>
         </div>
         <Space>
-          <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+          {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
           <Button icon={<ReloadOutlined />} onClick={() => fetchData(1, pagination.pageSize, "", activeTab === "all" ? undefined : (activeTab as 'CHI_PHI' | 'DOANH_THU'))}>Làm mới</Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>Thêm nhóm</Button>
+          {canCreate && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>Thêm nhóm</Button>
+          )}
         </Space>
       </div>
 

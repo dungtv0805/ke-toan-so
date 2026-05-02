@@ -32,10 +32,12 @@ import {
   useNhomKhuyenMaiState,
 } from "./NhomKhuyenMaiHandlerContext";
 import "./NhomKhuyenMaiPage.state";
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 const { Title, Text } = Typography;
 
 function NhomKhuyenMaiPageInner() {
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/nhom-khuyen-mai");
   const handler = useNhomKhuyenMaiHandler();
   const [data] = useNhomKhuyenMaiState("data", []);
   const [loading] = useNhomKhuyenMaiState("loading", false);
@@ -137,15 +139,15 @@ function NhomKhuyenMaiPageInner() {
       align: "center" as const,
       render: (_: any, record: NhomKhuyenMai) => (
         <Space size="small">
-          <Tooltip title="Sửa">
+          {canEdit && (<Tooltip title="Sửa">
             <Button
               type="text"
               size="small"
               icon={<EditOutlined />}
               onClick={() => openModal(record)}
             />
-          </Tooltip>
-          <Popconfirm
+          </Tooltip>)}
+          {canDelete && (<Popconfirm
             title="Xác nhận xóa"
             onConfirm={() => handleDelete(record.id)}
             okText="Xóa"
@@ -160,7 +162,7 @@ function NhomKhuyenMaiPageInner() {
                 danger
               />
             </Tooltip>
-          </Popconfirm>
+          </Popconfirm>)}
         </Space>
       ),
     },
@@ -231,13 +233,15 @@ function NhomKhuyenMaiPageInner() {
               </Space>
             </Col>
             <Col xs={24} md={12} className="text-right">
-              <Button
+              {canCreate && (
+                <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => openModal()}
               >
                 Thêm mới
               </Button>
+              )}
             </Col>
           </Row>
         </div>

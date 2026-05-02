@@ -3,9 +3,11 @@ import { PhanQuyenHandlerProvider, usePhanQuyenHandler } from "./PhanQuyenHandle
 import { PhanQuyenHeader } from "./components/header/PhanQuyenHeader";
 import { PermissionMatrix } from "./components/matrix/PermissionMatrix";
 import { PhanQuyenFooter } from "./components/footer/PhanQuyenFooter";
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 function PhanQuyenPageInner() {
   const handler = usePhanQuyenHandler();
+  const { canEdit } = usePagePermission("/cau-hinh/phan-quyen");
 
   useEffect(() => {
     handler.executeEvent("init", {});
@@ -15,7 +17,7 @@ function PhanQuyenPageInner() {
     <div className="p-6">
       <PhanQuyenHeader />
       <PermissionMatrix />
-      <PhanQuyenFooter />
+      {canEdit && <PhanQuyenFooter />}
     </div>
   );
 }

@@ -1,39 +1,26 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
-import { permissionModules, PermissionModule } from "../../constants/permissionModules";
+import { phanQuyenService } from "@/services/phanQuyenService";
+import { message } from "antd";
+import { convertPermissionsToMatrix } from "../../utils/permissionConverter";
 import "./select-role.event";
-
-function collectLeafModules(modules: PermissionModule[]): string[] {
-  const keys: string[] = [];
-  for (const mod of modules) {
-    if (mod.children) {
-      keys.push(...collectLeafModules(mod.children));
-    } else {
-      keys.push(mod.key);
-    }
-  }
-  return keys;
-}
-
-function generateDefaultPermissions() {
-  const leafKeys = collectLeafModules(permissionModules);
-  return leafKeys.map((key) => ({
-    moduleKey: key,
-    actions: {
-      xem: true,
-      them: true,
-      sua: true,
-      xoa: true,
-      xuat: true,
-    },
-  }));
-}
 
 @RegisterHandler("phan-quyen-context")
 export class SelectRoleHandler extends CSubHanlder {
   @HandlerDecorator("selectRole")
   async selectRole(params: { roleId: string }): Promise<void> {
     this.setState("selectedRoleId", params.roleId);
-    this.setState("permissions", generateDefaultPermissions());
+    this.setState("loading", true);
+
+    try {
+      const permissionsArray = await phanQuyenService.getPermissionsByVaiTro(params.roleId);
+      this.setState("permissions", convertPermissionsToMatrix(permissionsArray));
+    } catch (error) {
+      message.error("Không thể tải quyền cho vai trò này");
+      console.error("Select role permissions error:", error);
+      this.setState("permissions", convertPermissionsToMatrix([]));
+    } finally {
+      this.setState("loading", false);
+    }
   }
 }

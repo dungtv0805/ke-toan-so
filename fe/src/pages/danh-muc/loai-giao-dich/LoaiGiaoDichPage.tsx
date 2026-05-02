@@ -32,6 +32,7 @@ import {
 import { LoaiGiaoDich } from "@/types";
 import { loaiGiaoDichService, LoaiGiaoDichStats } from "@/services/loaiGiaoDichService";
 import { z } from "zod";
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -53,6 +54,7 @@ const loaiGiaoDichSchema = z.object({
 });
 
 const LoaiGiaoDichPage: React.FC = () => {
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/loai-giao-dich");
   const [data, setData] = useState<LoaiGiaoDich[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -231,15 +233,15 @@ const LoaiGiaoDichPage: React.FC = () => {
       fixed: "right" as const,
       render: (_: unknown, record: LoaiGiaoDich) => (
         <Space size="small">
-          <Tooltip title="Sửa">
+          {canEdit && (<Tooltip title="Sửa">
             <Button
               type="text"
               icon={<EditOutlined />}
               onClick={() => handleEdit(record)}
               className="text-primary"
             />
-          </Tooltip>
-          <Popconfirm
+          </Tooltip>)}
+          {canDelete && (<Popconfirm
             title="Xác nhận xóa"
             description="Bạn có chắc chắn muốn xóa loại giao dịch này?"
             onConfirm={() => handleDelete(record.id)}
@@ -248,7 +250,7 @@ const LoaiGiaoDichPage: React.FC = () => {
             okButtonProps={{ danger: true }}
           >
             <Button type="text" icon={<DeleteOutlined />} danger />
-          </Popconfirm>
+          </Popconfirm>)}
         </Space>
       ),
     },
@@ -277,16 +279,18 @@ const LoaiGiaoDichPage: React.FC = () => {
           </Text>
         </div>
         <Space>
-          <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+          {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
           <Button
             icon={<ReloadOutlined />}
             onClick={() => fetchData(1, pagination.pageSize, "")}
           >
             Làm mới
           </Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+          {canCreate && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
             Thêm loại giao dịch
           </Button>
+          )}
         </Space>
       </div>
 

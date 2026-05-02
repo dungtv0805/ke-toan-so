@@ -38,6 +38,7 @@ import { DoiTuong } from "@/types";
 import { doiTuongService } from "@/services/doiTuongService";
 import { loaiDoiTuong } from "@/mock-data/doi-tuong";
 import { z } from "zod";
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 const { Title, Text } = Typography;
 
@@ -65,6 +66,7 @@ const doiTuongSchema = z.object({
 });
 
 const DoiTuongPage: React.FC = () => {
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/doi-tuong");
   const [data, setData] = useState<DoiTuong[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -316,7 +318,7 @@ const DoiTuongPage: React.FC = () => {
       align: "center" as const,
       render: (_: any, record: DoiTuong) => (
         <Space size="small">
-          <Tooltip title="Sửa">
+          {canEdit && (<Tooltip title="Sửa">
             <Button
               type="text"
               size="small"
@@ -324,8 +326,8 @@ const DoiTuongPage: React.FC = () => {
               onClick={() => openModal(record)}
               className="!text-primary hover:!bg-primary/10"
             />
-          </Tooltip>
-          <Popconfirm
+          </Tooltip>)}
+          {canDelete && (<Popconfirm
             title="Xác nhận xóa"
             description="Bạn có chắc chắn muốn xóa đối tượng này?"
             onConfirm={() => handleDelete(record.id)}
@@ -341,7 +343,7 @@ const DoiTuongPage: React.FC = () => {
                 className="!text-destructive hover:!bg-destructive/10"
               />
             </Tooltip>
-          </Popconfirm>
+          </Popconfirm>)}
         </Space>
       ),
     },
@@ -507,14 +509,16 @@ const DoiTuongPage: React.FC = () => {
             </Col>
             <Col xs={24} md={12} className="text-right">
               <Space>
-                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
-                <Button
+                {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+                {canCreate && (
+                  <Button
                   type="primary"
                   icon={<PlusOutlined />}
                   onClick={() => openModal()}
                 >
                   Thêm đối tượng
                 </Button>
+                )}
               </Space>
             </Col>
           </Row>

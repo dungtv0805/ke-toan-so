@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Switch, message, Space, Tag, Popconfirm, Divider, Tooltip, Radio, Select } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UserOutlined, UserAddOutlined } from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePagePermission } from '@/hooks/usePagePermission';
 import { tenantService, Tenant, CreateTenantDto, UpdateTenantDto } from '@/services/tenantService';
 import TenantMembersModal from './TenantMembersModal';
 
@@ -25,6 +26,7 @@ const TenantPage = () => {
   const [membersTenant, setMembersTenant] = useState<Tenant | null>(null);
   const [adminMode, setAdminMode] = useState<AdminMode>('new');
   const [form] = Form.useForm();
+  const { canCreate, canEdit, canDelete } = usePagePermission("/cau-hinh/tenant");
 
   // Only super admin can access this page
   if (!user?.isSuperAdmin) {
@@ -236,20 +238,24 @@ const TenantPage = () => {
               onClick={() => setMembersTenant(record)}
             />
           </Tooltip>
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          />
-          <Popconfirm
-            title="Xác nhận xóa?"
-            description="Bạn có chắc muốn xóa công ty này?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-          >
-            <Button type="text" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
+          {canEdit && (
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+            />
+          )}
+          {canDelete && (
+            <Popconfirm
+              title="Xác nhận xóa?"
+              description="Bạn có chắc muốn xóa công ty này?"
+              onConfirm={() => handleDelete(record.id)}
+              okText="Xóa"
+              cancelText="Hủy"
+            >
+              <Button type="text" danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -266,9 +272,11 @@ const TenantPage = () => {
             Quản lý danh sách các công ty trong hệ thống
           </p>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-          Thêm công ty
-        </Button>
+        {canCreate && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+            Thêm công ty
+          </Button>
+        )}
       </div>
 
       <Table

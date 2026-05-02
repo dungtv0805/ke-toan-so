@@ -32,10 +32,12 @@ import {
   useChuDauTuState,
 } from "./ChuDauTuHandlerContext";
 import "./ChuDauTuPage.state";
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 const { Title, Text } = Typography;
 
 function ChuDauTuPageInner() {
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/chu-dau-tu");
   const handler = useChuDauTuHandler();
   const [data] = useChuDauTuState("data", []);
   const [loading] = useChuDauTuState("loading", false);
@@ -135,15 +137,15 @@ function ChuDauTuPageInner() {
       align: "center" as const,
       render: (_: any, record: ChuDauTu) => (
         <Space size="small">
-          <Tooltip title="Sửa">
+          {canEdit && (<Tooltip title="Sửa">
             <Button
               type="text"
               size="small"
               icon={<EditOutlined />}
               onClick={() => openModal(record)}
             />
-          </Tooltip>
-          <Popconfirm
+          </Tooltip>)}
+          {canDelete && (<Popconfirm
             title="Xác nhận xóa"
             description="Bạn có chắc chắn muốn xóa?"
             onConfirm={() => handleDelete(record.id)}
@@ -159,7 +161,7 @@ function ChuDauTuPageInner() {
                 danger
               />
             </Tooltip>
-          </Popconfirm>
+          </Popconfirm>)}
         </Space>
       ),
     },
@@ -230,13 +232,15 @@ function ChuDauTuPageInner() {
               </Space>
             </Col>
             <Col xs={24} md={12} className="text-right">
-              <Button
+              {canCreate && (
+                <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => openModal()}
               >
                 Thêm mới
               </Button>
+              )}
             </Col>
           </Row>
         </div>

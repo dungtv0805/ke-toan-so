@@ -75,4 +75,24 @@ export class PhanQuyen_Service {
     const phanQuyen = await this.findByVaiTro(vaiTro);
     return phanQuyen?.permissions || [];
   }
+
+  async upsertPermissions(
+    vaiTro: string,
+    permissions: string[],
+  ): Promise<PhanQuyen> {
+    const existing = await this.findByVaiTro(vaiTro);
+
+    if (existing) {
+      existing.permissions = permissions;
+      return this.repo.save(existing);
+    }
+
+    const item = this.repo.create({
+      vaiTro,
+      ten: vaiTro,
+      permissions,
+      isActive: true,
+    });
+    return this.repo.save(item);
+  }
 }

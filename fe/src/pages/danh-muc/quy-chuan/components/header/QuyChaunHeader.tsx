@@ -9,6 +9,7 @@ import {
   SettingOutlined 
 } from '@ant-design/icons';
 import { useQuyChaunHandler, useQuyChaunState } from '../../QuyChaunHandlerContext';
+import { usePagePermission } from "@/hooks/usePagePermission";
 import './QuyChaunHeader.state';
 import { PaginationMeta } from '../table/QuyChaunTable.state';
 
@@ -21,6 +22,7 @@ const DEFAULT_PAGINATION: PaginationMeta = {
 
 export const QuyChaunHeader: React.FC = () => {
   const handler = useQuyChaunHandler();
+  const { canCreate, canExport } = usePagePermission("/danh-muc/quy-chuan");
   const [searchText] = useQuyChaunState('searchText', '');
   const [activeTab] = useQuyChaunState('activeTab', 'all');
   const [pagination] = useQuyChaunState('pagination', DEFAULT_PAGINATION);
@@ -90,13 +92,17 @@ export const QuyChaunHeader: React.FC = () => {
             style={{ width: 250 }}
             allowClear
           />
-          <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+          {canExport && (
+            <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+          )}
           <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
             Làm mới
           </Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-            Thêm mới
-          </Button>
+          {canCreate && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+              Thêm mới
+            </Button>
+          )}
         </Space>
       </div>
     </>

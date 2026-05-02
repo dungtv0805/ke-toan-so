@@ -1,11 +1,13 @@
 import { useEffect } from "react";
 import { KqkdHandlerProvider, useKqkdHandler, useKqkdState } from "./KqkdHandlerContext";
+import { usePagePermission } from "@/hooks/usePagePermission";
 import { KqkdFilter, type KqkdFilterParams } from "./components/KqkdFilter";
 import { KqkdTable } from "./components/KqkdTable";
 import type { KqkdReport } from "@/services/kqkdService";
 
 function KqkdPageInner() {
   const handler = useKqkdHandler();
+  const { canExport } = usePagePermission("/bao-cao/kqkd");
   const [kqkdData] = useKqkdState("kqkdData") as [KqkdReport | null, unknown];
   const [loading] = useKqkdState("loading") as [boolean, unknown];
 

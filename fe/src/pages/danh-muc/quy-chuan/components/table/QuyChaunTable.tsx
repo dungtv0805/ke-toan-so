@@ -7,6 +7,7 @@ import {
   useQuyChaunHandler,
   useQuyChaunState,
 } from "../../QuyChaunHandlerContext";
+import { usePagePermission } from "@/hooks/usePagePermission";
 import "./QuyChaunTable.state";
 import { PaginationMeta } from "./QuyChaunTable.state";
 
@@ -19,6 +20,7 @@ const DEFAULT_PAGINATION: PaginationMeta = {
 
 export const QuyChaunTable: React.FC = () => {
   const handler = useQuyChaunHandler();
+  const { canEdit, canDelete } = usePagePermission("/danh-muc/quy-chuan");
   const [quyChaunList] = useQuyChaunState("quyChaunList", []);
   const [loading] = useQuyChaunState("loading", false);
   const [pagination] = useQuyChaunState("pagination", DEFAULT_PAGINATION);
@@ -131,22 +133,26 @@ export const QuyChaunTable: React.FC = () => {
       align: "center",
       render: (_, record) => (
         <Space>
-          <Tooltip title="Sửa">
-            <Button
-              type="text"
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(record)}
-            />
-          </Tooltip>
-          <Popconfirm
-            title="Xác nhận xóa quy chuẩn này?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-            okButtonProps={{ danger: true }}
-          >
-            <Button type="text" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
+          {canEdit && (
+            <Tooltip title="Sửa">
+              <Button
+                type="text"
+                icon={<EditOutlined />}
+                onClick={() => handleEdit(record)}
+              />
+            </Tooltip>
+          )}
+          {canDelete && (
+            <Popconfirm
+              title="Xác nhận xóa quy chuẩn này?"
+              onConfirm={() => handleDelete(record.id)}
+              okText="Xóa"
+              cancelText="Hủy"
+              okButtonProps={{ danger: true }}
+            >
+              <Button type="text" danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+          )}
         </Space>
       ),
     },

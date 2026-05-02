@@ -32,10 +32,12 @@ import {
   useNhomQuanLyState,
 } from "./NhomQuanLyHandlerContext";
 import "./NhomQuanLyPage.state";
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 const { Title, Text } = Typography;
 
 function NhomQuanLyPageInner() {
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/nhom-quan-ly");
   const handler = useNhomQuanLyHandler();
   const [data] = useNhomQuanLyState("data", []);
   const [loading] = useNhomQuanLyState("loading", false);
@@ -135,15 +137,15 @@ function NhomQuanLyPageInner() {
       align: "center" as const,
       render: (_: any, record: NhomQuanLy) => (
         <Space size="small">
-          <Tooltip title="Sửa">
+          {canEdit && (<Tooltip title="Sửa">
             <Button
               type="text"
               size="small"
               icon={<EditOutlined />}
               onClick={() => openModal(record)}
             />
-          </Tooltip>
-          <Popconfirm
+          </Tooltip>)}
+          {canDelete && (<Popconfirm
             title="Xác nhận xóa"
             onConfirm={() => handleDelete(record.id)}
             okText="Xóa"
@@ -158,7 +160,7 @@ function NhomQuanLyPageInner() {
                 danger
               />
             </Tooltip>
-          </Popconfirm>
+          </Popconfirm>)}
         </Space>
       ),
     },
@@ -229,13 +231,15 @@ function NhomQuanLyPageInner() {
               </Space>
             </Col>
             <Col xs={24} md={12} className="text-right">
-              <Button
+              {canCreate && (
+                <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => openModal()}
               >
                 Thêm mới
               </Button>
+              )}
             </Col>
           </Row>
         </div>

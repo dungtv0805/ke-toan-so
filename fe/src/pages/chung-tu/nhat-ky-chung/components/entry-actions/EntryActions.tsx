@@ -7,6 +7,7 @@ import {
   CloseOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { usePagePermission } from "@/hooks/usePagePermission";
 import { NhatKyChung } from "@/types";
 import {
   useNhatKyChungHandler,
@@ -20,6 +21,7 @@ interface EntryActionsProps {
 export function EntryActions({ entry }: EntryActionsProps) {
   const navigate = useNavigate();
   const handler = useNhatKyChungHandler();
+  const { canEdit, canDelete } = usePagePermission("/chung-tu/nhat-ky-chung");
 
   // Row edit state (for inline edit via double-click)
   const [editingRowId] = useNhatKyChungState("editingRowId", null);
@@ -98,7 +100,7 @@ export function EntryActions({ entry }: EntryActionsProps) {
         />
       </Tooltip>
 
-      {isApproved ? (
+      {canEdit && (isApproved ? (
         <Tooltip title="Không thể sửa bút toán đã duyệt">
           <Button
             type="text"
@@ -115,24 +117,26 @@ export function EntryActions({ entry }: EntryActionsProps) {
 onClick={handleEdit}
           disabled={isOtherRowEditing}
         />
-      )}
+      ))}
 
-      <Popconfirm
-        title="Xác nhận xóa bút toán này?"
-        onConfirm={handleDelete}
-        okText="Xóa"
-        cancelText="Hủy"
-        disabled={isApproved || isOtherRowEditing}
-        okButtonProps={{ danger: true }}
-      >
-        <Button
-          type="text"
-          size="small"
-          icon={<DeleteOutlined />}
+      {canDelete && (
+        <Popconfirm
+          title="Xác nhận xóa bút toán này?"
+          onConfirm={handleDelete}
+          okText="Xóa"
+          cancelText="Hủy"
           disabled={isApproved || isOtherRowEditing}
-          className={isApproved || isOtherRowEditing ? "" : "!text-destructive"}
-        />
-      </Popconfirm>
+          okButtonProps={{ danger: true }}
+        >
+          <Button
+            type="text"
+            size="small"
+            icon={<DeleteOutlined />}
+            disabled={isApproved || isOtherRowEditing}
+            className={isApproved || isOtherRowEditing ? "" : "!text-destructive"}
+          />
+        </Popconfirm>
+      )}
     </Space>
   );
 }

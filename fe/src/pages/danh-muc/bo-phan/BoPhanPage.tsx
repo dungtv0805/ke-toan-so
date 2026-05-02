@@ -31,6 +31,7 @@ import {
 import { BoPhan } from "@/types";
 import { boPhanService, BoPhanStats } from "@/services/boPhanService";
 import { z } from "zod";
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -51,6 +52,7 @@ const boPhanSchema = z.object({
 });
 
 const BoPhanPage: React.FC = () => {
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/bo-phan");
   const [data, setData] = useState<BoPhan[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -208,15 +210,15 @@ const BoPhanPage: React.FC = () => {
       fixed: "right" as const,
       render: (_: unknown, record: BoPhan) => (
         <Space size="small">
-          <Tooltip title="Sửa">
+          {canEdit && (<Tooltip title="Sửa">
             <Button
               type="text"
               icon={<EditOutlined />}
               onClick={() => handleEdit(record)}
               className="text-primary"
             />
-          </Tooltip>
-          <Popconfirm
+          </Tooltip>)}
+          {canDelete && (<Popconfirm
             title="Xác nhận xóa"
             description="Bạn có chắc chắn muốn xóa bộ phận này?"
             onConfirm={() => handleDelete(record.id)}
@@ -225,7 +227,7 @@ const BoPhanPage: React.FC = () => {
             okButtonProps={{ danger: true }}
           >
             <Button type="text" icon={<DeleteOutlined />} danger />
-          </Popconfirm>
+          </Popconfirm>)}
         </Space>
       ),
     },
@@ -254,16 +256,18 @@ const BoPhanPage: React.FC = () => {
           </Text>
         </div>
         <Space>
-          <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+          {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
           <Button
             icon={<ReloadOutlined />}
             onClick={() => fetchData(1, pagination.pageSize, "")}
           >
             Làm mới
           </Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+          {canCreate && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
             Thêm bộ phận
           </Button>
+          )}
         </Space>
       </div>
 

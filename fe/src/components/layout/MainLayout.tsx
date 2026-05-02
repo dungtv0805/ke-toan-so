@@ -263,23 +263,19 @@ const MainLayout: React.FC = () => {
   });
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, currentTenant } = useAuth();
+  const { user, logout, currentTenant, hasPermission } = useAuth();
   const currentRole = currentTenant?.role as VaiTro | undefined;
   const isSuperAdmin = user?.isSuperAdmin || false;
   const isMobile = useIsMobile();
 
   const roleInfo = currentRole ? vaiTroOptions.find((v) => v.value === currentRole) : null;
 
-  // Filter menu items based on user role
-  const canAccessRoute = (path: string, userRole: VaiTro): boolean => {
-    // Super admin can access all routes
+  const canAccessRoute = (path: string): boolean => {
     if (isSuperAdmin) return true;
-    const allowedRoles = routePermissions[path];
-    if (!allowedRoles) return true; // No restriction defined = accessible
-    return allowedRoles.includes(userRole);
+    return hasPermission(`${path}:xem`);
   };
 
-  const filterMenuItems = (items: MenuItem[], userRole: VaiTro): MenuItem[] => {
+  const filterMenuItems = (items: MenuItem[]): MenuItem[] => {
     return items
       .map((item) => {
         if (!item || typeof item !== "object") return null;
@@ -292,16 +288,14 @@ const MainLayout: React.FC = () => {
         };
         const key = menuItem.key as string;
 
-        // Check if user can access this route
-        if (!canAccessRoute(key, userRole)) {
+        if (!canAccessRoute(key)) {
           return null;
         }
 
-        // If has children, filter them too
         if (menuItem.children && menuItem.children.length > 0) {
-          const filteredChildren = filterMenuItems(menuItem.children, userRole);
+          const filteredChildren = filterMenuItems(menuItem.children);
           if (filteredChildren.length === 0) {
-            return null; // Hide parent if no accessible children
+            return null;
           }
           return {
             ...menuItem,
@@ -314,17 +308,15 @@ const MainLayout: React.FC = () => {
       .filter(Boolean) as MenuItem[];
   };
 
-  // Filter menu sections
-  // Super admin sees all menus, regular users filter by role
   const filteredDieuHanhMenu = isSuperAdmin
     ? dieuHanhMenuItems
-    : (currentRole ? filterMenuItems(dieuHanhMenuItems, currentRole) : []);
+    : filterMenuItems(dieuHanhMenuItems);
   const filteredKeToAnMenu = isSuperAdmin
     ? keToAnMenuItems
-    : (currentRole ? filterMenuItems(keToAnMenuItems, currentRole) : []);
+    : filterMenuItems(keToAnMenuItems);
   const filteredThuVienMenu = isSuperAdmin
     ? thuVienMenuItems
-    : (currentRole ? filterMenuItems(thuVienMenuItems, currentRole) : []);
+    : filterMenuItems(thuVienMenuItems);
 
   useEffect(() => {
     if (darkMode) {

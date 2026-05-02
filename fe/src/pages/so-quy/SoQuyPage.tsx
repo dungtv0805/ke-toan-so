@@ -32,11 +32,13 @@ import { SoQuy } from '@/types';
 import { soQuyService, DailySummary } from '@/services/soQuyService';
 import { useIntroAnimation } from '@/hooks/useIntroAnimation';
 import dayjs from 'dayjs';
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
 const SoQuyPage: React.FC = () => {
+  const { canExport } = usePagePermission("so-quy");
   const [data, setData] = useState<SoQuy[]>([]);
   const [dailySummary, setDailySummary] = useState<DailySummary[]>([]);
   const [loading, setLoading] = useState(false);
@@ -414,7 +416,7 @@ const SoQuyPage: React.FC = () => {
                         </Space>
                       </Col>
                       <Col xs={24} lg={8} className="text-right">
-                        <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+                        {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
                       </Col>
                     </Row>
                   </div>

@@ -2,6 +2,7 @@ import { Table, Tag, Button, Space, Popconfirm } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useVaiTroHandler, useVaiTroState } from "../../VaiTroHandlerContext";
+import { usePagePermission } from "@/hooks/usePagePermission";
 import { VaiTroItem } from "./VaiTroTable.state";
 import "./VaiTroTable.state";
 
@@ -9,6 +10,7 @@ export function VaiTroTable() {
   const handler = useVaiTroHandler();
   const [vaiTroList] = useVaiTroState("vaiTroList", [] as VaiTroItem[]);
   const [loading] = useVaiTroState("loading", false);
+  const { canEdit, canDelete } = usePagePermission("/cau-hinh/vai-tro");
 
   const handleEdit = (record: VaiTroItem) => {
     handler.executeEvent("openModal", { record });
@@ -56,19 +58,23 @@ export function VaiTroTable() {
       align: "center",
       render: (_: unknown, record: VaiTroItem) => (
         <Space>
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          />
-          <Popconfirm
-            title="Bạn có chắc muốn xoá vai trò này?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Xoá"
-            cancelText="Huỷ"
-          >
-            <Button type="text" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
+          {canEdit && (
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+            />
+          )}
+          {canDelete && (
+            <Popconfirm
+              title="Bạn có chắc muốn xoá vai trò này?"
+              onConfirm={() => handleDelete(record.id)}
+              okText="Xoá"
+              cancelText="Huỷ"
+            >
+              <Button type="text" danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+          )}
         </Space>
       ),
     },

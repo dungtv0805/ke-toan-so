@@ -4,6 +4,7 @@ import { PlusOutlined, ReloadOutlined, FileExcelOutlined } from "@ant-design/ico
 import { useNavigate } from "react-router-dom";
 import { NhatKyChung } from "@/types";
 import { useTableColumnResize } from "@/hooks/useTableColumnResize";
+import { usePagePermission } from "@/hooks/usePagePermission";
 import {
   getNkcDoiTuongMa,
   getNkcDoiTuongTen,
@@ -750,6 +751,7 @@ export function EntryListTab() {
   const [taiKhoanList] = useNhatKyChungState("taiKhoanList", []);
   const [editingRowId] = useNhatKyChungState("editingRowId", null);
   const [exportingExcel] = useNhatKyChungState("exportingExcel", false);
+  const { canCreate } = usePagePermission("/chung-tu/nhat-ky-chung");
 
   // Enable column resize via DOM manipulation (no React re-renders)
   useTableColumnResize("resizable-table");
@@ -802,14 +804,16 @@ export function EntryListTab() {
     <div className="excel-tab-content">
       {/* Toolbar */}
       <div className="excel-toolbar">
-        <Button
-          type="primary"
-          size="small"
-          icon={<PlusOutlined />}
-          onClick={handleCreateEntry}
-        >
-          Thêm mới
-        </Button>
+        {canCreate && (
+          <Button
+            type="primary"
+            size="small"
+            icon={<PlusOutlined />}
+            onClick={handleCreateEntry}
+          >
+            Thêm mới
+          </Button>
+        )}
         <Space size="small">
           <Button
             size="small"

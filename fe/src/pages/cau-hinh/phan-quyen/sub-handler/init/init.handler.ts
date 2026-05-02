@@ -1,53 +1,63 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
-import { permissionModules, PermissionModule } from "../../constants/permissionModules";
+import { phanQuyenService } from "@/services/phanQuyenService";
+import { message } from "antd";
+import { convertPermissionsToMatrix } from "../../utils/permissionConverter";
 import "./init.event";
 
-const mockRoles = [
-  { id: '1', ten: 'Giám đốc' },
-  { id: '2', ten: 'Kế toán trưởng' },
-  { id: '3', ten: 'Kế toán quỹ' },
-  { id: '4', ten: 'Kế toán công nợ' },
-  { id: '5', ten: 'Kế toán tổng hợp' },
-  { id: '6', ten: 'Quản lý' },
-  { id: '7', ten: 'Kiểm soát' },
+const defaultRoleNames = [
+  'Giám đốc',
+  'Kế toán trưởng',
+  'Kế toán quỹ',
+  'Kế toán công nợ',
+  'Kế toán tổng hợp',
+  'Quản lý',
+  'Kiểm soát',
 ];
-
-function collectLeafModules(modules: PermissionModule[]): string[] {
-  const keys: string[] = [];
-  for (const mod of modules) {
-    if (mod.isSection && mod.children) {
-      keys.push(...collectLeafModules(mod.children));
-    } else if (mod.children) {
-      keys.push(...collectLeafModules(mod.children));
-    } else {
-      keys.push(mod.key);
-    }
-  }
-  return keys;
-}
-
-function generateDefaultPermissions() {
-  const leafKeys = collectLeafModules(permissionModules);
-  return leafKeys.map((key) => ({
-    moduleKey: key,
-    actions: {
-      xem: true,
-      them: true,
-      sua: true,
-      xoa: true,
-      xuat: true,
-    },
-  }));
-}
 
 @RegisterHandler("phan-quyen-context")
 export class InitHandler extends CSubHanlder {
   @HandlerDecorator("init")
   async init(): Promise<void> {
-    this.setState("roleOptions", mockRoles);
-    this.setState("selectedRoleId", "1");
-    this.setState("permissions", generateDefaultPermissions());
-    this.setState("loading", false);
+    try {
+      const phanQuyenList = await phanQuyenService.getAll();
+
+      let roleOptions: { id: string; ten: string }[];
+
+      if (phanQuyenList && phanQuyenList.length > 0) {
+        roleOptions = phanQuyenList.map((item) => ({
+          id: item.vaiTro || item._id,
+          ten: item.ten,
+        }));
+      } else {
+        roleOptions = defaultRoleNames.map((ten, index) => ({
+          id: String(index + 1),
+          ten,
+        }));
+      }
+
+      this.setState("roleOptions", roleOptions);
+      this.setState("selectedRoleId", roleOptions[0].id);
+
+      try {
+        const permissionsArray = await phanQuyenService.getPermissionsByVaiTro(roleOptions[0].id);
+        this.setState("permissions", convertPermissionsToMatrix(permissionsArray));
+      } catch {
+        this.setState("permissions", convertPermissionsToMatrix([]));
+      }
+    } catch (error) {
+      message.error("Không thể tải danh sách vai trò");
+      console.error("Init phan quyen error:", error);
+
+      const roleOptions = defaultRoleNames.map((ten, index) => ({
+        id: String(index + 1),
+        ten,
+      }));
+      this.setState("roleOptions", roleOptions);
+      this.setState("selectedRoleId", roleOptions[0].id);
+      this.setState("permissions", convertPermissionsToMatrix([]));
+    } finally {
+      this.setState("loading", false);
+    }
   }
 }

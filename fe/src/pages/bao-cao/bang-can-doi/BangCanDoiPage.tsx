@@ -36,6 +36,7 @@ import {
   BalanceSheetItem,
   BalanceSheetStats,
 } from '@/services/balanceSheetService';
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 const COLORS = ['#1890ff', '#52c41a', '#faad14', '#ff4d4f', '#722ed1', '#13c2c2'];
 
@@ -53,6 +54,7 @@ const formatCurrencyShort = (value: number) => {
 };
 
 const BangCanDoiPage: React.FC = () => {
+  const { canExport } = usePagePermission("bao-cao/bang-can-doi");
   const [data, setData] = useState<BalanceSheetData | null>(null);
   const [stats, setStats] = useState<BalanceSheetStats | null>(null);
   const [loading, setLoading] = useState(false);
@@ -187,7 +189,7 @@ const BangCanDoiPage: React.FC = () => {
         }
         extra={
           <Space>
-            <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+            {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
             <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
               Làm mới
             </Button>

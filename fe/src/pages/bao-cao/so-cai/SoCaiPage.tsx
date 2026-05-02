@@ -31,8 +31,10 @@ import {
   TrialBalance
 } from '@/services/soCaiService';
 import { taiKhoanService } from '@/services/taiKhoanService';
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 const SoCaiPage: React.FC = () => {
+  const { canExport } = usePagePermission("bao-cao/so-cai");
   const [summaryData, setSummaryData] = useState<SoCaiByAccount[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<SoCaiByAccount | null>(null);
   const [trialBalance, setTrialBalance] = useState<TrialBalance[]>([]);
@@ -499,7 +501,7 @@ const SoCaiPage: React.FC = () => {
         }
         extra={
           <Space>
-            <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+            {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
             <Button icon={<ReloadOutlined />} onClick={fetchData}>
               Làm mới
             </Button>

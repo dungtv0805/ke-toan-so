@@ -33,8 +33,10 @@ import {
   CongNoStats,
   CongNoSummaryByCustomer 
 } from '@/services/congNoPhaiThuService';
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 const CongNoPhaiThuPage: React.FC = () => {
+  const { canExport } = usePagePermission("cong-no/phai-thu");
   const [data, setData] = useState<CongNoWithOverdue[]>([]);
   const [summaryData, setSummaryData] = useState<CongNoSummaryByCustomer[]>([]);
   const [agingData, setAgingData] = useState<{
@@ -516,7 +518,7 @@ const CongNoPhaiThuPage: React.FC = () => {
               style={{ width: 280 }}
               allowClear
             />
-            <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+            {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
             <Button icon={<ReloadOutlined />} onClick={fetchData}>
               Làm mới
             </Button>

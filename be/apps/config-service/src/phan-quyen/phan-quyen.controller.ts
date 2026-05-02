@@ -44,6 +44,19 @@ export class PhanQuyen_Controller {
     return { success: true, data };
   }
 
+  @Put('vai-tro/:vaiTro/permissions')
+  @Roles('ADMIN')
+  async upsertPermissions(
+    @Param('vaiTro') vaiTro: string,
+    @Body() body: { permissions: string[] },
+  ) {
+    const data = await this.phanQuyen_Service.upsertPermissions(
+      vaiTro,
+      body.permissions,
+    );
+    return { success: true, data };
+  }
+
   @Post()
   @Roles('ADMIN')
   async create(@Body() createDto: any) {

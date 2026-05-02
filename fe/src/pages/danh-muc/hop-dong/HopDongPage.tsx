@@ -43,6 +43,7 @@ import {
   useHopDongState,
 } from "./HopDongHandlerContext";
 import "./HopDongPage.state";
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 const { Title, Text } = Typography;
 
@@ -109,6 +110,7 @@ interface FormValues {
 }
 
 function HopDongPageInner() {
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/hop-dong");
   const handler = useHopDongHandler();
   const [data] = useHopDongState("data", []);
   const [loading] = useHopDongState("loading", false);
@@ -337,15 +339,15 @@ function HopDongPageInner() {
       align: "center" as const,
       render: (_: unknown, record: HopDong) => (
         <Space size="small">
-          <Tooltip title="Sửa">
+          {canEdit && (<Tooltip title="Sửa">
             <Button
               type="text"
               size="small"
               icon={<EditOutlined />}
               onClick={() => openModal(record)}
             />
-          </Tooltip>
-          <Popconfirm
+          </Tooltip>)}
+          {canDelete && (<Popconfirm
             title="Xác nhận xóa"
             description="Bạn có chắc chắn muốn xóa hợp đồng này?"
             onConfirm={() => handleDelete(record.id)}
@@ -361,7 +363,7 @@ function HopDongPageInner() {
                 danger
               />
             </Tooltip>
-          </Popconfirm>
+          </Popconfirm>)}
         </Space>
       ),
     },
@@ -777,13 +779,15 @@ function HopDongPageInner() {
               </Space>
             </Col>
             <Col xs={24} md={12} className="text-right">
-              <Button
+              {canCreate && (
+                <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => openModal()}
               >
                 Thêm hợp đồng
               </Button>
+              )}
             </Col>
           </Row>
         </div>

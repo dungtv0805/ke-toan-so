@@ -28,6 +28,7 @@ import {
   PnLGroupedData,
   PnLItem,
 } from '@/services/pnlService';
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('vi-VN', {
@@ -51,6 +52,7 @@ type PnLRow = {
 };
 
 const PnLPage: React.FC = () => {
+  const { canExport } = usePagePermission("bao-cao/pnl");
   const [groupedData, setGroupedData] = useState<PnLGroupedData[]>([]);
   const [summary, setSummary] = useState<PnLSummary | null>(null);
   const [loading, setLoading] = useState(false);
@@ -190,7 +192,7 @@ const PnLPage: React.FC = () => {
                 { value: 'luyKe', label: 'Lũy kế năm' },
               ]}
             />
-            <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+            {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
             <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
               Làm mới
             </Button>

@@ -77,6 +77,7 @@ import { sanPhamService } from "@/services/sanPhamService";
 import { dongTienService } from "@/services/dongTienService";
 import { trangThaiChungTu } from "@/mock-data/chung-tu";
 import { useIntroAnimation } from "@/hooks/useIntroAnimation";
+import { usePagePermission } from "@/hooks/usePagePermission";
 import { z } from "zod";
 import dayjs from "dayjs";
 
@@ -94,6 +95,7 @@ const phieuChiSchema = z.object({
 });
 
 const PhieuChiPage: React.FC = () => {
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/chung-tu/phieu-chi");
   const [data, setData] = useState<ChungTu[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -587,15 +589,17 @@ const PhieuChiPage: React.FC = () => {
 
           {record.trangThai === "NHAP" && (
             <>
-              <Tooltip title="Sửa">
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<EditOutlined />}
-                  onClick={() => openModal(record)}
-                  className="!text-primary"
-                />
-              </Tooltip>
+              {canEdit && (
+                <Tooltip title="Sửa">
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<EditOutlined />}
+                    onClick={() => openModal(record)}
+                    className="!text-primary"
+                  />
+                </Tooltip>
+              )}
               <Tooltip title="Gửi duyệt">
                 <Button
                   type="text"
@@ -605,19 +609,21 @@ const PhieuChiPage: React.FC = () => {
                   className="!text-blue-500"
                 />
               </Tooltip>
-              <Popconfirm
-                title="Xác nhận xóa?"
-                onConfirm={() => handleDelete(record.id)}
-                okText="Xóa"
-                cancelText="Hủy"
-              >
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<DeleteOutlined />}
-                  className="!text-destructive"
-                />
-              </Popconfirm>
+              {canDelete && (
+                <Popconfirm
+                  title="Xác nhận xóa?"
+                  onConfirm={() => handleDelete(record.id)}
+                  okText="Xóa"
+                  cancelText="Hủy"
+                >
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    className="!text-destructive"
+                  />
+                </Popconfirm>
+              )}
             </>
           )}
 
@@ -790,15 +796,19 @@ const PhieuChiPage: React.FC = () => {
             </Col>
             <Col xs={24} md={12} className="text-right">
               <Space>
-                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => openModal()}
-                  danger
-                >
-                  Tạo phiếu chi
-                </Button>
+                {canExport && (
+                  <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+                )}
+                {canCreate && (
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => openModal()}
+                    danger
+                  >
+                    Tạo phiếu chi
+                  </Button>
+                )}
               </Space>
             </Col>
           </Row>

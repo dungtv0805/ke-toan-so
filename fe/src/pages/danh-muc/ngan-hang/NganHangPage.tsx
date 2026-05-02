@@ -37,6 +37,7 @@ import { TaiKhoanNganHang } from "@/types";
 import { nganHangService, TaiKhoanNHStats } from "@/services/nganHangService";
 import { loaiTaiKhoanOptions, danhSachNganHang } from "@/mock-data/ngan-hang";
 import { z } from "zod";
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 const { Title, Text } = Typography;
 
@@ -59,6 +60,7 @@ const taiKhoanNHSchema = z.object({
 });
 
 const NganHangPage: React.FC = () => {
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/ngan-hang");
   const [data, setData] = useState<TaiKhoanNganHang[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -324,15 +326,15 @@ const NganHangPage: React.FC = () => {
       fixed: "right" as const,
       render: (_: unknown, record: TaiKhoanNganHang) => (
         <Space size="small">
-          <Tooltip title="Sửa">
+          {canEdit && (<Tooltip title="Sửa">
             <Button
               type="text"
               icon={<EditOutlined />}
               onClick={() => handleEdit(record)}
               className="text-primary"
             />
-          </Tooltip>
-          <Popconfirm
+          </Tooltip>)}
+          {canDelete && (<Popconfirm
             title="Xác nhận xóa"
             description="Bạn có chắc chắn muốn xóa tài khoản này?"
             onConfirm={() => handleDelete(record.id)}
@@ -343,7 +345,7 @@ const NganHangPage: React.FC = () => {
             <Tooltip title="Xóa">
               <Button type="text" icon={<DeleteOutlined />} danger />
             </Tooltip>
-          </Popconfirm>
+          </Popconfirm>)}
         </Space>
       ),
     },
@@ -407,7 +409,7 @@ const NganHangPage: React.FC = () => {
           </Text>
         </div>
         <Space>
-          <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+          {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
           <Button
             icon={<ReloadOutlined />}
             onClick={() =>
@@ -423,9 +425,11 @@ const NganHangPage: React.FC = () => {
           >
             Làm mới
           </Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+          {canCreate && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
             Thêm tài khoản
           </Button>
+          )}
         </Space>
       </div>
 

@@ -40,6 +40,7 @@ import { pnlService, PnLComparisonData } from '@/services/pnlService';
 import { PeriodFilter, PeriodFilterParams } from '@/components/shared/PeriodFilter';
 import { kqkdService, KqkdReport } from '@/services/kqkdService';
 import { KqkdTable } from '@/pages/bao-cao/kqkd/components/KqkdTable';
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 // ============ TYPES ============
 
@@ -99,6 +100,7 @@ const getPeriodLabel = (params: PeriodFilterParams): string => {
 // ============ MAIN COMPONENT ============
 
 const BaoCaoTaiChinhPage: React.FC = () => {
+  const { canExport } = usePagePermission("bao-cao/tai-chinh");
   const [activeTab, setActiveTab] = useState('1');
   const [loading, setLoading] = useState(false);
 

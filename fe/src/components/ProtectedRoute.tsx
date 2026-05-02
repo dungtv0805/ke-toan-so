@@ -6,13 +6,15 @@ import { VaiTro } from '@/types';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: VaiTro[];
+  requiredPermission?: string;
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
-  allowedRoles
+  allowedRoles,
+  requiredPermission,
 }) => {
-  const { user, isAuthenticated, isLoading, currentTenant } = useAuth();
+  const { user, isAuthenticated, isLoading, currentTenant, hasPermission } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -27,9 +29,25 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Super admin bypasses all role checks
   if (user?.isSuperAdmin) {
     return <>{children}</>;
+  }
+
+  if (requiredPermission && !hasPermission(requiredPermission)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Result
+          status="403"
+          title="Không có quyền truy cập"
+          subTitle="Bạn không có quyền truy cập trang này."
+          extra={
+            <Button type="primary" onClick={() => window.history.back()}>
+              Quay lại
+            </Button>
+          }
+        />
+      </div>
+    );
   }
 
   const currentRole = currentTenant?.role as VaiTro | undefined;

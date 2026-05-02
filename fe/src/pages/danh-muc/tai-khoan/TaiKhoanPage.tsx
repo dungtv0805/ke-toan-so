@@ -32,6 +32,7 @@ import { TaiKhoan } from "@/types";
 import { taiKhoanService } from "@/services/taiKhoanService";
 import { loaiTaiKhoan, nhomTaiKhoan } from "@/mock-data/tai-khoan";
 import { z } from "zod";
+import { usePagePermission } from "@/hooks/usePagePermission";
 
 const { Text } = Typography;
 
@@ -86,6 +87,7 @@ const sortHierarchy = (accounts: TaiKhoan[]): TaiKhoan[] => {
 };
 
 const TaiKhoanPage: React.FC = () => {
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/tai-khoan");
   const [allData, setAllData] = useState<TaiKhoan[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -273,40 +275,44 @@ const TaiKhoanPage: React.FC = () => {
         </Text>
       ),
     },
-    {
+    ...((canEdit || canDelete) ? [{
       title: "Thao tác",
       key: "action",
       width: 120,
       align: "center" as const,
       render: (_: any, record: TaiKhoan) => (
         <Space size="small">
-          <Tooltip title="Sửa">
-            <Button
-              type="text"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => openModal(record)}
-              className="!text-primary hover:!bg-primary/10"
-            />
-          </Tooltip>
-          <Popconfirm
-            title="Xác nhận xóa"
-            description="Bạn có chắc chắn muốn xóa tài khoản này?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-            okButtonProps={{ danger: true }}
-          >
-            <Button
-              type="text"
-              size="small"
-              icon={<DeleteOutlined />}
-              className="!text-destructive hover:!bg-destructive/10"
-            />
-          </Popconfirm>
+          {canEdit && (
+            <Tooltip title="Sửa">
+              <Button
+                type="text"
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => openModal(record)}
+                className="!text-primary hover:!bg-primary/10"
+              />
+            </Tooltip>
+          )}
+          {canDelete && (
+            <Popconfirm
+              title="Xác nhận xóa"
+              description="Bạn có chắc chắn muốn xóa tài khoản này?"
+              onConfirm={() => handleDelete(record.id)}
+              okText="Xóa"
+              cancelText="Hủy"
+              okButtonProps={{ danger: true }}
+            >
+              <Button
+                type="text"
+                size="small"
+                icon={<DeleteOutlined />}
+                className="!text-destructive hover:!bg-destructive/10"
+              />
+            </Popconfirm>
+          )}
         </Space>
       ),
-    },
+    }] : []),
   ];
 
   return (
@@ -379,14 +385,16 @@ const TaiKhoanPage: React.FC = () => {
             </Col>
             <Col xs={24} md={8} className="text-right">
               <Space>
-                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => openModal()}
-                >
-                  Thêm tài khoản
-                </Button>
+                {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+                {canCreate && (
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => openModal()}
+                  >
+                    Thêm tài khoản
+                  </Button>
+                )}
               </Space>
             </Col>
           </Row>
