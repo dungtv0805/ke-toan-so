@@ -144,6 +144,10 @@ export const PhanQuyenPage = loadable(() => import('./cau-hinh/phan-quyen/PhanQu
   fallback: <PageLoader />
 });
 
+export const VaiTroPage = loadable(() => import('./cau-hinh/vai-tro/VaiTroPage'), {
+  fallback: <PageLoader />
+});
+
 export const TenantPage = loadable(() => import('./cau-hinh/tenant/TenantPage'), {
   fallback: <PageLoader />
 });

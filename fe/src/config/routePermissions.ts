@@ -36,6 +36,7 @@ export const routePermissions: Record<string, VaiTro[]> = {
 
   // Cấu hình - Admin only
   '/cau-hinh/phan-quyen': ['ADMIN'],
+  '/cau-hinh/vai-tro': ['ADMIN'],
 };
 
 export const getRoutePermissions = (path: string): VaiTro[] | undefined => {

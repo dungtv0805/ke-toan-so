@@ -1,24 +1,12 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
 import { permissionModules, PermissionModule } from "../../constants/permissionModules";
-import "./init.event";
-
-const mockRoles = [
-  { id: '1', ten: 'Giám đốc' },
-  { id: '2', ten: 'Kế toán trưởng' },
-  { id: '3', ten: 'Kế toán quỹ' },
-  { id: '4', ten: 'Kế toán công nợ' },
-  { id: '5', ten: 'Kế toán tổng hợp' },
-  { id: '6', ten: 'Quản lý' },
-  { id: '7', ten: 'Kiểm soát' },
-];
+import "./select-role.event";
 
 function collectLeafModules(modules: PermissionModule[]): string[] {
   const keys: string[] = [];
   for (const mod of modules) {
-    if (mod.isSection && mod.children) {
-      keys.push(...collectLeafModules(mod.children));
-    } else if (mod.children) {
+    if (mod.children) {
       keys.push(...collectLeafModules(mod.children));
     } else {
       keys.push(mod.key);
@@ -42,12 +30,10 @@ function generateDefaultPermissions() {
 }
 
 @RegisterHandler("phan-quyen-context")
-export class InitHandler extends CSubHanlder {
-  @HandlerDecorator("init")
-  async init(): Promise<void> {
-    this.setState("roleOptions", mockRoles);
-    this.setState("selectedRoleId", "1");
+export class SelectRoleHandler extends CSubHanlder {
+  @HandlerDecorator("selectRole")
+  async selectRole(params: { roleId: string }): Promise<void> {
+    this.setState("selectedRoleId", params.roleId);
     this.setState("permissions", generateDefaultPermissions());
-    this.setState("loading", false);
   }
 }

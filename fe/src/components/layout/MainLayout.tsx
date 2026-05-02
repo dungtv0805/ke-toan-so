@@ -107,6 +107,7 @@ const existingRoutes = new Set([
   "/bao-cao/bang-can-doi",
 
   "/cau-hinh/phan-quyen",
+  "/cau-hinh/vai-tro",
 ]);
 
 // Helper để tạo label với badge "Sắp ra mắt"
@@ -407,6 +408,12 @@ const MainLayout: React.FC = () => {
 
   // Settings menu items for gear icon dropdown
   const settingsMenuItems: MenuProps["items"] = [
+    {
+      key: "vai-tro",
+      icon: <TeamOutlined />,
+      label: "Quản lý Vai trò",
+      onClick: () => navigate("/cau-hinh/vai-tro"),
+    },
     {
       key: "phan-quyen",
       icon: <SafetyCertificateOutlined />,

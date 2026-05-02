@@ -1,4 +1,4 @@
 import "./init/init.handler";
-import "./fetch-data/fetchData.handler";
-import "./crud/crud.handler";
-import "./toggle-status/toggleStatus.handler";
+import "./select-role/select-role.handler";
+import "./toggle-permission/toggle-permission.handler";
+import "./save/save.handler";

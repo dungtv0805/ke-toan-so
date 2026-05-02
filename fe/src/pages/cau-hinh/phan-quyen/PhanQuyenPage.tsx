@@ -1,10 +1,8 @@
 import { useEffect } from "react";
 import { PhanQuyenHandlerProvider, usePhanQuyenHandler } from "./PhanQuyenHandlerContext";
 import { PhanQuyenHeader } from "./components/header/PhanQuyenHeader";
-import { PhanQuyenStats } from "./components/stats/PhanQuyenStats";
-import { PhanQuyenTable } from "./components/table/PhanQuyenTable";
-import { PhanQuyenModal } from "./components/modal/PhanQuyenModal";
-import { RoleReferenceCard } from "./components/role-reference/RoleReferenceCard";
+import { PermissionMatrix } from "./components/matrix/PermissionMatrix";
+import { PhanQuyenFooter } from "./components/footer/PhanQuyenFooter";
 
 function PhanQuyenPageInner() {
   const handler = usePhanQuyenHandler();
@@ -16,10 +14,8 @@ function PhanQuyenPageInner() {
   return (
     <div className="p-6">
       <PhanQuyenHeader />
-      <PhanQuyenStats />
-      <PhanQuyenTable />
-      <RoleReferenceCard />
-      <PhanQuyenModal />
+      <PermissionMatrix />
+      <PhanQuyenFooter />
     </div>
   );
 }
