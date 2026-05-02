@@ -412,6 +412,12 @@ const MainLayout: React.FC = () => {
       label: "Phân quyền",
       onClick: () => navigate("/cau-hinh/phan-quyen"),
     },
+    {
+      key: "thanh-vien",
+      icon: <UserOutlined />,
+      label: "Quản lý Thành viên",
+      onClick: () => navigate("/cau-hinh/thanh-vien"),
+    },
     // Only show Tenant management for super admin
     ...(user?.isSuperAdmin ? [{
       key: "tenant",

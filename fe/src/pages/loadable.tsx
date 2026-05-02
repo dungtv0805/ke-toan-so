@@ -152,6 +152,10 @@ export const TenantPage = loadable(() => import('./cau-hinh/tenant/TenantPage'),
   fallback: <PageLoader />
 });
 
+export const ThanhVienPage = loadable(() => import('./cau-hinh/thanh-vien/ThanhVienPage'), {
+  fallback: <PageLoader />
+});
+
 // Other pages
 export const PlaceholderPage = loadable(() => import('./PlaceholderPage'), {
   fallback: <PageLoader />

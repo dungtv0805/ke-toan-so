@@ -45,6 +45,7 @@ import {
   QuyChaunPage,
   PhanQuyenPage,
   VaiTroPage,
+  ThanhVienPage,
   TenantPage,
   ComingSoonPage,
   NotFound
@@ -341,6 +342,14 @@ const App = () => (
                     element={
                       <ProtectedRoute allowedRoles={routePermissions['/cau-hinh/vai-tro']} requiredPermission="/cau-hinh/vai-tro:xem">
                         <VaiTroPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="thanh-vien"
+                    element={
+                      <ProtectedRoute allowedRoles={routePermissions['/cau-hinh/thanh-vien']}>
+                        <ThanhVienPage />
                       </ProtectedRoute>
                     }
                   />
