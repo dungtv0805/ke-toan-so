@@ -58,7 +58,7 @@ const khoanMucSchema = z.object({
 });
 
 const KhoanMucPage: React.FC = () => {
-  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/khoan-muc");
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/khoan-muc");
   const [data, setData] = useState<KhoanMuc[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");

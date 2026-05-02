@@ -37,7 +37,7 @@ import { usePagePermission } from "@/hooks/usePagePermission";
 const { Title, Text } = Typography;
 
 function NhomKhuyenMaiPageInner() {
-  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/nhom-khuyen-mai");
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/nhom-khuyen-mai");
   const handler = useNhomKhuyenMaiHandler();
   const [data] = useNhomKhuyenMaiState("data", []);
   const [loading] = useNhomKhuyenMaiState("loading", false);

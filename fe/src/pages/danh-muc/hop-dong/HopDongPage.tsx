@@ -110,7 +110,7 @@ interface FormValues {
 }
 
 function HopDongPageInner() {
-  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/hop-dong");
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/hop-dong");
   const handler = useHopDongHandler();
   const [data] = useHopDongState("data", []);
   const [loading] = useHopDongState("loading", false);

@@ -52,7 +52,7 @@ type PnLRow = {
 };
 
 const PnLPage: React.FC = () => {
-  const { canExport } = usePagePermission("bao-cao/pnl");
+  const { canExport } = usePagePermission("/bao-cao/pnl");
   const [groupedData, setGroupedData] = useState<PnLGroupedData[]>([]);
   const [summary, setSummary] = useState<PnLSummary | null>(null);
   const [loading, setLoading] = useState(false);

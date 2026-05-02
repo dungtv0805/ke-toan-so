@@ -64,7 +64,7 @@ const duAnSchema = z.object({
 });
 
 const DuAnPage: React.FC = () => {
-  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/du-an");
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/du-an");
   const [data, setData] = useState<DuAn[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");

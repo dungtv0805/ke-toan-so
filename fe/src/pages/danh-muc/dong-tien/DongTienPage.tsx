@@ -59,7 +59,7 @@ const dongTienSchema = z.object({
 });
 
 const DongTienPage: React.FC = () => {
-  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/dong-tien");
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/dong-tien");
   const [data, setData] = useState<DongTien[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");

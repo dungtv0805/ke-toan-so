@@ -52,7 +52,7 @@ const boPhanSchema = z.object({
 });
 
 const BoPhanPage: React.FC = () => {
-  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/bo-phan");
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/bo-phan");
   const [data, setData] = useState<BoPhan[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");

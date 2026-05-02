@@ -38,7 +38,7 @@ const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
 const SoQuyPage: React.FC = () => {
-  const { canExport } = usePagePermission("so-quy");
+  const { canExport } = usePagePermission("/so-quy");
   const [data, setData] = useState<SoQuy[]>([]);
   const [dailySummary, setDailySummary] = useState<DailySummary[]>([]);
   const [loading, setLoading] = useState(false);

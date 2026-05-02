@@ -37,7 +37,7 @@ import {
 import { usePagePermission } from "@/hooks/usePagePermission";
 
 const CongNoPhaiTraPage: React.FC = () => {
-  const { canExport } = usePagePermission("cong-no/phai-tra");
+  const { canExport } = usePagePermission("/cong-no/phai-tra");
   const [data, setData] = useState<CongNoWithOverdue[]>([]);
   const [summaryData, setSummaryData] = useState<CongNoSummaryBySupplier[]>([]);
   const [agingData, setAgingData] = useState<{

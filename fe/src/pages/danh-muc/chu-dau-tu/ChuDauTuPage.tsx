@@ -37,7 +37,7 @@ import { usePagePermission } from "@/hooks/usePagePermission";
 const { Title, Text } = Typography;
 
 function ChuDauTuPageInner() {
-  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/chu-dau-tu");
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/chu-dau-tu");
   const handler = useChuDauTuHandler();
   const [data] = useChuDauTuState("data", []);
   const [loading] = useChuDauTuState("loading", false);

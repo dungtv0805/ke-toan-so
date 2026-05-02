@@ -54,7 +54,7 @@ const formatCurrencyShort = (value: number) => {
 };
 
 const BangCanDoiPage: React.FC = () => {
-  const { canExport } = usePagePermission("bao-cao/bang-can-doi");
+  const { canExport } = usePagePermission("/bao-cao/bang-can-doi");
   const [data, setData] = useState<BalanceSheetData | null>(null);
   const [stats, setStats] = useState<BalanceSheetStats | null>(null);
   const [loading, setLoading] = useState(false);

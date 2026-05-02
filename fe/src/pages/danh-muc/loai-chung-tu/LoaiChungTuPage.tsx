@@ -48,7 +48,7 @@ const loaiChungTuSchema = z.object({
 });
 
 const LoaiChungTuPage: React.FC = () => {
-  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/loai-chung-tu");
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/loai-chung-tu");
   const [data, setData] = useState<LoaiChungTuType[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");

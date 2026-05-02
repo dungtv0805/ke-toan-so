@@ -66,7 +66,7 @@ const doiTuongSchema = z.object({
 });
 
 const DoiTuongPage: React.FC = () => {
-  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/doi-tuong");
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/doi-tuong");
   const [data, setData] = useState<DoiTuong[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");

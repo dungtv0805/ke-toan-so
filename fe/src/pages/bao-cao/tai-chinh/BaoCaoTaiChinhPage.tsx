@@ -100,7 +100,7 @@ const getPeriodLabel = (params: PeriodFilterParams): string => {
 // ============ MAIN COMPONENT ============
 
 const BaoCaoTaiChinhPage: React.FC = () => {
-  const { canExport } = usePagePermission("bao-cao/tai-chinh");
+  const { canExport } = usePagePermission("/bao-cao/tai-chinh");
   const [activeTab, setActiveTab] = useState('1');
   const [loading, setLoading] = useState(false);
 

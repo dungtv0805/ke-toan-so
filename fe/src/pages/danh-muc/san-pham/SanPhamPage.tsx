@@ -58,7 +58,7 @@ const sanPhamSchema = z.object({
 });
 
 const SanPhamPage: React.FC = () => {
-  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/san-pham");
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/san-pham");
   const [data, setData] = useState<SanPham[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");

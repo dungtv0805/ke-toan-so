@@ -54,7 +54,7 @@ const loaiGiaoDichSchema = z.object({
 });
 
 const LoaiGiaoDichPage: React.FC = () => {
-  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/loai-giao-dich");
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/loai-giao-dich");
   const [data, setData] = useState<LoaiGiaoDich[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");

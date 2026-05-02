@@ -37,7 +37,7 @@ import { usePagePermission } from "@/hooks/usePagePermission";
 const { Title, Text } = Typography;
 
 function NhomQuanLyPageInner() {
-  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/nhom-quan-ly");
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/nhom-quan-ly");
   const handler = useNhomQuanLyHandler();
   const [data] = useNhomQuanLyState("data", []);
   const [loading] = useNhomQuanLyState("loading", false);

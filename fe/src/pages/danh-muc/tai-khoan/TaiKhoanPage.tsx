@@ -87,7 +87,7 @@ const sortHierarchy = (accounts: TaiKhoan[]): TaiKhoan[] => {
 };
 
 const TaiKhoanPage: React.FC = () => {
-  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/tai-khoan");
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/tai-khoan");
   const [allData, setAllData] = useState<TaiKhoan[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");

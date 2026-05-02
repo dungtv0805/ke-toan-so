@@ -60,7 +60,7 @@ const taiKhoanNHSchema = z.object({
 });
 
 const NganHangPage: React.FC = () => {
-  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("danh-muc/ngan-hang");
+  const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/ngan-hang");
   const [data, setData] = useState<TaiKhoanNganHang[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
