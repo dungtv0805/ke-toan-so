@@ -58,7 +58,7 @@ export function KqkdTable({ data, loading }: KqkdTableProps) {
   if (loading) return <LoadingSkeleton />;
 
   return (
-    <div className="overflow-x-auto rounded-md border">
+    <div className="overflow-x-auto rounded-md border text-xs [&_th]:!px-2 [&_th]:!py-1.5 [&_th]:text-[11px] [&_th]:font-semibold [&_td]:!px-2 [&_td]:!py-1">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">

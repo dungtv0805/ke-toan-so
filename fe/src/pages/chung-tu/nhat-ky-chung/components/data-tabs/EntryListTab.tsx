@@ -726,6 +726,7 @@ const getColumnDefinitions = (
   {
     title: "",
     key: "action",
+    width: 120,
     align: "center" as const,
     fixed: "right" as const,
     render: (_: unknown, record: NhatKyChung) => <EntryActions entry={record} />,
@@ -773,7 +774,7 @@ export function EntryListTab() {
     () =>
       getColumnDefinitions(taiKhoanOptions).map((col) => ({
         ...col,
-        width: DEFAULT_WIDTHS[col.key as string] || 100,
+        width: col.width || DEFAULT_WIDTHS[col.key as string] || 100,
       })),
     [taiKhoanOptions]
   );

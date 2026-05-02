@@ -122,6 +122,23 @@ const BaoCaoTaiChinhPage: React.FC = () => {
   const [kqkdData, setKqkdData] = useState<KqkdReport | null>(null);
   const [pnlComparison, setPnlComparison] = useState<PnLComparisonData | null>(null);
 
+  // Dynamic heights based on actual DOM measurements
+  const [tabContentHeight, setTabContentHeight] = useState<number>(500);
+  const [antTableScrollY, setAntTableScrollY] = useState<number>(400);
+
+  useEffect(() => {
+    const update = () => {
+      const pane = document.querySelector('.ant-tabs-tabpane-active') as HTMLElement;
+      if (!pane) return;
+      const paneTop = pane.getBoundingClientRect().top;
+      setTabContentHeight(Math.max(window.innerHeight - paneTop - 8, 200));
+      setAntTableScrollY(Math.max(window.innerHeight - paneTop - 73 - 39, 200));
+    };
+    const raf = requestAnimationFrame(update);
+    window.addEventListener('resize', update);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', update); };
+  }, [activeTab, loading]);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -314,70 +331,65 @@ const BaoCaoTaiChinhPage: React.FC = () => {
   // ============ RENDER ============
 
   return (
-    <div style={{ padding: 24 }}>
-      <Breadcrumb
-        items={[
-          { href: '/', title: <><HomeOutlined /> Trang chủ</> },
-          { title: 'Báo cáo' },
-          { title: 'Báo cáo tài chính' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
-      <Card style={{ marginBottom: 16 }}>
-        <PeriodFilter onFilter={handleFilter} loading={loading} />
-      </Card>
-
-      <Card
-        title={
+    <div style={{ padding: '8px 16px', height: 'calc(100vh - 48px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <Breadcrumb
+            items={[
+              { href: '/', title: <><HomeOutlined /> Trang chủ</> },
+              { title: 'Báo cáo' },
+              { title: 'Báo cáo tài chính' },
+            ]}
+          />
           <Space>
-            <FileTextOutlined style={{ fontSize: 20, color: '#1890ff' }} />
-            <span style={{ fontSize: 18, fontWeight: 600 }}>Báo cáo tài chính</span>
             <Tag color="blue">{getPeriodLabel(filterParams)}</Tag>
-          </Space>
-        }
-        extra={
-          <Space>
-            <Button icon={<ExportOutlined />}>Xuất Excel</Button>
-            <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
+            <Button size="small" icon={<ExportOutlined />}>Xuất Excel</Button>
+            <Button size="small" type="primary" icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
               Làm mới
             </Button>
           </Space>
-        }
-      >
-        <Row gutter={16} style={{ marginBottom: 24 }}>
-          <Col span={6}>
-            <Card size="small">
-              <Statistic title="Tổng tài sản" value={bsState.stats?.tongTaiSan ?? 0} formatter={(val) => formatCurrencyShort(val as number)} prefix={<BankOutlined style={{ color: '#1890ff' }} />} />
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card size="small">
-              <Statistic title="Doanh thu" value={doanhThu} formatter={(val) => formatCurrencyShort(val as number)} prefix={<DollarOutlined style={{ color: '#52c41a' }} />} />
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card size="small">
-              <Statistic
-                title="Lợi nhuận sau thuế"
-                value={loiNhuanSauThue}
-                formatter={(val) => formatCurrencyShort(val as number)}
-                valueStyle={{ color: loiNhuanSauThue >= 0 ? '#52c41a' : '#ff4d4f' }}
-                prefix={loiNhuanSauThue >= 0 ? <RiseOutlined /> : <FallOutlined />}
-              />
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card size="small">
-              <Statistic
-                title="Cân đối phát sinh"
-                value={tbState.soCaiStats?.canDoi ? 'Cân đối' : 'Lệch'}
-                valueStyle={{ color: tbState.soCaiStats?.canDoi ? '#52c41a' : '#ff4d4f' }}
-                prefix={tbState.soCaiStats?.canDoi ? <CheckCircleOutlined /> : <WarningOutlined />}
-              />
-            </Card>
-          </Col>
-        </Row>
+        </div>
+
+        <div style={{ marginBottom: 4 }}>
+          <PeriodFilter onFilter={handleFilter} loading={loading} />
+        </div>
+
+        <Row gutter={8} style={{ marginBottom: 4 }}>
+        <Col span={6}>
+          <Card size="small" bodyStyle={{ padding: '4px 12px' }}>
+            <Statistic title="Tổng tài sản" value={bsState.stats?.tongTaiSan ?? 0} formatter={(val) => formatCurrencyShort(val as number)} prefix={<BankOutlined style={{ color: '#1890ff' }} />} valueStyle={{ fontSize: 16 }} />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small" bodyStyle={{ padding: '4px 12px' }}>
+            <Statistic title="Doanh thu" value={doanhThu} formatter={(val) => formatCurrencyShort(val as number)} prefix={<DollarOutlined style={{ color: '#52c41a' }} />} valueStyle={{ fontSize: 16 }} />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small" bodyStyle={{ padding: '4px 12px' }}>
+            <Statistic
+              title="Lợi nhuận sau thuế"
+              value={loiNhuanSauThue}
+              formatter={(val) => formatCurrencyShort(val as number)}
+              valueStyle={{ color: loiNhuanSauThue >= 0 ? '#52c41a' : '#ff4d4f', fontSize: 16 }}
+              prefix={loiNhuanSauThue >= 0 ? <RiseOutlined /> : <FallOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small" bodyStyle={{ padding: '4px 12px' }}>
+            <Statistic
+              title="Cân đối phát sinh"
+              value={tbState.soCaiStats?.canDoi ? 'Cân đối' : 'Lệch'}
+              valueStyle={{ color: tbState.soCaiStats?.canDoi ? '#52c41a' : '#ff4d4f', fontSize: 16 }}
+              prefix={tbState.soCaiStats?.canDoi ? <CheckCircleOutlined /> : <WarningOutlined />}
+            />
+          </Card>
+        </Col>
+      </Row>
+      </div>
+
+      <Card size="small" bodyStyle={{ padding: '0 8px 8px' }} style={{ flex: 1, overflow: 'hidden' }}>
 
         <Tabs activeKey={activeTab} onChange={setActiveTab} type="card" items={[
           {
@@ -389,13 +401,14 @@ const BaoCaoTaiChinhPage: React.FC = () => {
                   <Alert message="Cảnh báo: Tổng phát sinh Nợ và Có không cân đối!" type="warning" showIcon style={{ marginBottom: 16 }} />
                 )}
                 <Table
+                  className="excel-table"
                   columns={trialBalanceColumns}
                   dataSource={tbState.trialBalance}
                   rowKey="taiKhoan"
                   loading={loading}
                   bordered
                   size="small"
-                  scroll={{ x: 1200 }}
+                  scroll={{ x: 1200, y: antTableScrollY }}
                   pagination={false}
                   summary={() => {
                     const totals = tbState.trialBalance.reduce(
@@ -431,35 +444,41 @@ const BaoCaoTaiChinhPage: React.FC = () => {
             key: '2',
             label: 'Cân đối kế toán',
             children: bsState.data ? (
-              <>
+              <div style={{ maxHeight: tabContentHeight, overflow: 'auto' }}>
                 {!bsState.data.canDoi && (
                   <Alert message="Cảnh báo: Tổng tài sản và Tổng nguồn vốn không cân đối!" type="warning" showIcon style={{ marginBottom: 16 }} />
                 )}
                 <Card title="TÀI SẢN" size="small" style={{ marginBottom: 16 }}>
-                  <Table columns={balanceSheetColumns} dataSource={bsState.data.taiSan} rowKey="ma" loading={loading} bordered size="small" pagination={false} />
+                  <Table className="excel-table" columns={balanceSheetColumns} dataSource={bsState.data.taiSan} rowKey="ma" loading={loading} bordered size="small" pagination={false} />
                 </Card>
                 <Card title="NGUỒN VỐN" size="small">
-                  <Table columns={balanceSheetColumns} dataSource={bsState.data.nguonVon} rowKey="ma" loading={loading} bordered size="small" pagination={false} />
+                  <Table className="excel-table" columns={balanceSheetColumns} dataSource={bsState.data.nguonVon} rowKey="ma" loading={loading} bordered size="small" pagination={false} />
                 </Card>
-              </>
+              </div>
             ) : null,
           },
           {
             key: '3',
             label: 'Kết quả kinh doanh',
-            children: <KqkdTable data={kqkdData?.chiTieu ?? []} loading={loading} />,
+            children: (
+              <div style={{ maxHeight: tabContentHeight, overflow: 'auto' }}>
+                <KqkdTable data={kqkdData?.chiTieu ?? []} loading={loading} />
+              </div>
+            ),
           },
           {
             key: '4',
             label: 'So sánh lãi lỗ',
             children: (
               <Table
+                className="excel-table"
                 columns={pnlCompColumns}
                 dataSource={buildPnLComparisonData()}
                 rowKey="key"
                 loading={loading}
                 bordered
                 size="small"
+                scroll={{ y: antTableScrollY }}
                 pagination={false}
                 rowClassName={(record) => record.isSummary ? 'ant-table-row-summary' : record.isCategory ? 'ant-table-row-category' : ''}
               />
