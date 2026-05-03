@@ -1,19 +1,14 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
 import { phanQuyenService } from "@/services/phanQuyenService";
+import { vaiTroOptions } from "@/mock-data/nguoi-dung";
 import { message } from "antd";
 import { convertPermissionsToMatrix } from "../../utils/permissionConverter";
 import "./init.event";
 
-const defaultRoleNames = [
-  'Giám đốc',
-  'Kế toán trưởng',
-  'Kế toán quỹ',
-  'Kế toán công nợ',
-  'Kế toán tổng hợp',
-  'Quản lý',
-  'Kiểm soát',
-];
+const defaultRoles = vaiTroOptions
+  .filter((v) => v.value !== 'ADMIN')
+  .map((v) => ({ id: v.value, ten: v.label }));
 
 @RegisterHandler("phan-quyen-context")
 export class InitHandler extends CSubHanlder {
@@ -30,10 +25,7 @@ export class InitHandler extends CSubHanlder {
           ten: item.ten,
         }));
       } else {
-        roleOptions = defaultRoleNames.map((ten, index) => ({
-          id: String(index + 1),
-          ten,
-        }));
+        roleOptions = [...defaultRoles];
       }
 
       this.setState("roleOptions", roleOptions);
@@ -49,10 +41,7 @@ export class InitHandler extends CSubHanlder {
       message.error("Không thể tải danh sách vai trò");
       console.error("Init phan quyen error:", error);
 
-      const roleOptions = defaultRoleNames.map((ten, index) => ({
-        id: String(index + 1),
-        ten,
-      }));
+      const roleOptions = [...defaultRoles];
       this.setState("roleOptions", roleOptions);
       this.setState("selectedRoleId", roleOptions[0].id);
       this.setState("permissions", convertPermissionsToMatrix([]));
