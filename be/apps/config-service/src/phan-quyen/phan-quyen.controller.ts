@@ -24,10 +24,10 @@ export class PhanQuyen_Controller {
     return { success: true, data };
   }
 
-  @Get(':id')
+  @Get('vai-tro/:vaiTro/permissions')
   @Roles('ADMIN')
-  async findOne(@Param('id') id: string) {
-    const data = await this.phanQuyen_Service.findOne(id);
+  async getPermissions(@Param('vaiTro') vaiTro: string) {
+    const data = await this.phanQuyen_Service.getPermissionsByVaiTro(vaiTro);
     return { success: true, data };
   }
 
@@ -38,10 +38,10 @@ export class PhanQuyen_Controller {
     return { success: true, data };
   }
 
-  @Get('vai-tro/:vaiTro/permissions')
+  @Get(':id')
   @Roles('ADMIN')
-  async getPermissions(@Param('vaiTro') vaiTro: string) {
-    const data = await this.phanQuyen_Service.getPermissionsByVaiTro(vaiTro);
+  async findOne(@Param('id') id: string) {
+    const data = await this.phanQuyen_Service.findOne(id);
     return { success: true, data };
   }
 

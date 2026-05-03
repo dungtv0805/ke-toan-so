@@ -21,7 +21,7 @@ export const permissionModules: PermissionModule[] = [
     label: 'ĐIỀU HÀNH',
     isSection: true,
     children: [
-      { key: '/', label: 'Tổng quan' },
+      { key: '/tong-quan', label: 'Tổng quan' },
       {
         key: '/phan-tich',
         label: 'Phân tích',

@@ -28,7 +28,7 @@ export function convertPermissionsToMatrix(permissionsArray: string[]): ModulePe
   return leafKeys.map((moduleKey) => {
     const actions = {} as Record<PermissionAction, boolean>;
     for (const { key } of PERMISSION_ACTIONS) {
-      actions[key] = permissionSet.has(`${moduleKey}:${key}`);
+      actions[key] = permissionSet.has(`/${moduleKey}:${key}`) || permissionSet.has(`${moduleKey}:${key}`);
     }
     return { moduleKey, actions };
   });
@@ -41,9 +41,10 @@ export function convertPermissionsToMatrix(permissionsArray: string[]): ModulePe
 export function convertMatrixToPermissions(modulePermissions: ModulePermission[]): string[] {
   const permissions: string[] = [];
   for (const { moduleKey, actions } of modulePermissions) {
+    const normalizedKey = moduleKey.startsWith('/') ? moduleKey : `/${moduleKey}`;
     for (const { key } of PERMISSION_ACTIONS) {
       if (actions[key]) {
-        permissions.push(`${moduleKey}:${key}`);
+        permissions.push(`${normalizedKey}:${key}`);
       }
     }
   }
