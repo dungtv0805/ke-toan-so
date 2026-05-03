@@ -23,7 +23,7 @@ class VaiTroService extends ServiceBase {
     return this.get<VaiTroResponse>({ endpoint: `/${id}` });
   }
 
-  async create(data: { ten: string; moTa?: string }): Promise<VaiTroResponse> {
+  async create(data: { ten: string; moTa?: string; isActive?: boolean }): Promise<VaiTroResponse> {
     return this.post<VaiTroResponse>(data, { endpoint: '' });
   }
 

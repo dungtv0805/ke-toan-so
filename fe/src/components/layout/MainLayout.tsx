@@ -272,6 +272,7 @@ const MainLayout: React.FC = () => {
 
   const canAccessRoute = (path: string): boolean => {
     if (isSuperAdmin) return true;
+    if (path === '/') return hasPermission('/:xem') || hasPermission('/tong-quan:xem');
     return hasPermission(`${path}:xem`);
   };
 
@@ -288,10 +289,6 @@ const MainLayout: React.FC = () => {
         };
         const key = menuItem.key as string;
 
-        if (!canAccessRoute(key)) {
-          return null;
-        }
-
         if (menuItem.children && menuItem.children.length > 0) {
           const filteredChildren = filterMenuItems(menuItem.children);
           if (filteredChildren.length === 0) {
@@ -301,6 +298,10 @@ const MainLayout: React.FC = () => {
             ...menuItem,
             children: filteredChildren,
           } as MenuItem;
+        }
+
+        if (!canAccessRoute(key)) {
+          return null;
         }
 
         return item;

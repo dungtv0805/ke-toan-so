@@ -18,12 +18,18 @@ export class InitHandler extends CSubHanlder {
       }));
 
       this.setState("roleOptions", roleOptions);
-      this.setState("selectedRoleId", roleOptions[0].id);
 
-      try {
-        const permissionsArray = await phanQuyenService.getPermissionsByVaiTro(roleOptions[0].id);
-        this.setState("permissions", convertPermissionsToMatrix(permissionsArray));
-      } catch {
+      if (roleOptions.length > 0) {
+        this.setState("selectedRoleId", roleOptions[0].id);
+
+        try {
+          const permissionsArray = await phanQuyenService.getPermissionsByVaiTro(roleOptions[0].id);
+          this.setState("permissions", convertPermissionsToMatrix(permissionsArray));
+        } catch {
+          this.setState("permissions", convertPermissionsToMatrix([]));
+        }
+      } else {
+        this.setState("selectedRoleId", "");
         this.setState("permissions", convertPermissionsToMatrix([]));
       }
     } catch (error) {

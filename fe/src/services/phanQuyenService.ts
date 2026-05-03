@@ -19,15 +19,15 @@ class PhanQuyenService extends ServiceBase {
   }
 
   async getByVaiTro(vaiTro: string): Promise<PhanQuyenItem | null> {
-    return this.get<PhanQuyenItem | null>({ endpoint: `/vai-tro/${vaiTro}` });
+    return this.get<PhanQuyenItem | null>({ endpoint: `/vai-tro/${encodeURIComponent(vaiTro)}` });
   }
 
   async getPermissionsByVaiTro(vaiTro: string): Promise<string[]> {
-    return this.get<string[]>({ endpoint: `/vai-tro/${vaiTro}/permissions` });
+    return this.get<string[]>({ endpoint: `/vai-tro/${encodeURIComponent(vaiTro)}/permissions` });
   }
 
   async savePermissions(vaiTro: string, permissions: string[]): Promise<PhanQuyenItem> {
-    return this.put<PhanQuyenItem>({ permissions }, { endpoint: `/vai-tro/${vaiTro}/permissions` });
+    return this.put<PhanQuyenItem>({ permissions }, { endpoint: `/vai-tro/${encodeURIComponent(vaiTro)}/permissions` });
   }
 
   async create(data: Partial<PhanQuyenItem>): Promise<PhanQuyenItem> {

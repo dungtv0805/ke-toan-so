@@ -28,6 +28,16 @@ import {
 
 const SALT_ROUNDS = 10;
 
+const ROLE_CODE_TO_NAME: Record<string, string> = {
+  [UserRole.GIAM_DOC]: 'Giám đốc',
+  [UserRole.KE_TOAN_TRUONG]: 'Kế toán trưởng',
+  [UserRole.KE_TOAN_QUY]: 'Kế toán quỹ',
+  [UserRole.KE_TOAN_CONG_NO]: 'Kế toán công nợ',
+  [UserRole.KE_TOAN_TONG_HOP]: 'Kế toán tổng hợp',
+  [UserRole.MANAGER]: 'Quản lý',
+  [UserRole.KIEM_SOAT]: 'Kiểm soát',
+};
+
 @Injectable()
 export class AuthServiceService {
   constructor(
@@ -45,11 +55,19 @@ export class AuthServiceService {
   ) {}
 
   /**
-   * Load permissions from PhanQuyen entity by role name
+   * Load permissions from PhanQuyen entity by role code or Vietnamese name
    */
   private async loadPermissions(vaiTro: string): Promise<string[]> {
     const phanQuyen = await this.phanQuyenRepo.findOne({ where: { vaiTro, isActive: true } });
-    return phanQuyen?.permissions || [];
+    if (phanQuyen) {
+      return phanQuyen.permissions || [];
+    }
+    const vietnameseName = ROLE_CODE_TO_NAME[vaiTro];
+    if (vietnameseName) {
+      const fallback = await this.phanQuyenRepo.findOne({ where: { vaiTro: vietnameseName, isActive: true } });
+      return fallback?.permissions || [];
+    }
+    return [];
   }
 
   /**

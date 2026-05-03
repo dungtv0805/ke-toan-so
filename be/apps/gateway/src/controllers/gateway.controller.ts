@@ -38,7 +38,12 @@ export class GatewayController {
     const queryString = req.url?.includes('?')
       ? req.url.substring(req.url.indexOf('?'))
       : '';
-    const fullTargetPath = targetPath + queryString;
+    // Re-encode path segments to avoid ERR_UNESCAPED_CHARACTERS with non-ASCII chars
+    const encodedTargetPath = targetPath
+      .split('/')
+      .map((seg) => encodeURIComponent(seg))
+      .join('/');
+    const fullTargetPath = encodedTargetPath + queryString;
 
     const options: http.RequestOptions = {
       hostname: service.host,

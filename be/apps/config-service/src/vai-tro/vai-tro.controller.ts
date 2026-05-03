@@ -30,7 +30,7 @@ export class VaiTro_Controller {
   }
 
   @Post()
-  async create(@Body() body: { ten: string; moTa?: string }) {
+  async create(@Body() body: { ten: string; moTa?: string; isActive?: boolean }) {
     const data = await this.vaiTro_Service.create(body);
     return { success: true, data };
   }

@@ -17,6 +17,7 @@ export class CrudHandler extends CSubHanlder {
       const created = await vaiTroService.create({
         ten: params.ten,
         moTa: params.moTa,
+        isActive: params.trangThai === "HOAT_DONG",
       });
 
       const currentList = (this.getState("vaiTroList") as VaiTroItem[]) || [];
