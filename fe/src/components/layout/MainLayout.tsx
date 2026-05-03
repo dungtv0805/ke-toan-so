@@ -398,27 +398,30 @@ const MainLayout: React.FC = () => {
     },
   ];
 
+  const isAdmin = currentRole === 'ADMIN' || user?.isSuperAdmin;
+
   // Settings menu items for gear icon dropdown
   const settingsMenuItems: MenuProps["items"] = [
-    {
-      key: "vai-tro",
-      icon: <TeamOutlined />,
-      label: "Quản lý Vai trò",
-      onClick: () => navigate("/cau-hinh/vai-tro"),
-    },
-    {
-      key: "phan-quyen",
-      icon: <SafetyCertificateOutlined />,
-      label: "Phân quyền",
-      onClick: () => navigate("/cau-hinh/phan-quyen"),
-    },
-    {
-      key: "thanh-vien",
-      icon: <UserOutlined />,
-      label: "Quản lý Thành viên",
-      onClick: () => navigate("/cau-hinh/thanh-vien"),
-    },
-    // Only show Tenant management for super admin
+    ...(isAdmin ? [
+      {
+        key: "vai-tro",
+        icon: <TeamOutlined />,
+        label: "Quản lý Vai trò",
+        onClick: () => navigate("/cau-hinh/vai-tro"),
+      },
+      {
+        key: "phan-quyen",
+        icon: <SafetyCertificateOutlined />,
+        label: "Phân quyền",
+        onClick: () => navigate("/cau-hinh/phan-quyen"),
+      },
+      {
+        key: "thanh-vien",
+        icon: <UserOutlined />,
+        label: "Quản lý Thành viên",
+        onClick: () => navigate("/cau-hinh/thanh-vien"),
+      },
+    ] : []),
     ...(user?.isSuperAdmin ? [{
       key: "tenant",
       icon: <TeamOutlined />,
@@ -698,7 +701,7 @@ const MainLayout: React.FC = () => {
             <TenantSwitcher />
 
             {/* Settings dropdown with gear icon */}
-            {user && (isSuperAdmin || currentRole === 'ADMIN' || currentRole === 'KE_TOAN_TRUONG' || currentRole === 'KE_TOAN_TONG_HOP') && (
+            {user && settingsMenuItems && settingsMenuItems.length > 0 && (
               <Dropdown
                 menu={{ items: settingsMenuItems }}
                 placement="bottomRight"
