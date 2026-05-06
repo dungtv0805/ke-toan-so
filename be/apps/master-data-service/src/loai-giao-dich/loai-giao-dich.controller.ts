@@ -22,6 +22,7 @@ export class LoaiGiaoDichController {
   @Get()
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -36,6 +37,7 @@ export class LoaiGiaoDichController {
   @Get('all')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -50,6 +52,7 @@ export class LoaiGiaoDichController {
   @Get('search')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -67,6 +70,7 @@ export class LoaiGiaoDichController {
   @Get('total')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -81,6 +85,7 @@ export class LoaiGiaoDichController {
   @Get('check-ma')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -98,6 +103,7 @@ export class LoaiGiaoDichController {
   @Get('stats')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -112,6 +118,7 @@ export class LoaiGiaoDichController {
   @Get(':id')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -124,14 +131,14 @@ export class LoaiGiaoDichController {
   }
 
   @Post()
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
   async create(@Body() createDto: CreateLoaiGiaoDichDto) {
     const data = await this.loaiGiaoDichService.create(createDto);
     return { success: true, data };
   }
 
   @Put(':id')
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
   async update(@Param('id') id: string, @Body() updateDto: UpdateLoaiGiaoDichDto) {
     const data = await this.loaiGiaoDichService.update(id, updateDto);
     return { success: true, data };

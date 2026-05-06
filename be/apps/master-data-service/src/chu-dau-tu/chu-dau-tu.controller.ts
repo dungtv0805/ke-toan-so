@@ -21,6 +21,7 @@ export class ChuDauTuController {
   @Get()
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -35,6 +36,7 @@ export class ChuDauTuController {
   @Get('all')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -49,6 +51,7 @@ export class ChuDauTuController {
   @Get('search')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -66,6 +69,7 @@ export class ChuDauTuController {
   @Get('check-ma')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -83,6 +87,7 @@ export class ChuDauTuController {
   @Get('stats')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -97,6 +102,7 @@ export class ChuDauTuController {
   @Get(':id')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -109,14 +115,14 @@ export class ChuDauTuController {
   }
 
   @Post()
-  @Roles('ADMIN', 'MANAGER')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'MANAGER')
   async create(@Body() createDto: CreateChuDauTuDto) {
     const data = await this.chuDauTuService.create(createDto);
     return { success: true, data };
   }
 
   @Put(':id')
-  @Roles('ADMIN', 'MANAGER')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'MANAGER')
   async update(@Param('id') id: string, @Body() updateDto: UpdateChuDauTuDto) {
     const data = await this.chuDauTuService.update(id, updateDto);
     return { success: true, data };

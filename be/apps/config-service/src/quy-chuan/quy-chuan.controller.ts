@@ -21,6 +21,7 @@ export class QuyChuan_Controller {
   @Get()
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -49,7 +50,8 @@ export class QuyChuan_Controller {
   }
 
   @Get('stats')
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP', 'MANAGER')
+  @Roles('ADMIN',
+    'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER')
   async getStats(@Query('keyword') keyword?: string) {
     const data = await this.quyChuan_Service.getStats(keyword);
     return { success: true, data };
@@ -58,6 +60,7 @@ export class QuyChuan_Controller {
   @Get('search')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -88,6 +91,7 @@ export class QuyChuan_Controller {
   @Get('by-loai/:loai')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -101,6 +105,7 @@ export class QuyChuan_Controller {
   @Get('suggested-accounts')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -118,7 +123,8 @@ export class QuyChuan_Controller {
   }
 
   @Get('duplicate-check')
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP', 'MANAGER')
+  @Roles('ADMIN',
+    'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER')
   async duplicateCheck(
     @Query('loaiGiaoDich') loaiGiaoDich: string,
     @Query('nghiepVu') nghiepVu: string,
@@ -135,6 +141,7 @@ export class QuyChuan_Controller {
   @Get(':id')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',

@@ -33,21 +33,24 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <>{children}</>;
   }
 
-  if (requiredPermission && !hasPermission(requiredPermission)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Result
-          status="403"
-          title="Không có quyền truy cập"
-          subTitle="Bạn không có quyền truy cập trang này."
-          extra={
-            <Button type="primary" onClick={() => window.history.back()}>
-              Quay lại
-            </Button>
-          }
-        />
-      </div>
-    );
+  if (requiredPermission) {
+    if (!hasPermission(requiredPermission)) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <Result
+            status="403"
+            title="Không có quyền truy cập"
+            subTitle="Bạn không có quyền truy cập trang này."
+            extra={
+              <Button type="primary" onClick={() => window.history.back()}>
+                Quay lại
+              </Button>
+            }
+          />
+        </div>
+      );
+    }
+    return <>{children}</>;
   }
 
   const currentRole = currentTenant?.role as VaiTro | undefined;

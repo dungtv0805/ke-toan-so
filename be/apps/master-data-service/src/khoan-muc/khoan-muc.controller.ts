@@ -21,6 +21,7 @@ export class KhoanMucController {
   @Get()
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -35,6 +36,7 @@ export class KhoanMucController {
   @Get('search')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -52,6 +54,7 @@ export class KhoanMucController {
   @Get('total')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -66,6 +69,7 @@ export class KhoanMucController {
   @Get('check-ma')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -83,6 +87,7 @@ export class KhoanMucController {
   @Get('stats')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -97,6 +102,7 @@ export class KhoanMucController {
   @Get('loai/:loai')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -114,6 +120,7 @@ export class KhoanMucController {
   @Get(':id')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -126,14 +133,14 @@ export class KhoanMucController {
   }
 
   @Post()
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
   async create(@Body() createDto: CreateKhoanMucDto) {
     const data = await this.khoanMucService.create(createDto);
     return { success: true, data };
   }
 
   @Put(':id')
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
   async update(@Param('id') id: string, @Body() updateDto: UpdateKhoanMucDto) {
     const data = await this.khoanMucService.update(id, updateDto);
     return { success: true, data };

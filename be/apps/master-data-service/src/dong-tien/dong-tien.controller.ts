@@ -22,6 +22,7 @@ export class DongTienController {
   @Get()
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -36,6 +37,7 @@ export class DongTienController {
   @Get('all')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -50,6 +52,7 @@ export class DongTienController {
   @Get('search')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -67,6 +70,7 @@ export class DongTienController {
   @Get('total')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -81,6 +85,7 @@ export class DongTienController {
   @Get('check-ma')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -98,6 +103,7 @@ export class DongTienController {
   @Get('stats')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -112,6 +118,7 @@ export class DongTienController {
   @Get('loai/:loai')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -129,6 +136,7 @@ export class DongTienController {
   @Get(':id')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -141,14 +149,14 @@ export class DongTienController {
   }
 
   @Post()
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
   async create(@Body() createDto: CreateDongTienDto) {
     const data = await this.dongTienService.create(createDto);
     return { success: true, data };
   }
 
   @Put(':id')
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
   async update(@Param('id') id: string, @Body() updateDto: UpdateDongTienDto) {
     const data = await this.dongTienService.update(id, updateDto);
     return { success: true, data };

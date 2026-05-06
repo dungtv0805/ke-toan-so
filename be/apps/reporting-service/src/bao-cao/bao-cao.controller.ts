@@ -8,7 +8,7 @@ export class BaoCaoController {
   constructor(private readonly baoCaoService: BaoCaoService) {}
 
   @Get('pnl')
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getPnL(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
@@ -34,7 +34,7 @@ export class BaoCaoController {
   }
 
   @Get('balance-sheet')
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getBalanceSheet(
     @Query('asOfDate') asOfDate: string,
     @Headers('authorization') authToken: string,
@@ -49,7 +49,7 @@ export class BaoCaoController {
   }
 
   @Get('kqkd')
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getKqkd(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,

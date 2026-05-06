@@ -265,8 +265,10 @@ export function PermissionMatrix() {
   const counter = { value: 0 };
 
   return (
-    <Card bodyStyle={{ padding: 0 }}>
-      <div style={{ overflowX: "auto" }}>
+    <Card
+      style={{ height: "100%" }}
+      styles={{ body: { height: "100%", padding: 0, overflow: "auto" } }}
+    >
         <table
           style={{
             width: "100%",
@@ -274,7 +276,7 @@ export function PermissionMatrix() {
             fontSize: 14,
           }}
         >
-          <thead>
+          <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
             <tr style={{ backgroundColor: "#fafafa" }}>
               <th
                 style={{
@@ -282,7 +284,7 @@ export function PermissionMatrix() {
                   padding: "12px",
                   borderBottom: "2px solid #e8e8e8",
                   fontWeight: 600,
-                  minWidth: 280,
+                  backgroundColor: "#fafafa",
                 }}
               >
                 Module
@@ -290,10 +292,12 @@ export function PermissionMatrix() {
               <th
                 style={{
                   textAlign: "center",
-                  padding: "12px 8px",
+                  padding: "12px 4px",
                   borderBottom: "2px solid #e8e8e8",
                   fontWeight: 600,
-                  width: 80,
+                  width: 50,
+                  whiteSpace: "nowrap",
+                  backgroundColor: "#fafafa",
                 }}
               >
                 Tất cả
@@ -303,10 +307,12 @@ export function PermissionMatrix() {
                   key={action.key}
                   style={{
                     textAlign: "center",
-                    padding: "12px 8px",
+                    padding: "12px 4px",
                     borderBottom: "2px solid #e8e8e8",
                     fontWeight: 600,
-                    width: 80,
+                    width: 50,
+                    whiteSpace: "nowrap",
+                    backgroundColor: "#fafafa",
                   }}
                 >
                   {action.label}
@@ -324,7 +330,6 @@ export function PermissionMatrix() {
             )}
           </tbody>
         </table>
-      </div>
     </Card>
   );
 }

@@ -46,47 +46,47 @@ export class ChungTuController {
   constructor(private readonly chungTuService: ChungTuService) {}
 
   @Get('phieu-thu')
-  @Roles('ADMIN', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async findAllPhieuThu(@Query() query: PaginationQueryDto) {
     return this.chungTuService.findAllPaginated('PHIEU_THU', query);
   }
 
   @Get('phieu-thu/search')
-  @Roles('ADMIN', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async searchPhieuThu(@Query('keyword') keyword: string) {
     const data = await this.chungTuService.search(keyword || '', 'PHIEU_THU');
     return { success: true, data };
   }
 
   @Get('phieu-chi')
-  @Roles('ADMIN', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async findAllPhieuChi(@Query() query: PaginationQueryDto) {
     return this.chungTuService.findAllPaginated('PHIEU_CHI', query);
   }
 
   @Get('phieu-chi/search')
-  @Roles('ADMIN', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async searchPhieuChi(@Query('keyword') keyword: string) {
     const data = await this.chungTuService.search(keyword || '', 'PHIEU_CHI');
     return { success: true, data };
   }
 
   @Get('chung-tu')
-  @Roles('ADMIN', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async findAll(@Query('loai') loai?: LoaiChungTu) {
     const data = await this.chungTuService.findAll(loai);
     return { success: true, data };
   }
 
   @Get('chung-tu/:id')
-  @Roles('ADMIN', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async findOne(@Param('id') id: string) {
     const data = await this.chungTuService.findOne(id);
     return { success: true, data };
   }
 
   @Post('phieu-thu')
-  @Roles('ADMIN', 'KE_TOAN_QUY')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
   async createPhieuThu(
     @Body() createDto: Omit<CreateChungTuDto, 'loai'>,
     @CurrentUser() user: UserPayload,
@@ -99,7 +99,7 @@ export class ChungTuController {
   }
 
   @Post('phieu-chi')
-  @Roles('ADMIN', 'KE_TOAN_QUY')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
   async createPhieuChi(
     @Body() createDto: Omit<CreateChungTuDto, 'loai'>,
     @CurrentUser() user: UserPayload,
@@ -112,14 +112,14 @@ export class ChungTuController {
   }
 
   @Put('chung-tu/:id')
-  @Roles('ADMIN', 'KE_TOAN_QUY')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
   async update(@Param('id') id: string, @Body() updateDto: UpdateChungTuDto) {
     const data = await this.chungTuService.update(id, updateDto);
     return { success: true, data };
   }
 
   @Delete('chung-tu/:id')
-  @Roles('ADMIN', 'KE_TOAN_QUY')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
   async delete(@Param('id') id: string) {
     await this.chungTuService.delete(id);
     return { success: true, message: 'Xóa thành công' };

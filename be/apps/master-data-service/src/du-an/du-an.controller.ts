@@ -22,6 +22,7 @@ export class DuAnController {
   @Get()
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -36,6 +37,7 @@ export class DuAnController {
   @Get('all')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -50,6 +52,7 @@ export class DuAnController {
   @Get('search')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -67,6 +70,7 @@ export class DuAnController {
   @Get('total')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -84,6 +88,7 @@ export class DuAnController {
   @Get('check-ma')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -101,6 +106,7 @@ export class DuAnController {
   @Get('stats')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -115,6 +121,7 @@ export class DuAnController {
   @Get(':id')
   @Roles(
     'ADMIN',
+    'KE_TOAN_TRUONG',
     'KE_TOAN_TONG_HOP',
     'KE_TOAN_QUY',
     'KE_TOAN_CONG_NO',
@@ -127,21 +134,21 @@ export class DuAnController {
   }
 
   @Post()
-  @Roles('ADMIN', 'MANAGER')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'MANAGER')
   async create(@Body() createDto: CreateDuAnDto) {
     const data = await this.duAnService.create(createDto);
     return { success: true, data };
   }
 
   @Put(':id')
-  @Roles('ADMIN', 'MANAGER')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'MANAGER')
   async update(@Param('id') id: string, @Body() updateDto: UpdateDuAnDto) {
     const data = await this.duAnService.update(id, updateDto);
     return { success: true, data };
   }
 
   @Put(':id/status')
-  @Roles('ADMIN', 'MANAGER')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'MANAGER')
   async updateStatus(
     @Param('id') id: string,
     @Body('trangThai') trangThai: DuAnStatus,

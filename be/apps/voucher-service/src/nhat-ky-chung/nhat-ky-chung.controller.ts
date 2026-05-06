@@ -33,19 +33,19 @@ export class NhatKyChungController {
   constructor(private readonly nhatKyChungService: NhatKyChungService) {}
 
   @Get()
-  @Roles('ADMIN', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getEntries(@Query() query: NhatKyChungQueryDto) {
     return this.nhatKyChungService.getEntries(query);
   }
 
   @Get('stats')
-  @Roles('ADMIN', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getStats(@Query() query: NhatKyChungQueryDto) {
     return this.nhatKyChungService.getStats(query);
   }
 
   @Get('aggregate-balance')
-  @Roles('ADMIN', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async aggregateBalance(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
@@ -57,7 +57,7 @@ export class NhatKyChungController {
   }
 
   @Get('summary/:type')
-  @Roles('ADMIN', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getSummary(
     @Param('type') type: string,
     @Query() query: NhatKyChungQueryDto,
@@ -71,13 +71,13 @@ export class NhatKyChungController {
   }
 
   @Get(':id')
-  @Roles('ADMIN', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getById(@Param('id') id: string) {
     return this.nhatKyChungService.findById(id);
   }
 
   @Post()
-  @Roles('ADMIN', 'KE_TOAN_QUY')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
   async create(
     @Body() createDto: CreateNhatKyChungDto,
     @CurrentUser() user: UserPayload,
@@ -86,7 +86,7 @@ export class NhatKyChungController {
   }
 
   @Post('batch')
-  @Roles('ADMIN', 'KE_TOAN_QUY')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
   async createBatch(
     @Body() items: CreateNhatKyChungDto[],
     @CurrentUser() user: UserPayload,
@@ -95,7 +95,7 @@ export class NhatKyChungController {
   }
 
   @Patch('batch')
-  @Roles('ADMIN', 'KE_TOAN_QUY')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
   async updateBatch(
     @Body() body: { soPhieu: string; items: BatchItemDto[] },
     @CurrentUser() user: UserPayload,
@@ -104,7 +104,7 @@ export class NhatKyChungController {
   }
 
   @Patch(':id')
-  @Roles('ADMIN', 'KE_TOAN_QUY')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
   async update(
     @Param('id') id: string,
     @Body() updateDto: UpdateNhatKyChungDto,
@@ -114,7 +114,7 @@ export class NhatKyChungController {
   }
 
   @Delete(':id')
-  @Roles('ADMIN', 'KE_TOAN_QUY')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
   async delete(@Param('id') id: string) {
     return this.nhatKyChungService.remove(id);
   }

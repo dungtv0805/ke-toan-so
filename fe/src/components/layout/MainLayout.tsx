@@ -235,6 +235,13 @@ const thuVienMenuItems: MenuItem[] = [
     ]),
   ]),
 
+  getMenuItem("Sổ quỹ", "/so-quy", <WalletOutlined />),
+
+  getItem("Công nợ", "/cong-no", <ReconciliationOutlined />, [
+    getMenuItem("Phải thu", "/cong-no/phai-thu", <RiseOutlined />),
+    getMenuItem("Phải trả", "/cong-no/phai-tra", <DollarOutlined />),
+  ]),
+
   // Quy trình
   getMenuItem("Quy trình", "/quy-trinh", <NodeIndexOutlined />),
 

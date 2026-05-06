@@ -8,7 +8,7 @@ export class SoCaiController {
   constructor(private readonly soCaiService: SoCaiService) {}
 
   @Get()
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getLedger(
     @Query('maTaiKhoan') maTaiKhoan: string,
     @Query('startDate') startDate: string,
@@ -25,28 +25,28 @@ export class SoCaiController {
   }
 
   @Get('all')
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getAll(@Headers('authorization') authToken: string) {
     const data = await this.soCaiService.getAll(authToken);
     return { success: true, data };
   }
 
   @Get('summary-by-account')
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getSummaryByAccount(@Headers('authorization') authToken: string) {
     const data = await this.soCaiService.getSummaryByAccount(authToken);
     return { success: true, data };
   }
 
   @Get('stats')
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getStats(@Headers('authorization') authToken: string) {
     const data = await this.soCaiService.getStats(authToken);
     return { success: true, data };
   }
 
   @Get('trial-balance')
-  @Roles('ADMIN', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getTrialBalance(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
