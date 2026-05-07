@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { NguoiDung, VaiTro, TenantInfo } from '@/types';
+import { NguoiDung, TenantInfo } from '@/types';
 import { authService } from '@/services/authService';
 import { setAuthToken, getAuthToken, clearAuthToken, setCurrentTenant, getCurrentTenant, clearCurrentTenant } from '@/services/base/service-base';
 import { ApiError, ApiErrorType } from '@/config/api';
@@ -17,7 +17,6 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
   selectTenant: (tenantId: string) => Promise<void>;
   switchTenant: (tenantId: string) => Promise<void>;
-  hasRole: (roles: VaiTro[]) => boolean;
   hasPermission: (permission: string) => boolean;
 }
 
@@ -209,14 +208,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const hasRole = useCallback((roles: VaiTro[]) => {
-    if (!user) return false;
-    // Super admin has all roles
-    if (user.isSuperAdmin) return true;
-    if (!currentTenant) return false;
-    return roles.includes(currentTenant.role as VaiTro);
-  }, [user, currentTenant]);
-
   const hasPermission = useCallback((permission: string) => {
     if (!user) return false;
     if (user.isSuperAdmin) return true;
@@ -239,7 +230,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshUser,
         selectTenant,
         switchTenant,
-        hasRole,
         hasPermission,
       }}
     >

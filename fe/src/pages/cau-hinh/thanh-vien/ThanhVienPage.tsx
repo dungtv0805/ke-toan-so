@@ -18,20 +18,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { tenantService, TenantMember, AddMemberDto, UpdateMemberDto } from '@/services/tenantService';
 import { vaiTroService, VaiTroResponse } from '@/services/vaiTroService';
 
-const NAME_TO_CODE: Record<string, string> = {
-  'Admin': 'ADMIN',
-  'Giám đốc': 'GIAM_DOC',
-  'Kế toán trưởng': 'KE_TOAN_TRUONG',
-  'Kế toán quỹ': 'KE_TOAN_QUY',
-  'Kế toán công nợ': 'KE_TOAN_CONG_NO',
-  'Kế toán tổng hợp': 'KE_TOAN_TONG_HOP',
-  'Quản lý': 'MANAGER',
-  'Kiểm soát': 'KIEM_SOAT',
-};
-
-const CODE_TO_NAME: Record<string, string> = Object.fromEntries(
-  Object.entries(NAME_TO_CODE).map(([name, code]) => [code, name]),
-);
 
 const DEFAULT_PASSWORD = '123456';
 
@@ -97,7 +83,7 @@ const ThanhVienPage = () => {
         data
           .filter((vt: VaiTroResponse) => vt.isActive)
           .map((vt: VaiTroResponse) => ({
-            value: NAME_TO_CODE[vt.ten] || vt.ten,
+            value: vt.ten,
             label: vt.ten,
           })),
       );
@@ -167,7 +153,7 @@ const ThanhVienPage = () => {
   };
 
   const getRoleLabel = (role: string) =>
-    roles.find((r) => r.value === role)?.label || CODE_TO_NAME[role] || role;
+    roles.find((r) => r.value === role)?.label || role;
 
   const availableUsers = users.filter(
     (u) => !members.some((m) => m.id === u.id && m.isActive),

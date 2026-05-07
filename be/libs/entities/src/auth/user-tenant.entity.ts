@@ -1,6 +1,5 @@
 import { Entity, Column, Index } from 'typeorm';
 import { BaseEntity } from '../base.entity';
-import { UserRole } from './user.entity';
 
 /**
  * UserTenant - Stores user membership in tenants
@@ -18,8 +17,8 @@ export class UserTenant extends BaseEntity {
   @Column()
   declare tenantId: string;
 
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.KIEM_SOAT })
-  role: UserRole;
+  @Column({ default: 'KIEM_SOAT' })
+  role: string;
 
   @Column({ default: true })
   isActive: boolean;

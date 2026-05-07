@@ -8,7 +8,6 @@ import viVN from 'antd/locale/vi_VN';
 
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { routePermissions } from "./config/routePermissions";
 
 import MainLayout from "./components/layout/MainLayout";
 import {
@@ -77,7 +76,7 @@ const App = () => (
               <Route
                 path="/"
                 element={
-                  <ProtectedRoute allowedRoles={routePermissions['/']}>
+                  <ProtectedRoute>
                     <MainLayout />
                   </ProtectedRoute>
                 }
@@ -90,7 +89,7 @@ const App = () => (
                   <Route
                     path="tai-khoan"
                     element={
-                      <ProtectedRoute allowedRoles={routePermissions['/danh-muc/tai-khoan']} requiredPermission="/danh-muc/tai-khoan:xem">
+                      <ProtectedRoute requiredPermission="/danh-muc/tai-khoan:xem">
                         <TaiKhoanPage />
                       </ProtectedRoute>
                     }
@@ -98,7 +97,7 @@ const App = () => (
                   <Route
                     path="doi-tuong"
                     element={
-                      <ProtectedRoute allowedRoles={routePermissions['/danh-muc/doi-tuong']} requiredPermission="/danh-muc/doi-tuong:xem">
+                      <ProtectedRoute requiredPermission="/danh-muc/doi-tuong:xem">
                         <DoiTuongPage />
                       </ProtectedRoute>
                     }
@@ -171,7 +170,7 @@ const App = () => (
                   <Route
                     path="quy-chuan"
                     element={
-                      <ProtectedRoute allowedRoles={routePermissions['/danh-muc/quy-chuan']} requiredPermission="/danh-muc/quy-chuan:xem">
+                      <ProtectedRoute requiredPermission="/danh-muc/quy-chuan:xem">
                         <QuyChaunPage />
                       </ProtectedRoute>
                     }
@@ -193,7 +192,7 @@ const App = () => (
                   <Route
                     path="nhat-ky-chung"
                     element={
-                      <ProtectedRoute allowedRoles={routePermissions['/chung-tu/nhat-ky-chung']} requiredPermission="/chung-tu/nhat-ky-chung:xem">
+                      <ProtectedRoute requiredPermission="/chung-tu/nhat-ky-chung:xem">
                         <NhatKyChungPage />
                       </ProtectedRoute>
                     }
@@ -201,7 +200,7 @@ const App = () => (
                   <Route
                     path="nhat-ky-chung/tao-moi"
                     element={
-                      <ProtectedRoute allowedRoles={routePermissions['/chung-tu/nhat-ky-chung']} requiredPermission="/chung-tu/nhat-ky-chung:xem">
+                      <ProtectedRoute requiredPermission="/chung-tu/nhat-ky-chung:xem">
                         <NhatKyChungFormPage />
                       </ProtectedRoute>
                     }
@@ -209,7 +208,7 @@ const App = () => (
                   <Route
                     path="nhat-ky-chung/:soPhieu/sua"
                     element={
-                      <ProtectedRoute allowedRoles={routePermissions['/chung-tu/nhat-ky-chung']} requiredPermission="/chung-tu/nhat-ky-chung:xem">
+                      <ProtectedRoute requiredPermission="/chung-tu/nhat-ky-chung:xem">
                         <NhatKyChungFormPage />
                       </ProtectedRoute>
                     }
@@ -230,7 +229,7 @@ const App = () => (
                 <Route
                   path="so-quy"
                   element={
-                    <ProtectedRoute allowedRoles={routePermissions['/so-quy']} requiredPermission="/so-quy:xem">
+                    <ProtectedRoute requiredPermission="/so-quy:xem">
                       <SoQuyPage />
                     </ProtectedRoute>
                   }
@@ -241,7 +240,7 @@ const App = () => (
                   <Route
                     path="phai-thu"
                     element={
-                      <ProtectedRoute allowedRoles={routePermissions['/cong-no/phai-thu']} requiredPermission="/cong-no/phai-thu:xem">
+                      <ProtectedRoute requiredPermission="/cong-no/phai-thu:xem">
                         <CongNoPhaiThuPage />
                       </ProtectedRoute>
                     }
@@ -249,7 +248,7 @@ const App = () => (
                   <Route
                     path="phai-tra"
                     element={
-                      <ProtectedRoute allowedRoles={routePermissions['/cong-no/phai-tra']} requiredPermission="/cong-no/phai-tra:xem">
+                      <ProtectedRoute requiredPermission="/cong-no/phai-tra:xem">
                         <CongNoPhaiTraPage />
                       </ProtectedRoute>
                     }
@@ -261,7 +260,7 @@ const App = () => (
                   <Route
                     path="pnl"
                     element={
-                      <ProtectedRoute allowedRoles={routePermissions['/bao-cao/pnl']} requiredPermission="/bao-cao/pnl:xem">
+                      <ProtectedRoute requiredPermission="/bao-cao/pnl:xem">
                         <PnLPage />
                       </ProtectedRoute>
                     }
@@ -269,7 +268,7 @@ const App = () => (
                   <Route
                     path="so-cai"
                     element={
-                      <ProtectedRoute allowedRoles={routePermissions['/bao-cao/so-cai']} requiredPermission="/bao-cao/so-cai:xem">
+                      <ProtectedRoute requiredPermission="/bao-cao/so-cai:xem">
                         <SoCaiPage />
                       </ProtectedRoute>
                     }
@@ -277,7 +276,7 @@ const App = () => (
                   <Route
                     path="bang-can-doi"
                     element={
-                      <ProtectedRoute allowedRoles={routePermissions['/bao-cao/bang-can-doi']} requiredPermission="/bao-cao/bang-can-doi:xem">
+                      <ProtectedRoute requiredPermission="/bao-cao/bang-can-doi:xem">
                         <BangCanDoiPage />
                       </ProtectedRoute>
                     }
@@ -286,7 +285,7 @@ const App = () => (
                   <Route
                     path="tai-chinh"
                     element={
-                      <ProtectedRoute allowedRoles={routePermissions['/bao-cao/tai-chinh']} requiredPermission="/bao-cao/tai-chinh:xem">
+                      <ProtectedRoute requiredPermission="/bao-cao/tai-chinh:xem">
                         <BaoCaoTaiChinhPage />
                       </ProtectedRoute>
                     }
@@ -332,7 +331,7 @@ const App = () => (
                   <Route
                     path="phan-quyen"
                     element={
-                      <ProtectedRoute allowedRoles={routePermissions['/cau-hinh/phan-quyen']} requiredPermission="/cau-hinh/phan-quyen:xem">
+                      <ProtectedRoute requiredPermission="/cau-hinh/phan-quyen:xem">
                         <PhanQuyenPage />
                       </ProtectedRoute>
                     }
@@ -340,7 +339,7 @@ const App = () => (
                   <Route
                     path="vai-tro"
                     element={
-                      <ProtectedRoute allowedRoles={routePermissions['/cau-hinh/vai-tro']} requiredPermission="/cau-hinh/vai-tro:xem">
+                      <ProtectedRoute requiredPermission="/cau-hinh/vai-tro:xem">
                         <VaiTroPage />
                       </ProtectedRoute>
                     }
@@ -348,7 +347,7 @@ const App = () => (
                   <Route
                     path="thanh-vien"
                     element={
-                      <ProtectedRoute allowedRoles={routePermissions['/cau-hinh/thanh-vien']}>
+                      <ProtectedRoute requiredPermission="/cau-hinh/thanh-vien:xem">
                         <ThanhVienPage />
                       </ProtectedRoute>
                     }

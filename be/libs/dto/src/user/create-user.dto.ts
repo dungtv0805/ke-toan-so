@@ -1,13 +1,14 @@
-import { IsEmail, IsString, IsArray, ValidateNested, IsEnum, IsOptional, IsBoolean } from 'class-validator';
+import { IsEmail, IsString, IsArray, ValidateNested, IsNotEmpty, IsEnum, IsOptional, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
-import { UserRole, UserStatus } from '@app/entities';
+import { UserStatus } from '@app/entities';
 
 export class UserTenantDto {
   @IsString()
   tenantId: string;
 
-  @IsEnum(UserRole)
-  role: UserRole;
+  @IsString()
+  @IsNotEmpty()
+  role: string;
 }
 
 export class CreateUserDto {

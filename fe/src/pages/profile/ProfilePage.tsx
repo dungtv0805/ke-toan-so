@@ -19,13 +19,11 @@ import {
   LockOutlined, 
   SaveOutlined,
   KeyOutlined,
-  SafetyOutlined,
-  CheckCircleOutlined
+  SafetyOutlined
 } from '@ant-design/icons';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { authService } from '@/services/authService';
-import { vaiTroOptions, moTaQuyenTheoVaiTro } from '@/mock-data/nguoi-dung';
 
 const { Title, Text } = Typography;
 
@@ -50,9 +48,8 @@ const ProfilePage = () => {
   const [profileLoading, setProfileLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
 
-  const currentRole = currentTenant?.role as VaiTro | undefined;
-  const roleInfo = vaiTroOptions.find(v => v.value === currentRole);
-  const permissions = currentRole ? moTaQuyenTheoVaiTro[currentRole] || [] : [];
+  const currentRole = currentTenant?.role;
+  const roleLabel = currentRole || 'Chưa gán vai trò';
 
   const handleProfileSubmit = async (values: { hoTen: string }) => {
     try {
@@ -133,22 +130,17 @@ const ProfilePage = () => {
           {/* Profile Card */}
           <Card className="lg:col-span-1">
             <div className="text-center">
-              <Avatar 
-                size={100} 
-                style={{ backgroundColor: roleInfo?.color || '#1890ff' }}
+              <Avatar
+                size={100}
+                style={{ backgroundColor: '#1890ff' }}
                 icon={<UserOutlined />}
                 className="mb-4"
               />
               <Title level={4} className="!mb-1">{user.hoTen}</Title>
               <Text type="secondary" className="block mb-3">{user.email}</Text>
-              <Tag color={roleInfo?.color} className="text-sm">
-                {roleInfo?.label}
+              <Tag color="blue" className="text-sm">
+                {roleLabel}
               </Tag>
-              <Divider />
-              <div className="text-left">
-                <Text type="secondary" className="text-xs uppercase tracking-wide">Mô tả vai trò</Text>
-                <p className="text-sm mt-1">{roleInfo?.description}</p>
-              </div>
             </div>
           </Card>
 
@@ -196,7 +188,7 @@ const ProfilePage = () => {
                 label="Vai trò"
               >
                 <Input 
-                  value={roleInfo?.label}
+                  value={roleLabel}
                   disabled
                   size="large"
                 />
@@ -321,17 +313,14 @@ const ProfilePage = () => {
       ),
       children: (
         <Card title="Quyền hạn của bạn">
-          <Descriptions 
-            column={1} 
+          <Descriptions
+            column={1}
             bordered
             size="small"
             className="mb-6"
           >
             <Descriptions.Item label="Vai trò">
-              <Tag color={roleInfo?.color}>{roleInfo?.label}</Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Mô tả">
-              {roleInfo?.description}
+              <Tag color="blue">{roleLabel}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
               <Tag color={user.trangThai === 'HOAT_DONG' ? 'success' : 'error'}>
@@ -339,19 +328,6 @@ const ProfilePage = () => {
               </Tag>
             </Descriptions.Item>
           </Descriptions>
-
-          <Title level={5} className="!mb-4">Danh sách quyền hạn</Title>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {permissions.map((permission, index) => (
-              <div 
-                key={index}
-                className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg"
-              >
-                <CheckCircleOutlined className="text-green-500" />
-                <Text>{permission}</Text>
-              </div>
-            ))}
-          </div>
         </Card>
       ),
     },

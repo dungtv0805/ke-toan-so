@@ -3,12 +3,10 @@ import {
   IsNotEmpty,
   IsOptional,
   IsBoolean,
-  IsEnum,
   IsEmail,
   IsMongoId,
   ValidateIf,
 } from 'class-validator';
-import { UserRole } from '@app/entities';
 
 export class AddUserToTenantDto {
   @IsMongoId()
@@ -29,15 +27,15 @@ export class AddUserToTenantDto {
   @IsOptional()
   password?: string;
 
-  @IsEnum(UserRole)
+  @IsString()
   @IsNotEmpty()
-  role: UserRole;
+  role: string;
 }
 
 export class UpdateTenantMemberDto {
-  @IsEnum(UserRole)
+  @IsString()
   @IsOptional()
-  role?: UserRole;
+  role?: string;
 
   @IsBoolean()
   @IsOptional()

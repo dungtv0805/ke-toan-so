@@ -1,6 +1,5 @@
 import { NguoiDung, VaiTro } from '@/types';
 import { ServiceBase } from './base/service-base';
-import { vaiTroOptions, moTaQuyenTheoVaiTro } from '@/mock-data/nguoi-dung';
 
 export interface NguoiDungStats {
   tongNguoiDung: number;
@@ -125,13 +124,6 @@ class NguoiDungService extends ServiceBase {
     return transformUser(response);
   }
 
-  getVaiTroOptions() {
-    return vaiTroOptions;
-  }
-
-  getQuyenHanTheoVaiTro(vaiTro: VaiTro) {
-    return moTaQuyenTheoVaiTro[vaiTro] || [];
-  }
 }
 
 export const nguoiDungService = new NguoiDungService();

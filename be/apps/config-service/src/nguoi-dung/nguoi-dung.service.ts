@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User, UserCredential, UserTenant, UserRole, UserStatus } from '@app/entities';
+import { User, UserCredential, UserTenant, UserStatus } from '@app/entities';
 import { TenantContextService } from '@app/core';
 import {
   CreateNguoiDungDto,
@@ -30,7 +30,7 @@ export interface NguoiDungStats {
   tongNguoiDung: number;
   dangHoatDong: number;
   daKhoa: number;
-  theoVaiTro: Record<UserRole, number>;
+  theoVaiTro: Record<string, number>;
 }
 
 // Extended user with tenant info
@@ -44,7 +44,7 @@ export interface UserWithTenant {
   isSuperAdmin: boolean;
   createdAt: Date;
   updatedAt: Date;
-  tenantRole?: UserRole;
+  tenantRole?: string;
 }
 
 @Injectable()
@@ -384,15 +384,11 @@ export class NguoiDung_Service {
     const userIds = [...new Set(userTenants.map((ut) => ut.userId))];
 
     if (userIds.length === 0) {
-      const emptyStats: Record<UserRole, number> = {} as Record<UserRole, number>;
-      Object.values(UserRole).forEach((vt) => {
-        emptyStats[vt] = 0;
-      });
       return {
         tongNguoiDung: 0,
         dangHoatDong: 0,
         daKhoa: 0,
-        theoVaiTro: emptyStats,
+        theoVaiTro: {},
       };
     }
 
@@ -407,11 +403,11 @@ export class NguoiDung_Service {
       },
     });
 
-    // Count by role
-    const theoVaiTro = {} as Record<UserRole, number>;
-    Object.values(UserRole).forEach((vt) => {
-      theoVaiTro[vt] = userTenants.filter((ut) => ut.role === vt).length;
-    });
+    // Count by role dynamically
+    const theoVaiTro: Record<string, number> = {};
+    for (const ut of userTenants) {
+      theoVaiTro[ut.role] = (theoVaiTro[ut.role] || 0) + 1;
+    }
 
     return {
       tongNguoiDung: allUsers.length,

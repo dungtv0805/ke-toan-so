@@ -1,10 +1,10 @@
-import { IsString, IsEnum, IsMongoId } from 'class-validator';
-import { UserRole } from '@app/entities';
+import { IsString, IsNotEmpty, IsMongoId } from 'class-validator';
 
 export class AddExistingUserDto {
   @IsMongoId({ message: 'User ID không hợp lệ' })
   userId: string;
 
-  @IsEnum(UserRole, { message: 'Vai trò không hợp lệ' })
-  vaiTro: UserRole;
+  @IsString()
+  @IsNotEmpty({ message: 'Vai trò không được để trống' })
+  vaiTro: string;
 }

@@ -1,52 +1,49 @@
-import { VaiTro } from '@/types';
+// Route permission mapping - maps routes to their required permission string
+// Used by ProtectedRoute to check if user has access via hasPermission()
+export const routePermissions: Record<string, string> = {
+  '/': '/tong-quan:xem',
 
-// Define which roles can access each route
-export const routePermissions: Record<string, VaiTro[]> = {
-  // Dashboard - everyone can see
-  '/': ['ADMIN', 'GIAM_DOC', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_CONG_NO', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT'],
-  
-  // Danh mục - Admin and accountants
-  '/danh-muc': ['ADMIN', 'GIAM_DOC', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_CONG_NO', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT'],
-  '/danh-muc/tai-khoan': ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP'],
-  '/danh-muc/doi-tuong': ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_CONG_NO', 'KE_TOAN_TONG_HOP'],
-  
-  // Chứng từ - Role-specific
-  '/chung-tu': ['ADMIN', 'GIAM_DOC', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT'],
-  '/chung-tu/phieu-thu': ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'MANAGER'],
-  '/chung-tu/phieu-chi': ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'MANAGER'],
-  '/chung-tu/nhat-ky-chung': ['ADMIN', 'GIAM_DOC', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KIEM_SOAT'],
-  
-  // Trung tâm dữ liệu
-  '/trung-tam-du-lieu': ['ADMIN', 'GIAM_DOC', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_CONG_NO', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT'],
-  '/so-quy': ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'MANAGER', 'KIEM_SOAT'],
-  
-  // Công nợ
-  '/cong-no/phai-thu': ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_CONG_NO', 'MANAGER'],
-  '/cong-no/phai-tra': ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_CONG_NO', 'MANAGER'],
-  
-  // Báo cáo
-  '/bao-cao': ['ADMIN', 'GIAM_DOC', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT'],
-  '/bao-cao/pnl': ['ADMIN', 'GIAM_DOC', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT'],
-  '/bao-cao/so-cai': ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KIEM_SOAT'],
-  '/bao-cao/bang-can-doi': ['ADMIN', 'GIAM_DOC', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT'],
-  '/bao-cao/tai-chinh': ['ADMIN', 'GIAM_DOC', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT'],
+  '/danh-muc/tai-khoan': '/danh-muc/tai-khoan:xem',
+  '/danh-muc/doi-tuong': '/danh-muc/doi-tuong:xem',
+  '/danh-muc/du-an': '/danh-muc/du-an:xem',
+  '/danh-muc/san-pham': '/danh-muc/san-pham:xem',
+  '/danh-muc/bo-phan': '/danh-muc/bo-phan:xem',
+  '/danh-muc/khoan-muc': '/danh-muc/khoan-muc:xem',
+  '/danh-muc/ngan-hang': '/danh-muc/ngan-hang:xem',
+  '/danh-muc/dong-tien': '/danh-muc/dong-tien:xem',
+  '/danh-muc/chu-dau-tu': '/danh-muc/chu-dau-tu:xem',
+  '/danh-muc/nhom-khuyen-mai': '/danh-muc/nhom-khuyen-mai:xem',
+  '/danh-muc/nhom-quan-ly': '/danh-muc/nhom-quan-ly:xem',
+  '/danh-muc/loai-chung-tu': '/danh-muc/loai-chung-tu:xem',
+  '/danh-muc/nhom-khoan-muc': '/danh-muc/nhom-khoan-muc:xem',
+  '/danh-muc/loai-giao-dich': '/danh-muc/loai-giao-dich:xem',
+  '/danh-muc/hop-dong': '/danh-muc/hop-dong:xem',
+  '/danh-muc/quy-chuan': '/danh-muc/quy-chuan:xem',
 
-  // Danh mục - Quy chuẩn hạch toán
-  '/danh-muc/quy-chuan': ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP'],
+  '/chung-tu/phieu-thu': '/chung-tu/phieu-thu:xem',
+  '/chung-tu/phieu-chi': '/chung-tu/phieu-chi:xem',
+  '/chung-tu/nhat-ky-chung': '/chung-tu/nhat-ky-chung:xem',
 
-  // Cấu hình - Admin only
-  '/cau-hinh/phan-quyen': ['ADMIN'],
-  '/cau-hinh/vai-tro': ['ADMIN'],
-  '/cau-hinh/thanh-vien': ['ADMIN'],
+  '/so-quy': '/so-quy:xem',
+
+  '/cong-no/phai-thu': '/cong-no/phai-thu:xem',
+  '/cong-no/phai-tra': '/cong-no/phai-tra:xem',
+
+  '/bao-cao/pnl': '/bao-cao/pnl:xem',
+  '/bao-cao/so-cai': '/bao-cao/so-cai:xem',
+  '/bao-cao/bang-can-doi': '/bao-cao/bang-can-doi:xem',
+  '/bao-cao/tai-chinh': '/bao-cao/tai-chinh:xem',
+
+  '/cau-hinh/phan-quyen': '/cau-hinh/phan-quyen:xem',
+  '/cau-hinh/vai-tro': '/cau-hinh/vai-tro:xem',
+  '/cau-hinh/thanh-vien': '/cau-hinh/thanh-vien:xem',
 };
 
-export const getRoutePermissions = (path: string): VaiTro[] | undefined => {
-  // Exact match first
+export const getRoutePermission = (path: string): string | undefined => {
   if (routePermissions[path]) {
     return routePermissions[path];
   }
-  
-  // Try to find parent route match
+
   const pathParts = path.split('/').filter(Boolean);
   while (pathParts.length > 0) {
     const parentPath = '/' + pathParts.join('/');
@@ -55,6 +52,6 @@ export const getRoutePermissions = (path: string): VaiTro[] | undefined => {
     }
     pathParts.pop();
   }
-  
+
   return undefined;
 };

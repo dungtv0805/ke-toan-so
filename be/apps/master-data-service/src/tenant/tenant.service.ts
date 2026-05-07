@@ -4,15 +4,90 @@ import {
   NotFoundException,
   ConflictException,
   Inject,
+  Logger,
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { Tenant, User, UserCredential, UserTenant, UserRole, UserStatus } from '@app/entities';
+import { Tenant, User, UserCredential, UserTenant, UserStatus, VaiTro, PhanQuyen } from '@app/entities';
 import { CreateTenantDto, UpdateTenantDto, AddUserToTenantDto, UpdateTenantMemberDto } from '@app/dto';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 import * as bcrypt from 'bcrypt';
 
 const SALT_ROUNDS = 10;
 const DEFAULT_PASSWORD = '123456';
+const ADMIN_ROLE_NAME = 'Admin';
+
+const PERMISSION_MODULES = [
+  '/tong-quan',
+  '/phan-tich/bao-cao-tai-chinh',
+  '/phan-tich/ban-hang',
+  '/phan-tich/mua-hang',
+  '/phan-tich/cong-no',
+  '/phan-tich/dong-tien',
+  '/phan-tich/ton-kho',
+  '/phan-tich/thanh-khoan',
+  '/bao-cao/tai-chinh',
+  '/bao-cao/so-chi-tiet-tai-khoan',
+  '/bao-cao/so-chi-tiet-cong-no',
+  '/bao-cao/so-chi-tiet-phat-sinh',
+  '/bao-cao/bang-tong-hop',
+  '/trung-tam-du-lieu/ke-hoach',
+  '/trung-tam-du-lieu/du-bao',
+  '/chung-tu/nhat-ky-chung',
+  '/trung-tam-du-lieu/tai-san',
+  '/trung-tam-du-lieu/hang-hoa',
+  '/trung-tam-du-lieu/nguyen-lieu',
+  '/trung-tam-du-lieu/dung-cu',
+  '/trung-tam-du-lieu/hop-dong',
+  '/trung-tam-du-lieu/nhan-su',
+  '/trung-tam-du-lieu/luong-bhxh',
+  '/chung-tu/phieu-thu',
+  '/chung-tu/phieu-chi',
+  '/chung-tu/phieu-nhap',
+  '/chung-tu/phieu-xuat',
+  '/chung-tu/phieu-luong',
+  '/chung-tu/bang-tinh-luong',
+  '/chung-tu/bang-cham-cong',
+  '/chung-tu/cham-cong-lam-them',
+  '/chung-tu/phan-bo-khau-hao',
+  '/chung-tu/phieu-ke-toan',
+  '/chung-tu/de-nghi-thanh-toan',
+  '/danh-muc/tai-khoan',
+  '/danh-muc/doi-tuong',
+  '/danh-muc/du-an',
+  '/danh-muc/san-pham',
+  '/danh-muc/hop-dong',
+  '/danh-muc/bo-phan',
+  '/danh-muc/khoan-muc',
+  '/danh-muc/kho',
+  '/danh-muc/chu-dau-tu',
+  '/danh-muc/nhom-khoan-muc',
+  '/danh-muc/ngan-hang',
+  '/danh-muc/dong-tien',
+  '/danh-muc/nhom-khuyen-mai',
+  '/danh-muc/nhom-quan-ly',
+  '/danh-muc/loai-chung-tu',
+  '/danh-muc/loai-giao-dich',
+  '/danh-muc/quy-chuan',
+  '/so-quy',
+  '/cong-no/phai-thu',
+  '/cong-no/phai-tra',
+  '/quy-trinh',
+  '/chinh-sach',
+  '/bieu-mau',
+  '/huong-dan',
+];
+
+const PERMISSION_ACTIONS = ['xem', 'them', 'sua', 'xoa', 'xuat'];
+
+function generateAllPermissions(): string[] {
+  const permissions: string[] = [];
+  for (const mod of PERMISSION_MODULES) {
+    for (const action of PERMISSION_ACTIONS) {
+      permissions.push(`${mod}:${action}`);
+    }
+  }
+  return permissions;
+}
 
 export interface TenantAdminInfo {
   id: string;
@@ -39,6 +114,8 @@ export interface TenantWithAdmin {
 
 @Injectable()
 export class TenantService {
+  private readonly logger = new Logger(TenantService.name);
+
   constructor(
     @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`)
     private readonly tenantRepository: Repository<Tenant>,
@@ -48,6 +125,10 @@ export class TenantService {
     private readonly credentialRepository: Repository<UserCredential>,
     @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}UserTenant`)
     private readonly userTenantRepository: Repository<UserTenant>,
+    @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`)
+    private readonly vaiTroRepository: Repository<VaiTro>,
+    @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`)
+    private readonly phanQuyenRepository: Repository<PhanQuyen>,
   ) {}
 
   async findAll(): Promise<TenantWithAdmin[]> {
@@ -61,7 +142,7 @@ export class TenantService {
         const adminMemberships = await this.userTenantRepository.find({
           where: {
             tenantId: tenant._id.toString(),
-            role: UserRole.ADMIN,
+            role: ADMIN_ROLE_NAME,
             isActive: true,
           },
         });
@@ -167,7 +248,7 @@ export class TenantService {
           const userTenant = this.userTenantRepository.create({
             userId: existingUser._id.toString(),
             tenantId: savedTenant._id.toString(),
-            role: UserRole.ADMIN,
+            role: ADMIN_ROLE_NAME,
             isActive: true,
           });
           await this.userTenantRepository.save(userTenant);
@@ -197,7 +278,7 @@ export class TenantService {
           const userTenant = this.userTenantRepository.create({
             userId: existingUser._id.toString(),
             tenantId: savedTenant._id.toString(),
-            role: UserRole.ADMIN,
+            role: ADMIN_ROLE_NAME,
             isActive: true,
           });
           await this.userTenantRepository.save(userTenant);
@@ -229,7 +310,7 @@ export class TenantService {
         const userTenant = this.userTenantRepository.create({
           userId: savedUser._id.toString(),
           tenantId: savedTenant._id.toString(),
-          role: UserRole.ADMIN,
+          role: ADMIN_ROLE_NAME,
           isActive: true,
         });
         await this.userTenantRepository.save(userTenant);
@@ -238,7 +319,50 @@ export class TenantService {
       }
     }
 
+    // Auto-create Admin role and permissions for this tenant
+    await this.ensureAdminRole();
+
     return { tenant: savedTenant, admin: adminUser };
+  }
+
+  /**
+   * Ensure "Admin" role exists in vai_tro and has full permissions in phan_quyen
+   */
+  private async ensureAdminRole(): Promise<void> {
+    try {
+      const existingRole = await this.vaiTroRepository.findOne({
+        where: { ten: ADMIN_ROLE_NAME },
+      });
+
+      if (!existingRole) {
+        const adminRole = this.vaiTroRepository.create({
+          ten: ADMIN_ROLE_NAME,
+          moTa: 'Quản trị viên - toàn quyền',
+          isActive: true,
+        });
+        await this.vaiTroRepository.save(adminRole);
+      }
+
+      const existingPhanQuyen = await this.phanQuyenRepository.findOne({
+        where: { vaiTro: ADMIN_ROLE_NAME },
+      });
+
+      if (!existingPhanQuyen) {
+        const phanQuyen = this.phanQuyenRepository.create({
+          vaiTro: ADMIN_ROLE_NAME,
+          ten: ADMIN_ROLE_NAME,
+          moTa: 'Toàn quyền hệ thống',
+          permissions: generateAllPermissions(),
+          isActive: true,
+        });
+        await this.phanQuyenRepository.save(phanQuyen);
+      } else if (!existingPhanQuyen.permissions || existingPhanQuyen.permissions.length === 0) {
+        existingPhanQuyen.permissions = generateAllPermissions();
+        await this.phanQuyenRepository.save(existingPhanQuyen);
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to ensure admin role: ${error.message}`);
+    }
   }
 
   async update(id: string, updateDto: UpdateTenantDto): Promise<Tenant> {
@@ -294,7 +418,7 @@ export class TenantService {
     id: string;
     email: string;
     hoTen: string;
-    role: UserRole;
+    role: string;
     isActive: boolean;
     membershipId: string;
   }>> {
@@ -333,7 +457,7 @@ export class TenantService {
 
   async addUserToTenant(tenantId: string, dto: AddUserToTenantDto): Promise<{
     user: { id: string; email: string; hoTen: string };
-    role: UserRole;
+    role: string;
     isNew: boolean;
   }> {
     // Verify tenant exists

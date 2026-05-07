@@ -67,10 +67,7 @@ import {
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import type { MenuProps } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
-import { vaiTroOptions } from "@/mock-data/nguoi-dung";
 import { TenantSwitcher } from "./TenantSwitcher";
-import { routePermissions } from "@/config/routePermissions";
-import { VaiTro } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const { Header, Sider, Content } = Layout;
@@ -271,11 +268,11 @@ const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, currentTenant, hasPermission } = useAuth();
-  const currentRole = currentTenant?.role as VaiTro | undefined;
+  const currentRole = currentTenant?.role;
   const isSuperAdmin = user?.isSuperAdmin || false;
   const isMobile = useIsMobile();
 
-  const roleInfo = currentRole ? vaiTroOptions.find((v) => v.value === currentRole) : null;
+  const roleInfo = currentRole ? { label: currentRole, color: 'blue' } : null;
 
   const canAccessRoute = (path: string): boolean => {
     if (isSuperAdmin) return true;
@@ -406,29 +403,29 @@ const MainLayout: React.FC = () => {
     },
   ];
 
-  const isAdmin = currentRole === 'ADMIN' || user?.isSuperAdmin;
+  const canManageConfig = hasPermission('/cau-hinh/vai-tro:xem') || hasPermission('/cau-hinh/phan-quyen:xem') || hasPermission('/cau-hinh/thanh-vien:xem') || user?.isSuperAdmin;
 
   // Settings menu items for gear icon dropdown
   const settingsMenuItems: MenuProps["items"] = [
-    ...(isAdmin ? [
-      {
+    ...(canManageConfig ? [
+      ...(hasPermission('/cau-hinh/vai-tro:xem') || user?.isSuperAdmin ? [{
         key: "vai-tro",
         icon: <TeamOutlined />,
         label: "Quản lý Vai trò",
         onClick: () => navigate("/cau-hinh/vai-tro"),
-      },
-      {
+      }] : []),
+      ...(hasPermission('/cau-hinh/phan-quyen:xem') || user?.isSuperAdmin ? [{
         key: "phan-quyen",
         icon: <SafetyCertificateOutlined />,
         label: "Phân quyền",
         onClick: () => navigate("/cau-hinh/phan-quyen"),
-      },
-      {
+      }] : []),
+      ...(hasPermission('/cau-hinh/thanh-vien:xem') || user?.isSuperAdmin ? [{
         key: "thanh-vien",
         icon: <UserOutlined />,
         label: "Quản lý Thành viên",
         onClick: () => navigate("/cau-hinh/thanh-vien"),
-      },
+      }] : []),
     ] : []),
     ...(user?.isSuperAdmin ? [{
       key: "tenant",

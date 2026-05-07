@@ -1,20 +1,17 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { Spin, Result, Button } from 'antd';
 import { useAuth } from '@/contexts/AuthContext';
-import { VaiTro } from '@/types';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: VaiTro[];
   requiredPermission?: string;
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
-  allowedRoles,
   requiredPermission,
 }) => {
-  const { user, isAuthenticated, isLoading, currentTenant, hasPermission } = useAuth();
+  const { user, isAuthenticated, isLoading, hasPermission } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -33,35 +30,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <>{children}</>;
   }
 
-  if (requiredPermission) {
-    if (!hasPermission(requiredPermission)) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <Result
-            status="403"
-            title="Không có quyền truy cập"
-            subTitle="Bạn không có quyền truy cập trang này."
-            extra={
-              <Button type="primary" onClick={() => window.history.back()}>
-                Quay lại
-              </Button>
-            }
-          />
-        </div>
-      );
-    }
-    return <>{children}</>;
-  }
-
-  const currentRole = currentTenant?.role as VaiTro | undefined;
-
-  if (allowedRoles && currentRole && !allowedRoles.includes(currentRole)) {
+  if (requiredPermission && !hasPermission(requiredPermission)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Result
           status="403"
           title="Không có quyền truy cập"
-          subTitle={`Vai trò "${currentRole}" không được phép truy cập trang này.`}
+          subTitle="Bạn không có quyền truy cập trang này."
           extra={
             <Button type="primary" onClick={() => window.history.back()}>
               Quay lại

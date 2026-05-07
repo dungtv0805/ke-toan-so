@@ -20,28 +20,7 @@ import {
   TenantMember,
   UserOption,
 } from '@/services/tenantService';
-
-const USER_ROLES = [
-  { value: 'ADMIN', label: 'Admin' },
-  { value: 'GIAM_DOC', label: 'Giám đốc' },
-  { value: 'KE_TOAN_TRUONG', label: 'Kế toán trưởng' },
-  { value: 'KE_TOAN_QUY', label: 'Kế toán quỹ' },
-  { value: 'KE_TOAN_CONG_NO', label: 'Kế toán công nợ' },
-  { value: 'KE_TOAN_TONG_HOP', label: 'Kế toán tổng hợp' },
-  { value: 'MANAGER', label: 'Manager' },
-  { value: 'KIEM_SOAT', label: 'Kiểm soát' },
-];
-
-const ROLE_COLORS: Record<string, string> = {
-  ADMIN: 'red',
-  GIAM_DOC: 'purple',
-  KE_TOAN_TRUONG: 'blue',
-  KE_TOAN_QUY: 'cyan',
-  KE_TOAN_CONG_NO: 'geekblue',
-  KE_TOAN_TONG_HOP: 'volcano',
-  MANAGER: 'orange',
-  KIEM_SOAT: 'default',
-};
+import { vaiTroService, VaiTroResponse } from '@/services/vaiTroService';
 
 const DEFAULT_PASSWORD = '123456';
 
@@ -56,6 +35,7 @@ interface Props {
 const TenantMembersModal = ({ tenant, open, onClose }: Props) => {
   const [members, setMembers] = useState<TenantMember[]>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
+  const [roles, setRoles] = useState<{ value: string; label: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [editingMember, setEditingMember] = useState<TenantMember | null>(null);
@@ -85,10 +65,27 @@ const TenantMembersModal = ({ tenant, open, onClose }: Props) => {
     }
   };
 
+  const fetchRoles = async () => {
+    try {
+      const data = await vaiTroService.getAll();
+      setRoles(
+        data
+          .filter((vt: VaiTroResponse) => vt.isActive)
+          .map((vt: VaiTroResponse) => ({
+            value: vt.ten,
+            label: vt.ten,
+          })),
+      );
+    } catch {
+      // silent
+    }
+  };
+
   useEffect(() => {
     if (open && tenant) {
       fetchMembers();
       fetchUsers();
+      fetchRoles();
     }
   }, [open, tenant]);
 
@@ -149,7 +146,7 @@ const TenantMembersModal = ({ tenant, open, onClose }: Props) => {
   };
 
   const getRoleLabel = (role: string) =>
-    USER_ROLES.find((r) => r.value === role)?.label || role;
+    roles.find((r) => r.value === role)?.label || role;
 
   // Filter out users already in this tenant
   const availableUsers = users.filter(
@@ -172,7 +169,7 @@ const TenantMembersModal = ({ tenant, open, onClose }: Props) => {
       dataIndex: 'role',
       key: 'role',
       render: (role: string) => (
-        <Tag color={ROLE_COLORS[role] || 'default'}>{getRoleLabel(role)}</Tag>
+        <Tag color="blue">{getRoleLabel(role)}</Tag>
       ),
     },
     {
@@ -316,7 +313,7 @@ const TenantMembersModal = ({ tenant, open, onClose }: Props) => {
             label="Vai trò"
             rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
           >
-            <Select placeholder="Chọn vai trò" options={USER_ROLES} />
+            <Select placeholder="Chọn vai trò" options={roles} />
           </Form.Item>
 
           <Form.Item className="mb-0 flex justify-end">
@@ -339,7 +336,7 @@ const TenantMembersModal = ({ tenant, open, onClose }: Props) => {
       >
         <Form form={editForm} layout="vertical">
           <Form.Item name="role" label="Vai trò">
-            <Select options={USER_ROLES} />
+            <Select options={roles} />
           </Form.Item>
         </Form>
       </Modal>

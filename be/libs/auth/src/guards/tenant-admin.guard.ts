@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { Repository } from 'typeorm';
-import { SUPER_ADMIN_EMAIL, UserTenant, UserRole } from '@app/entities';
+import { SUPER_ADMIN_EMAIL, UserTenant } from '@app/entities';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 
 /**
@@ -45,7 +45,7 @@ export class TenantAdminGuard implements CanActivate {
       where: {
         userId: user.id,
         tenantId,
-        role: UserRole.ADMIN,
+        role: 'ADMIN',
         isActive: true,
       },
     });

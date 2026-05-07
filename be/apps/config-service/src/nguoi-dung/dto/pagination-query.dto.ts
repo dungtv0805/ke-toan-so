@@ -1,6 +1,6 @@
 import { IsOptional, IsInt, Min, IsString, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
-import { UserRole, UserStatus } from '@app/entities';
+import { UserStatus } from '@app/entities';
 
 export class PaginationQueryDto {
   @IsOptional()
@@ -20,8 +20,8 @@ export class PaginationQueryDto {
   search?: string;
 
   @IsOptional()
-  @IsEnum(UserRole)
-  vaiTro?: UserRole;
+  @IsString()
+  vaiTro?: string;
 
   @IsOptional()
   @IsEnum(UserStatus)

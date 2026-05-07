@@ -9,7 +9,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User, UserCredential, Tenant, UserRole, UserStatus, UserTenant, PhanQuyen, SUPER_ADMIN_EMAIL } from '@app/entities';
+import { User, UserCredential, Tenant, UserStatus, UserTenant, PhanQuyen, SUPER_ADMIN_EMAIL } from '@app/entities';
 import {
   LoginDto,
   RegisterDto,
@@ -28,15 +28,6 @@ import {
 
 const SALT_ROUNDS = 10;
 
-const ROLE_CODE_TO_NAME: Record<string, string> = {
-  [UserRole.GIAM_DOC]: 'Giám đốc',
-  [UserRole.KE_TOAN_TRUONG]: 'Kế toán trưởng',
-  [UserRole.KE_TOAN_QUY]: 'Kế toán quỹ',
-  [UserRole.KE_TOAN_CONG_NO]: 'Kế toán công nợ',
-  [UserRole.KE_TOAN_TONG_HOP]: 'Kế toán tổng hợp',
-  [UserRole.MANAGER]: 'Quản lý',
-  [UserRole.KIEM_SOAT]: 'Kiểm soát',
-};
 
 @Injectable()
 export class AuthServiceService {
@@ -55,19 +46,11 @@ export class AuthServiceService {
   ) {}
 
   /**
-   * Load permissions from PhanQuyen entity by role code or Vietnamese name
+   * Load permissions from PhanQuyen entity by role name and tenant
    */
-  private async loadPermissions(vaiTro: string): Promise<string[]> {
-    const phanQuyen = await this.phanQuyenRepo.findOne({ where: { vaiTro, isActive: true } });
-    if (phanQuyen) {
-      return phanQuyen.permissions || [];
-    }
-    const vietnameseName = ROLE_CODE_TO_NAME[vaiTro];
-    if (vietnameseName) {
-      const fallback = await this.phanQuyenRepo.findOne({ where: { vaiTro: vietnameseName, isActive: true } });
-      return fallback?.permissions || [];
-    }
-    return [];
+  private async loadPermissions(vaiTro: string, tenantId: string): Promise<string[]> {
+    const phanQuyen = await this.phanQuyenRepo.findOne({ where: { vaiTro, tenantId, isActive: true } });
+    return phanQuyen?.permissions || [];
   }
 
   /**
@@ -249,7 +232,7 @@ export class AuthServiceService {
         email: user.email,
         tenantId: tenantInfo.tenantId,
         vaiTro: tenantInfo.role,
-        permissions: await this.loadPermissions(tenantInfo.role),
+        permissions: await this.loadPermissions(tenantInfo.role, tenantInfo.tenantId),
       };
 
       const accessToken = this.jwtService.sign(payload);
@@ -357,7 +340,7 @@ export class AuthServiceService {
       email: user.email,
       tenantId: tenantInfo.tenantId,
       vaiTro: tenantInfo.role,
-      permissions: await this.loadPermissions(tenantInfo.role),
+      permissions: await this.loadPermissions(tenantInfo.role, tenantInfo.tenantId),
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -409,7 +392,7 @@ export class AuthServiceService {
       const userTenant = this.userTenantRepository.create({
         userId: savedUser._id.toString(),
         tenantId,
-        role: role || UserRole.KIEM_SOAT,
+        role: role || 'KIEM_SOAT',
         isActive: true,
       });
       await this.userTenantRepository.save(userTenant);
@@ -534,7 +517,7 @@ export class AuthServiceService {
       user: this.buildUserResponse(user),
       tenant: this.buildTenantInfo(currentUserTenant, currentTenant),
       availableTenants,
-      permissions: await this.loadPermissions(currentUserTenant.role),
+      permissions: await this.loadPermissions(currentUserTenant.role, tenantId),
     };
   }
 
@@ -610,7 +593,7 @@ export class AuthServiceService {
       email: user.email,
       tenantId: tenantInfo.tenantId,
       vaiTro: tenantInfo.role,
-      permissions: await this.loadPermissions(tenantInfo.role),
+      permissions: await this.loadPermissions(tenantInfo.role, tenantInfo.tenantId),
     };
 
     const accessToken = this.jwtService.sign(payload);

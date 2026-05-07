@@ -2,10 +2,11 @@ import {
   IsString,
   IsEmail,
   IsEnum,
+  IsNotEmpty,
   MinLength,
   IsOptional,
 } from 'class-validator';
-import { UserRole, UserStatus } from '@app/entities';
+import { UserStatus } from '@app/entities';
 
 export class CreateNguoiDungDto {
   @IsString()
@@ -15,8 +16,9 @@ export class CreateNguoiDungDto {
   @IsEmail({}, { message: 'Email không hợp lệ' })
   email: string;
 
-  @IsEnum(UserRole, { message: 'Vai trò không hợp lệ' })
-  vaiTro: UserRole;
+  @IsString()
+  @IsNotEmpty({ message: 'Vai trò không được để trống' })
+  vaiTro: string;
 
   @IsOptional()
   @IsEnum(UserStatus, { message: 'Trạng thái không hợp lệ' })

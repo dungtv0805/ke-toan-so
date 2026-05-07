@@ -3,10 +3,8 @@ import {
   IsNotEmpty,
   IsString,
   MinLength,
-  IsEnum,
   IsOptional,
 } from 'class-validator';
-import { UserRole } from '@app/entities';
 
 export class RegisterDto {
   @IsEmail()
@@ -26,7 +24,7 @@ export class RegisterDto {
   @IsOptional()
   tenantId?: string;
 
-  @IsEnum(UserRole)
+  @IsString()
   @IsOptional()
-  role?: UserRole;
+  role?: string;
 }

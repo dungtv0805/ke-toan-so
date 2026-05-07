@@ -147,7 +147,6 @@ describe('NguoiDung_Service - Property Tests', () => {
                 createMockUser({
                   _id: { toString: () => `${role}-${i}` } as any,
                   email: `${role.toLowerCase()}${i}@example.com`,
-                  tenants: [{ tenantId: 'test-tenant', role }],
                 }),
               ),
             );
@@ -161,12 +160,9 @@ describe('NguoiDung_Service - Property Tests', () => {
               vaiTro: filterVaiTro,
             });
 
-            // All returned users should have the filtered vaiTro in their tenants
+            // All returned users should have the filtered vaiTro as their tenantRole
             result.data.forEach((user) => {
-              const hasRole = (user.tenants || []).some(
-                (t) => t.role === filterVaiTro,
-              );
-              expect(hasRole).toBe(true);
+              expect(user.tenantRole).toBe(filterVaiTro);
             });
 
             return true;

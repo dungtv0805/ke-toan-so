@@ -1,8 +1,8 @@
-import { UserRole, UserStatus } from '@app/entities';
+import { UserStatus } from '@app/entities';
 
 export class UserTenantResponseDto {
   tenantId: string;
-  role: UserRole;
+  role: string;
 }
 
 export class UserResponseDto {
