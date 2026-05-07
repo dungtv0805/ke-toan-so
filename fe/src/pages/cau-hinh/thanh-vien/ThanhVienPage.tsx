@@ -16,28 +16,22 @@ import {
 import { UserAddOutlined, DeleteOutlined, EditOutlined, UserOutlined, TeamOutlined } from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { tenantService, TenantMember, AddMemberDto, UpdateMemberDto } from '@/services/tenantService';
+import { vaiTroService, VaiTroResponse } from '@/services/vaiTroService';
 
-const USER_ROLES = [
-  { value: 'ADMIN', label: 'Admin' },
-  { value: 'GIAM_DOC', label: 'Giám đốc' },
-  { value: 'KE_TOAN_TRUONG', label: 'Kế toán trưởng' },
-  { value: 'KE_TOAN_QUY', label: 'Kế toán quỹ' },
-  { value: 'KE_TOAN_CONG_NO', label: 'Kế toán công nợ' },
-  { value: 'KE_TOAN_TONG_HOP', label: 'Kế toán tổng hợp' },
-  { value: 'MANAGER', label: 'Manager' },
-  { value: 'KIEM_SOAT', label: 'Kiểm soát' },
-];
-
-const ROLE_COLORS: Record<string, string> = {
-  ADMIN: 'red',
-  GIAM_DOC: 'purple',
-  KE_TOAN_TRUONG: 'blue',
-  KE_TOAN_QUY: 'cyan',
-  KE_TOAN_CONG_NO: 'geekblue',
-  KE_TOAN_TONG_HOP: 'volcano',
-  MANAGER: 'orange',
-  KIEM_SOAT: 'default',
+const NAME_TO_CODE: Record<string, string> = {
+  'Admin': 'ADMIN',
+  'Giám đốc': 'GIAM_DOC',
+  'Kế toán trưởng': 'KE_TOAN_TRUONG',
+  'Kế toán quỹ': 'KE_TOAN_QUY',
+  'Kế toán công nợ': 'KE_TOAN_CONG_NO',
+  'Kế toán tổng hợp': 'KE_TOAN_TONG_HOP',
+  'Quản lý': 'MANAGER',
+  'Kiểm soát': 'KIEM_SOAT',
 };
+
+const CODE_TO_NAME: Record<string, string> = Object.fromEntries(
+  Object.entries(NAME_TO_CODE).map(([name, code]) => [code, name]),
+);
 
 const DEFAULT_PASSWORD = '123456';
 
@@ -53,6 +47,7 @@ const ThanhVienPage = () => {
   const { currentTenant } = useAuth();
   const [members, setMembers] = useState<TenantMember[]>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
+  const [roles, setRoles] = useState<{ value: string; label: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [editingMember, setEditingMember] = useState<TenantMember | null>(null);
@@ -95,9 +90,26 @@ const ThanhVienPage = () => {
     }
   };
 
+  const fetchRoles = async () => {
+    try {
+      const data = await vaiTroService.getAll();
+      setRoles(
+        data
+          .filter((vt: VaiTroResponse) => vt.isActive)
+          .map((vt: VaiTroResponse) => ({
+            value: NAME_TO_CODE[vt.ten] || vt.ten,
+            label: vt.ten,
+          })),
+      );
+    } catch {
+      // fallback nếu API lỗi
+    }
+  };
+
   useEffect(() => {
     fetchMembers();
     fetchUsers();
+    fetchRoles();
   }, [tenantId]);
 
   const handleAdd = async (values: Record<string, string>) => {
@@ -155,7 +167,7 @@ const ThanhVienPage = () => {
   };
 
   const getRoleLabel = (role: string) =>
-    USER_ROLES.find((r) => r.value === role)?.label || role;
+    roles.find((r) => r.value === role)?.label || CODE_TO_NAME[role] || role;
 
   const availableUsers = users.filter(
     (u) => !members.some((m) => m.id === u.id && m.isActive),
@@ -177,7 +189,7 @@ const ThanhVienPage = () => {
       dataIndex: 'role',
       key: 'role',
       render: (role: string) => (
-        <Tag color={ROLE_COLORS[role] || 'default'}>{getRoleLabel(role)}</Tag>
+        <Tag color="blue">{getRoleLabel(role)}</Tag>
       ),
     },
     {
@@ -323,7 +335,7 @@ const ThanhVienPage = () => {
             label="Vai trò"
             rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
           >
-            <Select placeholder="Chọn vai trò" options={USER_ROLES} />
+            <Select placeholder="Chọn vai trò" options={roles} />
           </Form.Item>
 
           <Form.Item className="mb-0 flex justify-end">
@@ -346,7 +358,7 @@ const ThanhVienPage = () => {
       >
         <Form form={editForm} layout="vertical">
           <Form.Item name="role" label="Vai trò">
-            <Select options={USER_ROLES} />
+            <Select options={roles} />
           </Form.Item>
         </Form>
       </Modal>
