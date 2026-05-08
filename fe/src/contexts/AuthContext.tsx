@@ -4,6 +4,16 @@ import { authService } from '@/services/authService';
 import { setAuthToken, getAuthToken, clearAuthToken, setCurrentTenant, getCurrentTenant, clearCurrentTenant } from '@/services/base/service-base';
 import { ApiError, ApiErrorType } from '@/config/api';
 
+function extractPermissionsFromToken(token: string): string[] {
+  try {
+    const payload = token.split('.')[1];
+    const decoded = JSON.parse(atob(payload));
+    return decoded.permissions || [];
+  } catch {
+    return [];
+  }
+}
+
 
 interface AuthContextType {
   user: NguoiDung | null;
@@ -47,9 +57,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setNeedsTenantSelection(false);
           }
 
-          // Set permissions from BE
+          // Set permissions from BE or extract from JWT
           if (response.permissions) {
             setUserPermissions(response.permissions);
+          } else if (token) {
+            setUserPermissions(extractPermissionsFromToken(token));
           }
 
           // Set available tenants if provided
@@ -103,9 +115,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setTempToken(null);
       }
 
-      // Save BE permissions if available
+      // Save permissions from response or extract from JWT
       if (response.permissions) {
         setUserPermissions(response.permissions);
+      } else if (response.accessToken) {
+        setUserPermissions(extractPermissionsFromToken(response.accessToken));
       }
 
       return { success: true };
@@ -159,8 +173,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentTenantState(response.tenant);
       setNeedsTenantSelection(false);
       setTempToken(null);
-      if (response.permissions) {
+
+      // Set permissions from API response or extract from JWT token
+      if (response.permissions && response.permissions.length > 0) {
         setUserPermissions(response.permissions);
+      } else {
+        const token = getAuthToken();
+        if (token) {
+          setUserPermissions(extractPermissionsFromToken(token));
+        }
       }
     } catch (error) {
       console.error('Failed to select tenant:', error);
@@ -175,8 +196,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(response.user);
       setCurrentTenant(response.tenant);
       setCurrentTenantState(response.tenant);
-      if (response.permissions) {
+
+      // Set permissions from API response or extract from JWT token
+      if (response.permissions && response.permissions.length > 0) {
         setUserPermissions(response.permissions);
+      } else {
+        const token = getAuthToken();
+        if (token) {
+          setUserPermissions(extractPermissionsFromToken(token));
+        }
       }
 
       // Update the role in availableTenants if needed
@@ -211,10 +239,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const hasPermission = useCallback((permission: string) => {
     if (!user) return false;
     if (user.isSuperAdmin) return true;
-    if (!currentTenant) return false;
-    if (userPermissions.includes('*')) return true;
-    return userPermissions.includes(permission);
-  }, [user, currentTenant, userPermissions]);
+    if (userPermissions.length > 0) {
+      if (userPermissions.includes('*')) return true;
+      return userPermissions.includes(permission);
+    }
+    // Fallback: extract permissions directly from stored JWT token
+    const token = getAuthToken();
+    if (token) {
+      const perms = extractPermissionsFromToken(token);
+      if (perms.includes('*') || perms.includes(permission)) return true;
+    }
+    return false;
+  }, [user, userPermissions]);
 
   return (
     <AuthContext.Provider

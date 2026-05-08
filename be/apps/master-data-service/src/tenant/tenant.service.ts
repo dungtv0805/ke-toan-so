@@ -75,6 +75,9 @@ const PERMISSION_MODULES = [
   '/chinh-sach',
   '/bieu-mau',
   '/huong-dan',
+  '/cau-hinh/vai-tro',
+  '/cau-hinh/phan-quyen',
+  '/cau-hinh/thanh-vien',
 ];
 
 const PERMISSION_ACTIONS = ['xem', 'them', 'sua', 'xoa', 'xuat'];
@@ -320,15 +323,15 @@ export class TenantService {
     }
 
     // Auto-create Admin role and permissions for this tenant
-    await this.ensureAdminRole();
+    await this.ensureAdminRole(savedTenant._id.toString());
 
     return { tenant: savedTenant, admin: adminUser };
   }
 
   /**
-   * Ensure "Admin" role exists in vai_tro and has full permissions in phan_quyen
+   * Ensure "Admin" role exists in vai_tro and has full permissions in phan_quyen for the given tenant
    */
-  private async ensureAdminRole(): Promise<void> {
+  private async ensureAdminRole(tenantId: string): Promise<void> {
     try {
       const existingRole = await this.vaiTroRepository.findOne({
         where: { ten: ADMIN_ROLE_NAME },
@@ -344,7 +347,7 @@ export class TenantService {
       }
 
       const existingPhanQuyen = await this.phanQuyenRepository.findOne({
-        where: { vaiTro: ADMIN_ROLE_NAME },
+        where: { vaiTro: ADMIN_ROLE_NAME, tenantId },
       });
 
       if (!existingPhanQuyen) {
@@ -352,6 +355,7 @@ export class TenantService {
           vaiTro: ADMIN_ROLE_NAME,
           ten: ADMIN_ROLE_NAME,
           moTa: 'Toàn quyền hệ thống',
+          tenantId,
           permissions: generateAllPermissions(),
           isActive: true,
         });

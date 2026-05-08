@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Inject,
   UnauthorizedException,
   ConflictException,
   InternalServerErrorException,
@@ -10,6 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User, UserCredential, Tenant, UserStatus, UserTenant, PhanQuyen, SUPER_ADMIN_EMAIL } from '@app/entities';
+import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 import {
   LoginDto,
   RegisterDto,
@@ -40,7 +42,7 @@ export class AuthServiceService {
     private readonly tenantRepository: Repository<Tenant>,
     @InjectRepository(UserTenant)
     private readonly userTenantRepository: Repository<UserTenant>,
-    @InjectRepository(PhanQuyen)
+    @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`)
     private readonly phanQuyenRepo: Repository<PhanQuyen>,
     private readonly jwtService: JwtService,
   ) {}
@@ -227,12 +229,13 @@ export class AuthServiceService {
     // Case 1: Single tenant - return accessToken directly
     if (tenantInfoList.length === 1) {
       const tenantInfo = tenantInfoList[0];
+      const permissions = await this.loadPermissions(tenantInfo.role, tenantInfo.tenantId);
       const payload: UserPayload = {
         id: user._id.toString(),
         email: user.email,
         tenantId: tenantInfo.tenantId,
         vaiTro: tenantInfo.role,
-        permissions: await this.loadPermissions(tenantInfo.role, tenantInfo.tenantId),
+        permissions: [],
       };
 
       const accessToken = this.jwtService.sign(payload);
@@ -241,6 +244,7 @@ export class AuthServiceService {
         accessToken,
         tenant: tenantInfo,
         user: userResponse,
+        permissions,
       };
     }
 
@@ -316,6 +320,7 @@ export class AuthServiceService {
         accessToken,
         tenant: tenantInfo,
         user: this.buildUserResponse(user),
+        permissions: ['*'],
       };
     }
 
@@ -334,13 +339,14 @@ export class AuthServiceService {
 
     const tenantInfo = this.buildTenantInfo(userTenant, tenant);
 
-    // Create access token with tenantId
+    // Create access token without permissions (too large for JWT/headers)
+    const permissions = await this.loadPermissions(tenantInfo.role, tenantInfo.tenantId);
     const payload: UserPayload = {
       id: user._id.toString(),
       email: user.email,
       tenantId: tenantInfo.tenantId,
       vaiTro: tenantInfo.role,
-      permissions: await this.loadPermissions(tenantInfo.role, tenantInfo.tenantId),
+      permissions: [],
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -349,6 +355,7 @@ export class AuthServiceService {
       accessToken,
       tenant: tenantInfo,
       user: this.buildUserResponse(user),
+      permissions,
     };
   }
 
@@ -570,6 +577,7 @@ export class AuthServiceService {
         accessToken,
         tenant: tenantInfo,
         user: this.buildUserResponse(user),
+        permissions: ['*'],
       };
     }
 
@@ -588,12 +596,13 @@ export class AuthServiceService {
 
     const tenantInfo = this.buildTenantInfo(userTenant, tenant);
 
+    const permissions = await this.loadPermissions(tenantInfo.role, tenantInfo.tenantId);
     const payload: UserPayload = {
       id: user._id.toString(),
       email: user.email,
       tenantId: tenantInfo.tenantId,
       vaiTro: tenantInfo.role,
-      permissions: await this.loadPermissions(tenantInfo.role, tenantInfo.tenantId),
+      permissions: [],
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -602,6 +611,7 @@ export class AuthServiceService {
       accessToken,
       tenant: tenantInfo,
       user: this.buildUserResponse(user),
+      permissions,
     };
   }
 

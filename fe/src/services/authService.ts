@@ -1,6 +1,16 @@
 import { ServiceBase, setAuthToken, clearAuthToken } from './base/service-base';
 import { NguoiDung, TenantInfo } from '@/types';
 
+function extractPermissionsFromToken(token: string): string[] {
+  try {
+    const payload = token.split('.')[1];
+    const decoded = JSON.parse(atob(payload));
+    return decoded.permissions || [];
+  } catch {
+    return [];
+  }
+}
+
 interface LoginRequest {
   email: string;
   password: string;
@@ -73,6 +83,9 @@ class AuthService extends ServiceBase {
       { endpoint: '/select-tenant' }
     );
     setAuthToken(response.accessToken);
+    if (!response.permissions) {
+      response.permissions = extractPermissionsFromToken(response.accessToken);
+    }
     return response;
   }
 
@@ -82,6 +95,9 @@ class AuthService extends ServiceBase {
       { endpoint: '/switch-tenant' }
     );
     setAuthToken(response.accessToken);
+    if (!response.permissions) {
+      response.permissions = extractPermissionsFromToken(response.accessToken);
+    }
     return response;
   }
 

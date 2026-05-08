@@ -21,6 +21,7 @@ export interface LoginResponse {
   // Case 1: Single tenant - return accessToken directly
   accessToken?: string;
   tenant?: TenantInfo;
+  permissions?: string[];
 
   // Case 2: Multiple tenants - return tempToken + tenants list
   tempToken?: string;
@@ -34,6 +35,7 @@ export interface SelectTenantResponse {
   accessToken: string;
   tenant: TenantInfo;
   user: AuthUserResponse;
+  permissions: string[];
 }
 
 export interface AuthResponseDTOs {
