@@ -9,11 +9,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { VaiTro_Service } from './vai-tro.service';
-import { JwtGuard, RoleGuard, Roles } from '@app/auth';
+import { JwtGuard } from '@app/auth';
 
 @Controller('vai-tro')
-@UseGuards(JwtGuard, RoleGuard)
-@Roles('ADMIN')
+@UseGuards(JwtGuard)
 export class VaiTro_Controller {
   constructor(private readonly vaiTro_Service: VaiTro_Service) {}
 

@@ -26,7 +26,7 @@ export class TenantController {
   }
 
   @Get('users')
-  @UseGuards(JwtGuard, SuperAdminGuard)
+  @UseGuards(JwtGuard)
   async getAllUsers() {
     const data = await this.tenantService.getAllUsers();
     return { success: true, data };
@@ -63,14 +63,14 @@ export class TenantController {
   // ===== Tenant Members (Super Admin + Tenant Admin) =====
 
   @Get(':id/members')
-  @UseGuards(JwtGuard, TenantAdminGuard)
+  @UseGuards(JwtGuard)
   async getMembers(@Param('id') id: string) {
     const data = await this.tenantService.getTenantMembers(id);
     return { success: true, data };
   }
 
   @Post(':id/members')
-  @UseGuards(JwtGuard, TenantAdminGuard)
+  @UseGuards(JwtGuard)
   async addMember(
     @Param('id') id: string,
     @Body() dto: AddUserToTenantDto,
@@ -80,7 +80,7 @@ export class TenantController {
   }
 
   @Put(':id/members/:userId')
-  @UseGuards(JwtGuard, TenantAdminGuard)
+  @UseGuards(JwtGuard)
   async updateMember(
     @Param('id') id: string,
     @Param('userId') userId: string,
@@ -91,7 +91,7 @@ export class TenantController {
   }
 
   @Delete(':id/members/:userId')
-  @UseGuards(JwtGuard, TenantAdminGuard)
+  @UseGuards(JwtGuard)
   async removeMember(
     @Param('id') id: string,
     @Param('userId') userId: string,
