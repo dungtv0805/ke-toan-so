@@ -2,6 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Skills System
+
+Skills: `.claude/skills/` — gọi trực tiếp bằng slash command
+- `/db-fe` — Frontend pages, components, handlers
+- `/db-be` — Backend services, APIs, controllers
+- `/db-deploy` — Deploy BE/FE to production server
+- `/db-update-knowledge` — Classify and persist discovered facts
+
+Shared context: `.claude/context/`
+Learnings: `.claude/skills/learnings/` (system.md, per-page files)
+
+## Context Files
+
+Đọc context files trong `.claude/context/` khi xử lý vấn đề liên quan:
+- `service-communication.md` — Inter-service HTTP calls, ServiceClient config, deployment, bugs đã fix
+- `be-api-map.md` — Full API endpoint map (all services, all routes)
+- `active-pages.md` — Sidebar → Route → API mapping, active vs coming-soon pages
+
 ## Project Overview
 
 Digital Books is a full-stack accounting/financial management system with:

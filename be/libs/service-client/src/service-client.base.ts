@@ -28,16 +28,51 @@ export abstract class BaseServiceClient {
 
   protected loadServiceConfig(serviceName: string): ServiceClientConfig {
     const envPrefix = serviceName.toUpperCase().replace(/-/g, '_');
+
+    const serviceUrl =
+      this.configService.get<string>(`${envPrefix}_SERVICE_URL`) ||
+      this.configService.get<string>(`SERVICE_${envPrefix}_URL`);
+
+    let host = 'localhost';
+    let port = 3000;
+    let resolved = false;
+
+    if (serviceUrl) {
+      try {
+        const url = new URL(serviceUrl);
+        host = url.hostname;
+        port = parseInt(url.port, 10) || 3000;
+        resolved = true;
+      } catch {
+        console.warn(
+          `[ServiceClient] Invalid URL for ${serviceName}: "${serviceUrl}". Trying HOST/PORT vars.`,
+        );
+      }
+    }
+
+    const hostOverride =
+      this.configService.get<string>(`SERVICE_${envPrefix}_HOST`) ||
+      this.configService.get<string>(`${envPrefix}_SERVICE_HOST`);
+    const portOverride =
+      this.configService.get<number>(`SERVICE_${envPrefix}_PORT`) ||
+      this.configService.get<number>(`${envPrefix}_SERVICE_PORT`);
+
+    if (hostOverride) { host = hostOverride; resolved = true; }
+    if (portOverride) { port = portOverride; resolved = true; }
+
+    if (!resolved) {
+      console.warn(
+        `[ServiceClient] No env config found for "${serviceName}". ` +
+        `Checked: ${envPrefix}_SERVICE_URL, SERVICE_${envPrefix}_URL, ` +
+        `SERVICE_${envPrefix}_HOST/PORT, ${envPrefix}_SERVICE_HOST/PORT. ` +
+        `Falling back to ${host}:${port} — this will likely cause routing errors.`,
+      );
+    }
+
     return {
       serviceName,
-      host:
-        this.configService.get<string>(`SERVICE_${envPrefix}_HOST`) ||
-        this.configService.get<string>(`${envPrefix}_SERVICE_HOST`) ||
-        'localhost',
-      port:
-        this.configService.get<number>(`SERVICE_${envPrefix}_PORT`) ||
-        this.configService.get<number>(`${envPrefix}_SERVICE_PORT`) ||
-        3000,
+      host,
+      port,
       timeout:
         this.configService.get<number>(`SERVICE_${envPrefix}_TIMEOUT`) ||
         this.defaultTimeout,
