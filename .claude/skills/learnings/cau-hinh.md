@@ -70,9 +70,10 @@
 - Seeded default permissions cho 8 roles: `be/scripts/seeds/phan-quyen.seed.js`
 
 ### Security Implication
-- **Bất kỳ ai có valid JWT đều có thể gọi mọi API endpoint** — BE không chặn
+- **Bất kỳ ai có valid JWT đều có thể gọi mọi API endpoint** — BE không chặn theo permission
 - FE chỉ ẩn UI, không ngăn được direct API calls
 - Nếu cần enforce BE: thêm `@Permissions()` decorator + register `PermissionGuard` vào module
+- **Tuy nhiên:** Tenant isolation vẫn được enforce ở BE (xem `learnings/system.md` → Tenant Isolation)
 
 ## Important Notes
 

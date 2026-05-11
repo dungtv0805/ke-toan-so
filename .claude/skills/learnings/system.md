@@ -38,6 +38,52 @@
 - Roles: ADMIN, KE_TOAN_TRUONG, KE_TOAN_TONG_HOP, KE_TOAN_QUY, KE_TOAN_CONG_NO, MANAGER, KIEM_SOAT
 - Config service manages permissions per role per tenant
 
+## Tenant Isolation (Auto-inject tenantId)
+
+### [2026-05-12] TenantId tự động inject — KHÔNG cần query/add/update thủ công (VERIFIED)
+
+#### Flow: Request → AsyncLocalStorage → Repository Proxy
+
+1. **TenantMiddleware** (`libs/core/src/tenant/tenant.middleware.ts`)
+   - Intercept mọi request, decode JWT (không verify — chỉ decode)
+   - Extract `{ tenantId, userId, email }` → `TenantContextService.run(context, next)`
+   - Dùng `AsyncLocalStorage` để lưu context xuyên suốt request lifecycle
+
+2. **TenantContextService** (`libs/core/src/tenant/tenant-context.service.ts`)
+   - Singleton service, dùng `AsyncLocalStorage<TenantContext>`
+   - `getCurrentTenantId()` — lấy tenantId từ current request context
+   - `isSuperAdmin()` — check email === SUPER_ADMIN_EMAIL
+
+3. **createTenantAwareProxy** (`libs/database/src/database.module.ts`)
+   - Proxy wrap tất cả Repository methods:
+     - **Filter methods** (find, findOne, findBy, count, exist, findAndCount): auto-inject `{ tenantId }` vào WHERE
+     - **Inject methods** (save, insert, create): auto-set `tenantId` trên entity
+     - **Criteria methods** (update, delete, softDelete, restore): auto-inject `tenantId` vào criteria
+     - **Aggregate**: auto-inject `{ $match: { tenantId } }` vào đầu pipeline
+   - Nếu không có tenant context (unauthenticated) → không filter (pass-through)
+
+4. **TenantSubscriber** (`libs/database/src/tenant.subscriber.ts`)
+   - TypeORM EventSubscriber — backup layer
+   - `beforeInsert` / `beforeUpdate`: auto-set `tenantId` nếu entity chưa có
+   - Exempt entities: User, UserCredential, UserTenant, Tenant
+
+#### Kết quả
+- **Developer KHÔNG cần** thêm `tenantId` vào query hay entity khi code service
+- Mọi `repository.find()`, `repository.save()` đều tự động scoped theo tenant
+- **Bypass:** Dùng `DatabaseModule.forFeatureRaw(entities)` + `InjectRawRepository` cho SuperAdmin services
+
+#### LƯU Ý QUAN TRỌNG: Module phải dùng đúng import
+- **ĐÚNG:** `DatabaseModule.forFeature([Entity])` — repository được wrap bởi TenantAwareProxy → auto-inject tenantId
+- **SAI:** `TypeOrmModule.forFeature([Entity])` — repository KHÔNG có proxy → query không filter theo tenant → data leak cross-tenant
+- `DatabaseModule.forFeature()` nội bộ gọi `TypeOrmModule.forFeature()` rồi override repository provider bằng proxy
+- Nếu dùng nhầm `TypeOrmModule.forFeature()` trực tiếp → mất tenant isolation hoàn toàn
+
+#### Files
+- `be/libs/core/src/tenant/tenant.middleware.ts`
+- `be/libs/core/src/tenant/tenant-context.service.ts`
+- `be/libs/database/src/database.module.ts` (createTenantAwareProxy, forFeature, forFeatureRaw)
+- `be/libs/database/src/tenant.subscriber.ts`
+
 ## Data Patterns
 
 ### Voucher Entry Structure (ChungTu)
