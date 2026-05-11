@@ -75,8 +75,8 @@ export class BaoCaoService {
     const vouchersKT = vouchersKTRes.success ? vouchersKTRes.data || [] : [];
     const accounts = accountsRes.success ? accountsRes.data || [] : [];
 
-    const revenueAccounts = accounts.filter((a) => a.ma.startsWith('5'));
-    const expenseAccounts = accounts.filter((a) => a.ma.startsWith('6'));
+    const revenueAccounts = accounts.filter((a) => a.ma?.startsWith('5'));
+    const expenseAccounts = accounts.filter((a) => a.ma?.startsWith('6'));
 
     const buildPeriodData = (vouchers: NhatKyChungEntry[]): PnLPeriodData => {
       const doanhThu: PnLEntry[] = [];
@@ -146,14 +146,11 @@ export class BaoCaoService {
     const vouchers = vouchersRes.success ? vouchersRes.data || [] : [];
     const accounts = accountsRes.success ? accountsRes.data || [] : [];
 
-    // Asset accounts typically start with 1xx, 2xx
-    // Liability accounts typically start with 3xx
-    // Equity accounts typically start with 4xx
     const assetAccounts = accounts.filter(
-      (a) => a.ma.startsWith('1') || a.ma.startsWith('2'),
+      (a) => a.ma?.startsWith('1') || a.ma?.startsWith('2'),
     );
     const liabilityAccounts = accounts.filter(
-      (a) => a.ma.startsWith('3') || a.ma.startsWith('4'),
+      (a) => a.ma?.startsWith('3') || a.ma?.startsWith('4'),
     );
 
     const taiSan: BalanceSheetEntry[] = [];

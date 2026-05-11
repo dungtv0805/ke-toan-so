@@ -40,8 +40,12 @@ export class BaoCaoController {
     @Headers('authorization') authToken: string,
     @CurrentUser() user: UserPayload,
   ) {
+    const date = new Date(asOfDate || new Date().toISOString());
+    if (isNaN(date.getTime())) {
+      throw new BadRequestException('asOfDate không hợp lệ');
+    }
     const data = await this.baoCaoService.getBalanceSheet(
-      new Date(asOfDate),
+      date,
       authToken,
       user.tenantId,
     );
