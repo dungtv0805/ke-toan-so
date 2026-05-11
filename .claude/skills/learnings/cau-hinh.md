@@ -30,6 +30,50 @@
 - **Key endpoints:** /users, /:id/members
 - **Verified:** NO
 
+## Permission System Architecture
+
+### [2026-05-12] Phân quyền cũ vs mới (VERIFIED)
+
+#### Phân quyền cũ (RoleGuard) — DEAD CODE
+- **File:** `be/libs/auth/src/guards/role.guard.ts`
+- **Behavior:** `canActivate()` luôn return `true` — không enforce gì cả
+- **Decorator:** `@Roles('ADMIN', 'KE_TOAN_TRUONG', ...)` tồn tại ở controllers nhưng vô nghĩa
+- **Status:** Dead code, chỉ còn mang tính documentation
+
+#### Phân quyền mới (PermissionGuard) — CHỈ CÓ Ý NGHĨA Ở FE
+- **File:** `be/libs/auth/src/guards/permission.guard.ts`
+- **Behavior:** Checks `user.permissions` từ JWT against `@Permissions()` decorator
+- **NHƯNG:** `@Permissions()` decorator **KHÔNG được sử dụng ở bất kỳ controller nào**
+- **NHƯNG:** `PermissionGuard` **KHÔNG được inject vào bất kỳ module nào**
+- **Kết luận:** BE permission enforcement = 0%. Tất cả access control chỉ ở FE
+
+#### FE Permission Flow
+1. Login → auth-service loads permissions từ `PhanQuyen` entity theo role
+2. Permissions embedded vào JWT token
+3. FE extract permissions từ JWT → store trong `AuthContext.userPermissions`
+4. `hasPermission(key)` check: super admin → `*` wildcard → specific permission
+5. `usePagePermission(moduleKey)` returns `{ canView, canCreate, canEdit, canDelete, canExport }`
+6. Permission format: `/{module}:{action}` (e.g., `/danh-muc/tai-khoan:xem`)
+
+#### FE Enforcement Points
+- **Sidebar:** `MainLayout.tsx` — ẩn menu items nếu không có quyền `xem`
+- **Route:** `ProtectedRoute.tsx` + `routePermissions.ts` — redirect nếu không có quyền
+- **Page actions:** `usePagePermission()` hook — disable/hide buttons CRUD
+
+#### Quản lý phân quyền
+- **Page:** `/cau-hinh/phan-quyen`
+- **API:** `PUT /api/config/phan-quyen/vai-tro/:vaiTro/permissions`
+- **Effect:** Thay đổi permissions → user cần re-login để JWT mới có permissions mới
+
+#### Key Commit
+- `cfdc513` (2026-04-23) — "fix hệ thống phân quyền: load permissions từ DB, fix hiển thị quyền user"
+- Seeded default permissions cho 8 roles: `be/scripts/seeds/phan-quyen.seed.js`
+
+### Security Implication
+- **Bất kỳ ai có valid JWT đều có thể gọi mọi API endpoint** — BE không chặn
+- FE chỉ ẩn UI, không ngăn được direct API calls
+- Nếu cần enforce BE: thêm `@Permissions()` decorator + register `PermissionGuard` vào module
+
 ## Important Notes
 
 - Permission page manages per-role permissions for the current tenant
