@@ -16,7 +16,7 @@ export class BaoCaoController {
     @Headers('authorization') authToken: string,
     @CurrentUser() user: UserPayload,
   ) {
-    const validPeriodTypes = ['thang', 'quy', 'nam', 'tuyChon'];
+    const validPeriodTypes = ['ngay', 'thang', 'quy', 'nam', 'tuyChon'];
     if (!validPeriodTypes.includes(periodType)) {
       throw new BadRequestException(
         `periodType phải là một trong: ${validPeriodTypes.join(', ')}`,
@@ -26,7 +26,7 @@ export class BaoCaoController {
     const data = await this.baoCaoService.getPnL(
       new Date(startDate),
       new Date(endDate),
-      periodType as 'thang' | 'quy' | 'nam' | 'tuyChon',
+      periodType as 'ngay' | 'thang' | 'quy' | 'nam' | 'tuyChon',
       authToken,
       user.tenantId,
     );
@@ -61,7 +61,7 @@ export class BaoCaoController {
     @Headers('authorization') authToken: string,
     @CurrentUser() user: UserPayload,
   ) {
-    const validPeriodTypes = ['thang', 'quy', 'nam', 'tuyChon'];
+    const validPeriodTypes = ['ngay', 'thang', 'quy', 'nam', 'tuyChon'];
     if (!validPeriodTypes.includes(periodType)) {
       throw new BadRequestException(
         `periodType phải là một trong: ${validPeriodTypes.join(', ')}`,
@@ -71,7 +71,7 @@ export class BaoCaoController {
     const data = await this.baoCaoService.getKqkd(
       new Date(startDate),
       new Date(endDate),
-      periodType as 'thang' | 'quy' | 'nam' | 'tuyChon',
+      periodType as 'ngay' | 'thang' | 'quy' | 'nam' | 'tuyChon',
       authToken,
       user.tenantId,
     );

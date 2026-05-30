@@ -152,9 +152,6 @@ const ThanhVienPage = () => {
     setAddModalVisible(true);
   };
 
-  const getRoleLabel = (role: string) =>
-    roles.find((r) => r.value === role)?.label || role;
-
   const availableUsers = users.filter(
     (u) => !members.some((m) => m.id === u.id && m.isActive),
   );
@@ -169,14 +166,6 @@ const ThanhVienPage = () => {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
-    },
-    {
-      title: 'Vai trò',
-      dataIndex: 'role',
-      key: 'role',
-      render: (role: string) => (
-        <Tag color="blue">{getRoleLabel(role)}</Tag>
-      ),
     },
     {
       title: 'Trạng thái',

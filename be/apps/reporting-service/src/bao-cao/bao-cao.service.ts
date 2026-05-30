@@ -49,7 +49,7 @@ export class BaoCaoService {
   async getPnL(
     startDate: Date,
     endDate: Date,
-    periodType: 'thang' | 'quy' | 'nam' | 'tuyChon',
+    periodType: 'ngay' | 'thang' | 'quy' | 'nam' | 'tuyChon',
     authToken?: string,
     tenantId?: string,
   ): Promise<PnLReport> {
@@ -208,7 +208,7 @@ export class BaoCaoService {
   async getKqkd(
     startDate: Date,
     endDate: Date,
-    periodType: 'thang' | 'quy' | 'nam' | 'tuyChon',
+    periodType: 'ngay' | 'thang' | 'quy' | 'nam' | 'tuyChon',
     authToken?: string,
     tenantId?: string,
   ): Promise<KqkdReport> {
@@ -343,12 +343,19 @@ export class BaoCaoService {
   private getPreviousPeriod(
     startDate: Date,
     endDate: Date,
-    periodType: 'thang' | 'quy' | 'nam' | 'tuyChon',
+    periodType: 'ngay' | 'thang' | 'quy' | 'nam' | 'tuyChon',
   ): { startDate: Date; endDate: Date } {
     const prevStart = new Date(startDate);
     const prevEnd = new Date(endDate);
 
     switch (periodType) {
+      case 'ngay': {
+        const prevStartDate = new Date(startDate);
+        prevStartDate.setDate(prevStartDate.getDate() - 1);
+        const prevEndDate = new Date(endDate);
+        prevEndDate.setDate(prevEndDate.getDate() - 1);
+        return { startDate: prevStartDate, endDate: prevEndDate };
+      }
       case 'thang': {
         const prevStartDate = new Date(startDate.getFullYear(), startDate.getMonth() - 1, 1);
         const prevEndDate = new Date(startDate.getFullYear(), startDate.getMonth(), 0);
