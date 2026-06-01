@@ -132,6 +132,22 @@ export class ServiceClient extends BaseServiceClient {
     });
   }
 
+  async getSoDuDauKy(
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<ServiceResponse<{
+    ngayApDung: string | null;
+    items: Array<{ maTaiKhoan: string; duNo: number; duCo: number }>;
+  }>> {
+    const headers: Record<string, string> = {};
+    if (authToken) headers['Authorization'] = authToken;
+    if (tenantId) headers['x-tenant-id'] = tenantId;
+
+    return this.get('master-data', '/so-du-dau-ky', {
+      headers: Object.keys(headers).length ? headers : undefined,
+    });
+  }
+
   // ============ Voucher Service Methods ============
 
   async getChungTu(
