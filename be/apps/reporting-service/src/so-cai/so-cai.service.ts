@@ -31,6 +31,68 @@ export interface TrialBalanceEntry {
   coCuoiKy: number;
 }
 
+export interface AggBucket {
+  priorNo: number;
+  priorCo: number;
+  periodNo: number;
+  periodCo: number;
+}
+
+export interface OpeningBucket {
+  duNo: number;
+  duCo: number;
+}
+
+/**
+ * Tính 1 dòng bảng cân đối phát sinh, cộng số dư đầu kỳ thủ công (opening)
+ * vào prior bucket trước khi phân loại dư Nợ/Có theo loại tài khoản.
+ */
+export function computeTrialRow(
+  agg: AggBucket,
+  opening: OpeningBucket,
+  loai: string,
+): {
+  noDauKy: number;
+  coDauKy: number;
+  noPhatSinh: number;
+  coPhatSinh: number;
+  noCuoiKy: number;
+  coCuoiKy: number;
+} {
+  const calcBalance = (
+    no: number,
+    co: number,
+    l: string,
+  ): { duNo: number; duCo: number } => {
+    if (l === 'NO') {
+      const net = no - co;
+      return net >= 0 ? { duNo: net, duCo: 0 } : { duNo: 0, duCo: -net };
+    } else {
+      const net = co - no;
+      return net >= 0 ? { duNo: 0, duCo: net } : { duNo: -net, duCo: 0 };
+    }
+  };
+
+  const priorNo = agg.priorNo + opening.duNo;
+  const priorCo = agg.priorCo + opening.duCo;
+
+  const dauKy = calcBalance(priorNo, priorCo, loai);
+  const cuoiKy = calcBalance(
+    priorNo + agg.periodNo,
+    priorCo + agg.periodCo,
+    loai,
+  );
+
+  return {
+    noDauKy: dauKy.duNo,
+    coDauKy: dauKy.duCo,
+    noPhatSinh: agg.periodNo,
+    coPhatSinh: agg.periodCo,
+    noCuoiKy: cuoiKy.duNo,
+    coCuoiKy: cuoiKy.duCo,
+  };
+}
+
 /**
  * Helper to extract taiKhoanNo from voucher entry
  * Supports both legacy field and new danhMuc structure
@@ -253,70 +315,66 @@ export class SoCaiService {
     endDate: Date,
     authToken?: string,
   ): Promise<{ entries: TrialBalanceEntry[]; totals: TrialBalanceEntry }> {
-    const [aggRes, accountsRes] = await Promise.all([
+    const [aggRes, accountsRes, openingRes] = await Promise.all([
       this.serviceClient.aggregateBalance(
         startDate.toISOString(),
         endDate.toISOString(),
         authToken,
       ),
       this.serviceClient.getTaiKhoan(authToken),
+      this.serviceClient.getSoDuDauKy(authToken),
     ]);
 
     const aggData = aggRes.success ? aggRes.data || [] : [];
     const accounts = accountsRes.success ? accountsRes.data || [] : [];
+    const openingItems =
+      openingRes.success && openingRes.data ? openingRes.data.items || [] : [];
 
     // Build account lookup map
     const accountMap = new Map(accounts.map((a) => [a.ma, a]));
     const aggMap = new Map(aggData.map((a) => [a.ma, a]));
-
-    // Helper: tính dư Nợ/Có từ tổng Nợ - Có, dựa vào loại TK
-    const calcBalance = (no: number, co: number, loai: string): { duNo: number; duCo: number } => {
-      if (loai === 'NO') {
-        const net = no - co;
-        return net >= 0 ? { duNo: net, duCo: 0 } : { duNo: 0, duCo: -net };
-      } else {
-        const net = co - no;
-        return net >= 0 ? { duNo: 0, duCo: net } : { duNo: -net, duCo: 0 };
-      }
-    };
+    const openingMap = new Map<string, OpeningBucket>(
+      openingItems.map((o) => [
+        o.maTaiKhoan,
+        { duNo: Number(o.duNo) || 0, duCo: Number(o.duCo) || 0 },
+      ]),
+    );
 
     const entries: TrialBalanceEntry[] = [];
     let totalNoDauKy = 0, totalCoDauKy = 0;
     let totalNoPhatSinh = 0, totalCoPhatSinh = 0;
     let totalNoCuoiKy = 0, totalCoCuoiKy = 0;
 
-    // Process all accounts that have aggregation data
-    const processedMas = new Set<string>();
+    // Union: tài khoản có phát sinh HOẶC có số dư đầu kỳ
+    const allMas = new Set<string>([...aggMap.keys(), ...openingMap.keys()]);
 
-    for (const [ma, agg] of aggMap) {
-      processedMas.add(ma);
+    for (const ma of allMas) {
       const account = accountMap.get(ma);
       if (!account) continue;
 
-      const dauKy = calcBalance(agg.priorNo, agg.priorCo, account.loai);
-      const cuoiKy = calcBalance(
-        agg.priorNo + agg.periodNo,
-        agg.priorCo + agg.periodCo,
+      const agg =
+        aggMap.get(ma) ?? { priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 0 };
+      const opening = openingMap.get(ma) ?? { duNo: 0, duCo: 0 };
+
+      const row = computeTrialRow(
+        {
+          priorNo: agg.priorNo,
+          priorCo: agg.priorCo,
+          periodNo: agg.periodNo,
+          periodCo: agg.periodCo,
+        },
+        opening,
         account.loai,
       );
 
-      entries.push({
-        ma,
-        ten: account.ten,
-        noDauKy: dauKy.duNo,
-        coDauKy: dauKy.duCo,
-        noPhatSinh: agg.periodNo,
-        coPhatSinh: agg.periodCo,
-        noCuoiKy: cuoiKy.duNo,
-        coCuoiKy: cuoiKy.duCo,
-      });
+      entries.push({ ma, ten: account.ten, ...row });
 
-      totalNoDauKy += dauKy.duNo;
-      totalCoDauKy += dauKy.duCo;
-      totalNoPhatSinh += agg.periodNo;
-      totalCoPhatSinh += agg.periodCo;
-      totalNoCuoiKy += cuoiKy.duNo;
-      totalCoCuoiKy += cuoiKy.duCo;
+      totalNoDauKy += row.noDauKy;
+      totalCoDauKy += row.coDauKy;
+      totalNoPhatSinh += row.noPhatSinh;
+      totalCoPhatSinh += row.coPhatSinh;
+      totalNoCuoiKy += row.noCuoiKy;
+      totalCoCuoiKy += row.coCuoiKy;
     }
 
     entries.sort((a, b) => a.ma.localeCompare(b.ma));
