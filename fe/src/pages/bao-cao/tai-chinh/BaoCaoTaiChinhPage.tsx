@@ -336,20 +336,20 @@ const BaoCaoTaiChinhPage: React.FC = () => {
     {
       title: 'Số đầu năm', dataIndex: 'dauNam', key: 'dauNam', width: 150, align: 'right',
       render: (value: number, record: TreeNode<BalanceSheetItem>) => (
-        <CurrencyCell value={record.__isParent ? (record.__rollup.dauNam ?? 0) : value} bold={record.isSection || record.isTotal || record.__isParent} />
+        <CurrencyCell value={record.__isParent ? (Number(value) || 0) + (record.__rollup.dauNam ?? 0) : value} bold={record.isSection || record.isTotal || record.__isParent} />
       ),
     },
     {
       title: 'Số cuối kỳ', dataIndex: 'cuoiKy', key: 'cuoiKy', width: 150, align: 'right',
       render: (value: number, record: TreeNode<BalanceSheetItem>) => (
-        <CurrencyCell value={record.__isParent ? (record.__rollup.cuoiKy ?? 0) : value} bold={record.isSection || record.isTotal || record.__isParent} />
+        <CurrencyCell value={record.__isParent ? (Number(value) || 0) + (record.__rollup.cuoiKy ?? 0) : value} bold={record.isSection || record.isTotal || record.__isParent} />
       ),
     },
     {
       title: 'Chênh lệch', key: 'chenhLech', width: 130, align: 'right',
       render: (_: unknown, record: TreeNode<BalanceSheetItem>) => {
-        const dauNam = record.__isParent ? (record.__rollup.dauNam ?? 0) : record.dauNam;
-        const cuoiKy = record.__isParent ? (record.__rollup.cuoiKy ?? 0) : record.cuoiKy;
+        const dauNam = record.__isParent ? (Number(record.dauNam) || 0) + (record.__rollup.dauNam ?? 0) : record.dauNam;
+        const cuoiKy = record.__isParent ? (Number(record.cuoiKy) || 0) + (record.__rollup.cuoiKy ?? 0) : record.cuoiKy;
         if (dauNam === 0 && cuoiKy === 0) return '-';
         const diff = cuoiKy - dauNam;
         return (
