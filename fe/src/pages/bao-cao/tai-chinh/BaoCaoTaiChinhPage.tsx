@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Card,
   Table,
@@ -186,28 +186,77 @@ const BaoCaoTaiChinhPage: React.FC = () => {
 
   // ============ TAB 1: CÂN ĐỐI TÀI KHOẢN ============
 
+  // Compute children sums for parent accounts that have their own direct vouchers
+  const parentChildrenMap = useMemo(() => {
+    const rows = tbState.trialBalance;
+    const map = new Map<string, {
+      soDuDauKyNo: number; soDuDauKyCo: number;
+      phatSinhNo: number; phatSinhCo: number;
+      soDuCuoiKyNo: number; soDuCuoiKyCo: number;
+    }>();
+
+    for (const row of rows) {
+      const hasOwnValues =
+        row.soDuDauKyNo !== 0 || row.soDuDauKyCo !== 0 ||
+        row.phatSinhNo !== 0 || row.phatSinhCo !== 0 ||
+        row.soDuCuoiKyNo !== 0 || row.soDuCuoiKyCo !== 0;
+      if (!hasOwnValues) continue;
+
+      const children = rows.filter(r => r.taiKhoan !== row.taiKhoan && r.taiKhoan.startsWith(row.taiKhoan));
+      if (children.length === 0) continue;
+
+      const sums = children.reduce((acc, c) => ({
+        soDuDauKyNo: acc.soDuDauKyNo + c.soDuDauKyNo,
+        soDuDauKyCo: acc.soDuDauKyCo + c.soDuDauKyCo,
+        phatSinhNo: acc.phatSinhNo + c.phatSinhNo,
+        phatSinhCo: acc.phatSinhCo + c.phatSinhCo,
+        soDuCuoiKyNo: acc.soDuCuoiKyNo + c.soDuCuoiKyNo,
+        soDuCuoiKyCo: acc.soDuCuoiKyCo + c.soDuCuoiKyCo,
+      }), { soDuDauKyNo: 0, soDuDauKyCo: 0, phatSinhNo: 0, phatSinhCo: 0, soDuCuoiKyNo: 0, soDuCuoiKyCo: 0 });
+
+      map.set(row.taiKhoan, sums);
+    }
+    return map;
+  }, [tbState.trialBalance]);
+
+  type TrialBalanceAmountField = 'soDuDauKyNo' | 'soDuDauKyCo' | 'phatSinhNo' | 'phatSinhCo' | 'soDuCuoiKyNo' | 'soDuCuoiKyCo';
+
+  const renderTrialAmount = (v: number, record: TrialBalance, field: TrialBalanceAmountField) => {
+    const childrenSums = parentChildrenMap.get(record.taiKhoan);
+    const childrenVal = childrenSums?.[field] ?? 0;
+    if (childrenVal > 0 && v > 0) {
+      return (
+        <span style={{ whiteSpace: 'nowrap' }}>
+          <span style={{ color: '#52c41a' }}>{formatCurrency(childrenVal)}</span>
+          <span style={{ color: '#fa8c16', marginLeft: 4 }}>+{formatCurrency(v)}</span>
+        </span>
+      );
+    }
+    return <CurrencyCell value={v} />;
+  };
+
   const trialBalanceColumns: ColumnsType<TrialBalance> = [
     { title: 'Tài khoản', dataIndex: 'taiKhoan', key: 'taiKhoan', width: 100, fixed: 'left' },
     { title: 'Tên tài khoản', dataIndex: 'tenTaiKhoan', key: 'tenTaiKhoan', width: 250, fixed: 'left' },
     {
       title: 'Số dư đầu kỳ',
       children: [
-        { title: 'Nợ', dataIndex: 'soDuDauKyNo', key: 'soDuDauKyNo', width: 140, align: 'right' as const, render: (v: number) => <CurrencyCell value={v} /> },
-        { title: 'Có', dataIndex: 'soDuDauKyCo', key: 'soDuDauKyCo', width: 140, align: 'right' as const, render: (v: number) => <CurrencyCell value={v} /> },
+        { title: 'Nợ', dataIndex: 'soDuDauKyNo', key: 'soDuDauKyNo', width: 180, align: 'right' as const, render: (v: number, r: TrialBalance) => renderTrialAmount(v, r, 'soDuDauKyNo') },
+        { title: 'Có', dataIndex: 'soDuDauKyCo', key: 'soDuDauKyCo', width: 180, align: 'right' as const, render: (v: number, r: TrialBalance) => renderTrialAmount(v, r, 'soDuDauKyCo') },
       ],
     },
     {
       title: 'Phát sinh trong kỳ',
       children: [
-        { title: 'Nợ', dataIndex: 'phatSinhNo', key: 'phatSinhNo', width: 140, align: 'right' as const, render: (v: number) => <CurrencyCell value={v} /> },
-        { title: 'Có', dataIndex: 'phatSinhCo', key: 'phatSinhCo', width: 140, align: 'right' as const, render: (v: number) => <CurrencyCell value={v} /> },
+        { title: 'Nợ', dataIndex: 'phatSinhNo', key: 'phatSinhNo', width: 180, align: 'right' as const, render: (v: number, r: TrialBalance) => renderTrialAmount(v, r, 'phatSinhNo') },
+        { title: 'Có', dataIndex: 'phatSinhCo', key: 'phatSinhCo', width: 180, align: 'right' as const, render: (v: number, r: TrialBalance) => renderTrialAmount(v, r, 'phatSinhCo') },
       ],
     },
     {
       title: 'Số dư cuối kỳ',
       children: [
-        { title: 'Nợ', dataIndex: 'soDuCuoiKyNo', key: 'soDuCuoiKyNo', width: 140, align: 'right' as const, render: (v: number) => <CurrencyCell value={v} /> },
-        { title: 'Có', dataIndex: 'soDuCuoiKyCo', key: 'soDuCuoiKyCo', width: 140, align: 'right' as const, render: (v: number) => <CurrencyCell value={v} /> },
+        { title: 'Nợ', dataIndex: 'soDuCuoiKyNo', key: 'soDuCuoiKyNo', width: 180, align: 'right' as const, render: (v: number, r: TrialBalance) => renderTrialAmount(v, r, 'soDuCuoiKyNo') },
+        { title: 'Có', dataIndex: 'soDuCuoiKyCo', key: 'soDuCuoiKyCo', width: 180, align: 'right' as const, render: (v: number, r: TrialBalance) => renderTrialAmount(v, r, 'soDuCuoiKyCo') },
       ],
     },
   ];
@@ -410,7 +459,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
                   loading={loading}
                   bordered
                   size="small"
-                  scroll={{ x: 1200, y: antTableScrollY }}
+                  scroll={{ x: 1480, y: antTableScrollY }}
                   pagination={false}
                   summary={() => {
                     const totals = tbState.trialBalance.reduce(

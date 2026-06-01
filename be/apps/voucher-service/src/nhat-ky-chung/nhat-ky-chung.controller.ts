@@ -7,8 +7,10 @@ import {
   Query,
   Param,
   Body,
+  Headers,
   UseGuards,
 } from '@nestjs/common';
+import * as jwt from 'jsonwebtoken';
 import { NhatKyChungService } from './nhat-ky-chung.service';
 import {
   NhatKyChungQueryDto,
@@ -49,10 +51,19 @@ export class NhatKyChungController {
   async aggregateBalance(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
+    @Headers('authorization') authToken?: string,
   ) {
+    let tenantId: string | undefined;
+    if (authToken?.startsWith('Bearer ')) {
+      try {
+        const decoded = jwt.decode(authToken.substring(7)) as { tenantId?: string } | null;
+        tenantId = decoded?.tenantId;
+      } catch {}
+    }
     return this.nhatKyChungService.aggregateBalance(
       new Date(startDate),
       new Date(endDate),
+      tenantId,
     );
   }
 
