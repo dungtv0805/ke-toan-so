@@ -41,18 +41,14 @@ export class SoDuDauKyService {
     const tongCo = items.reduce((s, i) => s + i.duCo, 0);
     const ngayApDung = records.length > 0 ? records[0].ngayApDung : null;
 
-    return { ngayApDung, items, tongNo, tongCo, canDoi: tongNo === tongCo };
+    const canDoi = Math.round(tongNo * 100) === Math.round(tongCo * 100);
+
+    return { ngayApDung, items, tongNo, tongCo, canDoi };
   }
 
   async saveBulk(dto: SaveSoDuDauKyDto): Promise<SoDuDauKyResult> {
     const tenantId = this.tenantContext.getCurrentTenantId();
     const tenantFilter = this.getTenantFilter();
-
-    // Xoá toàn bộ bản ghi cũ của tenant
-    const existing = await this.repo.find({ where: tenantFilter as any });
-    if (existing.length > 0) {
-      await this.repo.remove(existing);
-    }
 
     const ngayApDung = new Date(dto.ngayApDung);
 
@@ -68,6 +64,12 @@ export class SoDuDauKyService {
           ...(tenantId ? { tenantId } : {}),
         }),
       );
+
+    // Xoá toàn bộ bản ghi cũ của tenant
+    const existing = await this.repo.find({ where: tenantFilter as any });
+    if (existing.length > 0) {
+      await this.repo.remove(existing);
+    }
 
     if (toSave.length > 0) {
       await this.repo.save(toSave);
