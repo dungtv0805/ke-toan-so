@@ -10,7 +10,7 @@ Trang `BaoCaoTaiChinhPage` hiển thị **Bảng cân đối phát sinh** và **
 
 Hiện trạng:
 - Bảng cân đối phát sinh (`tbState.trialBalance`): mảng phẳng `TrialBalance { taiKhoan, tenTaiKhoan, soDuDauKyNo/Co, phatSinhNo/Co, soDuCuoiKyNo/Co }`. Quan hệ cha-con đang nhận diện bằng prefix (`startsWith`) trong `parentChildrenMap`; cell TK cha hiển thị `tổng_con(xanh) + riêng_cha(cam)` qua `renderTrialAmount`. Tổng cộng = cộng tất cả dòng (mỗi dòng là giá trị riêng của TK).
-- Bảng cân đối kế toán (`bsState.data.taiSan` / `nguonVon`): mảng `BalanceSheetItem { ma, ten, soTien, ... }`. **BE chỉ trả TK có số dư ≠ 0** → TK cha không có phát sinh trực tiếp thường **không xuất hiện**. Tổng lấy từ `bsState.stats` (BE tính).
+- Bảng cân đối kế toán (`bsState.data.taiSan` / `nguonVon`): mảng `BalanceSheetItem { ma, tenChiTieu, dauNam, cuoiKy, level, isSection?, isTotal? }`, dựng FE-side trong `balanceSheetService.mapEntriesToItems`. Cấu trúc phẳng 2 tầng: **1 dòng section header** (`isSection: true, level: 0`, `cuoiKy` = tổng nhóm) + các **dòng tài khoản** (`level: 1`, `cuoiKy = soTien`, `tenChiTieu = "{ma} - {ten}"`). **BE chỉ trả TK có số dư ≠ 0** → TK cha không có phát sinh trực tiếp **không xuất hiện** (chỉ có TK lá). `dauNam` hiện luôn = 0. Tổng lấy từ `bsState.stats` (BE tính).
 
 ## Mục tiêu
 
@@ -52,12 +52,21 @@ Thuật toán:
 4. **Roll-up**: với mỗi node cha, tính tổng các `sumFields` của **toàn bộ con cháu có dữ liệu** (đệ quy), lưu vào `node.rollup`. Giá trị riêng của node giữ ở `node.own` (= report row của chính nó, hoặc 0 nếu cha không có report row).
 5. Trả về mảng node gốc (cấp cao nhất), mỗi node có `children?: TreeNode<T>[]`.
 
-`TreeNode<T>` chứa: `ma`, `ten`, `own: T | null` (số liệu riêng), `rollup: Record<sumField, number>` (tổng con cháu), `children?`.
+`TreeNode<T>` **trải (spread) các field của row gốc lên node** để các cột `dataIndex` cũ vẫn đọc được, kèm metadata:
+```
+type TreeNode<T> = T & {
+  __ma: string;            // mã dùng làm rowKey + matching
+  __isParent: boolean;     // true nếu có con
+  __rollup: Record<string, number>;  // tổng con cháu cho mỗi sumField
+  children?: TreeNode<T>[];
+};
+```
+- Node cha (synthesized, không có report row riêng): các field số của `T` = 0, `__rollup` = tổng con cháu.
+- Node cha (có report row riêng): field số = giá trị riêng, `__rollup` = tổng con cháu.
+- Node lá: field số = giá trị riêng, không `children`.
+- TK trong báo cáo không khớp chart → node gốc, không con.
 
-Đặc tả rõ:
-- Node có `children` ⇒ là node cha (hiển thị roll-up + own).
-- Node không `children` ⇒ node lá (hiển thị own).
-- TK trong báo cáo không khớp chart → thành node gốc, không con.
+Dùng prefix `__` cho metadata để không đụng field thật của row.
 
 ### 2. Lấy danh mục đầy đủ
 
@@ -66,21 +75,24 @@ Thuật toán:
 
 ### 3. Bảng cân đối phát sinh (tree)
 
-- `dataSource` = `buildAccountTree(trialBalance, accounts, r => r.taiKhoan, [6 field số])`.
-- `Table` thêm `expandable={{ defaultExpandAllRows: false }}` (mặc định đóng) + state điều khiển `expandedRowKeys` cho nút "Mở tất cả / Thu gọn". `rowKey = "ma"`.
-- `renderTrialAmount(field)` cập nhật để đọc từ `TreeNode`:
-  - Node lá: `CurrencyCell(own[field])`.
-  - Node cha: nếu `own[field] > 0` và `rollup[field] > 0` → `rollup(xanh) + own(cam)`; nếu chỉ có rollup → chỉ phần xanh `rollup[field]`; (giữ logic màu hiện có).
-- `parentChildrenMap` cũ **bị thay thế** bởi roll-up của cây (xoá, tránh trùng logic).
+- `dataSource` = `buildAccountTree(trialBalance, accounts, r => r.taiKhoan, ['soDuDauKyNo','soDuDauKyCo','phatSinhNo','phatSinhCo','soDuCuoiKyNo','soDuCuoiKyCo'])`.
+- `Table` thêm `expandable` mặc định đóng + state `expandedKeys` cho nút "Mở tất cả / Thu gọn". `rowKey = "__ma"`.
+- `renderTrialAmount(field)` cập nhật, nhận `record: TreeNode<TrialBalance>`:
+  - Node lá (`!__isParent`): `CurrencyCell(record[field])`.
+  - Node cha: gọi `childrenVal = record.__rollup[field]`, `ownVal = record[field]`; nếu `childrenVal > 0 && ownVal > 0` → `childrenVal(xanh) + ownVal(cam)`; nếu chỉ `childrenVal > 0` → chỉ phần xanh; nếu chỉ own → `CurrencyCell(ownVal)`. (Giữ đúng màu/logic hiện có.)
+- `parentChildrenMap` cũ **bị xoá**, thay bằng roll-up của cây.
 - **Tổng cộng giữ nguyên**: tính từ mảng phẳng gốc `tbState.trialBalance` như hiện tại (không đụng cây).
 
 ### 4. Bảng cân đối kế toán (tree)
 
-- 2 bảng `taiSan` / `nguonVon` mỗi cái = `buildAccountTree(items, accounts, r => r.ma, ['soTien'])`.
-- `Table` cây, mặc định đóng, `rowKey = "ma"`.
-- Cột số tiền: node cha hiện `rollup.soTien` (in đậm); node lá hiện `own.soTien`.
+Mỗi nhóm (`taiSan` / `nguonVon`) hiện là `[sectionHeader(isSection), ...accountItems(level 1)]`:
+- Tách: `sectionHeader` = phần tử `isSection`; `accountItems` = các phần tử còn lại (TK lá).
+- Dựng cây TK: `tree = buildAccountTree(accountItems, accounts, r => r.ma, ['dauNam','cuoiKy'])`.
+- `dataSource` = `[sectionHeader, ...tree]` — section header giữ là dòng top-level (không con), các nhóm TK cấp cao thành dòng top-level cạnh nó.
+- `rowKey = "__ma"` (gán `__ma = ma` cho cả section header để có key duy nhất).
+- `Table` cây, mặc định đóng (account-parents thu gọn; section header + nhóm TK cấp cao hiện sẵn).
+- Cột `cuoiKy`/`dauNam`: node cha (`__isParent`) hiện `record.__rollup[field]` in đậm; section header giữ render cũ (`isSection` bold); node lá hiện `record[field]`. Giữ cột "Chênh lệch", indentation theo `level` cũ vẫn dùng được (level của section = 0; TK trong cây có thể bỏ `level` thủ công, để antd tự thụt theo cấp cây).
 - **Tổng giữ nguyên** từ `bsState.stats` (BE). Node cha gộp chỉ để hiển thị, không cộng vào tổng.
-- Giữ các dòng đặc biệt hiện có (section/total) nếu có — không phá vỡ.
 
 ### 5. Nút "Mở tất cả / Thu gọn"
 
