@@ -15,7 +15,7 @@ const chart = [
   { ma: '131', ten: 'Phải thu KH' },
 ];
 
-const make = (ma: string, ten: string): Row => ({ ma, ten, val: 0 });
+const make = (a: { ma: string; ten: string }): Row => ({ ma: a.ma, ten: a.ten, val: 0 });
 
 describe('buildAccountTree', () => {
   it('lồng đa cấp theo prefix và roll-up tổng con cháu', () => {
@@ -38,6 +38,7 @@ describe('buildAccountTree', () => {
     const n1121 = n112.children![0];
     expect(n1121.__ma).toBe('1121');
     expect(n1121.val).toBe(0);           // synthesized → 0
+    expect(n1121.ten).toBe('VND'); // synthesized node lấy tên từ chart
     expect(n1121.__rollup.val).toBe(200);
     expect(n1121.children![0].__ma).toBe('11211');
     expect(n1121.children![0].__isParent).toBe(false);
