@@ -85,10 +85,10 @@ Dùng prefix `__` cho metadata để không đụng field thật của row.
 
 ### 4. Bảng cân đối kế toán (tree)
 
-Mỗi nhóm (`taiSan` / `nguonVon`) hiện là `[sectionHeader(isSection), ...accountItems(level 1)]`:
-- Tách: `sectionHeader` = phần tử `isSection`; `accountItems` = các phần tử còn lại (TK lá).
-- Dựng cây TK: `tree = buildAccountTree(accountItems, accounts, r => r.ma, ['dauNam','cuoiKy'])`.
-- `dataSource` = `[sectionHeader, ...tree]` — section header giữ là dòng top-level (không con), các nhóm TK cấp cao thành dòng top-level cạnh nó.
+Mỗi nhóm (`taiSan` / `nguonVon`) chứa **nhiều section** (taiSan: A - ngắn hạn, B - dài hạn; nguonVon: C - nợ phải trả, D - vốn CSH), dạng `[headerA, ...láA, headerB, ...láB]`:
+- Duyệt tuần tự: mỗi `isSection` mở 1 section mới; gom các TK lá theo sau (đến header kế tiếp) thành 1 cây riêng.
+- Dựng cây mỗi section: `tree = buildAccountTree(leavesCủaSection, accounts, r => r.ma, ['dauNam','cuoiKy'])`.
+- `dataSource` = `[headerA, ...treeA, headerB, ...treeB]` — mỗi section header giữ là dòng top-level (không con, hiện tổng nhóm BE trả), nhóm TK cấp cao của section đó thành dòng top-level cạnh nó.
 - `rowKey = "__ma"` (gán `__ma = ma` cho cả section header để có key duy nhất).
 - `Table` cây, mặc định đóng (account-parents thu gọn; section header + nhóm TK cấp cao hiện sẵn).
 - Cột `cuoiKy`/`dauNam`: node cha (`__isParent`) hiện `record.__rollup[field]` in đậm; section header giữ render cũ (`isSection` bold); node lá hiện `record[field]`. Giữ cột "Chênh lệch", indentation theo `level` cũ vẫn dùng được (level của section = 0; TK trong cây có thể bỏ `level` thủ công, để antd tự thụt theo cấp cây).
