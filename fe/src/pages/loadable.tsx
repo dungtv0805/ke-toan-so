@@ -47,6 +47,10 @@ export const KhoanMucPage = loadable(() => import('./danh-muc/khoan-muc/KhoanMuc
   fallback: <PageLoader />
 });
 
+export const SoDuDauKyPage = loadable(() => import('./danh-muc/so-du-dau-ky/SoDuDauKyPage'), {
+  fallback: <PageLoader />
+});
+
 export const NganHangPage = loadable(() => import('./danh-muc/ngan-hang/NganHangPage'), {
   fallback: <PageLoader />
 });

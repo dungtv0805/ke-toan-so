@@ -84,6 +84,7 @@ const existingRoutes = new Set([
   "/danh-muc/san-pham",
   "/danh-muc/bo-phan",
   "/danh-muc/khoan-muc",
+  "/danh-muc/so-du-dau-ky",
   "/danh-muc/ngan-hang",
   "/danh-muc/dong-tien",
   "/danh-muc/chu-dau-tu",
@@ -218,6 +219,7 @@ const thuVienMenuItems: MenuItem[] = [
     getMenuItem("Hợp đồng", "/danh-muc/hop-dong", <FileProtectOutlined />),
     getMenuItem("Bộ phận", "/danh-muc/bo-phan", <TeamOutlined />),
     getMenuItem("Khoản mục", "/danh-muc/khoan-muc", <DollarOutlined />),
+    getMenuItem("Số dư đầu kỳ", "/danh-muc/so-du-dau-ky", <DollarOutlined />),
     getMenuItem("Kho", "/danh-muc/kho", <InboxOutlined />),
     getItem("Khác", "/danh-muc/khac", <AppstoreOutlined />, [
       getMenuItem("Chủ đầu tư", "/danh-muc/chu-dau-tu", <UserOutlined />),

@@ -20,6 +20,7 @@ import {
   DuAnPage,
   BoPhanPage,
   KhoanMucPage,
+  SoDuDauKyPage,
   NganHangPage,
   DongTienPage,
   ChuDauTuPage,
@@ -120,6 +121,11 @@ const App = () => (
                   <Route path="khoan-muc" element={
                     <ProtectedRoute requiredPermission="/danh-muc/khoan-muc:xem">
                       <KhoanMucPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="so-du-dau-ky" element={
+                    <ProtectedRoute requiredPermission="/danh-muc/so-du-dau-ky:xem">
+                      <SoDuDauKyPage />
                     </ProtectedRoute>
                   } />
                   <Route path="ngan-hang" element={
