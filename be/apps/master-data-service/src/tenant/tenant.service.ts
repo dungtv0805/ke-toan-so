@@ -58,6 +58,7 @@ const PERMISSION_MODULES = [
   '/danh-muc/hop-dong',
   '/danh-muc/bo-phan',
   '/danh-muc/khoan-muc',
+  '/danh-muc/so-du-dau-ky',
   '/danh-muc/kho',
   '/danh-muc/chu-dau-tu',
   '/danh-muc/nhom-khoan-muc',
