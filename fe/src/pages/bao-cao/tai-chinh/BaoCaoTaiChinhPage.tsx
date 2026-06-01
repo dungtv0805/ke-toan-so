@@ -41,6 +41,8 @@ import { PeriodFilter, PeriodFilterParams } from '@/components/shared/PeriodFilt
 import { kqkdService, KqkdReport } from '@/services/kqkdService';
 import { KqkdTable } from '@/pages/bao-cao/kqkd/components/KqkdTable';
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { taiKhoanService } from '@/services/taiKhoanService';
+import { buildAccountTree, collectParentKeys, type TreeNode } from './utils/buildAccountTree';
 
 // ============ TYPES ============
 
@@ -124,6 +126,9 @@ const BaoCaoTaiChinhPage: React.FC = () => {
   const [kqkdData, setKqkdData] = useState<KqkdReport | null>(null);
   const [pnlComparison, setPnlComparison] = useState<PnLComparisonData | null>(null);
 
+  const [accounts, setAccounts] = useState<{ ma: string; ten: string }[]>([]);
+  const [tbExpanded, setTbExpanded] = useState<React.Key[]>([]);
+
   // Dynamic heights based on actual DOM measurements
   const [tabContentHeight, setTabContentHeight] = useState<number>(500);
   const [antTableScrollY, setAntTableScrollY] = useState<number>(400);
@@ -145,18 +150,20 @@ const BaoCaoTaiChinhPage: React.FC = () => {
     setLoading(true);
     try {
       const { startDate, endDate, periodType } = filterParams;
-      const [trial, stats, bsData, bsStats, kqkd, pnlComp] = await Promise.all([
+      const [trial, stats, bsData, bsStats, kqkd, pnlComp, accs] = await Promise.all([
         soCaiService.getTrialBalance(startDate, endDate),
         soCaiService.getStats(startDate, endDate),
         balanceSheetService.getData(endDate),
         balanceSheetService.getStats(endDate),
         kqkdService.getData({ startDate, endDate, periodType }),
         pnlService.getComparison(startDate, endDate, periodType),
+        taiKhoanService.getHierarchy().catch(() => [] as { ma: string; ten: string }[]),
       ]);
       setTbState({ trialBalance: trial, soCaiStats: stats });
       setBsState({ data: bsData, stats: bsStats });
       setKqkdData(kqkd);
       setPnlComparison(pnlComp);
+      setAccounts(accs.map((a) => ({ ma: a.ma, ten: a.ten })));
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -186,77 +193,70 @@ const BaoCaoTaiChinhPage: React.FC = () => {
 
   // ============ TAB 1: CÂN ĐỐI TÀI KHOẢN ============
 
-  // Compute children sums for parent accounts that have their own direct vouchers
-  const parentChildrenMap = useMemo(() => {
-    const rows = tbState.trialBalance;
-    const map = new Map<string, {
-      soDuDauKyNo: number; soDuDauKyCo: number;
-      phatSinhNo: number; phatSinhCo: number;
-      soDuCuoiKyNo: number; soDuCuoiKyCo: number;
-    }>();
-
-    for (const row of rows) {
-      const hasOwnValues =
-        row.soDuDauKyNo !== 0 || row.soDuDauKyCo !== 0 ||
-        row.phatSinhNo !== 0 || row.phatSinhCo !== 0 ||
-        row.soDuCuoiKyNo !== 0 || row.soDuCuoiKyCo !== 0;
-      if (!hasOwnValues) continue;
-
-      const children = rows.filter(r => r.taiKhoan !== row.taiKhoan && r.taiKhoan.startsWith(row.taiKhoan));
-      if (children.length === 0) continue;
-
-      const sums = children.reduce((acc, c) => ({
-        soDuDauKyNo: acc.soDuDauKyNo + c.soDuDauKyNo,
-        soDuDauKyCo: acc.soDuDauKyCo + c.soDuDauKyCo,
-        phatSinhNo: acc.phatSinhNo + c.phatSinhNo,
-        phatSinhCo: acc.phatSinhCo + c.phatSinhCo,
-        soDuCuoiKyNo: acc.soDuCuoiKyNo + c.soDuCuoiKyNo,
-        soDuCuoiKyCo: acc.soDuCuoiKyCo + c.soDuCuoiKyCo,
-      }), { soDuDauKyNo: 0, soDuDauKyCo: 0, phatSinhNo: 0, phatSinhCo: 0, soDuCuoiKyNo: 0, soDuCuoiKyCo: 0 });
-
-      map.set(row.taiKhoan, sums);
-    }
-    return map;
-  }, [tbState.trialBalance]);
+  const trialBalanceTree = useMemo(
+    () =>
+      buildAccountTree(
+        tbState.trialBalance,
+        accounts,
+        (r) => r.taiKhoan,
+        ['soDuDauKyNo', 'soDuDauKyCo', 'phatSinhNo', 'phatSinhCo', 'soDuCuoiKyNo', 'soDuCuoiKyCo'],
+        (acc) => ({
+          taiKhoan: acc.ma,
+          tenTaiKhoan: acc.ten,
+          soDuDauKyNo: 0,
+          soDuDauKyCo: 0,
+          phatSinhNo: 0,
+          phatSinhCo: 0,
+          soDuCuoiKyNo: 0,
+          soDuCuoiKyCo: 0,
+        }),
+      ),
+    [tbState.trialBalance, accounts],
+  );
 
   type TrialBalanceAmountField = 'soDuDauKyNo' | 'soDuDauKyCo' | 'phatSinhNo' | 'phatSinhCo' | 'soDuCuoiKyNo' | 'soDuCuoiKyCo';
 
-  const renderTrialAmount = (v: number, record: TrialBalance, field: TrialBalanceAmountField) => {
-    const childrenSums = parentChildrenMap.get(record.taiKhoan);
-    const childrenVal = childrenSums?.[field] ?? 0;
-    if (childrenVal > 0 && v > 0) {
-      return (
-        <span style={{ whiteSpace: 'nowrap' }}>
-          <span style={{ color: '#52c41a' }}>{formatCurrency(childrenVal)}</span>
-          <span style={{ color: '#fa8c16', marginLeft: 4 }}>+{formatCurrency(v)}</span>
-        </span>
-      );
+  const renderTrialAmount = (record: TreeNode<TrialBalance>, field: TrialBalanceAmountField) => {
+    const ownVal = Number(record[field]) || 0;
+    if (record.__isParent) {
+      const childrenVal = record.__rollup[field] ?? 0;
+      if (childrenVal > 0 && ownVal > 0) {
+        return (
+          <span style={{ whiteSpace: 'nowrap' }}>
+            <span style={{ color: '#52c41a' }}>{formatCurrency(childrenVal)}</span>
+            <span style={{ color: '#fa8c16', marginLeft: 4 }}>+{formatCurrency(ownVal)}</span>
+          </span>
+        );
+      }
+      if (childrenVal > 0) {
+        return <span style={{ color: '#52c41a' }}>{formatCurrency(childrenVal)}</span>;
+      }
     }
-    return <CurrencyCell value={v} />;
+    return <CurrencyCell value={ownVal} />;
   };
 
-  const trialBalanceColumns: ColumnsType<TrialBalance> = [
+  const trialBalanceColumns: ColumnsType<TreeNode<TrialBalance>> = [
     { title: 'Tài khoản', dataIndex: 'taiKhoan', key: 'taiKhoan', width: 100, fixed: 'left' },
     { title: 'Tên tài khoản', dataIndex: 'tenTaiKhoan', key: 'tenTaiKhoan', width: 250, fixed: 'left' },
     {
       title: 'Số dư đầu kỳ',
       children: [
-        { title: 'Nợ', dataIndex: 'soDuDauKyNo', key: 'soDuDauKyNo', width: 180, align: 'right' as const, render: (v: number, r: TrialBalance) => renderTrialAmount(v, r, 'soDuDauKyNo') },
-        { title: 'Có', dataIndex: 'soDuDauKyCo', key: 'soDuDauKyCo', width: 180, align: 'right' as const, render: (v: number, r: TrialBalance) => renderTrialAmount(v, r, 'soDuDauKyCo') },
+        { title: 'Nợ', dataIndex: 'soDuDauKyNo', key: 'soDuDauKyNo', width: 180, align: 'right' as const, render: (_: number, r: TreeNode<TrialBalance>) => renderTrialAmount(r, 'soDuDauKyNo') },
+        { title: 'Có', dataIndex: 'soDuDauKyCo', key: 'soDuDauKyCo', width: 180, align: 'right' as const, render: (_: number, r: TreeNode<TrialBalance>) => renderTrialAmount(r, 'soDuDauKyCo') },
       ],
     },
     {
       title: 'Phát sinh trong kỳ',
       children: [
-        { title: 'Nợ', dataIndex: 'phatSinhNo', key: 'phatSinhNo', width: 180, align: 'right' as const, render: (v: number, r: TrialBalance) => renderTrialAmount(v, r, 'phatSinhNo') },
-        { title: 'Có', dataIndex: 'phatSinhCo', key: 'phatSinhCo', width: 180, align: 'right' as const, render: (v: number, r: TrialBalance) => renderTrialAmount(v, r, 'phatSinhCo') },
+        { title: 'Nợ', dataIndex: 'phatSinhNo', key: 'phatSinhNo', width: 180, align: 'right' as const, render: (_: number, r: TreeNode<TrialBalance>) => renderTrialAmount(r, 'phatSinhNo') },
+        { title: 'Có', dataIndex: 'phatSinhCo', key: 'phatSinhCo', width: 180, align: 'right' as const, render: (_: number, r: TreeNode<TrialBalance>) => renderTrialAmount(r, 'phatSinhCo') },
       ],
     },
     {
       title: 'Số dư cuối kỳ',
       children: [
-        { title: 'Nợ', dataIndex: 'soDuCuoiKyNo', key: 'soDuCuoiKyNo', width: 180, align: 'right' as const, render: (v: number, r: TrialBalance) => renderTrialAmount(v, r, 'soDuCuoiKyNo') },
-        { title: 'Có', dataIndex: 'soDuCuoiKyCo', key: 'soDuCuoiKyCo', width: 180, align: 'right' as const, render: (v: number, r: TrialBalance) => renderTrialAmount(v, r, 'soDuCuoiKyCo') },
+        { title: 'Nợ', dataIndex: 'soDuCuoiKyNo', key: 'soDuCuoiKyNo', width: 180, align: 'right' as const, render: (_: number, r: TreeNode<TrialBalance>) => renderTrialAmount(r, 'soDuCuoiKyNo') },
+        { title: 'Có', dataIndex: 'soDuCuoiKyCo', key: 'soDuCuoiKyCo', width: 180, align: 'right' as const, render: (_: number, r: TreeNode<TrialBalance>) => renderTrialAmount(r, 'soDuCuoiKyCo') },
       ],
     },
   ];
@@ -451,11 +451,23 @@ const BaoCaoTaiChinhPage: React.FC = () => {
                 {tbState.soCaiStats && !tbState.soCaiStats.canDoi && (
                   <Alert message="Cảnh báo: Tổng phát sinh Nợ và Có không cân đối!" type="warning" showIcon style={{ marginBottom: 16 }} />
                 )}
-                <Table
+                <Space style={{ marginBottom: 8 }}>
+                  <Button size="small" onClick={() => setTbExpanded(collectParentKeys(trialBalanceTree))}>
+                    Mở tất cả
+                  </Button>
+                  <Button size="small" onClick={() => setTbExpanded([])}>
+                    Thu gọn
+                  </Button>
+                </Space>
+                <Table<TreeNode<TrialBalance>>
                   className="excel-table"
                   columns={trialBalanceColumns}
-                  dataSource={tbState.trialBalance}
-                  rowKey="taiKhoan"
+                  dataSource={trialBalanceTree}
+                  rowKey="__ma"
+                  expandable={{
+                    expandedRowKeys: tbExpanded,
+                    onExpandedRowsChange: (keys) => setTbExpanded([...keys]),
+                  }}
                   loading={loading}
                   bordered
                   size="small"
