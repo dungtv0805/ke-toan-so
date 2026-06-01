@@ -128,6 +128,8 @@ const BaoCaoTaiChinhPage: React.FC = () => {
 
   const [accounts, setAccounts] = useState<{ ma: string; ten: string }[]>([]);
   const [tbExpanded, setTbExpanded] = useState<React.Key[]>([]);
+  const [bsTaiSanExpanded, setBsTaiSanExpanded] = useState<React.Key[]>([]);
+  const [bsNguonVonExpanded, setBsNguonVonExpanded] = useState<React.Key[]>([]);
 
   // Dynamic heights based on actual DOM measurements
   const [tabContentHeight, setTabContentHeight] = useState<number>(500);
@@ -165,6 +167,8 @@ const BaoCaoTaiChinhPage: React.FC = () => {
       setPnlComparison(pnlComp);
       setAccounts(accs.map((a) => ({ ma: a.ma, ten: a.ten })));
       setTbExpanded([]);
+      setBsTaiSanExpanded([]);
+      setBsNguonVonExpanded([]);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -213,6 +217,41 @@ const BaoCaoTaiChinhPage: React.FC = () => {
         }),
       ),
     [tbState.trialBalance, accounts],
+  );
+
+  const buildBsTree = useCallback((items: BalanceSheetItem[]): TreeNode<BalanceSheetItem>[] => {
+    const header = items.find((i) => i.isSection);
+    const leaves = items.filter((i) => !i.isSection);
+    const tree = buildAccountTree(
+      leaves,
+      accounts,
+      (r) => r.ma,
+      ['dauNam', 'cuoiKy'],
+      (acc) => ({
+        ma: acc.ma,
+        tenChiTieu: `${acc.ma} - ${acc.ten}`,
+        dauNam: 0,
+        cuoiKy: 0,
+        level: 1,
+      }),
+    );
+    if (!header) return tree;
+    const headerNode = {
+      ...header,
+      __ma: header.ma,
+      __isParent: false,
+      __rollup: {} as Record<string, number>,
+    } as TreeNode<BalanceSheetItem>;
+    return [headerNode, ...tree];
+  }, [accounts]);
+
+  const taiSanTree = useMemo(
+    () => (bsState.data ? buildBsTree(bsState.data.taiSan) : []),
+    [bsState.data, buildBsTree],
+  );
+  const nguonVonTree = useMemo(
+    () => (bsState.data ? buildBsTree(bsState.data.nguonVon) : []),
+    [bsState.data, buildBsTree],
   );
 
   type TrialBalanceAmountField = 'soDuDauKyNo' | 'soDuDauKyCo' | 'phatSinhNo' | 'phatSinhCo' | 'soDuCuoiKyNo' | 'soDuCuoiKyCo';
@@ -264,27 +303,33 @@ const BaoCaoTaiChinhPage: React.FC = () => {
 
   // ============ TAB 2: CÂN ĐỐI KẾ TOÁN ============
 
-  const balanceSheetColumns: ColumnsType<BalanceSheetItem> = [
+  const balanceSheetColumns: ColumnsType<TreeNode<BalanceSheetItem>> = [
     {
       title: 'Chỉ tiêu', dataIndex: 'tenChiTieu', key: 'tenChiTieu', width: 350,
-      render: (text: string, record: BalanceSheetItem) => (
-        <span style={{ fontWeight: record.isSection ? 700 : record.isTotal ? 600 : 400, paddingLeft: record.level * 16, color: record.isSection ? '#1890ff' : 'inherit' }}>{text}</span>
+      render: (text: string, record: TreeNode<BalanceSheetItem>) => (
+        <span style={{ fontWeight: record.isSection ? 700 : record.isTotal || record.__isParent ? 600 : 400, color: record.isSection ? '#1890ff' : 'inherit' }}>{text}</span>
       ),
     },
     { title: 'Mã số', dataIndex: 'ma', key: 'ma', width: 80, align: 'center' },
     {
       title: 'Số đầu năm', dataIndex: 'dauNam', key: 'dauNam', width: 150, align: 'right',
-      render: (value: number, record: BalanceSheetItem) => <CurrencyCell value={value} bold={record.isSection || record.isTotal} />,
+      render: (value: number, record: TreeNode<BalanceSheetItem>) => (
+        <CurrencyCell value={record.__isParent ? (record.__rollup.dauNam ?? 0) : value} bold={record.isSection || record.isTotal || record.__isParent} />
+      ),
     },
     {
       title: 'Số cuối kỳ', dataIndex: 'cuoiKy', key: 'cuoiKy', width: 150, align: 'right',
-      render: (value: number, record: BalanceSheetItem) => <CurrencyCell value={value} bold={record.isSection || record.isTotal} />,
+      render: (value: number, record: TreeNode<BalanceSheetItem>) => (
+        <CurrencyCell value={record.__isParent ? (record.__rollup.cuoiKy ?? 0) : value} bold={record.isSection || record.isTotal || record.__isParent} />
+      ),
     },
     {
       title: 'Chênh lệch', key: 'chenhLech', width: 130, align: 'right',
-      render: (_: unknown, record: BalanceSheetItem) => {
-        if (record.dauNam === 0 && record.cuoiKy === 0) return '-';
-        const diff = record.cuoiKy - record.dauNam;
+      render: (_: unknown, record: TreeNode<BalanceSheetItem>) => {
+        const dauNam = record.__isParent ? (record.__rollup.dauNam ?? 0) : record.dauNam;
+        const cuoiKy = record.__isParent ? (record.__rollup.cuoiKy ?? 0) : record.cuoiKy;
+        if (dauNam === 0 && cuoiKy === 0) return '-';
+        const diff = cuoiKy - dauNam;
         return (
           <Space>
             <span style={{ color: diff >= 0 ? '#52c41a' : '#ff4d4f' }}>{formatCurrencyShort(diff)}</span>
@@ -513,10 +558,42 @@ const BaoCaoTaiChinhPage: React.FC = () => {
                   <Alert message="Cảnh báo: Tổng tài sản và Tổng nguồn vốn không cân đối!" type="warning" showIcon style={{ marginBottom: 16 }} />
                 )}
                 <Card title="TÀI SẢN" size="small" style={{ marginBottom: 16 }}>
-                  <Table className="excel-table" columns={balanceSheetColumns} dataSource={bsState.data.taiSan} rowKey="ma" loading={loading} bordered size="small" pagination={false} />
+                  <div style={{ marginBottom: 8 }}>
+                    <Space>
+                      <Button size="small" onClick={() => setBsTaiSanExpanded(collectParentKeys(taiSanTree))}>Mở tất cả</Button>
+                      <Button size="small" onClick={() => setBsTaiSanExpanded([])}>Thu gọn</Button>
+                    </Space>
+                  </div>
+                  <Table<TreeNode<BalanceSheetItem>>
+                    className="excel-table"
+                    columns={balanceSheetColumns}
+                    dataSource={taiSanTree}
+                    rowKey="__ma"
+                    loading={loading}
+                    bordered
+                    size="small"
+                    pagination={false}
+                    expandable={{ expandedRowKeys: bsTaiSanExpanded, onExpandedRowsChange: (keys) => setBsTaiSanExpanded([...keys]) }}
+                  />
                 </Card>
                 <Card title="NGUỒN VỐN" size="small">
-                  <Table className="excel-table" columns={balanceSheetColumns} dataSource={bsState.data.nguonVon} rowKey="ma" loading={loading} bordered size="small" pagination={false} />
+                  <div style={{ marginBottom: 8 }}>
+                    <Space>
+                      <Button size="small" onClick={() => setBsNguonVonExpanded(collectParentKeys(nguonVonTree))}>Mở tất cả</Button>
+                      <Button size="small" onClick={() => setBsNguonVonExpanded([])}>Thu gọn</Button>
+                    </Space>
+                  </div>
+                  <Table<TreeNode<BalanceSheetItem>>
+                    className="excel-table"
+                    columns={balanceSheetColumns}
+                    dataSource={nguonVonTree}
+                    rowKey="__ma"
+                    loading={loading}
+                    bordered
+                    size="small"
+                    pagination={false}
+                    expandable={{ expandedRowKeys: bsNguonVonExpanded, onExpandedRowsChange: (keys) => setBsNguonVonExpanded([...keys]) }}
+                  />
                 </Card>
               </div>
             ) : null,
