@@ -39,6 +39,20 @@ export interface BalanceSheetReport {
   };
 }
 
+/**
+ * Tính phần đóng góp của số dư đầu kỳ thủ công vào số dư 1 phía (Nợ/Có).
+ * Phía NO (tài sản): duNo - duCo. Phía CO (nguồn vốn): duCo - duNo.
+ */
+export function openingNetForSide(
+  opening: { duNo: number; duCo: number } | undefined,
+  side: 'NO' | 'CO',
+): number {
+  if (!opening) return 0;
+  return side === 'NO'
+    ? opening.duNo - opening.duCo
+    : opening.duCo - opening.duNo;
+}
+
 @Injectable()
 export class BaoCaoService {
   constructor(private readonly serviceClient: ServiceClient) {}
@@ -133,7 +147,7 @@ export class BaoCaoService {
     authToken?: string,
     tenantId?: string,
   ): Promise<BalanceSheetReport> {
-    const [vouchersRes, accountsRes] = await Promise.all([
+    const [vouchersRes, accountsRes, openingRes] = await Promise.all([
       this.serviceClient.getNhatKyChung(
         '2000-01-01',
         asOfDate.toISOString(),
@@ -141,10 +155,19 @@ export class BaoCaoService {
         tenantId,
       ),
       this.serviceClient.getTaiKhoan(authToken, tenantId),
+      this.serviceClient.getSoDuDauKy(authToken, tenantId),
     ]);
 
     const vouchers = vouchersRes.success ? vouchersRes.data || [] : [];
     const accounts = accountsRes.success ? accountsRes.data || [] : [];
+    const openingItems =
+      openingRes.success && openingRes.data ? openingRes.data.items || [] : [];
+    const openingMap = new Map<string, { duNo: number; duCo: number }>(
+      openingItems.map((o) => [
+        o.maTaiKhoan,
+        { duNo: Number(o.duNo) || 0, duCo: Number(o.duCo) || 0 },
+      ]),
+    );
 
     const assetAccounts = accounts.filter(
       (a) => a.ma?.startsWith('1') || a.ma?.startsWith('2'),
@@ -158,7 +181,12 @@ export class BaoCaoService {
 
     // Calculate assets (debit balance)
     for (const account of assetAccounts) {
-      const amount = this.calculateAccountBalance(vouchers, account.ma, 'NO');
+      const amount = this.calculateAccountBalance(
+        vouchers,
+        account.ma,
+        'NO',
+        openingNetForSide(openingMap.get(account.ma), 'NO'),
+      );
       if (amount !== 0) {
         taiSan.push({ ma: account.ma, ten: account.ten, soTien: amount });
       }
@@ -166,7 +194,12 @@ export class BaoCaoService {
 
     // Calculate liabilities & equity (credit balance)
     for (const account of liabilityAccounts) {
-      const amount = this.calculateAccountBalance(vouchers, account.ma, 'CO');
+      const amount = this.calculateAccountBalance(
+        vouchers,
+        account.ma,
+        'CO',
+        openingNetForSide(openingMap.get(account.ma), 'CO'),
+      );
       if (amount !== 0) {
         nguonVon.push({ ma: account.ma, ten: account.ten, soTien: amount });
       }
@@ -409,8 +442,9 @@ export class BaoCaoService {
     vouchers: NhatKyChungEntry[],
     maTaiKhoan: string,
     type: 'NO' | 'CO',
+    openingNet = 0,
   ): number {
-    let balance = 0;
+    let balance = openingNet;
 
     for (const v of vouchers) {
       const maTKNo = v.danhMuc?.taiKhoanNo?.ma ?? v.taiKhoanNo;
