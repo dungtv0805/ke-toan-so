@@ -219,31 +219,53 @@ const BaoCaoTaiChinhPage: React.FC = () => {
     [tbState.trialBalance, accounts],
   );
 
-  const buildBsTree = useCallback((items: BalanceSheetItem[]): TreeNode<BalanceSheetItem>[] => {
-    const header = items.find((i) => i.isSection);
-    const leaves = items.filter((i) => !i.isSection);
-    const tree = buildAccountTree(
-      leaves,
-      accounts,
-      (r) => r.ma,
-      ['dauNam', 'cuoiKy'],
-      (acc) => ({
-        ma: acc.ma,
-        tenChiTieu: `${acc.ma} - ${acc.ten}`,
-        dauNam: 0,
-        cuoiKy: 0,
-        level: 1,
-      }),
-    );
-    if (!header) return tree;
-    const headerNode = {
-      ...header,
-      __ma: header.ma,
-      __isParent: false,
-      __rollup: {} as Record<string, number>,
-    } as TreeNode<BalanceSheetItem>;
-    return [headerNode, ...tree];
-  }, [accounts]);
+  const buildBsTree = useCallback(
+    (items: BalanceSheetItem[]): TreeNode<BalanceSheetItem>[] => {
+      const result: TreeNode<BalanceSheetItem>[] = [];
+      let i = 0;
+      while (i < items.length) {
+        const item = items[i];
+        if (item.isSection) {
+          result.push({
+            ...item,
+            __ma: item.ma,
+            __isParent: false,
+            __rollup: {} as Record<string, number>,
+          } as TreeNode<BalanceSheetItem>);
+          const leaves: BalanceSheetItem[] = [];
+          i++;
+          while (i < items.length && !items[i].isSection) {
+            leaves.push(items[i]);
+            i++;
+          }
+          const tree = buildAccountTree(
+            leaves,
+            accounts,
+            (r) => r.ma,
+            ['dauNam', 'cuoiKy'],
+            (acc) => ({
+              ma: acc.ma,
+              tenChiTieu: `${acc.ma} - ${acc.ten}`,
+              dauNam: 0,
+              cuoiKy: 0,
+              level: 1,
+            }),
+          );
+          result.push(...tree);
+        } else {
+          result.push({
+            ...item,
+            __ma: item.ma,
+            __isParent: false,
+            __rollup: {} as Record<string, number>,
+          } as TreeNode<BalanceSheetItem>);
+          i++;
+        }
+      }
+      return result;
+    },
+    [accounts],
+  );
 
   const taiSanTree = useMemo(
     () => (bsState.data ? buildBsTree(bsState.data.taiSan) : []),
