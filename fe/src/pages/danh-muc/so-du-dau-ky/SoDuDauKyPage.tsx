@@ -42,7 +42,7 @@ const SoDuDauKyPage: React.FC = () => {
     setLoading(true);
     try {
       const [accounts, opening] = await Promise.all([
-        taiKhoanService.getAll(),
+        taiKhoanService.getLeafAccounts(),
         soDuDauKyService.getAll(),
       ]);
       const openingMap = new Map(
@@ -90,7 +90,7 @@ const SoDuDauKyPage: React.FC = () => {
     );
   }, [rows]);
 
-  const canDoi = tongNo === tongCo;
+  const canDoi = Math.round(tongNo * 100) === Math.round(tongCo * 100);
 
   const filteredRows = useMemo(() => {
     if (!search.trim()) return rows;
