@@ -164,6 +164,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
       setKqkdData(kqkd);
       setPnlComparison(pnlComp);
       setAccounts(accs.map((a) => ({ ma: a.ma, ten: a.ten })));
+      setTbExpanded([]);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
