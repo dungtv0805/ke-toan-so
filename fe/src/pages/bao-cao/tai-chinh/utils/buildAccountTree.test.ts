@@ -1,0 +1,74 @@
+import { describe, it, expect } from 'vitest';
+import { buildAccountTree, collectParentKeys } from './buildAccountTree';
+
+interface Row {
+  ma: string;
+  ten: string;
+  val: number;
+}
+
+const chart = [
+  { ma: '112', ten: 'Tiền gửi NH' },
+  { ma: '1121', ten: 'VND' },
+  { ma: '11211', ten: 'VCB' },
+  { ma: '113', ten: 'Tiền đang chuyển' },
+  { ma: '131', ten: 'Phải thu KH' },
+];
+
+const make = (ma: string, ten: string): Row => ({ ma, ten, val: 0 });
+
+describe('buildAccountTree', () => {
+  it('lồng đa cấp theo prefix và roll-up tổng con cháu', () => {
+    const rows: Row[] = [
+      { ma: '112', ten: 'Tiền gửi NH', val: 50 },
+      { ma: '11211', ten: 'VCB', val: 200 },
+    ];
+    const tree = buildAccountTree(rows, chart, (r) => r.ma, ['val'], make);
+
+    // root duy nhất là 112 (113/131 không có dữ liệu → bị cắt)
+    expect(tree).toHaveLength(1);
+    const n112 = tree[0];
+    expect(n112.__ma).toBe('112');
+    expect(n112.__isParent).toBe(true);
+    expect(n112.val).toBe(50);          // giá trị riêng của 112
+    expect(n112.__rollup.val).toBe(200); // tổng con cháu (11211)
+
+    // 112 → 1121 (synthesized, không có report row) → 11211
+    expect(n112.children).toHaveLength(1);
+    const n1121 = n112.children![0];
+    expect(n1121.__ma).toBe('1121');
+    expect(n1121.val).toBe(0);           // synthesized → 0
+    expect(n1121.__rollup.val).toBe(200);
+    expect(n1121.children![0].__ma).toBe('11211');
+    expect(n1121.children![0].__isParent).toBe(false);
+    expect(n1121.children![0].val).toBe(200);
+  });
+
+  it('cắt nhánh không có dữ liệu', () => {
+    const rows: Row[] = [{ ma: '131', ten: 'Phải thu KH', val: 10 }];
+    const tree = buildAccountTree(rows, chart, (r) => r.ma, ['val'], make);
+    expect(tree.map((n) => n.__ma)).toEqual(['131']);
+    expect(tree[0].__isParent).toBe(false);
+  });
+
+  it('mã lạ không có trong chart → node gốc đơn lẻ', () => {
+    const rows: Row[] = [{ ma: '999', ten: 'Lạ', val: 7 }];
+    const tree = buildAccountTree(rows, chart, (r) => r.ma, ['val'], make);
+    expect(tree).toHaveLength(1);
+    expect(tree[0].__ma).toBe('999');
+    expect(tree[0].__isParent).toBe(false);
+  });
+
+  it('report rỗng → []', () => {
+    expect(buildAccountTree([], chart, (r: Row) => r.ma, ['val'], make)).toEqual([]);
+  });
+
+  it('collectParentKeys gom đúng các mã node cha', () => {
+    const rows: Row[] = [
+      { ma: '112', ten: 'x', val: 1 },
+      { ma: '11211', ten: 'y', val: 2 },
+    ];
+    const tree = buildAccountTree(rows, chart, (r) => r.ma, ['val'], make);
+    expect(collectParentKeys(tree).sort()).toEqual(['112', '1121']);
+  });
+});
