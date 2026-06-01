@@ -17,6 +17,7 @@ import { LoaiChungTuModule } from './loai-chung-tu/loai-chung-tu.module';
 import { NhomKhoanMucModule } from './nhom-khoan-muc/nhom-khoan-muc.module';
 import { LoaiGiaoDichModule } from './loai-giao-dich/loai-giao-dich.module';
 import { HopDongModule } from './hop-dong/hop-dong.module';
+import { SoDuDauKyModule } from './so-du-dau-ky/so-du-dau-ky.module';
 import { TenantModule } from './tenant/tenant.module';
 import {
   TaiKhoan,
@@ -34,6 +35,7 @@ import {
   NhomKhoanMuc,
   LoaiGiaoDich,
   HopDong,
+  SoDuDauKy,
 } from '@app/entities';
 
 @Module({
@@ -57,6 +59,7 @@ import {
       NhomKhoanMuc,
       LoaiGiaoDich,
       HopDong,
+      SoDuDauKy,
     ]),
     TaiKhoanModule,
     DoiTuongModule,
@@ -73,6 +76,7 @@ import {
     NhomKhoanMucModule,
     LoaiGiaoDichModule,
     HopDongModule,
+    SoDuDauKyModule,
     TenantModule,
   ],
 })
