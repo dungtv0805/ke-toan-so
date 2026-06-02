@@ -49,7 +49,7 @@ const taiKhoanSchema = z.object({
   capDo: z.number().min(1).max(5),
   loai: z.enum(["TAI_SAN", "NO_PHAI_TRA", "VON_CHU_SO_HUU", "DOANH_THU", "CHI_PHI", "THU_NHAP_KHAC", "CHI_PHI_KHAC", "XAC_DINH_KQKD"]),
   nhom: z.enum(["NO", "CO", "LUONG_TINH", "KHONG_CO_SO_DU"]),
-  chiTietTheo: z.enum(["KHACH_HANG", "NHA_CUNG_CAP", "NHAN_VIEN", "NHA_THAU", "NGAN_HANG_QUY"]).optional(),
+  chiTietTheo: z.enum(["KHACH_HANG", "NHA_CUNG_CAP", "NHAN_VIEN", "NHA_THAU", "NGAN_HANG_QUY"]).nullable().optional(),
   parentId: z.string().nullable().optional(),
   moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").nullable().optional(),
 });
@@ -177,9 +177,11 @@ const TaiKhoanPage: React.FC = () => {
         return;
       }
 
-      // Send empty string as-is so BE sanitizeUpdateDto can convert to null
+      // Send empty string as-is so BE sanitizeUpdateDto can convert to null.
+      // chiTietTheo: gửi null khi bỏ chọn để BE xoá giá trị cũ (undefined sẽ bị JSON bỏ qua).
       const payload = {
         ...validation.data,
+        chiTietTheo: validation.data.chiTietTheo ?? null,
       };
 
       setLoading(true);

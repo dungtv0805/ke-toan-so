@@ -206,7 +206,25 @@ const SoDuDauKyPage: React.FC = () => {
       title: 'Chi tiết theo đối tượng', dataIndex: 'chiTietId', width: 300,
       render: (_: string, record: SoDuRow) => {
         if (!record.chiTietTheo) return <Text type="secondary">—</Text>;
-        const opts = optCache[record.chiTietTheo] || [];
+        let opts = optCache[record.chiTietTheo] || [];
+        // Dòng đã lưu: options chưa nạp → seed 1 option từ tên denormalize để
+        // hiển thị tên thay vì UUID trước khi user focus.
+        if (
+          record.chiTietId &&
+          !opts.some((o) => o.value === record.chiTietId)
+        ) {
+          opts = [
+            {
+              value: record.chiTietId,
+              label: record.chiTietMa
+                ? `${record.chiTietMa} - ${record.chiTietTen ?? ''}`
+                : record.chiTietTen ?? record.chiTietId,
+              ma: record.chiTietMa ?? '',
+              ten: record.chiTietTen ?? '',
+            },
+            ...opts,
+          ];
+        }
         return (
           <Select
             style={{ width: '100%' }}
