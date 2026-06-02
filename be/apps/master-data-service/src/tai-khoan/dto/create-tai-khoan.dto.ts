@@ -7,7 +7,7 @@ import {
   Min,
   Max,
 } from 'class-validator';
-import { LoaiTaiKhoan, NhomTaiKhoan } from '@app/entities';
+import { LoaiTaiKhoan, NhomTaiKhoan, ChiTietTheo } from '@app/entities';
 
 export class CreateTaiKhoanDto {
   @IsString()
@@ -36,4 +36,8 @@ export class CreateTaiKhoanDto {
   @IsString()
   @IsOptional()
   moTa?: string;
+
+  @IsEnum(ChiTietTheo)
+  @IsOptional()
+  chiTietTheo?: ChiTietTheo;
 }
