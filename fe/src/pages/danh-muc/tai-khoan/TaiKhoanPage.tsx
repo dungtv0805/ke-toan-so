@@ -49,9 +49,18 @@ const taiKhoanSchema = z.object({
   capDo: z.number().min(1).max(5),
   loai: z.enum(["TAI_SAN", "NO_PHAI_TRA", "VON_CHU_SO_HUU", "DOANH_THU", "CHI_PHI", "THU_NHAP_KHAC", "CHI_PHI_KHAC", "XAC_DINH_KQKD"]),
   nhom: z.enum(["NO", "CO", "LUONG_TINH", "KHONG_CO_SO_DU"]),
+  chiTietTheo: z.enum(["KHACH_HANG", "NHA_CUNG_CAP", "NHAN_VIEN", "NHA_THAU", "NGAN_HANG_QUY"]).optional(),
   parentId: z.string().nullable().optional(),
   moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").nullable().optional(),
 });
+
+const chiTietTheoOptions = [
+  { value: "KHACH_HANG", label: "Khách hàng" },
+  { value: "NHA_CUNG_CAP", label: "Nhà cung cấp" },
+  { value: "NHAN_VIEN", label: "Nhân viên" },
+  { value: "NHA_THAU", label: "Nhà thầu" },
+  { value: "NGAN_HANG_QUY", label: "Ngân hàng & Quỹ" },
+];
 
 // Sắp xếp tài khoản theo hierarchy: cha trước, con ngay sau cha (DFS)
 const sortHierarchy = (accounts: TaiKhoan[]): TaiKhoan[] => {
@@ -519,6 +528,19 @@ const TaiKhoanPage: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
+
+          <Form.Item
+            name="chiTietTheo"
+            label="Chi tiết theo"
+            className="mb-3"
+            tooltip="Khi nhập số dư đầu kỳ, TK này sẽ nhập chi tiết theo từng đối tượng"
+          >
+            <Select
+              allowClear
+              placeholder="— Không chi tiết —"
+              options={chiTietTheoOptions}
+            />
+          </Form.Item>
 
           <Form.Item
             name="moTa"
