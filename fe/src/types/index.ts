@@ -9,6 +9,7 @@ export interface TaiKhoan {
   nhom: 'NO' | 'CO' | 'LUONG_TINH' | 'KHONG_CO_SO_DU';
   parentId?: string;
   moTa?: string;
+  chiTietTheo?: 'KHACH_HANG' | 'NHA_CUNG_CAP' | 'NHAN_VIEN' | 'NHA_THAU' | 'NGAN_HANG_QUY';
 }
 
 export interface DoiTuong {
