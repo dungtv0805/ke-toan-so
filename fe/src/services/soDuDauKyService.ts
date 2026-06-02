@@ -8,6 +8,7 @@ export interface SoDuDauKyItem {
   chiTietId?: string;
   chiTietMa?: string;
   chiTietTen?: string;
+  nganHang?: string;
 }
 
 export interface SoDuDauKyData {

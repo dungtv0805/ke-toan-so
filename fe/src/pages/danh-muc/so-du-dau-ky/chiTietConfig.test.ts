@@ -41,3 +41,30 @@ describe('validateRows', () => {
     expect(validateRows(rows).ok).toBe(true);
   });
 });
+
+describe('validateRows nganHang', () => {
+  const row = (p: Partial<SoDuRow>): SoDuRow => ({
+    key: Math.random().toString(),
+    maTaiKhoan: '1111',
+    tenTaiKhoan: 'TM',
+    duNo: 0,
+    duCo: 0,
+    ...p,
+  });
+
+  it('cùng mã TK nhưng khác ngân hàng gõ tay → KHÔNG trùng', () => {
+    const r = validateRows([
+      row({ nganHang: 'VCB' }),
+      row({ nganHang: 'ACB' }),
+    ]);
+    expect(r.ok).toBe(true);
+  });
+
+  it('cùng mã TK + cùng ngân hàng gõ tay → trùng', () => {
+    const r = validateRows([
+      row({ nganHang: 'VCB' }),
+      row({ nganHang: 'VCB' }),
+    ]);
+    expect(r.ok).toBe(false);
+  });
+});

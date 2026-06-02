@@ -26,6 +26,7 @@ export interface SoDuRow {
   chiTietId?: string;
   chiTietMa?: string;
   chiTietTen?: string;
+  nganHang?: string;
   duNo: number;
   duCo: number;
 }
@@ -47,7 +48,7 @@ export function validateRows(rows: SoDuRow[]): ValidateResult {
         message: `Tài khoản ${r.maTaiKhoan} cần chọn đối tượng (${CHI_TIET_LABEL[r.chiTietTheo]})`,
       };
     }
-    const dupKey = `${r.maTaiKhoan}::${r.chiTietId ?? ''}`;
+    const dupKey = `${r.maTaiKhoan}::${r.chiTietId ?? ''}::${r.nganHang ?? ''}`;
     if (seen.has(dupKey)) {
       return {
         ok: false,
