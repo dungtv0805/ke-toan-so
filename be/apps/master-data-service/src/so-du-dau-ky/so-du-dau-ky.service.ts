@@ -66,13 +66,14 @@ export class SoDuDauKyService {
 
     const ngayApDung = new Date(dto.ngayApDung);
 
-    // Giữ dòng có số dư khác 0 HOẶC có đối tượng (chiTietId)
+    // Giữ dòng có số dư khác 0 HOẶC có đối tượng (chiTietId) HOẶC có ngân hàng gõ tay
     const toSave = dto.items
       .filter(
         (i) =>
           (Number(i.duNo) || 0) !== 0 ||
           (Number(i.duCo) || 0) !== 0 ||
-          !!i.chiTietId,
+          !!i.chiTietId ||
+          !!i.nganHang,
       )
       .map((i) =>
         this.repo.create({
