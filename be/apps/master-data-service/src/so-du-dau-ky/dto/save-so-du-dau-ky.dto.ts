@@ -3,6 +3,7 @@ import {
   IsArray,
   IsDateString,
   IsNumber,
+  IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
@@ -16,6 +17,22 @@ export class SoDuDauKyItemDto {
 
   @IsNumber()
   duCo: number;
+
+  @IsString()
+  @IsOptional()
+  chiTietType?: string;
+
+  @IsString()
+  @IsOptional()
+  chiTietId?: string;
+
+  @IsString()
+  @IsOptional()
+  chiTietMa?: string;
+
+  @IsString()
+  @IsOptional()
+  chiTietTen?: string;
 }
 
 export class SaveSoDuDauKyDto {

@@ -7,7 +7,15 @@ import { SaveSoDuDauKyDto } from './dto';
 
 export interface SoDuDauKyResult {
   ngayApDung: Date | null;
-  items: Array<{ maTaiKhoan: string; duNo: number; duCo: number }>;
+  items: Array<{
+    maTaiKhoan: string;
+    duNo: number;
+    duCo: number;
+    chiTietType?: string;
+    chiTietId?: string;
+    chiTietMa?: string;
+    chiTietTen?: string;
+  }>;
   tongNo: number;
   tongCo: number;
   canDoi: boolean;
@@ -35,6 +43,10 @@ export class SoDuDauKyService {
       maTaiKhoan: r.maTaiKhoan,
       duNo: Number(r.duNo) || 0,
       duCo: Number(r.duCo) || 0,
+      chiTietType: r.chiTietType,
+      chiTietId: r.chiTietId,
+      chiTietMa: r.chiTietMa,
+      chiTietTen: r.chiTietTen,
     }));
 
     const tongNo = items.reduce((s, i) => s + i.duNo, 0);
@@ -60,6 +72,10 @@ export class SoDuDauKyService {
           maTaiKhoan: i.maTaiKhoan,
           duNo: Number(i.duNo) || 0,
           duCo: Number(i.duCo) || 0,
+          chiTietType: i.chiTietType,
+          chiTietId: i.chiTietId,
+          chiTietMa: i.chiTietMa,
+          chiTietTen: i.chiTietTen,
           ngayApDung,
           ...(tenantId ? { tenantId } : {}),
         }),
