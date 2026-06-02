@@ -15,6 +15,7 @@ export interface SoDuDauKyResult {
     chiTietId?: string;
     chiTietMa?: string;
     chiTietTen?: string;
+    nganHang?: string;
   }>;
   tongNo: number;
   tongCo: number;
@@ -47,6 +48,7 @@ export class SoDuDauKyService {
       chiTietId: r.chiTietId,
       chiTietMa: r.chiTietMa,
       chiTietTen: r.chiTietTen,
+      nganHang: r.nganHang,
     }));
 
     const tongNo = items.reduce((s, i) => s + i.duNo, 0);
@@ -64,9 +66,14 @@ export class SoDuDauKyService {
 
     const ngayApDung = new Date(dto.ngayApDung);
 
-    // Chỉ lưu dòng có số dư khác 0
+    // Giữ dòng có số dư khác 0 HOẶC có đối tượng (chiTietId)
     const toSave = dto.items
-      .filter((i) => (Number(i.duNo) || 0) !== 0 || (Number(i.duCo) || 0) !== 0)
+      .filter(
+        (i) =>
+          (Number(i.duNo) || 0) !== 0 ||
+          (Number(i.duCo) || 0) !== 0 ||
+          !!i.chiTietId,
+      )
       .map((i) =>
         this.repo.create({
           maTaiKhoan: i.maTaiKhoan,
@@ -76,6 +83,7 @@ export class SoDuDauKyService {
           chiTietId: i.chiTietId,
           chiTietMa: i.chiTietMa,
           chiTietTen: i.chiTietTen,
+          nganHang: i.nganHang,
           ngayApDung,
           ...(tenantId ? { tenantId } : {}),
         }),
