@@ -4,6 +4,10 @@ export interface SoDuDauKyItem {
   maTaiKhoan: string;
   duNo: number;
   duCo: number;
+  chiTietType?: string;
+  chiTietId?: string;
+  chiTietMa?: string;
+  chiTietTen?: string;
 }
 
 export interface SoDuDauKyData {

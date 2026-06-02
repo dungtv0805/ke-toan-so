@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RequestOptions, ServiceResponse } from './interfaces';
 import { BaseServiceClient } from './service-client.base';
+import { aggregateOpeningByAccount } from './helpers/aggregate-opening';
 
 // Import types from DTO
 import type {
@@ -143,9 +144,23 @@ export class ServiceClient extends BaseServiceClient {
     if (authToken) headers['Authorization'] = authToken;
     if (tenantId) headers['x-tenant-id'] = tenantId;
 
-    return this.get('master-data', '/so-du-dau-ky', {
+    const res = await this.get<{
+      ngayApDung: string | null;
+      items: Array<{ maTaiKhoan: string; duNo: number; duCo: number }>;
+    }>('master-data', '/so-du-dau-ky', {
       headers: Object.keys(headers).length ? headers : undefined,
     });
+
+    if (res.success && res.data) {
+      return {
+        ...res,
+        data: {
+          ngayApDung: res.data.ngayApDung,
+          items: aggregateOpeningByAccount(res.data.items as any),
+        },
+      };
+    }
+    return res;
   }
 
   // ============ Voucher Service Methods ============

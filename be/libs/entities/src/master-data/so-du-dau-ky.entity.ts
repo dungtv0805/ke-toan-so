@@ -14,6 +14,18 @@ export class SoDuDauKy extends BaseEntity {
 
   @Column({ type: 'timestamp', nullable: true })
   ngayApDung: Date;
+
+  @Column({ nullable: true })
+  chiTietType?: string;
+
+  @Column({ nullable: true })
+  chiTietId?: string;
+
+  @Column({ nullable: true })
+  chiTietMa?: string;
+
+  @Column({ nullable: true })
+  chiTietTen?: string;
 }
 
 export interface SoDuDauKyEntities {
