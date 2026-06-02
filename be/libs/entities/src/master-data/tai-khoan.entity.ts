@@ -19,6 +19,14 @@ export enum NhomTaiKhoan {
   KHONG_CO_SO_DU = 'KHONG_CO_SO_DU', // Không có số dư
 }
 
+export enum ChiTietTheo {
+  KHACH_HANG = 'KHACH_HANG',
+  NHA_CUNG_CAP = 'NHA_CUNG_CAP',
+  NHAN_VIEN = 'NHAN_VIEN',
+  NHA_THAU = 'NHA_THAU',
+  NGAN_HANG_QUY = 'NGAN_HANG_QUY',
+}
+
 @Entity('tai_khoan')
 export class TaiKhoan extends BaseEntity {
   @Column()
@@ -41,6 +49,9 @@ export class TaiKhoan extends BaseEntity {
 
   @Column({ nullable: true })
   moTa: string;
+
+  @Column({ type: 'enum', enum: ChiTietTheo, nullable: true })
+  chiTietTheo?: ChiTietTheo;
 
   @Column({ default: true })
   isActive: boolean;
