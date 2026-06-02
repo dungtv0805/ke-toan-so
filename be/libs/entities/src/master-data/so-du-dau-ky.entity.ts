@@ -26,6 +26,9 @@ export class SoDuDauKy extends BaseEntity {
 
   @Column({ nullable: true })
   chiTietTen?: string;
+
+  @Column({ nullable: true })
+  nganHang?: string;
 }
 
 export interface SoDuDauKyEntities {

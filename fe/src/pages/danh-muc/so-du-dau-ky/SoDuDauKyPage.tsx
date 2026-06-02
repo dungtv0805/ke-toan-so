@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  Card, Table, Button, InputNumber, DatePicker, Select, Space,
+  Card, Table, Button, InputNumber, DatePicker, Select, Input, Space,
   Typography, Breadcrumb, message, Alert, Popconfirm,
 } from 'antd';
 import { HomeOutlined, SaveOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
@@ -14,6 +14,7 @@ import {
   CHI_TIET_LABEL, DOI_TUONG_LOAI, validateRows,
   type ChiTietLoai, type SoDuRow,
 } from './chiTietConfig';
+import { buildSoDuTree, collectExpandKeys, type SoDuTreeNode } from './buildSoDuTree';
 
 const { Text } = Typography;
 
@@ -21,6 +22,24 @@ const formatCurrency = (v: number) =>
   new Intl.NumberFormat('vi-VN').format(v || 0);
 
 interface DoiTuongOption { value: string; label: string; ma: string; ten: string; }
+interface LeafAccount { ma: string; ten: string; chiTietTheo?: ChiTietLoai; }
+
+// Dòng đã lưu nhưng options chưa nạp → seed 1 option từ tên đã denormalize
+// để hiển thị tên thay vì UUID trước khi user focus vào Select.
+const seedCurrentOpt = (opts: DoiTuongOption[], row: SoDuRow): DoiTuongOption[] => {
+  if (!row.chiTietId || opts.some((o) => o.value === row.chiTietId)) return opts;
+  return [
+    {
+      value: row.chiTietId,
+      label: row.chiTietMa
+        ? `${row.chiTietMa} - ${row.chiTietTen ?? ''}`
+        : row.chiTietTen ?? row.chiTietId,
+      ma: row.chiTietMa ?? '',
+      ten: row.chiTietTen ?? '',
+    },
+    ...opts,
+  ];
+};
 
 let rowSeq = 0;
 const newKey = () => `row-${++rowSeq}-${Date.now()}`;
@@ -28,20 +47,19 @@ const newKey = () => `row-${++rowSeq}-${Date.now()}`;
 const SoDuDauKyPage: React.FC = () => {
   const { canEdit } = usePagePermission('/danh-muc/so-du-dau-ky');
   const [rows, setRows] = useState<SoDuRow[]>([]);
-  const [accounts, setAccounts] = useState<
-    { ma: string; ten: string; chiTietTheo?: ChiTietLoai }[]
-  >([]);
+  const [leafAccounts, setLeafAccounts] = useState<LeafAccount[]>([]);
+  const [chart, setChart] = useState<{ ma: string; ten: string }[]>([]);
   const [ngayApDung, setNgayApDung] = useState<Dayjs>(dayjs().startOf('year'));
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  // cache options doi tuong theo loai
   const [optCache, setOptCache] = useState<Record<string, DoiTuongOption[]>>({});
+  const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
 
-  const accountMap = useMemo(() => {
-    const m = new Map<string, { ma: string; ten: string; chiTietTheo?: ChiTietLoai }>();
-    accounts.forEach((a) => m.set(a.ma, a));
+  const leafMap = useMemo(() => {
+    const m = new Map<string, LeafAccount>();
+    leafAccounts.forEach((a) => m.set(a.ma, a));
     return m;
-  }, [accounts]);
+  }, [leafAccounts]);
 
   const loadOptions = useCallback(
     async (loai: ChiTietLoai): Promise<DoiTuongOption[]> => {
@@ -69,32 +87,38 @@ const SoDuDauKyPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [accs, opening] = await Promise.all([
+      const [leaf, all, opening] = await Promise.all([
         taiKhoanService.getLeafAccounts(),
+        taiKhoanService.getHierarchy(),
         soDuDauKyService.getAll(),
       ]);
-      const accList = accs.map((a) => ({
+      const leafList: LeafAccount[] = leaf.map((a) => ({
         ma: a.ma, ten: a.ten,
         chiTietTheo: a.chiTietTheo as ChiTietLoai | undefined,
       }));
-      setAccounts(accList);
-      const accLookup = new Map(accList.map((a) => [a.ma, a]));
+      const chartList = all.map((a) => ({ ma: a.ma, ten: a.ten }));
+      setLeafAccounts(leafList);
+      setChart(chartList);
+
+      const leafLookup = new Map(leafList.map((a) => [a.ma, a]));
       const nextRows: SoDuRow[] = opening.items.map((i) => ({
         key: newKey(),
         maTaiKhoan: i.maTaiKhoan,
-        tenTaiKhoan: accLookup.get(i.maTaiKhoan)?.ten ?? '',
+        tenTaiKhoan: leafLookup.get(i.maTaiKhoan)?.ten ?? '',
         chiTietTheo:
           (i.chiTietType as ChiTietLoai | undefined) ??
-          accLookup.get(i.maTaiKhoan)?.chiTietTheo,
+          leafLookup.get(i.maTaiKhoan)?.chiTietTheo,
         chiTietId: i.chiTietId,
         chiTietMa: i.chiTietMa,
         chiTietTen: i.chiTietTen,
+        nganHang: i.nganHang,
         duNo: Number(i.duNo) || 0,
         duCo: Number(i.duCo) || 0,
       }));
       setRows(nextRows);
       if (opening.ngayApDung) setNgayApDung(dayjs(opening.ngayApDung));
-    } catch (e) {
+      setExpandedKeys(collectExpandKeys(buildSoDuTree(nextRows, chartList)));
+    } catch {
       message.error('Không tải được dữ liệu số dư đầu kỳ');
     } finally {
       setLoading(false);
@@ -103,50 +127,64 @@ const SoDuDauKyPage: React.FC = () => {
 
   useEffect(() => { loadData(); }, []);
 
+  const tree = useMemo(() => buildSoDuTree(rows, chart), [rows, chart]);
+
   const patchRow = (key: string, patch: Partial<SoDuRow>) =>
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
 
-  const handleSelectAccount = (key: string, ma: string) => {
-    const acc = accountMap.get(ma);
-    patchRow(key, {
-      maTaiKhoan: ma,
-      tenTaiKhoan: acc?.ten ?? '',
-      chiTietTheo: acc?.chiTietTheo,
-      chiTietId: undefined, chiTietMa: undefined, chiTietTen: undefined,
-    });
-    if (acc?.chiTietTheo) loadOptions(acc.chiTietTheo);
+  const addAccount = (ma: string) => {
+    const acc = leafMap.get(ma);
+    if (!acc) return;
+    if (!acc.chiTietTheo && rows.some((r) => r.maTaiKhoan === ma)) {
+      message.info(`Tài khoản ${ma} đã có trong danh sách`);
+      return;
+    }
+    setRows((prev) => [
+      ...prev,
+      {
+        key: newKey(), maTaiKhoan: ma, tenTaiKhoan: acc.ten,
+        chiTietTheo: acc.chiTietTheo,
+        chiTietId: undefined, chiTietMa: undefined, chiTietTen: undefined,
+        nganHang: undefined, duNo: 0, duCo: 0,
+      },
+    ]);
+    if (acc.chiTietTheo) loadOptions(acc.chiTietTheo);
   };
+
+  const addObjectRow = (ma: string, chiTietTheo: ChiTietLoai) => {
+    const acc = leafMap.get(ma);
+    setRows((prev) => [
+      ...prev,
+      {
+        key: newKey(), maTaiKhoan: ma, tenTaiKhoan: acc?.ten ?? '',
+        chiTietTheo,
+        chiTietId: undefined, chiTietMa: undefined, chiTietTen: undefined,
+        nganHang: undefined, duNo: 0, duCo: 0,
+      },
+    ]);
+    loadOptions(chiTietTheo);
+  };
+
+  const removeRow = (key: string) =>
+    setRows((prev) => prev.filter((r) => r.key !== key));
 
   const handleSelectDoiTuong = (key: string, loai: ChiTietLoai, id: string) => {
     const opt = (optCache[loai] || []).find((o) => o.value === id);
     patchRow(key, { chiTietId: id, chiTietMa: opt?.ma, chiTietTen: opt?.ten });
   };
 
-  const addRow = () =>
-    setRows((prev) => [
-      ...prev,
-      {
-        key: newKey(), maTaiKhoan: '', tenTaiKhoan: '', chiTietTheo: undefined,
-        chiTietId: undefined, chiTietMa: undefined, chiTietTen: undefined, duNo: 0, duCo: 0,
-      },
-    ]);
-
-  const removeRow = (key: string) =>
-    setRows((prev) => prev.filter((r) => r.key !== key));
-
   const { tongNo, tongCo } = useMemo(
-    () =>
-      rows.reduce(
-        (acc, r) => ({ tongNo: acc.tongNo + (r.duNo || 0), tongCo: acc.tongCo + (r.duCo || 0) }),
-        { tongNo: 0, tongCo: 0 },
-      ),
+    () => rows.reduce(
+      (a, r) => ({ tongNo: a.tongNo + (r.duNo || 0), tongCo: a.tongCo + (r.duCo || 0) }),
+      { tongNo: 0, tongCo: 0 },
+    ),
     [rows],
   );
   const canDoi = Math.round(tongNo * 100) === Math.round(tongCo * 100);
 
   const accountOptions = useMemo(
-    () => accounts.map((a) => ({ value: a.ma, label: `${a.ma} - ${a.ten}` })),
-    [accounts],
+    () => leafAccounts.map((a) => ({ value: a.ma, label: `${a.ma} - ${a.ten}` })),
+    [leafAccounts],
   );
 
   const handleSave = async () => {
@@ -164,94 +202,111 @@ const SoDuDauKyPage: React.FC = () => {
           chiTietId: r.chiTietId,
           chiTietMa: r.chiTietMa,
           chiTietTen: r.chiTietTen,
+          nganHang: r.nganHang,
         })),
       });
       if (!result.canDoi) message.warning('Đã lưu — lưu ý tổng Nợ và tổng Có chưa cân đối');
       else message.success('Lưu số dư đầu kỳ thành công');
-    } catch (e) {
+    } catch {
       message.error('Lưu thất bại');
     } finally {
       setSaving(false);
     }
   };
 
-  const numberInput = (record: SoDuRow, field: 'duNo' | 'duCo') => (
-    <InputNumber
-      style={{ width: '100%' }}
-      value={record[field]}
-      disabled={!canEdit}
-      min={0}
-      formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-      parser={(v) => Number((v || '').replace(/,/g, ''))}
-      onChange={(v) => patchRow(record.key, { [field]: Number(v) || 0 })}
-    />
-  );
+  const doiTuongCell = (node: SoDuTreeNode) => {
+    if (node.kind === 'account') {
+      return (
+        <Text strong={node.__isParent}>{`${node.__ma} - ${node.ten}`}</Text>
+      );
+    }
+    const row = node.row!;
+    if (!row.chiTietTheo || row.chiTietTheo === 'NGAN_HANG_QUY') {
+      return <Text type="secondary">—</Text>;
+    }
+    const opts = seedCurrentOpt(optCache[row.chiTietTheo] || [], row);
+    return (
+      <Select
+        style={{ width: '100%' }} showSearch optionFilterProp="label"
+        placeholder={`Chọn ${CHI_TIET_LABEL[row.chiTietTheo]}`}
+        disabled={!canEdit} value={row.chiTietId} options={opts}
+        onFocus={() => loadOptions(row.chiTietTheo!)}
+        onChange={(v) => handleSelectDoiTuong(row.key, row.chiTietTheo!, v)}
+      />
+    );
+  };
 
-  const columns = [
-    {
-      title: 'Tài khoản', dataIndex: 'maTaiKhoan', width: 280,
-      render: (_: string, record: SoDuRow) => (
+  const nganHangCell = (node: SoDuTreeNode) => {
+    if (node.__isParent || !node.row) return null;
+    const row = node.row;
+    if (row.chiTietTheo === 'NGAN_HANG_QUY') {
+      const opts = seedCurrentOpt(optCache.NGAN_HANG_QUY || [], row);
+      return (
         <Select
-          style={{ width: '100%' }}
-          showSearch optionFilterProp="label"
-          placeholder="Chọn tài khoản"
-          disabled={!canEdit}
-          value={record.maTaiKhoan || undefined}
-          options={accountOptions}
-          onChange={(v) => handleSelectAccount(record.key, v)}
+          style={{ width: '100%' }} showSearch optionFilterProp="label"
+          placeholder="Chọn ngân hàng" disabled={!canEdit}
+          value={row.chiTietId} options={opts}
+          onFocus={() => loadOptions('NGAN_HANG_QUY')}
+          onChange={(v) => handleSelectDoiTuong(row.key, 'NGAN_HANG_QUY', v)}
         />
-      ),
-    },
-    {
-      title: 'Chi tiết theo đối tượng', dataIndex: 'chiTietId', width: 300,
-      render: (_: string, record: SoDuRow) => {
-        if (!record.chiTietTheo) return <Text type="secondary">—</Text>;
-        let opts = optCache[record.chiTietTheo] || [];
-        // Dòng đã lưu: options chưa nạp → seed 1 option từ tên denormalize để
-        // hiển thị tên thay vì UUID trước khi user focus.
-        if (
-          record.chiTietId &&
-          !opts.some((o) => o.value === record.chiTietId)
-        ) {
-          opts = [
-            {
-              value: record.chiTietId,
-              label: record.chiTietMa
-                ? `${record.chiTietMa} - ${record.chiTietTen ?? ''}`
-                : record.chiTietTen ?? record.chiTietId,
-              ma: record.chiTietMa ?? '',
-              ten: record.chiTietTen ?? '',
-            },
-            ...opts,
-          ];
-        }
-        return (
-          <Select
-            style={{ width: '100%' }}
-            showSearch optionFilterProp="label"
-            placeholder={`Chọn ${CHI_TIET_LABEL[record.chiTietTheo]}`}
-            disabled={!canEdit}
-            value={record.chiTietId}
-            options={opts}
-            onFocus={() => loadOptions(record.chiTietTheo!)}
-            onChange={(v) => handleSelectDoiTuong(record.key, record.chiTietTheo!, v)}
-          />
-        );
-      },
-    },
-    { title: 'Dư Nợ đầu kỳ', dataIndex: 'duNo', width: 180,
-      render: (_: number, r: SoDuRow) => numberInput(r, 'duNo') },
-    { title: 'Dư Có đầu kỳ', dataIndex: 'duCo', width: 180,
-      render: (_: number, r: SoDuRow) => numberInput(r, 'duCo') },
-    {
-      title: '', dataIndex: 'op', width: 50,
-      render: (_: unknown, record: SoDuRow) => (
-        <Popconfirm title="Xoá dòng này?" onConfirm={() => removeRow(record.key)}
-          disabled={!canEdit}>
+      );
+    }
+    return (
+      <Input
+        placeholder="Ngân hàng (gõ tay)" disabled={!canEdit}
+        value={row.nganHang ?? ''}
+        onChange={(e) => patchRow(row.key, { nganHang: e.target.value })}
+      />
+    );
+  };
+
+  const numberCell = (node: SoDuTreeNode, field: 'duNo' | 'duCo') => {
+    if (node.__isParent) {
+      return <Text strong>{formatCurrency(node.__rollup[field])}</Text>;
+    }
+    if (!node.row) return null;
+    const row = node.row;
+    return (
+      <InputNumber
+        style={{ width: '100%' }} value={row[field]} disabled={!canEdit} min={0}
+        formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+        parser={(v) => Number((v || '').replace(/,/g, ''))}
+        onChange={(v) => patchRow(row.key, { [field]: Number(v) || 0 })}
+      />
+    );
+  };
+
+  const actionCell = (node: SoDuTreeNode) => {
+    if (node.kind === 'account' && node.__isParent && node.chiTietTheo) {
+      return (
+        <Button type="link" size="small" icon={<PlusOutlined />} disabled={!canEdit}
+          onClick={() => addObjectRow(node.__ma, node.chiTietTheo!)}>
+          {`Thêm ${CHI_TIET_LABEL[node.chiTietTheo]}`}
+        </Button>
+      );
+    }
+    if (!node.__isParent && node.row) {
+      return (
+        <Popconfirm title="Xoá dòng này?" disabled={!canEdit}
+          onConfirm={() => removeRow(node.row!.key)}>
           <Button type="text" danger icon={<DeleteOutlined />} disabled={!canEdit} />
         </Popconfirm>
-      ),
-    },
+      );
+    }
+    return null;
+  };
+
+  const columns = [
+    { title: 'Tài khoản / Đối tượng', key: 'tk', width: 360,
+      render: (_: unknown, node: SoDuTreeNode) => doiTuongCell(node) },
+    { title: 'Ngân hàng', key: 'nh', width: 260,
+      render: (_: unknown, node: SoDuTreeNode) => nganHangCell(node) },
+    { title: 'Dư Nợ đầu kỳ', key: 'duNo', width: 160, align: 'right' as const,
+      render: (_: unknown, node: SoDuTreeNode) => numberCell(node, 'duNo') },
+    { title: 'Dư Có đầu kỳ', key: 'duCo', width: 160, align: 'right' as const,
+      render: (_: unknown, node: SoDuTreeNode) => numberCell(node, 'duCo') },
+    { title: '', key: 'op', width: 140,
+      render: (_: unknown, node: SoDuTreeNode) => actionCell(node) },
   ];
 
   return (
@@ -277,26 +332,40 @@ const SoDuDauKyPage: React.FC = () => {
           <Alert type="warning" showIcon style={{ marginBottom: 16 }}
             message={`Tổng Nợ (${formatCurrency(tongNo)}) ≠ Tổng Có (${formatCurrency(tongCo)}) — số dư đầu kỳ chưa cân đối`} />
         )}
-        <Button icon={<PlusOutlined />} onClick={addRow} disabled={!canEdit}
-          style={{ marginBottom: 16 }}>Thêm dòng</Button>
-        <Table
-          rowKey="key" loading={loading} dataSource={rows} columns={columns}
-          pagination={false} scroll={{ y: 'calc(100vh - 380px)' }} size="small"
+        <Space style={{ marginBottom: 16 }} wrap>
+          <Select
+            style={{ width: 320 }} showSearch optionFilterProp="label"
+            placeholder="+ Thêm tài khoản (chọn TK chi tiết)"
+            disabled={!canEdit} value={undefined} options={accountOptions}
+            onChange={(v) => v && addAccount(v)}
+          />
+          <Button size="small" onClick={() => setExpandedKeys(collectExpandKeys(tree))}>
+            Mở tất cả
+          </Button>
+          <Button size="small" onClick={() => setExpandedKeys([])}>Thu gọn</Button>
+        </Space>
+        <Table<SoDuTreeNode>
+          rowKey="__key" loading={loading} dataSource={tree} columns={columns}
+          pagination={false} size="small" scroll={{ y: 'calc(100vh - 400px)' }}
+          expandable={{
+            expandedRowKeys: expandedKeys,
+            onExpandedRowsChange: (keys) => setExpandedKeys([...keys]),
+          }}
           summary={() => (
             <Table.Summary fixed>
               <Table.Summary.Row>
                 <Table.Summary.Cell index={0} colSpan={2}>
                   <Text strong>Tổng cộng</Text>
                 </Table.Summary.Cell>
-                <Table.Summary.Cell index={1}>
+                <Table.Summary.Cell index={2} align="right">
                   <Text strong>{formatCurrency(tongNo)}</Text>
                 </Table.Summary.Cell>
-                <Table.Summary.Cell index={2}>
+                <Table.Summary.Cell index={3} align="right">
                   <Text strong type={canDoi ? undefined : 'danger'}>
                     {formatCurrency(tongCo)}
                   </Text>
                 </Table.Summary.Cell>
-                <Table.Summary.Cell index={3} />
+                <Table.Summary.Cell index={4} />
               </Table.Summary.Row>
             </Table.Summary>
           )} />

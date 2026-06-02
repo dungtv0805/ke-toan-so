@@ -33,6 +33,10 @@ export class SoDuDauKyItemDto {
   @IsString()
   @IsOptional()
   chiTietTen?: string;
+
+  @IsString()
+  @IsOptional()
+  nganHang?: string;
 }
 
 export class SaveSoDuDauKyDto {
