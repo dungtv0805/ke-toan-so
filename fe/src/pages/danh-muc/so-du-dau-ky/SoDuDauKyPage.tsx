@@ -1,20 +1,31 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  Card, Table, Button, InputNumber, DatePicker, Select, Input, Space,
-  Typography, Breadcrumb, message, Alert, Popconfirm,
-} from 'antd';
-import { HomeOutlined, SaveOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
-import dayjs, { Dayjs } from 'dayjs';
-import { taiKhoanService } from '@/services/taiKhoanService';
-import { soDuDauKyService } from '@/services/soDuDauKyService';
+import { usePagePermission } from '@/hooks/usePagePermission';
 import { doiTuongService } from '@/services/doiTuongService';
 import { nganHangService } from '@/services/nganHangService';
-import { usePagePermission } from '@/hooks/usePagePermission';
+import { soDuDauKyService } from '@/services/soDuDauKyService';
+import { taiKhoanService } from '@/services/taiKhoanService';
+import { DeleteOutlined, HomeOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
+import {
+  Alert,
+  Breadcrumb,
+  Button,
+  Card,
+  DatePicker,
+  Input,
+  InputNumber,
+  message,
+  Popconfirm,
+  Select,
+  Space,
+  Table,
+  Typography,
+} from 'antd';
+import dayjs, { Dayjs } from 'dayjs';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { buildSoDuTree, collectExpandKeys, type SoDuTreeNode } from './buildSoDuTree';
 import {
   CHI_TIET_LABEL, DOI_TUONG_LOAI, validateRows,
   type ChiTietLoai, type SoDuRow,
 } from './chiTietConfig';
-import { buildSoDuTree, collectExpandKeys, type SoDuTreeNode } from './buildSoDuTree';
 
 const { Text } = Typography;
 
@@ -132,6 +143,15 @@ const SoDuDauKyPage: React.FC = () => {
   const patchRow = (key: string, patch: Partial<SoDuRow>) =>
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
 
+  // Mở đường dẫn cha → TK vừa thêm để thấy ngay dòng mới (không thu gọn các node khác)
+  const expandPathTo = (ma: string) => {
+    const keys = new Set<string>([`acc:${ma}`]);
+    for (const a of chart) {
+      if (ma.startsWith(a.ma)) keys.add(`acc:${a.ma}`);
+    }
+    setExpandedKeys((prev) => Array.from(new Set([...prev.map(String), ...keys])));
+  };
+
   const addAccount = (ma: string) => {
     const acc = leafMap.get(ma);
     if (!acc) return;
@@ -149,6 +169,7 @@ const SoDuDauKyPage: React.FC = () => {
       },
     ]);
     if (acc.chiTietTheo) loadOptions(acc.chiTietTheo);
+    expandPathTo(ma);
   };
 
   const addObjectRow = (ma: string, chiTietTheo: ChiTietLoai) => {
@@ -163,6 +184,7 @@ const SoDuDauKyPage: React.FC = () => {
       },
     ]);
     loadOptions(chiTietTheo);
+    expandPathTo(ma);
   };
 
   const removeRow = (key: string) =>
@@ -220,37 +242,29 @@ const SoDuDauKyPage: React.FC = () => {
         <Text strong={node.__isParent}>{`${node.__ma} - ${node.ten}`}</Text>
       );
     }
+    // Lá đối tượng: thụt vào dưới TK cha + chọn đối tượng (ngân hàng cũng chọn ở đây)
     const row = node.row!;
-    if (!row.chiTietTheo || row.chiTietTheo === 'NGAN_HANG_QUY') {
-      return <Text type="secondary">—</Text>;
-    }
-    const opts = seedCurrentOpt(optCache[row.chiTietTheo] || [], row);
+    const loai = row.chiTietTheo!;
+    const opts = seedCurrentOpt(optCache[loai] || [], row);
     return (
-      <Select
-        style={{ width: '100%' }} showSearch optionFilterProp="label"
-        placeholder={`Chọn ${CHI_TIET_LABEL[row.chiTietTheo]}`}
-        disabled={!canEdit} value={row.chiTietId} options={opts}
-        onFocus={() => loadOptions(row.chiTietTheo!)}
-        onChange={(v) => handleSelectDoiTuong(row.key, row.chiTietTheo!, v)}
-      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 24 }}>
+        <span style={{ color: '#bfbfbf', flex: 'none' }}>•</span>
+        <Select
+          style={{ flex: 1, minWidth: 200 }} showSearch optionFilterProp="label"
+          placeholder={loai === 'NGAN_HANG_QUY' ? 'Chọn ngân hàng' : `Chọn ${CHI_TIET_LABEL[loai]}`}
+          disabled={!canEdit} value={row.chiTietId} options={opts}
+          onFocus={() => loadOptions(loai)}
+          onChange={(v) => handleSelectDoiTuong(row.key, loai, v)}
+        />
+      </div>
     );
   };
 
   const nganHangCell = (node: SoDuTreeNode) => {
     if (node.__isParent || !node.row) return null;
     const row = node.row;
-    if (row.chiTietTheo === 'NGAN_HANG_QUY') {
-      const opts = seedCurrentOpt(optCache.NGAN_HANG_QUY || [], row);
-      return (
-        <Select
-          style={{ width: '100%' }} showSearch optionFilterProp="label"
-          placeholder="Chọn ngân hàng" disabled={!canEdit}
-          value={row.chiTietId} options={opts}
-          onFocus={() => loadOptions('NGAN_HANG_QUY')}
-          onChange={(v) => handleSelectDoiTuong(row.key, 'NGAN_HANG_QUY', v)}
-        />
-      );
-    }
+    // TK loại Ngân hàng đã chọn ở cột Đối tượng → cột này để trống
+    if (row.chiTietTheo === 'NGAN_HANG_QUY') return null;
     return (
       <Input
         placeholder="Ngân hàng (gõ tay)" disabled={!canEdit}
@@ -305,7 +319,7 @@ const SoDuDauKyPage: React.FC = () => {
       render: (_: unknown, node: SoDuTreeNode) => numberCell(node, 'duNo') },
     { title: 'Dư Có đầu kỳ', key: 'duCo', width: 160, align: 'right' as const,
       render: (_: unknown, node: SoDuTreeNode) => numberCell(node, 'duCo') },
-    { title: '', key: 'op', width: 140,
+    { title: '', key: 'op', width: 200,
       render: (_: unknown, node: SoDuTreeNode) => actionCell(node) },
   ];
 
