@@ -132,4 +132,35 @@ describe('buildSoChiTiet', () => {
     expect(r.soDuDauKyNo).toBe(0);
     expect(r.soDuCuoiKyNo).toBe(0);
   });
+
+  it('TK loại Có (331): số dư đầu kỳ + lũy kế hiển thị bên Có, vế Nợ giảm số dư', () => {
+    const account331 = { ma: '331', ten: 'Phải trả NCC', loai: 'CO' };
+    const rel = new Set(['331']);
+    const opening = [{ maTaiKhoan: '331', duNo: 0, duCo: 200 }];
+    const vouchers = [
+      v('2026-01-05', 'MH01', '156', '331', 1000), // 331 vế Có → tăng số dư Có
+      v('2026-01-08', 'TT01', '331', '111', 400), // 331 vế Nợ → giảm số dư Có
+    ];
+    const r = buildSoChiTiet(account331, rel, vouchers, opening, undefined, start, end);
+    expect(r.soDuDauKyCo).toBe(200);
+    expect(r.soDuDauKyNo).toBe(0);
+    expect(r.rows[0].phatSinhCo).toBe(1000);
+    expect(r.rows[0].tkDoiUng).toBe('156');
+    expect(r.rows[0].soDuCo).toBe(1200);
+    expect(r.rows[1].phatSinhNo).toBe(400);
+    expect(r.rows[1].tkDoiUng).toBe('111');
+    expect(r.rows[1].soDuCo).toBe(800);
+    expect(r.tongPhatSinhNo).toBe(400);
+    expect(r.tongPhatSinhCo).toBe(1000);
+    expect(r.soDuCuoiKyCo).toBe(800);
+    expect(r.soDuCuoiKyNo).toBe(0);
+  });
+
+  it('chứng từ đúng ngày startDate được tính trong kỳ (không phải đầu kỳ)', () => {
+    const vouchers = [v('2026-01-01', 'PT01', '111', '511', 100)];
+    const r = buildSoChiTiet(account, relevant, vouchers, [], undefined, start, end);
+    expect(r.rows).toHaveLength(1);
+    expect(r.soDuDauKyNo).toBe(0);
+    expect(r.tongPhatSinhNo).toBe(100);
+  });
 });
