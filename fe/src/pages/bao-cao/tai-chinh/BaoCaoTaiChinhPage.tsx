@@ -529,7 +529,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
                   </Button>
                 </Space>
                 <Table<TreeNode<TrialBalance>>
-                  className="excel-table"
+                  className="excel-table tb-summary"
                   columns={trialBalanceColumns}
                   dataSource={trialBalanceTree}
                   rowKey="__ma"

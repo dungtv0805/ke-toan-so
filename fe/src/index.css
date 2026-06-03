@@ -1101,6 +1101,13 @@
   min-height: 0;
 }
 
+/* Dòng "Tổng cộng" cố định (ghim đáy) + nổi bật cho bảng cân đối phát sinh */
+.tb-summary .ant-table-summary > tr > td {
+  background: #e6f4ff !important;
+  border-top: 2px solid #1890ff !important;
+  font-weight: 700;
+}
+
 .excel-table .ant-spin-nested-loading,
 .excel-table .ant-spin-container,
 .excel-table .ant-table-wrapper {
