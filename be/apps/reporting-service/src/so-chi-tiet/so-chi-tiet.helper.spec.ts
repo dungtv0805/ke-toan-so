@@ -1,4 +1,4 @@
-import { computeRelevantCodes } from './so-chi-tiet.helper';
+import { computeRelevantCodes, buildSoChiTiet } from './so-chi-tiet.helper';
 
 describe('computeRelevantCodes', () => {
   const accounts = [
@@ -23,5 +23,113 @@ describe('computeRelevantCodes', () => {
     const set = computeRelevantCodes(accounts, '131');
     expect(set.has('111')).toBe(false);
     expect(set.has('1111')).toBe(false);
+  });
+});
+
+describe('buildSoChiTiet', () => {
+  const account = { ma: '111', ten: 'Tiền mặt', loai: 'NO' };
+  const relevant = new Set(['111']);
+
+  const v = (
+    ngay: string,
+    soPhieu: string,
+    tkNo: string,
+    tkCo: string,
+    soTien: number,
+    doiTuongMa?: string,
+  ) =>
+    ({
+      soPhieu,
+      ngay: new Date(ngay) as any,
+      soTien,
+      noiDung: soPhieu,
+      danhMuc: {
+        taiKhoanNo: { ma: tkNo, ten: tkNo, loai: 'NO', nhom: '' },
+        taiKhoanCo: { ma: tkCo, ten: tkCo, loai: 'CO', nhom: '' },
+        ...(doiTuongMa
+          ? { doiTuong: { ma: doiTuongMa, ten: doiTuongMa, loai: 'KHACH_HANG' } }
+          : {}),
+      },
+    }) as any;
+
+  const start = new Date('2026-01-01T00:00:00.000Z');
+  const end = new Date('2026-01-31T23:59:59.999Z');
+
+  it('TK đối ứng + bên phát sinh đúng theo vế (TK ở vế Nợ)', () => {
+    const vouchers = [v('2026-01-05', 'PT01', '111', '511', 1000)];
+    const r = buildSoChiTiet(account, relevant, vouchers, [], undefined, start, end);
+    expect(r.rows).toHaveLength(1);
+    expect(r.rows[0].tkDoiUng).toBe('511');
+    expect(r.rows[0].phatSinhNo).toBe(1000);
+    expect(r.rows[0].phatSinhCo).toBe(0);
+    expect(r.rows[0].soDuNo).toBe(1000);
+    expect(r.tongPhatSinhNo).toBe(1000);
+    expect(r.soDuCuoiKyNo).toBe(1000);
+  });
+
+  it('TK ở vế Có → phát sinh hiển thị bên Có, số dư giảm', () => {
+    const vouchers = [
+      v('2026-01-05', 'PT01', '111', '511', 1000),
+      v('2026-01-06', 'PC01', '642', '111', 400),
+    ];
+    const r = buildSoChiTiet(account, relevant, vouchers, [], undefined, start, end);
+    expect(r.rows[1].tkDoiUng).toBe('642');
+    expect(r.rows[1].phatSinhCo).toBe(400);
+    expect(r.rows[1].soDuNo).toBe(600);
+    expect(r.tongPhatSinhCo).toBe(400);
+    expect(r.soDuCuoiKyNo).toBe(600);
+  });
+
+  it('số dư đầu kỳ = nhập tay + phát sinh trước kỳ', () => {
+    const opening = [{ maTaiKhoan: '111', duNo: 500, duCo: 0 }];
+    const vouchers = [
+      v('2025-12-20', 'PTprev', '111', '511', 200),
+      v('2026-01-05', 'PT01', '111', '511', 1000),
+    ];
+    const r = buildSoChiTiet(account, relevant, vouchers, opening, undefined, start, end);
+    expect(r.soDuDauKyNo).toBe(700);
+    expect(r.rows).toHaveLength(1);
+    expect(r.soDuCuoiKyNo).toBe(1700);
+  });
+
+  it('lọc theo đối tượng áp dụng cho cả phát sinh lẫn số dư đầu kỳ', () => {
+    const account131 = { ma: '131', ten: 'Phải thu', loai: 'NO' };
+    const rel = new Set(['131']);
+    const opening = [
+      { maTaiKhoan: '131', duNo: 100, duCo: 0, chiTietMa: 'KH01' },
+      { maTaiKhoan: '131', duNo: 999, duCo: 0, chiTietMa: 'KH02' },
+    ];
+    const vouchers = [
+      v('2026-01-05', 'BH01', '131', '511', 300, 'KH01'),
+      v('2026-01-06', 'BH02', '131', '511', 777, 'KH02'),
+    ];
+    const r = buildSoChiTiet(account131, rel, vouchers, opening, 'KH01', start, end);
+    expect(r.soDuDauKyNo).toBe(100);
+    expect(r.rows).toHaveLength(1);
+    expect(r.rows[0].soPhieu).toBe('BH01');
+    expect(r.soDuCuoiKyNo).toBe(400);
+  });
+
+  it('gộp TK cha: chứng từ nội bộ 2 con sinh 2 dòng, số dư triệt tiêu', () => {
+    const accountCha = { ma: '131', ten: 'Phải thu', loai: 'NO' };
+    const rel = new Set(['131', '1311', '1312']);
+    const vouchers = [v('2026-01-10', 'KC01', '1311', '1312', 500)];
+    const r = buildSoChiTiet(accountCha, rel, vouchers, [], undefined, start, end);
+    expect(r.rows).toHaveLength(2);
+    expect(r.rows[0].phatSinhNo).toBe(500);
+    expect(r.rows[0].tkDoiUng).toBe('1312');
+    expect(r.rows[1].phatSinhCo).toBe(500);
+    expect(r.rows[1].tkDoiUng).toBe('1311');
+    expect(r.soDuCuoiKyNo).toBe(0);
+    expect(r.soDuCuoiKyCo).toBe(0);
+    expect(r.tongPhatSinhNo).toBe(500);
+    expect(r.tongPhatSinhCo).toBe(500);
+  });
+
+  it('bộ rỗng → 0 dòng, các tổng = 0', () => {
+    const r = buildSoChiTiet(account, relevant, [], [], undefined, start, end);
+    expect(r.rows).toHaveLength(0);
+    expect(r.soDuDauKyNo).toBe(0);
+    expect(r.soDuCuoiKyNo).toBe(0);
   });
 });
