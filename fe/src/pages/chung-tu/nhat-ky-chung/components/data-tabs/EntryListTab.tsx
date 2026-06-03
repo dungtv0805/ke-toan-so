@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Table, Button, Space, Tooltip } from "antd";
 import { PlusOutlined, ReloadOutlined, FileExcelOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
@@ -47,6 +47,7 @@ import type { ColumnType } from "antd/es/table";
 
 // Import inline-edit handler to register it
 import "../../handler/sub-handler/inline-edit/inline-edit.handler";
+import { ImportExcelModal } from "../../import/ImportExcelModal";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("vi-VN").format(value);
@@ -752,6 +753,7 @@ export function EntryListTab() {
   const [editingRowId] = useNhatKyChungState("editingRowId", null);
   const [exportingExcel] = useNhatKyChungState("exportingExcel", false);
   const { canCreate } = usePagePermission("/chung-tu/nhat-ky-chung");
+  const [importOpen, setImportOpen] = useState(false);
 
   // Enable column resize via DOM manipulation (no React re-renders)
   useTableColumnResize("resizable-table");
@@ -814,6 +816,15 @@ export function EntryListTab() {
             Thêm mới
           </Button>
         )}
+        {canCreate && (
+          <Button
+            size="small"
+            icon={<FileExcelOutlined />}
+            onClick={() => setImportOpen(true)}
+          >
+            Import Excel
+          </Button>
+        )}
         <Space size="small">
           <Button
             size="small"
@@ -856,6 +867,16 @@ export function EntryListTab() {
           x: TOTAL_WIDTH,
           y: "calc(100vh - 250px)",
         }}
+      />
+      <ImportExcelModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={() =>
+          handler.executeEvent("loadPage", {
+            page: pagination?.page || 1,
+            limit: pagination?.limit || 50,
+          })
+        }
       />
     </div>
   );
