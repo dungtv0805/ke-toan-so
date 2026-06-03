@@ -816,16 +816,16 @@ export function EntryListTab() {
             Thêm mới
           </Button>
         )}
-        {canCreate && (
-          <Button
-            size="small"
-            icon={<FileExcelOutlined />}
-            onClick={() => setImportOpen(true)}
-          >
-            Import Excel
-          </Button>
-        )}
         <Space size="small">
+          {canCreate && (
+            <Button
+              size="small"
+              icon={<FileExcelOutlined />}
+              onClick={() => setImportOpen(true)}
+            >
+              Import Excel
+            </Button>
+          )}
           <Button
             size="small"
             icon={<FileExcelOutlined />}
