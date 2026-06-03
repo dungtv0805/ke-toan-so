@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
-import { ChungTu } from '@app/entities';
+import { ChungTu, LoaiChungTu } from '@app/entities';
 import { PaginatedResult } from '@app/dto';
 import { TenantContextService } from '@app/core';
 import {
@@ -339,6 +339,57 @@ export class NhatKyChungService {
         diaChi: item.diaChi,
         ngay: new Date(item.ngay),
         soPhieu, // Same soPhieu for all
+        nguoiTaoId,
+      }),
+    );
+
+    const saved = await this.chungTuRepository.save(chungTuList);
+    return { success: true, data: saved };
+  }
+
+  /**
+   * Import: mỗi item là 1 chứng từ độc lập (số phiếu riêng).
+   * Gom theo loai, đặt trước dải số mỗi loại, lưu 1 lần.
+   */
+  async importEntries(
+    items: CreateNhatKyChungDto[],
+    nguoiTaoId: string,
+  ): Promise<{ success: boolean; data: ChungTu[] }> {
+    if (items.length === 0) {
+      return { success: true, data: [] };
+    }
+
+    // Gom index theo loai
+    const indicesByLoai = new Map<LoaiChungTu, number[]>();
+    items.forEach((item, idx) => {
+      const list = indicesByLoai.get(item.loai) ?? [];
+      list.push(idx);
+      indicesByLoai.set(item.loai, list);
+    });
+
+    // Đặt trước dải số phiếu cho từng loai, gán theo đúng index gốc
+    const soPhieuByIndex: string[] = new Array(items.length);
+    for (const [loai, indices] of indicesByLoai) {
+      const numbers = await this.voucherNumberService.generateVoucherNumbers(
+        loai,
+        indices.length,
+      );
+      indices.forEach((origIdx, i) => {
+        soPhieuByIndex[origIdx] = numbers[i];
+      });
+    }
+
+    const chungTuList = items.map((item, idx) =>
+      this.chungTuRepository.create({
+        loai: item.loai,
+        soTien: item.soTien,
+        noiDung: item.noiDung,
+        danhMuc: item.danhMuc,
+        ghiChu: item.ghiChu,
+        nguoiGiaoDich: item.nguoiGiaoDich,
+        diaChi: item.diaChi,
+        ngay: new Date(item.ngay),
+        soPhieu: soPhieuByIndex[idx],
         nguoiTaoId,
       }),
     );
