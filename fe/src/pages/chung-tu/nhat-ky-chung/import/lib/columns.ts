@@ -1,0 +1,81 @@
+import { CreateEntryDto } from "@/services/nhatKyChungService";
+
+/** Khóa logic của từng cột, theo đúng thứ tự trong file Excel mẫu. */
+export type ImportColumnKey =
+  | "ngay"
+  | "loaiGiaoDich"
+  | "nghiepVu"
+  | "taiKhoanNo"
+  | "taiKhoanCo"
+  | "soTien"
+  | "dienGiai"
+  | "nguoiGiaoDich"
+  | "diaChi"
+  | "ghiChu"
+  | "doiTuong"
+  | "doiTuong2"
+  | "duAn"
+  | "boPhan"
+  | "doi"
+  | "nhanVien"
+  | "sanPham"
+  | "dongTien"
+  | "khoanMuc"
+  | "hopDong"
+  | "nhomKhuyenMai"
+  | "nhomQuanLy";
+
+export interface ImportColumn {
+  key: ImportColumnKey;
+  header: string;
+  required: boolean;
+}
+
+/** Thứ tự cột = thứ tự trong mảng này (index 0..21). */
+export const IMPORT_COLUMNS: ImportColumn[] = [
+  { key: "ngay", header: "Ngày chứng từ", required: true },
+  { key: "loaiGiaoDich", header: "Loại giao dịch", required: true },
+  { key: "nghiepVu", header: "Nghiệp vụ", required: true },
+  { key: "taiKhoanNo", header: "TK Nợ", required: true },
+  { key: "taiKhoanCo", header: "TK Có", required: true },
+  { key: "soTien", header: "Số tiền", required: true },
+  { key: "dienGiai", header: "Diễn giải", required: false },
+  { key: "nguoiGiaoDich", header: "Người giao dịch", required: false },
+  { key: "diaChi", header: "Địa chỉ", required: false },
+  { key: "ghiChu", header: "Ghi chú", required: false },
+  { key: "doiTuong", header: "Mã đối tượng", required: false },
+  { key: "doiTuong2", header: "Mã đối tượng 2", required: false },
+  { key: "duAn", header: "Mã dự án", required: false },
+  { key: "boPhan", header: "Mã bộ phận", required: false },
+  { key: "doi", header: "Mã đội", required: false },
+  { key: "nhanVien", header: "Mã nhân viên", required: false },
+  { key: "sanPham", header: "Mã sản phẩm", required: false },
+  { key: "dongTien", header: "Mã dòng tiền", required: false },
+  { key: "khoanMuc", header: "Mã khoản mục", required: false },
+  { key: "hopDong", header: "Số hợp đồng", required: false },
+  { key: "nhomKhuyenMai", header: "Mã nhóm khuyến mãi", required: false },
+  { key: "nhomQuanLy", header: "Mã nhóm quản lý", required: false },
+];
+
+/** Một dòng Excel sau khi parse thành string thô theo key. */
+export type RawImportRow = {
+  rowNumber: number; // số dòng trong Excel (tính cả header)
+} & Partial<Record<ImportColumnKey, string>>;
+
+export interface RowError {
+  field: string;
+  message: string;
+}
+
+export interface RowValidationResult {
+  rowNumber: number;
+  errors: RowError[]; // chặn import
+  warnings: RowError[]; // vẫn cho import
+  item: CreateEntryDto | null; // payload đã dựng nếu không có errors
+}
+
+export interface ValidateResult {
+  results: RowValidationResult[];
+  validItems: CreateEntryDto[];
+  hasErrors: boolean;
+}
