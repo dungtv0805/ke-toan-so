@@ -306,6 +306,14 @@ class NhatKyChungService extends ServiceBase {
   }
 
   /**
+   * Import nhiều chứng từ: mỗi item là 1 chứng từ độc lập (số phiếu riêng).
+   */
+  async importEntries(items: CreateEntryDto[]): Promise<NhatKyChung[]> {
+    const response = await this.post<ChungTuResponse[]>(items, { endpoint: '/import' });
+    return response.map((item) => this.mapChungTuToNhatKyChung(item));
+  }
+
+  /**
    * Update all entries of a soPhieu (batch update)
    * - Items with id: UPDATE existing
    * - Items without id: CREATE new with same soPhieu
