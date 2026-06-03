@@ -127,6 +127,10 @@ export const SoCaiPage = loadable(() => import('./bao-cao/so-cai/SoCaiPage'), {
   fallback: <PageLoader />
 });
 
+export const SoChiTietTaiKhoanPage = loadable(() => import('./bao-cao/so-chi-tiet-tai-khoan/SoChiTietTaiKhoanPage'), {
+  fallback: <PageLoader />
+});
+
 export const BangCanDoiPage = loadable(() => import('./bao-cao/bang-can-doi/BangCanDoiPage'), {
   fallback: <PageLoader />
 });
