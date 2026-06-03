@@ -106,4 +106,27 @@ describe("validateAndBuild", () => {
     expect(res.validItems).toHaveLength(1);
     expect(res.results).toHaveLength(2);
   });
+
+  it("nhận giá trị dropdown dạng 'Mã - Tên' và map đúng về mã", () => {
+    const res = validateAndBuild(
+      [
+        row({
+          loaiGiaoDich: "PHIEU_THU - Phiếu thu",
+          nghiepVu: "NV01 - Bán hàng (PHIEU_THU)",
+          taiKhoanNo: "111 - Tiền mặt",
+          taiKhoanCo: "511 - Doanh thu",
+          doiTuong: "KH001 - KH A",
+        }),
+      ],
+      masterData,
+    );
+    expect(res.hasErrors).toBe(false);
+    expect(res.validItems).toHaveLength(1);
+    const item = res.validItems[0];
+    expect(item.loai).toBe("PHIEU_THU");
+    expect(item.danhMuc?.taiKhoanNo?.ma).toBe("111");
+    expect(item.danhMuc?.taiKhoanCo?.ma).toBe("511");
+    expect(item.danhMuc?.nghiepVu?.ma).toBe("NV01");
+    expect(item.danhMuc?.doiTuong?.ma).toBe("KH001");
+  });
 });

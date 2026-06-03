@@ -57,6 +57,29 @@ export const IMPORT_COLUMNS: ImportColumn[] = [
   { key: "nhomQuanLy", header: "Mã nhóm quản lý", required: false },
 ];
 
+/**
+ * Các cột gắn danh mục — giá trị có thể ở dạng "Mã - Tên" (chọn từ dropdown).
+ * Cần tách mã (extractCode) trước khi khớp với master data.
+ */
+export const CODE_COLUMN_KEYS: ImportColumnKey[] = [
+  "loaiGiaoDich",
+  "nghiepVu",
+  "taiKhoanNo",
+  "taiKhoanCo",
+  "doiTuong",
+  "doiTuong2",
+  "duAn",
+  "boPhan",
+  "doi",
+  "nhanVien",
+  "sanPham",
+  "dongTien",
+  "khoanMuc",
+  "hopDong",
+  "nhomKhuyenMai",
+  "nhomQuanLy",
+];
+
 /** Một dòng Excel sau khi parse thành string thô theo key. */
 export type RawImportRow = {
   rowNumber: number; // số dòng trong Excel (tính cả header)

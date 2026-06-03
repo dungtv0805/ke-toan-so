@@ -19,7 +19,9 @@ import {
   RowValidationResult,
   ValidateResult,
   IMPORT_COLUMNS,
+  CODE_COLUMN_KEYS,
 } from "./columns";
+import { extractCode } from "./extractCode";
 import { normalizeAmount, normalizeDate } from "./normalize";
 import {
   buildDanhMucFromResolved,
@@ -67,9 +69,15 @@ export function validateAndBuild(
 }
 
 function validateRow(
-  row: RawImportRow,
+  rawRow: RawImportRow,
   md: ImportMasterData,
 ): RowValidationResult {
+  // Tách mã từ dạng "Mã - Tên" cho các cột danh mục (hỗ trợ cả dropdown lẫn gõ mã thuần)
+  const row: RawImportRow = { ...rawRow };
+  for (const key of CODE_COLUMN_KEYS) {
+    if (row[key] != null) row[key] = extractCode(row[key]);
+  }
+
   const errors: RowError[] = [];
   const warnings: RowError[] = [];
 
