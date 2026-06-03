@@ -42,6 +42,43 @@ export class VoucherNumberService {
   }
 
   /**
+   * Generate `count` consecutive voucher numbers in ONE sequence update.
+   * Dùng cho import: mỗi item 1 số phiếu riêng nhưng chỉ ghi sequence 1 lần.
+   */
+  async generateVoucherNumbers(
+    loai: LoaiChungTu,
+    count: number,
+  ): Promise<string[]> {
+    if (count <= 0) return [];
+
+    const year = new Date().getFullYear();
+    const prefix = loai === 'PHIEU_THU' ? 'PT' : 'PC';
+
+    let sequence = await this.sequenceRepository.findOne({
+      where: { loai, year },
+    });
+
+    if (!sequence) {
+      sequence = this.sequenceRepository.create({
+        loai,
+        year,
+        lastSequence: 0,
+      });
+    }
+
+    const start = sequence.lastSequence + 1;
+    sequence.lastSequence += count;
+    await this.sequenceRepository.save(sequence);
+
+    const numbers: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const seqStr = (start + i).toString().padStart(3, '0');
+      numbers.push(`${prefix}${seqStr}/${year}`);
+    }
+    return numbers;
+  }
+
+  /**
    * Parse voucher number to extract components
    */
   parseVoucherNumber(soPhieu: string): {
