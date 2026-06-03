@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Card, Table, Button, Space, Select, DatePicker, Breadcrumb, Empty, Typography,
+  Card, Table, Button, Space, Select, DatePicker, Breadcrumb, Empty, Typography, message,
 } from 'antd';
 import { ReloadOutlined, HomeOutlined, AccountBookOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
@@ -48,12 +48,17 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      const [accs, dts] = await Promise.all([
-        taiKhoanService.getAll(),
-        doiTuongService.getAll(),
-      ]);
-      setAccountOptions(accs.map((a) => ({ value: a.ma, label: `${a.ma} - ${a.ten}` })));
-      setDoiTuongOptions(dts.map((d) => ({ value: d.ma, label: `${d.ma} - ${d.ten}` })));
+      try {
+        const [accs, dts] = await Promise.all([
+          taiKhoanService.getAll(),
+          doiTuongService.getAll(),
+        ]);
+        setAccountOptions(accs.map((a) => ({ value: a.ma, label: `${a.ma} - ${a.ten}` })));
+        setDoiTuongOptions(dts.map((d) => ({ value: d.ma, label: `${d.ma} - ${d.ten}` })));
+      } catch (error) {
+        console.error('Error loading danh mục:', error);
+        message.error('Không tải được danh mục tài khoản / đối tượng');
+      }
     })();
   }, []);
 
@@ -68,6 +73,9 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
         maDoiTuong,
       );
       setReport(data);
+    } catch (error) {
+      console.error('Error loading sổ chi tiết:', error);
+      message.error('Không tải được sổ chi tiết tài khoản');
     } finally {
       setLoading(false);
     }
@@ -141,7 +149,7 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
       />
       <Card
         title={<Space><AccountBookOutlined /><span>Sổ chi tiết tài khoản</span></Space>}
-        extra={<Button icon={<ReloadOutlined />} onClick={loadReport}>Xem báo cáo</Button>}
+        extra={<Button icon={<ReloadOutlined />} onClick={loadReport} disabled={!maTaiKhoan}>Làm mới</Button>}
       >
         <Space wrap style={{ marginBottom: 16 }}>
           <RangePicker
