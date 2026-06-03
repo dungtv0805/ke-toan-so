@@ -102,6 +102,7 @@ const existingRoutes = new Set([
   "/bao-cao/tai-chinh",
   "/bao-cao/pnl",
   "/bao-cao/so-cai",
+  "/bao-cao/so-chi-tiet-tai-khoan",
   "/bao-cao/bang-can-doi",
 
   "/cau-hinh/phan-quyen",

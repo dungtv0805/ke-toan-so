@@ -5,6 +5,7 @@ import { TenantModule } from '@app/core';
 import { DatabaseModule } from '@app/database';
 import { ServiceClientModule } from '@app/service-client';
 import { SoCaiModule } from './so-cai/so-cai.module';
+import { SoChiTietModule } from './so-chi-tiet/so-chi-tiet.module';
 import { BaoCaoModule } from './bao-cao/bao-cao.module';
 
 @Module({
@@ -17,6 +18,7 @@ import { BaoCaoModule } from './bao-cao/bao-cao.module';
     AuthModule,
     ServiceClientModule.forRoot(),
     SoCaiModule,
+    SoChiTietModule,
     BaoCaoModule,
   ],
 })

@@ -17,6 +17,21 @@ import type {
   TaiKhoanResponse,
 } from '@app/dto';
 
+type SoDuDauKyRawItem = {
+  maTaiKhoan: string;
+  duNo: number;
+  duCo: number;
+  chiTietType?: string;
+  chiTietId?: string;
+  chiTietMa?: string;
+  chiTietTen?: string;
+  nganHang?: string;
+};
+type SoDuDauKyRawResponse = {
+  ngayApDung: string | null;
+  items: SoDuDauKyRawItem[];
+};
+
 @Injectable()
 export class ServiceClient extends BaseServiceClient {
   constructor(configService: ConfigService) {
@@ -161,6 +176,19 @@ export class ServiceClient extends BaseServiceClient {
       };
     }
     return res;
+  }
+
+  async getSoDuDauKyRaw(
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<ServiceResponse<SoDuDauKyRawResponse>> {
+    const headers: Record<string, string> = {};
+    if (authToken) headers['Authorization'] = authToken;
+    if (tenantId) headers['x-tenant-id'] = tenantId;
+
+    return this.get<SoDuDauKyRawResponse>('master-data', '/so-du-dau-ky', {
+      headers: Object.keys(headers).length ? headers : undefined,
+    });
   }
 
   // ============ Voucher Service Methods ============
