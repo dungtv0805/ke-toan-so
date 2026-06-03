@@ -20,6 +20,7 @@ làm công cụ xem nhanh; hai thứ phục vụ mục đích khác nhau và kh�
 | Vị trí | Trang mới riêng tại `/bao-cao/so-chi-tiet-tai-khoan` |
 | Số dư đầu kỳ | = Số dư đầu kỳ **nhập tay** (khớp TK + đối tượng) **+** net phát sinh **trước** ngày bắt đầu kỳ |
 | Bộ lọc Đối tượng | **Tùy chọn**. Bắt buộc chọn Tài khoản; để trống Đối tượng = xem toàn bộ |
+| Chọn TK cha | **Gộp chung 1 sổ**: dồn toàn bộ phát sinh các TK con vào 1 sổ liên tục, số dư lũy kế chung, header ghi TK cha (xem §3.6) |
 | Xuất / In | **Bản đầu: chỉ xem màn hình.** Xuất Excel / In PDF để sau |
 
 ## 2. Giao diện (theo ảnh mẫu)
@@ -62,22 +63,34 @@ làm công cụ xem nhanh; hai thứ phục vụ mục đích khác nhau và kh�
 
 ## 3. Logic tính toán (Backend)
 
-### 3.1 Lọc chứng từ
-Từ `getNhatKyChung(...)` lấy danh sách `NhatKyChungEntry`. Một chứng từ liên quan nếu:
-- `taiKhoanNo(v) === maTaiKhoan` **hoặc** `taiKhoanCo(v) === maTaiKhoan`, **và**
+### 3.1 Tập tài khoản liên quan (cha → con)
+Xác định **tập mã TK liên quan** `relevantCodes` từ TK đã chọn và danh sách tài khoản:
+- Nếu TK chọn là **leaf** (không có TK con): `relevantCodes = { maTaiKhoan }`.
+- Nếu TK chọn là **cha**: `relevantCodes =` tập các TK có mã `startsWith(maTaiKhoan)` **và** có mặt
+  trong danh mục tài khoản (đồng nhất quy tắc tiền tố của `buildSoDuTree`). Vì chứng từ chỉ ghi ở
+  leaf, thực chất là toàn bộ TK con cháu phát sinh.
+
+Một TK `code` coi là "thuộc cây" khi `code === maTaiKhoan || code.startsWith(maTaiKhoan)` và `code`
+là một tài khoản thật trong danh mục.
+
+### 3.1b Lọc chứng từ
+Từ `getNhatKyChung(...)` lấy `NhatKyChungEntry`. Một **vế** của chứng từ liên quan nếu:
+- mã TK của vế đó thuộc `relevantCodes`, **và**
 - nếu có `maDoiTuong`: `v.danhMuc?.doiTuong?.ma === maDoiTuong`.
 
-Helper `getTaiKhoanNo/Co` tái dùng cùng cách `so-cai.service.ts` (hỗ trợ cả field legacy lẫn
-`danhMuc.taiKhoanNo/Co.ma`).
+Lưu ý: khi gộp TK cha, **một chứng từ có thể sinh tối đa 2 dòng** (cả vế Nợ lẫn vế Có đều thuộc cây
+con) — xem §3.6. Helper `getTaiKhoanNo/Co` tái dùng cùng cách `so-cai.service.ts` (hỗ trợ cả field
+legacy lẫn `danhMuc.taiKhoanNo/Co.ma`).
 
 ### 3.2 TK đối ứng + bên phát sinh
-Với mỗi chứng từ liên quan trong kỳ:
-- Nếu `taiKhoanNo(v) === maTaiKhoan`: `phatSinhNo = v.soTien`, `phatSinhCo = 0`,
+Duyệt **từng vế** của chứng từ trong kỳ (không phải từng chứng từ), emit 1 dòng cho mỗi vế thuộc cây:
+- Nếu `taiKhoanNo(v)` ∈ `relevantCodes`: dòng `phatSinhNo = v.soTien`, `phatSinhCo = 0`,
   `tkDoiUng = taiKhoanCo(v)`.
-- Nếu `taiKhoanCo(v) === maTaiKhoan`: `phatSinhCo = v.soTien`, `phatSinhNo = 0`,
+- Nếu `taiKhoanCo(v)` ∈ `relevantCodes`: dòng `phatSinhCo = v.soTien`, `phatSinhNo = 0`,
   `tkDoiUng = taiKhoanNo(v)`.
-- Trường hợp hiếm cùng 1 TK ở cả hai vế (tự chuyển nội bộ): coi như không phát sinh thực, bỏ qua
-  hoặc số tiền triệt tiêu — ghi chú trong code, không xử lý cầu kỳ ở bản đầu.
+- Khi chọn **leaf**: tối đa 1 vế khớp → 1 dòng/chứng từ.
+- Khi chọn **cha** và cả hai vế cùng thuộc cây con (vd Nợ 1311 / Có 1312 dưới cha 131): emit **2 dòng**
+  đối ứng lẫn nhau; số dư lũy kế tự triệt tiêu (xem §3.6).
 
 ### 3.3 Số dư lũy kế
 Khởi tạo `soDu` (có dấu) = số dư đầu kỳ có dấu (§3.4). Duyệt chứng từ trong kỳ theo `ngay` tăng dần:
@@ -91,13 +104,15 @@ Khi hiển thị tách Nợ/Có theo `calcBalance` (tái dùng ý tưởng từ 
 ### 3.4 Số dư đầu kỳ (có dấu)
 `soDuDauKy_signed = manual_signed + prior_signed`
 
-**manual_signed** — từ `getSoDuDauKy(...)`, lọc các dòng có `maTaiKhoan === <TK>` và:
+**manual_signed** — từ `getSoDuDauKy(...)`, lọc các dòng có `maTaiKhoan ∈ relevantCodes` (gộp con
+khi chọn cha) và:
 - nếu có `maDoiTuong`: chỉ dòng `chiTietMa === maDoiTuong`;
-- nếu không: cộng tất cả dòng của TK đó.
+- nếu không: cộng tất cả dòng của các TK trong cây.
 
-Mỗi dòng quy về dấu theo loại TK: `loai NO` → `duNo - duCo`; `loai CO` → `duCo - duNo`. Cộng dồn.
+Mỗi dòng quy về dấu theo loại TK **cha đã chọn** (`account.loai`): `loai NO` → `duNo - duCo`;
+`loai CO` → `duCo - duNo`. Cộng dồn. (Các TK con cùng `loai` với cha theo chuẩn VAS.)
 
-**prior_signed** — net phát sinh các chứng từ **trước `startDate`** (cùng bộ lọc TK + đối tượng):
+**prior_signed** — net phát sinh các vế **trước `startDate`** (cùng bộ lọc cây TK + đối tượng):
 - `loai NO`: `Σ phatSinhNo_before − Σ phatSinhCo_before`
 - `loai CO`: `Σ phatSinhCo_before − Σ phatSinhNo_before`
 
@@ -108,6 +123,16 @@ Mỗi dòng quy về dấu theo loại TK: `loai NO` → `duNo - duCo`; `loai CO
 ### 3.5 Tổng & số dư cuối kỳ
 - `tongPhatSinhNo = Σ phatSinhNo` (trong kỳ); `tongPhatSinhCo = Σ phatSinhCo` (trong kỳ).
 - `soDuCuoiKy_signed = soDuDauKy_signed + (net phát sinh trong kỳ)`; hiển thị tách Nợ/Có như §3.3.
+
+### 3.6 Gộp tài khoản cha
+- Khi `maTaiKhoan` là TK cha, mọi bước (§3.1b lọc, §3.2 dòng phát sinh, §3.4 số dư đầu kỳ, §3.5 tổng)
+  dùng `relevantCodes` thay cho một mã đơn.
+- Header sổ ghi TK cha (`account.ma - account.ten`). Cột TK đối ứng vẫn hiển thị mã TK con đối ứng
+  thực tế của từng dòng — **không** rút gọn về cha.
+- Số dư lũy kế tính theo `account.loai` của TK cha; vì các con cùng loại nên nhất quán.
+- Chứng từ nội bộ giữa hai con cùng cây → 2 dòng đối ứng nhau, số dư triệt tiêu; tổng phát sinh
+  Nợ/Có **đều tăng** đúng bản chất (không khử ở dòng tổng — đây là hành vi chuẩn của sổ chi tiết
+  TK cha). Có thể ghi chú/đánh dấu sau nếu cần báo cáo "thuần".
 
 ## 4. Kiến trúc & tệp
 
@@ -128,13 +153,16 @@ index.ts
 ```ts
 buildSoChiTiet(
   vouchers: NhatKyChungEntry[],
-  account: { ma: string; ten: string; loai: string },
+  account: { ma: string; ten: string; loai: string },   // TK đã chọn (cha hoặc leaf)
+  relevantCodes: Set<string>,                            // §3.1 — gồm cha + mọi con cháu
   soDuDauKyRows: SoDuDauKyLike[],
   maDoiTuong: string | undefined,
   startDate: Date,
   endDate: Date,
 ): SoChiTietReport
 ```
+> `relevantCodes` được service tính sẵn từ danh mục tài khoản rồi truyền vào helper (giữ helper thuần,
+> không cần biết toàn bộ cây).
 
 **Kiểu trả về**:
 ```ts
@@ -181,12 +209,17 @@ fe/src/pages/bao-cao/so-chi-tiet-tai-khoan/
 - Đối tượng chọn nhưng TK không có phát sinh với đối tượng đó → rỗng + số dư đầu kỳ theo bộ lọc.
 - Chứng từ có cùng `ngay` → giữ thứ tự ổn định (sort theo ngay; tie-break theo thứ tự gốc).
 - Số tiền âm/0 → cột tương ứng để trống ("-").
+- **TK cha không có con leaf phát sinh** → `relevantCodes` vẫn gồm cha; sổ rỗng nếu không TK con nào
+  có chứng từ.
+- **Chứng từ nội bộ giữa 2 con cùng cây** (chọn cha) → 2 dòng đối ứng nhau, số dư triệt tiêu (§3.6).
 
 ## 7. Kiểm thử
 - **Unit (helper)**: số dư đầu kỳ (manual + prior), TK đối ứng đúng theo vế, bên phát sinh đúng,
   số dư lũy kế đổi dấu, tổng phát sinh, số dư cuối kỳ, lọc theo đối tượng, bộ rỗng.
-- **Thủ công**: chọn TK 111 không lọc đối tượng → đối chiếu Sổ cái; chọn TK 131 + 1 khách hàng →
-  đối chiếu công nợ; đổi kỳ để kiểm số dư đầu/cuối kỳ.
+- **Unit gộp cha**: chọn TK cha → gộp đủ con; chứng từ nội bộ 2 con sinh 2 dòng & số dư triệt tiêu;
+  số dư đầu kỳ gộp con; TK đối ứng giữ mã con thực tế.
+- **Thủ công**: chọn TK 111 không lọc đối tượng → đối chiếu Sổ cái; chọn TK 131 (cha) → tổng khớp các
+  con 1311/1312…; chọn TK 131 + 1 khách hàng → đối chiếu công nợ; đổi kỳ để kiểm số dư đầu/cuối kỳ.
 
 ## 8. Ngoài phạm vi (bản đầu)
 - Xuất Excel, In PDF mẫu sổ có chân ký + đánh số trang.
