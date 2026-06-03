@@ -105,6 +105,15 @@ export class NhatKyChungController {
     return this.nhatKyChungService.createBatch(items, user.id);
   }
 
+  @Post('import')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
+  async importEntries(
+    @Body() items: CreateNhatKyChungDto[],
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.nhatKyChungService.importEntries(items, user.id);
+  }
+
   @Patch('batch')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
   async updateBatch(
