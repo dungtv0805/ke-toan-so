@@ -60,8 +60,6 @@ interface BalanceSheetState {
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
     maximumFractionDigits: 0,
   }).format(value);
 
@@ -140,8 +138,11 @@ const BaoCaoTaiChinhPage: React.FC = () => {
       const pane = document.querySelector('.ant-tabs-tabpane-active') as HTMLElement;
       if (!pane) return;
       const paneTop = pane.getBoundingClientRect().top;
-      setTabContentHeight(Math.max(window.innerHeight - paneTop - 8, 200));
-      setAntTableScrollY(Math.max(window.innerHeight - paneTop - 73 - 39, 200));
+      const avail = Math.max(window.innerHeight - paneTop - 8, 160);
+      setTabContentHeight(avail);
+      // Chừa chỗ cho header (~39) + dòng "Tổng cộng" fixed (~39) + lề/scrollbar (~18)
+      // để bảng luôn nằm gọn trong vùng hiển thị, dòng tổng cộng không bị cắt ở màn thấp (vd 1280x720)
+      setAntTableScrollY(Math.max(avail - 96, 120));
     };
     const raf = requestAnimationFrame(update);
     window.addEventListener('resize', update);
