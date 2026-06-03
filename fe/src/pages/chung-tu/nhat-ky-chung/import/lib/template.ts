@@ -102,6 +102,8 @@ export async function downloadTemplate(
   const a = document.createElement("a");
   a.href = url;
   a.download = `${fileName}.xlsx`;
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
