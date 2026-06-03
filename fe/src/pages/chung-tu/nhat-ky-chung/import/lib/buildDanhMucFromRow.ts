@@ -69,7 +69,12 @@ export function buildDanhMucFromResolved(r: ResolvedRow): DanhMuc {
   if (r.sanPham) danhMuc.sanPham = buildSanPhamSnapshot(r.sanPham) as DanhMuc["sanPham"];
   if (r.dongTien) danhMuc.dongTien = buildDongTienSnapshot(r.dongTien) as DanhMuc["dongTien"];
   if (r.khoanMuc) danhMuc.khoanMuc = buildKhoanMucSnapshot(r.khoanMuc) as DanhMuc["khoanMuc"];
-  if (r.hopDong) danhMuc.hopDong = buildHopDongSnapshot(r.hopDong) as unknown as DanhMuc["hopDong"];
+  if (r.hopDong)
+    danhMuc.hopDong = {
+      ...buildHopDongSnapshot(r.hopDong),
+      ma: r.hopDong.soHopDong,
+      ten: r.hopDong.tenCongTrinh || r.hopDong.soHopDong,
+    } as DanhMuc["hopDong"];
   if (r.nhomKhuyenMai) danhMuc.nhomKhuyenMai = buildNhomKhuyenMaiSnapshot(r.nhomKhuyenMai) as DanhMuc["nhomKhuyenMai"];
   if (r.nhomQuanLy) danhMuc.nhomQuanLy = buildNhomQuanLySnapshot(r.nhomQuanLy) as DanhMuc["nhomQuanLy"];
 
