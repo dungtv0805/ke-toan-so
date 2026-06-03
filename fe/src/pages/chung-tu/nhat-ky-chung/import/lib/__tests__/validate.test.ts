@@ -97,4 +97,13 @@ describe("validateAndBuild", () => {
     expect(res.hasErrors).toBe(false);
     expect(res.validItems[0].danhMuc?.doiTuong?.ma).toBe("KH001");
   });
+
+  it("batch hỗn hợp: 1 hợp lệ + 1 lỗi → hasErrors true, validItems 1 phần tử, results 2 phần tử", () => {
+    const validRow = row({ rowNumber: 2 });
+    const errorRow = row({ rowNumber: 3, taiKhoanNo: "999" }); // TK Nợ không tồn tại
+    const res = validateAndBuild([validRow, errorRow], masterData);
+    expect(res.hasErrors).toBe(true);
+    expect(res.validItems).toHaveLength(1);
+    expect(res.results).toHaveLength(2);
+  });
 });

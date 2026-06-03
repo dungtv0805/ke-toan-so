@@ -9,6 +9,7 @@ import {
   HopDong,
   LoaiGiaoDich,
   QuyChuan,
+  KhoanMuc,
 } from "@/types";
 import { CreateEntryDto } from "@/services/nhatKyChungService";
 import { LoaiChungTu } from "@/types";
@@ -26,14 +27,6 @@ import {
   ResolvedRow,
 } from "./buildDanhMucFromRow";
 
-export interface KhoanMucLite {
-  id: string;
-  ma: string;
-  ten: string;
-  loai: string;
-  nhom: string;
-}
-
 export interface ImportMasterData {
   taiKhoanList: TaiKhoanLite[];
   loaiGiaoDichList: LoaiGiaoDich[];
@@ -43,7 +36,7 @@ export interface ImportMasterData {
   boPhanList: BoPhan[];
   sanPhamList: SanPham[];
   dongTienList: DongTien[];
-  khoanMucList: KhoanMucLite[];
+  khoanMucList: KhoanMuc[];
   hopDongList: HopDong[];
   nhomKhuyenMaiList: NhomKhuyenMai[];
   nhomQuanLyList: NhomQuanLy[];
@@ -238,6 +231,7 @@ function validateRow(
     taiKhoanCo: tkCo as TaiKhoanLite,
     loaiGiaoDich: { ma: lgd!.ma, ten: lgd!.ten },
     nghiepVu: row.nghiepVu as string,
+    // QuyChuan không có trường tên → dùng mã làm tên (giống nhập tay)
     nghiepVuTen: row.nghiepVu,
     doiTuong,
     doiTuong2,
@@ -247,7 +241,7 @@ function validateRow(
     nhanVien,
     sanPham,
     dongTien,
-    khoanMuc: khoanMuc as ResolvedRow["khoanMuc"],
+    khoanMuc,
     hopDong,
     nhomKhuyenMai,
     nhomQuanLy,
