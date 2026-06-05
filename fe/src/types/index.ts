@@ -69,6 +69,9 @@ export interface TaiKhoanNganHang {
   soDu: number;
   nganHang?: string;
   soTaiKhoan?: string;
+  chiNhanh?: string;
+  chuTaiKhoan?: string;
+  trangThai?: boolean;
 }
 
 export interface DongTien {

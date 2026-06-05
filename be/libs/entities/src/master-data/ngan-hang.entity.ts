@@ -29,6 +29,12 @@ export class NganHang extends BaseEntity {
   @Column({ nullable: true })
   chiNhanh: string;
 
+  @Column({ nullable: true })
+  chuTaiKhoan: string;
+
+  @Column({ default: true })
+  trangThai: boolean;
+
   @Column({ default: true })
   isActive: boolean;
 }

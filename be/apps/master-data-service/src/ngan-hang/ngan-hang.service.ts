@@ -59,10 +59,15 @@ export class NganHangService {
 
     if (search) {
       const searchLower = search.toLowerCase();
-      filteredItems = filteredItems.filter(
-        (item) =>
-          item.ma.toLowerCase().includes(searchLower) ||
-          item.ten.toLowerCase().includes(searchLower),
+      filteredItems = filteredItems.filter((item) =>
+        [
+          item.ma,
+          item.ten,
+          item.soTaiKhoan,
+          item.nganHang,
+          item.chiNhanh,
+          item.chuTaiKhoan,
+        ].some((field) => field?.toLowerCase().includes(searchLower)),
       );
     }
 

@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsEnum,
   IsNumber,
+  IsBoolean,
 } from 'class-validator';
 import { NganHangLoai } from '@app/entities';
 
@@ -34,4 +35,12 @@ export class CreateNganHangDto {
   @IsString()
   @IsOptional()
   chiNhanh?: string;
+
+  @IsString()
+  @IsOptional()
+  chuTaiKhoan?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  trangThai?: boolean;
 }
