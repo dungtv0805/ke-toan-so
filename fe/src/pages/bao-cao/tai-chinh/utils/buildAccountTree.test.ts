@@ -77,7 +77,7 @@ describe('buildAccountTree', () => {
 describe('attachDoiTuongChildren', () => {
   const makeDtNode = (code: string, dtMa: string, val: number): TreeNode<Row> => ({
     ma: '', ten: `${dtMa} - Tên`, val,
-    __ma: `${code}::${dtMa}`, __isParent: false, __isDoiTuong: true, __rollup: {},
+    __ma: `${code}::${dtMa}`, __isParent: false, __isDoiTuong: true, __rollup: { val: 0 },
   });
 
   it('gắn đối tượng làm con, giữ nguyên giá trị TK cha, không cộng vào rollup', () => {

@@ -144,8 +144,8 @@ export function attachDoiTuongChildren<T>(
 ): void {
   const walk = (nodes: TreeNode<T>[]) => {
     for (const node of nodes) {
-      if (node.children && node.children.length > 0) walk(node.children);
       if (node.__isDoiTuong) continue;
+      if (node.children && node.children.length > 0) walk(node.children);
       const kids = childrenByCode.get(node.__ma);
       if (kids && kids.length > 0) {
         node.children = [...(node.children ?? []), ...kids];
