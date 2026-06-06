@@ -42,7 +42,7 @@ import { kqkdService, KqkdReport } from '@/services/kqkdService';
 import { KqkdTable } from '@/pages/bao-cao/kqkd/components/KqkdTable';
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { taiKhoanService } from '@/services/taiKhoanService';
-import { buildAccountTree, collectParentKeys, type TreeNode } from './utils/buildAccountTree';
+import { buildAccountTree, collectParentKeys, attachDoiTuongChildren, type TreeNode } from './utils/buildAccountTree';
 
 // ============ TYPES ============
 
@@ -199,26 +199,42 @@ const BaoCaoTaiChinhPage: React.FC = () => {
 
   // ============ TAB 1: CÂN ĐỐI TÀI KHOẢN ============
 
-  const trialBalanceTree = useMemo(
-    () =>
-      buildAccountTree(
-        tbState.trialBalance,
-        accounts,
-        (r) => r.taiKhoan,
-        ['soDuDauKyNo', 'soDuDauKyCo', 'phatSinhNo', 'phatSinhCo', 'soDuCuoiKyNo', 'soDuCuoiKyCo'],
-        (acc) => ({
-          taiKhoan: acc.ma,
-          tenTaiKhoan: acc.ten,
-          soDuDauKyNo: 0,
-          soDuDauKyCo: 0,
-          phatSinhNo: 0,
-          phatSinhCo: 0,
-          soDuCuoiKyNo: 0,
-          soDuCuoiKyCo: 0,
-        }),
-      ),
-    [tbState.trialBalance, accounts],
-  );
+  const trialBalanceTree = useMemo(() => {
+    const tree = buildAccountTree(
+      tbState.trialBalance,
+      accounts,
+      (r) => r.taiKhoan,
+      ['soDuDauKyNo', 'soDuDauKyCo', 'phatSinhNo', 'phatSinhCo', 'soDuCuoiKyNo', 'soDuCuoiKyCo'],
+      (acc) => ({
+        taiKhoan: acc.ma,
+        tenTaiKhoan: acc.ten,
+        soDuDauKyNo: 0,
+        soDuDauKyCo: 0,
+        phatSinhNo: 0,
+        phatSinhCo: 0,
+        soDuCuoiKyNo: 0,
+        soDuCuoiKyCo: 0,
+      }),
+    );
+
+    const childrenByCode = new Map<string, TreeNode<TrialBalance>[]>();
+    for (const row of tbState.trialBalance) {
+      if (!row.doiTuongChiTiet?.length) continue;
+      const kids = row.doiTuongChiTiet.map((dt): TreeNode<TrialBalance> => ({
+        ...dt,
+        taiKhoan: '',
+        tenTaiKhoan: dt.taiKhoan ? `${dt.taiKhoan} - ${dt.tenTaiKhoan}` : dt.tenTaiKhoan,
+        __ma: `${row.taiKhoan}::${dt.taiKhoan || '__none__'}`,
+        __isParent: false,
+        __isDoiTuong: true,
+        __rollup: {},
+      }));
+      childrenByCode.set(row.taiKhoan, kids);
+    }
+    attachDoiTuongChildren(tree, childrenByCode);
+
+    return tree;
+  }, [tbState.trialBalance, accounts]);
 
   const buildBsTree = useCallback(
     (items: BalanceSheetItem[]): TreeNode<BalanceSheetItem>[] => {
