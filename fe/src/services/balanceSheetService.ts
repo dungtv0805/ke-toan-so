@@ -2,7 +2,7 @@ import { ServiceBase } from './base/service-base';
 
 // ============ BE Response Types ============
 
-interface DoiTuongSoTienResponse {
+export interface DoiTuongSoTienResponse {
   ma: string;
   ten: string;
   soTien: number;
