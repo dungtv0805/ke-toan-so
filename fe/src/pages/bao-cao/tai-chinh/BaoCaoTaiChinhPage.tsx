@@ -268,6 +268,24 @@ const BaoCaoTaiChinhPage: React.FC = () => {
               level: 1,
             }),
           );
+          const bsChildrenByCode = new Map<string, TreeNode<BalanceSheetItem>[]>();
+          for (const leaf of leaves) {
+            if (!leaf.doiTuongChiTiet?.length) continue;
+            const kids = leaf.doiTuongChiTiet.map((dt): TreeNode<BalanceSheetItem> => ({
+              ma: '',
+              tenChiTieu: dt.ma ? `${dt.ma} - ${dt.ten}` : dt.ten,
+              dauNam: 0,
+              cuoiKy: dt.soTien,
+              level: 2,
+              __ma: `${leaf.ma}::${dt.ma || '__none__'}`,
+              __isParent: false,
+              __isDoiTuong: true,
+              __rollup: {},
+            }));
+            bsChildrenByCode.set(leaf.ma, kids);
+          }
+          attachDoiTuongChildren(tree, bsChildrenByCode);
+
           result.push(...tree);
         } else {
           result.push({
