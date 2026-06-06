@@ -76,8 +76,9 @@ describe('buildDoiTuongRows', () => {
     expect(rows).toHaveLength(2);
     const tongPhatSinhNo = rows.reduce((s, r) => s + r.noPhatSinh, 0);
     expect(tongPhatSinhNo).toBe(500);
-    expect(rows[0].ma).toBe('KH01');
-    expect(rows[0].ten).toBe('A');
+    const kh01 = rows.find((r) => r.ma === 'KH01');
+    expect(kh01?.ten).toBe('A');
+    expect(kh01?.noPhatSinh).toBe(300);
   });
 
   it('opening theo đối tượng cộng vào đầu kỳ', () => {
@@ -110,5 +111,18 @@ describe('buildDoiTuongRows', () => {
       [],
     );
     expect(rows).toHaveLength(0);
+  });
+
+  it('đối tượng chỉ có ở opening (không phát sinh) vẫn ra 1 dòng đầu kỳ', () => {
+    const rows = buildDoiTuongRows(
+      'NO',
+      [],
+      [{ doiTuongMa: 'KH09', doiTuongTen: 'Chỉ đầu kỳ', duNo: 500, duCo: 0 }],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].ma).toBe('KH09');
+    expect(rows[0].noDauKy).toBe(500);
+    expect(rows[0].noCuoiKy).toBe(500);
+    expect(rows[0].noPhatSinh).toBe(0);
   });
 });

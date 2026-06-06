@@ -124,10 +124,31 @@ export function buildDoiTuongRows(
   openings: DoiTuongOpening[],
 ): TrialBalanceEntry[] {
   const keyOf = (dt: string | null) => dt ?? '';
+  // Cộng dồn khi trùng khóa để hàm tự khớp tổng dù caller truyền list chưa gom.
   const aggMap = new Map<string, DoiTuongAgg>();
-  for (const a of aggs) aggMap.set(keyOf(a.doiTuongMa), a);
+  for (const a of aggs) {
+    const k = keyOf(a.doiTuongMa);
+    const ex = aggMap.get(k);
+    if (ex) {
+      ex.priorNo += a.priorNo;
+      ex.priorCo += a.priorCo;
+      ex.periodNo += a.periodNo;
+      ex.periodCo += a.periodCo;
+    } else {
+      aggMap.set(k, { ...a });
+    }
+  }
   const openMap = new Map<string, DoiTuongOpening>();
-  for (const o of openings) openMap.set(keyOf(o.doiTuongMa), o);
+  for (const o of openings) {
+    const k = keyOf(o.doiTuongMa);
+    const ex = openMap.get(k);
+    if (ex) {
+      ex.duNo += o.duNo;
+      ex.duCo += o.duCo;
+    } else {
+      openMap.set(k, { ...o });
+    }
+  }
 
   const keys = new Set<string>([...aggMap.keys(), ...openMap.keys()]);
   const rows: TrialBalanceEntry[] = [];
