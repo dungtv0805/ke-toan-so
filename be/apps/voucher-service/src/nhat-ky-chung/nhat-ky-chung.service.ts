@@ -237,6 +237,7 @@ export class NhatKyChungService {
               $group: {
                 _id: { ma: '$danhMuc.taiKhoanNo.ma', dt: '$danhMuc.doiTuong.ma' },
                 doiTuongTen: { $first: '$danhMuc.doiTuong.ten' },
+                doiTuongLoai: { $first: '$danhMuc.doiTuong.loai' },
                 priorNo: {
                   $sum: { $cond: [{ $lt: ['$ngay', startDate] }, '$soTien', 0] },
                 },
@@ -258,6 +259,7 @@ export class NhatKyChungService {
               $group: {
                 _id: { ma: '$danhMuc.taiKhoanCo.ma', dt: '$danhMuc.doiTuong.ma' },
                 doiTuongTen: { $first: '$danhMuc.doiTuong.ten' },
+                doiTuongLoai: { $first: '$danhMuc.doiTuong.loai' },
                 priorCo: {
                   $sum: { $cond: [{ $lt: ['$ngay', startDate] }, '$soTien', 0] },
                 },

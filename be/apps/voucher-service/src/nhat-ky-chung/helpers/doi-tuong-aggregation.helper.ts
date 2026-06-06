@@ -2,6 +2,7 @@ export interface DoiTuongBucket {
   ma: string;
   doiTuongMa: string | null;
   doiTuongTen: string | null;
+  doiTuongLoai: string | null;
   priorNo: number;
   priorCo: number;
   periodNo: number;
@@ -11,6 +12,7 @@ export interface DoiTuongBucket {
 export interface RawNoGroup {
   _id: { ma: string; dt: string | null | undefined };
   doiTuongTen: string | null;
+  doiTuongLoai: string | null;
   priorNo: number;
   periodNo: number;
 }
@@ -18,6 +20,7 @@ export interface RawNoGroup {
 export interface RawCoGroup {
   _id: { ma: string; dt: string | null | undefined };
   doiTuongTen: string | null;
+  doiTuongLoai: string | null;
   priorCo: number;
   periodCo: number;
 }
@@ -37,6 +40,7 @@ export function mergeDoiTuongBuckets(
       ma,
       doiTuongMa: dt,
       doiTuongTen: e.doiTuongTen ?? null,
+      doiTuongLoai: e.doiTuongLoai ?? null,
       priorNo: e.priorNo,
       priorCo: 0,
       periodNo: e.periodNo,
@@ -52,6 +56,7 @@ export function mergeDoiTuongBuckets(
       ma,
       doiTuongMa: dt,
       doiTuongTen: e.doiTuongTen ?? null,
+      doiTuongLoai: e.doiTuongLoai ?? null,
       priorNo: 0,
       priorCo: 0,
       periodNo: 0,
@@ -60,6 +65,7 @@ export function mergeDoiTuongBuckets(
     existing.priorCo = e.priorCo;
     existing.periodCo = e.periodCo;
     if (existing.doiTuongTen === null) existing.doiTuongTen = e.doiTuongTen ?? null;
+    if (existing.doiTuongLoai === null) existing.doiTuongLoai = e.doiTuongLoai ?? null;
     map.set(k, existing);
   }
 

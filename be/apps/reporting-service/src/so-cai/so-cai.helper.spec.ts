@@ -68,10 +68,11 @@ describe('buildDoiTuongRows', () => {
     const rows = buildDoiTuongRows(
       'NO',
       [
-        { doiTuongMa: 'KH01', doiTuongTen: 'A', priorNo: 0, priorCo: 0, periodNo: 300, periodCo: 0 },
-        { doiTuongMa: 'KH02', doiTuongTen: 'B', priorNo: 0, priorCo: 0, periodNo: 200, periodCo: 0 },
+        { doiTuongMa: 'KH01', doiTuongTen: 'A', doiTuongLoai: 'KHACH_HANG', priorNo: 0, priorCo: 0, periodNo: 300, periodCo: 0 },
+        { doiTuongMa: 'KH02', doiTuongTen: 'B', doiTuongLoai: 'KHACH_HANG', priorNo: 0, priorCo: 0, periodNo: 200, periodCo: 0 },
       ],
       [],
+      'KHACH_HANG',
     );
     expect(rows).toHaveLength(2);
     const tongPhatSinhNo = rows.reduce((s, r) => s + r.noPhatSinh, 0);
@@ -84,8 +85,9 @@ describe('buildDoiTuongRows', () => {
   it('opening theo đối tượng cộng vào đầu kỳ', () => {
     const rows = buildDoiTuongRows(
       'NO',
-      [{ doiTuongMa: 'KH01', doiTuongTen: 'A', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 0 }],
-      [{ doiTuongMa: 'KH01', doiTuongTen: 'A', duNo: 1000, duCo: 0 }],
+      [{ doiTuongMa: 'KH01', doiTuongTen: 'A', doiTuongLoai: 'KHACH_HANG', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 0 }],
+      [{ doiTuongMa: 'KH01', doiTuongTen: 'A', chiTietType: 'KHACH_HANG', duNo: 1000, duCo: 0 }],
+      'KHACH_HANG',
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].noDauKy).toBe(1000);
@@ -95,8 +97,9 @@ describe('buildDoiTuongRows', () => {
   it('đối tượng null → dòng "Chưa xác định đối tượng", ma rỗng', () => {
     const rows = buildDoiTuongRows(
       'CO',
-      [{ doiTuongMa: null, doiTuongTen: null, priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 70 }],
+      [{ doiTuongMa: null, doiTuongTen: null, doiTuongLoai: null, priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 70 }],
       [],
+      'NHA_CUNG_CAP',
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].ma).toBe('');
@@ -107,8 +110,9 @@ describe('buildDoiTuongRows', () => {
   it('bỏ dòng đối tượng toàn 0', () => {
     const rows = buildDoiTuongRows(
       'NO',
-      [{ doiTuongMa: 'KH01', doiTuongTen: 'A', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 0 }],
+      [{ doiTuongMa: 'KH01', doiTuongTen: 'A', doiTuongLoai: 'KHACH_HANG', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 0 }],
       [],
+      'KHACH_HANG',
     );
     expect(rows).toHaveLength(0);
   });
@@ -117,7 +121,8 @@ describe('buildDoiTuongRows', () => {
     const rows = buildDoiTuongRows(
       'NO',
       [],
-      [{ doiTuongMa: 'KH09', doiTuongTen: 'Chỉ đầu kỳ', duNo: 500, duCo: 0 }],
+      [{ doiTuongMa: 'KH09', doiTuongTen: 'Chỉ đầu kỳ', chiTietType: 'KHACH_HANG', duNo: 500, duCo: 0 }],
+      'KHACH_HANG',
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].ma).toBe('KH09');
@@ -130,11 +135,31 @@ describe('buildDoiTuongRows', () => {
     const rows = buildDoiTuongRows(
       'NO',
       [
-        { doiTuongMa: null, doiTuongTen: null, priorNo: 0, priorCo: 0, periodNo: 200, periodCo: 0 },
-        { doiTuongMa: 'KH02', doiTuongTen: 'B', priorNo: 0, priorCo: 0, periodNo: 300, periodCo: 0 },
+        { doiTuongMa: null, doiTuongTen: null, doiTuongLoai: null, priorNo: 0, priorCo: 0, periodNo: 200, periodCo: 0 },
+        { doiTuongMa: 'KH02', doiTuongTen: 'B', doiTuongLoai: 'KHACH_HANG', priorNo: 0, priorCo: 0, periodNo: 300, periodCo: 0 },
       ],
       [],
+      'KHACH_HANG',
     );
     expect(rows.map((r) => r.ma)).toEqual(['KH02', '']);
+  });
+
+  it('đối tượng SAI loại bị gộp vào "Chưa xác định" (giữ khớp tổng)', () => {
+    // TK chi tiết theo KHÁCH HÀNG nhưng chứng từ gắn đối tượng là NHÀ CUNG CẤP
+    // (counterparty của vế kia) → không được hiện thành dòng NCC, phải gộp orphan.
+    const rows = buildDoiTuongRows(
+      'NO',
+      [
+        { doiTuongMa: 'KH01', doiTuongTen: 'A', doiTuongLoai: 'KHACH_HANG', priorNo: 0, priorCo: 0, periodNo: 300, periodCo: 0 },
+        { doiTuongMa: 'NCC9', doiTuongTen: 'NCC sai', doiTuongLoai: 'NHA_CUNG_CAP', priorNo: 0, priorCo: 0, periodNo: 200, periodCo: 0 },
+      ],
+      [],
+      'KHACH_HANG',
+    );
+    // KH01 giữ nguyên; NCC9 (sai loại) gộp vào orphan; tổng phát sinh vẫn 500.
+    expect(rows.map((r) => r.ma).sort()).toEqual(['', 'KH01']);
+    expect(rows.find((r) => r.ma === 'NCC9')).toBeUndefined();
+    expect(rows.reduce((s, r) => s + r.noPhatSinh, 0)).toBe(500);
+    expect(rows.find((r) => r.ma === '')?.noPhatSinh).toBe(200);
   });
 });

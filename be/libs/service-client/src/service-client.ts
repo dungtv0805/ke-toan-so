@@ -294,6 +294,7 @@ export class ServiceClient extends BaseServiceClient {
     ma: string;
     doiTuongMa: string | null;
     doiTuongTen: string | null;
+    doiTuongLoai: string | null;
     priorNo: number;
     priorCo: number;
     periodNo: number;

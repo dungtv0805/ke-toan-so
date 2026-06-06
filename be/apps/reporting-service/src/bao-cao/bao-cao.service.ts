@@ -63,17 +63,31 @@ export function openingNetForSide(
 const CHUA_XAC_DINH_DOI_TUONG = 'Chưa xác định đối tượng';
 
 /**
+ * Các loại "Chi tiết theo" lấy chi tiết từ danh mục ĐỐI TƯỢNG.
+ * NGAN_HANG_QUY KHÔNG thuộc nhóm này (chi tiết là ngân hàng / TK con).
+ * Nguồn chân lý: enum ChiTietTheo trong tai-khoan.entity.ts.
+ */
+export const DOI_TUONG_CHI_TIET_TYPES = new Set([
+  'KHACH_HANG',
+  'NHA_CUNG_CAP',
+  'NHAN_VIEN',
+  'NHA_THAU',
+]);
+
+/**
  * Phân rã số dư 1 tài khoản theo đối tượng cho Cân đối kế toán.
  * Cùng công thức cộng dồn như calculateAccountBalance nhưng tách theo đối tượng.
  * `openings[i].net` = phần đóng góp của số dư đầu kỳ vào phía đang xét (đã qua
- * openingNetForSide). Đối tượng rỗng/thiếu gom vào "Chưa xác định đối tượng".
- * Bỏ dòng ~0; Σ(các dòng) = số dư TK (với TK có số dư dương).
+ * openingNetForSide). Chỉ giữ đối tượng đúng `expectedLoai` (= chiTietTheo của TK);
+ * đối tượng sai loại / thiếu loại / chứng từ không có đối tượng đều gom vào
+ * "Chưa xác định đối tượng" để Σ(các dòng) = số dư TK. Bỏ dòng ~0.
  */
 export function buildDoiTuongSoTien(
   vouchers: NhatKyChungEntry[],
   maTaiKhoan: string,
   type: 'NO' | 'CO',
-  openings: Array<{ chiTietMa?: string; chiTietTen?: string; net: number }>,
+  openings: Array<{ chiTietMa?: string; chiTietTen?: string; chiTietType?: string; net: number }>,
+  expectedLoai: string,
 ): DoiTuongSoTien[] {
   const map = new Map<string, { ten: string; soTien: number }>();
   const add = (ma: string, ten: string, delta: number) => {
@@ -84,14 +98,16 @@ export function buildDoiTuongSoTien(
   };
 
   for (const o of openings) {
-    add(o.chiTietMa ?? '', o.chiTietTen ?? '', o.net);
+    const ma = o.chiTietMa && o.chiTietType === expectedLoai ? o.chiTietMa : '';
+    add(ma, o.chiTietTen ?? '', o.net);
   }
 
   for (const v of vouchers) {
     const maTKNo = v.danhMuc?.taiKhoanNo?.ma ?? v.taiKhoanNo;
     const maTKCo = v.danhMuc?.taiKhoanCo?.ma ?? v.taiKhoanCo;
-    const dtMa = v.danhMuc?.doiTuong?.ma ?? '';
-    const dtTen = v.danhMuc?.doiTuong?.ten ?? '';
+    const dt = v.danhMuc?.doiTuong;
+    const dtMa = dt?.ma && dt?.loai === expectedLoai ? dt.ma : '';
+    const dtTen = dtMa ? dt?.ten ?? '' : '';
     if (maTKNo === maTaiKhoan) add(dtMa, dtTen, type === 'NO' ? v.soTien : -v.soTien);
     if (maTKCo === maTaiKhoan) add(dtMa, dtTen, type === 'CO' ? v.soTien : -v.soTien);
   }
@@ -228,13 +244,14 @@ export class BaoCaoService {
       openingRawRes.success && openingRawRes.data ? openingRawRes.data.items || [] : [];
     const openingRawByAccount = new Map<
       string,
-      Array<{ chiTietMa?: string; chiTietTen?: string; duNo: number; duCo: number }>
+      Array<{ chiTietMa?: string; chiTietTen?: string; chiTietType?: string; duNo: number; duCo: number }>
     >();
     for (const o of openingRawItems) {
       const arr = openingRawByAccount.get(o.maTaiKhoan) ?? [];
       arr.push({
         chiTietMa: o.chiTietMa,
         chiTietTen: o.chiTietTen,
+        chiTietType: o.chiTietType,
         duNo: Number(o.duNo) || 0,
         duCo: Number(o.duCo) || 0,
       });
@@ -261,7 +278,7 @@ export class BaoCaoService {
       );
       if (amount !== 0) {
         taiSan.push({ ma: account.ma, ten: account.ten, soTien: amount });
-        if (account.chiTietTheo) {
+        if (account.chiTietTheo && DOI_TUONG_CHI_TIET_TYPES.has(account.chiTietTheo)) {
           const dt = buildDoiTuongSoTien(
             vouchers,
             account.ma,
@@ -269,8 +286,10 @@ export class BaoCaoService {
             (openingRawByAccount.get(account.ma) ?? []).map((o) => ({
               chiTietMa: o.chiTietMa,
               chiTietTen: o.chiTietTen,
+              chiTietType: o.chiTietType,
               net: openingNetForSide({ duNo: o.duNo, duCo: o.duCo }, 'NO'),
             })),
+            account.chiTietTheo,
           );
           if (dt.length > 0) taiSan[taiSan.length - 1].doiTuongChiTiet = dt;
         }
@@ -287,7 +306,7 @@ export class BaoCaoService {
       );
       if (amount !== 0) {
         nguonVon.push({ ma: account.ma, ten: account.ten, soTien: amount });
-        if (account.chiTietTheo) {
+        if (account.chiTietTheo && DOI_TUONG_CHI_TIET_TYPES.has(account.chiTietTheo)) {
           const dt = buildDoiTuongSoTien(
             vouchers,
             account.ma,
@@ -295,8 +314,10 @@ export class BaoCaoService {
             (openingRawByAccount.get(account.ma) ?? []).map((o) => ({
               chiTietMa: o.chiTietMa,
               chiTietTen: o.chiTietTen,
+              chiTietType: o.chiTietType,
               net: openingNetForSide({ duNo: o.duNo, duCo: o.duCo }, 'CO'),
             })),
+            account.chiTietTheo,
           );
           if (dt.length > 0) nguonVon[nguonVon.length - 1].doiTuongChiTiet = dt;
         }

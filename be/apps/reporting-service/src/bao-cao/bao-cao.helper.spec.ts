@@ -18,18 +18,24 @@ describe('openingNetForSide', () => {
 });
 
 describe('buildDoiTuongSoTien', () => {
-  const v = (maNo: string, maCo: string, dtMa: string | undefined, soTien: number) => ({
+  const v = (
+    maNo: string,
+    maCo: string,
+    dtMa: string | undefined,
+    soTien: number,
+    dtLoai = 'KHACH_HANG',
+  ) => ({
     soPhieu: 'x', loai: 'PHIEU_THU' as const, ngay: new Date(), noiDung: '', soTien,
     danhMuc: {
       taiKhoanNo: { ma: maNo, ten: '', loai: '', nhom: '' },
       taiKhoanCo: { ma: maCo, ten: '', loai: '', nhom: '' },
-      ...(dtMa ? { doiTuong: { ma: dtMa, ten: `Tên ${dtMa}`, loai: '' } } : {}),
+      ...(dtMa ? { doiTuong: { ma: dtMa, ten: `Tên ${dtMa}`, loai: dtLoai } } : {}),
     },
   });
 
   it('phân rã số dư TK 131 (phía NO) theo đối tượng, Σ = số dư TK', () => {
     const vouchers = [v('131', '511', 'KH01', 300), v('131', '511', 'KH02', 200)];
-    const rows = buildDoiTuongSoTien(vouchers, '131', 'NO', []);
+    const rows = buildDoiTuongSoTien(vouchers, '131', 'NO', [], 'KHACH_HANG');
     const tong = rows.reduce((s, r) => s + r.soTien, 0);
     expect(tong).toBe(500);
     expect(rows.map((r) => r.ma).sort()).toEqual(['KH01', 'KH02']);
@@ -37,7 +43,7 @@ describe('buildDoiTuongSoTien', () => {
 
   it('chứng từ thiếu đối tượng → dòng "Chưa xác định đối tượng" (ma rỗng)', () => {
     const vouchers = [v('131', '511', 'KH01', 300), v('131', '511', undefined, 200)];
-    const rows = buildDoiTuongSoTien(vouchers, '131', 'NO', []);
+    const rows = buildDoiTuongSoTien(vouchers, '131', 'NO', [], 'KHACH_HANG');
     const orphan = rows.find((r) => r.ma === '');
     expect(orphan?.ten).toBe('Chưa xác định đối tượng');
     expect(orphan?.soTien).toBe(200);
@@ -45,9 +51,9 @@ describe('buildDoiTuongSoTien', () => {
 
   it('cộng opening theo đối tượng và bỏ dòng 0', () => {
     const rows = buildDoiTuongSoTien([], '131', 'NO', [
-      { chiTietMa: 'KH01', chiTietTen: 'A', net: 1000 },
-      { chiTietMa: 'KH02', chiTietTen: 'B', net: 0 },
-    ]);
+      { chiTietMa: 'KH01', chiTietTen: 'A', chiTietType: 'KHACH_HANG', net: 1000 },
+      { chiTietMa: 'KH02', chiTietTen: 'B', chiTietType: 'KHACH_HANG', net: 0 },
+    ], 'KHACH_HANG');
     expect(rows).toHaveLength(1);
     expect(rows[0].ma).toBe('KH01');
     expect(rows[0].soTien).toBe(1000);
@@ -55,7 +61,21 @@ describe('buildDoiTuongSoTien', () => {
 
   it('dòng "Chưa xác định đối tượng" luôn xếp cuối', () => {
     const vouchers = [v('131', '511', undefined, 200), v('131', '511', 'KH02', 300)];
-    const rows = buildDoiTuongSoTien(vouchers, '131', 'NO', []);
+    const rows = buildDoiTuongSoTien(vouchers, '131', 'NO', [], 'KHACH_HANG');
     expect(rows.map((r) => r.ma)).toEqual(['KH02', '']);
+  });
+
+  it('đối tượng SAI loại (counterparty vế kia) bị gộp vào "Chưa xác định", không hiện sai', () => {
+    // TK 112 (giả lập chi tiết theo KHÁCH HÀNG) nhận chứng từ Nợ112/Có131 với
+    // đối tượng là NHÀ CUNG CẤP của vế kia → phải gộp orphan, KHÔNG hiện NCC.
+    const vouchers = [
+      v('112', '131', 'KH01', 300, 'KHACH_HANG'),
+      v('112', '331', 'NCC9', 200, 'NHA_CUNG_CAP'),
+    ];
+    const rows = buildDoiTuongSoTien(vouchers, '112', 'NO', [], 'KHACH_HANG');
+    expect(rows.find((r) => r.ma === 'NCC9')).toBeUndefined();
+    expect(rows.find((r) => r.ma === 'KH01')?.soTien).toBe(300);
+    expect(rows.find((r) => r.ma === '')?.soTien).toBe(200); // NCC gộp orphan
+    expect(rows.reduce((s, r) => s + r.soTien, 0)).toBe(500); // Σ vẫn khớp
   });
 });

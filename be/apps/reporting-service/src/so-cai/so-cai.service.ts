@@ -97,6 +97,7 @@ export function computeTrialRow(
 export interface DoiTuongAgg {
   doiTuongMa: string | null;
   doiTuongTen: string | null;
+  doiTuongLoai: string | null;
   priorNo: number;
   priorCo: number;
   periodNo: number;
@@ -106,11 +107,25 @@ export interface DoiTuongAgg {
 export interface DoiTuongOpening {
   doiTuongMa: string | null;
   doiTuongTen: string | null;
+  chiTietType: string | null;
   duNo: number;
   duCo: number;
 }
 
 const CHUA_XAC_DINH_DOI_TUONG = 'Chưa xác định đối tượng';
+
+/**
+ * Các loại "Chi tiết theo" được lấy chi tiết từ danh mục ĐỐI TƯỢNG.
+ * NGAN_HANG_QUY KHÔNG thuộc nhóm này — chi tiết của nó là danh mục ngân hàng /
+ * tài khoản con, không phải đối tượng (xem chiTietConfig.ts ở FE).
+ * Nguồn chân lý: enum ChiTietTheo trong tai-khoan.entity.ts.
+ */
+export const DOI_TUONG_CHI_TIET_TYPES = new Set([
+  'KHACH_HANG',
+  'NHA_CUNG_CAP',
+  'NHAN_VIEN',
+  'NHA_THAU',
+]);
 
 /**
  * Dựng các dòng chi tiết theo đối tượng cho 1 tài khoản (cân đối phát sinh).
@@ -122,11 +137,23 @@ export function buildDoiTuongRows(
   loai: string,
   aggs: DoiTuongAgg[],
   openings: DoiTuongOpening[],
+  expectedLoai: string,
 ): TrialBalanceEntry[] {
   const keyOf = (dt: string | null) => dt ?? '';
+  // Đối tượng SAI loại (hoặc thiếu loại) so với "Chi tiết theo" của TK được gộp
+  // vào dòng "Chưa xác định đối tượng" (doiTuongMa=null) để Σ con = số dư TK.
+  const normAgg = (a: DoiTuongAgg): DoiTuongAgg =>
+    a.doiTuongMa && a.doiTuongLoai === expectedLoai
+      ? a
+      : { ...a, doiTuongMa: null, doiTuongTen: null };
+  const normOpen = (o: DoiTuongOpening): DoiTuongOpening =>
+    o.doiTuongMa && o.chiTietType === expectedLoai
+      ? o
+      : { ...o, doiTuongMa: null, doiTuongTen: null };
   // Cộng dồn khi trùng khóa để hàm tự khớp tổng dù caller truyền list chưa gom.
   const aggMap = new Map<string, DoiTuongAgg>();
-  for (const a of aggs) {
+  for (const raw of aggs) {
+    const a = normAgg(raw);
     const k = keyOf(a.doiTuongMa);
     const ex = aggMap.get(k);
     if (ex) {
@@ -139,7 +166,8 @@ export function buildDoiTuongRows(
     }
   }
   const openMap = new Map<string, DoiTuongOpening>();
-  for (const o of openings) {
+  for (const raw of openings) {
+    const o = normOpen(raw);
     const k = keyOf(o.doiTuongMa);
     const ex = openMap.get(k);
     if (ex) {
@@ -441,6 +469,7 @@ export class SoCaiService {
       arr.push({
         doiTuongMa: d.doiTuongMa,
         doiTuongTen: d.doiTuongTen,
+        doiTuongLoai: d.doiTuongLoai,
         priorNo: d.priorNo,
         priorCo: d.priorCo,
         periodNo: d.periodNo,
@@ -457,6 +486,7 @@ export class SoCaiService {
       const ex = accMap.get(dtKey) ?? {
         doiTuongMa: o.chiTietMa ?? null,
         doiTuongTen: o.chiTietTen ?? null,
+        chiTietType: o.chiTietType ?? null,
         duNo: 0,
         duCo: 0,
       };
@@ -505,11 +535,12 @@ export class SoCaiService {
 
       entries.push({ ma, ten: account.ten, ...row });
 
-      if (account.chiTietTheo) {
+      if (account.chiTietTheo && DOI_TUONG_CHI_TIET_TYPES.has(account.chiTietTheo)) {
         const dtRows = buildDoiTuongRows(
           account.loai,
           dtAggByAccount.get(ma) ?? [],
           Array.from((dtOpeningByAccount.get(ma) ?? new Map<string, DoiTuongOpening>()).values()),
+          account.chiTietTheo,
         );
         if (dtRows.length > 0) {
           entries[entries.length - 1].doiTuongChiTiet = dtRows;
