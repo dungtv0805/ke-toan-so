@@ -1,4 +1,4 @@
-import { computeTrialRow } from './so-cai.service';
+import { computeTrialRow, buildDoiTuongRows } from './so-cai.service';
 
 describe('computeTrialRow', () => {
   const zeroAgg = { priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 0 };
@@ -60,5 +60,55 @@ describe('computeTrialRow', () => {
       noCuoiKy: 0,
       coCuoiKy: 0,
     });
+  });
+});
+
+describe('buildDoiTuongRows', () => {
+  it('phát sinh cộng đúng theo từng đối tượng (loại NO)', () => {
+    const rows = buildDoiTuongRows(
+      'NO',
+      [
+        { doiTuongMa: 'KH01', doiTuongTen: 'A', priorNo: 0, priorCo: 0, periodNo: 300, periodCo: 0 },
+        { doiTuongMa: 'KH02', doiTuongTen: 'B', priorNo: 0, priorCo: 0, periodNo: 200, periodCo: 0 },
+      ],
+      [],
+    );
+    expect(rows).toHaveLength(2);
+    const tongPhatSinhNo = rows.reduce((s, r) => s + r.noPhatSinh, 0);
+    expect(tongPhatSinhNo).toBe(500);
+    expect(rows[0].ma).toBe('KH01');
+    expect(rows[0].ten).toBe('A');
+  });
+
+  it('opening theo đối tượng cộng vào đầu kỳ', () => {
+    const rows = buildDoiTuongRows(
+      'NO',
+      [{ doiTuongMa: 'KH01', doiTuongTen: 'A', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 0 }],
+      [{ doiTuongMa: 'KH01', doiTuongTen: 'A', duNo: 1000, duCo: 0 }],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].noDauKy).toBe(1000);
+    expect(rows[0].noCuoiKy).toBe(1000);
+  });
+
+  it('đối tượng null → dòng "Chưa xác định đối tượng", ma rỗng', () => {
+    const rows = buildDoiTuongRows(
+      'CO',
+      [{ doiTuongMa: null, doiTuongTen: null, priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 70 }],
+      [],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].ma).toBe('');
+    expect(rows[0].ten).toBe('Chưa xác định đối tượng');
+    expect(rows[0].coPhatSinh).toBe(70);
+  });
+
+  it('bỏ dòng đối tượng toàn 0', () => {
+    const rows = buildDoiTuongRows(
+      'NO',
+      [{ doiTuongMa: 'KH01', doiTuongTen: 'A', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 0 }],
+      [],
+    );
+    expect(rows).toHaveLength(0);
   });
 });

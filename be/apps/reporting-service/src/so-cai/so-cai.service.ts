@@ -29,6 +29,7 @@ export interface TrialBalanceEntry {
   coPhatSinh: number;
   noCuoiKy: number;
   coCuoiKy: number;
+  doiTuongChiTiet?: TrialBalanceEntry[];
 }
 
 export interface AggBucket {
@@ -91,6 +92,72 @@ export function computeTrialRow(
     noCuoiKy: cuoiKy.duNo,
     coCuoiKy: cuoiKy.duCo,
   };
+}
+
+export interface DoiTuongAgg {
+  doiTuongMa: string | null;
+  doiTuongTen: string | null;
+  priorNo: number;
+  priorCo: number;
+  periodNo: number;
+  periodCo: number;
+}
+
+export interface DoiTuongOpening {
+  doiTuongMa: string | null;
+  doiTuongTen: string | null;
+  duNo: number;
+  duCo: number;
+}
+
+const CHUA_XAC_DINH_DOI_TUONG = 'Chưa xác định đối tượng';
+
+/**
+ * Dựng các dòng chi tiết theo đối tượng cho 1 tài khoản (cân đối phát sinh).
+ * Mỗi đối tượng tính như 1 "tài khoản con" qua computeTrialRow; ma rỗng + tên
+ * "Chưa xác định đối tượng" cho phần chứng từ/đầu kỳ không gắn đối tượng.
+ * Bỏ các dòng toàn 0. Σ phát sinh các dòng = phát sinh của TK.
+ */
+export function buildDoiTuongRows(
+  loai: string,
+  aggs: DoiTuongAgg[],
+  openings: DoiTuongOpening[],
+): TrialBalanceEntry[] {
+  const keyOf = (dt: string | null) => dt ?? '';
+  const aggMap = new Map<string, DoiTuongAgg>();
+  for (const a of aggs) aggMap.set(keyOf(a.doiTuongMa), a);
+  const openMap = new Map<string, DoiTuongOpening>();
+  for (const o of openings) openMap.set(keyOf(o.doiTuongMa), o);
+
+  const keys = new Set<string>([...aggMap.keys(), ...openMap.keys()]);
+  const rows: TrialBalanceEntry[] = [];
+
+  for (const k of keys) {
+    const a = aggMap.get(k);
+    const o = openMap.get(k);
+    const row = computeTrialRow(
+      {
+        priorNo: a?.priorNo ?? 0,
+        priorCo: a?.priorCo ?? 0,
+        periodNo: a?.periodNo ?? 0,
+        periodCo: a?.periodCo ?? 0,
+      },
+      { duNo: o?.duNo ?? 0, duCo: o?.duCo ?? 0 },
+      loai,
+    );
+    const doiTuongMa = a?.doiTuongMa ?? o?.doiTuongMa ?? null;
+    const doiTuongTen = a?.doiTuongTen ?? o?.doiTuongTen ?? null;
+    rows.push({
+      ma: doiTuongMa ?? '',
+      ten: doiTuongMa ? doiTuongTen ?? '' : CHUA_XAC_DINH_DOI_TUONG,
+      ...row,
+    });
+  }
+
+  const isZero = (r: TrialBalanceEntry) =>
+    !r.noDauKy && !r.coDauKy && !r.noPhatSinh && !r.coPhatSinh && !r.noCuoiKy && !r.coCuoiKy;
+
+  return rows.filter((r) => !isZero(r)).sort((x, y) => x.ma.localeCompare(y.ma));
 }
 
 /**
@@ -315,7 +382,7 @@ export class SoCaiService {
     endDate: Date,
     authToken?: string,
   ): Promise<{ entries: TrialBalanceEntry[]; totals: TrialBalanceEntry }> {
-    const [aggRes, accountsRes, openingRes] = await Promise.all([
+    const [aggRes, accountsRes, openingRes, dtAggRes, openingRawRes] = await Promise.all([
       this.serviceClient.aggregateBalance(
         startDate.toISOString(),
         endDate.toISOString(),
@@ -323,12 +390,53 @@ export class SoCaiService {
       ),
       this.serviceClient.getTaiKhoan(authToken),
       this.serviceClient.getSoDuDauKy(authToken),
+      this.serviceClient.aggregateBalanceByDoiTuong(
+        startDate.toISOString(),
+        endDate.toISOString(),
+        authToken,
+      ),
+      this.serviceClient.getSoDuDauKyRaw(authToken),
     ]);
 
     const aggData = aggRes.success ? aggRes.data || [] : [];
     const accounts = accountsRes.success ? accountsRes.data || [] : [];
     const openingItems =
       openingRes.success && openingRes.data ? openingRes.data.items || [] : [];
+    const dtAggData = dtAggRes.success ? dtAggRes.data || [] : [];
+    const openingRawItems =
+      openingRawRes.success && openingRawRes.data ? openingRawRes.data.items || [] : [];
+
+    // Gom đối tượng theo mã tài khoản
+    const dtAggByAccount = new Map<string, DoiTuongAgg[]>();
+    for (const d of dtAggData) {
+      const arr = dtAggByAccount.get(d.ma) ?? [];
+      arr.push({
+        doiTuongMa: d.doiTuongMa,
+        doiTuongTen: d.doiTuongTen,
+        priorNo: d.priorNo,
+        priorCo: d.priorCo,
+        periodNo: d.periodNo,
+        periodCo: d.periodCo,
+      });
+      dtAggByAccount.set(d.ma, arr);
+    }
+
+    // Gom opening đối tượng theo (mã TK, mã đối tượng)
+    const dtOpeningByAccount = new Map<string, Map<string, DoiTuongOpening>>();
+    for (const o of openingRawItems) {
+      const accMap = dtOpeningByAccount.get(o.maTaiKhoan) ?? new Map<string, DoiTuongOpening>();
+      const dtKey = o.chiTietMa ?? '';
+      const ex = accMap.get(dtKey) ?? {
+        doiTuongMa: o.chiTietMa ?? null,
+        doiTuongTen: o.chiTietTen ?? null,
+        duNo: 0,
+        duCo: 0,
+      };
+      ex.duNo += Number(o.duNo) || 0;
+      ex.duCo += Number(o.duCo) || 0;
+      accMap.set(dtKey, ex);
+      dtOpeningByAccount.set(o.maTaiKhoan, accMap);
+    }
 
     // Build account lookup map
     const accountMap = new Map(accounts.map((a) => [a.ma, a]));
@@ -368,6 +476,17 @@ export class SoCaiService {
       );
 
       entries.push({ ma, ten: account.ten, ...row });
+
+      if (account.chiTietTheo) {
+        const dtRows = buildDoiTuongRows(
+          account.loai,
+          dtAggByAccount.get(ma) ?? [],
+          Array.from((dtOpeningByAccount.get(ma) ?? new Map<string, DoiTuongOpening>()).values()),
+        );
+        if (dtRows.length > 0) {
+          entries[entries.length - 1].doiTuongChiTiet = dtRows;
+        }
+      }
 
       totalNoDauKy += row.noDauKy;
       totalCoDauKy += row.coDauKy;
