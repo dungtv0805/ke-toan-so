@@ -2,10 +2,17 @@ import { ServiceBase } from './base/service-base';
 
 // ============ BE Response Types ============
 
+interface DoiTuongSoTienResponse {
+  ma: string;
+  ten: string;
+  soTien: number;
+}
+
 interface BalanceSheetEntryResponse {
   ma: string;
   ten: string;
   soTien: number;
+  doiTuongChiTiet?: DoiTuongSoTienResponse[];
 }
 
 interface BalanceSheetResponse {
@@ -29,6 +36,7 @@ export interface BalanceSheetItem {
   level: number;
   isSection?: boolean;
   isTotal?: boolean;
+  doiTuongChiTiet?: DoiTuongSoTienResponse[];
 }
 
 export interface BalanceSheetData {
@@ -78,6 +86,7 @@ function mapEntriesToItems(entries: BalanceSheetEntryResponse[], groupLabel: str
       dauNam: 0, // BE chưa trả dauNam, mặc định 0
       cuoiKy: entry.soTien,
       level: 1,
+      doiTuongChiTiet: entry.doiTuongChiTiet,
     });
   }
 

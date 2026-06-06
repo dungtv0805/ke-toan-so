@@ -55,6 +55,7 @@ export interface TrialBalanceEntry {
   coPhatSinh: number;
   noCuoiKy: number;
   coCuoiKy: number;
+  doiTuongChiTiet?: TrialBalanceEntry[];
 }
 
 // Mapped type for FE display
@@ -67,6 +68,7 @@ export interface TrialBalance {
   phatSinhCo: number;
   soDuCuoiKyNo: number;
   soDuCuoiKyCo: number;
+  doiTuongChiTiet?: TrialBalance[];
 }
 
 class SoCaiService extends ServiceBase {
@@ -177,7 +179,7 @@ class SoCaiService extends ServiceBase {
       params: { startDate: sd, endDate: ed },
     });
 
-    return data.entries.map((item) => ({
+    const mapEntry = (item: TrialBalanceEntry): TrialBalance => ({
       taiKhoan: item.ma,
       tenTaiKhoan: item.ten,
       soDuDauKyNo: item.noDauKy,
@@ -186,6 +188,11 @@ class SoCaiService extends ServiceBase {
       phatSinhCo: item.coPhatSinh,
       soDuCuoiKyNo: item.noCuoiKy,
       soDuCuoiKyCo: item.coCuoiKy,
+    });
+
+    return data.entries.map((item) => ({
+      ...mapEntry(item),
+      doiTuongChiTiet: item.doiTuongChiTiet?.map(mapEntry),
     }));
   }
 
