@@ -125,4 +125,16 @@ describe('buildDoiTuongRows', () => {
     expect(rows[0].noCuoiKy).toBe(500);
     expect(rows[0].noPhatSinh).toBe(0);
   });
+
+  it('dòng "Chưa xác định đối tượng" luôn xếp cuối', () => {
+    const rows = buildDoiTuongRows(
+      'NO',
+      [
+        { doiTuongMa: null, doiTuongTen: null, priorNo: 0, priorCo: 0, periodNo: 200, periodCo: 0 },
+        { doiTuongMa: 'KH02', doiTuongTen: 'B', priorNo: 0, priorCo: 0, periodNo: 300, periodCo: 0 },
+      ],
+      [],
+    );
+    expect(rows.map((r) => r.ma)).toEqual(['KH02', '']);
+  });
 });

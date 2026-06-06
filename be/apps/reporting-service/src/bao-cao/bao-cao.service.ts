@@ -96,10 +96,15 @@ export function buildDoiTuongSoTien(
     if (maTKCo === maTaiKhoan) add(dtMa, dtTen, type === 'CO' ? v.soTien : -v.soTien);
   }
 
+  // "Chưa xác định đối tượng" (ma rỗng) luôn xếp cuối.
   return Array.from(map.entries())
     .map(([ma, val]) => ({ ma, ten: ma ? val.ten : CHUA_XAC_DINH_DOI_TUONG, soTien: val.soTien }))
     .filter((d) => Math.round(d.soTien) !== 0)
-    .sort((a, b) => a.ma.localeCompare(b.ma));
+    .sort((a, b) => {
+      if (a.ma === '') return 1;
+      if (b.ma === '') return -1;
+      return a.ma.localeCompare(b.ma);
+    });
 }
 
 @Injectable()

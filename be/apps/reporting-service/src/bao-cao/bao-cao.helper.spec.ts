@@ -52,4 +52,10 @@ describe('buildDoiTuongSoTien', () => {
     expect(rows[0].ma).toBe('KH01');
     expect(rows[0].soTien).toBe(1000);
   });
+
+  it('dòng "Chưa xác định đối tượng" luôn xếp cuối', () => {
+    const vouchers = [v('131', '511', undefined, 200), v('131', '511', 'KH02', 300)];
+    const rows = buildDoiTuongSoTien(vouchers, '131', 'NO', []);
+    expect(rows.map((r) => r.ma)).toEqual(['KH02', '']);
+  });
 });

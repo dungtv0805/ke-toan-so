@@ -178,7 +178,14 @@ export function buildDoiTuongRows(
   const isZero = (r: TrialBalanceEntry) =>
     !r.noDauKy && !r.coDauKy && !r.noPhatSinh && !r.coPhatSinh && !r.noCuoiKy && !r.coCuoiKy;
 
-  return rows.filter((r) => !isZero(r)).sort((x, y) => x.ma.localeCompare(y.ma));
+  // "Chưa xác định đối tượng" (ma rỗng) luôn xếp cuối.
+  return rows
+    .filter((r) => !isZero(r))
+    .sort((x, y) => {
+      if (x.ma === '') return 1;
+      if (y.ma === '') return -1;
+      return x.ma.localeCompare(y.ma);
+    });
 }
 
 /**
