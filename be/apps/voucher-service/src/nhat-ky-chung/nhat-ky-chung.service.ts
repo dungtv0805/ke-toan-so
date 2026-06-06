@@ -19,7 +19,7 @@ import {
   SummaryItem,
   SummaryResponse,
 } from './dto';
-import { buildMongoQuery, buildSummaryAggregation } from './helpers';
+import { buildMongoQuery, buildSummaryAggregation, mergeDoiTuongBuckets, DoiTuongBucket } from './helpers';
 import { VoucherNumberService } from '../shared';
 
 @Injectable()
@@ -211,6 +211,79 @@ export class NhatKyChungService {
       .sort((a, b) => a.ma.localeCompare(b.ma));
 
     return { success: true, data: accounts };
+  }
+
+  /**
+   * Gom số dư theo (tài khoản, đối tượng) — phục vụ xổ cây đối tượng ở báo cáo.
+   * Bucket doiTuongMa = null là phần chứng từ không gắn đối tượng.
+   */
+  async aggregateBalanceByDoiTuong(
+    startDate: Date,
+    endDate: Date,
+    tenantId?: string,
+  ): Promise<{ success: boolean; data: DoiTuongBucket[] }> {
+    const pipeline: object[] = [
+      {
+        $match: {
+          ...(tenantId ? { tenantId } : {}),
+          ngay: { $lte: endDate },
+        },
+      },
+      {
+        $facet: {
+          noEntries: [
+            { $match: { 'danhMuc.taiKhoanNo.ma': { $exists: true, $ne: null } } },
+            {
+              $group: {
+                _id: { ma: '$danhMuc.taiKhoanNo.ma', dt: '$danhMuc.doiTuong.ma' },
+                doiTuongTen: { $first: '$danhMuc.doiTuong.ten' },
+                priorNo: {
+                  $sum: { $cond: [{ $lt: ['$ngay', startDate] }, '$soTien', 0] },
+                },
+                periodNo: {
+                  $sum: {
+                    $cond: [
+                      { $and: [{ $gte: ['$ngay', startDate] }, { $lte: ['$ngay', endDate] }] },
+                      '$soTien',
+                      0,
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+          coEntries: [
+            { $match: { 'danhMuc.taiKhoanCo.ma': { $exists: true, $ne: null } } },
+            {
+              $group: {
+                _id: { ma: '$danhMuc.taiKhoanCo.ma', dt: '$danhMuc.doiTuong.ma' },
+                doiTuongTen: { $first: '$danhMuc.doiTuong.ten' },
+                priorCo: {
+                  $sum: { $cond: [{ $lt: ['$ngay', startDate] }, '$soTien', 0] },
+                },
+                periodCo: {
+                  $sum: {
+                    $cond: [
+                      { $and: [{ $gte: ['$ngay', startDate] }, { $lte: ['$ngay', endDate] }] },
+                      '$soTien',
+                      0,
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    ];
+
+    const result = await this.chungTuRepository.aggregate(pipeline).toArray();
+    const facet = result[0] || { noEntries: [], coEntries: [] };
+    const data = mergeDoiTuongBuckets(facet.noEntries, facet.coEntries);
+    data.sort((a, b) =>
+      a.ma.localeCompare(b.ma) || (a.doiTuongMa ?? '').localeCompare(b.doiTuongMa ?? ''),
+    );
+    return { success: true, data };
   }
 
   async findById(id: string): Promise<{ success: boolean; data: ChungTu }> {

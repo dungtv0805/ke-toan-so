@@ -67,6 +67,27 @@ export class NhatKyChungController {
     );
   }
 
+  @Get('aggregate-balance-by-doi-tuong')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async aggregateBalanceByDoiTuong(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Headers('authorization') authToken?: string,
+  ) {
+    let tenantId: string | undefined;
+    if (authToken?.startsWith('Bearer ')) {
+      try {
+        const decoded = jwt.decode(authToken.substring(7)) as { tenantId?: string } | null;
+        tenantId = decoded?.tenantId;
+      } catch {}
+    }
+    return this.nhatKyChungService.aggregateBalanceByDoiTuong(
+      new Date(startDate),
+      new Date(endDate),
+      tenantId,
+    );
+  }
+
   @Get('summary/:type')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getSummary(

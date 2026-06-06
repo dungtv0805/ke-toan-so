@@ -284,4 +284,28 @@ export class ServiceClient extends BaseServiceClient {
       query: { startDate, endDate },
     });
   }
+
+  async aggregateBalanceByDoiTuong(
+    startDate: string,
+    endDate: string,
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<ServiceResponse<Array<{
+    ma: string;
+    doiTuongMa: string | null;
+    doiTuongTen: string | null;
+    priorNo: number;
+    priorCo: number;
+    periodNo: number;
+    periodCo: number;
+  }>>> {
+    const headers: Record<string, string> = {};
+    if (authToken) headers['Authorization'] = authToken;
+    if (tenantId) headers['x-tenant-id'] = tenantId;
+
+    return this.get('voucher', '/nhat-ky-chung/aggregate-balance-by-doi-tuong', {
+      headers: Object.keys(headers).length ? headers : undefined,
+      query: { startDate, endDate },
+    });
+  }
 }

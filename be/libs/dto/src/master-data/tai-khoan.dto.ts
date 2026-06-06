@@ -8,6 +8,7 @@ export interface TaiKhoanResponse {
   nhom: string;
   parentId?: string;
   moTa?: string;
+  chiTietTheo?: string;
   isActive: boolean;
 }
 
