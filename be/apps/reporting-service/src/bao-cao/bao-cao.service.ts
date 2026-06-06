@@ -22,10 +22,17 @@ export interface PnLReport extends PnLPeriodData {
   kyTruocPeriod: { startDate: string; endDate: string };
 }
 
+export interface DoiTuongSoTien {
+  ma: string;
+  ten: string;
+  soTien: number;
+}
+
 export interface BalanceSheetEntry {
   ma: string;
   ten: string;
   soTien: number;
+  doiTuongChiTiet?: DoiTuongSoTien[];
 }
 
 export interface BalanceSheetReport {
@@ -51,6 +58,48 @@ export function openingNetForSide(
   return side === 'NO'
     ? opening.duNo - opening.duCo
     : opening.duCo - opening.duNo;
+}
+
+const CHUA_XAC_DINH_DOI_TUONG = 'Chưa xác định đối tượng';
+
+/**
+ * Phân rã số dư 1 tài khoản theo đối tượng cho Cân đối kế toán.
+ * Cùng công thức cộng dồn như calculateAccountBalance nhưng tách theo đối tượng.
+ * `openings[i].net` = phần đóng góp của số dư đầu kỳ vào phía đang xét (đã qua
+ * openingNetForSide). Đối tượng rỗng/thiếu gom vào "Chưa xác định đối tượng".
+ * Bỏ dòng ~0; Σ(các dòng) = số dư TK (với TK có số dư dương).
+ */
+export function buildDoiTuongSoTien(
+  vouchers: NhatKyChungEntry[],
+  maTaiKhoan: string,
+  type: 'NO' | 'CO',
+  openings: Array<{ chiTietMa?: string; chiTietTen?: string; net: number }>,
+): DoiTuongSoTien[] {
+  const map = new Map<string, { ten: string; soTien: number }>();
+  const add = (ma: string, ten: string, delta: number) => {
+    const ex = map.get(ma) ?? { ten, soTien: 0 };
+    ex.soTien += delta;
+    if (!ex.ten && ten) ex.ten = ten;
+    map.set(ma, ex);
+  };
+
+  for (const o of openings) {
+    add(o.chiTietMa ?? '', o.chiTietTen ?? '', o.net);
+  }
+
+  for (const v of vouchers) {
+    const maTKNo = v.danhMuc?.taiKhoanNo?.ma ?? v.taiKhoanNo;
+    const maTKCo = v.danhMuc?.taiKhoanCo?.ma ?? v.taiKhoanCo;
+    const dtMa = v.danhMuc?.doiTuong?.ma ?? '';
+    const dtTen = v.danhMuc?.doiTuong?.ten ?? '';
+    if (maTKNo === maTaiKhoan) add(dtMa, dtTen, type === 'NO' ? v.soTien : -v.soTien);
+    if (maTKCo === maTaiKhoan) add(dtMa, dtTen, type === 'CO' ? v.soTien : -v.soTien);
+  }
+
+  return Array.from(map.entries())
+    .map(([ma, val]) => ({ ma, ten: ma ? val.ten : CHUA_XAC_DINH_DOI_TUONG, soTien: val.soTien }))
+    .filter((d) => Math.round(d.soTien) !== 0)
+    .sort((a, b) => a.ma.localeCompare(b.ma));
 }
 
 @Injectable()
@@ -147,7 +196,7 @@ export class BaoCaoService {
     authToken?: string,
     tenantId?: string,
   ): Promise<BalanceSheetReport> {
-    const [vouchersRes, accountsRes, openingRes] = await Promise.all([
+    const [vouchersRes, accountsRes, openingRes, openingRawRes] = await Promise.all([
       this.serviceClient.getNhatKyChung(
         '2000-01-01',
         asOfDate.toISOString(),
@@ -156,6 +205,7 @@ export class BaoCaoService {
       ),
       this.serviceClient.getTaiKhoan(authToken, tenantId),
       this.serviceClient.getSoDuDauKy(authToken, tenantId),
+      this.serviceClient.getSoDuDauKyRaw(authToken, tenantId),
     ]);
 
     const vouchers = vouchersRes.success ? vouchersRes.data || [] : [];
@@ -168,6 +218,23 @@ export class BaoCaoService {
         { duNo: Number(o.duNo) || 0, duCo: Number(o.duCo) || 0 },
       ]),
     );
+
+    const openingRawItems =
+      openingRawRes.success && openingRawRes.data ? openingRawRes.data.items || [] : [];
+    const openingRawByAccount = new Map<
+      string,
+      Array<{ chiTietMa?: string; chiTietTen?: string; duNo: number; duCo: number }>
+    >();
+    for (const o of openingRawItems) {
+      const arr = openingRawByAccount.get(o.maTaiKhoan) ?? [];
+      arr.push({
+        chiTietMa: o.chiTietMa,
+        chiTietTen: o.chiTietTen,
+        duNo: Number(o.duNo) || 0,
+        duCo: Number(o.duCo) || 0,
+      });
+      openingRawByAccount.set(o.maTaiKhoan, arr);
+    }
 
     const assetAccounts = accounts.filter(
       (a) => a.ma?.startsWith('1') || a.ma?.startsWith('2'),
@@ -189,6 +256,19 @@ export class BaoCaoService {
       );
       if (amount !== 0) {
         taiSan.push({ ma: account.ma, ten: account.ten, soTien: amount });
+        if (account.chiTietTheo) {
+          const dt = buildDoiTuongSoTien(
+            vouchers,
+            account.ma,
+            'NO',
+            (openingRawByAccount.get(account.ma) ?? []).map((o) => ({
+              chiTietMa: o.chiTietMa,
+              chiTietTen: o.chiTietTen,
+              net: openingNetForSide({ duNo: o.duNo, duCo: o.duCo }, 'NO'),
+            })),
+          );
+          if (dt.length > 0) taiSan[taiSan.length - 1].doiTuongChiTiet = dt;
+        }
       }
     }
 
@@ -202,6 +282,19 @@ export class BaoCaoService {
       );
       if (amount !== 0) {
         nguonVon.push({ ma: account.ma, ten: account.ten, soTien: amount });
+        if (account.chiTietTheo) {
+          const dt = buildDoiTuongSoTien(
+            vouchers,
+            account.ma,
+            'CO',
+            (openingRawByAccount.get(account.ma) ?? []).map((o) => ({
+              chiTietMa: o.chiTietMa,
+              chiTietTen: o.chiTietTen,
+              net: openingNetForSide({ duNo: o.duNo, duCo: o.duCo }, 'CO'),
+            })),
+          );
+          if (dt.length > 0) nguonVon[nguonVon.length - 1].doiTuongChiTiet = dt;
+        }
       }
     }
 
