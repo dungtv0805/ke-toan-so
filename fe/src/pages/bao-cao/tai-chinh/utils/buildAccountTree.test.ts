@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildAccountTree, collectParentKeys } from './buildAccountTree';
+import { buildAccountTree, collectParentKeys, attachDoiTuongChildren, type TreeNode } from './buildAccountTree';
 
 interface Row {
   ma: string;
@@ -71,5 +71,39 @@ describe('buildAccountTree', () => {
     ];
     const tree = buildAccountTree(rows, chart, (r) => r.ma, ['val'], make);
     expect(collectParentKeys(tree).sort()).toEqual(['112', '1121']);
+  });
+});
+
+describe('attachDoiTuongChildren', () => {
+  const makeDtNode = (code: string, dtMa: string, val: number): TreeNode<Row> => ({
+    ma: '', ten: `${dtMa} - Tên`, val,
+    __ma: `${code}::${dtMa}`, __isParent: false, __isDoiTuong: true, __rollup: {},
+  });
+
+  it('gắn đối tượng làm con, giữ nguyên giá trị TK cha, không cộng vào rollup', () => {
+    const rows: Row[] = [{ ma: '131', ten: 'Phải thu KH', val: 500 }];
+    const tree = buildAccountTree(rows, chart, (r) => r.ma, ['val'], make);
+    const childrenByCode = new Map<string, TreeNode<Row>[]>([
+      ['131', [makeDtNode('131', 'KH01', 300), makeDtNode('131', 'KH02', 200)]],
+    ]);
+    attachDoiTuongChildren(tree, childrenByCode);
+
+    const n131 = tree[0];
+    expect(n131.__ma).toBe('131');
+    expect(n131.__isParent).toBe(true);
+    expect(n131.val).toBe(500);            // giá trị TK cha không đổi
+    expect(n131.__rollup.val).toBe(0);     // đối tượng KHÔNG vào rollup
+    expect(n131.children).toHaveLength(2);
+    expect(n131.children![0].__isDoiTuong).toBe(true);
+    // collectParentKeys gom được TK có đối tượng (cho nút "Mở tất cả")
+    expect(collectParentKeys(tree)).toContain('131');
+  });
+
+  it('node không có trong map → không đổi', () => {
+    const rows: Row[] = [{ ma: '131', ten: 'x', val: 10 }];
+    const tree = buildAccountTree(rows, chart, (r) => r.ma, ['val'], make);
+    attachDoiTuongChildren(tree, new Map());
+    expect(tree[0].__isParent).toBe(false);
+    expect(tree[0].children).toBeUndefined();
   });
 });

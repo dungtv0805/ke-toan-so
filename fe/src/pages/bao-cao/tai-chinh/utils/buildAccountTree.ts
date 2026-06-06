@@ -1,6 +1,7 @@
 export type TreeNode<T> = T & {
   __ma: string;
   __isParent: boolean;
+  __isDoiTuong?: boolean;
   __rollup: Record<string, number>;
   children?: TreeNode<T>[];
 };
@@ -130,4 +131,27 @@ export function collectParentKeys<T>(nodes: TreeNode<T>[]): string[] {
   };
   walk(nodes);
   return keys;
+}
+
+/**
+ * Gắn các node đối tượng (đã dựng sẵn) làm con của node tài khoản tương ứng.
+ * Đối tượng là PHÂN RÃ của số dư TK (không nằm trong __rollup) → chỉ append làm
+ * con và đánh dấu node TK là cha. Mutate cây tại chỗ.
+ */
+export function attachDoiTuongChildren<T>(
+  tree: TreeNode<T>[],
+  childrenByCode: Map<string, TreeNode<T>[]>,
+): void {
+  const walk = (nodes: TreeNode<T>[]) => {
+    for (const node of nodes) {
+      if (node.children && node.children.length > 0) walk(node.children);
+      if (node.__isDoiTuong) continue;
+      const kids = childrenByCode.get(node.__ma);
+      if (kids && kids.length > 0) {
+        node.children = [...(node.children ?? []), ...kids];
+        node.__isParent = true;
+      }
+    }
+  };
+  walk(tree);
 }
