@@ -9,14 +9,14 @@ export interface DoiTuongBucket {
 }
 
 export interface RawNoGroup {
-  _id: { ma: string; dt: string | null };
+  _id: { ma: string; dt: string | null | undefined };
   doiTuongTen: string | null;
   priorNo: number;
   periodNo: number;
 }
 
 export interface RawCoGroup {
-  _id: { ma: string; dt: string | null };
+  _id: { ma: string; dt: string | null | undefined };
   doiTuongTen: string | null;
   priorCo: number;
   periodCo: number;
@@ -59,7 +59,7 @@ export function mergeDoiTuongBuckets(
     };
     existing.priorCo = e.priorCo;
     existing.periodCo = e.periodCo;
-    if (!existing.doiTuongTen) existing.doiTuongTen = e.doiTuongTen ?? null;
+    if (existing.doiTuongTen === null) existing.doiTuongTen = e.doiTuongTen ?? null;
     map.set(k, existing);
   }
 
