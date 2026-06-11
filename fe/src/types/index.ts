@@ -10,6 +10,10 @@ export interface TaiKhoan {
   parentId?: string;
   moTa?: string;
   chiTietTheo?: 'KHACH_HANG' | 'NHA_CUNG_CAP' | 'NHAN_VIEN' | 'NHA_THAU' | 'NGAN_HANG_QUY';
+  fieldRules?: Partial<Record<
+    'doiTuong' | 'duAn' | 'boPhan' | 'doi' | 'nhanVien' | 'sanPham' | 'dongTien' | 'khoanMuc',
+    'BAT_BUOC' | 'CANH_BAO'
+  >> | null;
 }
 
 export interface DoiTuong {

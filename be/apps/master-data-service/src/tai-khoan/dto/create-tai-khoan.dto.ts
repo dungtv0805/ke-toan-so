@@ -3,11 +3,12 @@ import {
   IsNotEmpty,
   IsEnum,
   IsNumber,
+  IsObject,
   IsOptional,
   Min,
   Max,
 } from 'class-validator';
-import { LoaiTaiKhoan, NhomTaiKhoan, ChiTietTheo } from '@app/entities';
+import { LoaiTaiKhoan, NhomTaiKhoan, ChiTietTheo, FieldRules } from '@app/entities';
 
 export class CreateTaiKhoanDto {
   @IsString()
@@ -40,4 +41,8 @@ export class CreateTaiKhoanDto {
   @IsEnum(ChiTietTheo)
   @IsOptional()
   chiTietTheo?: ChiTietTheo;
+
+  @IsObject()
+  @IsOptional()
+  fieldRules?: FieldRules | null;
 }

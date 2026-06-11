@@ -9,6 +9,7 @@ export interface TaiKhoanResponse {
   parentId?: string;
   moTa?: string;
   chiTietTheo?: string;
+  fieldRules?: Record<string, 'BAT_BUOC' | 'CANH_BAO'> | null;
   isActive: boolean;
 }
 

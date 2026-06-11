@@ -27,6 +27,22 @@ export enum ChiTietTheo {
   NGAN_HANG_QUY = 'NGAN_HANG_QUY',
 }
 
+// 8 trường phân bổ trên dòng hạch toán có thể cấu hình mức nhập liệu
+export const FIELD_RULE_KEYS = [
+  'doiTuong',
+  'duAn',
+  'boPhan',
+  'doi',
+  'nhanVien',
+  'sanPham',
+  'dongTien',
+  'khoanMuc',
+] as const;
+export type FieldRuleKey = (typeof FIELD_RULE_KEYS)[number];
+// Không khai báo = không bắt buộc
+export type FieldRuleLevel = 'BAT_BUOC' | 'CANH_BAO';
+export type FieldRules = Partial<Record<FieldRuleKey, FieldRuleLevel>>;
+
 @Entity('tai_khoan')
 export class TaiKhoan extends BaseEntity {
   @Column()
@@ -52,6 +68,9 @@ export class TaiKhoan extends BaseEntity {
 
   @Column({ type: 'enum', enum: ChiTietTheo, nullable: true })
   chiTietTheo?: ChiTietTheo;
+
+  @Column({ type: 'simple-json', nullable: true })
+  fieldRules?: FieldRules | null;
 
   @Column({ default: true })
   isActive: boolean;
