@@ -1,13 +1,14 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
 import { nhatKyChungService, CreateEntryDto, BatchItemDto } from "@/services/nhatKyChungService";
-import { message } from "antd";
+import { message, Modal } from "antd";
 import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
 import "./submit.event";
 import { NhatKyChungFormStates, NhatKyChungFormEvents } from "../../nhat-ky-chung-form.handler";
 import { ChungTuHeader, ChungTuChiTiet, TaiKhoanItem } from "../init/init.state";
 import { DanhMuc, LoaiChungTu, LoaiGiaoDich } from "@/types";
+import { validateFieldRules, formatViolation } from "../../../fieldRulesValidation";
 
 @RegisterHandler("nhat-ky-chung-form")
 export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyChungFormStates> {
@@ -56,6 +57,30 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
     if (!validation.valid) {
       validation.errors.forEach((err) => message.error(err));
       return;
+    }
+
+    // Kiểm tra quy tắc nhập liệu theo cấu hình tài khoản (fieldRules)
+    const chiTietForRules = (this.getState("chiTietList") as ChungTuChiTiet[]) || [];
+    const taiKhoanForRules = (this.getState("taiKhoanList") as TaiKhoanItem[]) || [];
+    const ruleViolations = validateFieldRules(chiTietForRules, taiKhoanForRules);
+    const blocking = ruleViolations.filter((v) => v.level === "BAT_BUOC");
+    if (blocking.length > 0) {
+      blocking.forEach((v) => message.error(formatViolation(v)));
+      return;
+    }
+    const warnings = ruleViolations.filter((v) => v.level === "CANH_BAO");
+    if (warnings.length > 0) {
+      const proceed = await new Promise<boolean>((resolve) => {
+        Modal.confirm({
+          title: "Cảnh báo thiếu thông tin",
+          content: warnings.map((v) => formatViolation(v)).join("; "),
+          okText: "Vẫn lưu",
+          cancelText: "Quay lại",
+          onOk: () => resolve(true),
+          onCancel: () => resolve(false),
+        });
+      });
+      if (!proceed) return;
     }
 
     const header = this.getState("header") as ChungTuHeader;
