@@ -329,7 +329,7 @@ export interface DoiTuongSnapshot {
   id: string;
   ma: string;
   ten: string;
-  loai: 'KHACH_HANG' | 'NHA_CUNG_CAP' | 'NHAN_VIEN' | 'NHA_THAU';
+  loai: 'KHACH_HANG' | 'NHA_CUNG_CAP' | 'NHAN_VIEN' | 'NHA_THAU' | 'NGAN_HANG_QUY';
   diaChi?: string;
   soDienThoai?: string;
   email?: string;

@@ -9,6 +9,7 @@ import {
   NhomKhuyenMai,
   NhomQuanLy,
   HopDong,
+  TaiKhoanNganHang,
   DoiTuongSnapshot,
   DuAnSnapshot,
   BoPhanSnapshot,
@@ -166,4 +167,15 @@ export const buildHopDongSnapshot = (hopDong: HopDong): HopDongSnapshot => ({
   tienDoDenNgay: hopDong.tienDoThiCong?.denNgay,
   trangThai: hopDong.trangThai,
   soLuongLuu: hopDong.soLuongLuu,
+});
+
+/**
+ * Build DoiTuongSnapshot từ danh mục Ngân hàng & Quỹ
+ * (TK chiTietTheo = NGAN_HANG_QUY chọn đối tượng từ danh mục này)
+ */
+export const buildNganHangSnapshot = (nganHang: TaiKhoanNganHang): DoiTuongSnapshot => ({
+  id: nganHang.id,
+  ma: nganHang.ma,
+  ten: nganHang.ten,
+  loai: 'NGAN_HANG_QUY',
 });
