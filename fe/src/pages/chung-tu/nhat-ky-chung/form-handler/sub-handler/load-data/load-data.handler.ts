@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 import "./load-data.event";
 import { NhatKyChungFormStates, NhatKyChungFormEvents } from "../../nhat-ky-chung-form.handler";
 import { ChungTuHeader, ChungTuChiTiet } from "../init/init.state";
-import { NhatKyChung, DoiTuong, DuAn, BoPhan, SanPham, DongTien, NhomKhuyenMai, NhomQuanLy, QuyChuan, HopDong } from "@/types";
+import { NhatKyChung, DoiTuong, DuAn, BoPhan, SanPham, DongTien, NhomKhuyenMai, NhomQuanLy, QuyChuan, HopDong, TaiKhoanNganHang } from "@/types";
 import { KhoanMucItem } from "../init/init.state";
 
 @RegisterHandler("nhat-ky-chung-form")
@@ -74,10 +74,19 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
     const nhomQuanLyList = (this.getState("nhomQuanLyList") as NhomQuanLy[]) || [];
     const khoanMucList = (this.getState("khoanMucList") as KhoanMucItem[]) || [];
     const hopDongList = (this.getState("hopDongList") as HopDong[]) || [];
+    const nganHangList = (this.getState("nganHangList") as TaiKhoanNganHang[]) || [];
 
     // Find IDs from master data based on danhMuc snapshots
-    const doiTuong = danhMuc?.doiTuong ? doiTuongList.find((d) => d.ma === danhMuc.doiTuong?.ma) : undefined;
-    const doiTuong2 = danhMuc?.doiTuong2 ? doiTuongList.find((d) => d.ma === danhMuc.doiTuong2?.ma) : undefined;
+    // Đối tượng có thể là ngân hàng/quỹ (loai NGAN_HANG_QUY) → tìm ở danh mục tương ứng
+    const findDoiTuongId = (snap?: { ma?: string; loai?: string }): string | undefined => {
+      if (!snap?.ma) return undefined;
+      if (snap.loai === "NGAN_HANG_QUY") {
+        return nganHangList.find((nh) => nh.ma === snap.ma)?.id;
+      }
+      return doiTuongList.find((d) => d.ma === snap.ma)?.id;
+    };
+    const doiTuongId = findDoiTuongId(danhMuc?.doiTuong);
+    const doiTuong2Id = findDoiTuongId(danhMuc?.doiTuong2);
     const duAn = danhMuc?.duAn ? duAnList.find((d) => d.ma === danhMuc.duAn?.ma) : undefined;
     const boPhan = danhMuc?.boPhan ? boPhanList.find((b) => b.ma === danhMuc.boPhan?.ma) : undefined;
     const doi = danhMuc?.doi ? boPhanList.find((b) => b.ma === danhMuc.doi?.ma) : undefined;
@@ -107,8 +116,8 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
       nghiepVuTen: nghiepVuTen,
 
       // IDs
-      doiTuongId: doiTuong?.id,
-      doiTuong2Id: doiTuong2?.id,
+      doiTuongId: doiTuongId,
+      doiTuong2Id: doiTuong2Id,
       duAnId: duAn?.id,
       boPhanId: boPhan?.id,
       doiId: doi?.id,
