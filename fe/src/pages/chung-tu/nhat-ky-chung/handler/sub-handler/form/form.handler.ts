@@ -1,7 +1,7 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
 import dayjs from "dayjs";
-import { DanhMuc, NhatKyChung, DoiTuong, DuAn, BoPhan, SanPham, DongTien, NhomKhuyenMai, NhomQuanLy, KhoanMuc } from "@/types";
+import { DanhMuc, NhatKyChung, DoiTuong, DuAn, BoPhan, SanPham, DongTien, NhomKhuyenMai, NhomQuanLy, KhoanMuc, TaiKhoanNganHang, DoiTuongSnapshot } from "@/types";
 import {
   buildDoiTuongSnapshot,
   buildDuAnSnapshot,
@@ -11,6 +11,7 @@ import {
   buildNhomKhuyenMaiSnapshot,
   buildNhomQuanLySnapshot,
   buildKhoanMucSnapshot,
+  buildNganHangSnapshot,
 } from "@/utils/snapshotBuilder";
 import {
   NhatKyChungStates,
@@ -276,22 +277,39 @@ export class FormHandler extends CSubHanlder<
     const nhomKhuyenMaiList = (this.getState("nhomKhuyenMaiList") as NhomKhuyenMai[]) || [];
     const nhomQuanLyList = (this.getState("nhomQuanLyList") as NhomQuanLy[]) || [];
     const khoanMucList = (this.getState("khoanMucList") as KhoanMucItem[]) || [];
+    const nganHangList = (this.getState("nganHangList") as TaiKhoanNganHang[]) || [];
+
+    // Đối tượng có thể là ngân hàng/quỹ (loai NGAN_HANG_QUY) → tìm ở danh mục tương ứng
+    const findDoiTuong = (
+      snap: { ma?: string; loai?: string }
+    ): { id: string; snapshot: DoiTuongSnapshot } | undefined => {
+      if (snap.loai === "NGAN_HANG_QUY") {
+        const found = nganHangList.find((nh) => nh.ma === snap.ma);
+        return found
+          ? { id: found.id, snapshot: buildNganHangSnapshot(found) }
+          : undefined;
+      }
+      const found = doiTuongList.find((d) => d.ma === snap.ma);
+      return found
+        ? { id: found.id, snapshot: buildDoiTuongSnapshot(found) }
+        : undefined;
+    };
 
     // Đối tượng
     if (danhMuc.doiTuong) {
-      const found = doiTuongList.find((d) => d.ma === danhMuc.doiTuong?.ma);
+      const found = findDoiTuong(danhMuc.doiTuong);
       if (found) {
         result.doiTuongId = found.id;
-        result.doiTuongSnapshot = buildDoiTuongSnapshot(found);
+        result.doiTuongSnapshot = found.snapshot;
       }
     }
 
     // Đối tượng 2
     if (danhMuc.doiTuong2) {
-      const found = doiTuongList.find((d) => d.ma === danhMuc.doiTuong2?.ma);
+      const found = findDoiTuong(danhMuc.doiTuong2);
       if (found) {
         result.doiTuong2Id = found.id;
-        result.doiTuong2Snapshot = buildDoiTuongSnapshot(found);
+        result.doiTuong2Snapshot = found.snapshot;
       }
     }
 
