@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { NhatKyChungService } from './nhat-ky-chung.service';
+import { FieldRulesValidationService } from '../shared';
 import {
   NhatKyChungQueryDto,
   CreateNhatKyChungDto,
@@ -32,7 +33,10 @@ import { BadRequestException } from '@nestjs/common';
 @Controller('nhat-ky-chung')
 @UseGuards(JwtGuard, RoleGuard)
 export class NhatKyChungController {
-  constructor(private readonly nhatKyChungService: NhatKyChungService) {}
+  constructor(
+    private readonly nhatKyChungService: NhatKyChungService,
+    private readonly fieldRulesValidation: FieldRulesValidationService,
+  ) {}
 
   @Get()
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
@@ -113,7 +117,9 @@ export class NhatKyChungController {
   async create(
     @Body() createDto: CreateNhatKyChungDto,
     @CurrentUser() user: UserPayload,
+    @Headers('authorization') authToken?: string,
   ) {
+    await this.fieldRulesValidation.validateItems([createDto], authToken);
     return this.nhatKyChungService.create(createDto, user.id);
   }
 
@@ -122,7 +128,9 @@ export class NhatKyChungController {
   async createBatch(
     @Body() items: CreateNhatKyChungDto[],
     @CurrentUser() user: UserPayload,
+    @Headers('authorization') authToken?: string,
   ) {
+    await this.fieldRulesValidation.validateItems(items, authToken);
     return this.nhatKyChungService.createBatch(items, user.id);
   }
 
@@ -140,7 +148,9 @@ export class NhatKyChungController {
   async updateBatch(
     @Body() body: { soPhieu: string; items: BatchItemDto[] },
     @CurrentUser() user: UserPayload,
+    @Headers('authorization') authToken?: string,
   ) {
+    await this.fieldRulesValidation.validateItems(body.items, authToken);
     return this.nhatKyChungService.updateBatch(body.soPhieu, body.items, user.id);
   }
 
@@ -149,8 +159,9 @@ export class NhatKyChungController {
   async update(
     @Param('id') id: string,
     @Body() updateDto: UpdateNhatKyChungDto,
+    @Headers('authorization') authToken?: string,
   ) {
-    console.log(updateDto);
+    await this.fieldRulesValidation.validateItems([updateDto], authToken);
     return this.nhatKyChungService.update(id, updateDto);
   }
 
