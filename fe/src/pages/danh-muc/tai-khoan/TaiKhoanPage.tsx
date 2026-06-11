@@ -52,6 +52,10 @@ const taiKhoanSchema = z.object({
   chiTietTheo: z.enum(["KHACH_HANG", "NHA_CUNG_CAP", "NHAN_VIEN", "NHA_THAU", "NGAN_HANG_QUY"]).nullable().optional(),
   parentId: z.string().nullable().optional(),
   moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").nullable().optional(),
+  fieldRules: z
+    .record(z.string(), z.enum(["BAT_BUOC", "CANH_BAO"]).nullable().optional())
+    .nullable()
+    .optional(),
 });
 
 const chiTietTheoOptions = [
@@ -60,6 +64,23 @@ const chiTietTheoOptions = [
   { value: "NHAN_VIEN", label: "Nhân viên" },
   { value: "NHA_THAU", label: "Nhà thầu" },
   { value: "NGAN_HANG_QUY", label: "Ngân hàng & Quỹ" },
+];
+
+// 8 trường phân bổ cấu hình được mức nhập liệu trên dòng hạch toán
+const FIELD_RULE_FIELDS: Array<{ key: string; label: string }> = [
+  { key: "doiTuong", label: "Đối tượng" },
+  { key: "duAn", label: "Dự án" },
+  { key: "boPhan", label: "Bộ phận" },
+  { key: "doi", label: "Đội thi công" },
+  { key: "nhanVien", label: "Nhân viên" },
+  { key: "sanPham", label: "Sản phẩm" },
+  { key: "dongTien", label: "Dòng tiền" },
+  { key: "khoanMuc", label: "Khoản mục" },
+];
+
+const fieldRuleLevelOptions = [
+  { value: "CANH_BAO", label: "Cảnh báo" },
+  { value: "BAT_BUOC", label: "Bắt buộc" },
 ];
 
 // Sắp xếp tài khoản theo hierarchy: cha trước, con ngay sau cha (DFS)
@@ -155,7 +176,8 @@ const TaiKhoanPage: React.FC = () => {
       setEditingRecord(record);
       form.setFieldsValue({
         ...record,
-        moTa: record.moTa || '', // Ensure empty string instead of null
+        moTa: record.moTa || '',
+        fieldRules: record.fieldRules || {},
       });
     } else {
       setEditingRecord(null);
@@ -179,10 +201,15 @@ const TaiKhoanPage: React.FC = () => {
 
       // Send empty string as-is so BE sanitizeUpdateDto can convert to null.
       // chiTietTheo: gửi null khi bỏ chọn để BE xoá giá trị cũ (undefined sẽ bị JSON bỏ qua).
+      // Bỏ các trường không chọn mức; rỗng → null để BE xoá cấu hình cũ
+      const fieldRulesEntries = Object.entries(validation.data.fieldRules ?? {}).filter(
+        ([, v]) => v === "BAT_BUOC" || v === "CANH_BAO"
+      );
       const payload = {
         ...validation.data,
         chiTietTheo: validation.data.chiTietTheo ?? null,
-      };
+        fieldRules: fieldRulesEntries.length ? Object.fromEntries(fieldRulesEntries) : null,
+      } as Omit<TaiKhoan, "id">;
 
       setLoading(true);
       if (editingRecord) {
@@ -542,6 +569,28 @@ const TaiKhoanPage: React.FC = () => {
               placeholder="— Không chi tiết —"
               options={chiTietTheoOptions}
             />
+          </Form.Item>
+
+          <Form.Item label="Quy tắc nhập chứng từ" className="mb-3"
+            tooltip="Bắt buộc: không cho lưu chứng từ nếu thiếu. Cảnh báo: hỏi xác nhận rồi vẫn cho lưu.">
+            <Row gutter={[8, 4]}>
+              {FIELD_RULE_FIELDS.map((f) => (
+                <Col span={12} key={f.key}>
+                  <div className="flex items-center justify-between gap-2">
+                    <Text className="text-xs">{f.label}</Text>
+                    <Form.Item name={["fieldRules", f.key]} noStyle>
+                      <Select
+                        size="small"
+                        allowClear
+                        placeholder="Không bắt buộc"
+                        style={{ width: 130 }}
+                        options={fieldRuleLevelOptions}
+                      />
+                    </Form.Item>
+                  </div>
+                </Col>
+              ))}
+            </Row>
           </Form.Item>
 
           <Form.Item
