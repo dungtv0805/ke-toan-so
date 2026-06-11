@@ -78,4 +78,30 @@ describe('buildDoiTuongSoTien', () => {
     expect(rows.find((r) => r.ma === '')?.soTien).toBe(200); // NCC gộp orphan
     expect(rows.reduce((s, r) => s + r.soTien, 0)).toBe(500); // Σ vẫn khớp
   });
+
+  it('buildDoiTuongSoTien: bên Có lấy đối tượng từ doiTuong2, fallback doiTuong', () => {
+    const vouchers = [
+      // chi tiền: Có 112, ngân hàng nằm ở doiTuong2
+      {
+        soTien: 300,
+        danhMuc: {
+          taiKhoanNo: { ma: '331' }, taiKhoanCo: { ma: '112' },
+          doiTuong: { ma: 'NCC01', ten: 'NCC', loai: 'NHA_CUNG_CAP' },
+          doiTuong2: { ma: 'VCB01', ten: 'Vietcombank', loai: 'NGAN_HANG_QUY' },
+        },
+      },
+      // dữ liệu cũ: chỉ có doiTuong
+      {
+        soTien: 200,
+        danhMuc: {
+          taiKhoanNo: { ma: '642' }, taiKhoanCo: { ma: '112' },
+          doiTuong: { ma: 'VCB01', ten: 'Vietcombank', loai: 'NGAN_HANG_QUY' },
+        },
+      },
+    ];
+    const rows = buildDoiTuongSoTien(vouchers as never[], '112', 'NO', [], 'NGAN_HANG_QUY');
+    const vcb = rows.find((r) => r.ma === 'VCB01');
+    expect(vcb).toBeDefined();
+    expect(vcb!.soTien).toBe(-500); // tiền ra khỏi 112 (type NO, bên Có → trừ)
+  });
 });

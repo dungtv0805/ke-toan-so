@@ -1,4 +1,5 @@
 import * as fc from 'fast-check';
+import { buildDoiTuongRows } from './so-cai.service';
 
 /**
  * **Feature: api-completion, Property 1: Search Results Contain Keyword** (for ledger)
@@ -71,5 +72,36 @@ describe('Property: Ledger Stats Consistency', () => {
       ),
       { numRuns: 100 },
     );
+  });
+});
+
+describe('buildDoiTuongRows với NGAN_HANG_QUY', () => {
+  it('xổ chi tiết TK 112 theo từng ngân hàng', () => {
+    const rows = buildDoiTuongRows(
+      'TAI_SAN',
+      [
+        {
+          doiTuongMa: 'VCB01', doiTuongTen: 'Vietcombank', doiTuongLoai: 'NGAN_HANG_QUY',
+          priorNo: 0, priorCo: 0, periodNo: 500, periodCo: 200,
+        },
+        // đối tượng sai loại → gộp "Chưa xác định đối tượng"
+        {
+          doiTuongMa: 'KH001', doiTuongTen: 'Cty A', doiTuongLoai: 'KHACH_HANG',
+          priorNo: 0, priorCo: 0, periodNo: 100, periodCo: 0,
+        },
+      ],
+      [
+        { doiTuongMa: 'VCB01', doiTuongTen: 'Vietcombank', chiTietType: 'NGAN_HANG_QUY', duNo: 1000, duCo: 0 },
+      ],
+      'NGAN_HANG_QUY',
+    );
+    const vcb = rows.find((r) => r.ma === 'VCB01');
+    expect(vcb).toBeDefined();
+    expect(vcb!.noDauKy).toBe(1000);
+    expect(vcb!.noPhatSinh).toBe(500);
+    expect(vcb!.coPhatSinh).toBe(200);
+    const chuaXacDinh = rows.find((r) => r.ma === '');
+    expect(chuaXacDinh).toBeDefined();
+    expect(chuaXacDinh!.noPhatSinh).toBe(100);
   });
 });

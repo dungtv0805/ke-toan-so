@@ -63,8 +63,9 @@ export function openingNetForSide(
 const CHUA_XAC_DINH_DOI_TUONG = 'Chưa xác định đối tượng';
 
 /**
- * Các loại "Chi tiết theo" lấy chi tiết từ danh mục ĐỐI TƯỢNG.
- * NGAN_HANG_QUY KHÔNG thuộc nhóm này (chi tiết là ngân hàng / TK con).
+ * Các loại "Chi tiết theo" được xổ chi tiết theo đối tượng.
+ * NGAN_HANG_QUY: ngân hàng/quỹ lưu ở danhMuc.doiTuong/doiTuong2 với
+ * loai='NGAN_HANG_QUY'; số dư đầu kỳ có chiTietType tương ứng.
  * Nguồn chân lý: enum ChiTietTheo trong tai-khoan.entity.ts.
  */
 export const DOI_TUONG_CHI_TIET_TYPES = new Set([
@@ -72,6 +73,7 @@ export const DOI_TUONG_CHI_TIET_TYPES = new Set([
   'NHA_CUNG_CAP',
   'NHAN_VIEN',
   'NHA_THAU',
+  'NGAN_HANG_QUY',
 ]);
 
 /**
@@ -105,11 +107,17 @@ export function buildDoiTuongSoTien(
   for (const v of vouchers) {
     const maTKNo = v.danhMuc?.taiKhoanNo?.ma ?? v.taiKhoanNo;
     const maTKCo = v.danhMuc?.taiKhoanCo?.ma ?? v.taiKhoanCo;
-    const dt = v.danhMuc?.doiTuong;
-    const dtMa = dt?.ma && dt?.loai === expectedLoai ? dt.ma : '';
-    const dtTen = dtMa ? dt?.ten ?? '' : '';
-    if (maTKNo === maTaiKhoan) add(dtMa, dtTen, type === 'NO' ? v.soTien : -v.soTien);
-    if (maTKCo === maTaiKhoan) add(dtMa, dtTen, type === 'CO' ? v.soTien : -v.soTien);
+    if (maTKNo === maTaiKhoan) {
+      const dt = v.danhMuc?.doiTuong;
+      const dtMa = dt?.ma && dt?.loai === expectedLoai ? dt.ma : '';
+      add(dtMa, dtMa ? dt?.ten ?? '' : '', type === 'NO' ? v.soTien : -v.soTien);
+    }
+    if (maTKCo === maTaiKhoan) {
+      // "Đối tượng có" ở doiTuong2; dữ liệu cũ chỉ có doiTuong → fallback
+      const dt = v.danhMuc?.doiTuong2 ?? v.danhMuc?.doiTuong;
+      const dtMa = dt?.ma && dt?.loai === expectedLoai ? dt.ma : '';
+      add(dtMa, dtMa ? dt?.ten ?? '' : '', type === 'CO' ? v.soTien : -v.soTien);
+    }
   }
 
   // "Chưa xác định đối tượng" (ma rỗng) luôn xếp cuối.

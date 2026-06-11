@@ -115,9 +115,9 @@ export interface DoiTuongOpening {
 const CHUA_XAC_DINH_DOI_TUONG = 'Chưa xác định đối tượng';
 
 /**
- * Các loại "Chi tiết theo" được lấy chi tiết từ danh mục ĐỐI TƯỢNG.
- * NGAN_HANG_QUY KHÔNG thuộc nhóm này — chi tiết của nó là danh mục ngân hàng /
- * tài khoản con, không phải đối tượng (xem chiTietConfig.ts ở FE).
+ * Các loại "Chi tiết theo" được xổ chi tiết theo đối tượng.
+ * NGAN_HANG_QUY: chứng từ lưu ngân hàng/quỹ vào danhMuc.doiTuong/doiTuong2
+ * với loai='NGAN_HANG_QUY' (từ form NKC); số dư đầu kỳ có chiTietType tương ứng.
  * Nguồn chân lý: enum ChiTietTheo trong tai-khoan.entity.ts.
  */
 export const DOI_TUONG_CHI_TIET_TYPES = new Set([
@@ -125,6 +125,7 @@ export const DOI_TUONG_CHI_TIET_TYPES = new Set([
   'NHA_CUNG_CAP',
   'NHAN_VIEN',
   'NHA_THAU',
+  'NGAN_HANG_QUY',
 ]);
 
 /**
