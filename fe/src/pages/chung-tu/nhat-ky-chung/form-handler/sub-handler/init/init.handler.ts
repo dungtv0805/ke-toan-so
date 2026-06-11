@@ -112,6 +112,7 @@ export class InitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyCh
           loai: tk.loai,
           nhom: tk.nhom,
           chiTietTheo: tk.chiTietTheo,
+          fieldRules: tk.fieldRules,
         }))
       );
 

@@ -9,6 +9,7 @@ export interface TaiKhoanItem {
   loai: string;
   nhom: string;
   chiTietTheo?: string;
+  fieldRules?: Partial<Record<string, "BAT_BUOC" | "CANH_BAO">> | null;
 }
 
 export interface KhoanMucItem {
