@@ -1,10 +1,11 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
 import { nhatKyChungService, UpdateEntryDto } from "@/services/nhatKyChungService";
-import { NhatKyChung } from "@/types";
+import { DanhMuc, NhatKyChung } from "@/types";
+import { TaiKhoanItem } from "../init/init.state";
 import { message } from "antd";
 import { NhatKyChungStates, NhatKyChungEvents } from "../../nhat-ky-chung.handler";
-import {
+import type {
   StartEditRowParams,
   UpdateRowValueParams,
 } from "./inline-edit.event";
@@ -96,7 +97,7 @@ export class InlineEditHandler extends CSubHanlder<NhatKyChungEvents, NhatKyChun
 
     try {
       // Build update data from changed values
-      const updateData = this.buildUpdateData(editingRowValues);
+      const updateData = this.buildUpdateData(editingRowValues, editingRowOriginal);
 
       // Call API
       await nhatKyChungService.update(editingRowId, updateData);
@@ -143,8 +144,28 @@ export class InlineEditHandler extends CSubHanlder<NhatKyChungEvents, NhatKyChun
     });
   }
 
-  private buildUpdateData(values: EditingRowValues): UpdateEntryDto {
+  private buildUpdateData(values: EditingRowValues, original: NhatKyChung): UpdateEntryDto {
     const updateData: UpdateEntryDto = {};
+    const taiKhoanList = (this.getState("taiKhoanList") as TaiKhoanItem[]) || [];
+
+    // BE replace toàn bộ danhMuc khi PATCH → phải merge từ danhMuc hiện hữu của chứng từ,
+    // chỉ thay phần tài khoản được sửa (tránh mất dữ liệu + 400 oan từ fieldRules validation)
+    const ensureDanhMuc = (): DanhMuc => {
+      if (!updateData.danhMuc) {
+        updateData.danhMuc = { ...(original.danhMuc || {}) };
+      }
+      return updateData.danhMuc;
+    };
+
+    const buildTaiKhoanSnapshot = (ma: string) => {
+      const tk = taiKhoanList.find((t) => t.ma === ma);
+      return {
+        ma,
+        ten: tk?.ten || "",
+        loai: tk?.loai || "",
+        nhom: tk?.nhom || "",
+      };
+    };
 
     for (const [columnKey, value] of Object.entries(values)) {
       switch (columnKey) {
@@ -177,17 +198,15 @@ export class InlineEditHandler extends CSubHanlder<NhatKyChungEvents, NhatKyChun
           break;
 
         case "taiKhoanNo":
-          updateData.danhMuc = {
-            ...updateData.danhMuc,
-            taiKhoanNo: { ma: value as string },
-          };
+          if (value !== original.taiKhoanNo) {
+            ensureDanhMuc().taiKhoanNo = buildTaiKhoanSnapshot(value as string);
+          }
           break;
 
         case "taiKhoanCo":
-          updateData.danhMuc = {
-            ...updateData.danhMuc,
-            taiKhoanCo: { ma: value as string },
-          };
+          if (value !== original.taiKhoanCo) {
+            ensureDanhMuc().taiKhoanCo = buildTaiKhoanSnapshot(value as string);
+          }
           break;
       }
     }
