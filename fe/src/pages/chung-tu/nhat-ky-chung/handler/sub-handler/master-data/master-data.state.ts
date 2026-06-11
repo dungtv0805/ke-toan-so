@@ -1,5 +1,5 @@
 import { BaseStates } from "@/common/c-handler/core/actions/c-state.action";
-import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, QuyChuan, NhomKhuyenMai, NhomQuanLy, HopDong, LoaiGiaoDich } from "@/types";
+import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, QuyChuan, NhomKhuyenMai, NhomQuanLy, HopDong, LoaiGiaoDich, TaiKhoanNganHang } from "@/types";
 import { LoaiChungTuType } from "@/services/loaiChungTuService";
 
 export interface MasterDataStates extends BaseStates {
@@ -14,6 +14,7 @@ export interface MasterDataStates extends BaseStates {
   quyChaunList: QuyChuan[];
   loaiChungTuList: LoaiChungTuType[];
   loaiGiaoDichList: LoaiGiaoDich[];
+  nganHangList: TaiKhoanNganHang[];
   masterDataLoaded: boolean;
   masterDataLoading: boolean;
 }

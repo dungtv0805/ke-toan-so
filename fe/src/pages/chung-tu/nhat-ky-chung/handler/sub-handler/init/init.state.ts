@@ -7,6 +7,7 @@ export interface TaiKhoanItem {
   ten: string;
   loai: string;
   nhom: string;
+  chiTietTheo?: string;
 }
 
 export interface KhoanMucItem {

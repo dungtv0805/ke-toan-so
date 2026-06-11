@@ -136,6 +136,7 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
           ten: tk.ten,
           loai: tk.loai,
           nhom: tk.nhom,
+          chiTietTheo: tk.chiTietTheo,
         }))
       );
     } catch (error) {

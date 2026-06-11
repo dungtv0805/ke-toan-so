@@ -1,8 +1,9 @@
 import { Form, Select, Row, Col, Input, Tooltip } from "antd";
 import { ExclamationCircleOutlined, DeleteOutlined } from "@ant-design/icons";
-import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, NhomKhuyenMai, NhomQuanLy, KhoanMuc, HopDong } from "@/types";
+import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, NhomKhuyenMai, NhomQuanLy, KhoanMuc, HopDong, TaiKhoanNganHang } from "@/types";
 import {
   buildDoiTuongSnapshot,
+  buildNganHangSnapshot,
   buildDuAnSnapshot,
   buildBoPhanSnapshot,
   buildDoiSnapshot,
@@ -21,6 +22,7 @@ import {
 import { MasterDataChanges } from "../../handler/sub-handler/master-data-compare/master-data-compare.types";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { KhoanMucItem } from "../../handler/sub-handler/init/init.state";
+import { getDoiTuongSelectConfig } from "../../doiTuongConfig";
 
 interface AllocationFieldsProps {
   form: ReturnType<typeof Form.useForm>[0];
@@ -66,6 +68,15 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
   const [khoanMucList] = useNhatKyChungState("khoanMucList", []);
   const [hopDongList] = useNhatKyChungState("hopDongList", []);
   const [masterDataChanges] = useNhatKyChungState("masterDataChanges", {});
+  const [taiKhoanList] = useNhatKyChungState("taiKhoanList", []);
+  const [nganHangList] = useNhatKyChungState("nganHangList", []);
+  const taiKhoanNo = Form.useWatch("taiKhoanNo", form);
+  const taiKhoanCo = Form.useWatch("taiKhoanCo", form);
+
+  const tkNoInfo = taiKhoanList?.find((t) => t.ma === taiKhoanNo);
+  const tkCoInfo = taiKhoanList?.find((t) => t.ma === taiKhoanCo);
+  const doiTuongNoCfg = getDoiTuongSelectConfig(tkNoInfo?.chiTietTheo, doiTuongList ?? [], nganHangList ?? []);
+  const doiTuongCoCfg = getDoiTuongSelectConfig(tkCoInfo?.chiTietTheo, doiTuongList ?? [], nganHangList ?? []);
 
   const handleDoiTuongChange = (value: string | undefined) => {
     // Clear change warning when user selects new value
@@ -77,6 +88,11 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
     const doiTuong = doiTuongList?.find((d: DoiTuong) => d.id === value);
     if (doiTuong) {
       form.setFieldsValue({ doiTuongSnapshot: buildDoiTuongSnapshot(doiTuong) });
+      return;
+    }
+    const nganHang = nganHangList?.find((nh: TaiKhoanNganHang) => nh.id === value);
+    if (nganHang) {
+      form.setFieldsValue({ doiTuongSnapshot: buildNganHangSnapshot(nganHang) });
     }
   };
 
@@ -89,6 +105,11 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
     const doiTuong = doiTuongList?.find((d: DoiTuong) => d.id === value);
     if (doiTuong) {
       form.setFieldsValue({ doiTuong2Snapshot: buildDoiTuongSnapshot(doiTuong) });
+      return;
+    }
+    const nganHang = nganHangList?.find((nh: TaiKhoanNganHang) => nh.id === value);
+    if (nganHang) {
+      form.setFieldsValue({ doiTuong2Snapshot: buildNganHangSnapshot(nganHang) });
     }
   };
 
@@ -277,10 +298,8 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
                 placeholder="Chọn đối tượng nợ"
                 optionFilterProp="label"
                 onChange={handleDoiTuongChange}
-                options={doiTuongList?.map((d: DoiTuong) => ({
-                  value: d.id,
-                  label: `${d.ma} - ${d.ten}`,
-                }))}
+                disabled={doiTuongNoCfg.disabled}
+                options={doiTuongNoCfg.options}
               />
             </Form.Item>
           </Col>
@@ -296,10 +315,8 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
                 placeholder="Chọn đối tượng có"
                 optionFilterProp="label"
                 onChange={handleDoiTuong2Change}
-                options={doiTuongList?.map((d: DoiTuong) => ({
-                  value: d.id,
-                  label: `${d.ma} - ${d.ten}`,
-                }))}
+                disabled={doiTuongCoCfg.disabled}
+                options={doiTuongCoCfg.options}
               />
             </Form.Item>
           </Col>
