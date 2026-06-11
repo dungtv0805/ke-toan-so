@@ -255,11 +255,13 @@ export class NhatKyChungService {
           ],
           coEntries: [
             { $match: { 'danhMuc.taiKhoanCo.ma': { $exists: true, $ne: null } } },
+            // "Đối tượng có" nằm ở doiTuong2; dữ liệu cũ chỉ có doiTuong → fallback
+            { $addFields: { _dtCo: { $ifNull: ['$danhMuc.doiTuong2', '$danhMuc.doiTuong'] } } },
             {
               $group: {
-                _id: { ma: '$danhMuc.taiKhoanCo.ma', dt: '$danhMuc.doiTuong.ma' },
-                doiTuongTen: { $first: '$danhMuc.doiTuong.ten' },
-                doiTuongLoai: { $first: '$danhMuc.doiTuong.loai' },
+                _id: { ma: '$danhMuc.taiKhoanCo.ma', dt: '$_dtCo.ma' },
+                doiTuongTen: { $first: '$_dtCo.ten' },
+                doiTuongLoai: { $first: '$_dtCo.loai' },
                 priorCo: {
                   $sum: { $cond: [{ $lt: ['$ngay', startDate] }, '$soTien', 0] },
                 },
