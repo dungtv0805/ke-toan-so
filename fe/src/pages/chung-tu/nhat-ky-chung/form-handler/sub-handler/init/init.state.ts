@@ -1,5 +1,5 @@
 import { BaseStates } from "@/common/c-handler/core/actions/c-state.action";
-import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, QuyChuan, NhomKhuyenMai, NhomQuanLy, LoaiGiaoDich, HopDong } from "@/types";
+import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, QuyChuan, NhomKhuyenMai, NhomQuanLy, LoaiGiaoDich, HopDong, TaiKhoanNganHang } from "@/types";
 import { LoaiChungTuType } from "@/services/loaiChungTuService";
 import { Dayjs } from "dayjs";
 
@@ -8,6 +8,7 @@ export interface TaiKhoanItem {
   ten: string;
   loai: string;
   nhom: string;
+  chiTietTheo?: string;
 }
 
 export interface KhoanMucItem {
@@ -96,6 +97,7 @@ export interface InitFormStates extends BaseStates {
   nhomKhuyenMaiList: NhomKhuyenMai[];
   nhomQuanLyList: NhomQuanLy[];
   hopDongList: HopDong[];
+  nganHangList: TaiKhoanNganHang[];
 
   // Filtered list - nghiệp vụ theo loại giao dịch
   filteredNghiepVuList: Array<{ value: string; label: string }>;

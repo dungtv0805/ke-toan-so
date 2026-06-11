@@ -13,6 +13,7 @@ import { nhomQuanLyService } from "@/services/nhomQuanLyService";
 import { loaiChungTuService } from "@/services/loaiChungTuService";
 import { loaiGiaoDichService } from "@/services/loaiGiaoDichService";
 import { hopDongService } from "@/services/hopDongService";
+import { nganHangService } from "@/services/nganHangService";
 import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
 import "./init.event";
@@ -85,6 +86,7 @@ export class InitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyCh
         loaiChungTu,
         loaiGiaoDich,
         hopDong,
+        nganHangRes,
       ] = await Promise.all([
         taiKhoanService.getLeafAccounts(),
         khoanMucService.getPaginated({ limit: 500 }),
@@ -99,6 +101,7 @@ export class InitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyCh
         loaiChungTuService.getAll(),
         loaiGiaoDichService.getAll(),
         hopDongService.getAll(),
+        nganHangService.getPaginated({ limit: 500 }),
       ]);
 
       this.setState(
@@ -108,6 +111,7 @@ export class InitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyCh
           ten: tk.ten,
           loai: tk.loai,
           nhom: tk.nhom,
+          chiTietTheo: tk.chiTietTheo,
         }))
       );
 
@@ -133,6 +137,7 @@ export class InitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyCh
       this.setState("loaiChungTuList", loaiChungTu);
       this.setState("loaiGiaoDichList", loaiGiaoDich);
       this.setState("hopDongList", hopDong);
+      this.setState("nganHangList", nganHangRes.data);
       this.setState("masterDataLoaded", true);
     } catch (error) {
       console.error("Error loading master data:", error);
@@ -159,6 +164,7 @@ export class InitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyCh
     this.setState("nhomKhuyenMaiList", []);
     this.setState("nhomQuanLyList", []);
     this.setState("hopDongList", []);
+    this.setState("nganHangList", []);
     this.setState("filteredNghiepVuList", []);
   }
 }
