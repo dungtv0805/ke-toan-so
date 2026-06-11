@@ -174,6 +174,7 @@ const TaiKhoanPage: React.FC = () => {
   const openModal = (record?: TaiKhoan) => {
     if (record) {
       setEditingRecord(record);
+      form.resetFields(); // xoá state cũ (kể cả nested fieldRules) trước khi đổ record mới
       form.setFieldsValue({
         ...record,
         moTa: record.moTa || '',
