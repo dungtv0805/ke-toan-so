@@ -140,7 +140,7 @@ export class InlineEditHandler extends CSubHanlder<NhatKyChungEvents, NhatKyChun
     const pagination = this.getState("pagination") as { page: number; limit: number } | undefined;
     await this.executeEvent("loadPage", {
       page: pagination?.page || 1,
-      limit: pagination?.limit || 50
+      limit: pagination?.limit || 100
     });
   }
 

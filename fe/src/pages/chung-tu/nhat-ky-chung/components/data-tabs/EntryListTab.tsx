@@ -746,7 +746,7 @@ export function EntryListTab() {
   const [pagination] = useNhatKyChungState("pagination", {
     total: 0,
     page: 1,
-    limit: 50,
+    limit: 100,
     totalPages: 0,
   });
   const [taiKhoanList] = useNhatKyChungState("taiKhoanList", []);
@@ -769,7 +769,7 @@ export function EntryListTab() {
   );
 
   const handleTableChange = (paginationConfig: TablePaginationConfig) => {
-    const { current = 1, pageSize = 50 } = paginationConfig;
+    const { current = 1, pageSize = 100 } = paginationConfig;
     handler.executeEvent("loadPage", { page: current, limit: pageSize });
   };
 
@@ -790,7 +790,7 @@ export function EntryListTab() {
   const handleRefresh = () => {
     handler.executeEvent("loadPage", {
       page: pagination?.page || 1,
-      limit: pagination?.limit || 50,
+      limit: pagination?.limit || 100,
     });
   };
 
@@ -853,10 +853,9 @@ export function EntryListTab() {
         rowClassName={getRowClassName}
         pagination={{
           current: pagination?.page || 1,
-          pageSize: pagination?.limit || 50,
+          pageSize: 100,
           total: pagination?.total || 0,
-          showSizeChanger: true,
-          pageSizeOptions: ["25", "50", "100", "200", "500"],
+          showSizeChanger: false,
           showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
           size: "small",
         }}
@@ -874,7 +873,7 @@ export function EntryListTab() {
         onImported={() =>
           handler.executeEvent("loadPage", {
             page: pagination?.page || 1,
-            limit: pagination?.limit || 50,
+            limit: pagination?.limit || 100,
           })
         }
       />
