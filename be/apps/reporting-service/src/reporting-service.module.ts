@@ -7,6 +7,7 @@ import { ServiceClientModule } from '@app/service-client';
 import { SoCaiModule } from './so-cai/so-cai.module';
 import { SoChiTietModule } from './so-chi-tiet/so-chi-tiet.module';
 import { BaoCaoModule } from './bao-cao/bao-cao.module';
+import { CongNoTongHopModule } from './cong-no-tong-hop/cong-no-tong-hop.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { BaoCaoModule } from './bao-cao/bao-cao.module';
     SoCaiModule,
     SoChiTietModule,
     BaoCaoModule,
+    CongNoTongHopModule,
   ],
 })
 export class ReportingServiceModule {}
