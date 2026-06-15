@@ -306,16 +306,16 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
-                  <Route path="so-chi-tiet-cong-no" element={<ComingSoonPage />} />
-                  <Route path="so-chi-tiet-phat-sinh" element={<ComingSoonPage />} />
                   <Route
-                    path="bang-tong-hop"
+                    path="so-chi-tiet-cong-no"
                     element={
-                      <ProtectedRoute requiredPermission="/bao-cao/bang-tong-hop:xem">
+                      <ProtectedRoute requiredPermission="/bao-cao/so-chi-tiet-cong-no:xem">
                         <BangTongHopCongNoPage />
                       </ProtectedRoute>
                     }
                   />
+                  <Route path="so-chi-tiet-phat-sinh" element={<ComingSoonPage />} />
+                  <Route path="bang-tong-hop" element={<ComingSoonPage />} />
                 </Route>
 
                 {/* Phân tích - Coming Soon */}
