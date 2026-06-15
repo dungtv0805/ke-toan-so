@@ -28,6 +28,29 @@ export interface SoChiTietRow {
   phatSinhCo: number;
   soDuNo: number;
   soDuCo: number;
+  // Trường danhMuc (tùy chọn) phục vụ chọn cột hiển thị
+  maDoiTuong?: string;
+  tenDoiTuong?: string;
+  maDoiTuong2?: string;
+  tenDoiTuong2?: string;
+  maKhoanMuc?: string;
+  tenKhoanMuc?: string;
+  maDuAn?: string;
+  tenDuAn?: string;
+  maBoPhan?: string;
+  tenBoPhan?: string;
+  maNhanVien?: string;
+  tenNhanVien?: string;
+  maDoi?: string;
+  tenDoi?: string;
+  maSanPham?: string;
+  tenSanPham?: string;
+  maDongTien?: string;
+  tenDongTien?: string;
+  maLoaiGiaoDich?: string;
+  tenLoaiGiaoDich?: string;
+  maNghiepVu?: string;
+  tenNghiepVu?: string;
 }
 
 export interface SoChiTietReport {
@@ -141,6 +164,7 @@ export function buildSoChiTiet(
       tongPhatSinhNo += leg.no;
       tongPhatSinhCo += leg.co;
       const s = splitBalance(soDu, loai);
+      const dm = v.danhMuc;
       rows.push({
         ngay: new Date(v.ngay),
         soPhieu: v.soPhieu,
@@ -151,6 +175,28 @@ export function buildSoChiTiet(
         phatSinhCo: leg.co,
         soDuNo: s.no,
         soDuCo: s.co,
+        maDoiTuong: dm?.doiTuong?.ma,
+        tenDoiTuong: dm?.doiTuong?.ten,
+        maDoiTuong2: dm?.doiTuong2?.ma,
+        tenDoiTuong2: dm?.doiTuong2?.ten,
+        maKhoanMuc: dm?.khoanMuc?.ma,
+        tenKhoanMuc: dm?.khoanMuc?.ten,
+        maDuAn: dm?.duAn?.ma,
+        tenDuAn: dm?.duAn?.ten,
+        maBoPhan: dm?.boPhan?.ma,
+        tenBoPhan: dm?.boPhan?.ten,
+        maNhanVien: dm?.nhanVien?.ma,
+        tenNhanVien: dm?.nhanVien?.ten,
+        maDoi: dm?.doi?.ma,
+        tenDoi: dm?.doi?.ten,
+        maSanPham: dm?.sanPham?.ma,
+        tenSanPham: dm?.sanPham?.ten,
+        maDongTien: dm?.dongTien?.ma,
+        tenDongTien: dm?.dongTien?.ten,
+        maLoaiGiaoDich: dm?.loaiGiaoDich?.ma,
+        tenLoaiGiaoDich: dm?.loaiGiaoDich?.ten,
+        maNghiepVu: dm?.nghiepVu?.ma,
+        tenNghiepVu: dm?.nghiepVu?.ten,
       });
     }
   }
