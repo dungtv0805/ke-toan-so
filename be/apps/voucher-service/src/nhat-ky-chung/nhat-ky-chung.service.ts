@@ -53,7 +53,9 @@ export class NhatKyChungService {
 
     const [data, total] = await Promise.all([
       this.chungTuRepository.aggregate(aggregationPipeline).toArray(),
-      this.chungTuRepository.count(mongoQuery),
+      // Dùng countDocuments (native Mongo) để khớp đúng filter thô của $match.
+      // MongoRepository.count() diễn giải sai filter (dotted path/$or/$gte) → trả 0.
+      this.chungTuRepository.countDocuments(mongoQuery),
     ]);
 
     const totalPages = Math.ceil(total / limit);

@@ -11,7 +11,7 @@ import "./init.state";
 import { NhatKyChungStates } from "../../nhat-ky-chung.handler";
 import { InitEvent } from "./init.event";
 
-const DEFAULT_PAGE_SIZE = 50;
+const DEFAULT_PAGE_SIZE = 100;
 const TAI_KHOAN_LIMIT = 500;
 const KHOAN_MUC_LIMIT = 500;
 

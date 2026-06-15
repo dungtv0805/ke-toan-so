@@ -4,7 +4,7 @@ import { nhatKyChungService, GetEntriesParams } from "@/services/nhatKyChungServ
 import "./apply-drawer-filters.event";
 import { ApplyDrawerFiltersParams } from "./apply-drawer-filters.event";
 
-const DEFAULT_PAGE_SIZE = 50;
+const DEFAULT_PAGE_SIZE = 100;
 
 @RegisterHandler("nhat-ky-chung")
 export class ApplyDrawerFiltersHandler extends CSubHanlder {
