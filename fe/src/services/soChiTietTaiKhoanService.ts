@@ -10,6 +10,28 @@ export interface SoChiTietRow {
   phatSinhCo: number;
   soDuNo: number;
   soDuCo: number;
+  maDoiTuong?: string;
+  tenDoiTuong?: string;
+  maDoiTuong2?: string;
+  tenDoiTuong2?: string;
+  maKhoanMuc?: string;
+  tenKhoanMuc?: string;
+  maDuAn?: string;
+  tenDuAn?: string;
+  maBoPhan?: string;
+  tenBoPhan?: string;
+  maNhanVien?: string;
+  tenNhanVien?: string;
+  maDoi?: string;
+  tenDoi?: string;
+  maSanPham?: string;
+  tenSanPham?: string;
+  maDongTien?: string;
+  tenDongTien?: string;
+  maLoaiGiaoDich?: string;
+  tenLoaiGiaoDich?: string;
+  maNghiepVu?: string;
+  tenNghiepVu?: string;
 }
 
 export interface SoChiTietReport {
@@ -30,21 +52,20 @@ class SoChiTietTaiKhoanService extends ServiceBase {
   }
 
   async getReport(
-    maTaiKhoan: string,
+    maTaiKhoans: string[] | 'all',
     startDate: Date,
     endDate: Date,
     maDoiTuong?: string,
-  ): Promise<SoChiTietReport | null> {
+  ): Promise<SoChiTietReport[]> {
     const params: Record<string, string> = {
-      maTaiKhoan,
+      maTaiKhoan: maTaiKhoans === 'all' ? 'all' : maTaiKhoans.join(','),
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
     };
     if (maDoiTuong) params.maDoiTuong = maDoiTuong;
 
-    const data = await this.get<SoChiTietReport>({ params });
-    if (!data || !data.taiKhoan) return null;
-    return data;
+    const data = await this.get<{ reports: SoChiTietReport[] }>({ params });
+    return data?.reports ?? [];
   }
 }
 
