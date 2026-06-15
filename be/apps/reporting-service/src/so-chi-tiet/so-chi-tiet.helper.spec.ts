@@ -1,4 +1,8 @@
-import { computeRelevantCodes, buildSoChiTiet } from './so-chi-tiet.helper';
+import {
+  computeRelevantCodes,
+  buildSoChiTiet,
+  buildSoChiTietMulti,
+} from './so-chi-tiet.helper';
 
 describe('computeRelevantCodes', () => {
   const accounts = [
@@ -156,11 +160,78 @@ describe('buildSoChiTiet', () => {
     expect(r.soDuCuoiKyNo).toBe(0);
   });
 
+  it('điền các trường danhMuc lên dòng phát sinh', () => {
+    const voucher = {
+      soPhieu: 'PT01',
+      ngay: new Date('2026-01-05') as any,
+      soTien: 1000,
+      noiDung: 'PT01',
+      danhMuc: {
+        taiKhoanNo: { ma: '111', ten: '111', loai: 'NO', nhom: '' },
+        taiKhoanCo: { ma: '511', ten: '511', loai: 'CO', nhom: '' },
+        doiTuong: { ma: 'KH01', ten: 'Khách 01', loai: 'KHACH_HANG' },
+        khoanMuc: { ma: 'KM1', ten: 'Khoản mục 1', loai: 'CP', nhom: '' },
+        duAn: { ma: 'DA1', ten: 'Dự án 1', trangThai: 'ACTIVE' },
+        boPhan: { ma: 'BP1', ten: 'Bộ phận 1' },
+        nhanVien: { ma: 'NV1', ten: 'Nhân viên 1' },
+      },
+    } as any;
+    const r = buildSoChiTiet(account, relevant, [voucher], [], undefined, start, end);
+    expect(r.rows[0].maDoiTuong).toBe('KH01');
+    expect(r.rows[0].tenDoiTuong).toBe('Khách 01');
+    expect(r.rows[0].maKhoanMuc).toBe('KM1');
+    expect(r.rows[0].maDuAn).toBe('DA1');
+    expect(r.rows[0].maBoPhan).toBe('BP1');
+    expect(r.rows[0].maNhanVien).toBe('NV1');
+  });
+
   it('chứng từ đúng ngày startDate được tính trong kỳ (không phải đầu kỳ)', () => {
     const vouchers = [v('2026-01-01', 'PT01', '111', '511', 100)];
     const r = buildSoChiTiet(account, relevant, vouchers, [], undefined, start, end);
     expect(r.rows).toHaveLength(1);
     expect(r.soDuDauKyNo).toBe(0);
     expect(r.tongPhatSinhNo).toBe(100);
+  });
+});
+
+describe('buildSoChiTietMulti', () => {
+  const accounts = [
+    { ma: '111', ten: 'Tiền mặt', loai: 'NO' },
+    { ma: '511', ten: 'Doanh thu', loai: 'CO' },
+    { ma: '642', ten: 'Chi phí QLDN', loai: 'NO' },
+  ];
+  const start = new Date('2026-01-01T00:00:00.000Z');
+  const end = new Date('2026-01-31T23:59:59.999Z');
+  const voucher = {
+    soPhieu: 'PT01',
+    ngay: new Date('2026-01-05') as any,
+    soTien: 1000,
+    noiDung: 'PT01',
+    danhMuc: {
+      taiKhoanNo: { ma: '111', ten: '111', loai: 'NO', nhom: '' },
+      taiKhoanCo: { ma: '511', ten: '511', loai: 'CO', nhom: '' },
+    },
+  } as any;
+
+  it('trả về một report cho mỗi mã TK có phát sinh', () => {
+    const reports = buildSoChiTietMulti(
+      ['111', '511'], accounts, [voucher], [], undefined, start, end,
+    );
+    expect(reports).toHaveLength(2);
+    expect(reports.map((r) => r.taiKhoan.ma)).toEqual(['111', '511']);
+  });
+
+  it('bỏ qua TK không có số dư đầu kỳ và không phát sinh', () => {
+    const reports = buildSoChiTietMulti(
+      ['111', '642'], accounts, [voucher], [], undefined, start, end,
+    );
+    expect(reports.map((r) => r.taiKhoan.ma)).toEqual(['111']);
+  });
+
+  it('bỏ qua mã TK không tồn tại trong danh mục', () => {
+    const reports = buildSoChiTietMulti(
+      ['111', '999'], accounts, [voucher], [], undefined, start, end,
+    );
+    expect(reports.map((r) => r.taiKhoan.ma)).toEqual(['111']);
   });
 });

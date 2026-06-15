@@ -28,6 +28,29 @@ export interface SoChiTietRow {
   phatSinhCo: number;
   soDuNo: number;
   soDuCo: number;
+  // Trường danhMuc (tùy chọn) phục vụ chọn cột hiển thị
+  maDoiTuong?: string;
+  tenDoiTuong?: string;
+  maDoiTuong2?: string;
+  tenDoiTuong2?: string;
+  maKhoanMuc?: string;
+  tenKhoanMuc?: string;
+  maDuAn?: string;
+  tenDuAn?: string;
+  maBoPhan?: string;
+  tenBoPhan?: string;
+  maNhanVien?: string;
+  tenNhanVien?: string;
+  maDoi?: string;
+  tenDoi?: string;
+  maSanPham?: string;
+  tenSanPham?: string;
+  maDongTien?: string;
+  tenDongTien?: string;
+  maLoaiGiaoDich?: string;
+  tenLoaiGiaoDich?: string;
+  maNghiepVu?: string;
+  tenNghiepVu?: string;
 }
 
 export interface SoChiTietReport {
@@ -141,6 +164,7 @@ export function buildSoChiTiet(
       tongPhatSinhNo += leg.no;
       tongPhatSinhCo += leg.co;
       const s = splitBalance(soDu, loai);
+      const dm = v.danhMuc;
       rows.push({
         ngay: new Date(v.ngay),
         soPhieu: v.soPhieu,
@@ -151,6 +175,28 @@ export function buildSoChiTiet(
         phatSinhCo: leg.co,
         soDuNo: s.no,
         soDuCo: s.co,
+        maDoiTuong: dm?.doiTuong?.ma,
+        tenDoiTuong: dm?.doiTuong?.ten,
+        maDoiTuong2: dm?.doiTuong2?.ma,
+        tenDoiTuong2: dm?.doiTuong2?.ten,
+        maKhoanMuc: dm?.khoanMuc?.ma,
+        tenKhoanMuc: dm?.khoanMuc?.ten,
+        maDuAn: dm?.duAn?.ma,
+        tenDuAn: dm?.duAn?.ten,
+        maBoPhan: dm?.boPhan?.ma,
+        tenBoPhan: dm?.boPhan?.ten,
+        maNhanVien: dm?.nhanVien?.ma,
+        tenNhanVien: dm?.nhanVien?.ten,
+        maDoi: dm?.doi?.ma,
+        tenDoi: dm?.doi?.ten,
+        maSanPham: dm?.sanPham?.ma,
+        tenSanPham: dm?.sanPham?.ten,
+        maDongTien: dm?.dongTien?.ma,
+        tenDongTien: dm?.dongTien?.ten,
+        maLoaiGiaoDich: dm?.loaiGiaoDich?.ma,
+        tenLoaiGiaoDich: dm?.loaiGiaoDich?.ten,
+        maNghiepVu: dm?.nghiepVu?.ma,
+        tenNghiepVu: dm?.nghiepVu?.ten,
       });
     }
   }
@@ -168,4 +214,42 @@ export function buildSoChiTiet(
     soDuCuoiKyNo: cuoiKy.no,
     soDuCuoiKyCo: cuoiKy.co,
   };
+}
+
+/**
+ * Build sổ chi tiết cho nhiều tài khoản từ một lần fetch dữ liệu.
+ * - codes: danh sách mã TK cần dựng (đã resolve từ 'all' hoặc list).
+ * - Bỏ qua mã không có trong danh mục, và TK rỗng (không số dư đầu kỳ, không phát sinh).
+ */
+export function buildSoChiTietMulti(
+  codes: string[],
+  accounts: Array<{ ma: string; ten: string; loai: string }>,
+  vouchers: NhatKyChungEntry[],
+  opening: OpeningRow[],
+  maDoiTuong: string | undefined,
+  startDate: Date,
+  endDate: Date,
+): SoChiTietReport[] {
+  const reports: SoChiTietReport[] = [];
+  for (const code of codes) {
+    const account = accounts.find((a) => a.ma === code);
+    if (!account) continue;
+    const relevantCodes = computeRelevantCodes(accounts, code);
+    const report = buildSoChiTiet(
+      { ma: account.ma, ten: account.ten, loai: account.loai },
+      relevantCodes,
+      vouchers,
+      opening,
+      maDoiTuong,
+      startDate,
+      endDate,
+    );
+    const isEmpty =
+      report.rows.length === 0 &&
+      report.soDuDauKyNo === 0 &&
+      report.soDuDauKyCo === 0;
+    if (isEmpty) continue;
+    reports.push(report);
+  }
+  return reports;
 }

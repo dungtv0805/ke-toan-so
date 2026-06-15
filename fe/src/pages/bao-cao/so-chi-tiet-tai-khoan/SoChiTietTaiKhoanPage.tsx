@@ -1,50 +1,34 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Card, Table, Button, Space, Select, DatePicker, Breadcrumb, Empty, Typography, message,
+  Card, Button, Space, Select, DatePicker, Breadcrumb, Empty, message,
 } from 'antd';
 import { ReloadOutlined, HomeOutlined, AccountBookOutlined } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
 import dayjs, { Dayjs } from 'dayjs';
 import {
   soChiTietTaiKhoanService, SoChiTietReport,
 } from '@/services/soChiTietTaiKhoanService';
 import { taiKhoanService } from '@/services/taiKhoanService';
 import { doiTuongService } from '@/services/doiTuongService';
+import {
+  buildAntdColumns, loadVisibleKeys, saveVisibleKeys,
+} from './columnRegistry';
+import ColumnChooser from './ColumnChooser';
+import AccountReportBlock from './AccountReportBlock';
 
 const { RangePicker } = DatePicker;
-const { Text } = Typography;
-
-type Kind = 'opening' | 'entry' | 'cong' | 'cuoi';
-interface DisplayRow {
-  key: string;
-  kind: Kind;
-  ngay?: string;
-  soPhieu?: string;
-  ngayChungTu?: string;
-  noiDung: string;
-  tkDoiUng?: string;
-  phatSinhNo?: number;
-  phatSinhCo?: number;
-  soDuNo?: number;
-  soDuCo?: number;
-}
-
-const fmt = (v?: number) =>
-  v && v !== 0
-    ? new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(v)
-    : '';
 
 const SoChiTietTaiKhoanPage: React.FC = () => {
   const [accountOptions, setAccountOptions] = useState<{ value: string; label: string }[]>([]);
   const [doiTuongOptions, setDoiTuongOptions] = useState<{ value: string; label: string }[]>([]);
-  const [maTaiKhoan, setMaTaiKhoan] = useState<string>();
+  const [maTaiKhoans, setMaTaiKhoans] = useState<string[]>([]);
   const [maDoiTuong, setMaDoiTuong] = useState<string>();
   const [range, setRange] = useState<[Dayjs, Dayjs]>([
     dayjs().startOf('month'),
     dayjs().endOf('month'),
   ]);
-  const [report, setReport] = useState<SoChiTietReport | null>(null);
+  const [reports, setReports] = useState<SoChiTietReport[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [visibleKeys, setVisibleKeys] = useState<string[]>(() => loadVisibleKeys());
 
   useEffect(() => {
     (async () => {
@@ -62,17 +46,31 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
     })();
   }, []);
 
+  const onChangeVisible = (keys: string[]) => {
+    setVisibleKeys(keys);
+    saveVisibleKeys(keys);
+  };
+
+  const columns = useMemo(() => buildAntdColumns(visibleKeys), [visibleKeys]);
+  const scrollX = useMemo(
+    () => Math.max(1100, visibleKeys.length * 130),
+    [visibleKeys],
+  );
+
+  const allSelected =
+    accountOptions.length > 0 && maTaiKhoans.length === accountOptions.length;
+
   const loadReport = async () => {
-    if (!maTaiKhoan || !range) return;
+    if (maTaiKhoans.length === 0 || !range) return;
     setLoading(true);
     try {
       const data = await soChiTietTaiKhoanService.getReport(
-        maTaiKhoan,
+        allSelected ? 'all' : maTaiKhoans,
         range[0].startOf('day').toDate(),
         range[1].endOf('day').toDate(),
         maDoiTuong,
       );
-      setReport(data);
+      setReports(data);
     } catch (error) {
       console.error('Error loading sổ chi tiết:', error);
       message.error('Không tải được sổ chi tiết tài khoản');
@@ -80,62 +78,6 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const dataSource: DisplayRow[] = useMemo(() => {
-    if (!report) return [];
-    const rows: DisplayRow[] = [];
-    rows.push({
-      key: 'opening', kind: 'opening', noiDung: 'Số dư đầu kỳ',
-      soDuNo: report.soDuDauKyNo, soDuCo: report.soDuDauKyCo,
-    });
-    report.rows.forEach((r, i) => {
-      rows.push({
-        key: `e${i}`, kind: 'entry',
-        ngay: dayjs(r.ngay).format('DD/MM/YYYY'),
-        soPhieu: r.soPhieu,
-        ngayChungTu: dayjs(r.ngayChungTu).format('DD/MM/YYYY'),
-        noiDung: r.noiDung, tkDoiUng: r.tkDoiUng,
-        phatSinhNo: r.phatSinhNo, phatSinhCo: r.phatSinhCo,
-        soDuNo: r.soDuNo, soDuCo: r.soDuCo,
-      });
-    });
-    rows.push({
-      key: 'cong', kind: 'cong', noiDung: 'Cộng số phát sinh',
-      phatSinhNo: report.tongPhatSinhNo, phatSinhCo: report.tongPhatSinhCo,
-    });
-    rows.push({
-      key: 'cuoi', kind: 'cuoi', noiDung: 'Số dư cuối kỳ',
-      soDuNo: report.soDuCuoiKyNo, soDuCo: report.soDuCuoiKyCo,
-    });
-    return rows;
-  }, [report]);
-
-  const columns: ColumnsType<DisplayRow> = [
-    { title: 'Ngày ghi sổ', dataIndex: 'ngay', width: 110 },
-    {
-      title: 'Chứng từ',
-      children: [
-        { title: 'Số hiệu', dataIndex: 'soPhieu', width: 110 },
-        { title: 'Ngày tháng', dataIndex: 'ngayChungTu', width: 110 },
-      ],
-    },
-    { title: 'Diễn giải', dataIndex: 'noiDung', ellipsis: true },
-    { title: 'TK đối ứng', dataIndex: 'tkDoiUng', width: 110, align: 'center' },
-    {
-      title: 'Số phát sinh',
-      children: [
-        { title: 'Nợ', dataIndex: 'phatSinhNo', width: 140, align: 'right', render: fmt },
-        { title: 'Có', dataIndex: 'phatSinhCo', width: 140, align: 'right', render: fmt },
-      ],
-    },
-    {
-      title: 'Số dư',
-      children: [
-        { title: 'Nợ', dataIndex: 'soDuNo', width: 140, align: 'right', render: fmt },
-        { title: 'Có', dataIndex: 'soDuCo', width: 140, align: 'right', render: fmt },
-      ],
-    },
-  ];
 
   return (
     <div style={{ padding: 24 }}>
@@ -149,7 +91,15 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
       />
       <Card
         title={<Space><AccountBookOutlined /><span>Sổ chi tiết tài khoản</span></Space>}
-        extra={<Button icon={<ReloadOutlined />} onClick={loadReport} disabled={!maTaiKhoan}>Làm mới</Button>}
+        extra={
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={loadReport}
+            disabled={maTaiKhoans.length === 0}
+          >
+            Làm mới
+          </Button>
+        }
       >
         <Space wrap style={{ marginBottom: 16 }}>
           <RangePicker
@@ -159,43 +109,49 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
             allowClear={false}
           />
           <Select
-            showSearch placeholder="Chọn tài khoản (bắt buộc)"
-            style={{ width: 320 }} options={accountOptions}
-            value={maTaiKhoan} onChange={setMaTaiKhoan}
+            mode="multiple"
+            showSearch
+            placeholder="Chọn tài khoản (bắt buộc)"
+            style={{ minWidth: 320, maxWidth: 520 }}
+            options={accountOptions}
+            value={maTaiKhoans}
+            onChange={setMaTaiKhoans}
+            maxTagCount="responsive"
             filterOption={(i, o) => (o?.label ?? '').toLowerCase().includes(i.toLowerCase())}
           />
+          <Button onClick={() => setMaTaiKhoans(accountOptions.map((o) => o.value))}>
+            Chọn tất cả
+          </Button>
           <Select
             showSearch allowClear placeholder="Đối tượng (tùy chọn)"
-            style={{ width: 320 }} options={doiTuongOptions}
+            style={{ width: 280 }} options={doiTuongOptions}
             value={maDoiTuong} onChange={setMaDoiTuong}
             filterOption={(i, o) => (o?.label ?? '').toLowerCase().includes(i.toLowerCase())}
           />
-          <Button type="primary" onClick={loadReport} disabled={!maTaiKhoan}>Xem</Button>
+          <ColumnChooser visibleKeys={visibleKeys} onChange={onChangeVisible} />
+          <Button type="primary" onClick={loadReport} disabled={maTaiKhoans.length === 0}>
+            Xem
+          </Button>
         </Space>
 
-        {report ? (
-          <>
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ textAlign: 'center', fontWeight: 600, fontSize: 16 }}>
+        {reports ? (
+          reports.length === 0 ? (
+            <Empty description="Không có dữ liệu cho tài khoản và kỳ đã chọn" />
+          ) : (
+            <>
+              <div style={{ textAlign: 'center', fontWeight: 600, fontSize: 16, marginBottom: 12 }}>
                 SỔ CHI TIẾT TÀI KHOẢN
               </div>
-              <div>Tài khoản: <Text strong>{report.taiKhoan.ma} - {report.taiKhoan.ten}</Text></div>
-              {report.doiTuong && (
-                <div>Đối tượng: <Text strong>{report.doiTuong.ma} - {report.doiTuong.ten}</Text></div>
-              )}
-              <div>Loại tiền: <Text strong>VNĐ</Text></div>
-            </div>
-            <Table
-              columns={columns}
-              dataSource={dataSource}
-              loading={loading}
-              pagination={false}
-              size="small"
-              bordered
-              scroll={{ x: 1100 }}
-              rowClassName={(r) => (r.kind === 'entry' ? '' : 'sct-summary-row')}
-            />
-          </>
+              {reports.map((rep) => (
+                <AccountReportBlock
+                  key={rep.taiKhoan.ma}
+                  report={rep}
+                  columns={loading ? [] : columns}
+                  scrollX={scrollX}
+                />
+              ))}
+            </>
+          )
         ) : (
           <Empty description="Chọn tài khoản và kỳ rồi bấm Xem" />
         )}
