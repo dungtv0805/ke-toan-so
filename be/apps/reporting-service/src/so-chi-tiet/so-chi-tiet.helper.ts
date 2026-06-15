@@ -215,3 +215,41 @@ export function buildSoChiTiet(
     soDuCuoiKyCo: cuoiKy.co,
   };
 }
+
+/**
+ * Build sổ chi tiết cho nhiều tài khoản từ một lần fetch dữ liệu.
+ * - codes: danh sách mã TK cần dựng (đã resolve từ 'all' hoặc list).
+ * - Bỏ qua mã không có trong danh mục, và TK rỗng (không số dư đầu kỳ, không phát sinh).
+ */
+export function buildSoChiTietMulti(
+  codes: string[],
+  accounts: Array<{ ma: string; ten: string; loai: string }>,
+  vouchers: NhatKyChungEntry[],
+  opening: OpeningRow[],
+  maDoiTuong: string | undefined,
+  startDate: Date,
+  endDate: Date,
+): SoChiTietReport[] {
+  const reports: SoChiTietReport[] = [];
+  for (const code of codes) {
+    const account = accounts.find((a) => a.ma === code);
+    if (!account) continue;
+    const relevantCodes = computeRelevantCodes(accounts, code);
+    const report = buildSoChiTiet(
+      { ma: account.ma, ten: account.ten, loai: account.loai },
+      relevantCodes,
+      vouchers,
+      opening,
+      maDoiTuong,
+      startDate,
+      endDate,
+    );
+    const isEmpty =
+      report.rows.length === 0 &&
+      report.soDuDauKyNo === 0 &&
+      report.soDuDauKyCo === 0;
+    if (isEmpty) continue;
+    reports.push(report);
+  }
+  return reports;
+}
