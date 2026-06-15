@@ -41,6 +41,7 @@ import {
   SoCaiPage,
   SoChiTietTaiKhoanPage,
   BangCanDoiPage,
+  BangTongHopCongNoPage,
   BaoCaoTaiChinhPage,
 
   QuyChaunPage,
@@ -307,7 +308,14 @@ const App = () => (
                   />
                   <Route path="so-chi-tiet-cong-no" element={<ComingSoonPage />} />
                   <Route path="so-chi-tiet-phat-sinh" element={<ComingSoonPage />} />
-                  <Route path="bang-tong-hop" element={<ComingSoonPage />} />
+                  <Route
+                    path="bang-tong-hop"
+                    element={
+                      <ProtectedRoute requiredPermission="/bao-cao/bang-tong-hop:xem">
+                        <BangTongHopCongNoPage />
+                      </ProtectedRoute>
+                    }
+                  />
                 </Route>
 
                 {/* Phân tích - Coming Soon */}
