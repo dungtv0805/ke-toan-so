@@ -1,6 +1,12 @@
 import { useMemo, useState } from "react";
-import { Table, Button, Space, Tooltip } from "antd";
-import { PlusOutlined, ReloadOutlined, FileExcelOutlined } from "@ant-design/icons";
+import type { Key } from "react";
+import { Table, Button, Space, Tooltip, Popconfirm } from "antd";
+import {
+  PlusOutlined,
+  ReloadOutlined,
+  FileExcelOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { NhatKyChung } from "@/types";
 import { useTableColumnResize } from "@/hooks/useTableColumnResize";
@@ -752,7 +758,12 @@ export function EntryListTab() {
   const [taiKhoanList] = useNhatKyChungState("taiKhoanList", []);
   const [editingRowId] = useNhatKyChungState("editingRowId", null);
   const [exportingExcel] = useNhatKyChungState("exportingExcel", false);
-  const { canCreate } = usePagePermission("/chung-tu/nhat-ky-chung");
+  const [selectedEntryIds, setSelectedEntryIds] = useNhatKyChungState(
+    "selectedEntryIds",
+    []
+  );
+  const [deletingBatch] = useNhatKyChungState("deletingBatch", false);
+  const { canCreate, canDelete } = usePagePermission("/chung-tu/nhat-ky-chung");
   const [importOpen, setImportOpen] = useState(false);
 
   // Enable column resize via DOM manipulation (no React re-renders)
@@ -770,8 +781,19 @@ export function EntryListTab() {
 
   const handleTableChange = (paginationConfig: TablePaginationConfig) => {
     const { current = 1, pageSize = 100 } = paginationConfig;
+    // Chọn theo trang hiện tại → đổi trang thì bỏ chọn
+    setSelectedEntryIds([]);
     handler.executeEvent("loadPage", { page: current, limit: pageSize });
   };
+
+  // Checkbox chọn dòng để xóa hàng loạt (chỉ bật khi có quyền xóa)
+  const rowSelection = canDelete
+    ? {
+        selectedRowKeys: selectedEntryIds,
+        onChange: (keys: Key[]) => setSelectedEntryIds(keys.map(String)),
+        fixed: true as const,
+      }
+    : undefined;
 
   // Memoize columns with widths - now depends on taiKhoanOptions
   const columns = useMemo(
@@ -806,16 +828,39 @@ export function EntryListTab() {
     <div className="excel-tab-content">
       {/* Toolbar */}
       <div className="excel-toolbar">
-        {canCreate && (
-          <Button
-            type="primary"
-            size="small"
-            icon={<PlusOutlined />}
-            onClick={handleCreateEntry}
-          >
-            Thêm mới
-          </Button>
-        )}
+        <Space size="small">
+          {canCreate && (
+            <Button
+              type="primary"
+              size="small"
+              icon={<PlusOutlined />}
+              onClick={handleCreateEntry}
+            >
+              Thêm mới
+            </Button>
+          )}
+          {canDelete && selectedEntryIds.length > 0 && (
+            <Popconfirm
+              title={`Xóa ${selectedEntryIds.length} bút toán đã chọn?`}
+              description="Bút toán đã duyệt sẽ được bỏ qua."
+              okText="Xóa"
+              okButtonProps={{ danger: true }}
+              cancelText="Hủy"
+              onConfirm={() =>
+                handler.executeEvent("deleteBatch", { ids: selectedEntryIds })
+              }
+            >
+              <Button
+                danger
+                size="small"
+                icon={<DeleteOutlined />}
+                loading={deletingBatch}
+              >
+                Xóa đã chọn ({selectedEntryIds.length})
+              </Button>
+            </Popconfirm>
+          )}
+        </Space>
         <Space size="small">
           {canCreate && (
             <Button
@@ -848,6 +893,7 @@ export function EntryListTab() {
         columns={columns}
         dataSource={data || []}
         rowKey="id"
+        rowSelection={rowSelection}
         loading={loading}
         className="excel-table resizable-table"
         rowClassName={getRowClassName}

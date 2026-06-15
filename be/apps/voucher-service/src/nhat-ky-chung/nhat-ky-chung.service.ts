@@ -392,6 +392,40 @@ export class NhatKyChungService {
   }
 
   /**
+   * Xóa hàng loạt theo danh sách id.
+   * Bỏ qua các bút toán đã duyệt (DA_DUYET) thay vì fail cả lô.
+   * Repository tự lọc theo tenant nên chỉ xóa được dữ liệu của tenant hiện tại.
+   */
+  async removeBatch(
+    ids: string[],
+  ): Promise<{ success: boolean; data: { deleted: number; skipped: number } }> {
+    if (!ids || ids.length === 0) {
+      return { success: true, data: { deleted: 0, skipped: 0 } };
+    }
+
+    const { ObjectId } = await import('mongodb');
+    const objectIds = ids.map((id) => new ObjectId(id));
+
+    const entries = await this.chungTuRepository.find({
+      where: { _id: { $in: objectIds } as any },
+    });
+
+    const deletable = entries.filter(
+      (e) => (e as any).trangThai !== 'DA_DUYET',
+    );
+    const skipped = entries.length - deletable.length;
+
+    if (deletable.length > 0) {
+      await this.chungTuRepository.remove(deletable);
+    }
+
+    return {
+      success: true,
+      data: { deleted: deletable.length, skipped },
+    };
+  }
+
+  /**
    * Create multiple entries with the same soPhieu (batch create)
    */
   async createBatch(
