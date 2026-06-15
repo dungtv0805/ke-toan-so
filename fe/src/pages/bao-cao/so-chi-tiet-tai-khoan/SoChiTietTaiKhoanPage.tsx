@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Card, Button, Space, Select, DatePicker, Breadcrumb, Empty, message,
 } from 'antd';
@@ -14,10 +15,12 @@ import {
 } from './columnRegistry';
 import ColumnChooser from './ColumnChooser';
 import AccountReportBlock from './AccountReportBlock';
+import { parseReportParams } from './reportParams';
 
 const { RangePicker } = DatePicker;
 
 const SoChiTietTaiKhoanPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [accountOptions, setAccountOptions] = useState<{ value: string; label: string }[]>([]);
   const [doiTuongOptions, setDoiTuongOptions] = useState<{ value: string; label: string }[]>([]);
   const [maTaiKhoans, setMaTaiKhoans] = useState<string[]>([]);
@@ -44,6 +47,45 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
         message.error('Không tải được danh mục tài khoản / đối tượng');
       }
     })();
+  }, []);
+
+  // Mở từ link (vd drill-down từ báo cáo tài chính): đọc query param và tự tải.
+  useEffect(() => {
+    const p = parseReportParams(searchParams.get.bind(searchParams));
+    if (!p.maTaiKhoan) return;
+
+    const start = p.startDate && dayjs(p.startDate).isValid()
+      ? dayjs(p.startDate)
+      : dayjs().startOf('month');
+    const end = p.endDate && dayjs(p.endDate).isValid()
+      ? dayjs(p.endDate)
+      : dayjs().endOf('month');
+
+    // Phản ánh lựa chọn lên bộ lọc để người dùng thấy đang xem gì.
+    setMaTaiKhoans([p.maTaiKhoan]);
+    if (p.maDoiTuong) setMaDoiTuong(p.maDoiTuong);
+    setRange([start, end]);
+
+    // Tải trực tiếp từ param (tránh đọc state chưa cập nhật).
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await soChiTietTaiKhoanService.getReport(
+          [p.maTaiKhoan as string],
+          start.startOf('day').toDate(),
+          end.endOf('day').toDate(),
+          p.maDoiTuong,
+        );
+        setReports(data);
+      } catch (error) {
+        console.error('Error loading sổ chi tiết:', error);
+        message.error('Không tải được sổ chi tiết tài khoản');
+      } finally {
+        setLoading(false);
+      }
+    })();
+    // Chỉ chạy một lần lúc mount theo param ban đầu.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onChangeVisible = (keys: string[]) => {
