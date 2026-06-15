@@ -18,6 +18,7 @@ import {
   CreateNhatKyChungDto,
   UpdateNhatKyChungDto,
   BatchItemDto,
+  DeleteBatchNhatKyChungDto,
   SummaryType,
   SUMMARY_TYPES,
 } from './dto';
@@ -141,6 +142,12 @@ export class NhatKyChungController {
     @CurrentUser() user: UserPayload,
   ) {
     return this.nhatKyChungService.importEntries(items, user.id);
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
+  async deleteBatch(@Body() dto: DeleteBatchNhatKyChungDto) {
+    return this.nhatKyChungService.removeBatch(dto.ids);
   }
 
   @Patch('batch')

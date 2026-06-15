@@ -289,6 +289,19 @@ class NhatKyChungService extends ServiceBase {
   }
 
   /**
+   * Xóa hàng loạt theo danh sách id.
+   * Trả về số đã xóa và số bị bỏ qua (bút toán đã duyệt).
+   */
+  async removeBatch(
+    ids: string[]
+  ): Promise<{ deleted: number; skipped: number }> {
+    return this.post<{ deleted: number; skipped: number }>(
+      { ids },
+      { endpoint: '/delete-batch' }
+    );
+  }
+
+  /**
    * Get all entries by soPhieu (voucher number)
    */
   async getBySoPhieu(soPhieu: string): Promise<NhatKyChung[]> {
