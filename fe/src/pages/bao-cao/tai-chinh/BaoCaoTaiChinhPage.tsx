@@ -11,6 +11,7 @@ import {
   Breadcrumb,
   Tag,
   Alert,
+  Typography,
 } from 'antd';
 import {
   ReloadOutlined,
@@ -43,6 +44,7 @@ import { KqkdTable } from '@/pages/bao-cao/kqkd/components/KqkdTable';
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { taiKhoanService } from '@/services/taiKhoanService';
 import { buildAccountTree, collectParentKeys, attachDoiTuongChildren, type TreeNode } from './utils/buildAccountTree';
+import { buildSoChiTietUrl } from './utils/soChiTietLink';
 
 // ============ TYPES ============
 
@@ -332,9 +334,40 @@ const BaoCaoTaiChinhPage: React.FC = () => {
     return <CurrencyCell value={ownVal} />;
   };
 
+  // Mở Sổ chi tiết (tab mới) cho dòng được click: TK cho dòng tài khoản,
+  // TK cha + đối tượng cho dòng đối tượng (__ma = "TKcha::đốitượng").
+  const openSoChiTiet = (record: TreeNode<TrialBalance>) => {
+    let maTaiKhoan = record.taiKhoan;
+    let maDoiTuong: string | undefined;
+    if (record.__isDoiTuong) {
+      const [parentTK, dt] = (record.__ma ?? '').split('::');
+      maTaiKhoan = parentTK;
+      maDoiTuong = dt && dt !== '__none__' ? dt : undefined;
+    }
+    if (!maTaiKhoan) return;
+    const url = buildSoChiTietUrl({
+      maTaiKhoan,
+      maDoiTuong,
+      startDate: filterParams.startDate,
+      endDate: filterParams.endDate,
+    });
+    window.open(url, '_blank', 'noopener');
+  };
+
   const trialBalanceColumns: ColumnsType<TreeNode<TrialBalance>> = [
-    { title: 'Tài khoản', dataIndex: 'taiKhoan', key: 'taiKhoan', width: 100, fixed: 'left' },
-    { title: 'Tên tài khoản', dataIndex: 'tenTaiKhoan', key: 'tenTaiKhoan', width: 250, fixed: 'left' },
+    {
+      title: 'Tài khoản', dataIndex: 'taiKhoan', key: 'taiKhoan', width: 100, fixed: 'left',
+      render: (text: string, record: TreeNode<TrialBalance>) =>
+        text
+          ? <Typography.Link onClick={() => openSoChiTiet(record)}>{text}</Typography.Link>
+          : text,
+    },
+    {
+      title: 'Tên tài khoản', dataIndex: 'tenTaiKhoan', key: 'tenTaiKhoan', width: 250, fixed: 'left',
+      render: (text: string, record: TreeNode<TrialBalance>) => (
+        <Typography.Link onClick={() => openSoChiTiet(record)}>{text}</Typography.Link>
+      ),
+    },
     {
       title: 'Số dư đầu kỳ',
       children: [
