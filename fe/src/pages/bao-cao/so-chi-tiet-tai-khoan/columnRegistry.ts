@@ -196,8 +196,8 @@ export function buildDisplayRows(report: SoChiTietReport): DisplayRow[] {
       ...r,
       key: `e${i}`,
       kind: 'entry',
-      ngay: dayjs(r.ngay).format('DD/MM/YYYY'),
-      ngayChungTu: dayjs(r.ngayChungTu).format('DD/MM/YYYY'),
+      ngay: r.ngay ? dayjs(r.ngay).format('DD/MM/YYYY') : undefined,
+      ngayChungTu: r.ngayChungTu ? dayjs(r.ngayChungTu).format('DD/MM/YYYY') : undefined,
     });
   });
   rows.push({
