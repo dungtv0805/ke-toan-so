@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { ChungTuService } from './chung-tu.service';
 import { CreateChungTuDto, UpdateChungTuDto } from '../dto';
@@ -20,6 +21,8 @@ import {
   type UserPayload,
 } from '@app/auth';
 import { PaginationQueryDto } from '@app/dto';
+import { ChungTuQueryDto } from './dto/chung-tu-query.dto';
+import { SUMMARY_TYPES, SummaryType } from '../nhat-ky-chung/dto';
 
 /**
  * TODO: Các endpoint cần thêm lại sau khi refactor:
@@ -76,6 +79,54 @@ export class ChungTuController {
   async findAll(@Query('loai') loai?: LoaiChungTu) {
     const data = await this.chungTuService.findAll(loai);
     return { success: true, data };
+  }
+
+  @Get('phieu-thu/stats')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async statsPhieuThu(@Query() query: ChungTuQueryDto) {
+    return this.chungTuService.getStats('PHIEU_THU', query);
+  }
+
+  @Get('phieu-chi/stats')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async statsPhieuChi(@Query() query: ChungTuQueryDto) {
+    return this.chungTuService.getStats('PHIEU_CHI', query);
+  }
+
+  @Get('phieu-thu/summary/:type')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async summaryPhieuThu(@Param('type') type: string, @Query() query: ChungTuQueryDto) {
+    if (!SUMMARY_TYPES.includes(type as SummaryType)) {
+      throw new BadRequestException(`Invalid summary type. Valid: ${SUMMARY_TYPES.join(', ')}`);
+    }
+    return this.chungTuService.getSummary('PHIEU_THU', type as SummaryType, query);
+  }
+
+  @Get('phieu-chi/summary/:type')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async summaryPhieuChi(@Param('type') type: string, @Query() query: ChungTuQueryDto) {
+    if (!SUMMARY_TYPES.includes(type as SummaryType)) {
+      throw new BadRequestException(`Invalid summary type. Valid: ${SUMMARY_TYPES.join(', ')}`);
+    }
+    return this.chungTuService.getSummary('PHIEU_CHI', type as SummaryType, query);
+  }
+
+  @Post('phieu-thu/import')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
+  async importPhieuThu(
+    @Body() items: Omit<CreateChungTuDto, 'loai'>[],
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.chungTuService.importPhieu('PHIEU_THU', items, user.id);
+  }
+
+  @Post('phieu-chi/import')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
+  async importPhieuChi(
+    @Body() items: Omit<CreateChungTuDto, 'loai'>[],
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.chungTuService.importPhieu('PHIEU_CHI', items, user.id);
   }
 
   @Get('chung-tu/:id')
