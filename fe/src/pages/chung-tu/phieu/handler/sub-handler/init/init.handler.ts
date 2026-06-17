@@ -21,6 +21,7 @@ export class InitHandler extends CSubHanlder<InitEvent, PhieuStates> {
       this.loadEntries({ page: 1, limit: DEFAULT_PAGE_SIZE }),
       this.loadTaiKhoanList(),
       this.executeEvent("loadMasterData", {}),
+      this.executeEvent("loadStats", {}),
     ]);
   }
 
