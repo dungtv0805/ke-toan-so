@@ -7,6 +7,7 @@ import { PhieuStates } from "../../../phieu.handler";
 import { InitEvent } from "./init.event";
 import "./init.event";
 import "./init.state";
+import { buildPhieuQueryParams } from "../../lib/buildPhieuQueryParams";
 
 const DEFAULT_PAGE_SIZE = 50;
 
@@ -60,28 +61,7 @@ export class InitHandler extends CSubHanlder<InitEvent, PhieuStates> {
   }
 
   buildQueryParams(): PhieuQueryParams {
-    const searchText = (this.getState("searchText") as string) || "";
-    const dateRange = this.getState("dateRange") as
-      | [{ format: (f: string) => string }, { format: (f: string) => string }]
-      | null;
-    const filterDoiTuong = this.getState("filterDoiTuong") as string | undefined;
-    const filterDuAn = this.getState("filterDuAn") as string | undefined;
-    const filterBoPhan = this.getState("filterBoPhan") as string | undefined;
-    const filterTaiKhoanNo = this.getState("filterTaiKhoanNo") as string | undefined;
-    const filterTaiKhoanCo = this.getState("filterTaiKhoanCo") as string | undefined;
-
-    const params: PhieuQueryParams = {};
-    if (searchText) params.search = searchText;
-    if (dateRange && dateRange[0] && dateRange[1]) {
-      params.startDate = dateRange[0].format("YYYY-MM-DD");
-      params.endDate = dateRange[1].format("YYYY-MM-DD");
-    }
-    if (filterDoiTuong) params.doiTuong = filterDoiTuong;
-    if (filterDuAn) params.duAn = filterDuAn;
-    if (filterBoPhan) params.boPhan = filterBoPhan;
-    if (filterTaiKhoanNo) params.taiKhoanNo = filterTaiKhoanNo;
-    if (filterTaiKhoanCo) params.taiKhoanCo = filterTaiKhoanCo;
-    return params;
+    return buildPhieuQueryParams((k) => this.getState(k));
   }
 
   async loadEntries(params: PhieuQueryParams): Promise<void> {

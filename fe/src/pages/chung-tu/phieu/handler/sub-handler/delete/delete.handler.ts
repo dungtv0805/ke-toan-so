@@ -13,11 +13,15 @@ export class DeleteHandler extends CSubHanlder<DeleteEvent, PhieuStates> {
     if (!config) return false;
     try {
       await config.service.remove(params.id);
-      await this.executeEvent("refresh", {});
-      return true;
     } catch (e) {
       console.error("Error deleting phieu:", e);
       return false;
     }
+    try {
+      await this.executeEvent("refresh", {});
+    } catch (e) {
+      console.error("Error refreshing after delete:", e);
+    }
+    return true;
   }
 }

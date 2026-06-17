@@ -18,11 +18,15 @@ export class SubmitHandler extends CSubHanlder<SubmitEvent, PhieuStates> {
       } else {
         await config.service.create(params.dto);
       }
-      await this.executeEvent("refresh", {});
-      return true;
     } catch (e) {
       console.error("Error submitting phieu:", e);
       return false;
     }
+    try {
+      await this.executeEvent("refresh", {});
+    } catch (e) {
+      console.error("Error refreshing after submit:", e);
+    }
+    return true;
   }
 }

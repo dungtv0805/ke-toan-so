@@ -22,9 +22,14 @@ export class LoadMasterDataHandler extends CSubHanlder<InitEvent, PhieuStates> {
     ]);
     const [dt, da, bp, sp, dts] = results;
     if (dt.status === "fulfilled") this.setState("doiTuongList", dt.value);
+    else console.error("Error loading doiTuong list:", dt.reason);
     if (da.status === "fulfilled") this.setState("duAnList", da.value);
+    else console.error("Error loading duAn list:", da.reason);
     if (bp.status === "fulfilled") this.setState("boPhanList", bp.value);
+    else console.error("Error loading boPhan list:", bp.reason);
     if (sp.status === "fulfilled") this.setState("sanPhamList", sp.value);
+    else console.error("Error loading sanPham list:", sp.reason);
     if (dts.status === "fulfilled") this.setState("dongTienList", dts.value);
+    else console.error("Error loading dongTien list:", dts.reason);
   }
 }
