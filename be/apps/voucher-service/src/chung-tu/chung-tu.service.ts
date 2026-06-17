@@ -1,10 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { MongoRepository, Between } from 'typeorm';
 import { ChungTu, LoaiChungTu } from '@app/entities';
 import { CreateChungTuDto, UpdateChungTuDto } from '../dto';
 import { VoucherNumberService } from '../shared';
 import { PaginationQueryDto, PaginatedResult } from '@app/dto';
+import { TenantContextService } from '@app/core';
+import { ChungTuQueryDto } from './dto/chung-tu-query.dto';
+import { buildChungTuMongoQuery } from './helpers';
 
 /**
  * TODO: Các API cần thêm lại sau khi refactor:
@@ -28,8 +31,9 @@ import { PaginationQueryDto, PaginatedResult } from '@app/dto';
 export class ChungTuService {
   constructor(
     @InjectRepository(ChungTu)
-    private readonly chungTuRepository: Repository<ChungTu>,
+    private readonly chungTuRepository: MongoRepository<ChungTu>,
     private readonly voucherNumberService: VoucherNumberService,
+    private readonly tenantContext: TenantContextService,
   ) {}
 
   async findAllPaginated(
@@ -73,6 +77,23 @@ export class ChungTuService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async getStats(
+    loai: LoaiChungTu,
+    query: ChungTuQueryDto,
+  ): Promise<{ success: boolean; data: { tongSo: number; tongTien: number } }> {
+    const mongoQuery = buildChungTuMongoQuery(loai, query);
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    if (tenantId) mongoQuery['tenantId'] = tenantId;
+
+    const pipeline: object[] = [
+      { $match: mongoQuery },
+      { $group: { _id: null, tongSo: { $sum: 1 }, tongTien: { $sum: '$soTien' } } },
+    ];
+    const result = await this.chungTuRepository.aggregate(pipeline).toArray();
+    const s = (result[0] as { tongSo: number; tongTien: number }) || { tongSo: 0, tongTien: 0 };
+    return { success: true, data: { tongSo: s.tongSo, tongTien: s.tongTien } };
   }
 
   async findAll(loai?: LoaiChungTu): Promise<ChungTu[]> {
