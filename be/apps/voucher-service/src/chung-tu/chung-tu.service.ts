@@ -8,6 +8,8 @@ import { PaginationQueryDto, PaginatedResult } from '@app/dto';
 import { TenantContextService } from '@app/core';
 import { ChungTuQueryDto } from './dto/chung-tu-query.dto';
 import { buildChungTuMongoQuery } from './helpers';
+import { buildSummaryAggregation } from '../nhat-ky-chung/helpers';
+import { SummaryType, SummaryItem } from '../nhat-ky-chung/dto';
 
 /**
  * TODO: Các API cần thêm lại sau khi refactor:
@@ -94,6 +96,20 @@ export class ChungTuService {
     const result = await this.chungTuRepository.aggregate(pipeline).toArray();
     const s = (result[0] as { tongSo: number; tongTien: number }) || { tongSo: 0, tongTien: 0 };
     return { success: true, data: { tongSo: s.tongSo, tongTien: s.tongTien } };
+  }
+
+  async getSummary(
+    loai: LoaiChungTu,
+    type: SummaryType,
+    query: ChungTuQueryDto,
+  ): Promise<{ success: boolean; data: SummaryItem[] }> {
+    const mongoQuery = buildChungTuMongoQuery(loai, query);
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    if (tenantId) mongoQuery['tenantId'] = tenantId;
+
+    const pipeline = buildSummaryAggregation(type, mongoQuery);
+    const result = await this.chungTuRepository.aggregate(pipeline).toArray();
+    return { success: true, data: result as SummaryItem[] };
   }
 
   async findAll(loai?: LoaiChungTu): Promise<ChungTu[]> {
