@@ -35,6 +35,10 @@ export function FilterBar() {
     handler.executeEvent("setFilter", { key: "searchText", value });
   };
 
+  // Radix <SelectItem> cannot have an empty-string value, so the "Tất cả"
+  // (no-filter) option uses this sentinel and is mapped back to undefined.
+  const ALL = "__all__";
+
   const handleSelectFilter = (key: string, value: string | undefined) => {
     handler.executeEvent("setFilter", { key, value });
   };
@@ -90,16 +94,16 @@ export function FilterBar() {
       {/* Row 2: Selects */}
       <div className="flex flex-wrap items-center gap-2">
         <Select
-          value={filterDoiTuong ?? ""}
+          value={filterDoiTuong ?? ALL}
           onValueChange={(v) =>
-            handleSelectFilter("filterDoiTuong", v === "" ? undefined : v)
+            handleSelectFilter("filterDoiTuong", v === ALL ? undefined : v)
           }
         >
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Đối tượng" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Tất cả</SelectItem>
+            <SelectItem value={ALL}>Tất cả</SelectItem>
             {doiTuongList.map((dt) => (
               <SelectItem key={dt.ma} value={dt.ma}>
                 {dt.ten}
@@ -109,16 +113,16 @@ export function FilterBar() {
         </Select>
 
         <Select
-          value={filterDuAn ?? ""}
+          value={filterDuAn ?? ALL}
           onValueChange={(v) =>
-            handleSelectFilter("filterDuAn", v === "" ? undefined : v)
+            handleSelectFilter("filterDuAn", v === ALL ? undefined : v)
           }
         >
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Dự án" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Tất cả</SelectItem>
+            <SelectItem value={ALL}>Tất cả</SelectItem>
             {duAnList.map((da) => (
               <SelectItem key={da.ma} value={da.ma}>
                 {da.ten}
@@ -128,16 +132,16 @@ export function FilterBar() {
         </Select>
 
         <Select
-          value={filterBoPhan ?? ""}
+          value={filterBoPhan ?? ALL}
           onValueChange={(v) =>
-            handleSelectFilter("filterBoPhan", v === "" ? undefined : v)
+            handleSelectFilter("filterBoPhan", v === ALL ? undefined : v)
           }
         >
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Bộ phận" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Tất cả</SelectItem>
+            <SelectItem value={ALL}>Tất cả</SelectItem>
             {boPhanList.map((bp) => (
               <SelectItem key={bp.ma} value={bp.ma}>
                 {bp.ten}
@@ -147,16 +151,16 @@ export function FilterBar() {
         </Select>
 
         <Select
-          value={filterTaiKhoanNo ?? ""}
+          value={filterTaiKhoanNo ?? ALL}
           onValueChange={(v) =>
-            handleSelectFilter("filterTaiKhoanNo", v === "" ? undefined : v)
+            handleSelectFilter("filterTaiKhoanNo", v === ALL ? undefined : v)
           }
         >
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="TK Nợ" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Tất cả</SelectItem>
+            <SelectItem value={ALL}>Tất cả</SelectItem>
             {taiKhoanList.map((tk) => (
               <SelectItem key={tk.ma} value={tk.ma}>
                 {tk.ma} - {tk.ten}
@@ -166,16 +170,16 @@ export function FilterBar() {
         </Select>
 
         <Select
-          value={filterTaiKhoanCo ?? ""}
+          value={filterTaiKhoanCo ?? ALL}
           onValueChange={(v) =>
-            handleSelectFilter("filterTaiKhoanCo", v === "" ? undefined : v)
+            handleSelectFilter("filterTaiKhoanCo", v === ALL ? undefined : v)
           }
         >
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="TK Có" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Tất cả</SelectItem>
+            <SelectItem value={ALL}>Tất cả</SelectItem>
             {taiKhoanList.map((tk) => (
               <SelectItem key={tk.ma} value={tk.ma}>
                 {tk.ma} - {tk.ten}
