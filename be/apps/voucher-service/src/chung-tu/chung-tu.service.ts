@@ -194,4 +194,35 @@ export class ChungTuService {
         v.danhMuc?.doiTuong?.ten?.toLowerCase().includes(lowerKeyword),
     );
   }
+
+  async importPhieu(
+    loai: LoaiChungTu,
+    items: Omit<CreateChungTuDto, 'loai'>[],
+    nguoiTaoId: string,
+  ): Promise<{ success: boolean; data: ChungTu[] }> {
+    if (items.length === 0) return { success: true, data: [] };
+
+    const soPhieuList = await this.voucherNumberService.generateVoucherNumbers(
+      loai,
+      items.length,
+    );
+
+    const chungTuList = items.map((item, idx) =>
+      this.chungTuRepository.create({
+        loai,
+        soTien: item.soTien,
+        noiDung: item.noiDung,
+        danhMuc: item.danhMuc,
+        ghiChu: item.ghiChu,
+        nguoiGiaoDich: item.nguoiGiaoDich,
+        diaChi: item.diaChi,
+        ngay: new Date(item.ngay),
+        soPhieu: soPhieuList[idx],
+        nguoiTaoId,
+      }),
+    );
+
+    const saved = await this.chungTuRepository.save(chungTuList);
+    return { success: true, data: saved };
+  }
 }
