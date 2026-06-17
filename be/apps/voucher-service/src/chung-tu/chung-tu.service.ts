@@ -4,7 +4,7 @@ import { MongoRepository, Between } from 'typeorm';
 import { ChungTu, LoaiChungTu } from '@app/entities';
 import { CreateChungTuDto, UpdateChungTuDto } from '../dto';
 import { VoucherNumberService } from '../shared';
-import { PaginationQueryDto, PaginatedResult } from '@app/dto';
+import { PaginatedResult } from '@app/dto';
 import { TenantContextService } from '@app/core';
 import { ChungTuQueryDto } from './dto/chung-tu-query.dto';
 import { buildChungTuMongoQuery } from './helpers';
@@ -40,44 +40,33 @@ export class ChungTuService {
 
   async findAllPaginated(
     loai: LoaiChungTu,
-    query: PaginationQueryDto,
-  ): Promise<{
-    success: boolean;
-    data: ChungTu[];
-    meta: PaginatedResult<ChungTu>['meta'];
-  }> {
-    const { page = 1, limit = 10, search } = query;
+    query: ChungTuQueryDto,
+  ): Promise<{ success: boolean; data: ChungTu[]; meta: PaginatedResult<ChungTu>['meta'] }> {
+    const { page = 1, limit = 15 } = query;
     const skip = (page - 1) * limit;
 
-    const allItems = await this.chungTuRepository.find({
-      where: { loai },
-      order: { createdAt: 'DESC' },
-    });
+    const mongoQuery = buildChungTuMongoQuery(loai, query);
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    if (tenantId) mongoQuery['tenantId'] = tenantId;
 
-    let filteredItems = allItems;
-
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filteredItems = filteredItems.filter(
-        (item) =>
-          item.soPhieu.toLowerCase().includes(searchLower) ||
-          item.noiDung.toLowerCase().includes(searchLower) ||
-          item.danhMuc?.doiTuong?.ten?.toLowerCase().includes(searchLower),
-      );
-    }
-
-    const total = filteredItems.length;
-    const data = filteredItems.slice(skip, skip + limit);
+    const pipeline: object[] = [
+      { $match: mongoQuery },
+      { $sort: { createdAt: -1 } },
+      {
+        $facet: {
+          data: [{ $skip: skip }, { $limit: limit }],
+          totalArr: [{ $count: 'count' }],
+        },
+      },
+    ];
+    const agg = await this.chungTuRepository.aggregate(pipeline).toArray();
+    const facet = (agg[0] as { data: ChungTu[]; totalArr: { count: number }[] }) || { data: [], totalArr: [] };
+    const total = facet.totalArr[0]?.count ?? 0;
 
     return {
       success: true,
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
+      data: facet.data,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
   }
 

@@ -20,7 +20,6 @@ import {
   CurrentUser,
   type UserPayload,
 } from '@app/auth';
-import { PaginationQueryDto } from '@app/dto';
 import { ChungTuQueryDto } from './dto/chung-tu-query.dto';
 import { SUMMARY_TYPES, SummaryType } from '../nhat-ky-chung/dto';
 
@@ -50,7 +49,7 @@ export class ChungTuController {
 
   @Get('phieu-thu')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
-  async findAllPhieuThu(@Query() query: PaginationQueryDto) {
+  async findAllPhieuThu(@Query() query: ChungTuQueryDto) {
     return this.chungTuService.findAllPaginated('PHIEU_THU', query);
   }
 
@@ -63,7 +62,7 @@ export class ChungTuController {
 
   @Get('phieu-chi')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
-  async findAllPhieuChi(@Query() query: PaginationQueryDto) {
+  async findAllPhieuChi(@Query() query: ChungTuQueryDto) {
     return this.chungTuService.findAllPaginated('PHIEU_CHI', query);
   }
 
