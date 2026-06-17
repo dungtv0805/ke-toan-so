@@ -1,10 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { MongoRepository, Between } from 'typeorm';
 import { ChungTu, LoaiChungTu } from '@app/entities';
 import { CreateChungTuDto, UpdateChungTuDto } from '../dto';
 import { VoucherNumberService } from '../shared';
-import { PaginationQueryDto, PaginatedResult } from '@app/dto';
+import { PaginatedResult } from '@app/dto';
+import { TenantContextService } from '@app/core';
+import { ChungTuQueryDto } from './dto/chung-tu-query.dto';
+import { buildChungTuMongoQuery } from './helpers';
+import { buildSummaryAggregation } from '../nhat-ky-chung/helpers';
+import { SummaryType, SummaryItem } from '../nhat-ky-chung/dto';
 
 /**
  * TODO: Các API cần thêm lại sau khi refactor:
@@ -28,51 +33,72 @@ import { PaginationQueryDto, PaginatedResult } from '@app/dto';
 export class ChungTuService {
   constructor(
     @InjectRepository(ChungTu)
-    private readonly chungTuRepository: Repository<ChungTu>,
+    private readonly chungTuRepository: MongoRepository<ChungTu>,
     private readonly voucherNumberService: VoucherNumberService,
+    private readonly tenantContext: TenantContextService,
   ) {}
 
   async findAllPaginated(
     loai: LoaiChungTu,
-    query: PaginationQueryDto,
-  ): Promise<{
-    success: boolean;
-    data: ChungTu[];
-    meta: PaginatedResult<ChungTu>['meta'];
-  }> {
-    const { page = 1, limit = 10, search } = query;
+    query: ChungTuQueryDto,
+  ): Promise<{ success: boolean; data: ChungTu[]; meta: PaginatedResult<ChungTu>['meta'] }> {
+    const { page = 1, limit = 15 } = query;
     const skip = (page - 1) * limit;
 
-    const allItems = await this.chungTuRepository.find({
-      where: { loai },
-      order: { createdAt: 'DESC' },
-    });
+    const mongoQuery = buildChungTuMongoQuery(loai, query);
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    if (tenantId) mongoQuery['tenantId'] = tenantId;
 
-    let filteredItems = allItems;
-
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filteredItems = filteredItems.filter(
-        (item) =>
-          item.soPhieu.toLowerCase().includes(searchLower) ||
-          item.noiDung.toLowerCase().includes(searchLower) ||
-          item.danhMuc?.doiTuong?.ten?.toLowerCase().includes(searchLower),
-      );
-    }
-
-    const total = filteredItems.length;
-    const data = filteredItems.slice(skip, skip + limit);
+    const pipeline: object[] = [
+      { $match: mongoQuery },
+      { $sort: { createdAt: -1 } },
+      {
+        $facet: {
+          data: [{ $skip: skip }, { $limit: limit }],
+          totalArr: [{ $count: 'count' }],
+        },
+      },
+    ];
+    const agg = await this.chungTuRepository.aggregate(pipeline).toArray();
+    const facet = (agg[0] as { data: ChungTu[]; totalArr: { count: number }[] }) || { data: [], totalArr: [] };
+    const total = facet.totalArr[0]?.count ?? 0;
 
     return {
       success: true,
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
+      data: facet.data,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
+  }
+
+  async getStats(
+    loai: LoaiChungTu,
+    query: ChungTuQueryDto,
+  ): Promise<{ success: boolean; data: { tongSo: number; tongTien: number } }> {
+    const mongoQuery = buildChungTuMongoQuery(loai, query);
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    if (tenantId) mongoQuery['tenantId'] = tenantId;
+
+    const pipeline: object[] = [
+      { $match: mongoQuery },
+      { $group: { _id: null, tongSo: { $sum: 1 }, tongTien: { $sum: '$soTien' } } },
+    ];
+    const result = await this.chungTuRepository.aggregate(pipeline).toArray();
+    const s = (result[0] as { tongSo: number; tongTien: number }) || { tongSo: 0, tongTien: 0 };
+    return { success: true, data: { tongSo: s.tongSo, tongTien: s.tongTien } };
+  }
+
+  async getSummary(
+    loai: LoaiChungTu,
+    type: SummaryType,
+    query: ChungTuQueryDto,
+  ): Promise<{ success: boolean; data: SummaryItem[] }> {
+    const mongoQuery = buildChungTuMongoQuery(loai, query);
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    if (tenantId) mongoQuery['tenantId'] = tenantId;
+
+    const pipeline = buildSummaryAggregation(type, mongoQuery);
+    const result = await this.chungTuRepository.aggregate(pipeline).toArray();
+    return { success: true, data: result as SummaryItem[] };
   }
 
   async findAll(loai?: LoaiChungTu): Promise<ChungTu[]> {
@@ -156,5 +182,36 @@ export class ChungTuService {
         v.noiDung.toLowerCase().includes(lowerKeyword) ||
         v.danhMuc?.doiTuong?.ten?.toLowerCase().includes(lowerKeyword),
     );
+  }
+
+  async importPhieu(
+    loai: LoaiChungTu,
+    items: Omit<CreateChungTuDto, 'loai'>[],
+    nguoiTaoId: string,
+  ): Promise<{ success: boolean; data: ChungTu[] }> {
+    if (items.length === 0) return { success: true, data: [] };
+
+    const soPhieuList = await this.voucherNumberService.generateVoucherNumbers(
+      loai,
+      items.length,
+    );
+
+    const chungTuList = items.map((item, idx) =>
+      this.chungTuRepository.create({
+        loai,
+        soTien: item.soTien,
+        noiDung: item.noiDung,
+        danhMuc: item.danhMuc,
+        ghiChu: item.ghiChu,
+        nguoiGiaoDich: item.nguoiGiaoDich,
+        diaChi: item.diaChi,
+        ngay: new Date(item.ngay),
+        soPhieu: soPhieuList[idx],
+        nguoiTaoId,
+      }),
+    );
+
+    const saved = await this.chungTuRepository.save(chungTuList);
+    return { success: true, data: saved };
   }
 }

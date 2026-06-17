@@ -475,6 +475,11 @@ export interface ChungTu {
   sanPhamSnapshot?: SanPhamSnapshot;
   dongTienSnapshot?: DongTienSnapshot;
 
+  // New nested danhMuc field (returned by backend)
+  danhMuc?: DanhMuc;
+
+  nguoiGiaoDich?: string;
+  diaChi?: string;
   trangThai: 'NHAP' | 'CHO_DUYET' | 'DA_DUYET' | 'TU_CHOI';
   nguoiTao: string;
   ngayTao: string;

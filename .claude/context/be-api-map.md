@@ -103,12 +103,18 @@ Same CRUD pattern as /doi-tuong
 |--------|------|-------------|
 | GET | /phieu-thu | List receipts |
 | GET | /phieu-thu/search | Search receipts |
+| GET | /phieu-thu/stats | Phieu thu statistics (tongSo, tongTien) |
+| GET | /phieu-thu/summary/:type | Phieu thu summary by type (account/team/employee/project/investor/product/cash-flow/management-group/promotion-group) |
 | GET | /phieu-chi | List payments |
 | GET | /phieu-chi/search | Search payments |
+| GET | /phieu-chi/stats | Phieu chi statistics (tongSo, tongTien) |
+| GET | /phieu-chi/summary/:type | Phieu chi summary by type (account/team/employee/project/investor/product/cash-flow/management-group/promotion-group) |
 | GET | /chung-tu | List all vouchers |
 | GET | /chung-tu/:id | By ID |
 | POST | /phieu-thu | Create receipt |
+| POST | /phieu-thu/import | Import phieu thu (bulk) |
 | POST | /phieu-chi | Create payment |
+| POST | /phieu-chi/import | Import phieu chi (bulk) |
 | PUT | /chung-tu/:id | Update |
 | DELETE | /chung-tu/:id | Delete |
 

@@ -191,11 +191,19 @@ const App = () => (
                 <Route path="chung-tu">
                   <Route
                     path="phieu-thu"
-                    element={<ComingSoonPage />}
+                    element={
+                      <ProtectedRoute requiredPermission="/chung-tu/phieu-thu:xem">
+                        <PhieuThuPage />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="phieu-chi"
-                    element={<ComingSoonPage />}
+                    element={
+                      <ProtectedRoute requiredPermission="/chung-tu/phieu-chi:xem">
+                        <PhieuChiPage />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="nhat-ky-chung"
