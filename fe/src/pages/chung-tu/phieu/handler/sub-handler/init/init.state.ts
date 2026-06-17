@@ -32,6 +32,10 @@ export interface InitStates extends BaseStates {
   filterBoPhan: string | undefined;
   filterTaiKhoanNo: string | undefined;
   filterTaiKhoanCo: string | undefined;
+  formModalOpen: boolean;
+  editingPhieu: ChungTu | null;
+  viewModalPhieu: ChungTu | null;
+  importModalOpen: boolean;
   activeTab: string;
   statsCollapsed: boolean;
   doiTuongList: DoiTuong[];
