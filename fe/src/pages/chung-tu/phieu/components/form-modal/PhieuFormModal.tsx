@@ -35,7 +35,6 @@ import {
 } from "../../PhieuHandlerContext";
 import {
   buildDoiTuongSnapshot,
-  buildTaiKhoanSnapshot,
   buildDuAnSnapshot,
   buildBoPhanSnapshot,
   buildSanPhamSnapshot,
@@ -128,12 +127,12 @@ export function PhieuFormModal() {
       if (found) danhMuc.doiTuong = buildDoiTuongSnapshot(found);
     }
     if (taiKhoanNoMa) {
-      const found = taiKhoanList.find((t) => t.ma === taiKhoanNoMa);
-      if (found) danhMuc.taiKhoanNo = buildTaiKhoanSnapshot(found as Parameters<typeof buildTaiKhoanSnapshot>[0]);
+      const foundNo = taiKhoanList.find((t) => t.ma === taiKhoanNoMa);
+      if (foundNo) danhMuc.taiKhoanNo = { ma: foundNo.ma, ten: foundNo.ten, loai: foundNo.loai, nhom: foundNo.nhom };
     }
     if (taiKhoanCoMa) {
-      const found = taiKhoanList.find((t) => t.ma === taiKhoanCoMa);
-      if (found) danhMuc.taiKhoanCo = buildTaiKhoanSnapshot(found as Parameters<typeof buildTaiKhoanSnapshot>[0]);
+      const foundCo = taiKhoanList.find((t) => t.ma === taiKhoanCoMa);
+      if (foundCo) danhMuc.taiKhoanCo = { ma: foundCo.ma, ten: foundCo.ten, loai: foundCo.loai, nhom: foundCo.nhom };
     }
     if (duAnMa) {
       const found = duAnList.find((d) => d.ma === duAnMa);

@@ -14,7 +14,8 @@ import { Search, Filter, RotateCcw, Plus, Upload } from "lucide-react";
 export function FilterBar() {
   const handler = usePhieuHandler();
 
-  const [searchText, setSearchText] = usePhieuState("searchText", "");
+  const [searchText] = usePhieuState("searchText", "");
+  const [dateRange] = usePhieuState("dateRange", null);
   const [filterDoiTuong] = usePhieuState("filterDoiTuong", undefined);
   const [filterDuAn] = usePhieuState("filterDuAn", undefined);
   const [filterBoPhan] = usePhieuState("filterBoPhan", undefined);
@@ -31,32 +32,7 @@ export function FilterBar() {
   const [, setImportModalOpen] = usePhieuState("importModalOpen", false);
 
   const handleSearchChange = (value: string) => {
-    setSearchText(value);
     handler.executeEvent("setFilter", { key: "searchText", value });
-  };
-
-  const handleDateChange = (type: "start" | "end", rawValue: string) => {
-    // We read both current date range values locally since state is async
-    // Use a simple approach: each change sets the date range as a 2-tuple
-    const current = handler.getState("dateRange") as
-      | [dayjs.Dayjs, dayjs.Dayjs]
-      | null;
-
-    if (type === "start") {
-      const start = rawValue ? dayjs(rawValue) : null;
-      const end = current ? current[1] : null;
-      handler.executeEvent("setFilter", {
-        key: "dateRange",
-        value: start && end ? [start, end] : null,
-      });
-    } else {
-      const start = current ? current[0] : null;
-      const end = rawValue ? dayjs(rawValue) : null;
-      handler.executeEvent("setFilter", {
-        key: "dateRange",
-        value: start && end ? [start, end] : null,
-      });
-    }
   };
 
   const handleSelectFilter = (key: string, value: string | undefined) => {
@@ -82,7 +58,15 @@ export function FilterBar() {
           <Input
             type="date"
             className="w-[140px]"
-            onChange={(e) => handleDateChange("start", e.target.value)}
+            value={dateRange?.[0] ? dateRange[0].format("YYYY-MM-DD") : ""}
+            onChange={(e) => {
+              const start = e.target.value ? dayjs(e.target.value) : null;
+              const end = dateRange?.[1] ?? null;
+              handler.executeEvent("setFilter", {
+                key: "dateRange",
+                value: start && end ? [start, end] : start ? [start, start] : null,
+              });
+            }}
           />
         </div>
         <div className="flex items-center gap-1">
@@ -90,7 +74,15 @@ export function FilterBar() {
           <Input
             type="date"
             className="w-[140px]"
-            onChange={(e) => handleDateChange("end", e.target.value)}
+            value={dateRange?.[1] ? dateRange[1].format("YYYY-MM-DD") : ""}
+            onChange={(e) => {
+              const start = dateRange?.[0] ?? null;
+              const end = e.target.value ? dayjs(e.target.value) : null;
+              handler.executeEvent("setFilter", {
+                key: "dateRange",
+                value: start && end ? [start, end] : end ? [end, end] : null,
+              });
+            }}
           />
         </div>
       </div>
