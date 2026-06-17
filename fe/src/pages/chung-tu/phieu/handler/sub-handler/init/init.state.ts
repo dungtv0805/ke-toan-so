@@ -1,7 +1,7 @@
 import { BaseStates } from "@/common/c-handler/core/actions/c-state.action";
-import { ChungTu } from "@/types";
+import { ChungTu, DoiTuong, DuAn, BoPhan, SanPham, DongTien } from "@/types";
 import { PhieuConfig } from "../../../phieuConfig";
-import { PhieuStats } from "@/services/phieuService";
+import { PhieuStats, PhieuSummaryItem } from "@/services/phieuService";
 
 export interface TaiKhoanItem {
   ma: string;
@@ -34,6 +34,13 @@ export interface InitStates extends BaseStates {
   filterTaiKhoanCo: string | undefined;
   activeTab: string;
   statsCollapsed: boolean;
+  doiTuongList: DoiTuong[];
+  duAnList: DuAn[];
+  boPhanList: BoPhan[];
+  sanPhamList: SanPham[];
+  dongTienList: DongTien[];
+  summaryData: Record<string, PhieuSummaryItem[]>;
+  summaryLoading: Record<string, boolean>;
 }
 
 declare module "../../../phieu.handler" {

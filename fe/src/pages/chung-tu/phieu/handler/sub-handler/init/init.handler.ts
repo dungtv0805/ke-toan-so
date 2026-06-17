@@ -133,6 +133,13 @@ export class InitHandler extends CSubHanlder<InitEvent, PhieuStates> {
       ["filterTaiKhoanCo", undefined],
       ["activeTab", "list"],
       ["statsCollapsed", false],
+      ["doiTuongList", []],
+      ["duAnList", []],
+      ["boPhanList", []],
+      ["sanPhamList", []],
+      ["dongTienList", []],
+      ["summaryData", {}],
+      ["summaryLoading", {}],
     ];
     for (const [k, v] of defaults) {
       if (!this.hasState(k)) this.setState(k, v);
