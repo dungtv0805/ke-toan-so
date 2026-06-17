@@ -34,7 +34,7 @@ export class InitHandler extends CSubHanlder<InitEvent, PhieuStates> {
         page: pagination?.page || 1,
         limit: pagination?.limit || DEFAULT_PAGE_SIZE,
       }),
-      this.loadStats(),
+      this.executeEvent("loadStats", {}),
     ]);
   }
 
@@ -49,7 +49,8 @@ export class InitHandler extends CSubHanlder<InitEvent, PhieuStates> {
 
   @HandlerDecorator("loadStats")
   async loadStats(): Promise<void> {
-    const config = this.getState("config") as PhieuConfig;
+    const config = this.getState("config") as PhieuConfig | undefined;
+    if (!config) return;
     try {
       const stats = await config.service.getStats(this.buildQueryParams());
       this.setState("stats", stats);
@@ -84,7 +85,8 @@ export class InitHandler extends CSubHanlder<InitEvent, PhieuStates> {
   }
 
   async loadEntries(params: PhieuQueryParams): Promise<void> {
-    const config = this.getState("config") as PhieuConfig;
+    const config = this.getState("config") as PhieuConfig | undefined;
+    if (!config) return;
     this.setState("loading", true);
     try {
       const response = await config.service.getAll(params);
