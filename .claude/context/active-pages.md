@@ -26,8 +26,8 @@
 | Menu Item | Route | Status | API |
 |-----------|-------|--------|-----|
 | Nhat ky chung | `/chung-tu/nhat-ky-chung` | ACTIVE | voucher:3003 |
-| Phieu thu | `/chung-tu/phieu-thu` | COMING SOON | — |
-| Phieu chi | `/chung-tu/phieu-chi` | COMING SOON | — |
+| Phieu thu | `/chung-tu/phieu-thu` | ACTIVE | voucher:3003 |
+| Phieu chi | `/chung-tu/phieu-chi` | ACTIVE | voucher:3003 |
 | 8 other items | `/chung-tu/*` | COMING SOON | — |
 
 ### KE TOAN — So Quy (Cash Book)
