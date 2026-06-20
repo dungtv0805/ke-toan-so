@@ -218,6 +218,56 @@ export class BaoCaoService {
   }
 
   /**
+   * Chuỗi P&L 12 tháng của 1 năm (cho dashboard). Lấy nhật ký cả năm 1 lần rồi bucket theo tháng.
+   */
+  async getPnlSeries(
+    year: number,
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<
+    { thang: number; doanhThu: number; chiPhi: number; loiNhuan: number }[]
+  > {
+    const start = new Date(year, 0, 1);
+    const end = new Date(year, 11, 31, 23, 59, 59, 999);
+    const [vouchersRes, accountsRes] = await Promise.all([
+      this.serviceClient.getNhatKyChung(
+        start.toISOString(),
+        end.toISOString(),
+        authToken,
+        tenantId,
+      ),
+      this.serviceClient.getTaiKhoan(authToken, tenantId),
+    ]);
+    const vouchers: NhatKyChungEntry[] = vouchersRes.success
+      ? vouchersRes.data || []
+      : [];
+    const accounts = accountsRes.success ? accountsRes.data || [] : [];
+    const revenueAccounts = accounts.filter((a) => a.ma?.startsWith('5'));
+    const expenseAccounts = accounts.filter((a) => a.ma?.startsWith('6'));
+
+    const out: {
+      thang: number;
+      doanhThu: number;
+      chiPhi: number;
+      loiNhuan: number;
+    }[] = [];
+    for (let m = 0; m < 12; m++) {
+      const mv = vouchers.filter((v) => {
+        const d = new Date(v.ngay);
+        return d.getFullYear() === year && d.getMonth() === m;
+      });
+      let doanhThu = 0;
+      let chiPhi = 0;
+      for (const a of revenueAccounts)
+        doanhThu += this.calculateAccountBalance(mv, a.ma, 'CO');
+      for (const a of expenseAccounts)
+        chiPhi += this.calculateAccountBalance(mv, a.ma, 'NO');
+      out.push({ thang: m + 1, doanhThu, chiPhi, loiNhuan: doanhThu - chiPhi });
+    }
+    return out;
+  }
+
+  /**
    * Generate Balance Sheet report
    */
   async getBalanceSheet(
