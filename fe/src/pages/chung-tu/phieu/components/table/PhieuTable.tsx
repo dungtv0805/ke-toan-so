@@ -26,6 +26,8 @@ import { ChevronLeft, ChevronRight, Printer } from "lucide-react";
 import { usePhieuState, usePhieuHandler } from "../../PhieuHandlerContext";
 import { formatCurrency } from "../../lib/format";
 import { usePrintPhieu } from "../../lib/usePrintPhieu";
+import { TABLE_CONTAINER, TABLE_DENSITY } from "../../lib/tableStyles";
+import { cn } from "@/lib/utils";
 import { ChungTu } from "@/types";
 
 export function PhieuTable() {
@@ -88,8 +90,8 @@ export function PhieuTable() {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-md border">
-        <Table>
+      <div className={TABLE_CONTAINER}>
+        <Table className={cn(TABLE_DENSITY)}>
           <TableHeader>
             <TableRow>
               <TableHead>Số phiếu</TableHead>

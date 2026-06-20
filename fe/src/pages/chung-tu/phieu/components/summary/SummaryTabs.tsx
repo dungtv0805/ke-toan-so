@@ -11,6 +11,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePhieuState, usePhieuHandler } from "../../PhieuHandlerContext";
 import { formatCurrency } from "../../lib/format";
+import { TABLE_CONTAINER, TABLE_DENSITY } from "../../lib/tableStyles";
+import { cn } from "@/lib/utils";
 import { PhieuSummaryType } from "@/services/phieuService";
 
 interface TabDef {
@@ -69,8 +71,8 @@ export function SummaryTabs() {
 
         return (
           <TabsContent key={tab.type} value={tab.type}>
-            <div className="rounded-md border mt-2">
-              <Table>
+            <div className={cn(TABLE_CONTAINER, "mt-2")}>
+              <Table className={cn(TABLE_DENSITY)}>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Tên / Mã</TableHead>

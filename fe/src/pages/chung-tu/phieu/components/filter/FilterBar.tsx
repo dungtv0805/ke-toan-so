@@ -51,7 +51,7 @@ export function FilterBar() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Tìm kiếm số phiếu, nội dung..."
-            className="pl-9"
+            className="pl-9 h-9"
             value={searchText ?? ""}
             onChange={(e) => handleSearchChange(e.target.value)}
           />
@@ -61,7 +61,7 @@ export function FilterBar() {
           <span className="text-sm text-muted-foreground whitespace-nowrap">Từ:</span>
           <Input
             type="date"
-            className="w-[140px]"
+            className="w-[140px] h-9"
             value={dateRange?.[0] ? dateRange[0].format("YYYY-MM-DD") : ""}
             onChange={(e) => {
               const start = e.target.value ? dayjs(e.target.value) : null;
@@ -77,7 +77,7 @@ export function FilterBar() {
           <span className="text-sm text-muted-foreground whitespace-nowrap">Đến:</span>
           <Input
             type="date"
-            className="w-[140px]"
+            className="w-[140px] h-9"
             value={dateRange?.[1] ? dateRange[1].format("YYYY-MM-DD") : ""}
             onChange={(e) => {
               const start = dateRange?.[0] ?? null;
@@ -99,7 +99,7 @@ export function FilterBar() {
             handleSelectFilter("filterDoiTuong", v === ALL ? undefined : v)
           }
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[160px] h-9">
             <SelectValue placeholder="Đối tượng" />
           </SelectTrigger>
           <SelectContent>
@@ -118,7 +118,7 @@ export function FilterBar() {
             handleSelectFilter("filterDuAn", v === ALL ? undefined : v)
           }
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[160px] h-9">
             <SelectValue placeholder="Dự án" />
           </SelectTrigger>
           <SelectContent>
@@ -137,7 +137,7 @@ export function FilterBar() {
             handleSelectFilter("filterBoPhan", v === ALL ? undefined : v)
           }
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[160px] h-9">
             <SelectValue placeholder="Bộ phận" />
           </SelectTrigger>
           <SelectContent>
@@ -156,7 +156,7 @@ export function FilterBar() {
             handleSelectFilter("filterTaiKhoanNo", v === ALL ? undefined : v)
           }
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[160px] h-9">
             <SelectValue placeholder="TK Nợ" />
           </SelectTrigger>
           <SelectContent>
@@ -175,7 +175,7 @@ export function FilterBar() {
             handleSelectFilter("filterTaiKhoanCo", v === ALL ? undefined : v)
           }
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[160px] h-9">
             <SelectValue placeholder="TK Có" />
           </SelectTrigger>
           <SelectContent>

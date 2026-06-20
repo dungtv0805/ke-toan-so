@@ -7,25 +7,25 @@ export function StatsCards() {
   const config = usePhieuConfig();
 
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-3">
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
+        <CardHeader className="pb-1 pt-4">
+          <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Tổng số phiếu
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pb-4">
           <div className="text-2xl font-bold">{stats.tongSo}</div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
+        <CardHeader className="pb-1 pt-4">
+          <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Tổng tiền
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pb-4">
           <div className={`text-2xl font-bold ${config.accentClass}`}>
             {formatCurrency(stats.tongTien)}
           </div>
