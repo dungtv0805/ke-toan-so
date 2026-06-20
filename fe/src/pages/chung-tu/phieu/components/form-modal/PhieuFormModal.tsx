@@ -1,33 +1,17 @@
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import dayjs from "dayjs";
+import { useEffect } from "react";
+import dayjs, { Dayjs } from "dayjs";
 import { toast } from "sonner";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
+  Modal,
   Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import {
+  Input,
+  InputNumber,
+  DatePicker,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { phieuFormSchema, PhieuFormValues } from "../../phieuFormSchema";
+  Row,
+  Col,
+  Divider,
+} from "antd";
 import {
   usePhieuState,
   usePhieuHandler,
@@ -43,7 +27,21 @@ import {
 import { DoiTuong, DuAn, BoPhan, SanPham, DongTien } from "@/types";
 import { TaiKhoanItem } from "../../handler/sub-handler/init/init.state";
 
-const NONE_VALUE = "__none__";
+interface FormValues {
+  ngay: Dayjs | null;
+  soTien: number;
+  noiDung: string;
+  nguoiGiaoDich?: string;
+  diaChi?: string;
+  ghiChu?: string;
+  doiTuongMa?: string;
+  taiKhoanNoMa?: string;
+  taiKhoanCoMa?: string;
+  duAnMa?: string;
+  boPhanMa?: string;
+  sanPhamMa?: string;
+  dongTienMa?: string;
+}
 
 export function PhieuFormModal() {
   const handler = usePhieuHandler();
@@ -58,101 +56,81 @@ export function PhieuFormModal() {
   const [dongTienList] = usePhieuState("dongTienList", [] as DongTien[]);
   const [taiKhoanList] = usePhieuState("taiKhoanList", [] as TaiKhoanItem[]);
 
-  // Local state for danh mục selects (not part of zod schema)
-  const [doiTuongMa, setDoiTuongMa] = useState<string>("");
-  const [taiKhoanNoMa, setTaiKhoanNoMa] = useState<string>("");
-  const [taiKhoanCoMa, setTaiKhoanCoMa] = useState<string>("");
-  const [duAnMa, setDuAnMa] = useState<string>("");
-  const [boPhanMa, setBoPhanMa] = useState<string>("");
-  const [sanPhamMa, setSanPhamMa] = useState<string>("");
-  const [dongTienMa, setDongTienMa] = useState<string>("");
+  const [form] = Form.useForm<FormValues>();
 
-  const form = useForm<PhieuFormValues>({
-    resolver: zodResolver(phieuFormSchema),
-    defaultValues: {
-      ngay: "",
-      soTien: 0,
-      noiDung: "",
-      nguoiGiaoDich: "",
-      diaChi: "",
-      ghiChu: "",
-    },
-  });
-
-  // Reset form and selects when editingPhieu or open changes
   useEffect(() => {
-    if (open) {
-      if (editingPhieu) {
-        form.reset({
-          ngay: dayjs(editingPhieu.ngay).format("YYYY-MM-DD"),
-          soTien: editingPhieu.soTien,
-          noiDung: editingPhieu.noiDung,
-          nguoiGiaoDich: editingPhieu.nguoiGiaoDich ?? "",
-          diaChi: editingPhieu.diaChi ?? "",
-          ghiChu: editingPhieu.ghiChu ?? "",
-        });
-        setDoiTuongMa(editingPhieu.danhMuc?.doiTuong?.ma ?? "");
-        setTaiKhoanNoMa(editingPhieu.danhMuc?.taiKhoanNo?.ma ?? "");
-        setTaiKhoanCoMa(editingPhieu.danhMuc?.taiKhoanCo?.ma ?? "");
-        setDuAnMa(editingPhieu.danhMuc?.duAn?.ma ?? "");
-        setBoPhanMa(editingPhieu.danhMuc?.boPhan?.ma ?? "");
-        setSanPhamMa(editingPhieu.danhMuc?.sanPham?.ma ?? "");
-        setDongTienMa(editingPhieu.danhMuc?.dongTien?.ma ?? "");
-      } else {
-        form.reset({
-          ngay: "",
-          soTien: 0,
-          noiDung: "",
-          nguoiGiaoDich: "",
-          diaChi: "",
-          ghiChu: "",
-        });
-        setDoiTuongMa("");
-        setTaiKhoanNoMa("");
-        setTaiKhoanCoMa("");
-        setDuAnMa("");
-        setBoPhanMa("");
-        setSanPhamMa("");
-        setDongTienMa("");
-      }
+    if (!open) return;
+    if (editingPhieu) {
+      form.setFieldsValue({
+        ngay: editingPhieu.ngay ? dayjs(editingPhieu.ngay) : null,
+        soTien: editingPhieu.soTien,
+        noiDung: editingPhieu.noiDung,
+        nguoiGiaoDich: editingPhieu.nguoiGiaoDich ?? "",
+        diaChi: editingPhieu.diaChi ?? "",
+        ghiChu: editingPhieu.ghiChu ?? "",
+        doiTuongMa: editingPhieu.danhMuc?.doiTuong?.ma,
+        taiKhoanNoMa: editingPhieu.danhMuc?.taiKhoanNo?.ma,
+        taiKhoanCoMa: editingPhieu.danhMuc?.taiKhoanCo?.ma,
+        duAnMa: editingPhieu.danhMuc?.duAn?.ma,
+        boPhanMa: editingPhieu.danhMuc?.boPhan?.ma,
+        sanPhamMa: editingPhieu.danhMuc?.sanPham?.ma,
+        dongTienMa: editingPhieu.danhMuc?.dongTien?.ma,
+      });
+    } else {
+      form.resetFields();
+      form.setFieldsValue({ ngay: dayjs(), soTien: 0 });
     }
   }, [editingPhieu, open, form]);
 
-  const handleSubmit = async (values: PhieuFormValues) => {
-    // Build danhMuc snapshots from selected items
+  const buildDanhMuc = (v: FormValues): Record<string, unknown> => {
     const danhMuc: Record<string, unknown> = {};
+    if (v.doiTuongMa) {
+      const f = doiTuongList.find((d) => d.ma === v.doiTuongMa);
+      if (f) danhMuc.doiTuong = buildDoiTuongSnapshot(f);
+    }
+    if (v.taiKhoanNoMa) {
+      const f = taiKhoanList.find((t) => t.ma === v.taiKhoanNoMa);
+      if (f) danhMuc.taiKhoanNo = { ma: f.ma, ten: f.ten, loai: f.loai, nhom: f.nhom };
+    }
+    if (v.taiKhoanCoMa) {
+      const f = taiKhoanList.find((t) => t.ma === v.taiKhoanCoMa);
+      if (f) danhMuc.taiKhoanCo = { ma: f.ma, ten: f.ten, loai: f.loai, nhom: f.nhom };
+    }
+    if (v.duAnMa) {
+      const f = duAnList.find((d) => d.ma === v.duAnMa);
+      if (f) danhMuc.duAn = buildDuAnSnapshot(f);
+    }
+    if (v.boPhanMa) {
+      const f = boPhanList.find((b) => b.ma === v.boPhanMa);
+      if (f) danhMuc.boPhan = buildBoPhanSnapshot(f);
+    }
+    if (v.sanPhamMa) {
+      const f = sanPhamList.find((s) => s.ma === v.sanPhamMa);
+      if (f) danhMuc.sanPham = buildSanPhamSnapshot(f);
+    }
+    if (v.dongTienMa) {
+      const f = dongTienList.find((d) => d.ma === v.dongTienMa);
+      if (f) danhMuc.dongTien = buildDongTienSnapshot(f);
+    }
+    return danhMuc;
+  };
 
-    if (doiTuongMa) {
-      const found = doiTuongList.find((d) => d.ma === doiTuongMa);
-      if (found) danhMuc.doiTuong = buildDoiTuongSnapshot(found);
-    }
-    if (taiKhoanNoMa) {
-      const foundNo = taiKhoanList.find((t) => t.ma === taiKhoanNoMa);
-      if (foundNo) danhMuc.taiKhoanNo = { ma: foundNo.ma, ten: foundNo.ten, loai: foundNo.loai, nhom: foundNo.nhom };
-    }
-    if (taiKhoanCoMa) {
-      const foundCo = taiKhoanList.find((t) => t.ma === taiKhoanCoMa);
-      if (foundCo) danhMuc.taiKhoanCo = { ma: foundCo.ma, ten: foundCo.ten, loai: foundCo.loai, nhom: foundCo.nhom };
-    }
-    if (duAnMa) {
-      const found = duAnList.find((d) => d.ma === duAnMa);
-      if (found) danhMuc.duAn = buildDuAnSnapshot(found);
-    }
-    if (boPhanMa) {
-      const found = boPhanList.find((b) => b.ma === boPhanMa);
-      if (found) danhMuc.boPhan = buildBoPhanSnapshot(found);
-    }
-    if (sanPhamMa) {
-      const found = sanPhamList.find((s) => s.ma === sanPhamMa);
-      if (found) danhMuc.sanPham = buildSanPhamSnapshot(found);
-    }
-    if (dongTienMa) {
-      const found = dongTienList.find((d) => d.ma === dongTienMa);
-      if (found) danhMuc.dongTien = buildDongTienSnapshot(found);
+  const handleOk = async () => {
+    let v: FormValues;
+    try {
+      v = await form.validateFields();
+    } catch {
+      return;
     }
 
+    const danhMuc = buildDanhMuc(v);
     const dto = {
-      ...values,
+      ngay: v.ngay ? v.ngay.format("YYYY-MM-DD") : "",
+      soTien: v.soTien,
+      noiDung: v.noiDung,
+      nguoiGiaoDich: v.nguoiGiaoDich,
+      diaChi: v.diaChi,
+      ghiChu: v.ghiChu,
       danhMuc: Object.keys(danhMuc).length > 0 ? danhMuc : undefined,
     };
 
@@ -160,7 +138,6 @@ export function PhieuFormModal() {
       id: editingPhieu?.id,
       dto: dto as Parameters<typeof handler.executeEvent<"submitPhieu">>[1]["dto"],
     });
-
     if (ok) {
       toast.success(editingPhieu ? "Đã cập nhật" : "Đã tạo phiếu");
       setOpen(false);
@@ -169,286 +146,183 @@ export function PhieuFormModal() {
     }
   };
 
-  const title = `${editingPhieu ? "Sửa" : "Thêm"} ${config.title}`;
+  const tkOptions = taiKhoanList.map((t) => ({
+    value: t.ma,
+    label: `${t.ma} - ${t.ten}`,
+  }));
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            {/* Basic info grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="ngay"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ngày</FormLabel>
-                    <FormControl>
-                      <input
-                        type="date"
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+    <Modal
+      title={`${editingPhieu ? "Sửa" : "Thêm"} ${config.title}`}
+      open={open}
+      onCancel={() => setOpen(false)}
+      onOk={handleOk}
+      okText={editingPhieu ? "Cập nhật" : "Thêm mới"}
+      cancelText="Hủy"
+      width={720}
+    >
+      <Form form={form} layout="vertical" size="small" className="mt-2">
+        <Row gutter={12}>
+          <Col span={12}>
+            <Form.Item
+              name="ngay"
+              label="Ngày"
+              rules={[{ required: true, message: "Vui lòng chọn ngày" }]}
+            >
+              <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="soTien"
+              label="Số tiền"
+              rules={[
+                { required: true, message: "Vui lòng nhập số tiền" },
+                {
+                  validator: (_, value) =>
+                    value > 0
+                      ? Promise.resolve()
+                      : Promise.reject(new Error("Số tiền phải lớn hơn 0")),
+                },
+              ]}
+            >
+              <InputNumber
+                style={{ width: "100%" }}
+                min={0}
+                step={1000}
+                formatter={(v) =>
+                  `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                }
+                parser={(v) => (v ? Number(v.replace(/,/g, "")) : 0)}
               />
+            </Form.Item>
+          </Col>
+        </Row>
 
-              <FormField
-                control={form.control}
-                name="soTien"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Số tiền</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={0}
-                        step={1000}
-                        placeholder="0"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+        <Form.Item
+          name="noiDung"
+          label="Nội dung"
+          rules={[{ required: true, message: "Vui lòng nhập nội dung" }]}
+        >
+          <Input.TextArea rows={2} placeholder="Nội dung phiếu..." />
+        </Form.Item>
+
+        <Row gutter={12}>
+          <Col span={12}>
+            <Form.Item name="nguoiGiaoDich" label="Người giao dịch">
+              <Input placeholder="Tên người giao dịch" />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="diaChi" label="Địa chỉ">
+              <Input placeholder="Địa chỉ" />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Form.Item name="ghiChu" label="Ghi chú">
+          <Input.TextArea rows={2} placeholder="Ghi chú..." />
+        </Form.Item>
+
+        <Divider orientation="left" plain>
+          Danh mục
+        </Divider>
+
+        <Row gutter={12}>
+          <Col span={12}>
+            <Form.Item name="doiTuongMa" label="Đối tượng">
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="-- Chọn đối tượng --"
+                options={doiTuongList.map((d) => ({
+                  value: d.ma,
+                  label: `${d.ma} - ${d.ten}`,
+                }))}
               />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="noiDung"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nội dung</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Nội dung phiếu..." rows={2} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="nguoiGiaoDich"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Người giao dịch</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Tên người giao dịch" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="taiKhoanNoMa" label="Tài khoản Nợ">
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="-- Chọn TK Nợ --"
+                options={tkOptions}
               />
-
-              <FormField
-                control={form.control}
-                name="diaChi"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Địa chỉ</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Địa chỉ" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="taiKhoanCoMa" label="Tài khoản Có">
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="-- Chọn TK Có --"
+                options={tkOptions}
               />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="ghiChu"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ghi chú</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Ghi chú..." rows={2} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Danh mục section */}
-            <div className="border-t pt-4">
-              <p className="text-sm font-medium text-muted-foreground mb-3">Danh mục</p>
-              <div className="grid grid-cols-2 gap-4">
-                {/* Đối tượng */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none">Đối tượng</label>
-                  <Select
-                    value={doiTuongMa || NONE_VALUE}
-                    onValueChange={(v) => setDoiTuongMa(v === NONE_VALUE ? "" : v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="-- Chọn đối tượng --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={NONE_VALUE}>-- Không chọn --</SelectItem>
-                      {doiTuongList.map((d) => (
-                        <SelectItem key={d.ma} value={d.ma}>
-                          {d.ma} - {d.ten}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Tài khoản Nợ */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none">Tài khoản Nợ</label>
-                  <Select
-                    value={taiKhoanNoMa || NONE_VALUE}
-                    onValueChange={(v) => setTaiKhoanNoMa(v === NONE_VALUE ? "" : v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="-- Chọn TK Nợ --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={NONE_VALUE}>-- Không chọn --</SelectItem>
-                      {taiKhoanList.map((t) => (
-                        <SelectItem key={t.ma} value={t.ma}>
-                          {t.ma} - {t.ten}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Tài khoản Có */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none">Tài khoản Có</label>
-                  <Select
-                    value={taiKhoanCoMa || NONE_VALUE}
-                    onValueChange={(v) => setTaiKhoanCoMa(v === NONE_VALUE ? "" : v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="-- Chọn TK Có --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={NONE_VALUE}>-- Không chọn --</SelectItem>
-                      {taiKhoanList.map((t) => (
-                        <SelectItem key={t.ma} value={t.ma}>
-                          {t.ma} - {t.ten}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Dự án */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none">Dự án</label>
-                  <Select
-                    value={duAnMa || NONE_VALUE}
-                    onValueChange={(v) => setDuAnMa(v === NONE_VALUE ? "" : v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="-- Chọn dự án --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={NONE_VALUE}>-- Không chọn --</SelectItem>
-                      {duAnList.map((d) => (
-                        <SelectItem key={d.ma} value={d.ma}>
-                          {d.ma} - {d.ten}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Bộ phận */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none">Bộ phận</label>
-                  <Select
-                    value={boPhanMa || NONE_VALUE}
-                    onValueChange={(v) => setBoPhanMa(v === NONE_VALUE ? "" : v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="-- Chọn bộ phận --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={NONE_VALUE}>-- Không chọn --</SelectItem>
-                      {boPhanList.map((b) => (
-                        <SelectItem key={b.ma} value={b.ma}>
-                          {b.ma} - {b.ten}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Sản phẩm */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none">Sản phẩm</label>
-                  <Select
-                    value={sanPhamMa || NONE_VALUE}
-                    onValueChange={(v) => setSanPhamMa(v === NONE_VALUE ? "" : v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="-- Chọn sản phẩm --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={NONE_VALUE}>-- Không chọn --</SelectItem>
-                      {sanPhamList.map((s) => (
-                        <SelectItem key={s.ma} value={s.ma}>
-                          {s.ma} - {s.ten}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Dòng tiền */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none">Dòng tiền</label>
-                  <Select
-                    value={dongTienMa || NONE_VALUE}
-                    onValueChange={(v) => setDongTienMa(v === NONE_VALUE ? "" : v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="-- Chọn dòng tiền --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={NONE_VALUE}>-- Không chọn --</SelectItem>
-                      {dongTienList.map((d) => (
-                        <SelectItem key={d.ma} value={d.ma}>
-                          {d.ma} - {d.ten}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer buttons */}
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
-                Hủy
-              </Button>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Đang lưu..." : "Lưu"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="duAnMa" label="Dự án">
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="-- Chọn dự án --"
+                options={duAnList.map((d) => ({
+                  value: d.ma,
+                  label: `${d.ma} - ${d.ten}`,
+                }))}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="boPhanMa" label="Bộ phận">
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="-- Chọn bộ phận --"
+                options={boPhanList.map((b) => ({
+                  value: b.ma,
+                  label: `${b.ma} - ${b.ten}`,
+                }))}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="sanPhamMa" label="Sản phẩm">
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="-- Chọn sản phẩm --"
+                options={sanPhamList.map((s) => ({
+                  value: s.ma,
+                  label: `${s.ma} - ${s.ten}`,
+                }))}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="dongTienMa" label="Dòng tiền">
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="-- Chọn dòng tiền --"
+                options={dongTienList.map((d) => ({
+                  value: d.ma,
+                  label: `${d.ma} - ${d.ten}`,
+                }))}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+      </Form>
+    </Modal>
   );
 }

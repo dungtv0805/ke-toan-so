@@ -1,26 +1,12 @@
-import { useEffect } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useState } from "react";
+import { Tabs, Table, Typography } from "antd";
 import { usePhieuState, usePhieuHandler } from "../../PhieuHandlerContext";
 import { formatCurrency } from "../../lib/format";
-import { TABLE_CONTAINER, TABLE_DENSITY } from "../../lib/tableStyles";
-import { cn } from "@/lib/utils";
-import { PhieuSummaryType } from "@/services/phieuService";
+import { PhieuSummaryItem, PhieuSummaryType } from "@/services/phieuService";
 
-interface TabDef {
-  type: PhieuSummaryType;
-  label: string;
-}
+const { Text } = Typography;
 
-const SUMMARY_TABS: TabDef[] = [
+const SUMMARY_TABS: { type: PhieuSummaryType; label: string }[] = [
   { type: "account", label: "Tài khoản" },
   { type: "team", label: "Đội" },
   { type: "employee", label: "Nhân viên" },
@@ -32,94 +18,79 @@ const SUMMARY_TABS: TabDef[] = [
   { type: "promotion-group", label: "Nhóm KM" },
 ];
 
+const columns = [
+  {
+    title: "Tên / Mã",
+    key: "ten",
+    render: (_: unknown, row: PhieuSummaryItem) => row.ten ?? row.key,
+  },
+  {
+    title: "Phát sinh Nợ",
+    dataIndex: "phatSinhNo",
+    key: "phatSinhNo",
+    align: "right" as const,
+    render: (v: number) => formatCurrency(v),
+  },
+  {
+    title: "Phát sinh Có",
+    dataIndex: "phatSinhCo",
+    key: "phatSinhCo",
+    align: "right" as const,
+    render: (v: number) => formatCurrency(v),
+  },
+  {
+    title: "Số lượng",
+    dataIndex: "soLuong",
+    key: "soLuong",
+    align: "right" as const,
+    width: 100,
+    render: (v: number) => <Text>{v}</Text>,
+  },
+];
+
 export function SummaryTabs() {
   const handler = usePhieuHandler();
-  const [summaryData] = usePhieuState("summaryData", {} as Record<string, import("@/services/phieuService").PhieuSummaryItem[]>);
+  const [summaryData] = usePhieuState("summaryData", {} as Record<string, PhieuSummaryItem[]>);
   const [summaryLoading] = usePhieuState("summaryLoading", {} as Record<string, boolean>);
-  // Tabs đã từng nạp — nguồn sự thật ở handler để `refresh` (sau khi
-  // thêm/sửa/xoá) reload đúng các tab này; tab chưa mở vẫn lazy-load.
   const [loadedTypes] = usePhieuState("summaryLoadedTypes", [] as PhieuSummaryType[]);
+  const [activeKey, setActiveKey] = useState<string>(SUMMARY_TABS[0].type);
 
-  const handleTabChange = (type: string) => {
-    if (!loadedTypes.includes(type as PhieuSummaryType)) {
-      handler.executeEvent("loadSummary", { type: type as PhieuSummaryType });
+  const ensureLoaded = (type: PhieuSummaryType) => {
+    if (!loadedTypes.includes(type)) {
+      handler.executeEvent("loadSummary", { type });
     }
   };
 
-  // Load the first tab on mount (nếu chưa nạp)
   useEffect(() => {
-    const firstType = SUMMARY_TABS[0].type;
-    if (!loadedTypes.includes(firstType)) {
-      handler.executeEvent("loadSummary", { type: firstType });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    ensureLoaded(SUMMARY_TABS[0].type);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const items = SUMMARY_TABS.map((tab) => ({
+    key: tab.type,
+    label: tab.label,
+    children: (
+      <Table<PhieuSummaryItem>
+        className="excel-table"
+        columns={columns}
+        dataSource={summaryData[tab.type] ?? []}
+        rowKey={(r) => `${tab.type}-${r.key}`}
+        loading={summaryLoading[tab.type] ?? false}
+        size="middle"
+        pagination={false}
+        scroll={{ y: "calc(100vh - 420px)" }}
+      />
+    ),
+  }));
+
   return (
-    <Tabs defaultValue={SUMMARY_TABS[0].type} onValueChange={handleTabChange}>
-      <TabsList className="flex-wrap h-auto gap-1">
-        {SUMMARY_TABS.map((tab) => (
-          <TabsTrigger key={tab.type} value={tab.type}>
-            {tab.label}
-          </TabsTrigger>
-        ))}
-      </TabsList>
-
-      {SUMMARY_TABS.map((tab) => {
-        const rows = summaryData[tab.type] ?? [];
-        const loading = summaryLoading[tab.type] ?? false;
-
-        return (
-          <TabsContent key={tab.type} value={tab.type}>
-            <div className={cn(TABLE_CONTAINER, "mt-2")}>
-              <Table className={cn(TABLE_DENSITY)}>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tên / Mã</TableHead>
-                    <TableHead className="text-right">Phát sinh Nợ</TableHead>
-                    <TableHead className="text-right">Phát sinh Có</TableHead>
-                    <TableHead className="text-right">Số lượng</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    Array.from({ length: 3 }).map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-24 ml-auto" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-24 ml-auto" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
-                      </TableRow>
-                    ))
-                  ) : rows.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={4}
-                        className="text-center text-muted-foreground py-6"
-                      >
-                        Không có dữ liệu
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    rows.map((row, idx) => (
-                      <TableRow key={`${row.key}-${idx}`}>
-                        <TableCell>{row.ten ?? row.key}</TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(row.phatSinhNo)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(row.phatSinhCo)}
-                        </TableCell>
-                        <TableCell className="text-right">{row.soLuong}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </TabsContent>
-        );
-      })}
-    </Tabs>
+    <Tabs
+      activeKey={activeKey}
+      onChange={(key) => {
+        setActiveKey(key);
+        ensureLoaded(key as PhieuSummaryType);
+      }}
+      items={items}
+    />
   );
 }
