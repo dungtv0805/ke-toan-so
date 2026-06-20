@@ -16,6 +16,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   SearchOutlined,
+  PrinterOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
@@ -24,6 +25,7 @@ import { phieuKhoService } from '@/services/phieuKhoService';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { formatCurrency } from '@/pages/chung-tu/phieu/lib/format';
 import { PhieuKhoEditorModal } from './PhieuKhoEditorModal';
+import { usePrintKhoPhieu } from './print/usePrintKhoPhieu';
 
 const { RangePicker } = DatePicker;
 
@@ -35,6 +37,7 @@ interface Props {
 
 export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
   const { canCreate, canEdit, canDelete } = usePagePermission(route);
+  const printPhieu = usePrintKhoPhieu();
 
   const [data, setData] = useState<PhieuKho[]>([]);
   const [loading, setLoading] = useState(false);
@@ -174,7 +177,20 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
               />
             </Popconfirm>
           )}
-          {/* In phiếu: Task 12 sẽ wire hook usePhieuKhoPrint ở đây */}
+          <Button
+            type="text"
+            size="small"
+            icon={<PrinterOutlined />}
+            title="In phiếu"
+            onClick={async () => {
+              try {
+                const full = await phieuKhoService.getById(record.id);
+                printPhieu(full);
+              } catch {
+                message.error('Không tải được phiếu để in');
+              }
+            }}
+          />
         </Space>
       ),
     },
