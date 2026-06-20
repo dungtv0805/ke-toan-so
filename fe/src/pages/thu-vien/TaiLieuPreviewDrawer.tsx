@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Drawer, Spin, Button, Empty } from "antd";
+import { Modal, Spin, Button, Empty } from "antd";
 import { DownloadOutlined } from "@ant-design/icons";
 import { taiLieuService, TaiLieu } from "@/services/taiLieuService";
 
@@ -8,6 +8,8 @@ interface TaiLieuPreviewDrawerProps {
   open: boolean;
   onClose: () => void;
 }
+
+const FRAME_H = "calc(90vh - 96px)";
 
 const TaiLieuPreviewDrawer: React.FC<TaiLieuPreviewDrawerProps> = ({
   item,
@@ -59,7 +61,7 @@ const TaiLieuPreviewDrawer: React.FC<TaiLieuPreviewDrawerProps> = ({
         <iframe
           title={item.title}
           src={`https://www.youtube.com/embed/${item.youtubeId}`}
-          style={{ width: "100%", height: "80vh", border: 0 }}
+          style={{ width: "100%", height: FRAME_H, border: 0 }}
           allowFullScreen
         />
       );
@@ -86,7 +88,7 @@ const TaiLieuPreviewDrawer: React.FC<TaiLieuPreviewDrawerProps> = ({
         <iframe
           title={item.title}
           src={objectUrl}
-          style={{ width: "100%", height: "80vh", border: 0 }}
+          style={{ width: "100%", height: FRAME_H, border: 0 }}
         />
       );
     }
@@ -96,7 +98,7 @@ const TaiLieuPreviewDrawer: React.FC<TaiLieuPreviewDrawerProps> = ({
         <img
           src={objectUrl}
           alt={item.title}
-          style={{ maxWidth: "100%", display: "block", margin: "0 auto" }}
+          style={{ maxWidth: "100%", maxHeight: FRAME_H, display: "block", margin: "0 auto", objectFit: "contain" }}
         />
       );
     }
@@ -121,15 +123,18 @@ const TaiLieuPreviewDrawer: React.FC<TaiLieuPreviewDrawerProps> = ({
   };
 
   return (
-    <Drawer
+    <Modal
       title={item?.title}
       open={open}
-      onClose={onClose}
-      width={820}
+      onCancel={onClose}
+      footer={null}
+      width="90vw"
+      style={{ top: 24, maxWidth: 1400, paddingBottom: 0 }}
+      styles={{ body: { padding: 0, overflow: "hidden" } }}
       destroyOnClose
     >
       {renderContent()}
-    </Drawer>
+    </Modal>
   );
 };
 
