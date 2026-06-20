@@ -1,12 +1,16 @@
 import dayjs from "dayjs";
+import { Printer } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { usePhieuState } from "../../PhieuHandlerContext";
 import { formatCurrency } from "../../lib/format";
+import { usePrintPhieu } from "../../lib/usePrintPhieu";
 
 interface FieldRowProps {
   label: string;
@@ -26,6 +30,7 @@ function FieldRow({ label, value }: FieldRowProps) {
 
 export function PhieuViewModal() {
   const [phieu, setPhieu] = usePhieuState("viewModalPhieu", null);
+  const print = usePrintPhieu();
 
   const handleOpenChange = (open: boolean) => {
     if (!open) setPhieu(null);
@@ -93,6 +98,17 @@ export function PhieuViewModal() {
             />
           </div>
         )}
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => phieu && print(phieu)}
+            disabled={!phieu}
+          >
+            <Printer className="h-4 w-4 mr-1" />
+            In / Xuất PDF
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

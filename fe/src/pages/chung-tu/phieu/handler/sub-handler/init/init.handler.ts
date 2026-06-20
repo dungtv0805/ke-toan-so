@@ -131,6 +131,7 @@ export class InitHandler extends CSubHanlder<InitEvent, PhieuStates> {
       ["summaryData", {}],
       ["summaryLoading", {}],
       ["summaryLoadedTypes", []],
+      ["printTemplate", null],
     ];
     for (const [k, v] of defaults) {
       if (!this.hasState(k)) this.setState(k, v);

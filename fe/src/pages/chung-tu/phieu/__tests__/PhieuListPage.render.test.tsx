@@ -1,9 +1,14 @@
 // @vitest-environment jsdom
-import { describe, it, beforeAll } from "vitest";
+import { describe, it, beforeAll, vi } from "vitest";
 import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { PhieuListPage } from "../PhieuListPage";
 import { PHIEU_CONFIG } from "../phieuConfig";
+
+// Trang in (usePrintPhieu) đọc tenant qua useAuth; mock để test mount độc lập.
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => ({ currentTenant: { tenantName: "Test Co" } }),
+}));
 
 beforeAll(() => {
   // Radix/antd browser API stubs
