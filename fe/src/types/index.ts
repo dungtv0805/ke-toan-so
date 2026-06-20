@@ -609,6 +609,23 @@ export interface NguoiDung {
   isActive: boolean;
 }
 
+// ===== KHO =====
+
+export type LoaiPhieuKho = 'NHAP' | 'XUAT' | 'CHUYEN';
+export interface ChiTietPhieuKho {
+  stt: number; hangHoaMa: string; hangHoaTen: string; quyCach?: string; donViTinh?: string;
+  khoMa?: string; khoTen?: string; tkNo?: string; tkCo?: string;
+  soLuong: number; soLuongChungTu?: number; soLuongThucTe?: number; donGia: number; thanhTien: number;
+}
+export interface PhieuKho {
+  id: string; loaiPhieu: LoaiPhieuKho; soPhieu?: string; loaiNghiepVu?: string;
+  ngayHachToan: string; ngayChungTu?: string; soChungTuGoc?: string; thamChieu?: string;
+  doiTuongMa?: string; doiTuongTen?: string; diaChi?: string; nguoiGiaoNhan?: string; nhanVien?: string; dienGiai?: string;
+  khoMa?: string; khoTen?: string; khoXuatMa?: string; khoXuatTen?: string; khoNhapMa?: string; khoNhapTen?: string;
+  nguoiVanChuyen?: string; hopDongVC?: string; phuongTienVC?: string; lenhDieuDong?: string; veViec?: string;
+  chiTiet: ChiTietPhieuKho[]; tongTien?: number; tongTienBangChu?: string; trangThai?: string;
+}
+
 // ===== DASHBOARD =====
 
 export interface ThongKeTongQuan {
