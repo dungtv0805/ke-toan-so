@@ -15,6 +15,10 @@ import './nhom-khoan-muc.entity';
 import './loai-giao-dich.entity';
 import './hop-dong.entity';
 import './so-du-dau-ky.entity';
+import './kho.entity';
+import './don-vi-tinh.entity';
+import './nhom-vat-tu.entity';
+import './hang-hoa-vat-tu.entity';
 
 // Re-export all entities
 export * from './tai-khoan.entity';
@@ -33,3 +37,7 @@ export * from './nhom-khoan-muc.entity';
 export * from './loai-giao-dich.entity';
 export * from './hop-dong.entity';
 export * from './so-du-dau-ky.entity';
+export * from './kho.entity';
+export * from './don-vi-tinh.entity';
+export * from './nhom-vat-tu.entity';
+export * from './hang-hoa-vat-tu.entity';
