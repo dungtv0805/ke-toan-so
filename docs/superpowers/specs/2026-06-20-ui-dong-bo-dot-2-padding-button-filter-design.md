@@ -80,6 +80,19 @@ Chuyển filter tự chế (`Card.extra` / `Space` rời) sang `<FilterBar>` chu
 - **Áp dụng 4 chỗ tree**: `BaoCaoTaiChinhPage` (cân đối TK, tài sản, nguồn vốn) + `SoDuDauKyPage`. Giữ nguyên `collectParentKeys`/`collectExpandKeys` + state hiện có; chỉ thay phần JSX 2 nút chữ.
 - **Ngoài phạm vi đợt này**: nút "Mở rộng/Thu gọn" của *thẻ thống kê* (StatsCards, SoQuy) là toggle panel khác bản chất — giữ nguyên.
 
+## Phần 5 — Chuẩn tiêu đề trang (title) = chỉ Breadcrumb
+**Vấn đề:** Toàn bộ báo cáo/công nợ/phiếu (và 5 trang danh mục: tai-khoan, doi-tuong, chu-dau-tu, nhom-quan-ly, nhom-khuyen-mai — header đã comment) chỉ hiển thị **Breadcrumb**. Nhưng **9 trang danh mục** còn render `Title level={3}` + icon + subtitle → lệch hẳn.
+
+**Chuẩn:** Mọi trang chỉ dùng **Breadcrumb** làm tiêu đề, **không** `Title level={3}` + subtitle ở đầu trang.
+
+**Áp dụng — gỡ khối header title ở 9 trang danh mục** (giữ Breadcrumb):
+`ngan-hang`, `loai-chung-tu`, `loai-giao-dich`, `dong-tien`, `khoan-muc`, `san-pham`, `du-an`, `nhom-khoan-muc`, `bo-phan`.
+- Gỡ khối `<div className="flex flex-col sm:flex-row justify-between ...">` chứa `<Title level={3}>` + `<Text type="secondary">`.
+- Nếu khối đó có **nút hành động** (Space bên phải: Thêm/Xuất/Làm mới) → chuyển vào `actions` của `<FilterBar>` sẵn có của trang (cả 9 trang đều đã dùng FilterBar). Không làm mất nút.
+- Giữ nguyên Breadcrumb, Stats Cards (nếu có), bảng.
+
+> Các trang đã comment header (5 trang trên) giữ nguyên (đã breadcrumb-only). Không "thêm title" vào báo cáo/công nợ/phiếu.
+
 ## Kiểm thử
 - `tsc --noEmit` 0 lỗi; `vitest run` pass (đặc biệt `buildAccountTree.test.ts`); `npm run build` thành công.
 - Kiểm thị giác từng nhóm: button/input cùng cao 28px; lề 12px đều mọi trang; FilterBar đồng nhất ở báo cáo/công nợ/sổ quỹ; nút Mở/Thu gọn là 2 icon có tooltip.

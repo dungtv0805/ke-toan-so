@@ -560,8 +560,64 @@ git commit -m "chore(ui): rà soát cuối đồng bộ giao diện đợt 2"
 
 ---
 
+### Task 11: Chuẩn tiêu đề trang — gỡ Title lớn ở 9 trang danh mục (chỉ giữ Breadcrumb)
+
+**Files (gỡ khối header `Title level={3}` + subtitle, giữ Breadcrumb):**
+- `fe/src/pages/danh-muc/ngan-hang/NganHangPage.tsx` (title@~296, có 2 nút → kiểm tra)
+- `fe/src/pages/danh-muc/loai-chung-tu/LoaiChungTuPage.tsx` (title@~239, không nút)
+- `fe/src/pages/danh-muc/loai-giao-dich/LoaiGiaoDichPage.tsx` (title@~272, không nút)
+- `fe/src/pages/danh-muc/dong-tien/DongTienPage.tsx` (title@~286, **có nút inline**)
+- `fe/src/pages/danh-muc/khoan-muc/KhoanMucPage.tsx` (title@~370, không nút)
+- `fe/src/pages/danh-muc/san-pham/SanPhamPage.tsx` (title@~322, **có nút**)
+- `fe/src/pages/danh-muc/du-an/DuAnPage.tsx` (title@~469, **có nút**)
+- `fe/src/pages/danh-muc/nhom-khoan-muc/NhomKhoanMucPage.tsx` (title@~229)
+- `fe/src/pages/danh-muc/bo-phan/BoPhanPage.tsx` (title@~250, **có nút**)
+
+**Interfaces:** Consumes `FilterBar` (cả 9 trang đã import & dùng sẵn).
+
+- [ ] **Step 1: Với mỗi trang — xác định khối header**
+
+Đọc file, tìm khối:
+```tsx
+{/* Header */}
+<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+  <div>
+    <Title level={3} className="!mb-1 flex items-center gap-2">
+      <SomeIcon className="text-primary" />
+      ...tiêu đề...
+    </Title>
+    <Text type="secondary">...subtitle...</Text>
+  </div>
+  {/* (có thể có) <Space>...nút...</Space> */}
+</div>
+```
+
+- [ ] **Step 2: Gỡ khối header, bảo toàn nút**
+
+- Nếu khối KHÔNG có nút (loai-chung-tu, loai-giao-dich, khoan-muc, nhom-khoan-muc): **xóa toàn bộ khối** `<div className="flex ...">...</div>`. Giữ Breadcrumb phía trên.
+- Nếu khối CÓ `<Space>` nút bên phải (ngan-hang, dong-tien, san-pham, du-an, bo-phan): xóa khối header NHƯNG đưa các nút đó vào `actions` của `<FilterBar>` đang có trong file. Nếu FilterBar đã có `actions` → gộp thêm (không trùng lặp nút). Bỏ `size="small"` nếu có (theo Global Constraints).
+- Sau khi xóa, nếu `Title`/`Text` không còn dùng trong file → bỏ khỏi import `Typography`/antd để tránh unused.
+
+- [ ] **Step 3: Typecheck + build**
+
+Run (trong `fe/`): `npx tsc --noEmit && npm run build`
+Expected: 0 lỗi, build OK.
+
+- [ ] **Step 4: Kiểm thị giác**
+
+`npm run dev` → mở 9 trang: chỉ còn Breadcrumb (giống báo cáo/công nợ); nút hành động vẫn còn (trong FilterBar); Stats Cards (nếu có) giữ nguyên.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add fe/src/pages/danh-muc
+git commit -m "feat(ui): gỡ title lớn 9 trang danh mục, chuẩn breadcrumb-only (đợt 2)"
+```
+
+---
+
 ## Self-Review (đã thực hiện khi viết plan)
 
-- **Spec coverage:** Phần 1 (controlHeight)→Task 1; Phần 2 (padding/space-y/full-height)→Task 2 + Task 4(root) + Task 9; Phần 3 (FilterBar: công nợ→T6, sổ quỹ→T7, so-cai/so-chi-tiet/pnl→T8, tài chính+PeriodFilter→T4; tree pages loại trừ)→ đủ; Phần 4 (ExpandCollapseButtons + 4 chỗ)→Task 3 + Task 4 (3 chỗ) + Task 5 (1 chỗ). ✅
+- **Spec coverage:** Phần 1 (controlHeight)→Task 1; Phần 2 (padding/space-y/full-height)→Task 2 + Task 4(root) + Task 9; Phần 3 (FilterBar: công nợ→T6, sổ quỹ→T7, so-cai/so-chi-tiet/pnl→T8, tài chính+PeriodFilter→T4; tree pages loại trừ)→ đủ; Phần 4 (ExpandCollapseButtons + 4 chỗ)→Task 3 + Task 4 (3 chỗ) + Task 5 (1 chỗ); Phần 5 (chuẩn title breadcrumb-only)→Task 11. ✅
 - **Placeholder scan:** Các bước sweep (Task 9) dùng grep + quy tắc rõ ràng thay vì liệt kê cứng từng dòng (mã sẽ đổi theo thời điểm chạy) — kèm lệnh cụ thể và tiêu chí quyết định. Không có "TODO/sau này".
 - **Type consistency:** `ExpandCollapseButtons` props (`onExpandAll/onCollapseAll/size`) khớp ở Task 3/4/5. `FilterBar` props (`search/filters/actions/className`) khớp component thật.
