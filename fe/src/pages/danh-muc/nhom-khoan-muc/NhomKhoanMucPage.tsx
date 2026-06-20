@@ -23,7 +23,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   ExportOutlined,
-  TagOutlined,
   HomeOutlined,
   FallOutlined,
   RiseOutlined,
@@ -33,7 +32,7 @@ import { FilterBar } from "@/components/common/FilterBar";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const loaiOptions = [
   { value: 'CHI_PHI', label: 'Chi phí', color: 'red' },
@@ -223,16 +222,6 @@ const NhomKhoanMucPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <Breadcrumb items={[{ href: "/", title: <HomeOutlined /> }, { title: "Danh mục" }, { title: "Nhóm khoản mục" }]} />
-
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <Title level={3} className="!mb-1 flex items-center gap-2">
-            <TagOutlined className="text-primary" />
-            Quản lý nhóm khoản mục
-          </Title>
-          <Text type="secondary">Quản lý danh sách nhóm khoản mục chi phí và doanh thu</Text>
-        </div>
-      </div>
 
       <Card>
         <Tabs activeKey={activeTab} onChange={handleTabChange} items={tabItems} className="mb-4" />

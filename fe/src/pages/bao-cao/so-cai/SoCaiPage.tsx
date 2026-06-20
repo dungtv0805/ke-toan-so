@@ -32,6 +32,7 @@ import {
 } from '@/services/soCaiService';
 import { taiKhoanService } from '@/services/taiKhoanService';
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { FilterBar } from "@/components/common/FilterBar";
 
 const SoCaiPage: React.FC = () => {
   const { canExport } = usePagePermission("/bao-cao/so-cai");
@@ -372,22 +373,6 @@ const SoCaiPage: React.FC = () => {
       label: 'Chi tiết tài khoản',
       children: (
         <>
-          <Space style={{ marginBottom: 16 }}>
-            <span>Chọn tài khoản:</span>
-            <Select
-              showSearch
-              placeholder="Chọn tài khoản"
-              value={filterAccount || undefined}
-              onChange={handleAccountSelect}
-              options={accountOptions}
-              style={{ width: 350 }}
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-              allowClear
-            />
-          </Space>
-
           {selectedAccount ? (
             <>
               <Descriptions bordered size="small" column={4} style={{ marginBottom: 16 }}>
@@ -482,7 +467,7 @@ const SoCaiPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div>
       <Breadcrumb style={{ marginBottom: 16 }}>
         <Breadcrumb.Item href="/">
           <HomeOutlined />
@@ -491,20 +476,38 @@ const SoCaiPage: React.FC = () => {
         <Breadcrumb.Item>Sổ cái</Breadcrumb.Item>
       </Breadcrumb>
 
-      <Card 
+      <FilterBar
+        className="mb-3"
+        filters={
+          <Select
+            showSearch
+            placeholder="Chọn tài khoản"
+            value={filterAccount || undefined}
+            onChange={handleAccountSelect}
+            options={accountOptions}
+            style={{ width: 350 }}
+            filterOption={(input, option) =>
+              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+            }
+            allowClear
+          />
+        }
+        actions={
+          <>
+            {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+            <Button icon={<ReloadOutlined />} onClick={fetchData}>
+              Làm mới
+            </Button>
+          </>
+        }
+      />
+
+      <Card
         title={
           <Space>
             <BookOutlined />
             <span>Sổ cái tài khoản</span>
             <Tag color="blue">Kỳ hiện tại</Tag>
-          </Space>
-        }
-        extra={
-          <Space>
-            {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
-            <Button icon={<ReloadOutlined />} onClick={fetchData}>
-              Làm mới
-            </Button>
           </Space>
         }
       >

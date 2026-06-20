@@ -33,7 +33,7 @@ import { loaiGiaoDichService, LoaiGiaoDichStats } from "@/services/loaiGiaoDichS
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { TextArea } = Input;
 
 // Validation schema
@@ -265,19 +265,6 @@ const LoaiGiaoDichPage: React.FC = () => {
           { title: "Loại giao dịch" },
         ]}
       />
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <Title level={3} className="!mb-1 flex items-center gap-2">
-            <SwapOutlined className="text-primary" />
-            Quản lý loại giao dịch
-          </Title>
-          <Text type="secondary">
-            Quản lý danh sách các loại giao dịch: Phiếu thu, Phiếu chi, Báo có, Báo nợ...
-          </Text>
-        </div>
-      </div>
 
       {/* Stats Card */}
       <Row gutter={[16, 16]}>

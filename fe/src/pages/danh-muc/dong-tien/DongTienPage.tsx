@@ -37,7 +37,7 @@ import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { TextArea } = Input;
 
 // Validation schema
@@ -280,34 +280,6 @@ const DongTienPage: React.FC = () => {
         ]}
       />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <Title level={3} className="!mb-1 flex items-center gap-2">
-            <DollarOutlined className="text-primary" />
-            Quản lý dòng tiền
-          </Title>
-          <Text type="secondary">
-            Phân loại các khoản thu chi theo hoạt động kinh doanh, đầu tư, tài
-            chính
-          </Text>
-        </div>
-        <Space>
-          {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => fetchData(1, pagination.pageSize, "")}
-          >
-            Làm mới
-          </Button>
-          {canCreate && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-            Thêm dòng tiền
-          </Button>
-          )}
-        </Space>
-      </div>
-
       {/* Stats Cards */}
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={6}>
@@ -365,6 +337,28 @@ const DongTienPage: React.FC = () => {
             setSearchText("");
             fetchData(1, pagination.pageSize, "");
           }}
+          actions={
+            <>
+              {canExport && (
+                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+              )}
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={() => fetchData(1, pagination.pageSize, "")}
+              >
+                Làm mới
+              </Button>
+              {canCreate && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={handleAdd}
+                >
+                  Thêm dòng tiền
+                </Button>
+              )}
+            </>
+          }
         />
 
         <Table

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Select, DatePicker, Button, Space, Typography } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Select, DatePicker, Button, Space } from 'antd';
+import { SearchOutlined, CalendarOutlined } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
 
 export type PeriodType = 'ngay' | 'thang' | 'quy' | 'nam' | 'tuyChon';
@@ -167,81 +167,59 @@ export function PeriodFilter({ onFilter, loading }: PeriodFilterProps) {
   };
 
   return (
-    <Space wrap align="center" size="middle">
+    <Space align="center" size="small">
+      <CalendarOutlined style={{ color: '#1890ff' }} />
       {!isCustomMode ? (
         <>
-          <Space size={4} align="center">
-            <Typography.Text type="secondary" style={{ fontSize: 12 }}>Ngày</Typography.Text>
-            <Select
-              value={day}
-              onChange={handleDayChange}
-              options={DAYS}
-              allowClear
-              placeholder="Tất cả"
-              style={{ width: 80 }}
-              size="middle"
-            />
-          </Space>
+          <Select
+            value={day}
+            onChange={handleDayChange}
+            options={DAYS}
+            allowClear
+            placeholder="Ngày"
+            style={{ width: 80 }}
+          />
 
-          <Space size={4} align="center">
-            <Typography.Text type="secondary" style={{ fontSize: 12 }}>Tháng</Typography.Text>
-            <Select
-              value={month}
-              onChange={handleMonthChange}
-              options={MONTHS}
-              allowClear
-              placeholder="Tất cả"
-              style={{ width: 110 }}
-              size="middle"
-            />
-          </Space>
+          <Select
+            value={month}
+            onChange={handleMonthChange}
+            options={MONTHS}
+            allowClear
+            placeholder="Tháng"
+            style={{ width: 110 }}
+          />
 
-          <Space size={4} align="center">
-            <Typography.Text type="secondary" style={{ fontSize: 12 }}>Quý</Typography.Text>
-            <Select
-              value={quarterOrHalf}
-              onChange={handleQuarterChange}
-              options={QUARTER_OPTIONS}
-              allowClear
-              placeholder="Tất cả"
-              style={{ width: 110 }}
-              size="middle"
-            />
-          </Space>
+          <Select
+            value={quarterOrHalf}
+            onChange={handleQuarterChange}
+            options={QUARTER_OPTIONS}
+            allowClear
+            placeholder="Quý"
+            style={{ width: 110 }}
+          />
 
-          <Space size={4} align="center">
-            <Typography.Text type="secondary" style={{ fontSize: 12 }}>Năm</Typography.Text>
-            <Select
-              value={year}
-              onChange={setYear}
-              options={yearOptions}
-              style={{ width: 90 }}
-              size="middle"
-            />
-          </Space>
+          <Select
+            value={year}
+            onChange={setYear}
+            options={yearOptions}
+            placeholder="Năm"
+            style={{ width: 90 }}
+          />
         </>
       ) : (
         <>
-          <Space size={4} align="center">
-            <Typography.Text type="secondary" style={{ fontSize: 12 }}>Từ</Typography.Text>
-            <DatePicker
-              value={customFrom}
-              onChange={setCustomFrom}
-              placeholder="Từ ngày"
-              style={{ width: 140 }}
-              size="middle"
-            />
-          </Space>
-          <Space size={4} align="center">
-            <Typography.Text type="secondary" style={{ fontSize: 12 }}>Đến</Typography.Text>
-            <DatePicker
-              value={customTo}
-              onChange={setCustomTo}
-              placeholder="Đến ngày"
-              style={{ width: 140 }}
-              size="middle"
-            />
-          </Space>
+          <DatePicker
+            value={customFrom}
+            onChange={setCustomFrom}
+            placeholder="Từ ngày"
+            style={{ width: 140 }}
+          />
+          <DatePicker
+            value={customTo}
+            onChange={setCustomTo}
+            placeholder="Đến ngày"
+            style={{ width: 140 }}
+          />
         </>
       )}
 
@@ -249,7 +227,7 @@ export function PeriodFilter({ onFilter, loading }: PeriodFilterProps) {
         {isCustomMode ? 'Theo kỳ' : 'Tùy chọn'}
       </Button>
 
-      <Button type="primary" icon={<SearchOutlined />} onClick={handleSubmit} loading={loading} size="middle">
+      <Button type="primary" icon={<SearchOutlined />} onClick={handleSubmit} loading={loading}>
         Xem báo cáo
       </Button>
     </Space>

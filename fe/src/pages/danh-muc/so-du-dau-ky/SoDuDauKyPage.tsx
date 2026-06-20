@@ -1,3 +1,4 @@
+import { ExpandCollapseButtons } from '@/components/common/ExpandCollapseButtons';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { doiTuongService } from '@/services/doiTuongService';
 import { nganHangService } from '@/services/nganHangService';
@@ -353,10 +354,10 @@ const SoDuDauKyPage: React.FC = () => {
             disabled={!canEdit} value={undefined} options={accountOptions}
             onChange={(v) => v && addAccount(v)}
           />
-          <Button size="small" onClick={() => setExpandedKeys(collectExpandKeys(tree))}>
-            Mở tất cả
-          </Button>
-          <Button size="small" onClick={() => setExpandedKeys([])}>Thu gọn</Button>
+          <ExpandCollapseButtons
+            onExpandAll={() => setExpandedKeys(collectExpandKeys(tree))}
+            onCollapseAll={() => setExpandedKeys([])}
+          />
         </Space>
         <Table<SoDuTreeNode>
           rowKey="__key" loading={loading} dataSource={tree} columns={columns}

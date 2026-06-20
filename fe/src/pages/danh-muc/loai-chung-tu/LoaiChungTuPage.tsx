@@ -29,7 +29,7 @@ import { loaiChungTuService, LoaiChungTuType } from "@/services/loaiChungTuServi
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { TextArea } = Input;
 
 const loaiChungTuSchema = z.object({
@@ -233,18 +233,6 @@ const LoaiChungTuPage: React.FC = () => {
           { title: "Loại chứng từ" },
         ]}
       />
-
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <Title level={3} className="!mb-1 flex items-center gap-2">
-            <FileTextOutlined className="text-primary" />
-            Quản lý loại chứng từ
-          </Title>
-          <Text type="secondary">
-            Phân loại các loại chứng từ kế toán
-          </Text>
-        </div>
-      </div>
 
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={8}>

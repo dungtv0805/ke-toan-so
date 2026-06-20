@@ -33,7 +33,7 @@ import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 
-const { Title, Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
 // Validation schema
@@ -244,33 +244,6 @@ const BoPhanPage: React.FC = () => {
         ]}
       />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <Title level={3} className="!mb-1 flex items-center gap-2">
-            <TeamOutlined className="text-primary" />
-            Quản lý bộ phận
-          </Title>
-          <Text type="secondary">
-            Quản lý danh sách các phòng ban, bộ phận trong công ty
-          </Text>
-        </div>
-        <Space>
-          {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => fetchData(1, pagination.pageSize, "")}
-          >
-            Làm mới
-          </Button>
-          {canCreate && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-            Thêm bộ phận
-          </Button>
-          )}
-        </Space>
-      </div>
-
       {/* Stats Card */}
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={8}>
@@ -298,6 +271,28 @@ const BoPhanPage: React.FC = () => {
             setSearchText("");
             fetchData(1, pagination.pageSize, "");
           }}
+          actions={
+            <>
+              {canExport && (
+                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+              )}
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={() => fetchData(1, pagination.pageSize, "")}
+              >
+                Làm mới
+              </Button>
+              {canCreate && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={handleAdd}
+                >
+                  Thêm bộ phận
+                </Button>
+              )}
+            </>
+          }
         />
 
         <Table

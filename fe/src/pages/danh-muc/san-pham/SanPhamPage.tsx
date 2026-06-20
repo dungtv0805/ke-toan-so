@@ -24,7 +24,6 @@ import {
   DeleteOutlined,
   ExportOutlined,
   ReloadOutlined,
-  AppstoreOutlined,
   HomeOutlined,
   ShoppingOutlined,
   DollarOutlined,
@@ -37,7 +36,7 @@ import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { TextArea } = Input;
 
 // Validation schema
@@ -316,33 +315,6 @@ const SanPhamPage: React.FC = () => {
         ]}
       />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <Title level={3} className="!mb-1 flex items-center gap-2">
-            <AppstoreOutlined className="text-primary" />
-            Quản lý sản phẩm
-          </Title>
-          <Text type="secondary">
-            Quản lý danh sách sản phẩm, dịch vụ và vật tư
-          </Text>
-        </div>
-        <Space>
-          {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => fetchData(1, pagination.pageSize, "")}
-          >
-            Làm mới
-          </Button>
-          {canCreate && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-            Thêm sản phẩm
-          </Button>
-          )}
-        </Space>
-      </div>
-
       {/* Stats Cards */}
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={8}>
@@ -365,6 +337,28 @@ const SanPhamPage: React.FC = () => {
             placeholder: "Tìm kiếm theo mã hoặc tên sản phẩm...",
             width: 400,
           }}
+          actions={
+            <>
+              {canExport && (
+                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+              )}
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={() => fetchData(1, pagination.pageSize, "")}
+              >
+                Làm mới
+              </Button>
+              {canCreate && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={handleAdd}
+                >
+                  Thêm sản phẩm
+                </Button>
+              )}
+            </>
+          }
         />
 
         <Table

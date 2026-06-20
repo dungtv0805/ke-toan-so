@@ -23,6 +23,7 @@ import {
   buildAntdColumns, loadVisibleKeys, saveVisibleKeys,
 } from './columnRegistry';
 import { parseReportParams } from './reportParams';
+import { FilterBar } from '@/components/common/FilterBar';
 
 const { RangePicker } = DatePicker;
 
@@ -138,51 +139,58 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
           { title: 'Sổ chi tiết tài khoản' },
         ]}
       />
+      <FilterBar
+        className="mb-3"
+        filters={
+          <>
+            <RangePicker
+              value={range}
+              format="DD/MM/YYYY"
+              onChange={(v) => v && v[0] && v[1] && setRange([v[0], v[1]])}
+              allowClear={false}
+            />
+            <Select
+              mode="multiple"
+              showSearch
+              placeholder="Chọn tài khoản (bắt buộc)"
+              style={{ minWidth: 320, maxWidth: 520 }}
+              options={accountOptions}
+              value={maTaiKhoans}
+              onChange={setMaTaiKhoans}
+              maxTagCount="responsive"
+              filterOption={(i, o) => (o?.label ?? '').toLowerCase().includes(i.toLowerCase())}
+            />
+            <Button onClick={() => setMaTaiKhoans(accountOptions.map((o) => o.value))}>
+              Chọn tất cả
+            </Button>
+            <Select
+              showSearch allowClear placeholder="Đối tượng (tùy chọn)"
+              style={{ width: 280 }} options={doiTuongOptions}
+              value={maDoiTuong} onChange={setMaDoiTuong}
+              filterOption={(i, o) => (o?.label ?? '').toLowerCase().includes(i.toLowerCase())}
+            />
+            <ColumnChooser visibleKeys={visibleKeys} onChange={onChangeVisible} />
+          </>
+        }
+        actions={
+          <>
+            <Button type="primary" onClick={loadReport} disabled={maTaiKhoans.length === 0}>
+              Xem
+            </Button>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={loadReport}
+              disabled={maTaiKhoans.length === 0}
+            >
+              Làm mới
+            </Button>
+          </>
+        }
+      />
+
       <Card
         title={<Space><AccountBookOutlined /><span>Sổ chi tiết tài khoản</span></Space>}
-        extra={
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={loadReport}
-            disabled={maTaiKhoans.length === 0}
-          >
-            Làm mới
-          </Button>
-        }
       >
-        <Space wrap style={{ marginBottom: 16 }}>
-          <RangePicker
-            value={range}
-            format="DD/MM/YYYY"
-            onChange={(v) => v && v[0] && v[1] && setRange([v[0], v[1]])}
-            allowClear={false}
-          />
-          <Select
-            mode="multiple"
-            showSearch
-            placeholder="Chọn tài khoản (bắt buộc)"
-            style={{ minWidth: 320, maxWidth: 520 }}
-            options={accountOptions}
-            value={maTaiKhoans}
-            onChange={setMaTaiKhoans}
-            maxTagCount="responsive"
-            filterOption={(i, o) => (o?.label ?? '').toLowerCase().includes(i.toLowerCase())}
-          />
-          <Button onClick={() => setMaTaiKhoans(accountOptions.map((o) => o.value))}>
-            Chọn tất cả
-          </Button>
-          <Select
-            showSearch allowClear placeholder="Đối tượng (tùy chọn)"
-            style={{ width: 280 }} options={doiTuongOptions}
-            value={maDoiTuong} onChange={setMaDoiTuong}
-            filterOption={(i, o) => (o?.label ?? '').toLowerCase().includes(i.toLowerCase())}
-          />
-          <ColumnChooser visibleKeys={visibleKeys} onChange={onChangeVisible} />
-          <Button type="primary" onClick={loadReport} disabled={maTaiKhoans.length === 0}>
-            Xem
-          </Button>
-        </Space>
-
         {reports ? (
           reports.length === 0 ? (
             <Empty description="Không có dữ liệu cho tài khoản và kỳ đã chọn" />
