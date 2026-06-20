@@ -55,6 +55,7 @@ export const environment = {
     { pathPrefix: '/payable', service: 'payable', stripPrefix: true },
     { pathPrefix: '/reporting', service: 'reporting', stripPrefix: true },
     { pathPrefix: '/config', service: 'config', stripPrefix: true },
+    { pathPrefix: '/tai-lieu', service: 'config', stripPrefix: false },
   ] as Array<{ pathPrefix: string; service: string; stripPrefix?: boolean }>,
 };
 
