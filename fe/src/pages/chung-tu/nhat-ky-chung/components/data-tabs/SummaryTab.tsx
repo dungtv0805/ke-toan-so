@@ -80,12 +80,13 @@ export function SummaryTab() {
 
   return (
     <Table
+      className="excel-table"
       columns={columns}
       dataSource={summaryByAccount || []}
       rowKey="taiKhoan"
       loading={loading}
       pagination={false}
-      size="middle"
+      size="small"
       summary={(pageData) => {
         const totalNo = pageData.reduce((sum, r) => sum + r.phatSinhNo, 0);
         const totalCo = pageData.reduce((sum, r) => sum + r.phatSinhCo, 0);
