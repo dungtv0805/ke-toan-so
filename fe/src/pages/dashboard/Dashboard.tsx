@@ -37,9 +37,8 @@ const Dashboard: React.FC = () => {
         className="sticky z-20 flex flex-wrap items-center justify-between gap-2"
         style={{
           top: 0,
-          marginTop: -12,
           marginInline: -12,
-          padding: '8px 12px',
+          padding: '10px 12px',
           background: 'hsl(var(--background))',
           borderBottom: '1px solid hsl(var(--border))',
         }}
