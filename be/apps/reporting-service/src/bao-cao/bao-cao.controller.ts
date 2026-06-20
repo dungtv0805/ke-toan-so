@@ -33,6 +33,22 @@ export class BaoCaoController {
     return { success: true, data };
   }
 
+  @Get('pnl-series')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async getPnlSeries(
+    @Query('year') year: string,
+    @Headers('authorization') authToken: string,
+    @CurrentUser() user: UserPayload,
+  ) {
+    const y = parseInt(year, 10) || new Date().getFullYear();
+    const data = await this.baoCaoService.getPnlSeries(
+      y,
+      authToken,
+      user.tenantId,
+    );
+    return { success: true, data };
+  }
+
   @Get('balance-sheet')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getBalanceSheet(
