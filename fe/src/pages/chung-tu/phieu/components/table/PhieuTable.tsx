@@ -22,13 +22,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Printer } from "lucide-react";
 import { usePhieuState, usePhieuHandler } from "../../PhieuHandlerContext";
 import { formatCurrency } from "../../lib/format";
+import { usePrintPhieu } from "../../lib/usePrintPhieu";
+import { TABLE_CONTAINER, TABLE_DENSITY } from "../../lib/tableStyles";
+import { cn } from "@/lib/utils";
 import { ChungTu } from "@/types";
 
 export function PhieuTable() {
   const handler = usePhieuHandler();
+  const print = usePrintPhieu();
   const [data] = usePhieuState("data", [] as ChungTu[]);
   const [loading] = usePhieuState("loading", false);
   const [pagination] = usePhieuState("pagination", {
@@ -86,8 +90,8 @@ export function PhieuTable() {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-md border">
-        <Table>
+      <div className={TABLE_CONTAINER}>
+        <Table className={cn(TABLE_DENSITY)}>
           <TableHeader>
             <TableRow>
               <TableHead>Số phiếu</TableHead>
@@ -138,6 +142,15 @@ export function PhieuTable() {
                         onClick={() => setViewModalPhieu(row)}
                       >
                         Xem
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => print(row)}
+                        title="In / Xuất PDF"
+                      >
+                        <Printer className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         size="sm"

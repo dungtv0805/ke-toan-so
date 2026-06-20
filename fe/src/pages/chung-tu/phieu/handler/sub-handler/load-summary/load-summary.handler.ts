@@ -19,6 +19,10 @@ export class LoadSummaryHandler extends CSubHanlder<LoadSummaryEvent, PhieuState
       const rows = await config.service.getSummary(params.type, buildPhieuQueryParams((k) => this.getState(k)));
       const map = (this.getState("summaryData") as Record<string, unknown>) || {};
       this.setState("summaryData", { ...map, [params.type]: rows });
+      const loaded = (this.getState("summaryLoadedTypes") as PhieuSummaryType[]) || [];
+      if (!loaded.includes(params.type)) {
+        this.setState("summaryLoadedTypes", [...loaded, params.type]);
+      }
     } catch (e) {
       console.error("Error loading summary:", e);
     } finally {

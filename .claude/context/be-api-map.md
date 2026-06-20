@@ -220,3 +220,10 @@ Same pattern as /phai-thu (with summary-by-supplier instead)
 | POST | /vai-tro | Create |
 | PUT | /vai-tro/:id | Update |
 | DELETE | /vai-tro/:id | Delete |
+
+### /phieu-template (Mẫu in phiếu thu/chi)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /phieu-template/:loai | Lấy mẫu in HTML theo loại (PHIEU_THU/PHIEU_CHI); null nếu chưa cấu hình |
+| PUT | /phieu-template/:loai | Upsert (upload) mẫu in `{ html }` |
+| DELETE | /phieu-template/:loai | Xoá mẫu (FE về mẫu mặc định) |

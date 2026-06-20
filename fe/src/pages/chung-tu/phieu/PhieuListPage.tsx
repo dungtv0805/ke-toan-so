@@ -7,6 +7,7 @@ import { PhieuTable } from "./components/table/PhieuTable";
 import { PhieuFormModal } from "./components/form-modal/PhieuFormModal";
 import { PhieuViewModal } from "./components/view-modal/PhieuViewModal";
 import { SummaryTabs } from "./components/summary/SummaryTabs";
+import { TemplateModal } from "./components/template-modal/TemplateModal";
 import { ImportExcelModal } from "./import/ImportExcelModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -39,6 +40,7 @@ function PhieuListPageInner() {
       </Tabs>
       <PhieuFormModal />
       <PhieuViewModal />
+      <TemplateModal />
       <ImportExcelModal
         open={!!importModalOpen}
         onClose={() => setImportModalOpen(false)}
