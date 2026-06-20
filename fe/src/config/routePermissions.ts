@@ -36,6 +36,10 @@ export const routePermissions: Record<string, string> = {
   '/bao-cao/bang-can-doi': '/bao-cao/bang-can-doi:xem',
   '/bao-cao/tai-chinh': '/bao-cao/tai-chinh:xem',
 
+  '/bieu-mau': '/bieu-mau:xem',
+  '/chinh-sach': '/chinh-sach:xem',
+  '/huong-dan': '/huong-dan:xem',
+
   '/cau-hinh/phan-quyen': '/cau-hinh/phan-quyen:xem',
   '/cau-hinh/vai-tro': '/cau-hinh/vai-tro:xem',
   '/cau-hinh/thanh-vien': '/cau-hinh/thanh-vien:xem',

@@ -8,6 +8,7 @@ import { PhanQuyen_Module } from './phan-quyen/phan-quyen.module';
 import { NguoiDung_Module } from './nguoi-dung/nguoi-dung.module';
 import { VaiTro_Module } from './vai-tro/vai-tro.module';
 import { PhieuTemplate_Module } from './phieu-template/phieu-template.module';
+import { TaiLieu_Module } from './tai-lieu/tai-lieu.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { PhieuTemplate_Module } from './phieu-template/phieu-template.module';
     NguoiDung_Module,
     VaiTro_Module,
     PhieuTemplate_Module,
+    TaiLieu_Module,
   ],
 })
 export class ConfigServiceModule {}

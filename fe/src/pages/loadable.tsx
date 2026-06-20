@@ -147,6 +147,19 @@ export const KqkdPage = loadable(() => import('./bao-cao/kqkd/KqkdPage'), {
   fallback: <PageLoader />
 });
 
+// Thư viện tài liệu
+export const BieuMauPage = loadable(() => import('./thu-vien/BieuMauPage'), {
+  fallback: <PageLoader />
+});
+
+export const ChinhSachPage = loadable(() => import('./thu-vien/ChinhSachPage'), {
+  fallback: <PageLoader />
+});
+
+export const HuongDanPage = loadable(() => import('./thu-vien/HuongDanPage'), {
+  fallback: <PageLoader />
+});
+
 // Cấu hình
 export const QuyChaunPage = loadable(() => import('./danh-muc/quy-chuan/QuyChaunPage'), {
   fallback: <PageLoader />

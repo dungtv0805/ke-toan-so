@@ -44,6 +44,9 @@ import {
   BangTongHopCongNoPage,
   BaoCaoTaiChinhPage,
 
+  BieuMauPage,
+  ChinhSachPage,
+  HuongDanPage,
   QuyChaunPage,
   PhanQuyenPage,
   VaiTroPage,
@@ -364,11 +367,32 @@ const App = () => (
                   <Route path="luong-bhxh" element={<ComingSoonPage />} />
                 </Route>
 
-                {/* Thư viện - Coming Soon */}
+                {/* Thư viện */}
                 <Route path="quy-trinh" element={<ComingSoonPage />} />
-                <Route path="chinh-sach" element={<ComingSoonPage />} />
-                <Route path="bieu-mau" element={<ComingSoonPage />} />
-                <Route path="huong-dan" element={<ComingSoonPage />} />
+                <Route
+                  path="chinh-sach"
+                  element={
+                    <ProtectedRoute requiredPermission="/chinh-sach:xem">
+                      <ChinhSachPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="bieu-mau"
+                  element={
+                    <ProtectedRoute requiredPermission="/bieu-mau:xem">
+                      <BieuMauPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="huong-dan"
+                  element={
+                    <ProtectedRoute requiredPermission="/huong-dan:xem">
+                      <HuongDanPage />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Cấu hình */}
                 <Route path="cau-hinh">
