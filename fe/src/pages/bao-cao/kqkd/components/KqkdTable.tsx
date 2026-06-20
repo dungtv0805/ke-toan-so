@@ -1,12 +1,5 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Table } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import type { KqkdChiTieu } from '@/services/kqkdService';
 
 interface KqkdTableProps {
@@ -28,132 +21,79 @@ const formatPercent = (value: number | null | undefined): string => {
   return value < 0 ? `(${formatted}%)` : `${formatted}%`;
 };
 
-function numberColorClass(value: number): string {
-  return value < 0 ? 'text-red-600' : '';
-}
+const numberCell = (v: number) => (
+  <span style={{ color: v < 0 ? '#dc2626' : undefined }}>{formatNumber(v)}</span>
+);
 
-function LoadingSkeleton() {
-  return (
-    <div className="space-y-2">
-      {Array.from({ length: 12 }).map((_, i) => (
-        <div key={i} className="flex gap-2">
-          <Skeleton className="h-8 w-12" />
-          <Skeleton className="h-8 flex-1" />
-          <Skeleton className="h-8 w-16" />
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-8 w-20" />
-          <Skeleton className="h-8 w-20" />
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-8 w-20" />
-          <Skeleton className="h-8 w-20" />
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-8 w-16" />
-        </div>
-      ))}
-    </div>
-  );
-}
+const columns: ColumnsType<KqkdChiTieu> = [
+  {
+    title: 'STT',
+    key: 'stt',
+    width: 50,
+    align: 'center',
+    render: (_v, _r, index) => index + 1,
+  },
+  {
+    title: 'Chỉ tiêu',
+    dataIndex: 'ten',
+    key: 'ten',
+    width: 240,
+    render: (ten: string, row) => (
+      <span style={{ paddingLeft: row.isCalculated ? 16 : 32 }}>{ten}</span>
+    ),
+  },
+  { title: 'Mã số', dataIndex: 'ma', key: 'ma', width: 70, align: 'center' },
+  {
+    title: 'Kỳ hiện tại',
+    children: [
+      { title: 'Số tiền', dataIndex: 'kyHienTai', align: 'right', width: 120, render: numberCell },
+      { title: '% DT thuần', dataIndex: 'phanTramDTThuan', align: 'right', width: 90, render: formatPercent },
+      { title: 'Tỷ trọng CP', dataIndex: 'tyTrongChiPhi', align: 'right', width: 90, render: formatPercent },
+    ],
+  },
+  {
+    title: 'Kỳ trước',
+    children: [
+      { title: 'Số tiền', dataIndex: 'kyTruoc', align: 'right', width: 120, render: numberCell },
+      { title: '% DT thuần', dataIndex: 'phanTramDTThuanKyTruoc', align: 'right', width: 90, render: formatPercent },
+      { title: 'Tỷ trọng CP', dataIndex: 'tyTrongChiPhiKyTruoc', align: 'right', width: 90, render: formatPercent },
+    ],
+  },
+  {
+    title: 'Biến động',
+    children: [
+      { title: 'Số tiền', dataIndex: 'bienDong', align: 'right', width: 120, render: numberCell },
+      {
+        title: '%',
+        dataIndex: 'phanTramBienDong',
+        align: 'right',
+        width: 80,
+        render: (v: number | null) => (
+          <span style={{ color: v !== null && v < 0 ? '#dc2626' : undefined }}>
+            {formatPercent(v)}
+          </span>
+        ),
+      },
+    ],
+  },
+];
 
 export function KqkdTable({ data, loading }: KqkdTableProps) {
-  if (loading) return <LoadingSkeleton />;
-
   return (
-    <div className="overflow-x-auto rounded-md border text-xs [&_th]:!px-2 [&_th]:!py-1.5 [&_th]:text-[11px] [&_th]:font-semibold [&_td]:!px-2 [&_td]:!py-1">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-muted/50">
-            <TableHead rowSpan={2} className="w-[50px] border-r text-center">
-              STT
-            </TableHead>
-            <TableHead rowSpan={2} className="min-w-[220px] border-r">
-              Chỉ tiêu
-            </TableHead>
-            <TableHead rowSpan={2} className="w-[70px] border-r text-center">
-              Mã số
-            </TableHead>
-            <TableHead colSpan={3} className="border-r text-center">
-              Kỳ hiện tại
-            </TableHead>
-            <TableHead colSpan={3} className="border-r text-center">
-              Kỳ trước
-            </TableHead>
-            <TableHead colSpan={2} className="text-center">
-              Biến động
-            </TableHead>
-          </TableRow>
-          <TableRow className="bg-muted/50">
-            <TableHead className="w-[120px] border-r text-right">Số tiền</TableHead>
-            <TableHead className="w-[90px] border-r text-right">% DT thuần</TableHead>
-            <TableHead className="w-[90px] border-r text-right">Tỷ trọng CP</TableHead>
-            <TableHead className="w-[120px] border-r text-right">Số tiền</TableHead>
-            <TableHead className="w-[90px] border-r text-right">% DT thuần</TableHead>
-            <TableHead className="w-[90px] border-r text-right">Tỷ trọng CP</TableHead>
-            <TableHead className="w-[120px] border-r text-right">Số tiền</TableHead>
-            <TableHead className="w-[80px] text-right">%</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={11} className="h-24 text-center text-muted-foreground">
-                Không có dữ liệu
-              </TableCell>
-            </TableRow>
-          ) : (
-            data.map((row, index) => {
-              const bold = row.isBold || row.isCalculated;
-
-              return (
-                <TableRow
-                  key={row.ma}
-                  className={bold ? 'bg-muted/30 font-semibold' : ''}
-                >
-                  <TableCell className="border-r text-center">
-                    {index + 1}
-                  </TableCell>
-                  <TableCell
-                    className="border-r"
-                    style={{ paddingLeft: row.isCalculated ? '16px' : '32px' }}
-                  >
-                    {row.ten}
-                  </TableCell>
-                  <TableCell className="border-r text-center">{row.ma}</TableCell>
-
-                  {/* Ky hien tai */}
-                  <TableCell className={`border-r text-right ${numberColorClass(row.kyHienTai)}`}>
-                    {formatNumber(row.kyHienTai)}
-                  </TableCell>
-                  <TableCell className="border-r text-right">
-                    {formatPercent(row.phanTramDTThuan)}
-                  </TableCell>
-                  <TableCell className="border-r text-right">
-                    {formatPercent(row.tyTrongChiPhi)}
-                  </TableCell>
-
-                  {/* Ky truoc */}
-                  <TableCell className={`border-r text-right ${numberColorClass(row.kyTruoc)}`}>
-                    {formatNumber(row.kyTruoc)}
-                  </TableCell>
-                  <TableCell className="border-r text-right">
-                    {formatPercent(row.phanTramDTThuanKyTruoc)}
-                  </TableCell>
-                  <TableCell className="border-r text-right">
-                    {formatPercent(row.tyTrongChiPhiKyTruoc)}
-                  </TableCell>
-
-                  {/* Bien dong */}
-                  <TableCell className={`border-r text-right ${numberColorClass(row.bienDong)}`}>
-                    {formatNumber(row.bienDong)}
-                  </TableCell>
-                  <TableCell className={`text-right ${row.phanTramBienDong !== null && row.phanTramBienDong < 0 ? 'text-red-600' : ''}`}>
-                    {formatPercent(row.phanTramBienDong)}
-                  </TableCell>
-                </TableRow>
-              );
-            })
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    <Table<KqkdChiTieu>
+      className="excel-table"
+      columns={columns}
+      dataSource={data}
+      rowKey="ma"
+      loading={loading}
+      size="small"
+      bordered
+      pagination={false}
+      scroll={{ x: 1200 }}
+      rowClassName={(row) =>
+        row.isBold || row.isCalculated ? 'kqkd-row-bold' : ''
+      }
+      locale={{ emptyText: 'Không có dữ liệu' }}
+    />
   );
 }

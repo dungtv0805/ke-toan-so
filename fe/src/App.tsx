@@ -62,7 +62,11 @@ const App = () => (
       theme={{
         token: {
           colorPrimary: '#1890ff',
-          borderRadius: 6,
+          // Đồng bộ toàn dự án: bo góc = 0 (giữ tròn cho avatar/chấm/spinner riêng).
+          borderRadius: 0,
+          borderRadiusLG: 0,
+          borderRadiusSM: 0,
+          borderRadiusXS: 0,
         },
       }}
     >

@@ -45,7 +45,7 @@
     --input: 220 13% 91%;
     --ring: 221 83% 53%;
 
-    --radius: 0.75rem;
+    --radius: 0px;
 
     /* Sidebar - Deep blue/teal professional */
     --sidebar-background: 210 50% 20%;
@@ -153,7 +153,7 @@
 .ant-menu-dark .ant-menu-item {
   color: hsl(var(--sidebar-foreground) / 0.7) !important;
   margin: 2px 6px !important;
-  border-radius: 6px !important;
+  border-radius: 0 !important;
   transition: all 0.2s ease !important;
   height: 36px !important;
   line-height: 36px !important;
@@ -172,7 +172,7 @@
 .ant-menu-dark .ant-menu-submenu-title {
   color: hsl(var(--sidebar-foreground) / 0.7) !important;
   margin: 2px 6px !important;
-  border-radius: 6px !important;
+  border-radius: 0 !important;
   height: 36px !important;
   line-height: 36px !important;
 }
@@ -472,7 +472,7 @@
   bottom: 0;
   width: 4px;
   background: hsl(var(--primary));
-  border-radius: 0 4px 4px 0;
+  border-radius: 0;
 }
 
 .stat-card-success::before {
@@ -495,12 +495,12 @@
 
 ::-webkit-scrollbar-track {
   background: hsl(var(--muted));
-  border-radius: 3px;
+  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 3px;
+  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -592,7 +592,7 @@
 
 .sidebar-scroll::-webkit-scrollbar-thumb {
   background: hsl(var(--sidebar-accent));
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
@@ -630,7 +630,7 @@
   font-weight: 700;
   color: hsl(var(--sidebar-foreground) / 0.6);
   background: hsl(var(--sidebar-accent));
-  border-radius: 4px;
+  border-radius: 0;
   margin-right: 4px;
 }
 
@@ -692,7 +692,7 @@
   color: hsl(38 92% 50%);
   background: hsl(38 92% 50% / 0.15);
   border: 1px solid hsl(38 92% 50% / 0.3);
-  border-radius: 3px;
+  border-radius: 0;
   white-space: nowrap;
   flex-shrink: 0;
   line-height: 14px;
@@ -727,7 +727,7 @@
 .sidebar-menu .ant-menu-item {
   margin: 2px 8px !important;
   padding-left: 12px !important;
-  border-radius: 6px !important;
+  border-radius: 0 !important;
   height: 34px !important;
   line-height: 34px !important;
   font-size: 13px !important;
@@ -736,7 +736,7 @@
 .sidebar-menu .ant-menu-submenu-title {
   margin: 2px 8px !important;
   padding-left: 12px !important;
-  border-radius: 6px !important;
+  border-radius: 0 !important;
   height: 34px !important;
   line-height: 34px !important;
   font-size: 13px !important;
@@ -1020,7 +1020,7 @@
   flex-direction: column;
   background: #fff;
   border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  border-radius: 0;
   overflow: hidden;
   min-height: 0;
 }
@@ -2190,4 +2190,43 @@ body.col-resizing .ant-table * {
     flex-wrap: wrap;
     justify-content: center;
   }
+}
+
+/* ===== FilterBar dùng chung (filter 1 cục) ===== */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 0;
+}
+
+.filter-bar__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.dark .filter-bar {
+  background: hsl(var(--muted));
+  border-color: hsl(var(--border));
+}
+
+/* KQKD: dòng chỉ tiêu tổng/đậm */
+.kqkd-row-bold > td {
+  font-weight: 600 !important;
+  background: #fafafa !important;
 }

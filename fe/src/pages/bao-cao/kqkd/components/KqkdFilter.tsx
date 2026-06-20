@@ -1,13 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, DatePicker, Button } from 'antd';
+import dayjs from 'dayjs';
+import { FilterBar } from '@/components/common/FilterBar';
 import type { KqkdPeriodType } from '@/services/kqkdService';
 
 export interface KqkdFilterParams {
@@ -20,6 +14,13 @@ interface KqkdFilterProps {
   onFilter: (params: KqkdFilterParams) => void;
   loading?: boolean;
 }
+
+const PERIOD_OPTIONS = [
+  { value: 'thang', label: 'Tháng' },
+  { value: 'quy', label: 'Quý' },
+  { value: 'nam', label: 'Năm' },
+  { value: 'tuyChon', label: 'Tùy chọn' },
+];
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => ({
   value: String(i + 1),
@@ -74,201 +75,112 @@ function buildDateRange(
   }
 }
 
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-xs font-medium text-muted-foreground">{label}</label>
+      {children}
+    </div>
+  );
+}
+
 export function KqkdFilter({ onFilter, loading }: KqkdFilterProps) {
   const now = new Date();
   const [periodType, setPeriodType] = useState<KqkdPeriodType>('thang');
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [quarter, setQuarter] = useState(Math.floor(now.getMonth() / 3) + 1);
   const [year, setYear] = useState(now.getFullYear());
-  const [customFrom, setCustomFrom] = useState(
-    now.toISOString().slice(0, 10),
-  );
+  const [customFrom, setCustomFrom] = useState(now.toISOString().slice(0, 10));
   const [customTo, setCustomTo] = useState(now.toISOString().slice(0, 10));
 
   const yearOptions = useMemo(() => getYearOptions(), []);
 
   const handleSubmit = () => {
-    const range = buildDateRange(
-      periodType,
-      month,
-      quarter,
-      year,
-      customFrom,
-      customTo,
-    );
+    const range = buildDateRange(periodType, month, quarter, year, customFrom, customTo);
     onFilter({ periodType, ...range });
   };
 
+  const yearField = (
+    <Field label="Năm">
+      <Select
+        value={String(year)}
+        onChange={(v) => setYear(Number(v))}
+        options={yearOptions}
+        style={{ width: 100 }}
+      />
+    </Field>
+  );
+
   return (
-    <div className="flex flex-wrap items-end gap-3">
-      {/* Period type */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-muted-foreground">
-          Kỳ báo cáo
-        </label>
-        <Select
-          value={periodType}
-          onValueChange={(v) => setPeriodType(v as KqkdPeriodType)}
-        >
-          <SelectTrigger className="w-[140px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="thang">Tháng</SelectItem>
-            <SelectItem value="quy">Quý</SelectItem>
-            <SelectItem value="nam">Năm</SelectItem>
-            <SelectItem value="tuyChon">Tùy chọn</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Month picker */}
-      {periodType === 'thang' && (
+    <FilterBar
+      filters={
         <>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              Tháng
-            </label>
+          <Field label="Kỳ báo cáo">
             <Select
-              value={String(month)}
-              onValueChange={(v) => setMonth(Number(v))}
-            >
-              <SelectTrigger className="w-[120px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {MONTHS.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>
-                    {m.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              Năm
-            </label>
-            <Select
-              value={String(year)}
-              onValueChange={(v) => setYear(Number(v))}
-            >
-              <SelectTrigger className="w-[100px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {yearOptions.map((y) => (
-                  <SelectItem key={y.value} value={y.value}>
-                    {y.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </>
-      )}
-
-      {/* Quarter picker */}
-      {periodType === 'quy' && (
-        <>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              Quý
-            </label>
-            <Select
-              value={String(quarter)}
-              onValueChange={(v) => setQuarter(Number(v))}
-            >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {QUARTERS.map((q) => (
-                  <SelectItem key={q.value} value={q.value}>
-                    {q.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              Năm
-            </label>
-            <Select
-              value={String(year)}
-              onValueChange={(v) => setYear(Number(v))}
-            >
-              <SelectTrigger className="w-[100px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {yearOptions.map((y) => (
-                  <SelectItem key={y.value} value={y.value}>
-                    {y.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </>
-      )}
-
-      {/* Year picker */}
-      {periodType === 'nam' && (
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            Năm
-          </label>
-          <Select
-            value={String(year)}
-            onValueChange={(v) => setYear(Number(v))}
-          >
-            <SelectTrigger className="w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {yearOptions.map((y) => (
-                <SelectItem key={y.value} value={y.value}>
-                  {y.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* Custom date range */}
-      {periodType === 'tuyChon' && (
-        <>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              Từ ngày
-            </label>
-            <Input
-              type="date"
-              value={customFrom}
-              onChange={(e) => setCustomFrom(e.target.value)}
-              className="w-[160px]"
+              value={periodType}
+              onChange={(v) => setPeriodType(v as KqkdPeriodType)}
+              options={PERIOD_OPTIONS}
+              style={{ width: 140 }}
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              Đến ngày
-            </label>
-            <Input
-              type="date"
-              value={customTo}
-              onChange={(e) => setCustomTo(e.target.value)}
-              className="w-[160px]"
-            />
-          </div>
-        </>
-      )}
+          </Field>
 
-      <Button onClick={handleSubmit} disabled={loading}>
-        {loading ? 'Đang tải...' : 'Xem báo cáo'}
-      </Button>
-    </div>
+          {periodType === 'thang' && (
+            <>
+              <Field label="Tháng">
+                <Select
+                  value={String(month)}
+                  onChange={(v) => setMonth(Number(v))}
+                  options={MONTHS}
+                  style={{ width: 120 }}
+                />
+              </Field>
+              {yearField}
+            </>
+          )}
+
+          {periodType === 'quy' && (
+            <>
+              <Field label="Quý">
+                <Select
+                  value={String(quarter)}
+                  onChange={(v) => setQuarter(Number(v))}
+                  options={QUARTERS}
+                  style={{ width: 150 }}
+                />
+              </Field>
+              {yearField}
+            </>
+          )}
+
+          {periodType === 'nam' && yearField}
+
+          {periodType === 'tuyChon' && (
+            <>
+              <Field label="Từ ngày">
+                <DatePicker
+                  format="DD/MM/YYYY"
+                  value={customFrom ? dayjs(customFrom) : null}
+                  onChange={(d) => setCustomFrom(d ? d.format('YYYY-MM-DD') : '')}
+                  style={{ width: 160 }}
+                />
+              </Field>
+              <Field label="Đến ngày">
+                <DatePicker
+                  format="DD/MM/YYYY"
+                  value={customTo ? dayjs(customTo) : null}
+                  onChange={(d) => setCustomTo(d ? d.format('YYYY-MM-DD') : '')}
+                  style={{ width: 160 }}
+                />
+              </Field>
+            </>
+          )}
+        </>
+      }
+      actions={
+        <Button type="primary" onClick={handleSubmit} loading={loading}>
+          Xem báo cáo
+        </Button>
+      }
+    />
   );
 }

@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Space, Input, Button, Breadcrumb } from 'antd';
-import { 
-  SearchOutlined, 
-  ReloadOutlined, 
-  PlusOutlined, 
+import { Space, Button, Breadcrumb } from 'antd';
+import {
+  PlusOutlined,
   ExportOutlined,
   HomeOutlined,
-  SettingOutlined 
+  SettingOutlined
 } from '@ant-design/icons';
+import { FilterBar } from '@/components/common/FilterBar';
 import { useQuyChaunHandler, useQuyChaunState } from '../../QuyChaunHandlerContext';
 import { usePagePermission } from "@/hooks/usePagePermission";
 import './QuyChaunHeader.state';
@@ -43,20 +42,6 @@ export const QuyChaunHeader: React.FC = () => {
     });
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalSearchText(e.target.value);
-  };
-
-  const handleClear = () => {
-    setLocalSearchText('');
-    handler.executeEvent('searchPaginated', { 
-      keyword: '',
-      page: 1,
-      limit: pagination.limit,
-      loaiGiaoDich: activeTab === 'all' ? undefined : activeTab,
-    });
-  };
-
   const handleRefresh = () => {
     handler.executeEvent('refresh', {});
   };
@@ -75,36 +60,33 @@ export const QuyChaunHeader: React.FC = () => {
         <Breadcrumb.Item>Quy chuẩn hạch toán</Breadcrumb.Item>
       </Breadcrumb>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
         <Space>
           <SettingOutlined />
           <span style={{ fontSize: 16, fontWeight: 500 }}>Quy chuẩn hạch toán tự động</span>
         </Space>
-        
-        <Space>
-          <Input.Search
-            placeholder="Tìm kiếm nghiệp vụ..."
-            prefix={<SearchOutlined />}
-            value={localSearchText}
-            onChange={handleSearchChange}
-            onSearch={handleSearch}
-            onClear={handleClear}
-            style={{ width: 250 }}
-            allowClear
-          />
-          {canExport && (
-            <Button icon={<ExportOutlined />}>Xuất Excel</Button>
-          )}
-          <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
-            Làm mới
-          </Button>
-          {canCreate && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              Thêm mới
-            </Button>
-          )}
-        </Space>
       </div>
+
+      <FilterBar
+        search={{
+          value: localSearchText,
+          onChange: setLocalSearchText,
+          onSearch: () => handleSearch(localSearchText),
+          placeholder: 'Tìm kiếm nghiệp vụ...',
+          width: 250,
+        }}
+        onReset={handleRefresh}
+        actions={
+          <>
+            {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+            {canCreate && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                Thêm mới
+              </Button>
+            )}
+          </>
+        }
+      />
     </>
   );
 };
