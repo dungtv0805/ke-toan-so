@@ -14,7 +14,6 @@ import {
   Row,
   Col,
   Breadcrumb,
-  Statistic,
   Empty,
 } from "antd";
 import {
@@ -23,7 +22,6 @@ import {
   DeleteOutlined,
   ExportOutlined,
   ReloadOutlined,
-  TeamOutlined,
   HomeOutlined,
   ApartmentOutlined,
 } from "@ant-design/icons";
@@ -243,19 +241,6 @@ const BoPhanPage: React.FC = () => {
           { title: "Bộ phận" },
         ]}
       />
-
-      {/* Stats Card */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="Tổng số bộ phận"
-              value={pagination.total}
-              prefix={<TeamOutlined className="text-primary" />}
-            />
-          </Card>
-        </Col>
-      </Row>
 
       {/* Table */}
       <Card>

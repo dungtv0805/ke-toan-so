@@ -16,7 +16,6 @@ import {
   Row,
   Col,
   Breadcrumb,
-  Statistic,
   Tabs,
 } from "antd";
 import {
@@ -24,7 +23,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   ExportOutlined,
-  DollarOutlined,
   HomeOutlined,
   FallOutlined,
   RiseOutlined,
@@ -363,19 +361,6 @@ const KhoanMucPage: React.FC = () => {
           { title: "Khoản mục" },
         ]}
       />
-
-      {/* Stats Cards */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="Tổng khoản mục"
-              value={pagination.total}
-              prefix={<DollarOutlined className="text-primary" />}
-            />
-          </Card>
-        </Col>
-      </Row>
 
       {/* Table with Tabs */}
       <Card>

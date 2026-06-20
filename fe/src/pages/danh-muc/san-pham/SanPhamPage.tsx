@@ -15,7 +15,6 @@ import {
   Row,
   Col,
   Breadcrumb,
-  Statistic,
   InputNumber,
 } from "antd";
 import {
@@ -25,7 +24,6 @@ import {
   ExportOutlined,
   ReloadOutlined,
   HomeOutlined,
-  ShoppingOutlined,
   DollarOutlined,
   InboxOutlined,
 } from "@ant-design/icons";
@@ -314,19 +312,6 @@ const SanPhamPage: React.FC = () => {
           { title: "Sản phẩm" },
         ]}
       />
-
-      {/* Stats Cards */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="Tổng sản phẩm"
-              value={pagination.total}
-              prefix={<ShoppingOutlined className="text-primary" />}
-            />
-          </Card>
-        </Col>
-      </Row>
 
       {/* Table */}
       <Card>
