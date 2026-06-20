@@ -60,7 +60,17 @@
 | Loai giao dich | `/danh-muc/loai-giao-dich` | ACTIVE | master-data:3002 |
 | Hop dong | `/danh-muc/hop-dong` | ACTIVE | master-data:3002 |
 | Quy chuan | `/danh-muc/quy-chuan` | ACTIVE | config:3007 |
-| Kho | `/danh-muc/kho` | COMING SOON | — |
+| Kho | `/danh-muc/kho` | ACTIVE | master-data:3002 |
+| Hang hoa vat tu | `/danh-muc/hang-hoa-vat-tu` | ACTIVE | master-data:3002 |
+| Don vi tinh | `/danh-muc/don-vi-tinh` | ACTIVE | master-data:3002 |
+| Nhom vat tu | `/danh-muc/nhom-vat-tu` | ACTIVE | master-data:3002 |
+
+### KHO (Warehouse)
+| Menu Item | Route | Status | API |
+|-----------|-------|--------|-----|
+| Nhap kho | `/kho/nhap-kho` | ACTIVE | kho:3008 |
+| Xuat kho | `/kho/xuat-kho` | ACTIVE | kho:3008 |
+| Chuyen kho | `/kho/chuyen-kho` | ACTIVE | kho:3008 |
 
 ### CAU HINH (Configuration)
 | Menu Item | Route | Status | API |
@@ -75,4 +85,4 @@
 - **Total sidebar items:** ~80+
 - **Active (implemented):** ~35
 - **Coming Soon:** ~45+
-- **Services used by active pages:** auth(3001), master-data(3002), voucher(3003), cash-book(3004), payable(3005), reporting(3006), config(3007)
+- **Services used by active pages:** auth(3001), master-data(3002), voucher(3003), cash-book(3004), payable(3005), reporting(3006), config(3007), kho(3008)

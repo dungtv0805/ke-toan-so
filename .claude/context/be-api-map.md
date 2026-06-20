@@ -13,6 +13,7 @@ All requests: `https://masterceo.com.vn/api/{prefix}/...` → Gateway (3000) →
 | /payable | payable-service | 3005 |
 | /reporting | reporting-service | 3006 |
 | /config | config-service | 3007 |
+| /kho | kho-service | 3008 |
 
 ## Auth Service (3001)
 
@@ -76,6 +77,62 @@ Same CRUD pattern as /doi-tuong
 | PUT | /tenants/:id/members/:userId | Update member |
 | DELETE | /tenants/:id | Delete |
 | DELETE | /tenants/:id/members/:userId | Remove member |
+
+### /kho (Warehouses)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /kho | List (paginated) |
+| GET | /kho/all | List (all) |
+| GET | /kho/search | Search |
+| GET | /kho/stats | Statistics |
+| GET | /kho/check-ma | Check code exists |
+| GET | /kho/total | Count |
+| GET | /kho/:id | By ID |
+| POST | /kho | Create |
+| PUT | /kho/:id | Update |
+| DELETE | /kho/:id | Delete |
+
+### /don-vi-tinh (Units of Measure)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /don-vi-tinh | List (paginated) |
+| GET | /don-vi-tinh/all | List (all) |
+| GET | /don-vi-tinh/search | Search |
+| GET | /don-vi-tinh/stats | Statistics |
+| GET | /don-vi-tinh/check-ma | Check code exists |
+| GET | /don-vi-tinh/total | Count |
+| GET | /don-vi-tinh/:id | By ID |
+| POST | /don-vi-tinh | Create |
+| PUT | /don-vi-tinh/:id | Update |
+| DELETE | /don-vi-tinh/:id | Delete |
+
+### /nhom-vat-tu (Material Groups)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /nhom-vat-tu | List (paginated) |
+| GET | /nhom-vat-tu/all | List (all) |
+| GET | /nhom-vat-tu/search | Search |
+| GET | /nhom-vat-tu/stats | Statistics |
+| GET | /nhom-vat-tu/check-ma | Check code exists |
+| GET | /nhom-vat-tu/total | Count |
+| GET | /nhom-vat-tu/:id | By ID |
+| POST | /nhom-vat-tu | Create |
+| PUT | /nhom-vat-tu/:id | Update |
+| DELETE | /nhom-vat-tu/:id | Delete |
+
+### /hang-hoa-vat-tu (Goods & Materials)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /hang-hoa-vat-tu | List (paginated) |
+| GET | /hang-hoa-vat-tu/all | List (all) |
+| GET | /hang-hoa-vat-tu/search | Search |
+| GET | /hang-hoa-vat-tu/stats | Statistics |
+| GET | /hang-hoa-vat-tu/check-ma | Check code exists |
+| GET | /hang-hoa-vat-tu/total | Count |
+| GET | /hang-hoa-vat-tu/:id | By ID |
+| POST | /hang-hoa-vat-tu | Create |
+| PUT | /hang-hoa-vat-tu/:id | Update |
+| DELETE | /hang-hoa-vat-tu/:id | Delete |
 
 ### Other Master Data (same CRUD pattern)
 - /chu-dau-tu, /dong-tien, /du-an, /hop-dong, /khoan-muc
@@ -227,3 +284,20 @@ Same pattern as /phai-thu (with summary-by-supplier instead)
 | GET | /phieu-template/:loai | Lấy mẫu in HTML theo loại (PHIEU_THU/PHIEU_CHI); null nếu chưa cấu hình |
 | PUT | /phieu-template/:loai | Upsert (upload) mẫu in `{ html }` |
 | DELETE | /phieu-template/:loai | Xoá mẫu (FE về mẫu mặc định) |
+
+## Kho Service (3008)
+
+### /kho/phieu (Phiếu kho — Warehouse Vouchers)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /kho/phieu | List phiếu kho (paginated, filter by loaiPhieu) |
+| GET | /kho/phieu/next-so?loaiPhieu= | Get next auto-generated phiếu number (NK/XK/CK) |
+| GET | /kho/phieu/stats?loaiPhieu= | Statistics (total count, total value) |
+| GET | /kho/phieu/:id | By ID |
+| POST | /kho/phieu | Create phiếu kho |
+| PUT | /kho/phieu/:id | Update phiếu kho |
+| DELETE | /kho/phieu/:id | Delete phiếu kho |
+
+**loaiPhieu values:** `NK` (Nhập kho — mẫu 01-VT), `XK` (Xuất kho — mẫu 02-VT), `CK` (Chuyển kho — mẫu 03XKNB3)
+
+**Collections:** `phieu_kho`, `phieu_kho_sequence` (auto-increment so phieu per loaiPhieu)

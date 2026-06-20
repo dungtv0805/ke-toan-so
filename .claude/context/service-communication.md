@@ -7,6 +7,9 @@ Frontend → Gateway (:3000) → strip prefix → forward to target service
                                           ↓
 Reporting Service (:3006) → ServiceClient (HTTP) → Voucher Service (:3003)
                           → ServiceClient (HTTP) → Master Data Service (:3002)
+
+Services: auth(3001), master-data(3002), voucher(3003), cash-book(3004),
+          payable(3005), reporting(3006), config(3007), kho(3008)
 ```
 
 ## ServiceClient (libs/service-client/src/)
@@ -29,6 +32,7 @@ CASH_BOOK_SERVICE_URL=http://localhost:3004
 PAYABLE_SERVICE_URL=http://localhost:3005
 REPORTING_SERVICE_URL=http://localhost:3006
 CONFIG_SERVICE_URL=http://localhost:3007
+KHO_SERVICE_URL=http://localhost:3008
 ```
 
 ### Error Handling
@@ -79,10 +83,20 @@ rsync -az fe/dist/ kt:/root/chimseo/nginx/build4/
 ```
 
 ### Docker Container
-- Single container `digital-book-app` chạy tất cả 8 services via PM2
-- Ports: 3000-3007 (chỉ expose 3000 ra ngoài)
+- Single container `digital-book-app` chạy tất cả services via PM2
+- Ports: 3000-3008 (chỉ expose 3000 ra ngoài)
 - Env files: db.env, jwt.env, services.env
 - Volume mount: `./dist:/app/dist` — chỉ cần scp file mới + restart
+
+### Kho Service (3008) — Deploy Note
+**kho-service là process mới**, chưa có trong bộ deploy hiện tại (PM2 ecosystem chỉ có services 3000-3007). Khi lên production cần:
+1. Build: `cd be && npx nest build kho-service`
+2. Scp `dist/apps/kho-service/main.js` lên server
+3. Thêm entry kho-service vào `pm2/ecosystem.config.js` (port 3008)
+4. Thêm `KHO_SERVICE_URL=http://localhost:3008` vào `env/services.env`
+5. Thêm `SERVICE_KHO_HOST` / `SERVICE_KHO_PORT` nếu gateway dùng host/port format
+6. Restart container: `docker restart digital-book-app`
+Phối hợp `/db-deploy` skill khi deploy lần đầu.
 
 ## Bugs Đã Fix
 
