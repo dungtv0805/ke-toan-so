@@ -72,6 +72,11 @@ const App = () => (
           controlHeightSM: 24,
           controlHeightLG: 36,
         },
+        components: {
+          // Card header + body padding 12px đồng bộ nhịp 12
+          // (var --ant-card-header-padding / --ant-card-body-padding).
+          Card: { headerPadding: 12, bodyPadding: 12 },
+        },
       }}
     >
       <TooltipProvider>

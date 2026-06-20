@@ -288,7 +288,7 @@
 
 .ant-card-head {
   border-bottom: 1px solid hsl(var(--border)) !important;
-  padding: 16px 24px !important;
+  padding: 12px !important;
 }
 
 .ant-card-head-title {
