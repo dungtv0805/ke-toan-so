@@ -135,6 +135,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/voucher-service/tsconfig.app.json"
       }
+    },
+    "kho-service": {
+      "type": "application",
+      "root": "apps/kho-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/kho-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/kho-service/tsconfig.app.json"
+      }
     }
   }
 }
