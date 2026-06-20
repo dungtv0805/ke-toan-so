@@ -142,9 +142,21 @@ const BaoCaoTaiChinhPage: React.FC = () => {
       const paneTop = pane.getBoundingClientRect().top;
       const avail = Math.max(window.innerHeight - paneTop - 8, 160);
       setTabContentHeight(avail);
-      // Chừa chỗ cho header (~39) + dòng "Tổng cộng" fixed (~39) + lề/scrollbar (~18)
-      // để bảng luôn nằm gọn trong vùng hiển thị, dòng tổng cộng không bị cắt ở màn thấp (vd 1280x720)
-      setAntTableScrollY(Math.max(avail - 96, 120));
+
+      // Chiều cao vùng cuộn của bảng (scroll.y) phải đo từ ĐÁY HEADER thực tế
+      // của bảng đang hiển thị — không phải từ top của pane — để cộng đúng phần
+      // toolbar (nút "Mở tất cả/Thu gọn") nằm phía trên bảng. Trước đây dùng
+      // magic-number (avail - 96) bỏ qua toolbar nên bảng tràn xuống dưới và
+      // dòng "Tổng cộng" (summary fixed) bị cắt ở góc dưới.
+      const thead = pane.querySelector('.ant-table-thead') as HTMLElement | null;
+      const headerBottom = thead
+        ? thead.getBoundingClientRect().bottom
+        : paneTop + 40;
+      const SUMMARY_H = 40; // dòng "Tổng cộng" fixed
+      const MARGIN = 16; // lề + thanh cuộn ngang
+      setAntTableScrollY(
+        Math.max(window.innerHeight - headerBottom - SUMMARY_H - MARGIN, 120),
+      );
     };
     const raf = requestAnimationFrame(update);
     window.addEventListener('resize', update);
