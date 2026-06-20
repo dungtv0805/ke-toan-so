@@ -174,14 +174,10 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
         }
         actions={
           <>
-            <Button type="primary" onClick={loadReport} disabled={maTaiKhoans.length === 0}>
+            <Button type="primary" onClick={loadReport}>
               Xem
             </Button>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={loadReport}
-              disabled={maTaiKhoans.length === 0}
-            >
+            <Button icon={<ReloadOutlined />} onClick={loadReport}>
               Làm mới
             </Button>
           </>
