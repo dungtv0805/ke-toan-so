@@ -289,7 +289,7 @@ export function template03XKNB3(phieu: PhieuKho, congTy: CongTyInfo): string {
     'Thực xuất',
     'Thực nhập',
     (ct) => ct.soLuongThucTe ?? ct.soLuong,
-    (ct) => ct.soLuong,
+    (ct) => ct.soLuongThucTe ?? ct.soLuong,
   );
 
   return `<html><head>

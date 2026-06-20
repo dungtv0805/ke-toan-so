@@ -13,12 +13,12 @@ import { PhieuKhoService } from './phieu-kho.service';
 import { CreatePhieuKhoDto, UpdatePhieuKhoDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
 
-@Controller('kho')
+@Controller('phieu')
 @UseGuards(JwtGuard, RoleGuard)
 export class PhieuKhoController {
   constructor(private readonly phieuKhoService: PhieuKhoService) {}
 
-  @Get('phieu')
+  @Get()
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KE_TOAN_QUY', 'MANAGER')
   async findAll(
     @Query('page') page?: string,
@@ -40,42 +40,42 @@ export class PhieuKhoController {
   }
 
   // IMPORTANT: next-so and stats must be declared BEFORE :id
-  @Get('phieu/next-so')
+  @Get('next-so')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KE_TOAN_QUY', 'MANAGER')
   async nextSo(@Query('loaiPhieu') loaiPhieu: string) {
     const soPhieu = await this.phieuKhoService.getNextSo(loaiPhieu);
     return { success: true, data: { soPhieu } };
   }
 
-  @Get('phieu/stats')
+  @Get('stats')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KE_TOAN_QUY', 'MANAGER')
   async stats(@Query('loaiPhieu') loaiPhieu?: string) {
     const data = await this.phieuKhoService.getStats(loaiPhieu);
     return { success: true, data };
   }
 
-  @Get('phieu/:id')
+  @Get(':id')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KE_TOAN_QUY', 'MANAGER')
   async findOne(@Param('id') id: string) {
     const data = await this.phieuKhoService.findOne(id);
     return { success: true, data };
   }
 
-  @Post('phieu')
+  @Post()
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KE_TOAN_QUY', 'MANAGER')
   async create(@Body() dto: CreatePhieuKhoDto) {
     const data = await this.phieuKhoService.create(dto);
     return { success: true, data };
   }
 
-  @Put('phieu/:id')
+  @Put(':id')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KE_TOAN_QUY', 'MANAGER')
   async update(@Param('id') id: string, @Body() dto: UpdatePhieuKhoDto) {
     const data = await this.phieuKhoService.update(id, dto);
     return { success: true, data };
   }
 
-  @Delete('phieu/:id')
+  @Delete(':id')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
   async remove(@Param('id') id: string) {
     await this.phieuKhoService.remove(id);
