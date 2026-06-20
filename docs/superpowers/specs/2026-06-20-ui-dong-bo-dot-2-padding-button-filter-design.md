@@ -60,8 +60,9 @@ Chuyển filter tự chế (`Card.extra` / `Space` rời) sang `<FilterBar>` chu
 - **Sổ quỹ**: `SoQuyPage` — search + RangePicker → `search` + `filters` (RangePicker) + `actions`.
 - **Báo cáo**:
   - `SoCaiPage`: Select tài khoản → `filters`; actions Xuất/Làm mới.
-  - `BangCanDoiPage`, `BangTongHopCongNoPage`, `SoChiTietTaiKhoanPage`: gom control kỳ/tài khoản vào `filters`.
+  - `SoChiTietTaiKhoanPage`: gom control kỳ/tài khoản vào `filters`.
   - `PnLPage`, `BaoCaoTaiChinhPage`: bộ lọc kỳ (`PeriodFilter`) đặt trong `<FilterBar>` (filters = các select kỳ, actions = "Xem báo cáo").
+  - **KHÔNG migrate** `BangCanDoiPage`, `BangTongHopCongNoPage` (điều hướng bằng cây, không có filter rõ ràng) — chỉ áp Phần 1 + 2.
 - **PeriodFilter.tsx** (chỉ dùng ở tai-chinh): bỏ các `Typography.Text` label rời + `Space wrap`; render các select kỳ trên 1 hàng không wrap, dùng làm `filters` của FilterBar, thêm icon `CalendarOutlined` đầu hàng; link "Tùy chọn/Theo kỳ" giữ chức năng.
 
 > Lưu ý phạm vi: các trang cấu hình (tenant/vai-tro/thanh-vien/phan-quyen) theo handler-pattern, không có filter list — chỉ áp Phần 1 + 2, không thêm FilterBar.
