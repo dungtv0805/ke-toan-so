@@ -1,3 +1,15 @@
+// ===== DANH MỤC KHO =====
+
+export type TinhChatVatTu = 'TAI_SAN' | 'HANG_HOA' | 'NGUYEN_LIEU';
+export interface Kho { id: string; ma: string; ten: string; diaChi?: string; thuKho?: string; moTa?: string; isActive?: boolean; }
+export interface DonViTinh { id: string; ma: string; ten: string; moTa?: string; isActive?: boolean; }
+export interface NhomVatTu { id: string; ma: string; ten: string; moTa?: string; isActive?: boolean; }
+export interface HangHoaVatTu {
+  id: string; ma: string; ten: string; tinhChat?: TinhChatVatTu;
+  donViTinhMa?: string; donViTinhTen?: string; nhomVatTuMa?: string; nhomVatTuTen?: string;
+  quyCach?: string; tkKho?: string; donGia?: number; moTa?: string; isActive?: boolean;
+}
+
 // ===== DANH MỤC =====
 
 export interface TaiKhoan {
