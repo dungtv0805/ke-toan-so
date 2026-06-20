@@ -39,6 +39,16 @@ export interface CompositionSlice {
   soTien: number;
 }
 
+export interface BreakdownSlice {
+  ten: string;
+  soTien: number;
+}
+
+export interface PnlBreakdown {
+  doanhThu: BreakdownSlice[];
+  chiPhi: BreakdownSlice[];
+}
+
 export interface AgingBuckets {
   chuaDenHan: number;
   quaHan1_30: number;
@@ -118,6 +128,24 @@ export const dashboardService = {
     }
   },
 
+  /** Tỷ trọng doanh thu/chi phí theo tài khoản trong tháng/năm chọn. */
+  async getPnlBreakdown(month: number, year: number): Promise<PnlBreakdown> {
+    try {
+      const { start, end } = monthRange(month, year);
+      const pnl = await baoCaoReportService.getPnl({
+        startDate: start,
+        endDate: end,
+        periodType: 'thang',
+      });
+      return {
+        doanhThu: (pnl.doanhThu ?? []).map((e) => ({ ten: e.ten, soTien: e.soTien })),
+        chiPhi: (pnl.chiPhi ?? []).map((e) => ({ ten: e.ten, soTien: e.soTien })),
+      };
+    } catch {
+      return { doanhThu: [], chiPhi: [] };
+    }
+  },
+
   /** Dòng tiền 12 tháng (thu/chi/số dư cuối kỳ) từ sổ quỹ. */
   async getCashSeries(year: number): Promise<CashSeriesPoint[]> {
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -126,15 +154,16 @@ export const dashboardService = {
     );
     return months.map((thang, idx) => {
       const r = results[idx];
-      if (r.status !== 'fulfilled' || !Array.isArray(r.value) || r.value.length === 0) {
+      if (r.status !== 'fulfilled' || !r.value) {
         return { thang, thu: 0, chi: 0, soDu: 0 };
       }
-      const rows = r.value;
-      const thu = rows.reduce((s, e) => s + (e.thu || 0), 0);
-      const chi = rows.reduce((s, e) => s + (e.chi || 0), 0);
-      const last = rows[rows.length - 1];
-      const soDu = last?.tonSau ?? last?.soDu ?? 0;
-      return { thang, thu, chi, soDu };
+      const v = r.value;
+      return {
+        thang,
+        thu: v.tongThu || 0,
+        chi: v.tongChi || 0,
+        soDu: v.soDuCuoiKy || 0,
+      };
     });
   },
 

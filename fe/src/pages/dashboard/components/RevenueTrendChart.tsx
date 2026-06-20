@@ -1,5 +1,5 @@
-import React from 'react';
-import { Card, Skeleton, Empty } from 'antd';
+import React, { useState } from 'react';
+import { Card, Skeleton, Empty, Segmented } from 'antd';
 import { RiseOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -20,7 +20,18 @@ interface Props {
   year: number;
 }
 
+type Metric = 'all' | 'doanhThu' | 'chiPhi' | 'loiNhuan';
+
+const METRIC_OPTIONS: { label: string; value: Metric }[] = [
+  { label: 'Tất cả', value: 'all' },
+  { label: 'Doanh thu', value: 'doanhThu' },
+  { label: 'Chi phí', value: 'chiPhi' },
+  { label: 'Lợi nhuận', value: 'loiNhuan' },
+];
+
 const RevenueTrendChart: React.FC<Props> = ({ year }) => {
+  const [metric, setMetric] = useState<Metric>('all');
+
   const { data, isLoading } = useQuery({
     queryKey: ['dash-pnl-series', year],
     queryFn: () => dashboardService.getPnlSeries(year),
@@ -33,8 +44,16 @@ const RevenueTrendChart: React.FC<Props> = ({ year }) => {
       title={
         <span className="text-sm sm:text-base">
           <RiseOutlined className="text-primary mr-2" />
-          Doanh thu - Chi phí - Lợi nhuận ({year})
+          Doanh thu – Chi phí – Lợi nhuận theo tháng
         </span>
+      }
+      extra={
+        <Segmented<Metric>
+          size="small"
+          value={metric}
+          onChange={(v) => setMetric(v)}
+          options={METRIC_OPTIONS}
+        />
       }
     >
       {isLoading ? (
@@ -52,9 +71,22 @@ const RevenueTrendChart: React.FC<Props> = ({ year }) => {
               labelFormatter={(label) => `Tháng ${label}`}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Bar dataKey="doanhThu" name="Doanh thu" fill={DASH_COLORS.revenue} maxBarSize={28} />
-            <Bar dataKey="chiPhi" name="Chi phí" fill={DASH_COLORS.expense} maxBarSize={28} />
-            <Line type="monotone" dataKey="loiNhuan" name="Lợi nhuận" stroke={DASH_COLORS.balance} strokeWidth={2} dot={{ r: 3 }} />
+            {metric === 'all' && (
+              <>
+                <Bar dataKey="doanhThu" name="Doanh thu" fill={DASH_COLORS.revenue} maxBarSize={28} />
+                <Bar dataKey="chiPhi" name="Chi phí" fill={DASH_COLORS.expense} maxBarSize={28} />
+                <Line type="monotone" dataKey="loiNhuan" name="Lợi nhuận" stroke={DASH_COLORS.balance} strokeWidth={2} dot={{ r: 3 }} />
+              </>
+            )}
+            {metric === 'doanhThu' && (
+              <Bar dataKey="doanhThu" name="Doanh thu" fill={DASH_COLORS.revenue} maxBarSize={28} />
+            )}
+            {metric === 'chiPhi' && (
+              <Bar dataKey="chiPhi" name="Chi phí" fill={DASH_COLORS.expense} maxBarSize={28} />
+            )}
+            {metric === 'loiNhuan' && (
+              <Bar dataKey="loiNhuan" name="Lợi nhuận" fill={DASH_COLORS.balance} maxBarSize={28} />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       )}

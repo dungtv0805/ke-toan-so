@@ -15,6 +15,14 @@ export interface DailySummary {
   soDu: number;
 }
 
+export interface MonthlyCashReport {
+  soDuDauKy: number;
+  tongThu: number;
+  tongChi: number;
+  soDuCuoiKy: number;
+  entries: SoQuy[];
+}
+
 class SoQuyService extends ServiceBase {
   constructor() {
     super({ endpoint: '/cash-book/so-quy' });
@@ -31,8 +39,11 @@ class SoQuyService extends ServiceBase {
     });
   }
 
-  async getByMonth(month: number, year: number): Promise<SoQuy[]> {
-    return this.get<SoQuy[]>({
+  async getByMonth(
+    month: number,
+    year: number,
+  ): Promise<MonthlyCashReport> {
+    return this.get<MonthlyCashReport>({
       endpoint: '/by-month',
       params: { month: month.toString(), year: year.toString() },
     });

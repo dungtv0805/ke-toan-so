@@ -5,6 +5,7 @@ import KpiCards from './components/KpiCards';
 import RevenueTrendChart from './components/RevenueTrendChart';
 import CashFlowChart from './components/CashFlowChart';
 import CompositionCharts from './components/CompositionCharts';
+import RevenueExpenseBreakdownCharts from './components/RevenueExpenseBreakdownCharts';
 import AgingCharts from './components/AgingCharts';
 import TopPartnersCharts from './components/TopPartnersCharts';
 import OverdueTables from './components/OverdueTables';
@@ -68,6 +69,9 @@ const Dashboard: React.FC = () => {
           <CashFlowChart year={year} />
         </Col>
       </Row>
+
+      {/* Tỷ trọng doanh thu / chi phí */}
+      <RevenueExpenseBreakdownCharts month={month} year={year} />
 
       {/* Cơ cấu */}
       <CompositionCharts />
