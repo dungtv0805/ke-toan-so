@@ -47,6 +47,7 @@ export interface InitStates extends BaseStates {
   summaryLoading: Record<string, boolean>;
   summaryLoadedTypes: PhieuSummaryType[];
   printTemplate: string | null;
+  templateModalOpen: boolean;
 }
 
 declare module "../../../phieu.handler" {

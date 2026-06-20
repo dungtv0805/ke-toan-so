@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePhieuState, usePhieuHandler } from "../../PhieuHandlerContext";
-import { Search, Filter, RotateCcw, Plus, Upload } from "lucide-react";
+import { Search, Filter, RotateCcw, Plus, Upload, FileCog } from "lucide-react";
 
 export function FilterBar() {
   const handler = usePhieuHandler();
@@ -30,6 +30,7 @@ export function FilterBar() {
   const [, setFormModalOpen] = usePhieuState("formModalOpen", false);
   const [, setEditingPhieu] = usePhieuState("editingPhieu", null);
   const [, setImportModalOpen] = usePhieuState("importModalOpen", false);
+  const [, setTemplateModalOpen] = usePhieuState("templateModalOpen", false);
 
   const handleSearchChange = (value: string) => {
     handler.executeEvent("setFilter", { key: "searchText", value });
@@ -207,6 +208,14 @@ export function FilterBar() {
           Đặt lại
         </Button>
         <div className="flex-1" />
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setTemplateModalOpen(true)}
+        >
+          <FileCog className="h-4 w-4 mr-1" />
+          Mẫu in
+        </Button>
         <Button
           size="sm"
           variant="outline"

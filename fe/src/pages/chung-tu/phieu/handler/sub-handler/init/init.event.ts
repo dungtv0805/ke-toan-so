@@ -7,6 +7,7 @@ export interface InitEvent extends BaseEvents {
   loadPage: { params: { page: number; limit?: number }; result: void };
   loadStats: { params: {}; result: void };
   loadMasterData: { params: {}; result: void };
+  loadTemplate: { params: {}; result: void };
 }
 
 declare module "../../../phieu.handler" {

@@ -2,6 +2,7 @@ import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
 import { taiKhoanService } from "@/services/taiKhoanService";
 import { PhieuQueryParams, PhieuSummaryType } from "@/services/phieuService";
+import { phieuTemplateService } from "@/services/phieuTemplateService";
 import { PhieuConfig } from "../../../phieuConfig";
 import { PhieuStates } from "../../../phieu.handler";
 import { InitEvent } from "./init.event";
@@ -22,7 +23,20 @@ export class InitHandler extends CSubHanlder<InitEvent, PhieuStates> {
       this.loadTaiKhoanList(),
       this.executeEvent("loadMasterData", {}),
       this.executeEvent("loadStats", {}),
+      this.executeEvent("loadTemplate", {}),
     ]);
+  }
+
+  @HandlerDecorator("loadTemplate")
+  async loadTemplate(): Promise<void> {
+    const config = this.getState("config") as PhieuConfig | undefined;
+    if (!config) return;
+    try {
+      const tpl = await phieuTemplateService.getByLoai(config.loai);
+      this.setState("printTemplate", tpl?.html ?? null);
+    } catch (e) {
+      console.error("Error loading print template:", e);
+    }
   }
 
   @HandlerDecorator("refresh")
@@ -132,6 +146,7 @@ export class InitHandler extends CSubHanlder<InitEvent, PhieuStates> {
       ["summaryLoading", {}],
       ["summaryLoadedTypes", []],
       ["printTemplate", null],
+      ["templateModalOpen", false],
     ];
     for (const [k, v] of defaults) {
       if (!this.hasState(k)) this.setState(k, v);
