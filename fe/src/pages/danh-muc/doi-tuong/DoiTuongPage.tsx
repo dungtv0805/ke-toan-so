@@ -34,6 +34,7 @@ import {
   PhoneOutlined,
   MailOutlined,
 } from "@ant-design/icons";
+import { FilterBar } from "@/components/common/FilterBar";
 import { DoiTuong } from "@/types";
 import { doiTuongService } from "@/services/doiTuongService";
 import { loaiDoiTuong } from "@/mock-data/doi-tuong";
@@ -467,62 +468,44 @@ const DoiTuongPage: React.FC = () => {
         />
 
         {/* Toolbar */}
-        <div className="mb-4">
-          <Row gutter={[16, 16]} align="middle" justify="space-between">
-            <Col xs={24} md={12}>
-              <Space wrap>
-                <Input
-                  placeholder="Tìm kiếm theo mã, tên, SĐT, email..."
-                  prefix={<SearchOutlined className="text-muted-foreground" />}
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  onPressEnter={() =>
-                    fetchData(
-                      1,
-                      pagination.pageSize,
-                      searchText,
-                      activeTab === "all"
-                        ? undefined
-                        : (activeTab as DoiTuong["loai"])
-                    )
-                  }
-                  style={{ width: 300 }}
-                  allowClear
-                />
-                <Tooltip title="Làm mới">
-                  <Button
-                    icon={<ReloadOutlined />}
-                    onClick={() => {
-                      setSearchText("");
-                      fetchData(
-                        1,
-                        pagination.pageSize,
-                        "",
-                        activeTab === "all"
-                          ? undefined
-                          : (activeTab as DoiTuong["loai"])
-                      );
-                    }}
-                  />
-                </Tooltip>
-              </Space>
-            </Col>
-            <Col xs={24} md={12} className="text-right">
-              <Space>
-                {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
-                {canCreate && (
-                  <Button
+        <FilterBar
+          search={{
+            value: searchText,
+            onChange: setSearchText,
+            onSearch: () =>
+              fetchData(
+                1,
+                pagination.pageSize,
+                searchText,
+                activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"])
+              ),
+            placeholder: "Tìm kiếm theo mã, tên, SĐT, email...",
+            width: 300,
+          }}
+          onReset={() => {
+            setSearchText("");
+            fetchData(
+              1,
+              pagination.pageSize,
+              "",
+              activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"])
+            );
+          }}
+          actions={
+            <>
+              {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+              {canCreate && (
+                <Button
                   type="primary"
                   icon={<PlusOutlined />}
                   onClick={() => openModal()}
                 >
                   Thêm đối tượng
                 </Button>
-                )}
-              </Space>
-            </Col>
-          </Row>
-        </div>
+              )}
+            </>
+          }
+        />
 
         {/* Table */}
         <Table

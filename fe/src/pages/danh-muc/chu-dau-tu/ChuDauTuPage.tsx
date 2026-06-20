@@ -18,10 +18,8 @@ import {
 } from "antd";
 import {
   PlusOutlined,
-  SearchOutlined,
   EditOutlined,
   DeleteOutlined,
-  ReloadOutlined,
   HomeOutlined,
   BankOutlined,
 } from "@ant-design/icons";
@@ -33,6 +31,7 @@ import {
 } from "./ChuDauTuHandlerContext";
 import "./ChuDauTuPage.state";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { FilterBar } from "@/components/common/FilterBar";
 
 const { Title, Text } = Typography;
 
@@ -207,43 +206,32 @@ function ChuDauTuPageInner() {
       </Row>
 
       <Card className="shadow-sm">
-        <div className="mb-4">
-          <Row gutter={[16, 16]} align="middle" justify="space-between">
-            <Col xs={24} md={12}>
-              <Space wrap>
-                <Input
-                  placeholder="Tìm kiếm theo mã, tên..."
-                  prefix={<SearchOutlined />}
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  onPressEnter={() => handleSearch(searchText)}
-                  style={{ width: 300 }}
-                  allowClear
-                />
-                <Tooltip title="Làm mới">
-                  <Button
-                    icon={<ReloadOutlined />}
-                    onClick={() => {
-                      setSearchText("");
-                      handler.executeEvent("refresh", {});
-                    }}
-                  />
-                </Tooltip>
-              </Space>
-            </Col>
-            <Col xs={24} md={12} className="text-right">
+        <FilterBar
+          search={{
+            value: searchText,
+            onChange: setSearchText,
+            onSearch: () => handleSearch(searchText),
+            placeholder: "Tìm kiếm theo mã, tên...",
+            width: 300,
+          }}
+          onReset={() => {
+            setSearchText("");
+            handler.executeEvent("refresh", {});
+          }}
+          actions={
+            <>
               {canCreate && (
                 <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => openModal()}
-              >
-                Thêm mới
-              </Button>
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => openModal()}
+                >
+                  Thêm mới
+                </Button>
               )}
-            </Col>
-          </Row>
-        </div>
+            </>
+          }
+        />
 
         <Table
           columns={columns}

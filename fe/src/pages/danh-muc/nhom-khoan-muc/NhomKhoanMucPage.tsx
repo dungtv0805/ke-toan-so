@@ -20,17 +20,16 @@ import {
 } from "antd";
 import {
   PlusOutlined,
-  SearchOutlined,
   EditOutlined,
   DeleteOutlined,
   ExportOutlined,
-  ReloadOutlined,
   TagOutlined,
   HomeOutlined,
   FallOutlined,
   RiseOutlined,
 } from "@ant-design/icons";
 import { nhomKhoanMucService, NhomKhoanMuc, NhomKhoanMucStats } from "@/services/nhomKhoanMucService";
+import { FilterBar } from "@/components/common/FilterBar";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 
@@ -233,29 +232,36 @@ const NhomKhoanMucPage: React.FC = () => {
           </Title>
           <Text type="secondary">Quản lý danh sách nhóm khoản mục chi phí và doanh thu</Text>
         </div>
-        <Space>
-          {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
-          <Button icon={<ReloadOutlined />} onClick={() => fetchData(1, pagination.pageSize, "", activeTab === "all" ? undefined : (activeTab as 'CHI_PHI' | 'DOANH_THU'))}>Làm mới</Button>
-          {canCreate && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>Thêm nhóm</Button>
-          )}
-        </Space>
       </div>
 
       <Card>
         <Tabs activeKey={activeTab} onChange={handleTabChange} items={tabItems} className="mb-4" />
 
-        <div className="mb-4">
-          <Input
-            placeholder="Tìm kiếm theo mã hoặc tên..."
-            prefix={<SearchOutlined className="text-muted-foreground" />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            onPressEnter={() => fetchData(1, pagination.pageSize, searchText, activeTab === "all" ? undefined : (activeTab as 'CHI_PHI' | 'DOANH_THU'))}
-            allowClear
-            style={{ maxWidth: 400 }}
-          />
-        </div>
+        <FilterBar
+          search={{
+            value: searchText,
+            onChange: setSearchText,
+            onSearch: () => fetchData(1, pagination.pageSize, searchText, activeTab === "all" ? undefined : (activeTab as 'CHI_PHI' | 'DOANH_THU')),
+            placeholder: "Tìm kiếm theo mã hoặc tên...",
+            width: 300,
+          }}
+          onReset={() => {
+            setSearchText("");
+            fetchData(1, pagination.pageSize, "", activeTab === "all" ? undefined : (activeTab as 'CHI_PHI' | 'DOANH_THU'));
+          }}
+          actions={
+            <>
+              {canExport && (
+                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+              )}
+              {canCreate && (
+                <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                  Thêm nhóm
+                </Button>
+              )}
+            </>
+          }
+        />
 
         <Table
           columns={columns}

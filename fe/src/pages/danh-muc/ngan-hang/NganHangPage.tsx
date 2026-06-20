@@ -19,15 +19,14 @@ import {
 } from "antd";
 import {
   PlusOutlined,
-  SearchOutlined,
   EditOutlined,
   DeleteOutlined,
   ExportOutlined,
-  ReloadOutlined,
   BankOutlined,
   HomeOutlined,
 } from "@ant-design/icons";
 import { TaiKhoanNganHang } from "@/types";
+import { FilterBar } from "@/components/common/FilterBar";
 import { nganHangService } from "@/services/nganHangService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
@@ -302,37 +301,39 @@ const NganHangPage: React.FC = () => {
             Quản lý danh sách tài khoản ngân hàng
           </Text>
         </div>
-        <Space>
-          {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => fetchData(1, pagination.pageSize, "")}
-          >
-            Làm mới
-          </Button>
-          {canCreate && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              Thêm tài khoản
-            </Button>
-          )}
-        </Space>
       </div>
 
       {/* Table */}
       <Card>
-        <div className="mb-4">
-          <Input
-            placeholder="Tìm kiếm theo số tài khoản, tên ngân hàng, chi nhánh..."
-            prefix={<SearchOutlined className="text-muted-foreground" />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            onPressEnter={() =>
-              fetchData(1, pagination.pageSize, searchText)
-            }
-            allowClear
-            style={{ maxWidth: 450 }}
-          />
-        </div>
+        <FilterBar
+          search={{
+            value: searchText,
+            onChange: setSearchText,
+            onSearch: () => fetchData(1, pagination.pageSize, searchText),
+            placeholder: "Tìm kiếm theo số tài khoản, tên ngân hàng, chi nhánh...",
+            width: 300,
+          }}
+          onReset={() => {
+            setSearchText("");
+            fetchData(1, pagination.pageSize, "");
+          }}
+          actions={
+            <>
+              {canExport && (
+                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+              )}
+              {canCreate && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={handleAdd}
+                >
+                  Thêm tài khoản
+                </Button>
+              )}
+            </>
+          }
+        />
 
         <Table
           columns={columns}

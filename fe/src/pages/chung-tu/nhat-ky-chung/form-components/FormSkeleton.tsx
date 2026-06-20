@@ -1,5 +1,9 @@
-import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "antd";
+
+/** Khối skeleton dùng nội bộ (không phụ thuộc shadcn) — nhận className để định cỡ. */
+function Skeleton({ className }: { className?: string }) {
+  return <div className={`animate-pulse bg-black/10 ${className ?? ""}`} />;
+}
 
 export function FormHeaderSkeleton() {
   return (

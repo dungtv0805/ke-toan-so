@@ -20,14 +20,13 @@ import {
 } from "antd";
 import {
   PlusOutlined,
-  SearchOutlined,
   EditOutlined,
   DeleteOutlined,
   ExportOutlined,
-  ReloadOutlined,
   BankOutlined,
   HomeOutlined,
 } from "@ant-design/icons";
+import { FilterBar } from "@/components/common/FilterBar";
 import { TaiKhoan } from "@/types";
 import { taiKhoanService } from "@/services/taiKhoanService";
 import { loaiTaiKhoan, nhomTaiKhoan } from "@/mock-data/tai-khoan";
@@ -390,54 +389,43 @@ const TaiKhoanPage: React.FC = () => {
       {/* Main Card */}
       <Card className="shadow-sm">
         {/* Toolbar */}
-        <div className="mb-4">
-          <Row gutter={[16, 16]} align="middle" justify="space-between">
-            <Col xs={24} md={16}>
-              <Space wrap>
-                <Input
-                  placeholder="Tìm kiếm theo mã hoặc tên..."
-                  prefix={<SearchOutlined className="text-muted-foreground" />}
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  style={{ width: 280 }}
-                  allowClear
-                />
-                <Select
-                  placeholder="Lọc theo nhóm"
-                  value={filterNhom}
-                  onChange={(value) => setFilterNhom(value)}
-                  style={{ width: 200 }}
-                  allowClear
-                  options={nhomTaiKhoan}
-                />
-                <Tooltip title="Làm mới">
-                  <Button
-                    icon={<ReloadOutlined />}
-                    onClick={() => {
-                      setSearchText("");
-                      setFilterNhom(undefined);
-                      fetchData();
-                    }}
-                  />
-                </Tooltip>
-              </Space>
-            </Col>
-            <Col xs={24} md={8} className="text-right">
-              <Space>
-                {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
-                {canCreate && (
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={() => openModal()}
-                  >
-                    Thêm tài khoản
-                  </Button>
-                )}
-              </Space>
-            </Col>
-          </Row>
-        </div>
+        <FilterBar
+          search={{
+            value: searchText,
+            onChange: setSearchText,
+            placeholder: "Tìm kiếm theo mã hoặc tên...",
+            width: 280,
+          }}
+          onReset={() => {
+            setSearchText("");
+            setFilterNhom(undefined);
+            fetchData();
+          }}
+          filters={
+            <Select
+              placeholder="Lọc theo nhóm"
+              value={filterNhom}
+              onChange={(value) => setFilterNhom(value)}
+              style={{ width: 200 }}
+              allowClear
+              options={nhomTaiKhoan}
+            />
+          }
+          actions={
+            <>
+              {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+              {canCreate && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => openModal()}
+                >
+                  Thêm tài khoản
+                </Button>
+              )}
+            </>
+          }
+        />
 
         {/* Table */}
         <Table

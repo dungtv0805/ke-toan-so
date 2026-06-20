@@ -23,7 +23,6 @@ import {
 } from "antd";
 import {
   PlusOutlined,
-  SearchOutlined,
   EditOutlined,
   DeleteOutlined,
   ExportOutlined,
@@ -43,6 +42,7 @@ import { chuDauTuService } from "@/services/chuDauTuService";
 import { trangThaiDuAnOptions } from "@/mock-data/du-an";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { FilterBar } from "@/components/common/FilterBar";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -551,13 +551,11 @@ const DuAnPage: React.FC = () => {
           className="mb-4"
         />
 
-        <div className="mb-4">
-          <Input
-            placeholder="Tìm kiếm theo mã, tên dự án hoặc chủ đầu tư..."
-            prefix={<SearchOutlined className="text-muted-foreground" />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            onPressEnter={() =>
+        <FilterBar
+          search={{
+            value: searchText,
+            onChange: setSearchText,
+            onSearch: () =>
               fetchData(
                 1,
                 pagination.pageSize,
@@ -565,12 +563,20 @@ const DuAnPage: React.FC = () => {
                 activeTab === "all"
                   ? undefined
                   : (activeTab as DuAn["trangThai"])
-              )
-            }
-            allowClear
-            style={{ maxWidth: 450 }}
-          />
-        </div>
+              ),
+            placeholder: "Tìm kiếm theo mã, tên dự án hoặc chủ đầu tư...",
+            width: 300,
+          }}
+          onReset={() => {
+            setSearchText("");
+            fetchData(
+              1,
+              pagination.pageSize,
+              "",
+              activeTab === "all" ? undefined : (activeTab as DuAn["trangThai"])
+            );
+          }}
+        />
 
         <Table
           columns={columns}

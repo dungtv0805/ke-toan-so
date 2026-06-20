@@ -24,10 +24,8 @@ import {
 } from "antd";
 import {
   PlusOutlined,
-  SearchOutlined,
   EditOutlined,
   DeleteOutlined,
-  ReloadOutlined,
   HomeOutlined,
   FileTextOutlined,
   CheckCircleOutlined,
@@ -35,6 +33,7 @@ import {
   ClockCircleOutlined,
   FileUnknownOutlined,
 } from "@ant-design/icons";
+import { FilterBar } from "@/components/common/FilterBar";
 import dayjs, { Dayjs } from "dayjs";
 import { HopDong, DoiTuong, TrangThaiHopDong } from "@/types";
 import {
@@ -754,43 +753,32 @@ function HopDongPageInner() {
       </Row>
 
       <Card className="shadow-sm">
-        <div className="mb-4">
-          <Row gutter={[16, 16]} align="middle" justify="space-between">
-            <Col xs={24} md={12}>
-              <Space wrap>
-                <Input
-                  placeholder="Tìm kiếm theo số HĐ, tên công trình..."
-                  prefix={<SearchOutlined />}
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  onPressEnter={() => handleSearch(searchText)}
-                  style={{ width: 320 }}
-                  allowClear
-                />
-                <Tooltip title="Làm mới">
-                  <Button
-                    icon={<ReloadOutlined />}
-                    onClick={() => {
-                      setSearchText("");
-                      handler.executeEvent("refresh", {});
-                    }}
-                  />
-                </Tooltip>
-              </Space>
-            </Col>
-            <Col xs={24} md={12} className="text-right">
+        <FilterBar
+          search={{
+            value: searchText,
+            onChange: setSearchText,
+            onSearch: () => handleSearch(searchText),
+            placeholder: "Tìm kiếm theo số HĐ, tên công trình...",
+            width: 320,
+          }}
+          onReset={() => {
+            setSearchText("");
+            handler.executeEvent("refresh", {});
+          }}
+          actions={
+            <>
               {canCreate && (
                 <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => openModal()}
-              >
-                Thêm hợp đồng
-              </Button>
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => openModal()}
+                >
+                  Thêm hợp đồng
+                </Button>
               )}
-            </Col>
-          </Row>
-        </div>
+            </>
+          }
+        />
 
         <Table
           columns={columns}

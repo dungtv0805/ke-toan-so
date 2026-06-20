@@ -21,14 +21,13 @@ import {
 } from "antd";
 import {
   PlusOutlined,
-  SearchOutlined,
   EditOutlined,
   DeleteOutlined,
   ExportOutlined,
-  ReloadOutlined,
   HomeOutlined,
   SwapOutlined,
 } from "@ant-design/icons";
+import { FilterBar } from "@/components/common/FilterBar";
 import { LoaiGiaoDich } from "@/types";
 import { loaiGiaoDichService, LoaiGiaoDichStats } from "@/services/loaiGiaoDichService";
 import { z } from "zod";
@@ -278,20 +277,6 @@ const LoaiGiaoDichPage: React.FC = () => {
             Quản lý danh sách các loại giao dịch: Phiếu thu, Phiếu chi, Báo có, Báo nợ...
           </Text>
         </div>
-        <Space>
-          {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => fetchData(1, pagination.pageSize, "")}
-          >
-            Làm mới
-          </Button>
-          {canCreate && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-            Thêm loại giao dịch
-          </Button>
-          )}
-        </Space>
       </div>
 
       {/* Stats Card */}
@@ -309,17 +294,35 @@ const LoaiGiaoDichPage: React.FC = () => {
 
       {/* Table */}
       <Card>
-        <div className="mb-4">
-          <Input
-            placeholder="Tìm kiếm theo mã hoặc tên loại giao dịch..."
-            prefix={<SearchOutlined className="text-muted-foreground" />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            onPressEnter={() => fetchData(1, pagination.pageSize, searchText)}
-            allowClear
-            style={{ maxWidth: 400 }}
-          />
-        </div>
+        <FilterBar
+          search={{
+            value: searchText,
+            onChange: setSearchText,
+            onSearch: () => fetchData(1, pagination.pageSize, searchText),
+            placeholder: "Tìm kiếm theo mã hoặc tên loại giao dịch...",
+            width: 400,
+          }}
+          onReset={() => {
+            setSearchText("");
+            fetchData(1, pagination.pageSize, "");
+          }}
+          actions={
+            <>
+              {canExport && (
+                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+              )}
+              {canCreate && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={handleAdd}
+                >
+                  Thêm loại giao dịch
+                </Button>
+              )}
+            </>
+          }
+        />
 
         <Table
           columns={columns}
