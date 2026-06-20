@@ -95,6 +95,8 @@ const existingRoutes = new Set([
   "/danh-muc/loai-giao-dich",
   "/danh-muc/hop-dong",
   "/danh-muc/quy-chuan",
+  "/chung-tu/phieu-thu",
+  "/chung-tu/phieu-chi",
   "/chung-tu/nhat-ky-chung",
   "/so-quy",
   "/cong-no/phai-thu",
