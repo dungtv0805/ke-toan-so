@@ -95,8 +95,14 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
   };
 
   const handleSearch = () => {
-    setPage(1);
-    loadData();
+    if (page === 1) {
+      // Already on page 1; loadData deps (search, dateRange) are up-to-date via onChange,
+      // so trigger one explicit fetch instead of relying on a stale effect.
+      loadData();
+    } else {
+      // Resetting to page 1 will recreate loadData (page is a dep) and fire the effect.
+      setPage(1);
+    }
   };
 
   const columns: ColumnsType<PhieuKho> = [

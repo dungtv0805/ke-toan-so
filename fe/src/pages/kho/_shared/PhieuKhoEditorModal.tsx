@@ -75,7 +75,6 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
             khoMa: phieu.khoMa,
             khoXuatMa: phieu.khoXuatMa,
             khoNhapMa: phieu.khoNhapMa,
-            lyDoXuat: phieu.dienGiai,
             nguoiVanChuyen: phieu.nguoiVanChuyen,
             phuongTienVC: phieu.phuongTienVC,
             lenhDieuDong: phieu.lenhDieuDong,
@@ -120,17 +119,27 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
   };
 
   const handleSave = async () => {
-    // Get raw form values and merge chiTiet for schema validation
+    // Build payload first, then convert dayjs dates to strings for validation + sending
+    const rawPayload = buildPayload();
     const formValues = form.getFieldsValue();
-    const rawData = {
-      ...formValues,
-      ngayHachToan: formValues.ngayHachToan ? dayjs(formValues.ngayHachToan).format('YYYY-MM-DD') : '',
-      ngayChungTu: formValues.ngayChungTu ? dayjs(formValues.ngayChungTu).format('YYYY-MM-DD') : undefined,
-      chiTiet,
+    const finalPayload: Partial<PhieuKho> = {
+      ...rawPayload,
+      ngayHachToan: formValues.ngayHachToan
+        ? dayjs(formValues.ngayHachToan).format('YYYY-MM-DD')
+        : '',
+      ngayChungTu: formValues.ngayChungTu
+        ? dayjs(formValues.ngayChungTu).format('YYYY-MM-DD')
+        : undefined,
+      chiTiet: chiTiet.map((row) => ({
+        ...row,
+        soLuong: row.soLuong ?? 0,
+        donGia: row.donGia ?? 0,
+        thanhTien: row.thanhTien ?? 0,
+      })),
     };
 
     const schema = makePhieuKhoSchema(loaiPhieu);
-    const result = schema.safeParse(rawData);
+    const result = schema.safeParse(finalPayload);
     if (!result.success) {
       const firstError = result.error.issues[0];
       message.error(firstError.message || 'Dữ liệu không hợp lệ');
@@ -139,18 +148,6 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
 
     setSaving(true);
     try {
-      const payload = buildPayload();
-      // Convert dayjs dates to strings
-      const finalPayload: Partial<PhieuKho> = {
-        ...payload,
-        ngayHachToan: formValues.ngayHachToan
-          ? dayjs(formValues.ngayHachToan).format('YYYY-MM-DD')
-          : '',
-        ngayChungTu: formValues.ngayChungTu
-          ? dayjs(formValues.ngayChungTu).format('YYYY-MM-DD')
-          : undefined,
-      };
-
       if (editingId) {
         await phieuKhoService.update(editingId, finalPayload);
         message.success('Đã cập nhật phiếu');
