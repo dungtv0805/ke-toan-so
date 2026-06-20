@@ -67,6 +67,10 @@ const App = () => (
           borderRadiusLG: 0,
           borderRadiusSM: 0,
           borderRadiusXS: 0,
+          // Đợt 2: chiều cao control đồng nhất (compact).
+          controlHeight: 28,
+          controlHeightSM: 24,
+          controlHeightLG: 36,
         },
       }}
     >
