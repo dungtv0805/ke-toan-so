@@ -66,7 +66,7 @@ class PhieuKhoService extends ServiceBase {
   }
 
   async getNextSo(loaiPhieu: string): Promise<string> {
-    const r = await this.get<{ success: boolean; soPhieu: string }>({
+    const r = await this.get<{ soPhieu: string }>({
       endpoint: '/next-so',
       params: { loaiPhieu },
     });

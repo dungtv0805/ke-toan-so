@@ -44,14 +44,14 @@ export class PhieuKhoController {
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KE_TOAN_QUY', 'MANAGER')
   async nextSo(@Query('loaiPhieu') loaiPhieu: string) {
     const soPhieu = await this.phieuKhoService.getNextSo(loaiPhieu);
-    return { success: true, soPhieu };
+    return { success: true, data: { soPhieu } };
   }
 
   @Get('phieu/stats')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KE_TOAN_QUY', 'MANAGER')
   async stats(@Query('loaiPhieu') loaiPhieu?: string) {
     const data = await this.phieuKhoService.getStats(loaiPhieu);
-    return { success: true, ...data };
+    return { success: true, data };
   }
 
   @Get('phieu/:id')
