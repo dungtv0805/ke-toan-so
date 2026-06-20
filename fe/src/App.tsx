@@ -17,6 +17,9 @@ import {
   TaiKhoanPage,
   DoiTuongPage,
   SanPhamPage,
+  NhapKhoPage,
+  XuatKhoPage,
+  ChuyenKhoPage,
   DuAnPage,
   BoPhanPage,
   KhoanMucPage,
@@ -278,6 +281,34 @@ const App = () => (
                   <Route path="phan-bo-khau-hao" element={<ComingSoonPage />} />
                   <Route path="phieu-ke-toan" element={<ComingSoonPage />} />
                   <Route path="de-nghi-thanh-toan" element={<ComingSoonPage />} />
+                </Route>
+
+                {/* Kho */}
+                <Route path="kho">
+                  <Route
+                    path="nhap-kho"
+                    element={
+                      <ProtectedRoute requiredPermission="/kho/nhap-kho:xem">
+                        <NhapKhoPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="xuat-kho"
+                    element={
+                      <ProtectedRoute requiredPermission="/kho/xuat-kho:xem">
+                        <XuatKhoPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="chuyen-kho"
+                    element={
+                      <ProtectedRoute requiredPermission="/kho/chuyen-kho:xem">
+                        <ChuyenKhoPage />
+                      </ProtectedRoute>
+                    }
+                  />
                 </Route>
 
                 {/* Sổ quỹ */}

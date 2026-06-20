@@ -103,6 +103,19 @@ export const HangHoaVatTuPage = loadable(() => import('./danh-muc/hang-hoa-vat-t
   fallback: <PageLoader />
 });
 
+// Kho
+export const NhapKhoPage = loadable(() => import('./kho/nhap-kho/NhapKhoPage'), {
+  fallback: <PageLoader />
+});
+
+export const XuatKhoPage = loadable(() => import('./kho/xuat-kho/XuatKhoPage'), {
+  fallback: <PageLoader />
+});
+
+export const ChuyenKhoPage = loadable(() => import('./kho/chuyen-kho/ChuyenKhoPage'), {
+  fallback: <PageLoader />
+});
+
 // Chứng từ
 export const PhieuThuPage = loadable(() => import('./chung-tu/phieu-thu/PhieuThuPage'), {
   fallback: <PageLoader />

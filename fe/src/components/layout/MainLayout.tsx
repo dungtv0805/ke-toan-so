@@ -99,6 +99,9 @@ const existingRoutes = new Set([
   "/danh-muc/don-vi-tinh",
   "/danh-muc/nhom-vat-tu",
   "/danh-muc/hang-hoa-vat-tu",
+  "/kho/nhap-kho",
+  "/kho/xuat-kho",
+  "/kho/chuyen-kho",
   "/chung-tu/phieu-thu",
   "/chung-tu/phieu-chi",
   "/chung-tu/nhat-ky-chung",
@@ -217,6 +220,12 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Bảng phân bổ khấu hao TSCĐ", "/chung-tu/phan-bo-khau-hao", <PartitionOutlined />),
     getMenuItem("Phiếu kế toán", "/chung-tu/phieu-ke-toan", <AuditOutlined />),
     getMenuItem("Đề nghị thanh toán", "/chung-tu/de-nghi-thanh-toan", <FormOutlined />),
+  ]),
+
+  getItem("Kho", "/kho", <InboxOutlined />, [
+    getMenuItem("Nhập kho", "/kho/nhap-kho", <FileAddOutlined />),
+    getMenuItem("Xuất kho", "/kho/xuat-kho", <FileDoneOutlined />),
+    getMenuItem("Chuyển kho", "/kho/chuyen-kho", <SwapOutlined />),
   ]),
 ];
 

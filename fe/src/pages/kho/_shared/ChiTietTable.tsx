@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Table, Select, InputNumber, Button, Space } from 'antd';
+import { Table, Select, InputNumber, Input, Button, Space } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ChiTietPhieuKho, HangHoaVatTu, Kho, LoaiPhieuKho } from '@/types';
@@ -178,12 +178,11 @@ export function ChiTietTable({ value, onChange, loaiPhieu }: Props) {
       dataIndex: 'tkNo',
       width: 100,
       render: (_: unknown, _row: ChiTietPhieuKho, index: number) => (
-        <InputNumber
+        <Input
           size="small"
           style={{ width: '100%' }}
-          controls={false}
-          value={value[index]?.tkNo ? Number(value[index].tkNo) : undefined}
-          onChange={(v) => updateRow(index, { tkNo: v != null ? String(v) : '' })}
+          value={value[index]?.tkNo || ''}
+          onChange={(e) => updateRow(index, { tkNo: e.target.value })}
           placeholder="TK Nợ"
         />
       ),
@@ -193,12 +192,11 @@ export function ChiTietTable({ value, onChange, loaiPhieu }: Props) {
       dataIndex: 'tkCo',
       width: 100,
       render: (_: unknown, _row: ChiTietPhieuKho, index: number) => (
-        <InputNumber
+        <Input
           size="small"
           style={{ width: '100%' }}
-          controls={false}
-          value={value[index]?.tkCo ? Number(value[index].tkCo) : undefined}
-          onChange={(v) => updateRow(index, { tkCo: v != null ? String(v) : '' })}
+          value={value[index]?.tkCo || ''}
+          onChange={(e) => updateRow(index, { tkCo: e.target.value })}
           placeholder="TK Có"
         />
       ),
