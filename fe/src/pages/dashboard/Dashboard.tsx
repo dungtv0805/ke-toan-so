@@ -7,7 +7,6 @@ import CashFlowChart from './components/CashFlowChart';
 import CompositionCharts from './components/CompositionCharts';
 import RevenueExpenseBreakdownCharts from './components/RevenueExpenseBreakdownCharts';
 import AgingCharts from './components/AgingCharts';
-import TopPartnersCharts from './components/TopPartnersCharts';
 import OverdueTables from './components/OverdueTables';
 import { Row, Col } from 'antd';
 
@@ -33,8 +32,18 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      {/* Filter bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      {/* Filter bar — ghim trên cùng khi cuộn */}
+      <div
+        className="sticky z-20 flex flex-wrap items-center justify-between gap-2"
+        style={{
+          top: 0,
+          marginTop: -12,
+          marginInline: -12,
+          padding: '8px 12px',
+          background: 'hsl(var(--background))',
+          borderBottom: '1px solid hsl(var(--border))',
+        }}
+      >
         <div className="flex items-center gap-2">
           <CheckCircleOutlined className="text-primary" />
           <Text strong className="text-sm sm:text-base">Tổng quan báo cáo</Text>
@@ -45,14 +54,12 @@ const Dashboard: React.FC = () => {
             onChange={setMonth}
             options={MONTH_OPTIONS}
             style={{ width: 120 }}
-            size="middle"
           />
           <Select
             value={year}
             onChange={setYear}
             options={YEAR_OPTIONS}
             style={{ width: 120 }}
-            size="middle"
           />
         </Space>
       </div>
@@ -78,9 +85,6 @@ const Dashboard: React.FC = () => {
 
       {/* Tuổi nợ */}
       <AgingCharts />
-
-      {/* Xếp hạng đối tác */}
-      <TopPartnersCharts />
 
       {/* Công nợ quá hạn */}
       <OverdueTables />
