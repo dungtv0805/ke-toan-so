@@ -87,6 +87,22 @@ export const HopDongPage = loadable(() => import('./danh-muc/hop-dong/HopDongPag
   fallback: <PageLoader />
 });
 
+export const KhoPage = loadable(() => import('./danh-muc/kho/KhoPage'), {
+  fallback: <PageLoader />
+});
+
+export const DonViTinhPage = loadable(() => import('./danh-muc/don-vi-tinh/DonViTinhPage'), {
+  fallback: <PageLoader />
+});
+
+export const NhomVatTuPage = loadable(() => import('./danh-muc/nhom-vat-tu/NhomVatTuPage'), {
+  fallback: <PageLoader />
+});
+
+export const HangHoaVatTuPage = loadable(() => import('./danh-muc/hang-hoa-vat-tu/HangHoaVatTuPage'), {
+  fallback: <PageLoader />
+});
+
 // Chứng từ
 export const PhieuThuPage = loadable(() => import('./chung-tu/phieu-thu/PhieuThuPage'), {
   fallback: <PageLoader />

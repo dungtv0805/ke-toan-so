@@ -30,6 +30,10 @@ import {
   NhomKhoanMucPage,
   LoaiGiaoDichPage,
   HopDongPage,
+  KhoPage,
+  DonViTinhPage,
+  NhomVatTuPage,
+  HangHoaVatTuPage,
   PhieuThuPage,
   PhieuChiPage,
   NhatKyChungPage,
@@ -200,8 +204,26 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
-                  {/* Coming Soon */}
-                  <Route path="kho" element={<ComingSoonPage />} />
+                  <Route path="kho" element={
+                    <ProtectedRoute requiredPermission="/danh-muc/kho:xem">
+                      <KhoPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="don-vi-tinh" element={
+                    <ProtectedRoute requiredPermission="/danh-muc/don-vi-tinh:xem">
+                      <DonViTinhPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="nhom-vat-tu" element={
+                    <ProtectedRoute requiredPermission="/danh-muc/nhom-vat-tu:xem">
+                      <NhomVatTuPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="hang-hoa-vat-tu" element={
+                    <ProtectedRoute requiredPermission="/danh-muc/hang-hoa-vat-tu:xem">
+                      <HangHoaVatTuPage />
+                    </ProtectedRoute>
+                  } />
                 </Route>
 
                 {/* Chứng từ */}

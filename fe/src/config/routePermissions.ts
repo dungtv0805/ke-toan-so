@@ -20,6 +20,10 @@ export const routePermissions: Record<string, string> = {
   '/danh-muc/loai-giao-dich': '/danh-muc/loai-giao-dich:xem',
   '/danh-muc/hop-dong': '/danh-muc/hop-dong:xem',
   '/danh-muc/quy-chuan': '/danh-muc/quy-chuan:xem',
+  '/danh-muc/kho': '/danh-muc/kho:xem',
+  '/danh-muc/don-vi-tinh': '/danh-muc/don-vi-tinh:xem',
+  '/danh-muc/nhom-vat-tu': '/danh-muc/nhom-vat-tu:xem',
+  '/danh-muc/hang-hoa-vat-tu': '/danh-muc/hang-hoa-vat-tu:xem',
 
   '/chung-tu/phieu-thu': '/chung-tu/phieu-thu:xem',
   '/chung-tu/phieu-chi': '/chung-tu/phieu-chi:xem',
