@@ -11,10 +11,7 @@ import {
   Popconfirm,
   Tooltip,
   Typography,
-  Row,
-  Col,
   Breadcrumb,
-  Statistic,
 } from "antd";
 import {
   PlusOutlined,
@@ -45,7 +42,6 @@ function ChuDauTuPageInner() {
     pageSize: 50,
     total: 0,
   });
-  const [stats] = useChuDauTuState("stats", { total: 0 });
   const [searchText, setSearchText] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<ChuDauTu | null>(null);
@@ -192,18 +188,6 @@ function ChuDauTuPageInner() {
           <Text className="text-white/80">Quản lý danh sách chủ đầu tư</Text>
         </div>
       </div> */}
-
-      <Row gutter={16}>
-        <Col xs={24} sm={8}>
-          <Card className="stat-card" size="small">
-            <Statistic
-              title="Tổng số"
-              value={pagination.total}
-              prefix={<BankOutlined className="text-blue-500" />}
-            />
-          </Card>
-        </Col>
-      </Row>
 
       <Card className="shadow-sm">
         <FilterBar

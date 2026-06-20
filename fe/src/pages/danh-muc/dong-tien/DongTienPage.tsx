@@ -283,7 +283,7 @@ const DongTienPage: React.FC = () => {
       {/* Stats Cards */}
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={6}>
-          <Card>
+          <Card className="stat-card">
             <Statistic
               title="Tổng số"
               value={stats.tongSo}
@@ -292,7 +292,7 @@ const DongTienPage: React.FC = () => {
           </Card>
         </Col>
         <Col xs={24} sm={6}>
-          <Card>
+          <Card className="stat-card">
             <Statistic
               title="Kinh doanh"
               value={stats.kinhDoanh}
@@ -302,7 +302,7 @@ const DongTienPage: React.FC = () => {
           </Card>
         </Col>
         <Col xs={24} sm={6}>
-          <Card>
+          <Card className="stat-card">
             <Statistic
               title="Đầu tư"
               value={stats.dauTu}
@@ -312,7 +312,7 @@ const DongTienPage: React.FC = () => {
           </Card>
         </Col>
         <Col xs={24} sm={6}>
-          <Card>
+          <Card className="stat-card">
             <Statistic
               title="Tài chính"
               value={stats.taiChinh}

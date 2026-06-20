@@ -9,7 +9,7 @@ export const QuyChaunStats: React.FC = () => {
   return (
     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
       <Col xs={24} sm={12} lg={4}>
-        <Card size="small">
+        <Card size="small" className="stat-card">
           <Statistic
             title="Tổng quy chuẩn"
             value={stats?.tongQuyChuan || 0}
@@ -18,7 +18,7 @@ export const QuyChaunStats: React.FC = () => {
         </Card>
       </Col>
       <Col xs={24} sm={12} lg={5}>
-        <Card size="small">
+        <Card size="small" className="stat-card stat-card-success">
           <Statistic
             title="Phiếu thu"
             value={stats?.phieuThu || 0}
@@ -28,7 +28,7 @@ export const QuyChaunStats: React.FC = () => {
         </Card>
       </Col>
       <Col xs={24} sm={12} lg={5}>
-        <Card size="small">
+        <Card size="small" className="stat-card stat-card-destructive">
           <Statistic
             title="Phiếu chi"
             value={stats?.phieuChi || 0}
@@ -38,7 +38,7 @@ export const QuyChaunStats: React.FC = () => {
         </Card>
       </Col>
       <Col xs={24} sm={12} lg={5}>
-        <Card size="small">
+        <Card size="small" className="stat-card stat-card-success">
           <Statistic
             title="Báo có NH"
             value={stats?.baoCo || 0}
@@ -48,7 +48,7 @@ export const QuyChaunStats: React.FC = () => {
         </Card>
       </Col>
       <Col xs={24} sm={12} lg={5}>
-        <Card size="small">
+        <Card size="small" className="stat-card stat-card-destructive">
           <Statistic
             title="Báo nợ NH"
             value={stats?.baoNo || 0}

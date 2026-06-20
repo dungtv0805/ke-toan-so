@@ -199,7 +199,7 @@ const BangCanDoiPage: React.FC = () => {
         {/* Stats Cards */}
         <Row gutter={16} style={{ marginBottom: 24 }}>
           <Col span={4}>
-            <Card size="small">
+            <Card size="small" className="stat-card">
               <Statistic
                 title="Tổng tài sản"
                 value={stats?.tongTaiSan ?? 0}
@@ -209,7 +209,7 @@ const BangCanDoiPage: React.FC = () => {
             </Card>
           </Col>
           <Col span={4}>
-            <Card size="small">
+            <Card size="small" className="stat-card">
               <Statistic
                 title="TS ngắn hạn"
                 value={stats?.taiSanNganHan ?? 0}
@@ -219,7 +219,7 @@ const BangCanDoiPage: React.FC = () => {
             </Card>
           </Col>
           <Col span={4}>
-            <Card size="small">
+            <Card size="small" className="stat-card">
               <Statistic
                 title="TS dài hạn"
                 value={stats?.taiSanDaiHan ?? 0}
@@ -228,7 +228,7 @@ const BangCanDoiPage: React.FC = () => {
             </Card>
           </Col>
           <Col span={4}>
-            <Card size="small">
+            <Card size="small" className="stat-card stat-card-destructive">
               <Statistic
                 title="Nợ phải trả"
                 value={stats?.noPhaiTra ?? 0}
@@ -238,7 +238,7 @@ const BangCanDoiPage: React.FC = () => {
             </Card>
           </Col>
           <Col span={4}>
-            <Card size="small">
+            <Card size="small" className="stat-card stat-card-success">
               <Statistic
                 title="Vốn chủ sở hữu"
                 value={stats?.vonChuSoHuu ?? 0}
@@ -248,7 +248,7 @@ const BangCanDoiPage: React.FC = () => {
             </Card>
           </Col>
           <Col span={4}>
-            <Card size="small">
+            <Card size="small" className="stat-card">
               <Statistic
                 title="Trạng thái"
                 value={stats?.canDoi ? 'Cân đối' : 'Chưa cân đối'}

@@ -14,7 +14,6 @@ import {
   Row,
   Col,
   Breadcrumb,
-  Statistic,
 } from "antd";
 import {
   PlusOutlined,
@@ -22,7 +21,6 @@ import {
   DeleteOutlined,
   ExportOutlined,
   HomeOutlined,
-  FileTextOutlined,
 } from "@ant-design/icons";
 import { FilterBar } from "@/components/common/FilterBar";
 import { loaiChungTuService, LoaiChungTuType } from "@/services/loaiChungTuService";
@@ -233,18 +231,6 @@ const LoaiChungTuPage: React.FC = () => {
           { title: "Loại chứng từ" },
         ]}
       />
-
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="Tổng số"
-              value={pagination.total}
-              prefix={<FileTextOutlined className="text-primary" />}
-            />
-          </Card>
-        </Col>
-      </Row>
 
       <Card>
         <FilterBar

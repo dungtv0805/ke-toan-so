@@ -11,10 +11,7 @@ import {
   Popconfirm,
   Tooltip,
   Typography,
-  Row,
-  Col,
   Breadcrumb,
-  Statistic,
   Empty,
   Tag,
   ColorPicker,
@@ -60,7 +57,7 @@ const LoaiGiaoDichPage: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<LoaiGiaoDich | null>(null);
   const [form] = Form.useForm();
-  const [stats, setStats] = useState<LoaiGiaoDichStats>({ tongLoaiGiaoDich: 0 });
+  const [, setStats] = useState<LoaiGiaoDichStats>({ tongLoaiGiaoDich: 0 });
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 50,
@@ -265,19 +262,6 @@ const LoaiGiaoDichPage: React.FC = () => {
           { title: "Loại giao dịch" },
         ]}
       />
-
-      {/* Stats Card */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="Tổng số loại giao dịch"
-              value={pagination.total}
-              prefix={<SwapOutlined className="text-primary" />}
-            />
-          </Card>
-        </Col>
-      </Row>
 
       {/* Table */}
       <Card>

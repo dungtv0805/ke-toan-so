@@ -466,7 +466,7 @@ const DuAnPage: React.FC = () => {
       {/* Stats Cards */}
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={6}>
-          <Card>
+          <Card className="stat-card">
             <Statistic
               title="Tổng dự án"
               value={stats.tongDuAn}
@@ -475,7 +475,7 @@ const DuAnPage: React.FC = () => {
           </Card>
         </Col>
         <Col xs={24} sm={6}>
-          <Card>
+          <Card className="stat-card">
             <Statistic
               title="Đang thực hiện"
               value={stats.dangThucHien}
@@ -485,7 +485,7 @@ const DuAnPage: React.FC = () => {
           </Card>
         </Col>
         <Col xs={24} sm={6}>
-          <Card>
+          <Card className="stat-card stat-card-success">
             <Statistic
               title="Hoàn thành"
               value={stats.hoanThanh}
@@ -495,7 +495,7 @@ const DuAnPage: React.FC = () => {
           </Card>
         </Col>
         <Col xs={24} sm={6}>
-          <Card>
+          <Card className="stat-card stat-card-warning">
             <Statistic
               title="Tạm dừng"
               value={stats.tamDung}

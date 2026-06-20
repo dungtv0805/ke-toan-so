@@ -525,7 +525,7 @@ const CongNoPhaiThuPage: React.FC = () => {
         {/* Stats Cards */}
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           <Col xs={24} sm={12} lg={4}>
-            <Card size="small">
+            <Card size="small" className="stat-card">
               <Statistic
                 title="Số khoản nợ"
                 value={stats?.soKhoanNo || 0}
@@ -534,7 +534,7 @@ const CongNoPhaiThuPage: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={12} lg={4}>
-            <Card size="small">
+            <Card size="small" className="stat-card">
               <Statistic
                 title="Tổng công nợ"
                 value={stats?.tongCongNo || 0}
@@ -544,7 +544,7 @@ const CongNoPhaiThuPage: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={12} lg={4}>
-            <Card size="small">
+            <Card size="small" className="stat-card stat-card-success">
               <Statistic
                 title="Đã thu"
                 value={stats?.daThu || 0}
@@ -555,7 +555,7 @@ const CongNoPhaiThuPage: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={12} lg={4}>
-            <Card size="small">
+            <Card size="small" className="stat-card stat-card-destructive">
               <Statistic
                 title="Còn phải thu"
                 value={stats?.conLai || 0}
@@ -566,7 +566,7 @@ const CongNoPhaiThuPage: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={12} lg={4}>
-            <Card size="small">
+            <Card size="small" className="stat-card stat-card-destructive">
               <Statistic
                 title="Số khoản quá hạn"
                 value={stats?.soKhoanQuaHan || 0}
@@ -576,7 +576,7 @@ const CongNoPhaiThuPage: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={12} lg={4}>
-            <Card size="small">
+            <Card size="small" className="stat-card stat-card-destructive">
               <Statistic
                 title="Tổng nợ quá hạn"
                 value={agingData ? (agingData.quaHan1_30 + agingData.quaHan31_60 + agingData.quaHan61_90 + agingData.quaHanTren90) : 0}

@@ -11,10 +11,7 @@ import {
   Popconfirm,
   Tooltip,
   Typography,
-  Row,
-  Col,
   Breadcrumb,
-  Statistic,
 } from "antd";
 import {
   PlusOutlined,
@@ -45,7 +42,6 @@ function NhomQuanLyPageInner() {
     pageSize: 50,
     total: 0,
   });
-  const [stats] = useNhomQuanLyState("stats", { total: 0 });
   const [searchText, setSearchText] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<NhomQuanLy | null>(null);
@@ -191,18 +187,6 @@ function NhomQuanLyPageInner() {
           <Text className="text-white/80">Quản lý danh sách nhóm quản lý</Text>
         </div>
       </div> */}
-
-      <Row gutter={16}>
-        <Col xs={24} sm={8}>
-          <Card className="stat-card" size="small">
-            <Statistic
-              title="Tổng số"
-              value={stats?.total || 0}
-              prefix={<TeamOutlined className="text-green-500" />}
-            />
-          </Card>
-        </Col>
-      </Row>
 
       <Card className="shadow-sm">
         <FilterBar

@@ -514,7 +514,7 @@ const SoCaiPage: React.FC = () => {
         {/* Stats Cards */}
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           <Col xs={24} sm={12} lg={6}>
-            <Card size="small">
+            <Card size="small" className="stat-card">
               <Statistic
                 title="Số tài khoản"
                 value={stats?.soTaiKhoan || 0}
@@ -523,7 +523,7 @@ const SoCaiPage: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <Card size="small">
+            <Card size="small" className="stat-card stat-card-destructive">
               <Statistic
                 title="Tổng phát sinh Nợ"
                 value={stats?.tongPhatSinhNo || 0}
@@ -534,7 +534,7 @@ const SoCaiPage: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <Card size="small">
+            <Card size="small" className="stat-card stat-card-success">
               <Statistic
                 title="Tổng phát sinh Có"
                 value={stats?.tongPhatSinhCo || 0}
@@ -545,7 +545,7 @@ const SoCaiPage: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <Card size="small">
+            <Card size="small" className="stat-card">
               <Statistic
                 title="Trạng thái cân đối"
                 value={stats?.canDoi ? 'Cân đối' : 'Không cân đối'}

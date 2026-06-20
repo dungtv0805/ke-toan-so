@@ -11,10 +11,7 @@ import {
   Popconfirm,
   Tooltip,
   Typography,
-  Row,
-  Col,
   Breadcrumb,
-  Statistic,
 } from "antd";
 import {
   PlusOutlined,
@@ -45,7 +42,6 @@ function NhomKhuyenMaiPageInner() {
     pageSize: 50,
     total: 0,
   });
-  const [stats] = useNhomKhuyenMaiState("stats", { total: 0 });
   const [searchText, setSearchText] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<NhomKhuyenMai | null>(
@@ -193,18 +189,6 @@ function NhomKhuyenMaiPageInner() {
           <Text className="text-white/80">Quản lý danh sách nhóm khuyến mại</Text>
         </div>
       </div> */}
-
-      <Row gutter={16}>
-        <Col xs={24} sm={8}>
-          <Card className="stat-card" size="small">
-            <Statistic
-              title="Tổng số"
-              value={stats?.total || 0}
-              prefix={<GiftOutlined className="text-orange-500" />}
-            />
-          </Card>
-        </Col>
-      </Row>
 
       <Card className="shadow-sm">
         <FilterBar

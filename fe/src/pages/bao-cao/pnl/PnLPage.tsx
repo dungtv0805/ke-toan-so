@@ -209,7 +209,7 @@ const PnLPage: React.FC = () => {
         {/* Summary Cards */}
         <Row gutter={16} style={{ marginBottom: 24 }}>
           <Col span={6}>
-            <Card size="small">
+            <Card size="small" className="stat-card stat-card-success">
               <Statistic
                 title="Doanh thu"
                 value={summary?.tongDoanhThu ?? 0}
@@ -220,7 +220,7 @@ const PnLPage: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card size="small">
+            <Card size="small" className="stat-card stat-card-destructive">
               <Statistic
                 title="Chi phí"
                 value={summary?.tongChiPhi ?? 0}
@@ -230,7 +230,7 @@ const PnLPage: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card size="small">
+            <Card size="small" className="stat-card stat-card-success">
               <Statistic
                 title="LN trước thuế"
                 value={summary?.loiNhuanTruocThue ?? 0}
@@ -240,7 +240,7 @@ const PnLPage: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card size="small">
+            <Card size="small" className="stat-card stat-card-success">
               <Statistic
                 title="LN sau thuế"
                 value={summary?.loiNhuanSauThue ?? 0}
