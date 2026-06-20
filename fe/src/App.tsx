@@ -61,7 +61,8 @@ const App = () => (
       locale={viVN}
       theme={{
         token: {
-          colorPrimary: '#1890ff',
+          // Màu thương hiệu Master CEO: navy đậm (gold #C9A227 dùng làm accent).
+          colorPrimary: '#1B3A6B',
           // Đồng bộ toàn dự án: bo góc = 0 (giữ tròn cho avatar/chấm/spinner riêng).
           borderRadius: 0,
           borderRadiusLG: 0,
