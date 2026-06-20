@@ -1,37 +1,22 @@
-import { useState } from "react";
 import dayjs from "dayjs";
+import { Table, Button, Space, Tooltip, Popconfirm, Typography } from "antd";
+import {
+  PrinterOutlined,
+  EyeOutlined,
+  EditOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons";
 import { toast } from "sonner";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { ChevronLeft, ChevronRight, Printer } from "lucide-react";
-import { usePhieuState, usePhieuHandler } from "../../PhieuHandlerContext";
+import { usePhieuState, usePhieuHandler, usePhieuConfig } from "../../PhieuHandlerContext";
 import { formatCurrency } from "../../lib/format";
 import { usePrintPhieu } from "../../lib/usePrintPhieu";
-import { TABLE_CONTAINER, TABLE_DENSITY } from "../../lib/tableStyles";
-import { cn } from "@/lib/utils";
 import { ChungTu } from "@/types";
+
+const { Text } = Typography;
 
 export function PhieuTable() {
   const handler = usePhieuHandler();
+  const config = usePhieuConfig();
   const print = usePrintPhieu();
   const [data] = usePhieuState("data", [] as ChungTu[]);
   const [loading] = usePhieuState("loading", false);
@@ -45,196 +30,150 @@ export function PhieuTable() {
   const [, setEditingPhieu] = usePhieuState("editingPhieu", null);
   const [, setFormModalOpen] = usePhieuState("formModalOpen", false);
 
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
   const handleDelete = async (id: string) => {
-    setDeletingId(id);
     try {
       const ok = await handler.executeEvent("deletePhieu", { id });
-      if (ok) {
-        toast.success("Đã xóa phiếu");
-      } else {
-        toast.error("Xóa thất bại");
-      }
+      if (ok) toast.success("Đã xóa phiếu");
+      else toast.error("Xóa thất bại");
     } catch {
       toast.error("Xóa thất bại");
-    } finally {
-      setDeletingId(null);
     }
   };
 
-  const handlePrev = () => {
-    const currentPage = pagination?.page ?? 1;
-    if (currentPage > 1) {
-      handler.executeEvent("loadPage", { page: currentPage - 1 });
-    }
-  };
+  const moneyColor = config.loai === "PHIEU_THU" ? "#16a34a" : "#dc2626";
 
-  const handleNext = () => {
-    const currentPage = pagination?.page ?? 1;
-    const totalPages = pagination?.totalPages ?? 0;
-    if (currentPage < totalPages) {
-      handler.executeEvent("loadPage", { page: currentPage + 1 });
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="space-y-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-10 w-full" />
-        ))}
-      </div>
-    );
-  }
+  const columns = [
+    {
+      title: "Số phiếu",
+      dataIndex: "soPhieu",
+      key: "soPhieu",
+      width: 120,
+      render: (text: string) => <Text strong>{text}</Text>,
+    },
+    {
+      title: "Ngày",
+      dataIndex: "ngay",
+      key: "ngay",
+      width: 110,
+      render: (ngay: string) => (ngay ? dayjs(ngay).format("DD/MM/YYYY") : "-"),
+    },
+    {
+      title: "Nội dung",
+      dataIndex: "noiDung",
+      key: "noiDung",
+      ellipsis: true,
+    },
+    {
+      title: "Đối tượng",
+      key: "doiTuong",
+      width: 160,
+      ellipsis: true,
+      render: (_: unknown, row: ChungTu) => row.danhMuc?.doiTuong?.ten ?? "-",
+    },
+    {
+      title: "TK Nợ",
+      key: "tkNo",
+      width: 90,
+      render: (_: unknown, row: ChungTu) => row.danhMuc?.taiKhoanNo?.ma ?? "-",
+    },
+    {
+      title: "TK Có",
+      key: "tkCo",
+      width: 90,
+      render: (_: unknown, row: ChungTu) => row.danhMuc?.taiKhoanCo?.ma ?? "-",
+    },
+    {
+      title: "Số tiền",
+      dataIndex: "soTien",
+      key: "soTien",
+      width: 140,
+      align: "right" as const,
+      render: (v: number) => (
+        <Text strong style={{ color: moneyColor }}>
+          {formatCurrency(v)}
+        </Text>
+      ),
+    },
+    {
+      title: "Thao tác",
+      key: "action",
+      width: 130,
+      align: "center" as const,
+      render: (_: unknown, row: ChungTu) => (
+        <Space size="small">
+          <Tooltip title="In / Xuất PDF">
+            <Button
+              type="text"
+              size="small"
+              icon={<PrinterOutlined />}
+              onClick={() => print(row)}
+            />
+          </Tooltip>
+          <Tooltip title="Xem">
+            <Button
+              type="text"
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => setViewModalPhieu(row)}
+            />
+          </Tooltip>
+          <Tooltip title="Sửa">
+            <Button
+              type="text"
+              size="small"
+              icon={<EditOutlined />}
+              className="!text-primary hover:!bg-primary/10"
+              onClick={() => {
+                setEditingPhieu(row);
+                setFormModalOpen(true);
+              }}
+            />
+          </Tooltip>
+          <Popconfirm
+            title="Xác nhận xóa"
+            description={`Xóa phiếu ${row.soPhieu}?`}
+            onConfirm={() => handleDelete(row.id)}
+            okText="Xóa"
+            cancelText="Hủy"
+            okButtonProps={{ danger: true }}
+          >
+            <Tooltip title="Xóa">
+              <Button
+                type="text"
+                size="small"
+                icon={<DeleteOutlined />}
+                className="!text-destructive hover:!bg-destructive/10"
+              />
+            </Tooltip>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
 
   return (
-    <div className="space-y-3">
-      <div className={TABLE_CONTAINER}>
-        <Table className={cn(TABLE_DENSITY)}>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Số phiếu</TableHead>
-              <TableHead>Ngày</TableHead>
-              <TableHead>Nội dung</TableHead>
-              <TableHead>Đối tượng</TableHead>
-              <TableHead>TK Nợ</TableHead>
-              <TableHead>TK Có</TableHead>
-              <TableHead className="text-right">Số tiền</TableHead>
-              <TableHead className="text-center">Thao tác</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                  Không có dữ liệu
-                </TableCell>
-              </TableRow>
-            ) : (
-              data.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell className="font-medium">{row.soPhieu}</TableCell>
-                  <TableCell>
-                    {row.ngay ? dayjs(row.ngay).format("DD/MM/YYYY") : "-"}
-                  </TableCell>
-                  <TableCell className="max-w-[200px] truncate">
-                    {row.noiDung}
-                  </TableCell>
-                  <TableCell>
-                    {row.danhMuc?.doiTuong?.ten ?? "-"}
-                  </TableCell>
-                  <TableCell>
-                    {row.danhMuc?.taiKhoanNo?.ma ?? "-"}
-                  </TableCell>
-                  <TableCell>
-                    {row.danhMuc?.taiKhoanCo?.ma ?? "-"}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatCurrency(row.soTien)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-center gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-xs"
-                        onClick={() => setViewModalPhieu(row)}
-                      >
-                        Xem
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-xs"
-                        onClick={() => print(row)}
-                        title="In / Xuất PDF"
-                      >
-                        <Printer className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-xs"
-                        onClick={() => {
-                          setEditingPhieu(row);
-                          setFormModalOpen(true);
-                        }}
-                      >
-                        Sửa
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-                            disabled={deletingId === row.id}
-                          >
-                            Xóa
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Bạn có chắc chắn muốn xóa phiếu{" "}
-                              <strong>{row.soPhieu}</strong>? Hành động này
-                              không thể hoàn tác.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Hủy</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(row.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Xóa
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination footer */}
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          Tổng: <strong>{pagination?.total ?? 0}</strong> phiếu
-          {pagination && pagination.totalPages > 1 && (
-            <> | Trang <strong>{pagination.page}</strong> /{" "}
-            <strong>{pagination.totalPages}</strong></>
-          )}
-        </span>
-        <div className="flex items-center gap-1">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 w-8 p-0"
-            disabled={!pagination || pagination.page <= 1}
-            onClick={handlePrev}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 w-8 p-0"
-            disabled={
-              !pagination || pagination.page >= pagination.totalPages
-            }
-            onClick={handleNext}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    </div>
+    <Table<ChungTu>
+      className="excel-table"
+      columns={columns}
+      dataSource={data}
+      rowKey="id"
+      loading={loading}
+      size="middle"
+      scroll={{ x: 1100, y: "calc(100vh - 380px)" }}
+      pagination={{
+        current: pagination?.page ?? 1,
+        pageSize: pagination?.limit ?? 50,
+        total: pagination?.total ?? 0,
+        showSizeChanger: true,
+        showTotal: (total) => `Tổng ${total} phiếu`,
+        pageSizeOptions: ["20", "50", "100", "200"],
+      }}
+      onChange={(pag) =>
+        handler.executeEvent("loadPage", {
+          page: pag.current ?? 1,
+          limit: pag.pageSize ?? 50,
+        })
+      }
+    />
   );
 }

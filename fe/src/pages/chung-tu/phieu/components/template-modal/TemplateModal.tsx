@@ -1,14 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { Modal, Button, Input, Upload, Typography, Space, Collapse } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
+import type { UploadProps } from "antd";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { usePhieuState, usePhieuConfig } from "../../PhieuHandlerContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { phieuTemplateService } from "@/services/phieuTemplateService";
@@ -16,7 +10,8 @@ import { getDefaultTemplate, PHIEU_PLACEHOLDERS } from "../../lib/printTemplates
 import { buildPhieuHtml } from "../../lib/printPhieu";
 import { ChungTu, LoaiChungTu } from "@/types";
 
-/** Phiếu mẫu để xem trước (preview). */
+const { Text } = Typography;
+
 function buildSample(loai: LoaiChungTu): ChungTu {
   return {
     id: "preview",
@@ -85,81 +80,83 @@ export function TemplateModal() {
     }
   };
 
-  const handleUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => setHtml(String(reader.result ?? ""));
-    reader.readAsText(file);
+  const uploadProps: UploadProps = {
+    accept: ".html,.htm,text/html",
+    showUploadList: false,
+    beforeUpload: (file) => {
+      const reader = new FileReader();
+      reader.onload = () => setHtml(String(reader.result ?? ""));
+      reader.readAsText(file);
+      return false;
+    },
   };
 
   return (
-    <Dialog open={!!open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-5xl max-h-[92vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Mẫu in — {config.title}</DialogTitle>
-        </DialogHeader>
-
-        <div className="grid grid-cols-2 gap-4 flex-1 overflow-hidden">
-          {/* Trình soạn thảo */}
-          <div className="flex flex-col gap-2 overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Mã HTML</span>
-              <label className="text-xs text-primary cursor-pointer hover:underline">
+    <Modal
+      title={`Mẫu in — ${config.title}`}
+      open={!!open}
+      onCancel={() => setOpen(false)}
+      width={1000}
+      footer={[
+        <Button key="reset" danger onClick={handleReset} loading={saving}>
+          Khôi phục mặc định
+        </Button>,
+        <Button key="close" onClick={() => setOpen(false)}>
+          Đóng
+        </Button>,
+        <Button key="save" type="primary" onClick={handleSave} loading={saving}>
+          Lưu mẫu
+        </Button>,
+      ]}
+    >
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <Text strong>Mã HTML</Text>
+            <Upload {...uploadProps}>
+              <Button size="small" icon={<UploadOutlined />}>
                 Tải file .html
-                <input
-                  type="file"
-                  accept=".html,.htm,text/html"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleUpload(f);
-                    e.target.value = "";
-                  }}
-                />
-              </label>
-            </div>
-            <Textarea
-              className="flex-1 font-mono text-xs resize-none min-h-[260px]"
-              value={html}
-              onChange={(e) => setHtml(e.target.value)}
-              spellCheck={false}
-            />
-            <details className="text-xs text-muted-foreground">
-              <summary className="cursor-pointer">Placeholder hỗ trợ</summary>
-              <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-0.5">
-                {PHIEU_PLACEHOLDERS.map((p) => (
-                  <div key={p.token}>
-                    <code className="text-foreground">{p.token}</code> — {p.moTa}
-                  </div>
-                ))}
-              </div>
-            </details>
+              </Button>
+            </Upload>
           </div>
-
-          {/* Xem trước */}
-          <div className="flex flex-col gap-2 overflow-hidden">
-            <span className="text-sm font-medium">Xem trước</span>
-            <iframe
-              title="preview"
-              className="flex-1 w-full rounded-md border bg-white min-h-[260px]"
-              srcDoc={previewHtml}
-            />
-          </div>
+          <Input.TextArea
+            value={html}
+            onChange={(e) => setHtml(e.target.value)}
+            autoSize={{ minRows: 14, maxRows: 14 }}
+            spellCheck={false}
+            style={{ fontFamily: "monospace", fontSize: 12 }}
+          />
+          <Collapse
+            ghost
+            size="small"
+            items={[
+              {
+                key: "ph",
+                label: "Placeholder hỗ trợ",
+                children: (
+                  <Space direction="vertical" size={2}>
+                    {PHIEU_PLACEHOLDERS.map((p) => (
+                      <Text key={p.token} className="text-xs">
+                        <code>{p.token}</code> — {p.moTa}
+                      </Text>
+                    ))}
+                  </Space>
+                ),
+              },
+            ]}
+          />
         </div>
 
-        <DialogFooter className="gap-2 sm:justify-between">
-          <Button variant="outline" onClick={handleReset} disabled={saving}>
-            Khôi phục mặc định
-          </Button>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
-              Đóng
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              Lưu mẫu
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <div className="flex flex-col gap-2">
+          <Text strong>Xem trước</Text>
+          <iframe
+            title="preview"
+            className="w-full rounded-md border bg-white"
+            style={{ height: 420 }}
+            srcDoc={previewHtml}
+          />
+        </div>
+      </div>
+    </Modal>
   );
 }

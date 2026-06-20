@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { Card, Tabs, Breadcrumb } from "antd";
+import { HomeOutlined } from "@ant-design/icons";
 import { PhieuHandlerProvider, usePhieuHandler, usePhieuConfig, usePhieuState } from "./PhieuHandlerContext";
 import { PhieuConfig } from "./phieuConfig";
 import { StatsCards } from "./components/stats/StatsCards";
@@ -9,7 +11,6 @@ import { PhieuViewModal } from "./components/view-modal/PhieuViewModal";
 import { SummaryTabs } from "./components/summary/SummaryTabs";
 import { TemplateModal } from "./components/template-modal/TemplateModal";
 import { ImportExcelModal } from "./import/ImportExcelModal";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function PhieuListPageInner() {
   const handler = usePhieuHandler();
@@ -22,22 +23,40 @@ function PhieuListPageInner() {
   }, []);
 
   return (
-    <div className="space-y-4 p-4">
-      <h1 className="text-xl font-semibold">{config.title}</h1>
+    <div className="space-y-6">
+      <Breadcrumb
+        items={[
+          { href: "/", title: <><HomeOutlined /> Trang chủ</> },
+          { title: "Chứng từ" },
+          { title: config.title },
+        ]}
+      />
+
       <StatsCards />
-      <Tabs defaultValue="list">
-        <TabsList>
-          <TabsTrigger value="list">Danh sách</TabsTrigger>
-          <TabsTrigger value="summary">Tổng hợp</TabsTrigger>
-        </TabsList>
-        <TabsContent value="list" className="space-y-3">
-          <FilterBar />
-          <PhieuTable />
-        </TabsContent>
-        <TabsContent value="summary">
-          <SummaryTabs />
-        </TabsContent>
-      </Tabs>
+
+      <Card className="shadow-sm">
+        <Tabs
+          defaultActiveKey="list"
+          items={[
+            {
+              key: "list",
+              label: "Danh sách",
+              children: (
+                <>
+                  <FilterBar />
+                  <PhieuTable />
+                </>
+              ),
+            },
+            {
+              key: "summary",
+              label: "Tổng hợp",
+              children: <SummaryTabs />,
+            },
+          ]}
+        />
+      </Card>
+
       <PhieuFormModal />
       <PhieuViewModal />
       <TemplateModal />

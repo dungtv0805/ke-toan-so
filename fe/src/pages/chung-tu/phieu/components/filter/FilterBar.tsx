@@ -1,15 +1,15 @@
-import dayjs from "dayjs";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Row, Col, Space, Input, Select, DatePicker, Button, Tooltip } from "antd";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SearchOutlined,
+  ReloadOutlined,
+  PlusOutlined,
+  UploadOutlined,
+  FileTextOutlined,
+} from "@ant-design/icons";
+import type { Dayjs } from "dayjs";
 import { usePhieuState, usePhieuHandler } from "../../PhieuHandlerContext";
-import { Search, Filter, RotateCcw, Plus, Upload, FileCog } from "lucide-react";
+
+const { RangePicker } = DatePicker;
 
 export function FilterBar() {
   const handler = usePhieuHandler();
@@ -32,209 +32,135 @@ export function FilterBar() {
   const [, setImportModalOpen] = usePhieuState("importModalOpen", false);
   const [, setTemplateModalOpen] = usePhieuState("templateModalOpen", false);
 
-  const handleSearchChange = (value: string) => {
-    handler.executeEvent("setFilter", { key: "searchText", value });
-  };
-
-  // Radix <SelectItem> cannot have an empty-string value, so the "Tất cả"
-  // (no-filter) option uses this sentinel and is mapped back to undefined.
-  const ALL = "__all__";
-
-  const handleSelectFilter = (key: string, value: string | undefined) => {
+  const setFilter = (key: string, value: unknown) =>
     handler.executeEvent("setFilter", { key, value });
+
+  const apply = () => handler.executeEvent("applyFilters", {});
+
+  const handleSelect = (key: string, value: string | undefined) => {
+    setFilter(key, value);
+    apply();
   };
 
   return (
-    <div className="space-y-3">
-      {/* Row 1: Search + dates */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Tìm kiếm số phiếu, nội dung..."
-            className="pl-9 h-9"
-            value={searchText ?? ""}
-            onChange={(e) => handleSearchChange(e.target.value)}
-          />
-        </div>
+    <div className="mb-4 space-y-3">
+      {/* Hàng tìm kiếm + bộ lọc */}
+      <Row gutter={[12, 12]} align="middle">
+        <Col flex="auto">
+          <Space wrap>
+            <Input
+              placeholder="Tìm kiếm số phiếu, nội dung..."
+              prefix={<SearchOutlined className="text-muted-foreground" />}
+              value={searchText ?? ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFilter("searchText", val);
+                if (val === "") apply();
+              }}
+              onPressEnter={apply}
+              style={{ width: 280 }}
+              allowClear
+            />
+            <RangePicker
+              format="DD/MM/YYYY"
+              value={(dateRange as [Dayjs, Dayjs] | null) ?? null}
+              onChange={(v) => {
+                setFilter("dateRange", v && v[0] && v[1] ? v : null);
+                apply();
+              }}
+            />
+            <Tooltip title="Đặt lại bộ lọc">
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={() => handler.executeEvent("resetFilters", {})}
+              />
+            </Tooltip>
+          </Space>
+        </Col>
+      </Row>
 
-        <div className="flex items-center gap-1">
-          <span className="text-sm text-muted-foreground whitespace-nowrap">Từ:</span>
-          <Input
-            type="date"
-            className="w-[140px] h-9"
-            value={dateRange?.[0] ? dateRange[0].format("YYYY-MM-DD") : ""}
-            onChange={(e) => {
-              const start = e.target.value ? dayjs(e.target.value) : null;
-              const end = dateRange?.[1] ?? null;
-              handler.executeEvent("setFilter", {
-                key: "dateRange",
-                value: start && end ? [start, end] : start ? [start, start] : null,
-              });
-            }}
-          />
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="text-sm text-muted-foreground whitespace-nowrap">Đến:</span>
-          <Input
-            type="date"
-            className="w-[140px] h-9"
-            value={dateRange?.[1] ? dateRange[1].format("YYYY-MM-DD") : ""}
-            onChange={(e) => {
-              const start = dateRange?.[0] ?? null;
-              const end = e.target.value ? dayjs(e.target.value) : null;
-              handler.executeEvent("setFilter", {
-                key: "dateRange",
-                value: start && end ? [start, end] : end ? [end, end] : null,
-              });
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Row 2: Selects */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Select
-          value={filterDoiTuong ?? ALL}
-          onValueChange={(v) =>
-            handleSelectFilter("filterDoiTuong", v === ALL ? undefined : v)
-          }
-        >
-          <SelectTrigger className="w-[160px] h-9">
-            <SelectValue placeholder="Đối tượng" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Tất cả</SelectItem>
-            {doiTuongList.map((dt) => (
-              <SelectItem key={dt.ma} value={dt.ma}>
-                {dt.ten}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filterDuAn ?? ALL}
-          onValueChange={(v) =>
-            handleSelectFilter("filterDuAn", v === ALL ? undefined : v)
-          }
-        >
-          <SelectTrigger className="w-[160px] h-9">
-            <SelectValue placeholder="Dự án" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Tất cả</SelectItem>
-            {duAnList.map((da) => (
-              <SelectItem key={da.ma} value={da.ma}>
-                {da.ten}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filterBoPhan ?? ALL}
-          onValueChange={(v) =>
-            handleSelectFilter("filterBoPhan", v === ALL ? undefined : v)
-          }
-        >
-          <SelectTrigger className="w-[160px] h-9">
-            <SelectValue placeholder="Bộ phận" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Tất cả</SelectItem>
-            {boPhanList.map((bp) => (
-              <SelectItem key={bp.ma} value={bp.ma}>
-                {bp.ten}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filterTaiKhoanNo ?? ALL}
-          onValueChange={(v) =>
-            handleSelectFilter("filterTaiKhoanNo", v === ALL ? undefined : v)
-          }
-        >
-          <SelectTrigger className="w-[160px] h-9">
-            <SelectValue placeholder="TK Nợ" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Tất cả</SelectItem>
-            {taiKhoanList.map((tk) => (
-              <SelectItem key={tk.ma} value={tk.ma}>
-                {tk.ma} - {tk.ten}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filterTaiKhoanCo ?? ALL}
-          onValueChange={(v) =>
-            handleSelectFilter("filterTaiKhoanCo", v === ALL ? undefined : v)
-          }
-        >
-          <SelectTrigger className="w-[160px] h-9">
-            <SelectValue placeholder="TK Có" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Tất cả</SelectItem>
-            {taiKhoanList.map((tk) => (
-              <SelectItem key={tk.ma} value={tk.ma}>
-                {tk.ma} - {tk.ten}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Row 3: Action buttons */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          size="sm"
-          onClick={() => handler.executeEvent("applyFilters", {})}
-        >
-          <Filter className="h-4 w-4 mr-1" />
-          Lọc
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => handler.executeEvent("resetFilters", {})}
-        >
-          <RotateCcw className="h-4 w-4 mr-1" />
-          Đặt lại
-        </Button>
-        <div className="flex-1" />
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setTemplateModalOpen(true)}
-        >
-          <FileCog className="h-4 w-4 mr-1" />
-          Mẫu in
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setImportModalOpen(true)}
-        >
-          <Upload className="h-4 w-4 mr-1" />
-          Import Excel
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => {
-            setEditingPhieu(null);
-            setFormModalOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4 mr-1" />
-          Thêm phiếu
-        </Button>
-      </div>
+      <Row gutter={[12, 12]} align="middle" justify="space-between">
+        <Col flex="auto">
+          <Space wrap>
+            <Select
+              placeholder="Đối tượng"
+              style={{ width: 170 }}
+              allowClear
+              value={filterDoiTuong}
+              onChange={(v) => handleSelect("filterDoiTuong", v)}
+              options={doiTuongList.map((dt) => ({ value: dt.ma, label: dt.ten }))}
+            />
+            <Select
+              placeholder="Dự án"
+              style={{ width: 170 }}
+              allowClear
+              value={filterDuAn}
+              onChange={(v) => handleSelect("filterDuAn", v)}
+              options={duAnList.map((da) => ({ value: da.ma, label: da.ten }))}
+            />
+            <Select
+              placeholder="Bộ phận"
+              style={{ width: 170 }}
+              allowClear
+              value={filterBoPhan}
+              onChange={(v) => handleSelect("filterBoPhan", v)}
+              options={boPhanList.map((bp) => ({ value: bp.ma, label: bp.ten }))}
+            />
+            <Select
+              placeholder="TK Nợ"
+              style={{ width: 160 }}
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              value={filterTaiKhoanNo}
+              onChange={(v) => handleSelect("filterTaiKhoanNo", v)}
+              options={taiKhoanList.map((tk) => ({
+                value: tk.ma,
+                label: `${tk.ma} - ${tk.ten}`,
+              }))}
+            />
+            <Select
+              placeholder="TK Có"
+              style={{ width: 160 }}
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              value={filterTaiKhoanCo}
+              onChange={(v) => handleSelect("filterTaiKhoanCo", v)}
+              options={taiKhoanList.map((tk) => ({
+                value: tk.ma,
+                label: `${tk.ma} - ${tk.ten}`,
+              }))}
+            />
+          </Space>
+        </Col>
+        <Col>
+          <Space wrap>
+            <Button
+              icon={<FileTextOutlined />}
+              onClick={() => setTemplateModalOpen(true)}
+            >
+              Mẫu in
+            </Button>
+            <Button
+              icon={<UploadOutlined />}
+              onClick={() => setImportModalOpen(true)}
+            >
+              Import Excel
+            </Button>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setEditingPhieu(null);
+                setFormModalOpen(true);
+              }}
+            >
+              Thêm phiếu
+            </Button>
+          </Space>
+        </Col>
+      </Row>
     </div>
   );
 }

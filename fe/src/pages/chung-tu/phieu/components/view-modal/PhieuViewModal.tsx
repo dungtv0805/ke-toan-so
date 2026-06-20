@@ -1,115 +1,82 @@
 import dayjs from "dayjs";
-import { Printer } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Modal, Descriptions, Button } from "antd";
+import { PrinterOutlined } from "@ant-design/icons";
 import { usePhieuState } from "../../PhieuHandlerContext";
 import { formatCurrency } from "../../lib/format";
 import { usePrintPhieu } from "../../lib/usePrintPhieu";
-
-interface FieldRowProps {
-  label: string;
-  value?: string | null;
-}
-
-function FieldRow({ label, value }: FieldRowProps) {
-  return (
-    <div className="flex py-2 border-b last:border-b-0">
-      <span className="w-40 flex-shrink-0 text-sm text-muted-foreground font-medium">
-        {label}
-      </span>
-      <span className="text-sm">{value || "-"}</span>
-    </div>
-  );
-}
 
 export function PhieuViewModal() {
   const [phieu, setPhieu] = usePhieuState("viewModalPhieu", null);
   const print = usePrintPhieu();
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) setPhieu(null);
-  };
+  const tk = (
+    t?: { ma: string; ten: string } | null
+  ): string => (t ? `${t.ma} - ${t.ten}` : "-");
 
   return (
-    <Dialog open={!!phieu} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Chi tiết phiếu</DialogTitle>
-        </DialogHeader>
-
-        {phieu && (
-          <div className="divide-y">
-            <FieldRow label="Số phiếu" value={phieu.soPhieu} />
-            <FieldRow
-              label="Ngày"
-              value={dayjs(phieu.ngay).format("DD/MM/YYYY")}
-            />
-            <FieldRow
-              label="Số tiền"
-              value={formatCurrency(phieu.soTien)}
-            />
-            <FieldRow label="Nội dung" value={phieu.noiDung} />
-            <FieldRow label="Người giao dịch" value={phieu.nguoiGiaoDich} />
-            <FieldRow label="Địa chỉ" value={phieu.diaChi} />
-            <FieldRow label="Ghi chú" value={phieu.ghiChu} />
-
-            {/* Danh mục */}
-            <FieldRow
-              label="Đối tượng"
-              value={phieu.danhMuc?.doiTuong?.ten}
-            />
-            <FieldRow
-              label="TK Nợ"
-              value={
-                phieu.danhMuc?.taiKhoanNo
-                  ? `${phieu.danhMuc.taiKhoanNo.ma} - ${phieu.danhMuc.taiKhoanNo.ten}`
-                  : undefined
-              }
-            />
-            <FieldRow
-              label="TK Có"
-              value={
-                phieu.danhMuc?.taiKhoanCo
-                  ? `${phieu.danhMuc.taiKhoanCo.ma} - ${phieu.danhMuc.taiKhoanCo.ten}`
-                  : undefined
-              }
-            />
-            <FieldRow
-              label="Dự án"
-              value={phieu.danhMuc?.duAn?.ten}
-            />
-            <FieldRow
-              label="Bộ phận"
-              value={phieu.danhMuc?.boPhan?.ten}
-            />
-            <FieldRow
-              label="Sản phẩm"
-              value={phieu.danhMuc?.sanPham?.ten}
-            />
-            <FieldRow
-              label="Dòng tiền"
-              value={phieu.danhMuc?.dongTien?.ten}
-            />
-          </div>
-        )}
-
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => phieu && print(phieu)}
-            disabled={!phieu}
-          >
-            <Printer className="h-4 w-4 mr-1" />
-            In / Xuất PDF
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <Modal
+      title="Chi tiết phiếu"
+      open={!!phieu}
+      onCancel={() => setPhieu(null)}
+      width={680}
+      footer={[
+        <Button key="close" onClick={() => setPhieu(null)}>
+          Đóng
+        </Button>,
+        <Button
+          key="print"
+          type="primary"
+          icon={<PrinterOutlined />}
+          onClick={() => phieu && print(phieu)}
+        >
+          In / Xuất PDF
+        </Button>,
+      ]}
+    >
+      {phieu && (
+        <Descriptions bordered size="small" column={2}>
+          <Descriptions.Item label="Số phiếu">{phieu.soPhieu}</Descriptions.Item>
+          <Descriptions.Item label="Ngày">
+            {dayjs(phieu.ngay).format("DD/MM/YYYY")}
+          </Descriptions.Item>
+          <Descriptions.Item label="Số tiền" span={2}>
+            {formatCurrency(phieu.soTien)}
+          </Descriptions.Item>
+          <Descriptions.Item label="Nội dung" span={2}>
+            {phieu.noiDung || "-"}
+          </Descriptions.Item>
+          <Descriptions.Item label="Người giao dịch">
+            {phieu.nguoiGiaoDich || "-"}
+          </Descriptions.Item>
+          <Descriptions.Item label="Địa chỉ">
+            {phieu.diaChi || "-"}
+          </Descriptions.Item>
+          <Descriptions.Item label="TK Nợ">
+            {tk(phieu.danhMuc?.taiKhoanNo)}
+          </Descriptions.Item>
+          <Descriptions.Item label="TK Có">
+            {tk(phieu.danhMuc?.taiKhoanCo)}
+          </Descriptions.Item>
+          <Descriptions.Item label="Đối tượng">
+            {phieu.danhMuc?.doiTuong?.ten || "-"}
+          </Descriptions.Item>
+          <Descriptions.Item label="Dự án">
+            {phieu.danhMuc?.duAn?.ten || "-"}
+          </Descriptions.Item>
+          <Descriptions.Item label="Bộ phận">
+            {phieu.danhMuc?.boPhan?.ten || "-"}
+          </Descriptions.Item>
+          <Descriptions.Item label="Sản phẩm">
+            {phieu.danhMuc?.sanPham?.ten || "-"}
+          </Descriptions.Item>
+          <Descriptions.Item label="Dòng tiền">
+            {phieu.danhMuc?.dongTien?.ten || "-"}
+          </Descriptions.Item>
+          <Descriptions.Item label="Ghi chú">
+            {phieu.ghiChu || "-"}
+          </Descriptions.Item>
+        </Descriptions>
+      )}
+    </Modal>
   );
 }
