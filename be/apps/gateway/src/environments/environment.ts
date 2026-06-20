@@ -44,6 +44,10 @@ export const environment = {
       host: process.env.SERVICE_CONFIG_HOST || 'localhost',
       port: parseInt(process.env.SERVICE_CONFIG_PORT || '3007', 10),
     },
+    kho: {
+      host: process.env.SERVICE_KHO_HOST || 'localhost',
+      port: parseInt(process.env.SERVICE_KHO_PORT || '3008', 10),
+    },
   } as Record<string, ServiceConfig>,
 
   // Route mappings
@@ -55,6 +59,7 @@ export const environment = {
     { pathPrefix: '/payable', service: 'payable', stripPrefix: true },
     { pathPrefix: '/reporting', service: 'reporting', stripPrefix: true },
     { pathPrefix: '/config', service: 'config', stripPrefix: true },
+    { pathPrefix: '/kho', service: 'kho', stripPrefix: true },
     { pathPrefix: '/tai-lieu', service: 'config', stripPrefix: false },
   ] as Array<{ pathPrefix: string; service: string; stripPrefix?: boolean }>,
 };
