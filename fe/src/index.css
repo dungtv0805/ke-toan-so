@@ -168,8 +168,13 @@
 }
 
 .ant-menu-dark .ant-menu-item-selected {
-  background-color: hsl(var(--primary)) !important;
-  color: hsl(var(--primary-foreground)) !important;
+  background-color: hsl(var(--brand-gold)) !important;
+  color: hsl(var(--primary)) !important;
+  font-weight: 600 !important;
+}
+
+.ant-menu-dark .ant-menu-item-selected .anticon {
+  color: hsl(var(--primary)) !important;
 }
 
 .ant-menu-dark .ant-menu-submenu-title {
@@ -186,7 +191,20 @@
 }
 
 .ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title {
-  color: hsl(var(--sidebar-foreground)) !important;
+  color: hsl(var(--brand-gold)) !important;
+}
+
+.ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title .anticon {
+  color: hsl(var(--brand-gold)) !important;
+}
+
+/* Badge đếm dùng accent gold thương hiệu (chữ navy cho dễ đọc) */
+.ant-badge-count,
+.ant-badge .ant-badge-count {
+  background: hsl(var(--brand-gold)) !important;
+  color: hsl(var(--primary)) !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
 }
 
 .ant-menu-dark .ant-menu-sub {
@@ -232,8 +250,9 @@
 }
 
 .ant-menu-submenu-popup .ant-menu-item-selected {
-  background-color: hsl(var(--sidebar-primary)) !important;
-  color: hsl(var(--sidebar-primary-foreground)) !important;
+  background-color: hsl(var(--brand-gold)) !important;
+  color: hsl(var(--primary)) !important;
+  font-weight: 600 !important;
 }
 
 .ant-menu-submenu-popup .ant-menu-submenu-title {
