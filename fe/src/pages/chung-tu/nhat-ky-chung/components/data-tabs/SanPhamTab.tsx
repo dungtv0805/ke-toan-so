@@ -54,12 +54,13 @@ export function SanPhamTab() {
 
   return (
     <Table
+      className="excel-table"
       columns={columns}
       dataSource={summaryBySanPham || []}
       rowKey="sanPham"
       loading={loading}
       pagination={false}
-      size="middle"
+      size="small"
     />
   );
 }

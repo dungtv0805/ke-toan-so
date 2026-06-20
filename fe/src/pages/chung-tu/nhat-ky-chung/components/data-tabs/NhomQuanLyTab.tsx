@@ -76,12 +76,13 @@ export function NhomQuanLyTab() {
         <Text type="secondary">Tổng hợp thu chi theo nhóm quản lý</Text>
       </div>
       <Table<NhomQuanLySummary>
+        className="excel-table"
         columns={columns}
         dataSource={summaryByNhomQuanLy || []}
         rowKey="nhomQuanLy"
         loading={loading}
         pagination={false}
-        size="middle"
+        size="small"
         summary={(pageData) => {
           const totalThu = pageData.reduce((sum, r) => sum + r.tongThu, 0);
           const totalChi = pageData.reduce((sum, r) => sum + r.tongChi, 0);

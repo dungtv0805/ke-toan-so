@@ -70,12 +70,13 @@ export function TeamTab() {
         </Text>
       </div>
       <Table<TeamSummary>
+        className="excel-table"
         columns={columns}
         dataSource={summaryByTeam || []}
         rowKey="doi"
         loading={loading}
         pagination={false}
-        size="middle"
+        size="small"
         expandable={{
           expandedRowRender: (record) => (
             <Table

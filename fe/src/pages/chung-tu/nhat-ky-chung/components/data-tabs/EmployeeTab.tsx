@@ -83,12 +83,13 @@ export function EmployeeTab() {
         </Text>
       </div>
       <Table
+        className="excel-table"
         columns={columns}
         dataSource={summaryByEmployee || []}
         rowKey="nhanVien"
         loading={loading}
         pagination={false}
-        size="middle"
+        size="small"
         summary={(pageData) => {
           const totalChiSum = pageData.reduce((sum, r) => sum + r.tongChi, 0);
           const totalButToan = pageData.reduce((sum, r) => sum + r.soButToan, 0);

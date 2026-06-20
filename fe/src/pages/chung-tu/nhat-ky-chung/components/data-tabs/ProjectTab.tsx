@@ -83,12 +83,13 @@ export function ProjectTab() {
         <Text type="secondary">Tổng hợp thu chi theo từng dự án</Text>
       </div>
       <Table<ProjectSummary>
+        className="excel-table"
         columns={columns}
         dataSource={summaryByProject || []}
         rowKey="duAn"
         loading={loading}
         pagination={false}
-        size="middle"
+        size="small"
         summary={(pageData) => {
           const totalThu = pageData.reduce((sum, r) => sum + r.tongThu, 0);
           const totalChi = pageData.reduce((sum, r) => sum + r.tongChi, 0);

@@ -54,12 +54,13 @@ export function DongTienTab() {
 
   return (
     <Table
+      className="excel-table"
       columns={columns}
       dataSource={summaryByDongTien || []}
       rowKey="dongTien"
       loading={loading}
       pagination={false}
-      size="middle"
+      size="small"
     />
   );
 }

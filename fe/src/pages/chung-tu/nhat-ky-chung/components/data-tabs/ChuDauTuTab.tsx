@@ -54,12 +54,13 @@ export function ChuDauTuTab() {
 
   return (
     <Table
+      className="excel-table"
       columns={columns}
       dataSource={summaryByChuDauTu || []}
       rowKey="chuDauTu"
       loading={loading}
       pagination={false}
-      size="middle"
+      size="small"
     />
   );
 }
