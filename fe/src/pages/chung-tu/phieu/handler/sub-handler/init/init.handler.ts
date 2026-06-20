@@ -1,7 +1,7 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
 import { taiKhoanService } from "@/services/taiKhoanService";
-import { PhieuQueryParams } from "@/services/phieuService";
+import { PhieuQueryParams, PhieuSummaryType } from "@/services/phieuService";
 import { PhieuConfig } from "../../../phieuConfig";
 import { PhieuStates } from "../../../phieu.handler";
 import { InitEvent } from "./init.event";
@@ -30,6 +30,8 @@ export class InitHandler extends CSubHanlder<InitEvent, PhieuStates> {
     const pagination = this.getState("pagination") as
       | { page: number; limit: number }
       | undefined;
+    const loadedTypes =
+      (this.getState("summaryLoadedTypes") as PhieuSummaryType[]) || [];
     await Promise.all([
       this.loadEntries({
         ...this.buildQueryParams(),
@@ -37,6 +39,9 @@ export class InitHandler extends CSubHanlder<InitEvent, PhieuStates> {
         limit: pagination?.limit || DEFAULT_PAGE_SIZE,
       }),
       this.executeEvent("loadStats", {}),
+      // Reload các tab tổng hợp đã từng mở để chúng đồng bộ sau khi
+      // thêm/sửa/xoá/import phiếu (tab chưa mở vẫn lazy-load như cũ).
+      ...loadedTypes.map((type) => this.executeEvent("loadSummary", { type })),
     ]);
   }
 
@@ -125,6 +130,7 @@ export class InitHandler extends CSubHanlder<InitEvent, PhieuStates> {
       ["dongTienList", []],
       ["summaryData", {}],
       ["summaryLoading", {}],
+      ["summaryLoadedTypes", []],
     ];
     for (const [k, v] of defaults) {
       if (!this.hasState(k)) this.setState(k, v);

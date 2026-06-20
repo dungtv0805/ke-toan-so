@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table,
@@ -34,22 +34,22 @@ export function SummaryTabs() {
   const handler = usePhieuHandler();
   const [summaryData] = usePhieuState("summaryData", {} as Record<string, import("@/services/phieuService").PhieuSummaryItem[]>);
   const [summaryLoading] = usePhieuState("summaryLoading", {} as Record<string, boolean>);
-
-  // Track which tabs have been loaded (to avoid double-loading on mount)
-  const loadedRef = useRef<Set<string>>(new Set());
+  // Tabs đã từng nạp — nguồn sự thật ở handler để `refresh` (sau khi
+  // thêm/sửa/xoá) reload đúng các tab này; tab chưa mở vẫn lazy-load.
+  const [loadedTypes] = usePhieuState("summaryLoadedTypes", [] as PhieuSummaryType[]);
 
   const handleTabChange = (type: string) => {
-    if (!loadedRef.current.has(type)) {
-      loadedRef.current.add(type);
+    if (!loadedTypes.includes(type as PhieuSummaryType)) {
       handler.executeEvent("loadSummary", { type: type as PhieuSummaryType });
     }
   };
 
-  // Load the first tab on mount
+  // Load the first tab on mount (nếu chưa nạp)
   useEffect(() => {
     const firstType = SUMMARY_TABS[0].type;
-    loadedRef.current.add(firstType);
-    handler.executeEvent("loadSummary", { type: firstType });
+    if (!loadedTypes.includes(firstType)) {
+      handler.executeEvent("loadSummary", { type: firstType });
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
