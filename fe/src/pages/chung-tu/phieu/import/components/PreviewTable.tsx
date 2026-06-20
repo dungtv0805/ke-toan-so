@@ -53,6 +53,7 @@ export function PreviewTable() {
         style={{ marginBottom: 12 }}
       />
       <Table
+        className="excel-table"
         size="small"
         rowKey="rowNumber"
         dataSource={results ?? []}
