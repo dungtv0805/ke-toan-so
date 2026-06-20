@@ -759,10 +759,9 @@ const MainLayout: React.FC = () => {
             background: "hsl(var(--background))",
             height: "calc(100vh - 48px)",
             overflow: "auto",
-            padding: 12,
           }}
         >
-          <div className="h-full">
+          <div className="h-full" style={{ padding: 12 }}>
             <Outlet />
           </div>
         </Content>
