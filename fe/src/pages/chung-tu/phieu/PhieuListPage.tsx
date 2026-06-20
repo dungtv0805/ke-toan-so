@@ -23,7 +23,7 @@ function PhieuListPageInner() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <Breadcrumb
         items={[
           { href: "/", title: <><HomeOutlined /> Trang chủ</> },

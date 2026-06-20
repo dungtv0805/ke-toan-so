@@ -31,7 +31,7 @@ const TenantPage = () => {
   // Only super admin can access this page
   if (!user?.isSuperAdmin) {
     return (
-      <div className="p-6">
+      <div className="space-y-3">
         <div className="text-center text-red-500">
           Bạn không có quyền truy cập trang này. Chỉ Super Admin mới có thể quản lý Tenant.
         </div>
@@ -262,7 +262,7 @@ const TenantPage = () => {
   ];
 
   return (
-    <div className="p-6">
+    <div className="space-y-3">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">

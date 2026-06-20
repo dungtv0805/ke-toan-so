@@ -169,7 +169,7 @@ const BangCanDoiPage: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="space-y-3">
       <Breadcrumb
         items={[
           { href: '/', title: <><HomeOutlined /> Trang chủ</> },

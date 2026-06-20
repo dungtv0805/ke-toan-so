@@ -26,7 +26,7 @@ function KqkdPageInner() {
   };
 
   return (
-    <div className="kqkd-page space-y-4 p-4">
+    <div className="kqkd-page space-y-3">
       <h1 className="text-xl font-semibold">
         Báo cáo kết quả hoạt động kinh doanh
       </h1>
