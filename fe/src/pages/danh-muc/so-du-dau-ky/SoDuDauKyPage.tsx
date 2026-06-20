@@ -324,7 +324,7 @@ const SoDuDauKyPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div >
       <Breadcrumb style={{ marginBottom: 16 }}
         items={[
           { href: '/', title: <HomeOutlined /> },

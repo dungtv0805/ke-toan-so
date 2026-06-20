@@ -1,20 +1,27 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { doiTuongService } from '@/services/doiTuongService';
 import {
-  Card, Button, Space, Select, DatePicker, Breadcrumb, Empty, message,
-} from 'antd';
-import { ReloadOutlined, HomeOutlined, AccountBookOutlined } from '@ant-design/icons';
-import dayjs, { Dayjs } from 'dayjs';
-import {
-  soChiTietTaiKhoanService, SoChiTietReport,
+  SoChiTietReport,
+  soChiTietTaiKhoanService,
 } from '@/services/soChiTietTaiKhoanService';
 import { taiKhoanService } from '@/services/taiKhoanService';
-import { doiTuongService } from '@/services/doiTuongService';
+import { AccountBookOutlined, HomeOutlined, ReloadOutlined } from '@ant-design/icons';
+import {
+  Breadcrumb,
+  Button,
+  Card,
+  DatePicker,
+  Empty, message,
+  Select,
+  Space,
+} from 'antd';
+import dayjs, { Dayjs } from 'dayjs';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import AccountReportBlock from './AccountReportBlock';
+import ColumnChooser from './ColumnChooser';
 import {
   buildAntdColumns, loadVisibleKeys, saveVisibleKeys,
 } from './columnRegistry';
-import ColumnChooser from './ColumnChooser';
-import AccountReportBlock from './AccountReportBlock';
 import { parseReportParams } from './reportParams';
 
 const { RangePicker } = DatePicker;
@@ -122,7 +129,7 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: 24 }}>
+    <div>
       <Breadcrumb
         style={{ marginBottom: 16 }}
         items={[
