@@ -334,7 +334,7 @@ const ProfilePage = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Header */}
       <div>
         <Title level={3} className="!mb-1">Thông tin cá nhân</Title>

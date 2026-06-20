@@ -22,7 +22,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   ExportOutlined,
-  BankOutlined,
   HomeOutlined,
 } from "@ant-design/icons";
 import { TaiKhoanNganHang } from "@/types";
@@ -31,7 +30,7 @@ import { nganHangService } from "@/services/nganHangService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 // Validation schema
 const taiKhoanNHSchema = z.object({
@@ -280,7 +279,7 @@ const NganHangPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Breadcrumb */}
       <Breadcrumb
         items={[
@@ -289,19 +288,6 @@ const NganHangPage: React.FC = () => {
           { title: "Ngân hàng & Quỹ" },
         ]}
       />
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <Title level={3} className="!mb-1 flex items-center gap-2">
-            <BankOutlined className="text-primary" />
-            Quản lý Ngân hàng & Quỹ
-          </Title>
-          <Text type="secondary">
-            Quản lý danh sách tài khoản ngân hàng
-          </Text>
-        </div>
-      </div>
 
       {/* Table */}
       <Card>

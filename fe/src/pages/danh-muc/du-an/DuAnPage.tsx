@@ -44,7 +44,7 @@ import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { RangePicker } = DatePicker;
 
 // Validation schema
@@ -453,7 +453,7 @@ const DuAnPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Breadcrumb */}
       <Breadcrumb
         items={[
@@ -462,42 +462,6 @@ const DuAnPage: React.FC = () => {
           { title: "Dự án" },
         ]}
       />
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <Title level={3} className="!mb-1 flex items-center gap-2">
-            <ProjectOutlined className="text-primary" />
-            Quản lý dự án
-          </Title>
-          <Text type="secondary">
-            Quản lý thông tin các dự án và công trình
-          </Text>
-        </div>
-        <Space>
-          {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() =>
-              fetchData(
-                1,
-                pagination.pageSize,
-                "",
-                activeTab === "all"
-                  ? undefined
-                  : (activeTab as DuAn["trangThai"])
-              )
-            }
-          >
-            Làm mới
-          </Button>
-          {canCreate && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-            Thêm dự án
-          </Button>
-          )}
-        </Space>
-      </div>
 
       {/* Stats Cards */}
       <Row gutter={[16, 16]}>
@@ -576,6 +540,37 @@ const DuAnPage: React.FC = () => {
               activeTab === "all" ? undefined : (activeTab as DuAn["trangThai"])
             );
           }}
+          actions={
+            <>
+              {canExport && (
+                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+              )}
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={() =>
+                  fetchData(
+                    1,
+                    pagination.pageSize,
+                    "",
+                    activeTab === "all"
+                      ? undefined
+                      : (activeTab as DuAn["trangThai"])
+                  )
+                }
+              >
+                Làm mới
+              </Button>
+              {canCreate && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={handleAdd}
+                >
+                  Thêm dự án
+                </Button>
+              )}
+            </>
+          }
         />
 
         <Table

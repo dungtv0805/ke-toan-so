@@ -29,6 +29,7 @@ import {
   PnLItem,
 } from '@/services/pnlService';
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { FilterBar } from "@/components/common/FilterBar";
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('vi-VN', {
@@ -162,7 +163,7 @@ const PnLPage: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <div style={{ padding: 24 }}>
+    <div>
       <Breadcrumb
         items={[
           { href: '/', title: <><HomeOutlined /> Trang chủ</> },
@@ -172,30 +173,36 @@ const PnLPage: React.FC = () => {
         style={{ marginBottom: 16 }}
       />
 
+      <FilterBar
+        className="mb-3"
+        filters={
+          <Select
+            value={selectedPeriod}
+            onChange={setSelectedPeriod}
+            style={{ width: 150 }}
+            options={[
+              { value: 'thangNay', label: 'Tháng này' },
+              { value: 'thangTruoc', label: 'Tháng trước' },
+              { value: 'luyKe', label: 'Lũy kế năm' },
+            ]}
+          />
+        }
+        actions={
+          <>
+            {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+            <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
+              Làm mới
+            </Button>
+          </>
+        }
+      />
+
       <Card
         title={
           <Space>
             <LineChartOutlined />
             <span>Báo cáo Lãi lỗ (P&L)</span>
             <Tag color="blue">Năm {currentYear}</Tag>
-          </Space>
-        }
-        extra={
-          <Space>
-            <Select
-              value={selectedPeriod}
-              onChange={setSelectedPeriod}
-              style={{ width: 150 }}
-              options={[
-                { value: 'thangNay', label: 'Tháng này' },
-                { value: 'thangTruoc', label: 'Tháng trước' },
-                { value: 'luyKe', label: 'Lũy kế năm' },
-              ]}
-            />
-            {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
-            <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
-              Làm mới
-            </Button>
           </Space>
         }
       >

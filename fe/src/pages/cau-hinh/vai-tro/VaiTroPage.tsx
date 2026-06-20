@@ -12,7 +12,7 @@ function VaiTroPageInner() {
   }, [handler]);
 
   return (
-    <div className="p-6">
+    <div className="space-y-3">
       <VaiTroHeader />
       <VaiTroTable />
       <VaiTroModal />

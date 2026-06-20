@@ -39,6 +39,8 @@ import {
 } from '@/services/balanceSheetService';
 import { pnlService, PnLComparisonData } from '@/services/pnlService';
 import { PeriodFilter, PeriodFilterParams } from '@/components/shared/PeriodFilter';
+import { FilterBar } from "@/components/common/FilterBar";
+import { ExpandCollapseButtons } from "@/components/common/ExpandCollapseButtons";
 import { kqkdService, KqkdReport } from '@/services/kqkdService';
 import { KqkdTable } from '@/pages/bao-cao/kqkd/components/KqkdTable';
 import { usePagePermission } from "@/hooks/usePagePermission";
@@ -530,7 +532,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
   // ============ RENDER ============
 
   return (
-    <div style={{ padding: '8px 16px', height: 'calc(100vh - 48px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div style={{ flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
           <Breadcrumb
@@ -542,16 +544,14 @@ const BaoCaoTaiChinhPage: React.FC = () => {
           />
           <Space>
             <Tag color="blue">{getPeriodLabel(filterParams)}</Tag>
-            <Button size="small" icon={<ExportOutlined />}>Xuất Excel</Button>
-            <Button size="small" type="primary" icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
+            <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+            <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
               Làm mới
             </Button>
           </Space>
         </div>
 
-        <div style={{ marginBottom: 4 }}>
-          <PeriodFilter onFilter={handleFilter} loading={loading} />
-        </div>
+        <FilterBar className="mb-1" filters={<PeriodFilter onFilter={handleFilter} loading={loading} />} />
 
         <Row gutter={8} style={{ marginBottom: 4 }}>
         <Col span={6}>
@@ -599,14 +599,9 @@ const BaoCaoTaiChinhPage: React.FC = () => {
                 {tbState.soCaiStats && !tbState.soCaiStats.canDoi && (
                   <Alert message="Cảnh báo: Tổng phát sinh Nợ và Có không cân đối!" type="warning" showIcon style={{ marginBottom: 16 }} />
                 )}
-                <Space style={{ marginBottom: 8 }}>
-                  <Button size="small" onClick={() => setTbExpanded(collectParentKeys(trialBalanceTree))}>
-                    Mở tất cả
-                  </Button>
-                  <Button size="small" onClick={() => setTbExpanded([])}>
-                    Thu gọn
-                  </Button>
-                </Space>
+                <div style={{ marginBottom: 8, textAlign: 'right' }}>
+                  <ExpandCollapseButtons onExpandAll={() => setTbExpanded(collectParentKeys(trialBalanceTree))} onCollapseAll={() => setTbExpanded([])} />
+                </div>
                 <Table<TreeNode<TrialBalance>>
                   className="excel-table tb-summary"
                   columns={trialBalanceColumns}
@@ -660,11 +655,8 @@ const BaoCaoTaiChinhPage: React.FC = () => {
                   <Alert message="Cảnh báo: Tổng tài sản và Tổng nguồn vốn không cân đối!" type="warning" showIcon style={{ marginBottom: 16 }} />
                 )}
                 <Card title="TÀI SẢN" size="small" style={{ marginBottom: 16 }}>
-                  <div style={{ marginBottom: 8 }}>
-                    <Space>
-                      <Button size="small" onClick={() => setBsTaiSanExpanded(collectParentKeys(taiSanTree))}>Mở tất cả</Button>
-                      <Button size="small" onClick={() => setBsTaiSanExpanded([])}>Thu gọn</Button>
-                    </Space>
+                  <div style={{ marginBottom: 8, textAlign: 'right' }}>
+                    <ExpandCollapseButtons onExpandAll={() => setBsTaiSanExpanded(collectParentKeys(taiSanTree))} onCollapseAll={() => setBsTaiSanExpanded([])} />
                   </div>
                   <Table<TreeNode<BalanceSheetItem>>
                     className="excel-table"
@@ -679,11 +671,8 @@ const BaoCaoTaiChinhPage: React.FC = () => {
                   />
                 </Card>
                 <Card title="NGUỒN VỐN" size="small">
-                  <div style={{ marginBottom: 8 }}>
-                    <Space>
-                      <Button size="small" onClick={() => setBsNguonVonExpanded(collectParentKeys(nguonVonTree))}>Mở tất cả</Button>
-                      <Button size="small" onClick={() => setBsNguonVonExpanded([])}>Thu gọn</Button>
-                    </Space>
+                  <div style={{ marginBottom: 8, textAlign: 'right' }}>
+                    <ExpandCollapseButtons onExpandAll={() => setBsNguonVonExpanded(collectParentKeys(nguonVonTree))} onCollapseAll={() => setBsNguonVonExpanded([])} />
                   </div>
                   <Table<TreeNode<BalanceSheetItem>>
                     className="excel-table"

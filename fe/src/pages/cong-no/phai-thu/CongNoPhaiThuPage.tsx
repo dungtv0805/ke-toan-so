@@ -1,23 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  Table, 
-  Button, 
-  Input, 
-  Space, 
-  Tag, 
-  Statistic, 
-  Row, 
-  Col, 
+import {
+  Card,
+  Table,
+  Button,
+  Space,
+  Tag,
+  Statistic,
+  Row,
+  Col,
   Tabs,
   Alert,
   Progress,
   Tooltip,
   Breadcrumb
 } from 'antd';
-import { 
-  SearchOutlined, 
-  ReloadOutlined, 
+import {
+  ReloadOutlined,
   ExportOutlined,
   WarningOutlined,
   ExclamationCircleOutlined,
@@ -33,6 +31,7 @@ import {
   CongNoStats,
   CongNoSummaryByCustomer 
 } from '@/services/congNoPhaiThuService';
+import { FilterBar } from "@/components/common/FilterBar";
 import { usePagePermission } from "@/hooks/usePagePermission";
 
 const CongNoPhaiThuPage: React.FC = () => {
@@ -496,7 +495,7 @@ const CongNoPhaiThuPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div className="space-y-3">
       <Breadcrumb style={{ marginBottom: 16 }}>
         <Breadcrumb.Item href="/">
           <HomeOutlined />
@@ -505,26 +504,24 @@ const CongNoPhaiThuPage: React.FC = () => {
         <Breadcrumb.Item>Phải thu</Breadcrumb.Item>
       </Breadcrumb>
 
-      <Card 
-        title="Công nợ phải thu" 
-        extra={
-          <Space>
-            <Input
-              placeholder="Tìm theo tên, mã khách hàng..."
-              prefix={<SearchOutlined />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              onPressEnter={handleSearch}
-              style={{ width: 280 }}
-              allowClear
-            />
+      <FilterBar
+        search={{
+          value: searchText,
+          onChange: setSearchText,
+          onSearch: handleSearch,
+          placeholder: "Tìm theo tên, mã khách hàng...",
+        }}
+        actions={
+          <>
             {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
-            <Button icon={<ReloadOutlined />} onClick={fetchData}>
+            <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData}>
               Làm mới
             </Button>
-          </Space>
+          </>
         }
-      >
+      />
+
+      <Card title="Công nợ phải thu">
         {/* Stats Cards */}
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           <Col xs={24} sm={12} lg={4}>

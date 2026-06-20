@@ -15,7 +15,7 @@ const QuyChaunPageInner: React.FC = () => {
   }, [handler]);
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div className="space-y-3">
       <QuyChaunHeader />
       
       <Card style={{ marginTop: 16 }}>

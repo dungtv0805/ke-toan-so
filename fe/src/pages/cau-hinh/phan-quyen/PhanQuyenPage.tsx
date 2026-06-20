@@ -14,7 +14,7 @@ function PhanQuyenPageInner() {
   }, [handler]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 48px - 24px)", padding: "12px 24px" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <PhanQuyenHeader />
       <div style={{ flex: 1, minHeight: 0 }}>
         <PermissionMatrix />

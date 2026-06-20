@@ -1,23 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  Table, 
-  Button, 
-  Input, 
-  Space, 
-  Tag, 
-  Statistic, 
-  Row, 
-  Col, 
+import {
+  Card,
+  Table,
+  Button,
+  Space,
+  Tag,
+  Statistic,
+  Row,
+  Col,
   Tabs,
   Alert,
   Progress,
   Tooltip,
   Breadcrumb
 } from 'antd';
-import { 
-  SearchOutlined, 
-  ReloadOutlined, 
+import {
+  ReloadOutlined,
   ExportOutlined,
   WarningOutlined,
   ExclamationCircleOutlined,
@@ -34,6 +32,7 @@ import {
   CongNoStats,
   CongNoSummaryBySupplier 
 } from '@/services/congNoPhaiTraService';
+import { FilterBar } from "@/components/common/FilterBar";
 import { usePagePermission } from "@/hooks/usePagePermission";
 
 const CongNoPhaiTraPage: React.FC = () => {
@@ -497,7 +496,7 @@ const CongNoPhaiTraPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div className="space-y-3">
       <Breadcrumb style={{ marginBottom: 16 }}>
         <Breadcrumb.Item href="/">
           <HomeOutlined />
@@ -506,28 +505,28 @@ const CongNoPhaiTraPage: React.FC = () => {
         <Breadcrumb.Item>Phải trả</Breadcrumb.Item>
       </Breadcrumb>
 
-      <Card 
+      <FilterBar
+        search={{
+          value: searchText,
+          onChange: setSearchText,
+          onSearch: handleSearch,
+          placeholder: "Tìm theo tên, mã NCC...",
+        }}
+        actions={
+          <>
+            {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+            <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData}>
+              Làm mới
+            </Button>
+          </>
+        }
+      />
+
+      <Card
         title={
           <Space>
             <ShopOutlined />
             <span>Công nợ phải trả</span>
-          </Space>
-        }
-        extra={
-          <Space>
-            <Input
-              placeholder="Tìm theo tên, mã NCC..."
-              prefix={<SearchOutlined />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              onPressEnter={handleSearch}
-              style={{ width: 280 }}
-              allowClear
-            />
-            {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
-            <Button icon={<ReloadOutlined />} onClick={fetchData}>
-              Làm mới
-            </Button>
           </Space>
         }
       >

@@ -45,7 +45,7 @@ const ThanhVienPage = () => {
 
   if (!tenantId) {
     return (
-      <div className="p-6">
+      <div className="space-y-3">
         <Result
           status="warning"
           title="Chưa chọn công ty"
@@ -204,7 +204,7 @@ const ThanhVienPage = () => {
   ];
 
   return (
-    <div className="p-6">
+    <div className="space-y-3">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">

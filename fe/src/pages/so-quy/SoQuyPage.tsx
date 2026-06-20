@@ -3,7 +3,6 @@ import {
   Card,
   Table,
   Button,
-  Input,
   Space,
   Typography,
   Row,
@@ -11,14 +10,11 @@ import {
   Breadcrumb,
   Statistic,
   DatePicker,
-  Tooltip,
   Tabs,
   Tag,
 } from 'antd';
 import {
-  SearchOutlined,
   ExportOutlined,
-  ReloadOutlined,
   HomeOutlined,
   WalletOutlined,
   ArrowUpOutlined,
@@ -32,6 +28,7 @@ import { SoQuy } from '@/types';
 import { soQuyService, DailySummary } from '@/services/soQuyService';
 import { useIntroAnimation } from '@/hooks/useIntroAnimation';
 import dayjs from 'dayjs';
+import { FilterBar } from "@/components/common/FilterBar";
 import { usePagePermission } from "@/hooks/usePagePermission";
 
 const { Title, Text } = Typography;
@@ -273,7 +270,7 @@ const SoQuyPage: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-3">
       {/* Breadcrumb */}
       <Breadcrumb
         items={[
@@ -392,34 +389,26 @@ const SoQuyPage: React.FC = () => {
               children: (
                 <>
                   {/* Toolbar */}
-                  <div className="mb-4">
-                    <Row gutter={[16, 16]} align="middle" justify="space-between">
-                      <Col xs={24} lg={16}>
-                        <Space wrap>
-                          <Input
-                            placeholder="Tìm theo số phiếu, nội dung..."
-                            prefix={<SearchOutlined className="text-muted-foreground" />}
-                            value={searchText}
-                            onChange={(e) => handleSearch(e.target.value)}
-                            style={{ width: 260 }}
-                            allowClear
-                          />
-                          <RangePicker
-                            format="DD/MM/YYYY"
-                            value={dateRange}
-                            onChange={(dates) => handleDateRangeChange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)}
-                            placeholder={['Từ ngày', 'Đến ngày']}
-                          />
-                          <Tooltip title="Xóa bộ lọc">
-                            <Button icon={<ReloadOutlined />} onClick={resetFilters} />
-                          </Tooltip>
-                        </Space>
-                      </Col>
-                      <Col xs={24} lg={8} className="text-right">
-                        {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
-                      </Col>
-                    </Row>
-                  </div>
+                  <FilterBar
+                    className="mb-4"
+                    search={{
+                      value: searchText,
+                      onChange: handleSearch,
+                      placeholder: 'Tìm theo số phiếu, nội dung...',
+                    }}
+                    onReset={resetFilters}
+                    filters={
+                      <RangePicker
+                        format="DD/MM/YYYY"
+                        value={dateRange}
+                        onChange={(dates) => handleDateRangeChange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)}
+                        placeholder={['Từ ngày', 'Đến ngày']}
+                      />
+                    }
+                    actions={
+                      canExport ? <Button icon={<ExportOutlined />}>Xuất Excel</Button> : undefined
+                    }
+                  />
 
                   {/* Opening Balance Row */}
                   <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-4 flex justify-between items-center">
