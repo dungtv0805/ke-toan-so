@@ -4,6 +4,7 @@ export * from './base.entity';
 // Re-export all entities from domain modules
 export * from './master-data';
 export * from './voucher';
+export * from './kho';
 export * from './auth';
 export * from './payable';
 export * from './config';
