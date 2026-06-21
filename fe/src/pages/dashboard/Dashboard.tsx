@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Select, Space, Typography, Segmented } from 'antd';
+import { Select, Space, Typography, Segmented, ConfigProvider } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
 import KpiCards from './components/KpiCards';
 import RevenueTrendChart from './components/RevenueTrendChart';
@@ -56,12 +56,28 @@ const Dashboard: React.FC = () => {
           <CheckCircleOutlined className="text-primary" />
           <Text strong className="text-sm sm:text-base">Tổng quan báo cáo</Text>
         </div>
-        <Segmented
-          value={activeTab}
-          onChange={(v) => setActiveTab(v as string)}
-          options={TAB_OPTIONS}
-          size="small"
-        />
+        <ConfigProvider
+          theme={{
+            components: {
+              Segmented: {
+                itemSelectedBg: 'hsl(var(--primary))',
+                itemSelectedColor: '#fff',
+                itemColor: 'hsl(var(--primary))',
+                itemHoverColor: 'hsl(var(--primary))',
+                trackBg: 'hsl(var(--primary) / 0.08)',
+                fontSize: 15,
+              },
+            },
+          }}
+        >
+          <Segmented
+            value={activeTab}
+            onChange={(v) => setActiveTab(v as string)}
+            options={TAB_OPTIONS}
+            size="large"
+            className="font-semibold"
+          />
+        </ConfigProvider>
         <Space wrap>
           <Select
             value={month}
