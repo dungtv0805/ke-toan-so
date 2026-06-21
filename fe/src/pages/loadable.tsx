@@ -230,3 +230,11 @@ export const QuanLyHopDongPage = loadable(() => import('./trung-tam-du-lieu/hop-
 export const BaoCaoHopDongPage = loadable(() => import('./bao-cao/hop-dong/BaoCaoHopDongPage'), {
   fallback: <PageLoader />
 });
+
+export const SoThuTienPage = loadable(() => import('./trung-tam-du-lieu/thu-tien/SoThuTienPage'), {
+  fallback: <PageLoader />
+});
+
+export const SoHoaDonBanRaPage = loadable(() => import('./trung-tam-du-lieu/hd-ban-ra/SoHoaDonBanRaPage'), {
+  fallback: <PageLoader />
+});

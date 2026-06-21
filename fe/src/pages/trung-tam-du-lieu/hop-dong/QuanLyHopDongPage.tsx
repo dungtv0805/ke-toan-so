@@ -33,14 +33,16 @@ import dayjs, { Dayjs } from 'dayjs';
 import { FilterBar } from '@/components/common/FilterBar';
 import type {
   TheoDoiHopDongRow,
-  DotThanhToan,
-  DotHoaDon,
+  ThuTienHopDong,
+  HoaDonBanRa,
   DoiTuong,
 } from '@/types';
 import {
   theoDoiHopDongService,
   type TheoDoiHopDongStats,
 } from '@/services/theoDoiHopDongService';
+import { thuTienHopDongService } from '@/services/thuTienHopDongService';
+import { hoaDonBanRaService } from '@/services/hoaDonBanRaService';
 import { doiTuongService } from '@/services/doiTuongService';
 import { usePagePermission } from '@/hooks/usePagePermission';
 
@@ -105,8 +107,8 @@ export default function QuanLyHopDongPage() {
   const [current, setCurrent] = useState<TheoDoiHopDongRow | null>(null);
   const [saving, setSaving] = useState(false);
   const [form] = Form.useForm<ScalarForm>();
-  const [dotTT, setDotTT] = useState<DotThanhToan[]>([]);
-  const [dotHD, setDotHD] = useState<DotHoaDon[]>([]);
+  const [receipts, setReceipts] = useState<ThuTienHopDong[]>([]);
+  const [invoices, setInvoices] = useState<HoaDonBanRa[]>([]);
   const quyetToanGiaTri = Form.useWatch(['quyetToan', 'giaTri'], form);
 
   const loadList = async () => {
@@ -147,8 +149,11 @@ export default function QuanLyHopDongPage() {
     setCurrent(row);
     setOpen(true);
     form.resetFields();
-    setDotTT([]);
-    setDotHD([]);
+    setReceipts([]);
+    setInvoices([]);
+    // Đã thanh toán / Đã trả hóa đơn: tự cộng từ Sổ thu tiền + Sổ HĐ bán ra
+    thuTienHopDongService.getList({ hopDongId: row.hopDongId }).then(setReceipts).catch(() => {});
+    hoaDonBanRaService.getList({ hopDongId: row.hopDongId }).then(setInvoices).catch(() => {});
     try {
       const t = await theoDoiHopDongService.getByHopDongId(row.hopDongId);
       if (t) {
@@ -176,8 +181,6 @@ export default function QuanLyHopDongPage() {
           tinhTrangHoSo: t.tinhTrangHoSo,
           ghiChu: t.ghiChu,
         });
-        setDotTT(t.dotThanhToan || []);
-        setDotHD(t.dotHoaDon || []);
       }
     } catch {
       message.error('Không tải được dữ liệu hợp đồng');
@@ -185,12 +188,12 @@ export default function QuanLyHopDongPage() {
   };
 
   const daThanhToan = useMemo(
-    () => dotTT.reduce((s, d) => s + (Number(d.soTien) || 0), 0),
-    [dotTT],
+    () => receipts.reduce((s, d) => s + (Number(d.soTien) || 0), 0),
+    [receipts],
   );
   const daTraHoaDon = useMemo(
-    () => dotHD.reduce((s, d) => s + (Number(d.soTien) || 0), 0),
-    [dotHD],
+    () => invoices.reduce((s, d) => s + (Number(d.tong) || 0), 0),
+    [invoices],
   );
   const conLai = useMemo(() => {
     const base = Number(quyetToanGiaTri) || Number(current?.giaTriSauThue) || 0;
@@ -221,8 +224,6 @@ export default function QuanLyHopDongPage() {
             }
           : undefined,
         giamTru: v.giamTru,
-        dotThanhToan: dotTT,
-        dotHoaDon: dotHD,
         tinhTrangHoSo: v.tinhTrangHoSo,
         ghiChu: v.ghiChu,
       });
@@ -279,70 +280,19 @@ export default function QuanLyHopDongPage() {
     },
   ];
 
-  // Bảng đợt thanh toán (editable)
-  const dotTTCols: ColumnsType<DotThanhToan> = [
-    { title: 'Đợt', width: 50, align: 'center', render: (_, __, i) => i + 1 },
-    {
-      title: 'Tỉ lệ (%)',
-      width: 110,
-      render: (_, __, i) => (
-        <InputNumber
-          className="w-full"
-          min={0}
-          max={100}
-          value={dotTT[i]?.tiLe}
-          onChange={(val) => updateDotTT(i, { tiLe: val ?? undefined })}
-        />
-      ),
-    },
-    {
-      title: 'Số tiền',
-      render: (_, __, i) => (
-        <InputNumber
-          {...moneyProps}
-          value={dotTT[i]?.soTien}
-          onChange={(val) => updateDotTT(i, { soTien: val ?? undefined })}
-        />
-      ),
-    },
-    {
-      title: '',
-      width: 40,
-      align: 'center',
-      render: (_, __, i) => (
-        <Button type="text" danger size="small" icon={<DeleteOutlined />} onClick={() => setDotTT(dotTT.filter((_, j) => j !== i))} />
-      ),
-    },
+  // Danh sách khoản thu (read-only, từ Sổ thu tiền)
+  const receiptCols: ColumnsType<ThuTienHopDong> = [
+    { title: 'Ngày', dataIndex: 'ngay', width: 100, render: (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '-') },
+    { title: 'Nội dung', dataIndex: 'noiDung', ellipsis: true, render: (v) => v || '-' },
+    { title: 'Lần', dataIndex: 'lan', width: 50, align: 'center', render: (v) => v || '-' },
+    { title: 'Số tiền', dataIndex: 'soTien', width: 130, align: 'right', render: (v) => fmtCur(v) },
   ];
-
-  const dotHDCols: ColumnsType<DotHoaDon> = [
-    { title: 'Đợt', width: 50, align: 'center', render: (_, __, i) => i + 1 },
-    {
-      title: 'Số tiền',
-      render: (_, __, i) => (
-        <InputNumber
-          {...moneyProps}
-          value={dotHD[i]?.soTien}
-          onChange={(val) => updateDotHD(i, { soTien: val ?? undefined })}
-        />
-      ),
-    },
-    {
-      title: '',
-      width: 40,
-      align: 'center',
-      render: (_, __, i) => (
-        <Button type="text" danger size="small" icon={<DeleteOutlined />} onClick={() => setDotHD(dotHD.filter((_, j) => j !== i))} />
-      ),
-    },
+  const invoiceCols: ColumnsType<HoaDonBanRa> = [
+    { title: 'Số HĐ', dataIndex: 'soHoaDon', width: 70, align: 'center', render: (v) => v || '-' },
+    { title: 'Ngày', dataIndex: 'ngay', width: 100, render: (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '-') },
+    { title: 'Đơn vị mua', dataIndex: 'donViMua', ellipsis: true, render: (v) => v || '-' },
+    { title: 'Tổng', dataIndex: 'tong', width: 130, align: 'right', render: (v) => fmtCur(v) },
   ];
-
-  function updateDotTT(i: number, patch: Partial<DotThanhToan>) {
-    setDotTT(dotTT.map((d, j) => (j === i ? { ...d, ...patch } : d)));
-  }
-  function updateDotHD(i: number, patch: Partial<DotHoaDon>) {
-    setDotHD(dotHD.map((d, j) => (j === i ? { ...d, ...patch } : d)));
-  }
 
   return (
     <div className="space-y-3">
@@ -493,21 +443,12 @@ export default function QuanLyHopDongPage() {
                 <InputNumber {...moneyProps} addonAfter="VNĐ" style={{ width: 240 }} />
               </Form.Item>
 
-              <Divider orientation="left">
-                Đợt thanh toán{' '}
-                <Button size="small" icon={<PlusOutlined />} onClick={() => setDotTT([...dotTT, {}])}>
-                  Thêm đợt
-                </Button>
-              </Divider>
-              <Table size="small" rowKey={(_, i) => `tt-${i}`} columns={dotTTCols} dataSource={dotTT} pagination={false} />
+              <Divider orientation="left">Các khoản thu (từ Sổ thu tiền)</Divider>
+              <Text type="secondary" className="text-xs">Nhập ở mục Trung tâm dữ liệu → Thu tiền hợp đồng; tại đây chỉ xem và tự cộng.</Text>
+              <Table size="small" rowKey={(r) => r.id || ''} columns={receiptCols} dataSource={receipts} pagination={false} locale={{ emptyText: 'Chưa có khoản thu' }} />
 
-              <Divider orientation="left">
-                Đợt hóa đơn{' '}
-                <Button size="small" icon={<PlusOutlined />} onClick={() => setDotHD([...dotHD, {}])}>
-                  Thêm đợt
-                </Button>
-              </Divider>
-              <Table size="small" rowKey={(_, i) => `hd-${i}`} columns={dotHDCols} dataSource={dotHD} pagination={false} />
+              <Divider orientation="left">Hóa đơn bán ra</Divider>
+              <Table size="small" rowKey={(r) => r.id || ''} columns={invoiceCols} dataSource={invoices} pagination={false} locale={{ emptyText: 'Chưa có hóa đơn' }} />
 
               <Divider orientation="left">Tình trạng hồ sơ</Divider>
               <Space wrap size="large">

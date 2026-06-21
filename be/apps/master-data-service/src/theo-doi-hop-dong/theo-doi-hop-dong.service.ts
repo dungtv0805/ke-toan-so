@@ -2,7 +2,12 @@ import { sanitizeUpdateDto, TenantContextService } from '@app/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { HopDong, TheoDoiHopDong } from '@app/entities';
+import {
+  HopDong,
+  TheoDoiHopDong,
+  ThuTienHopDong,
+  HoaDonBanRa,
+} from '@app/entities';
 import { UpsertTheoDoiHopDongDto } from './dto';
 
 export interface TheoDoiHopDongRow {
@@ -55,6 +60,10 @@ export class TheoDoiHopDongService {
     private readonly repo: Repository<TheoDoiHopDong>,
     @InjectRepository(HopDong)
     private readonly hopDongRepo: Repository<HopDong>,
+    @InjectRepository(ThuTienHopDong)
+    private readonly thuTienRepo: Repository<ThuTienHopDong>,
+    @InjectRepository(HoaDonBanRa)
+    private readonly hoaDonRepo: Repository<HoaDonBanRa>,
     private readonly tenantContext: TenantContextService,
   ) {}
 
@@ -63,16 +72,37 @@ export class TheoDoiHopDongService {
     return tenantId ? { tenantId } : {};
   }
 
-  private computeTotals(hd: HopDong, t: TheoDoiHopDong | null) {
-    const daThanhToan = (t?.dotThanhToan || []).reduce((s, d) => s + num(d.soTien), 0);
-    const daTraHoaDon = (t?.dotHoaDon || []).reduce((s, d) => s + num(d.soTien), 0);
-    const base = num(t?.quyetToan?.giaTri) || num(hd.giaTriSauThue);
-    const conLai = base - daThanhToan;
-    return { daThanhToan, daTraHoaDon, conLai };
+  /** Tổng thu tiền / hóa đơn theo từng hopDongId (đúng Excel: tự cộng từ 2 sổ). */
+  private async buildSumMaps(): Promise<{
+    thuByHd: Map<string, number>;
+    hoaDonByHd: Map<string, number>;
+  }> {
+    const tenant = this.getTenantFilter();
+    const [thus, hoaDons] = await Promise.all([
+      this.thuTienRepo.find({ where: tenant as any }),
+      this.hoaDonRepo.find({ where: tenant as any }),
+    ]);
+    const thuByHd = new Map<string, number>();
+    for (const t of thus) {
+      if (t.isActive === false) continue;
+      thuByHd.set(t.hopDongId, (thuByHd.get(t.hopDongId) || 0) + num(t.soTien));
+    }
+    const hoaDonByHd = new Map<string, number>();
+    for (const h of hoaDons) {
+      if (h.isActive === false) continue;
+      hoaDonByHd.set(h.hopDongId, (hoaDonByHd.get(h.hopDongId) || 0) + num(h.tong));
+    }
+    return { thuByHd, hoaDonByHd };
   }
 
-  private toRow(hd: HopDong, t: TheoDoiHopDong | null): TheoDoiHopDongRow {
-    const { daThanhToan, daTraHoaDon, conLai } = this.computeTotals(hd, t);
+  private toRow(
+    hd: HopDong,
+    t: TheoDoiHopDong | null,
+    daThanhToan: number,
+    daTraHoaDon: number,
+  ): TheoDoiHopDongRow {
+    const base = num(t?.quyetToan?.giaTri) || num(hd.giaTriSauThue);
+    const conLai = base - daThanhToan;
     return {
       hopDongId: hd._id.toString(),
       soHopDong: hd.soHopDong,
@@ -96,8 +126,17 @@ export class TheoDoiHopDongService {
     });
     const trackings = await this.repo.find({ where: { ...tenant } as any });
     const byHd = new Map(trackings.map((t) => [t.hopDongId, t]));
+    const { thuByHd, hoaDonByHd } = await this.buildSumMaps();
 
-    let rows = hopDongs.map((hd) => this.toRow(hd, byHd.get(hd._id.toString()) ?? null));
+    let rows = hopDongs.map((hd) => {
+      const id = hd._id.toString();
+      return this.toRow(
+        hd,
+        byHd.get(id) ?? null,
+        thuByHd.get(id) || 0,
+        hoaDonByHd.get(id) || 0,
+      );
+    });
 
     if (query.nam) {
       const n = Number(query.nam);
@@ -145,14 +184,16 @@ export class TheoDoiHopDongService {
     });
     const trackings = await this.repo.find({ where: { ...tenant } as any });
     const byHd = new Map(trackings.map((t) => [t.hopDongId, t]));
+    const { thuByHd } = await this.buildSumMaps();
 
     const map = new Map<string, BaoCaoHopDongRow>();
     for (const hd of hopDongs) {
-      const t = byHd.get(hd._id.toString());
+      const id = hd._id.toString();
+      const t = byHd.get(id);
       const giaTri =
         num(hd.giaTriSauThue) + num(hd.phuLuc1?.giaTri) + num(hd.phuLuc2?.giaTri);
       const quyetToan = num(t?.quyetToan?.giaTri);
-      const thuTien = (t?.dotThanhToan || []).reduce((s, d) => s + num(d.soTien), 0);
+      const thuTien = thuByHd.get(id) || 0;
 
       const key = hd.nam != null ? String(hd.nam) : 'null';
       const row = map.get(key) ?? emptyBaoCaoRow(hd.nam ?? null);

@@ -62,6 +62,8 @@ import {
   ComingSoonPage,
   QuanLyHopDongPage,
   BaoCaoHopDongPage,
+  SoThuTienPage,
+  SoHoaDonBanRaPage,
   NotFound
 } from "./pages/loadable";
 
@@ -428,6 +430,16 @@ const App = () => (
                   <Route path="hop-dong" element={
                     <ProtectedRoute requiredPermission="/trung-tam-du-lieu/hop-dong:xem">
                       <QuanLyHopDongPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="thu-tien-hop-dong" element={
+                    <ProtectedRoute requiredPermission="/trung-tam-du-lieu/thu-tien-hop-dong:xem">
+                      <SoThuTienPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="hd-ban-ra" element={
+                    <ProtectedRoute requiredPermission="/trung-tam-du-lieu/hd-ban-ra:xem">
+                      <SoHoaDonBanRaPage />
                     </ProtectedRoute>
                   } />
                   <Route path="nhan-su" element={<ComingSoonPage />} />

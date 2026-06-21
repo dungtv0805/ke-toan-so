@@ -18,6 +18,8 @@ import { NhomKhoanMucModule } from './nhom-khoan-muc/nhom-khoan-muc.module';
 import { LoaiGiaoDichModule } from './loai-giao-dich/loai-giao-dich.module';
 import { HopDongModule } from './hop-dong/hop-dong.module';
 import { TheoDoiHopDongModule } from './theo-doi-hop-dong/theo-doi-hop-dong.module';
+import { ThuTienHopDongModule } from './thu-tien-hop-dong/thu-tien-hop-dong.module';
+import { HoaDonBanRaModule } from './hoa-don-ban-ra/hoa-don-ban-ra.module';
 import { SoDuDauKyModule } from './so-du-dau-ky/so-du-dau-ky.module';
 import { TenantModule } from './tenant/tenant.module';
 import { KhoModule } from './kho/kho.module';
@@ -41,6 +43,8 @@ import {
   LoaiGiaoDich,
   HopDong,
   TheoDoiHopDong,
+  ThuTienHopDong,
+  HoaDonBanRa,
   SoDuDauKy,
   Kho,
   DonViTinh,
@@ -70,6 +74,8 @@ import {
       LoaiGiaoDich,
       HopDong,
       TheoDoiHopDong,
+      ThuTienHopDong,
+      HoaDonBanRa,
       SoDuDauKy,
       Kho,
       DonViTinh,
@@ -92,6 +98,8 @@ import {
     LoaiGiaoDichModule,
     HopDongModule,
     TheoDoiHopDongModule,
+    ThuTienHopDongModule,
+    HoaDonBanRaModule,
     SoDuDauKyModule,
     TenantModule,
     KhoModule,

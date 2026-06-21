@@ -219,6 +219,36 @@ export interface TheoDoiHopDong {
   tinhTrangHoSo?: TinhTrangHoSo;
   ghiChu?: string;
 }
+export interface ThuTienHopDong {
+  id?: string;
+  nam?: number;
+  hopDongId: string;
+  soHopDong?: string;
+  doiTuongId?: string;
+  tenKhachHang?: string;
+  noiDung?: string;
+  soTien: number;
+  ngay?: string;
+  lan?: number;
+  ghiChu?: string;
+}
+export interface HoaDonBanRa {
+  id?: string;
+  soHoaDon?: string;
+  ngay?: string;
+  noiDung?: string;
+  hopDongId: string;
+  soHopDong?: string;
+  tenCongTrinh?: string;
+  doiTuongId?: string;
+  donViMua?: string;
+  tienHang?: number;
+  tienThue?: number;
+  tong: number;
+  lan?: number;
+  nam?: number;
+  namHoaDon?: number;
+}
 export interface BaoCaoHopDongRow {
   nam: number | null;
   soLuong: number;
