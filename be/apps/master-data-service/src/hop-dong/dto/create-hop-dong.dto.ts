@@ -26,16 +26,16 @@ export class PhuLucDto {
 
 export class DieuKhoanThanhToanDto {
   @IsOptional()
-  @IsString()
-  tamUng?: string;
+  @IsNumber()
+  tamUng?: number;
 
   @IsOptional()
-  @IsString()
-  thanhToanGiaiDoan?: string;
+  @IsNumber()
+  thanhToanGiaiDoan?: number;
 
   @IsOptional()
-  @IsString()
-  quyetToan?: string;
+  @IsNumber()
+  quyetToan?: number;
 }
 
 export class BaoHanhDto {
@@ -77,6 +77,11 @@ export class CreateHopDongDto {
   @IsString()
   @IsNotEmpty()
   tenCongTrinh: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1900)
+  nam?: number;
 
   @IsOptional()
   @IsNumber()

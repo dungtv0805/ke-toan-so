@@ -134,9 +134,9 @@ export interface PhuLuc {
 }
 
 export interface DieuKhoanThanhToan {
-  tamUng?: string;
-  thanhToanGiaiDoan?: string;
-  quyetToan?: string;
+  tamUng?: number;
+  thanhToanGiaiDoan?: number;
+  quyetToan?: number;
 }
 
 export interface BaoHanh {
@@ -155,6 +155,7 @@ export interface HopDong {
   id: string;
   soHopDong: string;
   tenCongTrinh: string;
+  nam?: number;
   giaTriSauThue?: number;
   ngayKy?: string;
   phuLuc1?: PhuLuc;

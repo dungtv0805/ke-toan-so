@@ -14,9 +14,9 @@ export interface PhuLuc {
 }
 
 export interface DieuKhoanThanhToan {
-  tamUng?: string;
-  thanhToanGiaiDoan?: string;
-  quyetToan?: string;
+  tamUng?: number;
+  thanhToanGiaiDoan?: number;
+  quyetToan?: number;
 }
 
 export interface BaoHanh {
@@ -38,6 +38,9 @@ export class HopDong extends BaseEntity {
 
   @Column()
   tenCongTrinh: string;
+
+  @Column({ nullable: true })
+  nam?: number;
 
   @Column({ type: 'decimal', nullable: true })
   giaTriSauThue?: number;

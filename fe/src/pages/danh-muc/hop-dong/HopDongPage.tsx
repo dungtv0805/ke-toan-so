@@ -75,6 +75,7 @@ const getTrangThaiTag = (trangThai?: TrangThaiHopDong) => {
 interface FormValues {
   soHopDong: string;
   tenCongTrinh: string;
+  nam?: number;
   giaTriSauThue?: number;
   ngayKy?: Dayjs;
   trangThai?: TrangThaiHopDong;
@@ -92,9 +93,9 @@ interface FormValues {
   chucVu?: string;
   nguoiGiaoDich?: string;
   dieuKhoanThanhToan?: {
-    tamUng?: string;
-    thanhToanGiaiDoan?: string;
-    quyetToan?: string;
+    tamUng?: number;
+    thanhToanGiaiDoan?: number;
+    quyetToan?: number;
   };
   baoHanh?: {
     giaTri?: number;
@@ -152,6 +153,7 @@ function HopDongPageInner() {
     return {
       soHopDong: record.soHopDong,
       tenCongTrinh: record.tenCongTrinh,
+      nam: record.nam,
       giaTriSauThue: record.giaTriSauThue,
       ngayKy: record.ngayKy ? dayjs(record.ngayKy) : undefined,
       trangThai: record.trangThai,
@@ -192,6 +194,7 @@ function HopDongPageInner() {
     return {
       soHopDong: values.soHopDong,
       tenCongTrinh: values.tenCongTrinh,
+      nam: values.nam,
       giaTriSauThue: values.giaTriSauThue,
       ngayKy: values.ngayKy?.format("YYYY-MM-DD"),
       trangThai: values.trangThai,
@@ -285,6 +288,14 @@ function HopDongPageInner() {
       render: (text: string) => <Text strong>{text}</Text>,
     },
     {
+      title: "Năm",
+      dataIndex: "nam",
+      key: "nam",
+      width: 80,
+      align: "center" as const,
+      render: (value: number) => value || "-",
+    },
+    {
       title: "Tên công trình",
       dataIndex: "tenCongTrinh",
       key: "tenCongTrinh",
@@ -375,7 +386,7 @@ function HopDongPageInner() {
       children: (
         <div className="pt-2">
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={9}>
               <Form.Item
                 name="soHopDong"
                 label="Số hợp đồng"
@@ -387,7 +398,21 @@ function HopDongPageInner() {
                 <Input placeholder="VD: HD-2024-001" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={6}>
+              <Form.Item
+                name="nam"
+                label="Năm"
+              >
+                <InputNumber
+                  className="w-full"
+                  placeholder="VD: 2026"
+                  min={1900}
+                  max={2200}
+                  controls={false}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={9}>
               <Form.Item
                 name="ngayKy"
                 label="Ngày ký"
@@ -396,6 +421,12 @@ function HopDongPageInner() {
                   format="DD/MM/YYYY"
                   placeholder="Chọn ngày ký"
                   className="w-full"
+                  onChange={(d) => {
+                    // Tự gợi ý Năm theo năm ngày ký khi ô Năm còn trống
+                    if (d && !form.getFieldValue("nam")) {
+                      form.setFieldValue("nam", d.year());
+                    }
+                  }}
                 />
               </Form.Item>
             </Col>
@@ -580,33 +611,56 @@ function HopDongPageInner() {
       children: (
         <div className="pt-2">
           <Divider orientation="left">Điều khoản thanh toán</Divider>
-          <Form.Item
-            name={["dieuKhoanThanhToan", "tamUng"]}
-            label="Tạm ứng"
-          >
-            <Input.TextArea
-              placeholder="Nhập điều khoản tạm ứng..."
-              autoSize={{ minRows: 2, maxRows: 3 }}
-            />
-          </Form.Item>
-          <Form.Item
-            name={["dieuKhoanThanhToan", "thanhToanGiaiDoan"]}
-            label="Thanh toán giai đoạn"
-          >
-            <Input.TextArea
-              placeholder="Nhập điều khoản thanh toán giai đoạn..."
-              autoSize={{ minRows: 2, maxRows: 3 }}
-            />
-          </Form.Item>
-          <Form.Item
-            name={["dieuKhoanThanhToan", "quyetToan"]}
-            label="Quyết toán"
-          >
-            <Input.TextArea
-              placeholder="Nhập điều khoản quyết toán..."
-              autoSize={{ minRows: 2, maxRows: 3 }}
-            />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item
+                name={["dieuKhoanThanhToan", "tamUng"]}
+                label="Tạm ứng"
+              >
+                <InputNumber
+                  className="w-full"
+                  placeholder="0"
+                  formatter={(value) =>
+                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) => value?.replace(/\$\s?|(,*)/g, "") as unknown as number}
+                  addonAfter="VNĐ"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name={["dieuKhoanThanhToan", "thanhToanGiaiDoan"]}
+                label="Thanh toán giai đoạn"
+              >
+                <InputNumber
+                  className="w-full"
+                  placeholder="0"
+                  formatter={(value) =>
+                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) => value?.replace(/\$\s?|(,*)/g, "") as unknown as number}
+                  addonAfter="VNĐ"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name={["dieuKhoanThanhToan", "quyetToan"]}
+                label="Quyết toán"
+              >
+                <InputNumber
+                  className="w-full"
+                  placeholder="0"
+                  formatter={(value) =>
+                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) => value?.replace(/\$\s?|(,*)/g, "") as unknown as number}
+                  addonAfter="VNĐ"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Divider orientation="left">Bảo hành</Divider>
           <Row gutter={16}>
