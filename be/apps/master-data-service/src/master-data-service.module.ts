@@ -17,6 +17,7 @@ import { LoaiChungTuModule } from './loai-chung-tu/loai-chung-tu.module';
 import { NhomKhoanMucModule } from './nhom-khoan-muc/nhom-khoan-muc.module';
 import { LoaiGiaoDichModule } from './loai-giao-dich/loai-giao-dich.module';
 import { HopDongModule } from './hop-dong/hop-dong.module';
+import { TheoDoiHopDongModule } from './theo-doi-hop-dong/theo-doi-hop-dong.module';
 import { SoDuDauKyModule } from './so-du-dau-ky/so-du-dau-ky.module';
 import { TenantModule } from './tenant/tenant.module';
 import { KhoModule } from './kho/kho.module';
@@ -39,6 +40,7 @@ import {
   NhomKhoanMuc,
   LoaiGiaoDich,
   HopDong,
+  TheoDoiHopDong,
   SoDuDauKy,
   Kho,
   DonViTinh,
@@ -67,6 +69,7 @@ import {
       NhomKhoanMuc,
       LoaiGiaoDich,
       HopDong,
+      TheoDoiHopDong,
       SoDuDauKy,
       Kho,
       DonViTinh,
@@ -88,6 +91,7 @@ import {
     NhomKhoanMucModule,
     LoaiGiaoDichModule,
     HopDongModule,
+    TheoDoiHopDongModule,
     SoDuDauKyModule,
     TenantModule,
     KhoModule,

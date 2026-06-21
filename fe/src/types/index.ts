@@ -179,6 +179,61 @@ export interface LoaiGiaoDich {
   moTa?: string;
 }
 
+// ===== THEO DÕI HỢP ĐỒNG (Phần 2) =====
+export interface QuyetToanHD {
+  so?: string;
+  ngay?: string;
+  giaTri?: number;
+}
+export interface BaoHanhTheoDoi {
+  giaTri?: number;
+  soNgay?: number;
+  ngayGiaiToaBL?: string;
+  trangThai?: string;
+}
+export interface DotThanhToan {
+  tiLe?: number;
+  soTien?: number;
+}
+export interface DotHoaDon {
+  soTien?: number;
+}
+export interface TinhTrangHoSo {
+  hd?: boolean;
+  nt1?: boolean;
+  nt2?: boolean;
+  ntSuDung?: boolean;
+  thanhLy?: boolean;
+  namQuyetToan?: number;
+}
+export interface TheoDoiHopDong {
+  id?: string;
+  hopDongId: string;
+  phuTrachHoSo?: string;
+  trangThaiHoSo?: string;
+  quyetToan?: QuyetToanHD;
+  baoHanhTheoDoi?: BaoHanhTheoDoi;
+  giamTru?: number;
+  dotThanhToan?: DotThanhToan[];
+  dotHoaDon?: DotHoaDon[];
+  tinhTrangHoSo?: TinhTrangHoSo;
+  ghiChu?: string;
+}
+export interface TheoDoiHopDongRow {
+  hopDongId: string;
+  soHopDong: string;
+  tenCongTrinh: string;
+  nam?: number;
+  giaTriSauThue?: number;
+  ngayKy?: string;
+  doiTuongId?: string;
+  trangThaiHopDong?: TrangThaiHopDong;
+  tracking: TheoDoiHopDong | null;
+  daThanhToan: number;
+  daTraHoaDon: number;
+  conLai: number;
+}
+
 // ===== DANH MỤC DTO (New Backend Structure) =====
 
 export type LoaiChungTu = 'PHIEU_THU' | 'PHIEU_CHI';

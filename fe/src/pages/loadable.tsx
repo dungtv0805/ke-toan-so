@@ -222,3 +222,7 @@ export const ComingSoonPage = loadable(() => import('./ComingSoon'), {
 export const NotFound = loadable(() => import('./NotFound'), {
   fallback: <PageLoader />
 });
+
+export const QuanLyHopDongPage = loadable(() => import('./trung-tam-du-lieu/hop-dong/QuanLyHopDongPage'), {
+  fallback: <PageLoader />
+});

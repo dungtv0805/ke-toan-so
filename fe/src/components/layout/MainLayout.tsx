@@ -102,6 +102,7 @@ const existingRoutes = new Set([
   "/kho/nhap-kho",
   "/kho/xuat-kho",
   "/kho/chuyen-kho",
+  "/trung-tam-du-lieu/hop-dong",
   "/chung-tu/phieu-thu",
   "/chung-tu/phieu-chi",
   "/chung-tu/nhat-ky-chung",

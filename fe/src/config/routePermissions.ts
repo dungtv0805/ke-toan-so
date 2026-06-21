@@ -29,6 +29,8 @@ export const routePermissions: Record<string, string> = {
   '/kho/xuat-kho': '/kho/xuat-kho:xem',
   '/kho/chuyen-kho': '/kho/chuyen-kho:xem',
 
+  '/trung-tam-du-lieu/hop-dong': '/trung-tam-du-lieu/hop-dong:xem',
+
   '/chung-tu/phieu-thu': '/chung-tu/phieu-thu:xem',
   '/chung-tu/phieu-chi': '/chung-tu/phieu-chi:xem',
   '/chung-tu/nhat-ky-chung': '/chung-tu/nhat-ky-chung:xem',

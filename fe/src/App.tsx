@@ -60,6 +60,7 @@ import {
   ThanhVienPage,
   TenantPage,
   ComingSoonPage,
+  QuanLyHopDongPage,
   NotFound
 } from "./pages/loadable";
 
@@ -415,7 +416,11 @@ const App = () => (
                   <Route path="hang-hoa" element={<ComingSoonPage />} />
                   <Route path="nguyen-lieu" element={<ComingSoonPage />} />
                   <Route path="dung-cu" element={<ComingSoonPage />} />
-                  <Route path="hop-dong" element={<ComingSoonPage />} />
+                  <Route path="hop-dong" element={
+                    <ProtectedRoute requiredPermission="/trung-tam-du-lieu/hop-dong:xem">
+                      <QuanLyHopDongPage />
+                    </ProtectedRoute>
+                  } />
                   <Route path="nhan-su" element={<ComingSoonPage />} />
                   <Route path="luong-bhxh" element={<ComingSoonPage />} />
                 </Route>
