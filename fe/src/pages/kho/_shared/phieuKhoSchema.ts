@@ -1,49 +1,54 @@
 import { z } from 'zod';
 import type { LoaiPhieuKho } from '@/types';
 
+// Chuỗi/số tùy chọn: chấp nhận cả null (server trả null cho cột nullable trống)
+// lẫn undefined. .optional() KHÔNG nhận null nên phải dùng .nullish().
+const optStr = z.string().nullish();
+const optNum = z.number().nullish();
+
 /** Schema cho một dòng chi tiết phiếu kho */
 const chiTietSchema = z.object({
   stt: z.number(),
-  hangHoaMa: z.string(),
-  hangHoaTen: z.string().default(''),
-  quyCach: z.string().optional(),
-  donViTinh: z.string().optional(),
-  khoMa: z.string().optional(),
-  khoTen: z.string().optional(),
-  tkNo: z.string().optional(),
-  tkCo: z.string().optional(),
+  hangHoaMa: optStr,
+  hangHoaTen: optStr,
+  quyCach: optStr,
+  donViTinh: optStr,
+  khoMa: optStr,
+  khoTen: optStr,
+  tkNo: optStr,
+  tkCo: optStr,
   soLuong: z.number().min(0).default(0),
-  soLuongChungTu: z.number().optional(),
-  soLuongThucTe: z.number().optional(),
+  soLuongChungTu: optNum,
+  soLuongThucTe: optNum,
   donGia: z.number().min(0).default(0),
   thanhTien: z.number().min(0).default(0),
 });
 
 /** Schema header chung cho phiếu kho */
 const baseHeaderSchema = z.object({
-  loaiNghiepVu: z.string().optional(),
-  soPhieu: z.string().optional(),
+  loaiNghiepVu: optStr,
+  soPhieu: optStr,
   ngayHachToan: z.string().min(1, 'Vui lòng chọn ngày hạch toán'),
-  ngayChungTu: z.string().optional(),
-  soChungTuGoc: z.string().optional(),
-  thamChieu: z.string().optional(),
-  doiTuongMa: z.string().optional(),
-  doiTuongTen: z.string().optional(),
-  diaChi: z.string().optional(),
-  nguoiGiaoNhan: z.string().optional(),
-  nhanVien: z.string().optional(),
-  dienGiai: z.string().optional(),
-  khoMa: z.string().optional(),
-  khoTen: z.string().optional(),
-  khoXuatMa: z.string().optional(),
-  khoXuatTen: z.string().optional(),
-  khoNhapMa: z.string().optional(),
-  khoNhapTen: z.string().optional(),
-  nguoiVanChuyen: z.string().optional(),
-  hopDongVC: z.string().optional(),
-  phuongTienVC: z.string().optional(),
-  lenhDieuDong: z.string().optional(),
-  veViec: z.string().optional(),
+  ngayChungTu: optStr,
+  soChungTuGoc: optStr,
+  thamChieu: optStr,
+  doiTuongMa: optStr,
+  doiTuongTen: optStr,
+  diaChi: optStr,
+  nguoiGiaoNhan: optStr,
+  nhanVien: optStr,
+  dienGiai: optStr,
+  khoMa: optStr,
+  khoTen: optStr,
+  khoXuatMa: optStr,
+  khoXuatTen: optStr,
+  khoNhapMa: optStr,
+  khoNhapTen: optStr,
+  nguoiVanChuyen: optStr,
+  hopDongVC: optStr,
+  phuongTienVC: optStr,
+  lenhDieuDong: optStr,
+  veViec: optStr,
   chiTiet: z.array(chiTietSchema).default([]),
 });
 
