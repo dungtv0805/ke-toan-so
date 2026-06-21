@@ -1,12 +1,48 @@
-import dayjs from 'dayjs';
-import type { PhieuKho, ChiTietPhieuKho } from '@/types';
+import type { PhieuKho, ChiTietPhieuKho, LoaiPhieuKho } from '@/types';
 import { formatCurrency } from '@/pages/chung-tu/phieu/lib/format';
-import { docTienBangChu } from '@/pages/chung-tu/phieu/lib/docTienBangChu';
 
 export interface CongTyInfo {
   tenCongTy?: string;
   diaChiCongTy?: string;
 }
+
+/** Key lưu mẫu in trong config-service (/config/phieu-template/:loai). */
+export const KHO_TEMPLATE_KEY: Record<LoaiPhieuKho, string> = {
+  NHAP: 'KHO_NHAP',
+  XUAT: 'KHO_XUAT',
+  CHUYEN: 'KHO_CHUYEN',
+};
+
+// ─── Placeholder hỗ trợ (hiển thị trong modal cấu hình) ─────────────────────
+
+export interface KhoPlaceholderDoc {
+  token: string;
+  moTa: string;
+}
+
+export const KHO_PLACEHOLDERS: KhoPlaceholderDoc[] = [
+  { token: '{{tenCongTy}}', moTa: 'Tên công ty' },
+  { token: '{{diaChiCongTy}}', moTa: 'Địa chỉ công ty' },
+  { token: '{{soPhieu}}', moTa: 'Số phiếu' },
+  { token: '{{ngay}}', moTa: 'Ngày (dd)' },
+  { token: '{{thang}}', moTa: 'Tháng (mm)' },
+  { token: '{{nam}}', moTa: 'Năm (yyyy)' },
+  { token: '{{tkNo}}', moTa: 'Tài khoản Nợ (dòng đầu)' },
+  { token: '{{tkCo}}', moTa: 'Tài khoản Có (dòng đầu)' },
+  { token: '{{nguoiGiaoNhan}}', moTa: 'Người giao / người nhận' },
+  { token: '{{dienGiai}}', moTa: 'Diễn giải / lý do' },
+  { token: '{{soChungTuGoc}}', moTa: 'Số chứng từ gốc kèm theo' },
+  { token: '{{khoTen}}', moTa: 'Tên kho (nhập/xuất)' },
+  { token: '{{khoXuatTen}}', moTa: 'Kho xuất (chuyển kho)' },
+  { token: '{{khoNhapTen}}', moTa: 'Kho nhập (chuyển kho)' },
+  { token: '{{lenhDieuDong}}', moTa: 'Lệnh điều động (chuyển kho)' },
+  { token: '{{veViec}}', moTa: 'Về việc (chuyển kho)' },
+  { token: '{{nguoiVanChuyen}}', moTa: 'Người vận chuyển (chuyển kho)' },
+  { token: '{{hopDongVC}}', moTa: 'Hợp đồng vận chuyển (chuyển kho)' },
+  { token: '{{phuongTienVC}}', moTa: 'Phương tiện vận chuyển (chuyển kho)' },
+  { token: '{{tongTienBangChu}}', moTa: 'Tổng tiền bằng chữ' },
+  { token: '{{chiTietTable}}', moTa: 'Bảng chi tiết hàng hóa (hệ thống tự dựng)' },
+];
 
 // ─── Common CSS ─────────────────────────────────────────────────────────────
 
@@ -52,16 +88,16 @@ const BASE_CSS = `
   .lien-info { font-style: italic; font-size: 10pt; margin: 2px 0; }
 `;
 
-// ─── Helper: build <tr> rows from chiTiet ───────────────────────────────────
+// ─── Bảng chi tiết: dựng động theo loại phiếu (KHÔNG sửa qua template) ──────
 
-export function buildChiTietRows(
+function buildChiTietRows(
   chiTiet: ChiTietPhieuKho[],
   slCol1Label: string,
   slCol2Label: string,
   getSlCol1: (ct: ChiTietPhieuKho) => number,
   getSlCol2: (ct: ChiTietPhieuKho) => number,
 ): string {
-  const rows = chiTiet.map((ct, idx) => {
+  const rows = (chiTiet || []).map((ct, idx) => {
     const tenHang = ct.hangHoaTen + (ct.quyCach ? ` - ${ct.quyCach}` : '');
     const sl1 = getSlCol1(ct);
     const sl2 = getSlCol2(ct);
@@ -77,14 +113,12 @@ export function buildChiTietRows(
     </tr>`;
   });
 
-  // Cộng row
-  const tongTien = chiTiet.reduce((s, ct) => s + (ct.thanhTien || 0), 0);
+  const tongTien = (chiTiet || []).reduce((s, ct) => s + (ct.thanhTien || 0), 0);
   rows.push(`<tr>
     <td colspan="7" style="text-align:right; font-weight:bold;">Cộng</td>
     <td class="right" style="font-weight:bold;">${formatCurrency(tongTien)}</td>
   </tr>`);
 
-  // Header row (rendered separately but needed for context here)
   const headerRow = `<tr>
     <th rowspan="2" style="width:35px">STT</th>
     <th rowspan="2">Tên, nhãn hiệu, quy cách, phẩm chất vật tư, hàng hóa</th>
@@ -102,54 +136,53 @@ export function buildChiTietRows(
   return headerRow + rows.join('');
 }
 
-// ─── Helper: tính tổng tiền từ chiTiet ────────────────────────────────────
-
-function tongTienFromChiTiet(chiTiet: ChiTietPhieuKho[]): number {
-  return chiTiet.reduce((s, ct) => s + (ct.thanhTien || 0), 0);
+/** Dựng toàn bộ thẻ <table> chi tiết theo loại phiếu. */
+export function buildChiTietTable(phieu: PhieuKho): string {
+  let rows: string;
+  switch (phieu.loaiPhieu) {
+    case 'XUAT':
+      rows = buildChiTietRows(
+        phieu.chiTiet,
+        'Yêu cầu',
+        'Thực xuất',
+        (ct) => ct.soLuongChungTu ?? ct.soLuong,
+        (ct) => ct.soLuongThucTe ?? ct.soLuong,
+      );
+      break;
+    case 'CHUYEN':
+      rows = buildChiTietRows(
+        phieu.chiTiet,
+        'Thực xuất',
+        'Thực nhập',
+        (ct) => ct.soLuongThucTe ?? ct.soLuong,
+        (ct) => ct.soLuongThucTe ?? ct.soLuong,
+      );
+      break;
+    case 'NHAP':
+    default:
+      rows = buildChiTietRows(
+        phieu.chiTiet,
+        'Theo chứng từ',
+        'Thực nhập',
+        (ct) => ct.soLuongChungTu ?? ct.soLuong,
+        (ct) => ct.soLuongThucTe ?? ct.soLuong,
+      );
+  }
+  return `<table class="chi-tiet">${rows}</table>`;
 }
 
-// ─── Helper: company header block ──────────────────────────────────────────
+// ─── Mẫu mặc định (dạng token {{...}}) ─────────────────────────────────────
 
-function companyHeader(congTy: CongTyInfo): string {
-  return `<div class="company-block">
-    <div class="company-name">${congTy.tenCongTy || ''}</div>
-    <div class="company-address">${congTy.diaChiCongTy || ''}</div>
-  </div>`;
-}
-
-// ─── Helper: ngày tháng năm from ISO date string ───────────────────────────
-
-function fmtDate(d?: string): { ngay: string; thang: string; nam: string } {
-  const dj = d ? dayjs(d) : dayjs();
-  return { ngay: dj.format('DD'), thang: dj.format('MM'), nam: dj.format('YYYY') };
-}
-
-// ─── Template 01-VT: Phiếu nhập kho ────────────────────────────────────────
-
-export function template01VT(phieu: PhieuKho, congTy: CongTyInfo): string {
-  const { ngay, thang, nam } = fmtDate(phieu.ngayHachToan || phieu.ngayChungTu);
-  const tongTien = phieu.tongTien ?? tongTienFromChiTiet(phieu.chiTiet);
-  const tongChu = docTienBangChu(tongTien);
-
-  // Lấy tkNo/tkCo từ chiTiet đầu tiên hoặc fallback về ''
-  const tkNo = phieu.chiTiet?.[0]?.tkNo || '';
-  const tkCo = phieu.chiTiet?.[0]?.tkCo || '';
-
-  const tableRows = buildChiTietRows(
-    phieu.chiTiet,
-    'Theo chứng từ',
-    'Thực nhập',
-    (ct) => ct.soLuongChungTu ?? ct.soLuong,
-    (ct) => ct.soLuongThucTe ?? ct.soLuong,
-  );
-
-  return `<html><head>
+const TEMPLATE_NHAP = `<html><head>
     <meta charset="utf-8">
-    <title>Phiếu nhập kho ${phieu.soPhieu || ''}</title>
+    <title>Phiếu nhập kho {{soPhieu}}</title>
     <style>${BASE_CSS}</style>
   </head><body><div class="page">
     <div class="header-row">
-      ${companyHeader(congTy)}
+      <div class="company-block">
+        <div class="company-name">{{tenCongTy}}</div>
+        <div class="company-address">{{diaChiCongTy}}</div>
+      </div>
       <div class="mau-so-block">
         <p><b>Mẫu số: 01-VT</b></p>
         <p>(Ban hành theo Thông tư số 133/2016/TT-BTC</p>
@@ -159,73 +192,41 @@ export function template01VT(phieu: PhieuKho, congTy: CongTyInfo): string {
 
     <div class="title-block">
       <h2>Phiếu nhập kho</h2>
-      <div class="ngay-line">Ngày <u>${ngay}</u> tháng <u>${thang}</u> năm <u>${nam}</u></div>
+      <div class="ngay-line">Ngày <u>{{ngay}}</u> tháng <u>{{thang}}</u> năm <u>{{nam}}</u></div>
     </div>
 
-    <div class="so-phieu">Số: ${phieu.soPhieu || ''}</div>
+    <div class="so-phieu">Số: {{soPhieu}}</div>
 
-    <div class="no-co-line">Nợ: <u>${tkNo}</u></div>
-    <div class="no-co-line">Có: <u>${tkCo}</u></div>
+    <div class="no-co-line">Nợ: <u>{{tkNo}}</u></div>
+    <div class="no-co-line">Có: <u>{{tkCo}}</u></div>
 
-    <div class="info-line">- Họ và tên người giao: <u>${phieu.nguoiGiaoNhan || phieu.doiTuongTen || ''}</u></div>
+    <div class="info-line">- Họ và tên người giao: <u>{{nguoiGiaoNhan}}</u></div>
     <div class="info-line">- Theo .......... số .......... ngày ..........</div>
-    <div class="info-line">- Nhập tại kho: <u>${phieu.khoTen || phieu.khoMa || ''}</u>&nbsp;&nbsp;&nbsp;Địa điểm: .........................................................................</div>
+    <div class="info-line">- Nhập tại kho: <u>{{khoTen}}</u>&nbsp;&nbsp;&nbsp;Địa điểm: .........................................................................</div>
 
-    <table class="chi-tiet">${tableRows}</table>
+    {{chiTietTable}}
 
-    <div class="tong-tien-chu">- Tổng số tiền (viết bằng chữ): <u>${tongChu}</u></div>
-    <div class="chung-tu-goc">- Số chứng từ gốc kèm theo: <u>${phieu.soChungTuGoc || ''}</u></div>
+    <div class="tong-tien-chu">- Tổng số tiền (viết bằng chữ): <u>{{tongTienBangChu}}</u></div>
+    <div class="chung-tu-goc">- Số chứng từ gốc kèm theo: <u>{{soChungTuGoc}}</u></div>
 
     <div class="sign-row">
-      <div class="sign-col">
-        <div class="sign-title">Người lập phiếu</div>
-        <div class="sign-note">(Ký, họ tên)</div>
-        <div class="sign-space"></div>
-      </div>
-      <div class="sign-col">
-        <div class="sign-title">Người giao hàng</div>
-        <div class="sign-note">(Ký, họ tên)</div>
-        <div class="sign-space"></div>
-      </div>
-      <div class="sign-col">
-        <div class="sign-title">Thủ kho</div>
-        <div class="sign-note">(Ký, họ tên)</div>
-        <div class="sign-space"></div>
-      </div>
-      <div class="sign-col">
-        <div class="sign-title">Kế toán trưởng</div>
-        <div class="sign-note">(Ký, họ tên)</div>
-        <div class="sign-space"></div>
-      </div>
+      <div class="sign-col"><div class="sign-title">Người lập phiếu</div><div class="sign-note">(Ký, họ tên)</div><div class="sign-space"></div></div>
+      <div class="sign-col"><div class="sign-title">Người giao hàng</div><div class="sign-note">(Ký, họ tên)</div><div class="sign-space"></div></div>
+      <div class="sign-col"><div class="sign-title">Thủ kho</div><div class="sign-note">(Ký, họ tên)</div><div class="sign-space"></div></div>
+      <div class="sign-col"><div class="sign-title">Kế toán trưởng</div><div class="sign-note">(Ký, họ tên)</div><div class="sign-space"></div></div>
     </div>
   </div></body></html>`;
-}
 
-// ─── Template 02-VT: Phiếu xuất kho ────────────────────────────────────────
-
-export function template02VT(phieu: PhieuKho, congTy: CongTyInfo): string {
-  const { ngay, thang, nam } = fmtDate(phieu.ngayHachToan || phieu.ngayChungTu);
-  const tongTien = phieu.tongTien ?? tongTienFromChiTiet(phieu.chiTiet);
-  const tongChu = docTienBangChu(tongTien);
-
-  const tkNo = phieu.chiTiet?.[0]?.tkNo || '';
-  const tkCo = phieu.chiTiet?.[0]?.tkCo || '';
-
-  const tableRows = buildChiTietRows(
-    phieu.chiTiet,
-    'Yêu cầu',
-    'Thực xuất',
-    (ct) => ct.soLuongChungTu ?? ct.soLuong,
-    (ct) => ct.soLuongThucTe ?? ct.soLuong,
-  );
-
-  return `<html><head>
+const TEMPLATE_XUAT = `<html><head>
     <meta charset="utf-8">
-    <title>Phiếu xuất kho ${phieu.soPhieu || ''}</title>
+    <title>Phiếu xuất kho {{soPhieu}}</title>
     <style>${BASE_CSS}</style>
   </head><body><div class="page">
     <div class="header-row">
-      ${companyHeader(congTy)}
+      <div class="company-block">
+        <div class="company-name">{{tenCongTy}}</div>
+        <div class="company-address">{{diaChiCongTy}}</div>
+      </div>
       <div class="mau-so-block">
         <p><b>Mẫu số: 02-VT</b></p>
         <p>(Ban hành theo Thông tư số 133/2016/TT-BTC</p>
@@ -235,74 +236,45 @@ export function template02VT(phieu: PhieuKho, congTy: CongTyInfo): string {
 
     <div class="title-block">
       <h2>Phiếu xuất kho</h2>
-      <div class="ngay-line">Ngày <u>${ngay}</u> tháng <u>${thang}</u> năm <u>${nam}</u></div>
+      <div class="ngay-line">Ngày <u>{{ngay}}</u> tháng <u>{{thang}}</u> năm <u>{{nam}}</u></div>
     </div>
 
-    <div class="so-phieu">Số: ${phieu.soPhieu || ''}</div>
+    <div class="so-phieu">Số: {{soPhieu}}</div>
 
-    <div class="no-co-line">Nợ: <u>${tkNo}</u></div>
-    <div class="no-co-line">Có: <u>${tkCo}</u></div>
+    <div class="no-co-line">Nợ: <u>{{tkNo}}</u></div>
+    <div class="no-co-line">Có: <u>{{tkCo}}</u></div>
 
-    <div class="info-line">- Họ và tên người nhận: <u>${phieu.nguoiGiaoNhan || phieu.doiTuongTen || ''}</u></div>
-    <div class="info-line">- Lý do xuất kho: <u>${phieu.dienGiai || ''}</u></div>
-    <div class="info-line">- Xuất tại kho: <u>${phieu.khoTen || phieu.khoMa || ''}</u>&nbsp;&nbsp;&nbsp;Địa điểm: .........................................................................</div>
+    <div class="info-line">- Họ và tên người nhận: <u>{{nguoiGiaoNhan}}</u></div>
+    <div class="info-line">- Lý do xuất kho: <u>{{dienGiai}}</u></div>
+    <div class="info-line">- Xuất tại kho: <u>{{khoTen}}</u>&nbsp;&nbsp;&nbsp;Địa điểm: .........................................................................</div>
 
-    <table class="chi-tiet">${tableRows}</table>
+    {{chiTietTable}}
 
-    <div class="tong-tien-chu">- Tổng số tiền (viết bằng chữ): <u>${tongChu}</u></div>
-    <div class="chung-tu-goc">- Số chứng từ gốc kèm theo: <u>${phieu.soChungTuGoc || ''}</u></div>
+    <div class="tong-tien-chu">- Tổng số tiền (viết bằng chữ): <u>{{tongTienBangChu}}</u></div>
+    <div class="chung-tu-goc">- Số chứng từ gốc kèm theo: <u>{{soChungTuGoc}}</u></div>
 
     <div class="sign-row">
-      <div class="sign-col">
-        <div class="sign-title">Người lập phiếu</div>
-        <div class="sign-note">(Ký, họ tên)</div>
-        <div class="sign-space"></div>
-      </div>
-      <div class="sign-col">
-        <div class="sign-title">Người nhận</div>
-        <div class="sign-note">(Ký, họ tên)</div>
-        <div class="sign-space"></div>
-      </div>
-      <div class="sign-col">
-        <div class="sign-title">Thủ kho</div>
-        <div class="sign-note">(Ký, họ tên)</div>
-        <div class="sign-space"></div>
-      </div>
-      <div class="sign-col">
-        <div class="sign-title">Kế toán trưởng</div>
-        <div class="sign-note">(Ký, họ tên)</div>
-        <div class="sign-space"></div>
-      </div>
+      <div class="sign-col"><div class="sign-title">Người lập phiếu</div><div class="sign-note">(Ký, họ tên)</div><div class="sign-space"></div></div>
+      <div class="sign-col"><div class="sign-title">Người nhận</div><div class="sign-note">(Ký, họ tên)</div><div class="sign-space"></div></div>
+      <div class="sign-col"><div class="sign-title">Thủ kho</div><div class="sign-note">(Ký, họ tên)</div><div class="sign-space"></div></div>
+      <div class="sign-col"><div class="sign-title">Kế toán trưởng</div><div class="sign-note">(Ký, họ tên)</div><div class="sign-space"></div></div>
     </div>
   </div></body></html>`;
-}
 
-// ─── Template 03XKNB3: Phiếu xuất kho kiêm vận chuyển nội bộ ───────────────
-
-export function template03XKNB3(phieu: PhieuKho, congTy: CongTyInfo): string {
-  const { ngay, thang, nam } = fmtDate(phieu.ngayHachToan || phieu.ngayChungTu);
-  const tongTien = phieu.tongTien ?? tongTienFromChiTiet(phieu.chiTiet);
-  const tongChu = docTienBangChu(tongTien);
-
-  const tableRows = buildChiTietRows(
-    phieu.chiTiet,
-    'Thực xuất',
-    'Thực nhập',
-    (ct) => ct.soLuongThucTe ?? ct.soLuong,
-    (ct) => ct.soLuongThucTe ?? ct.soLuong,
-  );
-
-  return `<html><head>
+const TEMPLATE_CHUYEN = `<html><head>
     <meta charset="utf-8">
-    <title>Phiếu xuất kho kiêm vận chuyển nội bộ ${phieu.soPhieu || ''}</title>
+    <title>Phiếu xuất kho kiêm vận chuyển nội bộ {{soPhieu}}</title>
     <style>${BASE_CSS}</style>
   </head><body><div class="page">
     <div class="header-row">
-      ${companyHeader(congTy)}
+      <div class="company-block">
+        <div class="company-name">{{tenCongTy}}</div>
+        <div class="company-address">{{diaChiCongTy}}</div>
+      </div>
       <div class="mau-so-block">
         <p><b>Mẫu số: 03XKNB3/001</b></p>
         <p>Ký hiệu: ...................</p>
-        <p>Số: <b>${phieu.soPhieu || ''}</b></p>
+        <p>Số: <b>{{soPhieu}}</b></p>
       </div>
     </div>
 
@@ -311,40 +283,36 @@ export function template03XKNB3(phieu: PhieuKho, congTy: CongTyInfo): string {
     </div>
 
     <div class="lien-info">Liên 01: Lưu</div>
-    <div class="info-line">Ngày <u>${ngay}</u> tháng <u>${thang}</u> năm <u>${nam}</u></div>
-    <div class="info-line">Căn cứ lệnh điều động số <u>${phieu.lenhDieuDong || ''}</u> ngày .......... của ..........</div>
-    <div class="info-line">về việc: <u>${phieu.veViec || ''}</u></div>
-    <div class="info-line">Họ tên người vận chuyển: <u>${phieu.nguoiVanChuyen || ''}</u>&nbsp;&nbsp;&nbsp;Hợp đồng số: <u>${phieu.hopDongVC || ''}</u></div>
-    <div class="info-line">Phương tiện vận chuyển: <u>${phieu.phuongTienVC || ''}</u></div>
-    <div class="info-line">Xuất tại kho: <u>${phieu.khoXuatTen || phieu.khoXuatMa || ''}</u></div>
-    <div class="info-line">Nhập tại kho: <u>${phieu.khoNhapTen || phieu.khoNhapMa || ''}</u></div>
+    <div class="info-line">Ngày <u>{{ngay}}</u> tháng <u>{{thang}}</u> năm <u>{{nam}}</u></div>
+    <div class="info-line">Căn cứ lệnh điều động số <u>{{lenhDieuDong}}</u> ngày .......... của ..........</div>
+    <div class="info-line">về việc: <u>{{veViec}}</u></div>
+    <div class="info-line">Họ tên người vận chuyển: <u>{{nguoiVanChuyen}}</u>&nbsp;&nbsp;&nbsp;Hợp đồng số: <u>{{hopDongVC}}</u></div>
+    <div class="info-line">Phương tiện vận chuyển: <u>{{phuongTienVC}}</u></div>
+    <div class="info-line">Xuất tại kho: <u>{{khoXuatTen}}</u></div>
+    <div class="info-line">Nhập tại kho: <u>{{khoNhapTen}}</u></div>
 
-    <table class="chi-tiet">${tableRows}</table>
+    {{chiTietTable}}
 
-    <div class="tong-tien-chu">Tổng số tiền (viết bằng chữ): <u>${tongChu}</u></div>
-    <div class="chung-tu-goc">Số chứng từ gốc kèm theo: <u>${phieu.soChungTuGoc || ''}</u></div>
+    <div class="tong-tien-chu">Tổng số tiền (viết bằng chữ): <u>{{tongTienBangChu}}</u></div>
+    <div class="chung-tu-goc">Số chứng từ gốc kèm theo: <u>{{soChungTuGoc}}</u></div>
 
     <div class="sign-row">
-      <div class="sign-col">
-        <div class="sign-title">Người lập phiếu</div>
-        <div class="sign-note">(Ký, họ tên)</div>
-        <div class="sign-space"></div>
-      </div>
-      <div class="sign-col">
-        <div class="sign-title">Thủ kho xuất</div>
-        <div class="sign-note">(Ký, họ tên)</div>
-        <div class="sign-space"></div>
-      </div>
-      <div class="sign-col">
-        <div class="sign-title">Người vận chuyển</div>
-        <div class="sign-note">(Ký, họ tên)</div>
-        <div class="sign-space"></div>
-      </div>
-      <div class="sign-col">
-        <div class="sign-title">Thủ kho nhập</div>
-        <div class="sign-note">(Ký, họ tên)</div>
-        <div class="sign-space"></div>
-      </div>
+      <div class="sign-col"><div class="sign-title">Người lập phiếu</div><div class="sign-note">(Ký, họ tên)</div><div class="sign-space"></div></div>
+      <div class="sign-col"><div class="sign-title">Thủ kho xuất</div><div class="sign-note">(Ký, họ tên)</div><div class="sign-space"></div></div>
+      <div class="sign-col"><div class="sign-title">Người vận chuyển</div><div class="sign-note">(Ký, họ tên)</div><div class="sign-space"></div></div>
+      <div class="sign-col"><div class="sign-title">Thủ kho nhập</div><div class="sign-note">(Ký, họ tên)</div><div class="sign-space"></div></div>
     </div>
   </div></body></html>`;
+
+/** Mẫu in mặc định theo loại phiếu (dạng token {{...}}). */
+export function getDefaultKhoTemplate(loaiPhieu: LoaiPhieuKho): string {
+  switch (loaiPhieu) {
+    case 'XUAT':
+      return TEMPLATE_XUAT;
+    case 'CHUYEN':
+      return TEMPLATE_CHUYEN;
+    case 'NHAP':
+    default:
+      return TEMPLATE_NHAP;
+  }
 }

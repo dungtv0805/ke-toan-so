@@ -1,25 +1,54 @@
+import dayjs from 'dayjs';
 import type { PhieuKho } from '@/types';
-import type { CongTyInfo } from './khoPrintTemplates';
-import { template01VT, template02VT, template03XKNB3 } from './khoPrintTemplates';
+import { docTienBangChu } from '@/pages/chung-tu/phieu/lib/docTienBangChu';
+import { buildChiTietTable, type CongTyInfo } from './khoPrintTemplates';
 
-/** Chọn template HTML theo loaiPhieu và in qua iframe ẩn.
+/** Thay token {{...}} trong template HTML bằng dữ liệu phiếu kho. */
+export function buildKhoPhieuHtml(
+  phieu: PhieuKho,
+  template: string,
+  congTy?: CongTyInfo,
+): string {
+  const d = phieu.ngayHachToan || phieu.ngayChungTu;
+  const dj = d ? dayjs(d) : dayjs();
+  const tongTien =
+    phieu.tongTien ?? (phieu.chiTiet || []).reduce((s, ct) => s + (ct.thanhTien || 0), 0);
+
+  const values: Record<string, string> = {
+    tenCongTy: congTy?.tenCongTy ?? '',
+    diaChiCongTy: congTy?.diaChiCongTy ?? '',
+    soPhieu: phieu.soPhieu ?? '',
+    ngay: dj.format('DD'),
+    thang: dj.format('MM'),
+    nam: dj.format('YYYY'),
+    tkNo: phieu.chiTiet?.[0]?.tkNo ?? '',
+    tkCo: phieu.chiTiet?.[0]?.tkCo ?? '',
+    nguoiGiaoNhan: phieu.nguoiGiaoNhan || phieu.doiTuongTen || '',
+    dienGiai: phieu.dienGiai ?? '',
+    soChungTuGoc: phieu.soChungTuGoc ?? '',
+    khoTen: phieu.khoTen || phieu.khoMa || '',
+    khoXuatTen: phieu.khoXuatTen || phieu.khoXuatMa || '',
+    khoNhapTen: phieu.khoNhapTen || phieu.khoNhapMa || '',
+    lenhDieuDong: phieu.lenhDieuDong ?? '',
+    veViec: phieu.veViec ?? '',
+    nguoiVanChuyen: phieu.nguoiVanChuyen ?? '',
+    hopDongVC: phieu.hopDongVC ?? '',
+    phuongTienVC: phieu.phuongTienVC ?? '',
+    tongTienBangChu: docTienBangChu(tongTien),
+    // Bảng chi tiết là HTML do hệ thống dựng — không escape.
+    chiTietTable: buildChiTietTable(phieu),
+  };
+
+  return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key: string) =>
+    key in values ? values[key] : '',
+  );
+}
+
+/** Dựng HTML từ template (đã lưu hoặc mặc định) rồi in qua iframe ẩn.
  *  Sao chép cơ chế iframe từ printPhieu.ts (onload + setTimeout fallback + cleanup).
  */
-export function printKhoPhieu(phieu: PhieuKho, congTy: CongTyInfo): void {
-  let html: string;
-  switch (phieu.loaiPhieu) {
-    case 'NHAP':
-      html = template01VT(phieu, congTy);
-      break;
-    case 'XUAT':
-      html = template02VT(phieu, congTy);
-      break;
-    case 'CHUYEN':
-      html = template03XKNB3(phieu, congTy);
-      break;
-    default:
-      html = template01VT(phieu, congTy);
-  }
+export function printKhoPhieu(phieu: PhieuKho, template: string, congTy?: CongTyInfo): void {
+  const html = buildKhoPhieuHtml(phieu, template, congTy);
 
   const iframe = document.createElement('iframe');
   iframe.style.position = 'fixed';

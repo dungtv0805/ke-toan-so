@@ -17,15 +17,19 @@ import {
   DeleteOutlined,
   SearchOutlined,
   PrinterOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import type { PhieuKho, LoaiPhieuKho } from '@/types';
 import { phieuKhoService } from '@/services/phieuKhoService';
+import { khoTemplateService } from '@/services/khoTemplateService';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { formatCurrency } from '@/pages/chung-tu/phieu/lib/format';
 import { PhieuKhoEditorModal } from './PhieuKhoEditorModal';
 import { usePrintKhoPhieu } from './print/usePrintKhoPhieu';
+import { KhoTemplateModal } from './print/KhoTemplateModal';
+import { KHO_TEMPLATE_KEY } from './print/khoPrintTemplates';
 
 const { RangePicker } = DatePicker;
 
@@ -52,6 +56,26 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
   // Editor modal state
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Mẫu in: mẫu đã lưu (null = dùng mặc định)
+  const [templateModalOpen, setTemplateModalOpen] = useState(false);
+  const [savedTemplate, setSavedTemplate] = useState<string | null>(null);
+
+  // Nạp mẫu in đã lưu cho loại phiếu này (để nút In dùng đúng mẫu)
+  useEffect(() => {
+    let cancelled = false;
+    khoTemplateService
+      .getByLoai(KHO_TEMPLATE_KEY[loaiPhieu])
+      .then((tpl) => {
+        if (!cancelled) setSavedTemplate(tpl?.html ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setSavedTemplate(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loaiPhieu]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -185,7 +209,7 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
             onClick={async () => {
               try {
                 const full = await phieuKhoService.getById(record.id);
-                printPhieu(full);
+                printPhieu(full, savedTemplate);
               } catch {
                 message.error('Không tải được phiếu để in');
               }
@@ -252,7 +276,15 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
           >
             Tìm
           </Button>
-          <div style={{ marginLeft: 'auto' }}>
+          <Space style={{ marginLeft: 'auto' }} size={8}>
+            <Button
+              size="small"
+              icon={<FileTextOutlined />}
+              style={{ height: 28 }}
+              onClick={() => setTemplateModalOpen(true)}
+            >
+              Mẫu in
+            </Button>
             {canCreate && (
               <Button
                 type="primary"
@@ -264,7 +296,7 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
                 Lập {groupLabel.toLowerCase()}
               </Button>
             )}
-          </div>
+          </Space>
         </div>
 
         <Table<PhieuKho>
@@ -291,6 +323,13 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
         editingId={editingId}
         onClose={() => setEditorOpen(false)}
         onSaved={loadData}
+      />
+
+      <KhoTemplateModal
+        loaiPhieu={loaiPhieu}
+        open={templateModalOpen}
+        onClose={() => setTemplateModalOpen(false)}
+        onSaved={(html) => setSavedTemplate(html)}
       />
     </div>
   );
