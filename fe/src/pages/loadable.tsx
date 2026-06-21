@@ -226,3 +226,7 @@ export const NotFound = loadable(() => import('./NotFound'), {
 export const QuanLyHopDongPage = loadable(() => import('./trung-tam-du-lieu/hop-dong/QuanLyHopDongPage'), {
   fallback: <PageLoader />
 });
+
+export const BaoCaoHopDongPage = loadable(() => import('./bao-cao/hop-dong/BaoCaoHopDongPage'), {
+  fallback: <PageLoader />
+});

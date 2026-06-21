@@ -115,6 +115,7 @@ const existingRoutes = new Set([
   "/bao-cao/so-chi-tiet-tai-khoan",
   "/bao-cao/bang-can-doi",
   "/bao-cao/bang-tong-hop",
+  "/bao-cao/hop-dong",
 
   "/bieu-mau",
   "/chinh-sach",
@@ -194,6 +195,7 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Sổ chi tiết công nợ", "/bao-cao/so-chi-tiet-cong-no", <FileSearchOutlined />),
     getMenuItem("Sổ chi tiết phát sinh", "/bao-cao/so-chi-tiet-phat-sinh", <ProfileOutlined />),
     getMenuItem("Bảng tổng hợp", "/bao-cao/bang-tong-hop", <TableOutlined />),
+    getMenuItem("Báo cáo hợp đồng", "/bao-cao/hop-dong", <FileProtectOutlined />),
   ]),
 
   getItem("Trung tâm dữ liệu", "/trung-tam-du-lieu", <DatabaseOutlined />, [

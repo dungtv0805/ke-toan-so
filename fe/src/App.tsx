@@ -61,6 +61,7 @@ import {
   TenantPage,
   ComingSoonPage,
   QuanLyHopDongPage,
+  BaoCaoHopDongPage,
   NotFound
 } from "./pages/loadable";
 
@@ -392,6 +393,14 @@ const App = () => (
                     element={
                       <ProtectedRoute requiredPermission="/bao-cao/bang-tong-hop:xem">
                         <BangTongHopCongNoPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="hop-dong"
+                    element={
+                      <ProtectedRoute requiredPermission="/bao-cao/hop-dong:xem">
+                        <BaoCaoHopDongPage />
                       </ProtectedRoute>
                     }
                   />

@@ -53,6 +53,13 @@ export class TheoDoiHopDongController {
     return { success: true, data };
   }
 
+  @Get('bao-cao')
+  @Roles(...READ_ROLES)
+  async baoCao() {
+    const data = await this.service.baoCao();
+    return { success: true, data };
+  }
+
   @Get(':hopDongId')
   @Roles(...READ_ROLES)
   async getByHopDongId(@Param('hopDongId') hopDongId: string) {

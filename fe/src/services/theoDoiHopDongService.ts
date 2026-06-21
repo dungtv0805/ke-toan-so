@@ -1,4 +1,4 @@
-import { TheoDoiHopDong, TheoDoiHopDongRow } from '@/types';
+import { TheoDoiHopDong, TheoDoiHopDongRow, BaoCaoHopDongRow } from '@/types';
 import { ServiceBase } from './base/service-base';
 
 export interface TheoDoiHopDongStats {
@@ -35,6 +35,13 @@ class TheoDoiHopDongService extends ServiceBase {
 
   async getStats(): Promise<TheoDoiHopDongStats> {
     return this.get<TheoDoiHopDongStats>({ endpoint: '/stats' });
+  }
+
+  /** Báo cáo nhanh theo năm. */
+  async getBaoCao(): Promise<{ rows: BaoCaoHopDongRow[]; tong: BaoCaoHopDongRow }> {
+    return this.get<{ rows: BaoCaoHopDongRow[]; tong: BaoCaoHopDongRow }>({
+      endpoint: '/bao-cao',
+    });
   }
 }
 

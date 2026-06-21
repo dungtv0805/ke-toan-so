@@ -219,6 +219,18 @@ export interface TheoDoiHopDong {
   tinhTrangHoSo?: TinhTrangHoSo;
   ghiChu?: string;
 }
+export interface BaoCaoHopDongRow {
+  nam: number | null;
+  soLuong: number;
+  giaTri: number;
+  quyetToan: number;
+  thuTien: number;
+  chuaCoHD: number;
+  hdChuaKy: number;
+  hdPhotoScan: number;
+  hdGoc: number;
+  giaTriBinhQuan: number;
+}
 export interface TheoDoiHopDongRow {
   hopDongId: string;
   soHopDong: string;

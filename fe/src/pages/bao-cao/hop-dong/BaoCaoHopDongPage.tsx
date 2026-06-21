@@ -1,0 +1,114 @@
+import React, { useEffect, useState } from 'react';
+import { Breadcrumb, Card, Table, Typography, message } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import { HomeOutlined, FileProtectOutlined } from '@ant-design/icons';
+import type { BaoCaoHopDongRow } from '@/types';
+import { theoDoiHopDongService } from '@/services/theoDoiHopDongService';
+
+const { Text, Title } = Typography;
+
+const fmtCur = (v?: number) =>
+  !v ? '-' : new Intl.NumberFormat('vi-VN').format(Math.round(v));
+const fmtNum = (v?: number) => (v ? new Intl.NumberFormat('vi-VN').format(v) : '-');
+
+export default function BaoCaoHopDongPage() {
+  const [rows, setRows] = useState<BaoCaoHopDongRow[]>([]);
+  const [tong, setTong] = useState<BaoCaoHopDongRow | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    theoDoiHopDongService
+      .getBaoCao()
+      .then((res) => {
+        setRows(res.rows);
+        setTong(res.tong);
+      })
+      .catch(() => message.error('Không tải được báo cáo'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const columns: ColumnsType<BaoCaoHopDongRow> = [
+    {
+      title: 'Năm',
+      dataIndex: 'nam',
+      width: 90,
+      fixed: 'left',
+      align: 'center',
+      render: (v: number | null) => <Text strong>{v ?? 'Chưa rõ'}</Text>,
+    },
+    {
+      title: 'Giá trị Hợp đồng + phụ lục',
+      children: [
+        { title: 'Số lượng', dataIndex: 'soLuong', width: 90, align: 'center', render: (v) => fmtNum(v) },
+        { title: 'Số tiền', dataIndex: 'giaTri', width: 160, align: 'right', render: (v) => fmtCur(v) },
+      ],
+    },
+    { title: 'Quyết toán', dataIndex: 'quyetToan', width: 150, align: 'right', render: (v) => fmtCur(v) },
+    {
+      title: 'Thu tiền',
+      dataIndex: 'thuTien',
+      width: 150,
+      align: 'right',
+      render: (v) => <Text type="success">{fmtCur(v)}</Text>,
+    },
+    {
+      title: 'Tình trạng Hợp đồng',
+      children: [
+        { title: 'Chưa có HĐ', dataIndex: 'chuaCoHD', width: 90, align: 'center', render: (v) => fmtNum(v) },
+        { title: 'HĐ chưa ký', dataIndex: 'hdChuaKy', width: 90, align: 'center', render: (v) => fmtNum(v) },
+        { title: 'HĐ photo/scan', dataIndex: 'hdPhotoScan', width: 100, align: 'center', render: (v) => fmtNum(v) },
+        { title: 'HĐ gốc', dataIndex: 'hdGoc', width: 80, align: 'center', render: (v) => fmtNum(v) },
+      ],
+    },
+    { title: 'Giá trị HĐ bình quân', dataIndex: 'giaTriBinhQuan', width: 160, align: 'right', render: (v) => fmtCur(v) },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <Breadcrumb
+        items={[
+          { href: '/', title: <><HomeOutlined /> Trang chủ</> },
+          { title: 'Báo cáo' },
+          { title: 'Báo cáo hợp đồng' },
+        ]}
+      />
+
+      <Card className="shadow-sm">
+        <div className="flex items-center gap-2 mb-3">
+          <FileProtectOutlined className="text-primary" />
+          <Title level={5} className="!mb-0">Báo cáo nhanh hợp đồng (theo năm)</Title>
+        </div>
+
+        <Table<BaoCaoHopDongRow>
+          columns={columns}
+          dataSource={rows}
+          rowKey={(r) => String(r.nam ?? 'null')}
+          loading={loading}
+          size="small"
+          bordered
+          scroll={{ x: 1200 }}
+          pagination={false}
+          summary={() =>
+            tong ? (
+              <Table.Summary fixed>
+                <Table.Summary.Row className="font-semibold bg-gray-50">
+                  <Table.Summary.Cell index={0} align="center"><Text strong>Tổng</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={1} align="center"><Text strong>{fmtNum(tong.soLuong)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={2} align="right"><Text strong>{fmtCur(tong.giaTri)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={3} align="right"><Text strong>{fmtCur(tong.quyetToan)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={4} align="right"><Text strong type="success">{fmtCur(tong.thuTien)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={5} align="center"><Text strong>{fmtNum(tong.chuaCoHD)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={6} align="center"><Text strong>{fmtNum(tong.hdChuaKy)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={7} align="center"><Text strong>{fmtNum(tong.hdPhotoScan)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={8} align="center"><Text strong>{fmtNum(tong.hdGoc)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={9} align="right"><Text strong>{fmtCur(tong.giaTriBinhQuan)}</Text></Table.Summary.Cell>
+                </Table.Summary.Row>
+              </Table.Summary>
+            ) : null
+          }
+        />
+      </Card>
+    </div>
+  );
+}
