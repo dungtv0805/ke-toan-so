@@ -14,6 +14,28 @@ description: Use when deploying backend services or frontend to production serve
 - Domain: masterceo.com.vn
 - Services hiện có: gateway(3000), auth(3001), master-data(3002), voucher(3003), cash-book(3004), payable(3005), reporting(3006), config(3007), kho(3008)
 
+## ⚠️ Khi thêm DEPENDENCY npm MỚI (runtime) — BẮT BUỘC đọc
+
+`nest build` (webpack) **externalize** node_modules — `main.js` chỉ `require("pkg")`, KHÔNG bundle. Image `localhost/digital-book:latest` chứa sẵn `/app/node_modules` (baked vào image, KHÔNG phải volume). Vì vậy thêm dep mới mà chỉ scp `main.js` → container crash-loop `Cannot find module`.
+
+Quy trình thêm dep mới (đã verify 2026-06-22 khi thêm nest-winston/winston):
+```bash
+# 1. Cài vào node_modules trong container (legacy-peer-deps vì typeorm/mongodb conflict sẵn có)
+ssh kt 'docker exec digital-book-app sh -c "cd /app && npm install --no-save --no-package-lock --legacy-peer-deps <pkg>@<ver> ..."'
+# 2. Restart PM2 để nạp lại
+ssh kt 'docker exec digital-book-app pm2 restart all'
+# 3. PERSIST: commit container thành image (nếu không, docker compose up -d sẽ mất dep)
+ssh kt 'docker commit digital-book-app localhost/digital-book:latest'
+# 4. Verify image mới có dep
+ssh kt 'docker run --rm --entrypoint sh localhost/digital-book:latest -c "ls /app/node_modules/<pkg>"'
+```
+Container chạy user `nestjs` uid=1001 gid=65533. `/app/node_modules` writable bởi uid này.
+
+## Ghi log ra file (Winston) — volume + quyền
+- Env `LOG_DIR=/app/logs` (trong `env/services.env`), volume `./logs:/app/logs` (trong `docker-compose.yml`).
+- Đổi volume cần **`docker compose up -d`** (recreate), KHÔNG phải `docker restart`.
+- Host `logs/` phải thuộc uid container: `chown -R 1001:65533 /root/chimseo/digital-book-be/logs` — nếu không sẽ `EACCES` khi winston ghi file.
+
 ## Deploy Backend Service
 
 ```bash
