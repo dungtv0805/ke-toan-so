@@ -31,6 +31,18 @@ ssh kt 'docker run --rm --entrypoint sh localhost/digital-book:latest -c "ls /ap
 ```
 Container chạy user `nestjs` uid=1001 gid=65533. `/app/node_modules` writable bởi uid này.
 
+## Đọc log nhanh trên server (chưa có Loki)
+Có script `logs.sh` tại `/root/chimseo/digital-book-be/logs.sh` (source: `be/scripts/logs.sh`), cần `jq`:
+```bash
+cd /root/chimseo/digital-book-be
+./logs.sh trace <requestId>     # gom log 1 request qua mọi service (theo thời gian)
+./logs.sh errors                # theo dõi mọi LỖI live
+./logs.sh tail voucher          # xem live 1 service (file ngày mới nhất)
+./logs.sh grep " - 500 - "      # tìm theo chuỗi (status/path...)
+./logs.sh services              # liệt kê service có log
+```
+File log JSON nằm ở `logs/{service}-YYYY-MM-DD.log` (+ `-error-`). Có thể grep thẳng: `grep -h "<requestId>" logs/*.log`.
+
 ## Ghi log ra file (Winston) — volume + quyền
 - Env `LOG_DIR=/app/logs` (trong `env/services.env`), volume `./logs:/app/logs` (trong `docker-compose.yml`).
 - Đổi volume cần **`docker compose up -d`** (recreate), KHÔNG phải `docker restart`.
