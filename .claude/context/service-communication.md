@@ -98,6 +98,30 @@ rsync -az fe/dist/ kt:/root/chimseo/nginx/build4/
 6. Restart container: `docker restart digital-book-app`
 Phối hợp `/db-deploy` skill khi deploy lần đầu.
 
+## Logging & Request Tracing (requestId)
+
+### Correlation ID end-to-end
+- **Header:** `x-request-id`. Gateway sinh UUID nếu client không gửi, hoặc reuse id client gửi.
+- **Lưu context:** `RequestContext` (AsyncLocalStorage) tại `libs/core/src/services/request-context/request-context.service.ts` — `getRequestId()`, `getRequest()`. Cũng set `req.id = requestId`.
+- **Middleware:** `RequestContextMiddleware` (`libs/core/src/middlewares/`) — chạy ĐẦU TIÊN, đọc/sinh requestId, set response header `x-request-id`, lưu vào ALS.
+- **Wire-up toàn hệ thống:** `TenantModule` (@Global, mọi service + gateway import) apply `RequestContextMiddleware` TRƯỚC `TenantMiddleware` trong `configure()`. Không cần chỉnh từng service.
+- **Propagate giữa services:** `BaseServiceClient.request()` tự đính header `x-request-id` từ ALS vào mọi call nội bộ → reporting→voucher→master-data dùng chung 1 requestId.
+- **Response:** mọi response có header `x-request-id`; body LỖI có thêm field `requestId` (`{success:false, error, requestId}`). Body thành công không đổi.
+
+### Logging (Winston)
+- Factory: `createAppLogger(serviceName)` tại `libs/core/src/logger/winston.logger.ts`. Truyền vào `NestFactory.create(Module, { logger })` ở từng `main.ts` → thay Nest Logger mặc định (mọi `new Logger()` cũ + LoggingInterceptor + GlobalExceptionFilter đều đi qua Winston, tự kèm `[requestId]`).
+- `LoggingInterceptor` + `GlobalExceptionFilter` được bật global ở 8 service backend (gateway chỉ bật filter — interceptor không hợp với stream proxy).
+- **Transports:** console (1 dòng, màu) + file JSON daily-rotate:
+  - `{service}-%DATE%.log` (mọi level) và `{service}-error-%DATE%.log` (chỉ error)
+  - rotate theo ngày, nén gzip, maxSize 20MB, giữ 14 ngày.
+- **Env:** `LOG_DIR` (mặc định `logs`), `LOG_LEVEL` (mặc định `info`).
+
+### ⚠️ Deploy note — BẮT BUỘC mount volume cho log
+Container chạy PM2 đa-service; log ghi trong container sẽ MẤT khi restart/redeploy. Khi deploy cần:
+1. Thêm vào `env/services.env`: `LOG_DIR=/app/logs` (và `LOG_LEVEL` nếu cần).
+2. Thêm volume trong `docker-compose.yml`: `./logs:/app/logs` (tạo thư mục `logs/` trên host).
+3. `logs/` đã được `.gitignore`.
+
 ## Bugs Đã Fix
 
 ### 1. Báo cáo tài chính trả về empty data (2026-05-11)

@@ -2,6 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { VoucherServiceModule } from './voucher-service.module';
+import {
+  createAppLogger,
+  LoggingInterceptor,
+  GlobalExceptionFilter,
+} from '@app/core';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(
@@ -10,7 +15,7 @@ async function bootstrap() {
     // limit. The default Express limit is 100kb, which rejects bulk imports
     // (e.g. Nhật ký chung import of a few hundred rows) with
     // "request entity too large".
-    { bodyParser: false },
+    { bodyParser: false, logger: createAppLogger('voucher') },
   );
 
   app.useBodyParser('json', { limit: '10mb' });
@@ -23,6 +28,9 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
+  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   app.enableCors();
 

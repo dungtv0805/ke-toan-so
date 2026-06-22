@@ -1,9 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { AuthServiceModule } from './auth-service.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import {
+  createAppLogger,
+  LoggingInterceptor,
+  GlobalExceptionFilter,
+} from '@app/core';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AuthServiceModule);
+  const app = await NestFactory.create(AuthServiceModule, {
+    logger: createAppLogger('auth'),
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -12,6 +19,9 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
+  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   app.enableCors();
 

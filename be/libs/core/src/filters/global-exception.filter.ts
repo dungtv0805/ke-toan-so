@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { RequestContext } from '../services/request-context/request-context.service';
 
 interface ErrorResponse {
   success: false;
@@ -15,6 +16,7 @@ interface ErrorResponse {
     message: string;
     details?: Record<string, string[]>;
   };
+  requestId?: string;
 }
 
 @Catch()
@@ -52,6 +54,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     }
 
+    // Correlation id for this request — surfaced to the client so it can be
+    // quoted to support and grepped across service logs.
+    const requestId = RequestContext.getRequestId();
+
     // Log error with stack trace (not exposed to client)
     this.logger.error(
       `${request.method} ${request.url} - ${status} - ${message}`,
@@ -65,6 +71,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         message,
         ...(details && { details }),
       },
+      ...(requestId && { requestId }),
     };
 
     response.status(status).json(errorResponse);

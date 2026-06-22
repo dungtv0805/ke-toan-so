@@ -1,9 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { CashBookServiceModule } from './cash-book-service.module';
+import {
+  createAppLogger,
+  LoggingInterceptor,
+  GlobalExceptionFilter,
+} from '@app/core';
 
 async function bootstrap() {
-  const app = await NestFactory.create(CashBookServiceModule);
+  const app = await NestFactory.create(CashBookServiceModule, {
+    logger: createAppLogger('cash-book'),
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -12,6 +19,9 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
+  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   app.enableCors();
 

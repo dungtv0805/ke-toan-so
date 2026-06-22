@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { RequestContext, REQUEST_ID_HEADER } from '@app/core';
 import * as http from 'http';
 import {
   ServiceClientConfig,
@@ -89,6 +90,11 @@ export abstract class BaseServiceClient {
     const queryString = this.buildQueryString(options?.query);
     const fullPath = queryString ? `${path}?${queryString}` : path;
 
+    // Propagate the correlation id so the called service logs under the same
+    // requestId. Pulled from the current request's AsyncLocalStorage; an
+    // explicit header in options takes precedence.
+    const requestId = RequestContext.getRequestId();
+
     return new Promise((resolve) => {
       const requestOptions: http.RequestOptions = {
         hostname: config.host,
@@ -97,6 +103,7 @@ export abstract class BaseServiceClient {
         method,
         headers: {
           'Content-Type': 'application/json',
+          ...(requestId ? { [REQUEST_ID_HEADER]: requestId } : {}),
           ...options?.headers,
         },
         timeout: options?.timeout || config.timeout,

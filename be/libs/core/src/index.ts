@@ -2,4 +2,7 @@ export * from './core.module';
 export * from './filters';
 export * from './interceptors';
 export * from './tenant';
+export * from './logger';
+export * from './middlewares/request-context.middleware';
+export * from './services/request-context';
 export * from './utils/dto.utils';

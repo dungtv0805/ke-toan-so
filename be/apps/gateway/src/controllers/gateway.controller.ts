@@ -1,6 +1,7 @@
 import { All, Controller, Logger, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import * as http from 'http';
+import { RequestContext } from '@app/core';
 import { getServiceForPath } from '../environments/environment';
 
 @Controller('/')
@@ -23,6 +24,9 @@ export class GatewayController {
           code: 'ROUTE_NOT_FOUND',
           message: `Không tìm thấy dịch vụ cho đường dẫn: ${fullPath}`,
         },
+        ...(RequestContext.getRequestId() && {
+          requestId: RequestContext.getRequestId(),
+        }),
       });
       return;
     }
@@ -86,6 +90,9 @@ export class GatewayController {
           code: 'BAD_GATEWAY',
           message: `Dịch vụ không khả dụng: ${err.message}`,
         },
+        ...(RequestContext.getRequestId() && {
+          requestId: RequestContext.getRequestId(),
+        }),
       });
     });
   }
