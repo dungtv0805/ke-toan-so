@@ -25,6 +25,7 @@ describe('NhatKyChungService.getEntries — meta.total', () => {
       repo as never,
       {} as never,
       tenantContext as never,
+      {} as never,
     );
 
     const res = await service.getEntries({ page: 1, limit: 100 });

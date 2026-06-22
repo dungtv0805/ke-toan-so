@@ -15,6 +15,7 @@ import {
   Empty,
   Tag,
   ColorPicker,
+  Select,
 } from "antd";
 import {
   PlusOutlined,
@@ -27,11 +28,19 @@ import {
 import { FilterBar } from "@/components/common/FilterBar";
 import { LoaiGiaoDich } from "@/types";
 import { loaiGiaoDichService, LoaiGiaoDichStats } from "@/services/loaiGiaoDichService";
+import { loaiChungTuService, LoaiChungTuType, PhanLoaiChungTu } from "@/services/loaiChungTuService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 
 const { Text } = Typography;
 const { TextArea } = Input;
+
+// Nhãn + màu cho phân loại của loại chứng từ liên kết
+const PHAN_LOAI_TAG: Record<PhanLoaiChungTu, { label: string; color: string }> = {
+  THU: { label: "Phiếu thu", color: "green" },
+  CHI: { label: "Phiếu chi", color: "red" },
+  KHAC: { label: "Nhật ký chung", color: "default" },
+};
 
 // Validation schema
 const loaiGiaoDichSchema = z.object({
@@ -47,6 +56,7 @@ const loaiGiaoDichSchema = z.object({
     .max(200, "Tên tối đa 200 ký tự"),
   color: z.string().max(50, "Màu sắc tối đa 50 ký tự").optional().nullable(),
   moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").optional().nullable(),
+  loaiChungTuMa: z.string().max(50, "Mã loại chứng từ tối đa 50 ký tự").optional().nullable(),
 });
 
 const LoaiGiaoDichPage: React.FC = () => {
@@ -58,6 +68,11 @@ const LoaiGiaoDichPage: React.FC = () => {
   const [editingRecord, setEditingRecord] = useState<LoaiGiaoDich | null>(null);
   const [form] = Form.useForm();
   const [, setStats] = useState<LoaiGiaoDichStats>({ tongLoaiGiaoDich: 0 });
+  const [loaiChungTuList, setLoaiChungTuList] = useState<LoaiChungTuType[]>([]);
+  const loaiChungTuMap = React.useMemo(
+    () => new Map(loaiChungTuList.map((l) => [l.ma, l])),
+    [loaiChungTuList]
+  );
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 50,
@@ -95,6 +110,10 @@ const LoaiGiaoDichPage: React.FC = () => {
 
   useEffect(() => {
     fetchData(1, pagination.pageSize, "");
+    loaiChungTuService
+      .getAll()
+      .then(setLoaiChungTuList)
+      .catch(() => setLoaiChungTuList([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -203,6 +222,24 @@ const LoaiGiaoDichPage: React.FC = () => {
           <Text strong>{text}</Text>
         </Space>
       ),
+    },
+    {
+      title: "Loại chứng từ → Phân hệ",
+      dataIndex: "loaiChungTuMa",
+      key: "loaiChungTuMa",
+      width: 240,
+      render: (ma?: string) => {
+        if (!ma) return <Text type="secondary">Chưa gán</Text>;
+        const lct = loaiChungTuMap.get(ma);
+        if (!lct) return <Text type="warning">{ma} (không tồn tại)</Text>;
+        const tag = PHAN_LOAI_TAG[lct.phanLoai ?? "KHAC"];
+        return (
+          <Space size={4}>
+            <Text>{lct.ten}</Text>
+            <Tag color={tag.color}>{tag.label}</Tag>
+          </Space>
+        );
+      },
     },
     {
       title: "Màu sắc",
@@ -361,6 +398,24 @@ const LoaiGiaoDichPage: React.FC = () => {
             className="mb-3"
           >
             <Input placeholder="VD: Phiếu thu, Phiếu chi, Báo có ngân hàng..." />
+          </Form.Item>
+
+          <Form.Item
+            name="loaiChungTuMa"
+            label="Loại chứng từ (quyết định Phiếu thu/chi/NKC)"
+            tooltip="Chứng từ dùng loại giao dịch này sẽ vào phân hệ theo phân loại của Loại chứng từ được chọn"
+            className="mb-3"
+          >
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder="Chọn loại chứng từ liên kết"
+              options={loaiChungTuList.map((l) => ({
+                value: l.ma,
+                label: `${l.ten} — ${PHAN_LOAI_TAG[l.phanLoai ?? "KHAC"].label}`,
+              }))}
+            />
           </Form.Item>
 
           <Form.Item

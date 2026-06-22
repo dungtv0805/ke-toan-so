@@ -15,6 +15,10 @@ export class LoaiGiaoDich extends BaseEntity {
   @Column({ nullable: true })
   moTa: string;
 
+  // Mã Loại chứng từ liên kết — dùng để suy ra phiếu thu/chi/NKC khi tạo chứng từ
+  @Column({ nullable: true })
+  loaiChungTuMa: string;
+
   @Column({ default: true })
   isActive: boolean;
 }

@@ -177,6 +177,8 @@ export interface LoaiGiaoDich {
   ten: string;
   color?: string;
   moTa?: string;
+  // Mã Loại chứng từ liên kết — quyết định phiếu thu/chi/NKC khi tạo chứng từ
+  loaiChungTuMa?: string;
 }
 
 // ===== THEO DÕI HỢP ĐỒNG (Phần 2) =====

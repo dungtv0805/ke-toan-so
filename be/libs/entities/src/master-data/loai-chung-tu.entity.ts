@@ -1,6 +1,9 @@
 import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '../base.entity';
 
+/** Phân loại chứng từ dùng để định tuyến phiếu thu/chi/nhật ký chung. */
+export type PhanLoaiChungTu = 'THU' | 'CHI' | 'KHAC';
+
 @Entity('loai_chung_tu')
 export class LoaiChungTuMaster extends BaseEntity {
   @Column()
@@ -11,6 +14,10 @@ export class LoaiChungTuMaster extends BaseEntity {
 
   @Column({ nullable: true })
   moTa: string;
+
+  // THU -> Phiếu thu, CHI -> Phiếu chi, KHAC -> chỉ Nhật ký chung (mua/bán chịu...)
+  @Column({ default: 'KHAC' })
+  phanLoai: PhanLoaiChungTu;
 
   @Column({ default: true })
   isActive: boolean;

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository, Between } from 'typeorm';
 import { ChungTu, LoaiChungTu } from '@app/entities';
 import { CreateChungTuDto, UpdateChungTuDto } from '../dto';
-import { VoucherNumberService } from '../shared';
+import { VoucherNumberService, LoaiResolverService } from '../shared';
 import { PaginatedResult } from '@app/dto';
 import { TenantContextService } from '@app/core';
 import { ChungTuQueryDto } from './dto/chung-tu-query.dto';
@@ -36,6 +36,7 @@ export class ChungTuService {
     private readonly chungTuRepository: MongoRepository<ChungTu>,
     private readonly voucherNumberService: VoucherNumberService,
     private readonly tenantContext: TenantContextService,
+    private readonly loaiResolver: LoaiResolverService,
   ) {}
 
   async findAllPaginated(
@@ -135,12 +136,16 @@ export class ChungTuService {
     createDto: CreateChungTuDto,
     nguoiTaoId: string,
   ): Promise<ChungTu> {
-    const soPhieu = await this.voucherNumberService.generateVoucherNumber(
+    // Suy ra loai từ Loại giao dịch (nếu có cấu hình); nếu không → giữ loai theo endpoint.
+    const loai = await this.loaiResolver.resolveLoai(
+      createDto.danhMuc,
       createDto.loai,
     );
+    const soPhieu = await this.voucherNumberService.generateVoucherNumber(loai);
 
     const chungTu = this.chungTuRepository.create({
       ...createDto,
+      loai,
       ngay: new Date(createDto.ngay),
       soPhieu,
       nguoiTaoId,
@@ -191,14 +196,33 @@ export class ChungTuService {
   ): Promise<{ success: boolean; data: ChungTu[] }> {
     if (items.length === 0) return { success: true, data: [] };
 
-    const soPhieuList = await this.voucherNumberService.generateVoucherNumbers(
-      loai,
-      items.length,
+    // Suy ra loai từng dòng theo Loại giao dịch; fallback = loai của endpoint import.
+    const loaiByIndex = await Promise.all(
+      items.map((item) => this.loaiResolver.resolveLoai(item.danhMuc, loai)),
     );
+
+    // Gom index theo loai đã suy luận để đặt dải số phiếu đúng tiền tố (PT/PC/NK).
+    const indicesByLoai = new Map<LoaiChungTu, number[]>();
+    loaiByIndex.forEach((l, idx) => {
+      const list = indicesByLoai.get(l) ?? [];
+      list.push(idx);
+      indicesByLoai.set(l, list);
+    });
+
+    const soPhieuByIndex: string[] = new Array(items.length);
+    for (const [l, indices] of indicesByLoai) {
+      const numbers = await this.voucherNumberService.generateVoucherNumbers(
+        l,
+        indices.length,
+      );
+      indices.forEach((origIdx, i) => {
+        soPhieuByIndex[origIdx] = numbers[i];
+      });
+    }
 
     const chungTuList = items.map((item, idx) =>
       this.chungTuRepository.create({
-        loai,
+        loai: loaiByIndex[idx],
         soTien: item.soTien,
         noiDung: item.noiDung,
         danhMuc: item.danhMuc,
@@ -206,7 +230,7 @@ export class ChungTuService {
         nguoiGiaoDich: item.nguoiGiaoDich,
         diaChi: item.diaChi,
         ngay: new Date(item.ngay),
-        soPhieu: soPhieuList[idx],
+        soPhieu: soPhieuByIndex[idx],
         nguoiTaoId,
       }),
     );

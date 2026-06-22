@@ -1,4 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsIn } from 'class-validator';
+import type { PhanLoaiChungTu } from '@app/entities';
 
 export class CreateLoaiChungTuDto {
   @IsString()
@@ -12,4 +13,8 @@ export class CreateLoaiChungTuDto {
   @IsString()
   @IsOptional()
   moTa?: string;
+
+  @IsIn(['THU', 'CHI', 'KHAC'])
+  @IsOptional()
+  phanLoai?: PhanLoaiChungTu;
 }

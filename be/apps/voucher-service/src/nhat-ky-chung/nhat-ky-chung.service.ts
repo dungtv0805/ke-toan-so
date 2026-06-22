@@ -20,7 +20,7 @@ import {
   SummaryResponse,
 } from './dto';
 import { buildMongoQuery, buildSummaryAggregation, mergeDoiTuongBuckets, DoiTuongBucket } from './helpers';
-import { VoucherNumberService } from '../shared';
+import { VoucherNumberService, LoaiResolverService } from '../shared';
 
 @Injectable()
 export class NhatKyChungService {
@@ -29,6 +29,7 @@ export class NhatKyChungService {
     private readonly chungTuRepository: MongoRepository<ChungTu>,
     private readonly voucherNumberService: VoucherNumberService,
     private readonly tenantContext: TenantContextService,
+    private readonly loaiResolver: LoaiResolverService,
   ) {}
 
   async getEntries(query: NhatKyChungQueryDto): Promise<{
@@ -309,12 +310,14 @@ export class NhatKyChungService {
     createDto: CreateNhatKyChungDto,
     nguoiTaoId: string,
   ): Promise<{ success: boolean; data: ChungTu }> {
-    const soPhieu = await this.voucherNumberService.generateVoucherNumber(
+    const loai = await this.loaiResolver.resolveLoai(
+      createDto.danhMuc,
       createDto.loai,
     );
+    const soPhieu = await this.voucherNumberService.generateVoucherNumber(loai);
 
     const chungTu = this.chungTuRepository.create({
-      loai: createDto.loai,
+      loai,
       soTien: createDto.soTien,
       noiDung: createDto.noiDung,
       danhMuc: createDto.danhMuc,
@@ -436,14 +439,18 @@ export class NhatKyChungService {
       return { success: true, data: [] };
     }
 
-    // Generate ONE soPhieu for all items
-    const soPhieu = await this.voucherNumberService.generateVoucherNumber(
+    // 1 bút toán (cùng soPhieu) = 1 loai. Suy ra từ dòng đầu (fallback loai dòng đầu).
+    const loai = await this.loaiResolver.resolveLoai(
+      items[0].danhMuc,
       items[0].loai,
     );
 
+    // Generate ONE soPhieu for all items
+    const soPhieu = await this.voucherNumberService.generateVoucherNumber(loai);
+
     const chungTuList = items.map((item) =>
       this.chungTuRepository.create({
-        loai: item.loai,
+        loai,
         soTien: item.soTien,
         noiDung: item.noiDung,
         danhMuc: item.danhMuc,
@@ -472,12 +479,17 @@ export class NhatKyChungService {
       return { success: true, data: [] };
     }
 
-    // Gom index theo loai
+    // Suy ra loai từng dòng theo Loại giao dịch (fallback = loai dòng đó).
+    const loaiByIndex = await Promise.all(
+      items.map((item) => this.loaiResolver.resolveLoai(item.danhMuc, item.loai)),
+    );
+
+    // Gom index theo loai đã suy luận
     const indicesByLoai = new Map<LoaiChungTu, number[]>();
-    items.forEach((item, idx) => {
-      const list = indicesByLoai.get(item.loai) ?? [];
+    loaiByIndex.forEach((l, idx) => {
+      const list = indicesByLoai.get(l) ?? [];
       list.push(idx);
-      indicesByLoai.set(item.loai, list);
+      indicesByLoai.set(l, list);
     });
 
     // Đặt trước dải số phiếu cho từng loai, gán theo đúng index gốc
@@ -557,7 +569,12 @@ export class NhatKyChungService {
         continue;
       }
 
-      existingItem.loai = item.loai;
+      const danhMucForResolve =
+        item.danhMuc !== undefined ? item.danhMuc : existingItem.danhMuc;
+      existingItem.loai = await this.loaiResolver.resolveLoai(
+        danhMucForResolve,
+        item.loai,
+      );
       existingItem.ngay = new Date(item.ngay);
       existingItem.soTien = item.soTien;
       existingItem.noiDung = item.noiDung;
@@ -580,8 +597,12 @@ export class NhatKyChungService {
 
     // 6. CREATE new items
     for (const item of toCreate) {
+      const loaiMoi = await this.loaiResolver.resolveLoai(
+        item.danhMuc,
+        item.loai,
+      );
       const chungTu = this.chungTuRepository.create({
-        loai: item.loai,
+        loai: loaiMoi,
         soTien: item.soTien,
         noiDung: item.noiDung,
         danhMuc: item.danhMuc,

@@ -14,6 +14,8 @@ import {
   Row,
   Col,
   Breadcrumb,
+  Select,
+  Tag,
 } from "antd";
 import {
   PlusOutlined,
@@ -23,12 +25,22 @@ import {
   HomeOutlined,
 } from "@ant-design/icons";
 import { FilterBar } from "@/components/common/FilterBar";
-import { loaiChungTuService, LoaiChungTuType } from "@/services/loaiChungTuService";
+import { loaiChungTuService, LoaiChungTuType, PhanLoaiChungTu } from "@/services/loaiChungTuService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 
 const { Text } = Typography;
 const { TextArea } = Input;
+
+// Phân loại quyết định chứng từ vào phân hệ nào
+const PHAN_LOAI_OPTIONS: { value: PhanLoaiChungTu; label: string; color: string }[] = [
+  { value: "THU", label: "Phiếu thu", color: "green" },
+  { value: "CHI", label: "Phiếu chi", color: "red" },
+  { value: "KHAC", label: "Nhật ký chung", color: "default" },
+];
+const PHAN_LOAI_MAP = Object.fromEntries(
+  PHAN_LOAI_OPTIONS.map((o) => [o.value, o])
+) as Record<PhanLoaiChungTu, (typeof PHAN_LOAI_OPTIONS)[number]>;
 
 const loaiChungTuSchema = z.object({
   ma: z
@@ -42,6 +54,7 @@ const loaiChungTuSchema = z.object({
     .min(1, "Tên không được để trống")
     .max(200, "Tên tối đa 200 ký tự"),
   moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").optional().nullable(),
+  phanLoai: z.enum(["THU", "CHI", "KHAC"]).optional(),
 });
 
 const LoaiChungTuPage: React.FC = () => {
@@ -177,6 +190,16 @@ const LoaiChungTuPage: React.FC = () => {
       sorter: (a: LoaiChungTuType, b: LoaiChungTuType) => a.ten.localeCompare(b.ten),
     },
     {
+      title: "Phân loại",
+      dataIndex: "phanLoai",
+      key: "phanLoai",
+      width: 150,
+      render: (value: PhanLoaiChungTu | undefined) => {
+        const opt = value ? PHAN_LOAI_MAP[value] : PHAN_LOAI_MAP.KHAC;
+        return <Tag color={opt.color}>{opt.label}</Tag>;
+      },
+    },
+    {
       title: "Mô tả",
       dataIndex: "moTa",
       key: "moTa",
@@ -295,7 +318,7 @@ const LoaiChungTuPage: React.FC = () => {
         width={550}
         destroyOnClose
       >
-        <Form form={form} layout="vertical" size="small" className="mt-2">
+        <Form form={form} layout="vertical" size="small" className="mt-2" initialValues={{ phanLoai: "KHAC" }}>
           <Row gutter={12}>
             <Col span={8}>
               <Form.Item
@@ -324,6 +347,19 @@ const LoaiChungTuPage: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
+
+          <Form.Item
+            name="phanLoai"
+            label="Phân loại (định tuyến phiếu)"
+            className="mb-3"
+            tooltip="Quyết định chứng từ vào phân hệ Phiếu thu, Phiếu chi hay Nhật ký chung"
+            rules={[{ required: true, message: "Vui lòng chọn phân loại" }]}
+          >
+            <Select
+              options={PHAN_LOAI_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+              placeholder="Chọn phân loại"
+            />
+          </Form.Item>
 
           <Form.Item
             name="moTa"

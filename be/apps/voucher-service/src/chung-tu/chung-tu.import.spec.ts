@@ -3,7 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { ChungTu } from '@app/entities';
 import { TenantContextService } from '@app/core';
 import { ChungTuService } from './chung-tu.service';
-import { VoucherNumberService } from '../shared';
+import { VoucherNumberService, LoaiResolverService } from '../shared';
 
 describe('ChungTuService.importPhieu', () => {
   const create = jest.fn((x) => x);
@@ -20,6 +20,7 @@ describe('ChungTuService.importPhieu', () => {
         { provide: getRepositoryToken(ChungTu), useValue: repo },
         { provide: VoucherNumberService, useValue: { generateVoucherNumbers } },
         { provide: TenantContextService, useValue: { getCurrentTenantId: () => undefined } },
+        { provide: LoaiResolverService, useValue: { resolveLoai: async (_dm: any, fb: any) => fb } },
       ],
     }).compile();
     service = moduleRef.get(ChungTuService);

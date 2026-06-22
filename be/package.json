@@ -60,7 +60,9 @@
     "migrate:drop-unique-indexes": "env-cmd -e db -- node scripts/drop-unique-indexes-on-ma.js",
     "migrate:drop-unique-indexes:dry-run": "env-cmd -e db -- node scripts/drop-unique-indexes-on-ma.js --dry-run",
     "migrate:tenant": "env-cmd -e db -- ts-node scripts/migrations/add-default-tenant.ts",
-    "migrate:tenant:dry-run": "env-cmd -e db -- ts-node scripts/migrations/add-default-tenant.ts --dry-run"
+    "migrate:tenant:dry-run": "env-cmd -e db -- ts-node scripts/migrations/add-default-tenant.ts --dry-run",
+    "migrate:reclassify-loai": "env-cmd -e db -- node scripts/reclassify-chung-tu-loai.js",
+    "migrate:reclassify-loai:dry-run": "env-cmd -e db -- node scripts/reclassify-chung-tu-loai.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

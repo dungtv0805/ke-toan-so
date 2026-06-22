@@ -1,10 +1,14 @@
 import { ServiceBase, PaginatedResponse, PaginationParams } from './base/service-base';
 
+export type PhanLoaiChungTu = 'THU' | 'CHI' | 'KHAC';
+
 export interface LoaiChungTuType {
   id: string;
   ma: string;
   ten: string;
   moTa?: string;
+  // THU -> Phiếu thu, CHI -> Phiếu chi, KHAC -> Nhật ký chung
+  phanLoai?: PhanLoaiChungTu;
 }
 
 interface LoaiChungTuResponse extends Omit<LoaiChungTuType, 'id'> {

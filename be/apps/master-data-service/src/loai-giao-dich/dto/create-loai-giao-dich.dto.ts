@@ -20,4 +20,9 @@ export class CreateLoaiGiaoDichDto {
   @IsOptional()
   @MaxLength(500, { message: 'Mô tả tối đa 500 ký tự' })
   moTa?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(50, { message: 'Mã loại chứng từ tối đa 50 ký tự' })
+  loaiChungTuMa?: string;
 }

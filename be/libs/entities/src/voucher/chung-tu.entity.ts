@@ -1,7 +1,8 @@
 import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '../base.entity';
 
-export type LoaiChungTu = 'PHIEU_THU' | 'PHIEU_CHI';
+// PHIEU_THU -> Phiếu thu, PHIEU_CHI -> Phiếu chi, KHAC -> chỉ hiện ở Nhật ký chung
+export type LoaiChungTu = 'PHIEU_THU' | 'PHIEU_CHI' | 'KHAC';
 
 // Types cho danh mục (embedded in ChungTu.danhMuc)
 // Prefixed with DanhMuc to avoid conflicts with master-data entities
@@ -85,6 +86,16 @@ export interface DanhMucNghiepVu {
   ten: string;
 }
 
+export interface DanhMucLoaiGiaoDich {
+  ma: string;
+  ten: string;
+}
+
+export interface DanhMucLoaiChungTu {
+  ma: string;
+  ten: string;
+}
+
 // Gộp tất cả danh mục vào 1 field
 export interface DanhMuc {
   doiTuong?: DanhMucDoiTuong;
@@ -102,6 +113,8 @@ export interface DanhMuc {
   nhomKhuyenMai?: DanhMucNhomKhuyenMai;
   nhomQuanLy?: DanhMucNhomQuanLy;
   nghiepVu?: DanhMucNghiepVu;
+  loaiGiaoDich?: DanhMucLoaiGiaoDich;
+  loaiChungTu?: DanhMucLoaiChungTu;
 }
 
 @Entity('chung_tu')

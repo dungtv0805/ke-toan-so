@@ -19,10 +19,12 @@ describe('NhatKyChungService.importEntries', () => {
       }),
     };
     const tenantContext = { getCurrentTenantId: () => undefined };
+    const loaiResolver = { resolveLoai: async (_dm: any, fb: any) => fb };
     const service = new NhatKyChungService(
       chungTuRepo as any,
       voucherNumberService as any,
       tenantContext as any,
+      loaiResolver as any,
     );
     return { service, chungTuRepo, voucherNumberService, created };
   }

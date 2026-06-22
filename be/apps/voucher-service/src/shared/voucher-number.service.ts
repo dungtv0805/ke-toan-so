@@ -3,6 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { VoucherSequence, LoaiChungTu } from '@app/entities';
 
+/** Tiền tố số phiếu theo loại chứng từ. */
+const PREFIX_BY_LOAI: Record<LoaiChungTu, string> = {
+  PHIEU_THU: 'PT',
+  PHIEU_CHI: 'PC',
+  KHAC: 'NK',
+};
+
 @Injectable()
 export class VoucherNumberService {
   constructor(
@@ -12,12 +19,11 @@ export class VoucherNumberService {
 
   /**
    * Generate voucher number in format: {PREFIX}{SEQ}/{YEAR}
-   * PT001/2024 for PHIEU_THU
-   * PC001/2024 for PHIEU_CHI
+   * PT001/2024 for PHIEU_THU, PC001/2024 for PHIEU_CHI, NK001/2024 for KHAC
    */
   async generateVoucherNumber(loai: LoaiChungTu): Promise<string> {
     const year = new Date().getFullYear();
-    const prefix = loai === 'PHIEU_THU' ? 'PT' : 'PC';
+    const prefix = PREFIX_BY_LOAI[loai] ?? 'PT';
 
     // Find or create sequence record
     let sequence = await this.sequenceRepository.findOne({
@@ -52,7 +58,7 @@ export class VoucherNumberService {
     if (count <= 0) return [];
 
     const year = new Date().getFullYear();
-    const prefix = loai === 'PHIEU_THU' ? 'PT' : 'PC';
+    const prefix = PREFIX_BY_LOAI[loai] ?? 'PT';
 
     let sequence = await this.sequenceRepository.findOne({
       where: { loai, year },
@@ -86,7 +92,7 @@ export class VoucherNumberService {
     sequence: number;
     year: number;
   } | null {
-    const match = soPhieu.match(/^(PT|PC)(\d{3})\/(\d{4})$/);
+    const match = soPhieu.match(/^(PT|PC|NK)(\d{3})\/(\d{4})$/);
     if (!match) return null;
 
     return {
