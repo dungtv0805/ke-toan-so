@@ -89,8 +89,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [allModules],
   );
 
-  // Khi đổi tenant (hoặc khôi phục phiên): tự chọn nếu chỉ 1 lĩnh vực,
-  // ngược lại nạp lĩnh vực đã lưu; nếu chưa có → null (cần hiện màn chọn).
+  // Có lựa chọn để hiện màn chọn lĩnh vực: hoặc được cấp nhiều lĩnh vực,
+  // hoặc còn lĩnh vực active chưa cấp để giới thiệu (hiển thị dạng disabled).
+  const hasModuleChoice =
+    availableModules.length > 1 || activeCodes.length > availableModules.length;
+
+  // Khi đổi tenant (hoặc khôi phục phiên): chỉ tự chọn khi toàn hệ thống đúng 1
+  // lĩnh vực (không có gì để giới thiệu); ngược lại nạp lĩnh vực đã lưu, nếu chưa
+  // có → null để hiện màn chọn (kèm lĩnh vực chưa cấp dạng disabled).
   useEffect(() => {
     if (!currentTenant) {
       setSelectedModuleState(null);
@@ -104,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const stored = getStoredModule(currentTenant.tenantId) as ModuleCode | null;
     if (stored && avail.includes(stored)) {
       setSelectedModuleState(stored);
-    } else if (avail.length === 1) {
+    } else if (avail.length === 1 && activeCodes.length === 1) {
       setStoredModule(currentTenant.tenantId, avail[0]);
       setSelectedModuleState(avail[0]);
     } else {
@@ -114,7 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [currentTenant, user, allModules]);
 
   const needsModuleSelection =
-    !!currentTenant && availableModules.length > 1 && !selectedModule;
+    !!currentTenant && !selectedModule && hasModuleChoice;
 
   const setSelectedModule = useCallback((code: ModuleCode | null) => {
     if (currentTenant) setStoredModule(currentTenant.tenantId, code);
@@ -188,6 +194,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setCurrentTenantState(response.tenant);
         setNeedsTenantSelection(false);
         setTempToken(null);
+        // Đăng nhập mới → quên lựa chọn lĩnh vực để hiện lại màn chọn.
+        setStoredModule(response.tenant.tenantId, null);
       } else if (response.tempToken && response.tenants && response.tenants.length > 0) {
         // Multiple tenants - need selection, save tempToken for later
         setTempToken(response.tempToken);
@@ -262,6 +270,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentTenantState(response.tenant);
       setNeedsTenantSelection(false);
       setTempToken(null);
+      // Chọn tenant (đăng nhập mới) → quên lựa chọn lĩnh vực để hiện lại màn chọn.
+      setStoredModule(response.tenant.tenantId, null);
 
       // Set permissions from API response or extract from JWT token
       if (response.permissions && response.permissions.length > 0) {

@@ -498,7 +498,7 @@ const MainLayout: React.FC = () => {
 
   // Settings menu items for gear icon dropdown
   const settingsMenuItems: MenuProps["items"] = [
-    ...(availableModules.length > 1 ? [{
+    ...(allModules.filter((m) => m.isActive).length > 1 ? [{
       key: "doi-linh-vuc",
       icon: <AppstoreOutlined />,
       label: "Đổi lĩnh vực",

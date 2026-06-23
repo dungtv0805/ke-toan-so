@@ -1,19 +1,31 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AppstoreOutlined } from '@ant-design/icons';
+import { Tag, Tooltip } from 'antd';
+import { AppstoreOutlined, LockOutlined } from '@ant-design/icons';
 import { iconByName, type ModuleCode } from '@/config/modules';
 
 /**
- * Màn "Chọn lĩnh vực" — hiển thị khi tenant có >1 lĩnh vực mà chưa chọn.
- * Chọn xong vào app chỉ thấy menu của lĩnh vực đó (đổi lại qua nút ở sidebar).
+ * Màn "Chọn lĩnh vực" — hiển thị khi tenant có lĩnh vực để chọn/giới thiệu mà
+ * chưa chọn. Liệt kê TẤT CẢ lĩnh vực active: được cấp → chọn được; chưa cấp →
+ * disabled (giới thiệu sản phẩm). Chọn xong vào app chỉ thấy menu lĩnh vực đó.
  */
 export function ModuleSelector() {
-  const { availableModules, setSelectedModule, currentTenant, logout, getModule } = useAuth();
+  const { availableModules, allModules, setSelectedModule, currentTenant, logout } = useAuth();
 
   const handleSelect = (code: ModuleCode) => {
     setSelectedModule(code);
   };
+
+  // Tất cả lĩnh vực active, lĩnh vực được cấp xếp trước (theo order).
+  const isOwned = (code: string) => availableModules.includes(code);
+  const modules = allModules
+    .filter((m) => m.isActive)
+    .sort((a, b) => {
+      const ao = isOwned(a.code) ? 0 : 1;
+      const bo = isOwned(b.code) ? 0 : 1;
+      return ao !== bo ? ao - bo : a.order - b.order;
+    });
 
   return (
     <div className="min-h-dvh flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
@@ -29,7 +41,7 @@ export function ModuleSelector() {
           </p>
         </CardHeader>
         <CardContent className="pt-4">
-          {availableModules.length === 0 ? (
+          {modules.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <AppstoreOutlined className="text-4xl mb-3 opacity-50" />
               <p>Công ty chưa được cấp lĩnh vực nào.</p>
@@ -37,27 +49,44 @@ export function ModuleSelector() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {availableModules.map((code) => {
-                const def = getModule(code);
-                if (!def) return null;
-                return (
+              {modules.map((def) => {
+                const owned = isOwned(def.code);
+                const card = (
                   <button
-                    key={code}
+                    key={def.code}
                     type="button"
-                    onClick={() => handleSelect(code)}
-                    className="p-5 border rounded-lg text-left transition-all duration-200 border-gray-200 hover:border-primary hover:bg-primary/5 hover:ring-2 hover:ring-primary/20 flex flex-col items-center gap-3"
+                    disabled={!owned}
+                    onClick={() => owned && handleSelect(def.code)}
+                    className={[
+                      'relative p-5 border rounded-lg text-left transition-all duration-200 flex flex-col items-center gap-3 w-full',
+                      owned
+                        ? 'border-gray-200 hover:border-primary hover:bg-primary/5 hover:ring-2 hover:ring-primary/20 cursor-pointer'
+                        : 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed',
+                    ].join(' ')}
                   >
                     <div
                       className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl text-white shrink-0"
-                      style={{ backgroundColor: def.color }}
+                      style={{ backgroundColor: owned ? def.color : '#9ca3af' }}
                     >
                       {iconByName(def.icon)}
                     </div>
                     <div className="text-center">
-                      <div className="font-semibold text-base">{def.name}</div>
+                      <div className="font-semibold text-base flex items-center justify-center gap-2">
+                        {def.name}
+                        {!owned && (
+                          <Tag icon={<LockOutlined />} className="!m-0">Chưa kích hoạt</Tag>
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground mt-1">{def.description}</div>
                     </div>
                   </button>
+                );
+                return owned ? (
+                  card
+                ) : (
+                  <Tooltip key={def.code} title="Lĩnh vực chưa được cấp. Liên hệ quản trị để kích hoạt.">
+                    {card}
+                  </Tooltip>
                 );
               })}
             </div>
