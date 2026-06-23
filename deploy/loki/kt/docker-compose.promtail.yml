@@ -1,0 +1,17 @@
+services:
+  promtail:
+    image: grafana/promtail:3.4.2
+    container_name: promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yaml -config.expand-env=true
+    environment:
+      - LOKI_DOMAIN=${LOKI_DOMAIN:?set in .env}
+      - LOKI_USER=${LOKI_USER:?set in .env}
+      - LOKI_PASSWORD=${LOKI_PASSWORD:?set in .env}
+    volumes:
+      - /root/chimseo/digital-book-be/logs:/logs:ro
+      - promtail-positions:/promtail
+    mem_limit: 128m
+
+volumes:
+  promtail-positions:
