@@ -40,12 +40,12 @@ export class TenantAdminGuard implements CanActivate {
       throw new ForbiddenException('Không tìm thấy mã công ty');
     }
 
-    // Check if user is ADMIN in this tenant
+    // Check if user has role 'Admin' in this tenant
     const membership = await this.userTenantRepository.findOne({
       where: {
         userId: user.id,
         tenantId,
-        role: 'ADMIN',
+        role: 'Admin',
         isActive: true,
       },
     });

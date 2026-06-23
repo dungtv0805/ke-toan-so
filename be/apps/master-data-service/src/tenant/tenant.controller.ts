@@ -76,7 +76,7 @@ export class TenantController {
   }
 
   @Post(':id/members')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, TenantAdminGuard)
   async addMember(
     @Param('id') id: string,
     @Body() dto: AddUserToTenantDto,
@@ -86,7 +86,7 @@ export class TenantController {
   }
 
   @Put(':id/members/:userId')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, TenantAdminGuard)
   async updateMember(
     @Param('id') id: string,
     @Param('userId') userId: string,
@@ -97,7 +97,7 @@ export class TenantController {
   }
 
   @Put(':id/members/:userId/profile')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, TenantAdminGuard)
   async updateMemberProfile(
     @Param('id') id: string,
     @Param('userId') userId: string,
@@ -108,7 +108,7 @@ export class TenantController {
   }
 
   @Post(':id/members/:userId/reset-password')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, TenantAdminGuard)
   async resetMemberPassword(
     @Param('id') id: string,
     @Param('userId') userId: string,
@@ -118,7 +118,7 @@ export class TenantController {
   }
 
   @Delete(':id/members/:userId')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, TenantAdminGuard)
   async removeMember(
     @Param('id') id: string,
     @Param('userId') userId: string,
