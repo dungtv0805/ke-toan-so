@@ -79,6 +79,7 @@
 | Vai tro | `/cau-hinh/vai-tro` | ACTIVE | config:3007 |
 | Thanh vien | `/cau-hinh/thanh-vien` | ACTIVE | config:3007 |
 | Tenant | `/cau-hinh/tenant` | ACTIVE | master-data:3002 |
+| Linh vuc | `/cau-hinh/linh-vuc` | ACTIVE (SuperAdmin) | master-data:3002 |
 
 ## Summary
 

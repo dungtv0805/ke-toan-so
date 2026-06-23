@@ -78,6 +78,16 @@ Same CRUD pattern as /doi-tuong
 | DELETE | /tenants/:id | Delete |
 | DELETE | /tenants/:id/members/:userId | Remove member |
 
+### /linh-vuc (Lĩnh vực / entitlement — collection `linh_vuc`)
+Danh mục lĩnh vực động + mapping menu→lĩnh vực (`menuKeys[]` nhúng). Seed mặc định
+KE_TOAN/KHO khi collection rỗng (OnModuleInit). FE lọc menu theo `menuKeys`; BE không enforce.
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /linh-vuc | List (JwtGuard, sort order ASC) — FE render menu |
+| POST | /linh-vuc | Create (SuperAdmin) — chặn trùng code |
+| PUT | /linh-vuc/:id | Update (SuperAdmin) — `code` bất biến |
+| DELETE | /linh-vuc/:id | Delete (SuperAdmin) — chặn KE_TOAN & lĩnh vực còn tenant dùng |
+
 ### /kho (Warehouses)
 | Method | Path | Description |
 |--------|------|-------------|
