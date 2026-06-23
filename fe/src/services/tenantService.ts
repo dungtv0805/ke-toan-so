@@ -82,6 +82,11 @@ export interface UpdateMemberDto {
   isActive?: boolean;
 }
 
+export interface UpdateMemberProfileDto {
+  hoTen?: string;
+  email?: string;
+}
+
 class TenantService extends ServiceBase {
   constructor() {
     super({ endpoint: '/master-data/tenants' });
@@ -145,6 +150,21 @@ class TenantService extends ServiceBase {
 
   async updateMember(tenantId: string, userId: string, data: UpdateMemberDto): Promise<void> {
     await this.put(data, { endpoint: `/${tenantId}/members/${userId}` });
+  }
+
+  async updateMemberProfile(
+    tenantId: string,
+    userId: string,
+    data: UpdateMemberProfileDto,
+  ): Promise<{ id: string; email: string; hoTen: string }> {
+    return this.put(data, { endpoint: `/${tenantId}/members/${userId}/profile` });
+  }
+
+  async resetMemberPassword(
+    tenantId: string,
+    userId: string,
+  ): Promise<{ defaultPassword: string }> {
+    return this.post({}, { endpoint: `/${tenantId}/members/${userId}/reset-password` });
   }
 
   async removeMember(tenantId: string, userId: string): Promise<void> {
