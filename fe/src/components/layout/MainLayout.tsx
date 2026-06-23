@@ -70,26 +70,32 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TenantSwitcher } from "./TenantSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ModuleSelector, ModuleSwitchModal } from "@/components/auth";
-import { getModuleDef, moduleOfMenuKey, type ModuleCode } from "@/config/modules";
+import { isCommonKey } from "@/config/modules";
+import { MENU_CATALOG } from "@/config/menuCatalog";
 
 const { Header, Sider, Content } = Layout;
 
 type MenuItem = Required<MenuProps>["items"][number];
 
-// Lọc menu theo lĩnh vực đang chọn: giữ COMMON + mục thuộc lĩnh vực đó.
+// Hiện item nếu key thuộc COMMON hoặc nằm trong menuKeys của lĩnh vực đang chọn.
+function keyMatches(key: string, moduleKeys: string[]): boolean {
+  if (isCommonKey(key)) return true;
+  return moduleKeys.some((k) => key === k || key.startsWith(k + "/"));
+}
+
+// Lọc menu theo lĩnh vực đang chọn: giữ COMMON + mục thuộc menuKeys của lĩnh vực.
 // Mục cha giữ lại nếu còn ít nhất 1 con sau khi lọc.
-function filterByModule(items: MenuItem[], mod: ModuleCode): MenuItem[] {
+function filterByModule(items: MenuItem[], moduleKeys: string[]): MenuItem[] {
   return items
     .map((item) => {
       if (!item || typeof item !== "object") return null;
       const mi = item as { key?: string; children?: MenuItem[] };
       if (mi.children && mi.children.length > 0) {
-        const fc = filterByModule(mi.children, mod);
+        const fc = filterByModule(mi.children, moduleKeys);
         if (fc.length === 0) return null;
         return { ...mi, children: fc } as MenuItem;
       }
-      const m = moduleOfMenuKey(mi.key as string);
-      return m === "COMMON" || m === mod ? item : null;
+      return keyMatches(mi.key as string, moduleKeys) ? item : null;
     })
     .filter(Boolean) as MenuItem[];
 }
@@ -330,6 +336,8 @@ const MainLayout: React.FC = () => {
     availableModules,
     needsModuleSelection,
     setSelectedModule,
+    allModules,
+    getModule,
   } = useAuth();
   const currentRole = currentTenant?.role;
   const isSuperAdmin = user?.isSuperAdmin || false;
@@ -376,9 +384,26 @@ const MainLayout: React.FC = () => {
       .filter(Boolean) as MenuItem[];
   };
 
+  const selectedModuleDef = selectedModule ? getModule(selectedModule) : undefined;
+  const selectedMenuKeys = selectedModuleDef?.menuKeys ?? [];
+
+  // Edge case: menu chưa gán cho BẤT KỲ lĩnh vực nào → mặc định thuộc KE_TOAN.
+  // Khi đang ở KE_TOAN, bổ sung các key (trong catalog) chưa được lĩnh vực nào nhận.
+  const isAssigned = (key: string): boolean =>
+    allModules.some((m) =>
+      m.menuKeys.some((k) => key === k || key.startsWith(k + "/")),
+    );
+  const unassignedKeys =
+    selectedModule === "KE_TOAN"
+      ? MENU_CATALOG.map((e) => e.key).filter(
+          (key) => !isCommonKey(key) && !isAssigned(key),
+        )
+      : [];
+  const effectiveKeys = [...selectedMenuKeys, ...unassignedKeys];
+
   // Lọc 2 tầng: (1) theo lĩnh vực đang chọn, (2) theo role (SuperAdmin bỏ qua role).
   const applyFilters = (items: MenuItem[]): MenuItem[] => {
-    const byModule = selectedModule ? filterByModule(items, selectedModule) : items;
+    const byModule = selectedModule ? filterByModule(items, effectiveKeys) : items;
     return isSuperAdmin ? byModule : filterMenuItems(byModule);
   };
 
@@ -387,9 +412,7 @@ const MainLayout: React.FC = () => {
   const filteredThuVienMenu = applyFilters(thuVienMenuItems);
 
   // Tiêu đề section nghiệp vụ = tên lĩnh vực đang chọn (KẾ TOÁN / KHO).
-  const moduleSectionTitle = (
-    getModuleDef(selectedModule ?? "")?.name ?? "Kế toán"
-  ).toUpperCase();
+  const moduleSectionTitle = (selectedModuleDef?.name ?? "Kế toán").toUpperCase();
 
   useEffect(() => {
     if (darkMode) {
