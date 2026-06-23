@@ -1,0 +1,18 @@
+docRoot                   $VH_ROOT/html/
+extprocessor grafana_be {
+  type                    proxy
+  address                 http://127.0.0.1:3000
+  maxConns                100
+  initTimeout             60
+  retryTimeout            0
+  respBuffer              0
+}
+context / {
+  type                    proxy
+  handler                 grafana_be
+  addDefaultCharset       off
+}
+vhssl {
+  enableSpdy              15
+  # AutoSSL của LiteSpeed sẽ tự cấp cert cho grafana.<domain>
+}

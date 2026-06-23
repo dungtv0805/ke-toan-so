@@ -1,0 +1,22 @@
+docRoot                   $VH_ROOT/html/
+extprocessor loki_be {
+  type                    proxy
+  address                 http://127.0.0.1:3100
+  maxConns                100
+  initTimeout             60
+  retryTimeout            0
+  respBuffer              0
+}
+realm LokiPush {
+  userDB  {
+    location              conf/vhosts/loki/htpasswd
+  }
+}
+context / {
+  type                    proxy
+  handler                 loki_be
+  addDefaultCharset       off
+  realm                   LokiPush
+  authName                "Loki"
+  required                "valid-user"
+}
