@@ -13,9 +13,9 @@ import {
   Modal,
   Result,
 } from 'antd';
-import { UserAddOutlined, DeleteOutlined, EditOutlined, UserOutlined, TeamOutlined } from '@ant-design/icons';
+import { UserAddOutlined, DeleteOutlined, EditOutlined, UserOutlined, TeamOutlined, KeyOutlined } from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
-import { tenantService, TenantMember, AddMemberDto, UpdateMemberDto } from '@/services/tenantService';
+import { tenantService, TenantMember, AddMemberDto } from '@/services/tenantService';
 import { vaiTroService, VaiTroResponse } from '@/services/vaiTroService';
 
 
@@ -30,7 +30,7 @@ interface UserOption {
 }
 
 const ThanhVienPage = () => {
-  const { currentTenant } = useAuth();
+  const { currentTenant, hasPermission } = useAuth();
   const [members, setMembers] = useState<TenantMember[]>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
   const [roles, setRoles] = useState<{ value: string; label: string }[]>([]);
@@ -42,6 +42,7 @@ const ThanhVienPage = () => {
   const [editForm] = Form.useForm();
 
   const tenantId = currentTenant?.tenantId;
+  const canEdit = hasPermission('/cau-hinh/thanh-vien:sua');
 
   if (!tenantId) {
     return (
@@ -122,16 +123,33 @@ const ThanhVienPage = () => {
     }
   };
 
-  const handleEditRole = async () => {
+  const handleEdit = async () => {
     if (!editingMember) return;
     try {
-      const values = editForm.getFieldsValue() as UpdateMemberDto;
-      await tenantService.updateMember(tenantId, editingMember.id, values);
-      message.success('Đã cập nhật vai trò');
+      const values = editForm.getFieldsValue() as { hoTen: string; email: string; role: string };
+      if (values.hoTen !== editingMember.hoTen || values.email !== editingMember.email) {
+        await tenantService.updateMemberProfile(tenantId, editingMember.id, {
+          hoTen: values.hoTen,
+          email: values.email,
+        });
+      }
+      if (values.role !== editingMember.role) {
+        await tenantService.updateMember(tenantId, editingMember.id, { role: values.role });
+      }
+      message.success('Đã cập nhật thành viên');
       setEditingMember(null);
       fetchMembers();
     } catch {
-      message.error('Không thể cập nhật vai trò');
+      message.error('Không thể cập nhật thành viên');
+    }
+  };
+
+  const handleResetPassword = async (userId: string) => {
+    try {
+      const res = await tenantService.resetMemberPassword(tenantId, userId);
+      message.success(`Đã reset mật khẩu về ${res.defaultPassword}`);
+    } catch {
+      message.error('Không thể reset mật khẩu');
     }
   };
 
@@ -182,14 +200,31 @@ const ThanhVienPage = () => {
       key: 'actions',
       render: (_: unknown, record: TenantMember) => (
         <Space>
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => {
-              setEditingMember(record);
-              editForm.setFieldsValue({ role: record.role, isActive: record.isActive });
-            }}
-          />
+          {canEdit && (
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => {
+                setEditingMember(record);
+                editForm.setFieldsValue({
+                  hoTen: record.hoTen,
+                  email: record.email,
+                  role: record.role,
+                });
+              }}
+            />
+          )}
+          {canEdit && (
+            <Popconfirm
+              title="Reset mật khẩu về mặc định?"
+              description="Mật khẩu sẽ được đặt lại thành 123456."
+              onConfirm={() => handleResetPassword(record.id)}
+              okText="Reset"
+              cancelText="Hủy"
+            >
+              <Button type="text" icon={<KeyOutlined />} title="Reset mật khẩu" />
+            </Popconfirm>
+          )}
           <Popconfirm
             title="Xác nhận xóa thành viên?"
             onConfirm={() => handleRemove(record.id)}
@@ -322,16 +357,33 @@ const ThanhVienPage = () => {
         </Form>
       </Modal>
 
-      {/* Edit Role Modal */}
+      {/* Edit Member Modal */}
       <Modal
-        title={`Sửa vai trò - ${editingMember?.hoTen || ''}`}
+        title={`Sửa thành viên - ${editingMember?.hoTen || ''}`}
         open={!!editingMember}
         onCancel={() => setEditingMember(null)}
-        onOk={handleEditRole}
+        onOk={handleEdit}
         okText="Cập nhật"
         cancelText="Hủy"
       >
         <Form form={editForm} layout="vertical">
+          <Form.Item
+            name="hoTen"
+            label="Họ tên"
+            rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
+          >
+            <Input placeholder="VD: Nguyễn Văn A" />
+          </Form.Item>
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[
+              { required: true, message: 'Vui lòng nhập email' },
+              { type: 'email', message: 'Email không hợp lệ' },
+            ]}
+          >
+            <Input placeholder="VD: user@congty.com" />
+          </Form.Item>
           <Form.Item name="role" label="Vai trò">
             <Select options={roles} />
           </Form.Item>
