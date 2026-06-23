@@ -1,48 +1,49 @@
 import { describe, it, expect } from 'vitest';
-import { moduleOfMenuKey, getAvailableModules, MODULE_CODES } from './modules';
+import { isCommonKey, getAvailableModuleCodes } from './modules';
 
-describe('moduleOfMenuKey', () => {
-  it('mục dùng chung → COMMON', () => {
-    expect(moduleOfMenuKey('/')).toBe('COMMON');
-    expect(moduleOfMenuKey('/quy-trinh')).toBe('COMMON');
-    expect(moduleOfMenuKey('/huong-dan')).toBe('COMMON');
+describe('isCommonKey', () => {
+  it('mục dùng chung → true', () => {
+    expect(isCommonKey('/')).toBe(true);
+    expect(isCommonKey('/quy-trinh')).toBe(true);
+    expect(isCommonKey('/huong-dan')).toBe(true);
+    expect(isCommonKey('/chinh-sach')).toBe(true);
+    expect(isCommonKey('/bieu-mau')).toBe(true);
   });
 
-  it('mục kho (gồm con theo tiền tố) → KHO', () => {
-    expect(moduleOfMenuKey('/kho/nhap-kho')).toBe('KHO');
-    expect(moduleOfMenuKey('/kho/xuat-kho')).toBe('KHO');
-    expect(moduleOfMenuKey('/phan-tich/ton-kho')).toBe('KHO');
-    expect(moduleOfMenuKey('/danh-muc/hang-hoa-vat-tu')).toBe('KHO');
-    expect(moduleOfMenuKey('/chung-tu/phieu-nhap')).toBe('KHO');
+  it('khớp theo tiền tố con của mục chung', () => {
+    expect(isCommonKey('/quy-trinh/chi-tiet')).toBe(true);
   });
 
-  it('mặc định mục khác → KE_TOAN', () => {
-    expect(moduleOfMenuKey('/bao-cao/tai-chinh')).toBe('KE_TOAN');
-    expect(moduleOfMenuKey('/chung-tu/phieu-thu')).toBe('KE_TOAN');
-    expect(moduleOfMenuKey('/danh-muc/tai-khoan')).toBe('KE_TOAN');
-  });
-
-  it('không nhầm /danh-muc/kho (kế toán catalog kho) với prefix /kho', () => {
-    // /danh-muc/kho được khai báo riêng là KHO
-    expect(moduleOfMenuKey('/danh-muc/kho')).toBe('KHO');
-    // nhưng /danh-muc/khoan-muc KHÔNG bị nuốt bởi prefix /danh-muc/kho
-    expect(moduleOfMenuKey('/danh-muc/khoan-muc')).toBe('KE_TOAN');
+  it('mục nghiệp vụ → false', () => {
+    expect(isCommonKey('/bao-cao/tai-chinh')).toBe(false);
+    expect(isCommonKey('/kho/nhap-kho')).toBe(false);
+    expect(isCommonKey('/danh-muc/tai-khoan')).toBe(false);
   });
 });
 
-describe('getAvailableModules', () => {
-  it('SuperAdmin thấy toàn bộ catalog', () => {
-    expect(getAvailableModules(['KE_TOAN'], true)).toEqual(MODULE_CODES);
+describe('getAvailableModuleCodes', () => {
+  const ALL = ['KE_TOAN', 'KHO', 'BAN_HANG'];
+
+  it('SuperAdmin thấy mọi code active', () => {
+    expect(getAvailableModuleCodes(['KE_TOAN'], true, ALL)).toEqual(ALL);
   });
 
-  it('user thường theo modules công ty', () => {
-    expect(getAvailableModules(['KE_TOAN', 'KHO'], false)).toEqual(['KE_TOAN', 'KHO']);
-    expect(getAvailableModules(['KHO'], false)).toEqual(['KHO']);
+  it('user thường = giao tenantModules ∩ code active', () => {
+    expect(getAvailableModuleCodes(['KE_TOAN', 'KHO'], false, ALL)).toEqual(['KE_TOAN', 'KHO']);
+    expect(getAvailableModuleCodes(['KHO'], false, ALL)).toEqual(['KHO']);
   });
 
-  it('thiếu/không hợp lệ → mặc định KE_TOAN', () => {
-    expect(getAvailableModules(undefined, false)).toEqual(['KE_TOAN']);
-    expect(getAvailableModules([], false)).toEqual(['KE_TOAN']);
-    expect(getAvailableModules(['XXX'], false)).toEqual(['KE_TOAN']);
+  it('loại code không còn active', () => {
+    expect(getAvailableModuleCodes(['KE_TOAN', 'KHO'], false, ['KE_TOAN'])).toEqual(['KE_TOAN']);
+  });
+
+  it('thiếu/không hợp lệ → fallback KE_TOAN nếu active', () => {
+    expect(getAvailableModuleCodes(undefined, false, ALL)).toEqual(['KE_TOAN']);
+    expect(getAvailableModuleCodes([], false, ALL)).toEqual(['KE_TOAN']);
+    expect(getAvailableModuleCodes(['XXX'], false, ALL)).toEqual(['KE_TOAN']);
+  });
+
+  it('fallback về code đầu tiên khi không có KE_TOAN', () => {
+    expect(getAvailableModuleCodes(['XXX'], false, ['KHO', 'BAN_HANG'])).toEqual(['KHO']);
   });
 });

@@ -1,67 +1,43 @@
 /**
- * Module / Lĩnh vực catalog (code-defined).
+ * Module / Lĩnh vực (entitlement) — DANH MỤC ĐỘNG.
  *
- * Tầng "entitlement": công ty (tenant) được cấp 1 hoặc nhiều lĩnh vực. Mỗi lĩnh vực
- * quyết định nhóm menu hiển thị (xem MainLayout). Đây KHÔNG phải phân quyền role —
- * role vẫn lọc tinh từng menu bên trong lĩnh vực.
- *
- * Thêm lĩnh vực mới: thêm code vào ModuleCode + 1 entry vào MODULES, rồi gắn nhãn
- * module cho menu tương ứng trong MainLayout.
+ * Danh sách lĩnh vực và mapping menu→lĩnh vực nay lưu ở DB
+ * (collection `linh_vuc`, API `/master-data/linh-vuc`), nạp qua AuthContext.
+ * File này chỉ giữ: kiểu code, whitelist icon (DB lưu tên string), menu COMMON,
+ * helper tính lĩnh vực khả dụng và lưu lựa chọn ở localStorage.
  */
 import React from 'react';
-import { AccountBookOutlined, InboxOutlined } from '@ant-design/icons';
+import {
+  AccountBookOutlined,
+  InboxOutlined,
+  AppstoreOutlined,
+  ShopOutlined,
+  BankOutlined,
+  FileTextOutlined,
+  DatabaseOutlined,
+  TeamOutlined,
+} from '@ant-design/icons';
 
-export type ModuleCode = 'KE_TOAN' | 'KHO';
+export type ModuleCode = string;
 
-export interface ModuleDef {
-  code: ModuleCode;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  color: string;
-}
+// Whitelist icon AntD cho lĩnh vực (DB lưu tên string).
+const ICON_MAP: Record<string, React.ComponentType> = {
+  AccountBookOutlined,
+  InboxOutlined,
+  AppstoreOutlined,
+  ShopOutlined,
+  BankOutlined,
+  FileTextOutlined,
+  DatabaseOutlined,
+  TeamOutlined,
+};
 
-export const MODULES: ModuleDef[] = [
-  {
-    code: 'KE_TOAN',
-    name: 'Kế toán',
-    description: 'Báo cáo, chứng từ, sổ sách, công nợ',
-    icon: React.createElement(AccountBookOutlined),
-    color: '#1B3A6B',
-  },
-  {
-    code: 'KHO',
-    name: 'Kho',
-    description: 'Nhập, xuất, chuyển kho và hàng hóa vật tư',
-    icon: React.createElement(InboxOutlined),
-    color: '#C9A227',
-  },
-];
+export const ICON_WHITELIST = Object.keys(ICON_MAP);
 
-export const MODULE_CODES: ModuleCode[] = MODULES.map((m) => m.code);
+export const iconByName = (name: string): React.ReactNode =>
+  React.createElement(ICON_MAP[name] ?? AppstoreOutlined);
 
-export const getModuleDef = (code: string): ModuleDef | undefined =>
-  MODULES.find((m) => m.code === code);
-
-/**
- * Lĩnh vực khả dụng cho người dùng hiện tại:
- * - SuperAdmin: toàn bộ catalog.
- * - User thường: theo modules công ty được cấp (mặc định ['KE_TOAN']).
- */
-export function getAvailableModules(
-  tenantModules: string[] | undefined,
-  isSuperAdmin: boolean,
-): ModuleCode[] {
-  if (isSuperAdmin) return MODULE_CODES;
-  const codes = (tenantModules ?? ['KE_TOAN']).filter((c): c is ModuleCode =>
-    MODULE_CODES.includes(c as ModuleCode),
-  );
-  return codes.length ? codes : ['KE_TOAN'];
-}
-
-// ===== Gắn lĩnh vực cho từng mục menu (theo key/path) =====
-// Menu chia theo SECTION (trực giao với lĩnh vực); mỗi mục lá quy về 1 lĩnh vực.
-// COMMON = luôn hiện ở mọi lĩnh vực.
+// Menu luôn hiển thị bất kể lĩnh vực.
 export const COMMON_MENU_KEYS = new Set<string>([
   '/',
   '/quy-trinh',
@@ -70,24 +46,26 @@ export const COMMON_MENU_KEYS = new Set<string>([
   '/huong-dan',
 ]);
 
-export const KHO_MENU_KEYS: string[] = [
-  '/kho', // /kho/nhap-kho, /kho/xuat-kho, /kho/chuyen-kho
-  '/phan-tich/ton-kho',
-  '/chung-tu/phieu-nhap',
-  '/chung-tu/phieu-xuat',
-  '/danh-muc/kho',
-  '/danh-muc/hang-hoa-vat-tu',
-  '/danh-muc/don-vi-tinh',
-  '/danh-muc/nhom-vat-tu',
-  '/trung-tam-du-lieu/hang-hoa',
-  '/trung-tam-du-lieu/nguyen-lieu',
-];
+export const isCommonKey = (key: string): boolean => {
+  for (const k of COMMON_MENU_KEYS) {
+    if (key === k || key.startsWith(k + '/')) return true;
+  }
+  return false;
+};
 
-/** Lĩnh vực của một mục menu theo key; mặc định KE_TOAN (nghiệp vụ kế toán). */
-export function moduleOfMenuKey(key: string): ModuleCode | 'COMMON' {
-  if (COMMON_MENU_KEYS.has(key)) return 'COMMON';
-  if (KHO_MENU_KEYS.some((k) => key === k || key.startsWith(k + '/'))) return 'KHO';
-  return 'KE_TOAN';
+/**
+ * Code lĩnh vực khả dụng: SuperAdmin = mọi code active; user thường = giao
+ * tenantModules ∩ code active. Fallback ['KE_TOAN'] nếu rỗng.
+ */
+export function getAvailableModuleCodes(
+  tenantModules: string[] | undefined,
+  isSuperAdmin: boolean,
+  allActiveCodes: string[],
+): string[] {
+  if (isSuperAdmin) return allActiveCodes;
+  const codes = (tenantModules ?? ['KE_TOAN']).filter((c) => allActiveCodes.includes(c));
+  if (codes.length) return codes;
+  return allActiveCodes.includes('KE_TOAN') ? ['KE_TOAN'] : allActiveCodes.slice(0, 1);
 }
 
 const STORAGE_PREFIX = 'selectedModule:';
