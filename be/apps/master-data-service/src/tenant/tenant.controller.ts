@@ -9,7 +9,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { TenantService } from './tenant.service';
-import { CreateTenantDto, UpdateTenantDto, AddUserToTenantDto, UpdateTenantMemberDto } from '@app/dto';
+import {
+  CreateTenantDto,
+  UpdateTenantDto,
+  AddUserToTenantDto,
+  UpdateTenantMemberDto,
+  UpdateMemberProfileDto,
+} from '@app/dto';
 import { JwtGuard, SuperAdminGuard, TenantAdminGuard } from '@app/auth';
 
 @Controller('tenants')
@@ -88,6 +94,27 @@ export class TenantController {
   ) {
     await this.tenantService.updateTenantMember(id, userId, dto);
     return { success: true, message: 'Cập nhật thành viên thành công' };
+  }
+
+  @Put(':id/members/:userId/profile')
+  @UseGuards(JwtGuard)
+  async updateMemberProfile(
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+    @Body() dto: UpdateMemberProfileDto,
+  ) {
+    const data = await this.tenantService.updateMemberProfile(id, userId, dto);
+    return { success: true, data };
+  }
+
+  @Post(':id/members/:userId/reset-password')
+  @UseGuards(JwtGuard)
+  async resetMemberPassword(
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+  ) {
+    const data = await this.tenantService.resetMemberPassword(id, userId);
+    return { success: true, message: 'Đã reset mật khẩu về mặc định', data };
   }
 
   @Delete(':id/members/:userId')
