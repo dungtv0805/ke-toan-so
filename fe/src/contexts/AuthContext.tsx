@@ -3,6 +3,7 @@ import { NguoiDung, TenantInfo } from '@/types';
 import { authService } from '@/services/authService';
 import { setAuthToken, getAuthToken, clearAuthToken, setCurrentTenant, getCurrentTenant, clearCurrentTenant } from '@/services/base/service-base';
 import { ApiError, ApiErrorType } from '@/config/api';
+import { getAvailableModules, getStoredModule, setStoredModule, type ModuleCode } from '@/config/modules';
 
 function extractPermissionsFromToken(token: string): string[] {
   try {
@@ -22,6 +23,13 @@ interface AuthContextType {
   needsTenantSelection: boolean;
   availableTenants: TenantInfo[];
   currentTenant: TenantInfo | null;
+  // Lĩnh vực (module) đang chọn của tenant hiện tại; null = chưa chọn (cần hiện màn chọn).
+  selectedModule: ModuleCode | null;
+  // Các lĩnh vực user được phép xem ở tenant hiện tại (SuperAdmin = toàn bộ).
+  availableModules: ModuleCode[];
+  // true khi tenant có >1 lĩnh vực mà chưa chọn → hiển thị màn Chọn lĩnh vực.
+  needsModuleSelection: boolean;
+  setSelectedModule: (code: ModuleCode | null) => void;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -40,6 +48,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [needsTenantSelection, setNeedsTenantSelection] = useState(false);
   const [tempToken, setTempToken] = useState<string | null>(null);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
+  const [selectedModule, setSelectedModuleState] = useState<ModuleCode | null>(null);
+
+  // Lĩnh vực khả dụng theo tenant hiện tại (SuperAdmin = toàn bộ catalog).
+  const availableModules = currentTenant
+    ? getAvailableModules(currentTenant.modules, user?.isSuperAdmin || false)
+    : [];
+
+  // Khi đổi tenant (hoặc khôi phục phiên): tự chọn nếu chỉ 1 lĩnh vực,
+  // ngược lại nạp lĩnh vực đã lưu; nếu chưa có → null (cần hiện màn chọn).
+  useEffect(() => {
+    if (!currentTenant) {
+      setSelectedModuleState(null);
+      return;
+    }
+    const avail = getAvailableModules(currentTenant.modules, user?.isSuperAdmin || false);
+    const stored = getStoredModule(currentTenant.tenantId) as ModuleCode | null;
+    if (stored && avail.includes(stored)) {
+      setSelectedModuleState(stored);
+    } else if (avail.length === 1) {
+      setStoredModule(currentTenant.tenantId, avail[0]);
+      setSelectedModuleState(avail[0]);
+    } else {
+      setSelectedModuleState(null);
+    }
+  }, [currentTenant, user]);
+
+  const needsModuleSelection =
+    !!currentTenant && availableModules.length > 1 && !selectedModule;
+
+  const setSelectedModule = useCallback((code: ModuleCode | null) => {
+    if (currentTenant) setStoredModule(currentTenant.tenantId, code);
+    setSelectedModuleState(code);
+  }, [currentTenant]);
 
   // Check for existing token and fetch user on mount
   useEffect(() => {
@@ -261,6 +302,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         needsTenantSelection,
         availableTenants,
         currentTenant,
+        selectedModule,
+        availableModules,
+        needsModuleSelection,
+        setSelectedModule,
         login,
         logout,
         refreshUser,

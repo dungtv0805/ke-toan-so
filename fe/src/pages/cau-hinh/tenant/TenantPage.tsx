@@ -4,6 +4,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UserOutlined,
 import { useAuth } from '@/contexts/AuthContext';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { tenantService, Tenant, CreateTenantDto, UpdateTenantDto } from '@/services/tenantService';
+import { MODULES, getModuleDef } from '@/config/modules';
 import TenantMembersModal from './TenantMembersModal';
 
 const DEFAULT_PASSWORD = '123456';
@@ -71,6 +72,7 @@ const TenantPage = () => {
     form.resetFields();
     form.setFieldsValue({
       isActive: true,
+      modules: ['KE_TOAN'],
       adminPassword: DEFAULT_PASSWORD,
       adminMode: 'new',
     });
@@ -88,6 +90,7 @@ const TenantPage = () => {
       email: tenant.email,
       nguoiDaiDien: tenant.nguoiDaiDien,
       isActive: tenant.isActive,
+      modules: tenant.modules?.length ? tenant.modules : ['KE_TOAN'],
     });
     setModalVisible(true);
   };
@@ -120,6 +123,7 @@ const TenantPage = () => {
           email: formValues.email,
           nguoiDaiDien: formValues.nguoiDaiDien,
           isActive: values.isActive,
+          modules: formValues.modules?.length ? formValues.modules : ['KE_TOAN'],
         };
 
         if (adminMode === 'existing' && formValues.existingUserId) {
@@ -211,6 +215,23 @@ const TenantPage = () => {
                   {admin.hoTen}
                 </Tag>
               </Tooltip>
+            ))}
+          </div>
+        );
+      },
+    },
+    {
+      title: 'Lĩnh vực',
+      dataIndex: 'modules',
+      key: 'modules',
+      render: (modules: string[] | undefined) => {
+        const list = modules?.length ? modules : ['KE_TOAN'];
+        return (
+          <div className="flex flex-wrap gap-1">
+            {list.map((code) => (
+              <Tag key={code} color="geekblue">
+                {getModuleDef(code)?.name ?? code}
+              </Tag>
             ))}
           </div>
         );
@@ -353,6 +374,19 @@ const TenantPage = () => {
             valuePropName="checked"
           >
             <Switch checkedChildren="Hoạt động" unCheckedChildren="Ngừng" />
+          </Form.Item>
+
+          <Form.Item
+            name="modules"
+            label="Lĩnh vực sử dụng"
+            rules={[{ required: true, message: 'Vui lòng chọn ít nhất 1 lĩnh vực' }]}
+            extra="Công ty sẽ thấy menu theo các lĩnh vực được cấp"
+          >
+            <Select
+              mode="multiple"
+              placeholder="Chọn lĩnh vực"
+              options={MODULES.map((m) => ({ value: m.code, label: m.name }))}
+            />
           </Form.Item>
 
           {/* Admin section - only show when creating */}

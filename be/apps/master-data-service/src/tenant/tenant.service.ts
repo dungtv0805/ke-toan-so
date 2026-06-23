@@ -116,6 +116,7 @@ export interface TenantWithAdmin {
   email?: string;
   nguoiDaiDien?: string;
   isActive: boolean;
+  modules: string[];
   tenantId?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -187,6 +188,7 @@ export class TenantService {
           email: tenant.email,
           nguoiDaiDien: tenant.nguoiDaiDien,
           isActive: tenant.isActive,
+          modules: tenant.modules ?? ['KE_TOAN'],
           tenantId: tenant.tenantId,
           createdAt: tenant.createdAt,
           updatedAt: tenant.updatedAt,
@@ -231,6 +233,7 @@ export class TenantService {
       email: createDto.email,
       nguoiDaiDien: createDto.nguoiDaiDien,
       isActive: createDto.isActive ?? true,
+      modules: createDto.modules?.length ? createDto.modules : ['KE_TOAN'],
     });
     const savedTenant = await this.tenantRepository.save(tenant);
 

@@ -69,10 +69,30 @@ import type { MenuProps } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
 import { TenantSwitcher } from "./TenantSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ModuleSelector, ModuleSwitchModal } from "@/components/auth";
+import { getModuleDef, moduleOfMenuKey, type ModuleCode } from "@/config/modules";
 
 const { Header, Sider, Content } = Layout;
 
 type MenuItem = Required<MenuProps>["items"][number];
+
+// Lọc menu theo lĩnh vực đang chọn: giữ COMMON + mục thuộc lĩnh vực đó.
+// Mục cha giữ lại nếu còn ít nhất 1 con sau khi lọc.
+function filterByModule(items: MenuItem[], mod: ModuleCode): MenuItem[] {
+  return items
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const mi = item as { key?: string; children?: MenuItem[] };
+      if (mi.children && mi.children.length > 0) {
+        const fc = filterByModule(mi.children, mod);
+        if (fc.length === 0) return null;
+        return { ...mi, children: fc } as MenuItem;
+      }
+      const m = moduleOfMenuKey(mi.key as string);
+      return m === "COMMON" || m === mod ? item : null;
+    })
+    .filter(Boolean) as MenuItem[];
+}
 
 // Danh sách các routes đã có component
 const existingRoutes = new Set([
@@ -294,13 +314,23 @@ const MainLayout: React.FC = () => {
   // Initialize collapsed based on current URL - if on form screen, start collapsed
   const [collapsed, setCollapsed] = useState(() => isFormScreen(window.location.pathname));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [moduleModalOpen, setModuleModalOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
     return saved ? JSON.parse(saved) : false;
   });
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, currentTenant, hasPermission } = useAuth();
+  const {
+    user,
+    logout,
+    currentTenant,
+    hasPermission,
+    selectedModule,
+    availableModules,
+    needsModuleSelection,
+    setSelectedModule,
+  } = useAuth();
   const currentRole = currentTenant?.role;
   const isSuperAdmin = user?.isSuperAdmin || false;
   const isMobile = useIsMobile();
@@ -346,15 +376,20 @@ const MainLayout: React.FC = () => {
       .filter(Boolean) as MenuItem[];
   };
 
-  const filteredDieuHanhMenu = isSuperAdmin
-    ? dieuHanhMenuItems
-    : filterMenuItems(dieuHanhMenuItems);
-  const filteredKeToAnMenu = isSuperAdmin
-    ? keToAnMenuItems
-    : filterMenuItems(keToAnMenuItems);
-  const filteredThuVienMenu = isSuperAdmin
-    ? thuVienMenuItems
-    : filterMenuItems(thuVienMenuItems);
+  // Lọc 2 tầng: (1) theo lĩnh vực đang chọn, (2) theo role (SuperAdmin bỏ qua role).
+  const applyFilters = (items: MenuItem[]): MenuItem[] => {
+    const byModule = selectedModule ? filterByModule(items, selectedModule) : items;
+    return isSuperAdmin ? byModule : filterMenuItems(byModule);
+  };
+
+  const filteredDieuHanhMenu = applyFilters(dieuHanhMenuItems);
+  const filteredKeToAnMenu = applyFilters(keToAnMenuItems);
+  const filteredThuVienMenu = applyFilters(thuVienMenuItems);
+
+  // Tiêu đề section nghiệp vụ = tên lĩnh vực đang chọn (KẾ TOÁN / KHO).
+  const moduleSectionTitle = (
+    getModuleDef(selectedModule ?? "")?.name ?? "Kế toán"
+  ).toUpperCase();
 
   useEffect(() => {
     if (darkMode) {
@@ -440,6 +475,12 @@ const MainLayout: React.FC = () => {
 
   // Settings menu items for gear icon dropdown
   const settingsMenuItems: MenuProps["items"] = [
+    ...(availableModules.length > 1 ? [{
+      key: "doi-linh-vuc",
+      icon: <AppstoreOutlined />,
+      label: "Đổi lĩnh vực",
+      onClick: () => setModuleModalOpen(true),
+    }] : []),
     ...(canManageConfig ? [
       ...(hasPermission('/cau-hinh/vai-tro:xem') || user?.isSuperAdmin ? [{
         key: "vai-tro",
@@ -531,7 +572,7 @@ const MainLayout: React.FC = () => {
       {/* KẾ TOÁN Section */}
       <div className="sidebar-section">
         <div className="sidebar-section-header">
-          <span className="sidebar-section-title">KẾ TOÁN</span>
+          <span className="sidebar-section-title">{moduleSectionTitle}</span>
         </div>
         <Menu
           theme="dark"
@@ -561,6 +602,11 @@ const MainLayout: React.FC = () => {
       </div>
     </Drawer>
   );
+
+  // Tenant có >1 lĩnh vực mà chưa chọn → hiển thị màn Chọn lĩnh vực.
+  if (needsModuleSelection) {
+    return <ModuleSelector />;
+  }
 
   return (
     <Layout className="min-h-screen">
@@ -644,7 +690,7 @@ const MainLayout: React.FC = () => {
             <div className="sidebar-section">
               {!collapsed && (
                 <div className="sidebar-section-header">
-                  <span className="sidebar-section-title">KẾ TOÁN</span>
+                  <span className="sidebar-section-title">{moduleSectionTitle}</span>
                 </div>
               )}
               <Menu
@@ -789,6 +835,20 @@ const MainLayout: React.FC = () => {
           </div>
         </Content>
       </Layout>
+
+      <ModuleSwitchModal
+        open={moduleModalOpen}
+        onClose={() => setModuleModalOpen(false)}
+        availableModules={availableModules}
+        selectedModule={selectedModule}
+        onSelect={(code) => {
+          setModuleModalOpen(false);
+          if (code !== selectedModule) {
+            setSelectedModule(code);
+            navigate("/");
+          }
+        }}
+      />
     </Layout>
   );
 };

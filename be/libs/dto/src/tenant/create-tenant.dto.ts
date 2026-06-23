@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, Matches, IsEmail, ValidateNested, IsMongoId } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean, Matches, IsEmail, ValidateNested, IsMongoId, IsArray } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class TenantAdminDto {
@@ -50,6 +50,12 @@ export class CreateTenantDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  // Lĩnh vực (module) công ty được cấp, vd ['KE_TOAN','KHO']. Mặc định ['KE_TOAN'].
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  modules?: string[];
 
   @ValidateNested()
   @Type(() => TenantAdminDto)

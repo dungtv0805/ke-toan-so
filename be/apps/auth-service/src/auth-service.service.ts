@@ -74,6 +74,7 @@ export class AuthServiceService {
       tenantName: tenant.name,
       tenantSlug: tenant.slug,
       role: userTenant.role,
+      modules: tenant.modules?.length ? tenant.modules : ['KE_TOAN'],
     };
   }
 
@@ -159,6 +160,7 @@ export class AuthServiceService {
         tenantName: tenant.name,
         tenantSlug: tenant.slug,
         role: 'SUPER_ADMIN',
+        modules: tenant.modules?.length ? tenant.modules : ['KE_TOAN'],
       }));
 
       if (tenantInfoList.length === 1) {
@@ -304,6 +306,7 @@ export class AuthServiceService {
         tenantName: tenant.name,
         tenantSlug: tenant.slug,
         role: 'SUPER_ADMIN',
+        modules: tenant.modules?.length ? tenant.modules : ['KE_TOAN'],
       };
 
       const payload: UserPayload = {
@@ -459,6 +462,7 @@ export class AuthServiceService {
         tenantName: t.name,
         tenantSlug: t.slug,
         role: 'SUPER_ADMIN',
+        modules: t.modules?.length ? t.modules : ['KE_TOAN'],
       }));
 
       if (!tenantId) {
@@ -481,6 +485,7 @@ export class AuthServiceService {
           tenantName: tenant.name,
           tenantSlug: tenant.slug,
           role: 'SUPER_ADMIN',
+          modules: tenant.modules?.length ? tenant.modules : ['KE_TOAN'],
         },
         availableTenants,
         permissions: ['*'],
@@ -506,6 +511,7 @@ export class AuthServiceService {
         tenantName: t.name,
         tenantSlug: t.slug,
         role: ut?.role || 'KIEM_SOAT',
+        modules: t.modules?.length ? t.modules : ['KE_TOAN'],
       };
     });
 
@@ -561,6 +567,7 @@ export class AuthServiceService {
         tenantName: tenant.name,
         tenantSlug: tenant.slug,
         role: 'SUPER_ADMIN',
+        modules: tenant.modules?.length ? tenant.modules : ['KE_TOAN'],
       };
 
       const payload: UserPayload = {
