@@ -3,23 +3,47 @@ import {
   NotFoundException,
   ConflictException,
   Inject,
+  OnModuleInit,
+  Logger,
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { LinhVuc, Tenant } from '@app/entities';
 import { CreateLinhVucDto, UpdateLinhVucDto } from '@app/dto';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 import { sanitizeUpdateDto } from '@app/core';
+import { DEFAULT_LINH_VUC_SEED } from './linh-vuc.seed';
 
 const DEFAULT_LINH_VUC_CODE = 'KE_TOAN';
 
 @Injectable()
-export class LinhVucService {
+export class LinhVucService implements OnModuleInit {
+  private readonly logger = new Logger(LinhVucService.name);
+
   constructor(
     @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}LinhVuc`)
     private readonly linhVucRepository: Repository<LinhVuc>,
     @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`)
     private readonly tenantRepository: Repository<Tenant>,
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.seedDefaults();
+  }
+
+  async seedDefaults(): Promise<void> {
+    const count = await this.linhVucRepository.count();
+    if (count > 0) return;
+    const { ObjectId } = await import('mongodb');
+    for (const item of DEFAULT_LINH_VUC_SEED) {
+      const entity = this.linhVucRepository.create({
+        _id: new ObjectId() as any,
+        isActive: true,
+        ...item,
+      });
+      await this.linhVucRepository.save(entity);
+    }
+    this.logger.log(`Seeded ${DEFAULT_LINH_VUC_SEED.length} lĩnh vực mặc định`);
+  }
 
   async findAll(): Promise<LinhVuc[]> {
     return this.linhVucRepository.find({ order: { order: 'ASC' } });
