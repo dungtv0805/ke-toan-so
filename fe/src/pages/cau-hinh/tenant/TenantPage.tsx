@@ -4,7 +4,6 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UserOutlined,
 import { useAuth } from '@/contexts/AuthContext';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { tenantService, Tenant, CreateTenantDto, UpdateTenantDto } from '@/services/tenantService';
-import { MODULES, getModuleDef } from '@/config/modules';
 import TenantMembersModal from './TenantMembersModal';
 
 const DEFAULT_PASSWORD = '123456';
@@ -18,7 +17,10 @@ interface UserOption {
 type AdminMode = 'existing' | 'new';
 
 const TenantPage = () => {
-  const { user } = useAuth();
+  const { user, allModules } = useAuth();
+  const moduleOptions = allModules
+    .filter((m) => m.isActive)
+    .map((m) => ({ value: m.code, label: m.name }));
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
   const [loading, setLoading] = useState(false);
@@ -230,7 +232,7 @@ const TenantPage = () => {
           <div className="flex flex-wrap gap-1">
             {list.map((code) => (
               <Tag key={code} color="geekblue">
-                {getModuleDef(code)?.name ?? code}
+                {allModules.find((m) => m.code === code)?.name ?? code}
               </Tag>
             ))}
           </div>
@@ -385,7 +387,7 @@ const TenantPage = () => {
             <Select
               mode="multiple"
               placeholder="Chọn lĩnh vực"
-              options={MODULES.map((m) => ({ value: m.code, label: m.name }))}
+              options={moduleOptions}
             />
           </Form.Item>
 
