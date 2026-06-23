@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsEmail, Matches } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEmail, Matches, IsArray } from 'class-validator';
 
 export class UpdateTenantDto {
   @IsString()
@@ -35,4 +35,10 @@ export class UpdateTenantDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  // Lĩnh vực (module) công ty được cấp, vd ['KE_TOAN','KHO'].
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  modules?: string[];
 }

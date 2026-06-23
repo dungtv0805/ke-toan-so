@@ -26,4 +26,9 @@ export class Tenant extends BaseEntity {
 
   @Column({ default: true })
   isActive: boolean;
+
+  // Lĩnh vực (module) công ty được cấp, vd ['KE_TOAN','KHO'].
+  // Tầng entitlement (công ty đã mua gì) — độc lập với role/permission.
+  @Column({ type: 'json', default: ['KE_TOAN'] })
+  modules: string[];
 }

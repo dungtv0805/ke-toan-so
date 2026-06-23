@@ -4,6 +4,8 @@ export interface TenantInfo {
   tenantName: string;
   tenantSlug: string;
   role: string;
+  // Lĩnh vực (module) công ty được cấp, vd ['KE_TOAN','KHO'].
+  modules: string[];
 }
 
 // User info for auth responses
