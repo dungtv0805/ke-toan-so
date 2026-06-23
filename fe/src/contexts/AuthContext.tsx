@@ -3,7 +3,8 @@ import { NguoiDung, TenantInfo } from '@/types';
 import { authService } from '@/services/authService';
 import { setAuthToken, getAuthToken, clearAuthToken, setCurrentTenant, getCurrentTenant, clearCurrentTenant } from '@/services/base/service-base';
 import { ApiError, ApiErrorType } from '@/config/api';
-import { getAvailableModules, getStoredModule, setStoredModule, type ModuleCode } from '@/config/modules';
+import { getAvailableModuleCodes, getStoredModule, setStoredModule, type ModuleCode } from '@/config/modules';
+import { linhVucService, type LinhVuc } from '@/services/linhVucService';
 
 function extractPermissionsFromToken(token: string): string[] {
   try {
@@ -25,11 +26,17 @@ interface AuthContextType {
   currentTenant: TenantInfo | null;
   // Lĩnh vực (module) đang chọn của tenant hiện tại; null = chưa chọn (cần hiện màn chọn).
   selectedModule: ModuleCode | null;
-  // Các lĩnh vực user được phép xem ở tenant hiện tại (SuperAdmin = toàn bộ).
-  availableModules: ModuleCode[];
+  // Toàn bộ lĩnh vực từ API (gồm inactive, để admin thấy hết).
+  allModules: LinhVuc[];
+  // Code lĩnh vực user được phép xem ở tenant hiện tại (SuperAdmin = toàn bộ active).
+  availableModules: string[];
   // true khi tenant có >1 lĩnh vực mà chưa chọn → hiển thị màn Chọn lĩnh vực.
   needsModuleSelection: boolean;
   setSelectedModule: (code: ModuleCode | null) => void;
+  // Tra cứu doc lĩnh vực theo code.
+  getModule: (code: string) => LinhVuc | undefined;
+  // Nạp lại danh sách lĩnh vực (sau khi admin sửa).
+  refreshModules: () => Promise<void>;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -49,11 +56,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [tempToken, setTempToken] = useState<string | null>(null);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
   const [selectedModule, setSelectedModuleState] = useState<ModuleCode | null>(null);
+  const [allModules, setAllModules] = useState<LinhVuc[]>([]);
 
-  // Lĩnh vực khả dụng theo tenant hiện tại (SuperAdmin = toàn bộ catalog).
+  const refreshModules = useCallback(async () => {
+    try {
+      const list = await linhVucService.getAll();
+      setAllModules(list);
+      // cache lần thành công gần nhất để fallback khi lỗi
+      localStorage.setItem('linhVucCache', JSON.stringify(list));
+    } catch {
+      const cached = localStorage.getItem('linhVucCache');
+      if (cached) {
+        try {
+          setAllModules(JSON.parse(cached));
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+  }, []);
+
+  // Code lĩnh vực đang active (nguồn để tính available + auto-chọn).
+  const activeCodes = allModules.filter((m) => m.isActive).map((m) => m.code);
+
+  // Lĩnh vực khả dụng theo tenant hiện tại (SuperAdmin = toàn bộ active).
   const availableModules = currentTenant
-    ? getAvailableModules(currentTenant.modules, user?.isSuperAdmin || false)
+    ? getAvailableModuleCodes(currentTenant.modules, user?.isSuperAdmin || false, activeCodes)
     : [];
+
+  const getModule = useCallback(
+    (code: string) => allModules.find((m) => m.code === code),
+    [allModules],
+  );
 
   // Khi đổi tenant (hoặc khôi phục phiên): tự chọn nếu chỉ 1 lĩnh vực,
   // ngược lại nạp lĩnh vực đã lưu; nếu chưa có → null (cần hiện màn chọn).
@@ -62,7 +96,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSelectedModuleState(null);
       return;
     }
-    const avail = getAvailableModules(currentTenant.modules, user?.isSuperAdmin || false);
+    const avail = getAvailableModuleCodes(
+      currentTenant.modules,
+      user?.isSuperAdmin || false,
+      activeCodes,
+    );
     const stored = getStoredModule(currentTenant.tenantId) as ModuleCode | null;
     if (stored && avail.includes(stored)) {
       setSelectedModuleState(stored);
@@ -72,7 +110,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       setSelectedModuleState(null);
     }
-  }, [currentTenant, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTenant, user, allModules]);
 
   const needsModuleSelection =
     !!currentTenant && availableModules.length > 1 && !selectedModule;
@@ -109,6 +148,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (response.availableTenants && response.availableTenants.length > 0) {
             setAvailableTenants(response.availableTenants);
           }
+
+          // Nạp danh sách lĩnh vực động (sau khi đã có token hợp lệ).
+          await refreshModules();
         } catch (error) {
           // Token invalid or expired
           clearAuthToken();
@@ -131,6 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       window.removeEventListener('auth:unauthorized', handleUnauthorized);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -163,6 +206,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserPermissions(extractPermissionsFromToken(response.accessToken));
       }
 
+      // Nạp lĩnh vực động khi đã có token (bỏ qua nếu còn chờ chọn tenant).
+      if (response.accessToken) {
+        await refreshModules();
+      }
+
       return { success: true };
     } catch (error) {
       if (error instanceof ApiError) {
@@ -179,7 +227,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return { success: false, error: 'Đã xảy ra lỗi. Vui lòng thử lại' };
     }
-  }, []);
+  }, [refreshModules]);
 
   const logout = useCallback(async () => {
     try {
@@ -224,11 +272,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUserPermissions(extractPermissionsFromToken(token));
         }
       }
+
+      // Nạp lĩnh vực động sau khi chọn tenant.
+      await refreshModules();
     } catch (error) {
       console.error('Failed to select tenant:', error);
       throw error;
     }
-  }, [tempToken]);
+  }, [tempToken, refreshModules]);
 
   const switchTenant = useCallback(async (tenantId: string) => {
     try {
@@ -303,9 +354,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         availableTenants,
         currentTenant,
         selectedModule,
+        allModules,
         availableModules,
         needsModuleSelection,
         setSelectedModule,
+        getModule,
+        refreshModules,
         login,
         logout,
         refreshUser,
