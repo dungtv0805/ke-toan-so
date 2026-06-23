@@ -530,6 +530,12 @@ const MainLayout: React.FC = () => {
       label: "Quản lý Công ty",
       onClick: () => navigate("/cau-hinh/tenant"),
     }] : []),
+    ...(user?.isSuperAdmin ? [{
+      key: "linh-vuc",
+      icon: <AppstoreOutlined />,
+      label: "Quản lý Lĩnh vực",
+      onClick: () => navigate("/cau-hinh/linh-vuc"),
+    }] : []),
   ];
 
   const getSelectedKeys = () => {

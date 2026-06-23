@@ -85,6 +85,7 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/danh-muc/quy-chuan', label: 'Quy chuẩn hạch toán', parentLabel: 'Danh mục › Khác' },
 
   // ===== THƯ VIỆN — gốc =====
+  { key: '/cau-hinh/linh-vuc', label: 'Lĩnh vực', parentLabel: 'Cấu hình' },
   { key: '/quy-trinh', label: 'Quy trình' },
   { key: '/chinh-sach', label: 'Chính sách' },
   { key: '/bieu-mau', label: 'Biểu mẫu' },

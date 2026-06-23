@@ -59,6 +59,7 @@ import {
   VaiTroPage,
   ThanhVienPage,
   TenantPage,
+  LinhVucPage,
   ComingSoonPage,
   QuanLyHopDongPage,
   BaoCaoHopDongPage,
@@ -502,6 +503,10 @@ const App = () => (
                   <Route
                     path="tenant"
                     element={<TenantPage />}
+                  />
+                  <Route
+                    path="linh-vuc"
+                    element={<LinhVucPage />}
                   />
                 </Route>
               </Route>
