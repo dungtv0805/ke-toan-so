@@ -9,3 +9,4 @@ export * from './auth';
 export * from './payable';
 export * from './config';
 export * from './tenant';
+export * from './linh-vuc';
