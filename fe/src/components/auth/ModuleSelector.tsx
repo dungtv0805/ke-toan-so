@@ -2,14 +2,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AppstoreOutlined } from '@ant-design/icons';
-import { getModuleDef, type ModuleCode } from '@/config/modules';
+import { iconByName, type ModuleCode } from '@/config/modules';
 
 /**
  * Màn "Chọn lĩnh vực" — hiển thị khi tenant có >1 lĩnh vực mà chưa chọn.
  * Chọn xong vào app chỉ thấy menu của lĩnh vực đó (đổi lại qua nút ở sidebar).
  */
 export function ModuleSelector() {
-  const { availableModules, setSelectedModule, currentTenant, logout } = useAuth();
+  const { availableModules, setSelectedModule, currentTenant, logout, getModule } = useAuth();
 
   const handleSelect = (code: ModuleCode) => {
     setSelectedModule(code);
@@ -38,7 +38,7 @@ export function ModuleSelector() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {availableModules.map((code) => {
-                const def = getModuleDef(code);
+                const def = getModule(code);
                 if (!def) return null;
                 return (
                   <button
@@ -51,7 +51,7 @@ export function ModuleSelector() {
                       className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl text-white shrink-0"
                       style={{ backgroundColor: def.color }}
                     >
-                      {def.icon}
+                      {iconByName(def.icon)}
                     </div>
                     <div className="text-center">
                       <div className="font-semibold text-base">{def.name}</div>

@@ -1,6 +1,7 @@
 import { Modal, Tag, Tooltip } from 'antd';
 import { CheckCircleFilled, LockOutlined } from '@ant-design/icons';
-import { MODULES, type ModuleCode } from '@/config/modules';
+import { iconByName, type ModuleCode } from '@/config/modules';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ModuleSwitchModalProps {
   open: boolean;
@@ -11,9 +12,8 @@ interface ModuleSwitchModalProps {
 }
 
 /**
- * Modal đổi lĩnh vực — hiển thị TẤT CẢ lĩnh vực trong catalog.
- * Lĩnh vực công ty chưa được cấp → disable (chờ kích hoạt). Sẵn sàng cho việc
- * mở rộng nhiều lĩnh vực sau này.
+ * Modal đổi lĩnh vực — hiển thị TẤT CẢ lĩnh vực đang active.
+ * Lĩnh vực công ty chưa được cấp → disable (chờ kích hoạt).
  */
 export function ModuleSwitchModal({
   open,
@@ -22,6 +22,7 @@ export function ModuleSwitchModal({
   selectedModule,
   onSelect,
 }: ModuleSwitchModalProps) {
+  const { allModules } = useAuth();
   return (
     <Modal
       title="Chọn lĩnh vực"
@@ -31,7 +32,7 @@ export function ModuleSwitchModal({
       width={560}
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-        {MODULES.map((def) => {
+        {allModules.filter((m) => m.isActive).map((def) => {
           const owned = availableModules.includes(def.code);
           const current = def.code === selectedModule;
 
@@ -54,7 +55,7 @@ export function ModuleSwitchModal({
                 className="w-11 h-11 rounded-xl flex items-center justify-center text-xl text-white shrink-0"
                 style={{ backgroundColor: owned ? def.color : '#9ca3af' }}
               >
-                {def.icon}
+                {iconByName(def.icon)}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold flex items-center gap-2">
