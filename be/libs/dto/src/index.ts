@@ -6,6 +6,7 @@ import './voucher';
 import './master-data';
 import './common';
 import './tenant';
+import './linh-vuc';
 import './user';
 import './reporting';
 
@@ -15,5 +16,6 @@ export * from './voucher';
 export * from './master-data';
 export * from './common';
 export * from './tenant';
+export * from './linh-vuc';
 export * from './user';
 export * from './reporting';

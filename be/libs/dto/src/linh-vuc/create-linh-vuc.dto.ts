@@ -1,0 +1,37 @@
+import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsArray, IsInt, Matches } from 'class-validator';
+
+export class CreateLinhVucDto {
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^[A-Z0-9_]+$/, { message: 'Code chỉ gồm chữ HOA, số và gạch dưới' })
+  code: string;
+
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsString()
+  @IsOptional()
+  icon?: string;
+
+  @IsString()
+  @IsOptional()
+  color?: string;
+
+  @IsInt()
+  @IsOptional()
+  order?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  menuKeys?: string[];
+}
