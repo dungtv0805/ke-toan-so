@@ -8,7 +8,13 @@ import {
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Tenant, User, UserCredential, UserTenant, UserStatus, VaiTro, PhanQuyen } from '@app/entities';
-import { CreateTenantDto, UpdateTenantDto, AddUserToTenantDto, UpdateTenantMemberDto } from '@app/dto';
+import {
+  CreateTenantDto,
+  UpdateTenantDto,
+  AddUserToTenantDto,
+  UpdateTenantMemberDto,
+  UpdateMemberProfileDto,
+} from '@app/dto';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 import * as bcrypt from 'bcrypt';
 
@@ -561,6 +567,44 @@ export class TenantService {
     if (dto.isActive !== undefined) membership.isActive = dto.isActive;
 
     await this.userTenantRepository.save(membership);
+  }
+
+  async updateMemberProfile(
+    tenantId: string,
+    userId: string,
+    dto: UpdateMemberProfileDto,
+  ): Promise<{ id: string; email: string; hoTen: string }> {
+    const membership = await this.userTenantRepository.findOne({
+      where: { tenantId, userId, isActive: true },
+    });
+    if (!membership) {
+      throw new NotFoundException('Không tìm thấy thành viên trong công ty này');
+    }
+
+    const { ObjectId } = await import('mongodb');
+    const user = await this.userRepository.findOne({
+      where: { _id: new ObjectId(userId) as any },
+    });
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+
+    if (dto.email) {
+      const email = dto.email.toLowerCase();
+      if (email !== user.email) {
+        const existing = await this.userRepository.findOne({ where: { email } });
+        if (existing && existing._id.toString() !== userId) {
+          throw new ConflictException('Email đã được sử dụng');
+        }
+        user.email = email;
+      }
+    }
+    if (dto.hoTen !== undefined) {
+      user.hoTen = dto.hoTen;
+    }
+
+    const saved = await this.userRepository.save(user);
+    return { id: saved._id.toString(), email: saved.email, hoTen: saved.hoTen };
   }
 
   async removeTenantMember(tenantId: string, userId: string): Promise<void> {

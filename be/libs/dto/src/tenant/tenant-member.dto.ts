@@ -41,3 +41,14 @@ export class UpdateTenantMemberDto {
   @IsOptional()
   isActive?: boolean;
 }
+
+export class UpdateMemberProfileDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  hoTen?: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+}
