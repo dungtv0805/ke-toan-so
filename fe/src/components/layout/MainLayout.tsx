@@ -69,7 +69,7 @@ import type { MenuProps } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
 import { TenantSwitcher } from "./TenantSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ModuleSelector } from "@/components/auth";
+import { ModuleSelector, ModuleSwitchModal } from "@/components/auth";
 import { getModuleDef, moduleOfMenuKey, type ModuleCode } from "@/config/modules";
 
 const { Header, Sider, Content } = Layout;
@@ -314,6 +314,7 @@ const MainLayout: React.FC = () => {
   // Initialize collapsed based on current URL - if on form screen, start collapsed
   const [collapsed, setCollapsed] = useState(() => isFormScreen(window.location.pathname));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [moduleModalOpen, setModuleModalOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
     return saved ? JSON.parse(saved) : false;
@@ -474,6 +475,12 @@ const MainLayout: React.FC = () => {
 
   // Settings menu items for gear icon dropdown
   const settingsMenuItems: MenuProps["items"] = [
+    ...(availableModules.length > 1 ? [{
+      key: "doi-linh-vuc",
+      icon: <AppstoreOutlined />,
+      label: "Đổi lĩnh vực",
+      onClick: () => setModuleModalOpen(true),
+    }] : []),
     ...(canManageConfig ? [
       ...(hasPermission('/cau-hinh/vai-tro:xem') || user?.isSuperAdmin ? [{
         key: "vai-tro",
@@ -516,19 +523,6 @@ const MainLayout: React.FC = () => {
     }
     return [];
   };
-
-  // Dropdown đổi lĩnh vực (chỉ hiện khi có >1 lĩnh vực).
-  const moduleSwitcherItems: MenuProps["items"] = availableModules.map((code) => ({
-    key: code,
-    icon: getModuleDef(code)?.icon,
-    label: getModuleDef(code)?.name ?? code,
-    onClick: () => {
-      if (code !== selectedModule) {
-        setSelectedModule(code);
-        navigate("/");
-      }
-    },
-  }));
 
   const siderWidth = collapsed ? 56 : 240;
 
@@ -787,28 +781,6 @@ const MainLayout: React.FC = () => {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-1 sm:gap-2">
-            {/* Đổi lĩnh vực (chỉ khi có >1 lĩnh vực) */}
-            {availableModules.length > 1 && (
-              <Dropdown
-                menu={{ items: moduleSwitcherItems, selectedKeys: selectedModule ? [selectedModule] : [] }}
-                placement="bottomRight"
-                trigger={["click"]}
-              >
-                <Tooltip title="Đổi lĩnh vực">
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={getModuleDef(selectedModule ?? "")?.icon ?? <AppstoreOutlined />}
-                    className="!text-foreground hover:!bg-muted flex items-center gap-1"
-                  >
-                    <span className="hidden sm:inline text-xs">
-                      {getModuleDef(selectedModule ?? "")?.name ?? "Lĩnh vực"}
-                    </span>
-                  </Button>
-                </Tooltip>
-              </Dropdown>
-            )}
-
             {/* Tenant Switcher */}
             <TenantSwitcher />
 
@@ -863,6 +835,20 @@ const MainLayout: React.FC = () => {
           </div>
         </Content>
       </Layout>
+
+      <ModuleSwitchModal
+        open={moduleModalOpen}
+        onClose={() => setModuleModalOpen(false)}
+        availableModules={availableModules}
+        selectedModule={selectedModule}
+        onSelect={(code) => {
+          setModuleModalOpen(false);
+          if (code !== selectedModule) {
+            setSelectedModule(code);
+            navigate("/");
+          }
+        }}
+      />
     </Layout>
   );
 };
