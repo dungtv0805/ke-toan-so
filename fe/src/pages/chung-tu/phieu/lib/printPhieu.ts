@@ -61,8 +61,11 @@ export function printPhieu(
   }
 
   doc.open();
+  // Ép khổ A5 ngang cho phiếu thu/chi — đặt SAU nội dung để @page này thắng cascade,
+  // áp dụng cả mẫu mặc định lẫn mẫu tuỳ chỉnh tenant đã lưu (vốn để A5 portrait).
+  const forcePageStyle = `<style>@page { size: A5 landscape; margin: 12mm; }</style>`;
   doc.write(
-    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${phieu.soPhieu ?? "Phiếu"}</title></head><body>${html}</body></html>`
+    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${phieu.soPhieu ?? "Phiếu"}</title></head><body>${html}${forcePageStyle}</body></html>`
   );
   doc.close();
 

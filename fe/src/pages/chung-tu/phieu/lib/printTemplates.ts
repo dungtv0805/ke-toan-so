@@ -30,7 +30,7 @@ export const PHIEU_PLACEHOLDERS: PlaceholderDoc[] = [
 
 const BASE_STYLE = `
   <style>
-    @page { size: A5 portrait; margin: 12mm; }
+    @page { size: A5 landscape; margin: 12mm; }
     * { box-sizing: border-box; }
     .phieu { font-family: "Times New Roman", serif; font-size: 13px; color: #000; line-height: 1.5; }
     .phieu .top { display: flex; justify-content: space-between; }
