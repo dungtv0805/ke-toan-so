@@ -81,4 +81,40 @@ describe('TenantService - member profile & password', () => {
       ).rejects.toBeInstanceOf(ConflictException);
     });
   });
+
+  describe('resetMemberPassword', () => {
+    it('reset credential hiện có về mật khẩu mặc định 123456', async () => {
+      userTenantRepo.findOne.mockResolvedValue({ userId: USER_ID, tenantId: TENANT_ID, isActive: true });
+      const credential = { userId: USER_ID, password: 'old-hash', isActive: true };
+      credentialRepo.findOne.mockResolvedValue(credential);
+      credentialRepo.save.mockImplementation(async (c: any) => c);
+
+      const result = await service.resetMemberPassword(TENANT_ID, USER_ID);
+
+      expect(result).toEqual({ defaultPassword: '123456' });
+      expect(credentialRepo.save).toHaveBeenCalledWith(credential);
+      await expect(bcrypt.compare('123456', credential.password)).resolves.toBe(true);
+    });
+
+    it('tạo credential mới nếu user chưa có', async () => {
+      userTenantRepo.findOne.mockResolvedValue({ userId: USER_ID, tenantId: TENANT_ID, isActive: true });
+      credentialRepo.findOne.mockResolvedValue(null);
+      credentialRepo.create.mockImplementation((c: any) => c);
+      credentialRepo.save.mockImplementation(async (c: any) => c);
+
+      await service.resetMemberPassword(TENANT_ID, USER_ID);
+
+      expect(credentialRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: USER_ID, isActive: true }),
+      );
+      expect(credentialRepo.save).toHaveBeenCalled();
+    });
+
+    it('ném NotFound khi không phải thành viên của tenant', async () => {
+      userTenantRepo.findOne.mockResolvedValue(null);
+      await expect(
+        service.resetMemberPassword(TENANT_ID, USER_ID),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
 });

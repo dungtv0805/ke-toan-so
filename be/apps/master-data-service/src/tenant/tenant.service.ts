@@ -607,6 +607,36 @@ export class TenantService {
     return { id: saved._id.toString(), email: saved.email, hoTen: saved.hoTen };
   }
 
+  async resetMemberPassword(
+    tenantId: string,
+    userId: string,
+  ): Promise<{ defaultPassword: string }> {
+    const membership = await this.userTenantRepository.findOne({
+      where: { tenantId, userId, isActive: true },
+    });
+    if (!membership) {
+      throw new NotFoundException('Không tìm thấy thành viên trong công ty này');
+    }
+
+    const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, SALT_ROUNDS);
+
+    let credential = await this.credentialRepository.findOne({
+      where: { userId },
+    });
+    if (credential) {
+      credential.password = hashedPassword;
+    } else {
+      credential = this.credentialRepository.create({
+        userId,
+        password: hashedPassword,
+        isActive: true,
+      });
+    }
+    await this.credentialRepository.save(credential);
+
+    return { defaultPassword: DEFAULT_PASSWORD };
+  }
+
   async removeTenantMember(tenantId: string, userId: string): Promise<void> {
     const membership = await this.userTenantRepository.findOne({
       where: { tenantId, userId },
