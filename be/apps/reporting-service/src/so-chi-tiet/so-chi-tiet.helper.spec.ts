@@ -114,6 +114,39 @@ describe('buildSoChiTiet', () => {
     expect(r.soDuCuoiKyNo).toBe(400);
   });
 
+  it('lọc theo đối tượng: TK ở vế Có nhận diện đối tượng qua doiTuong2', () => {
+    const account131 = { ma: '131', ten: 'Phải thu', loai: 'NO' };
+    const rel = new Set(['131']);
+    // Trước kỳ: 131 ở vế Có cho KH01 (đối tượng bên Có ghi ở doiTuong2)
+    // → khách dư Có (phải trả) 20tr đầu kỳ.
+    const prev = {
+      soPhieu: 'TT-prev',
+      ngay: new Date('2025-12-20') as any,
+      soTien: 20_000_000,
+      noiDung: 'KH ứng trước',
+      danhMuc: {
+        taiKhoanNo: { ma: '112', ten: '112', loai: 'NO', nhom: '' },
+        taiKhoanCo: { ma: '131', ten: '131', loai: 'CO', nhom: '' },
+        doiTuong2: { ma: 'KH01', ten: 'Khách 01', loai: 'KHACH_HANG' },
+      },
+    } as any;
+    // Trong kỳ: 131 ở vế Nợ cho KH01 (doiTuong) → phát sinh Nợ 20tr.
+    const inPeriod = v('2026-01-05', 'BH01', '131', '511', 20_000_000, 'KH01');
+    const r = buildSoChiTiet(
+      account131,
+      rel,
+      [prev, inPeriod],
+      [],
+      'KH01',
+      start,
+      end,
+    );
+    expect(r.soDuDauKyCo).toBe(20_000_000);
+    expect(r.tongPhatSinhNo).toBe(20_000_000);
+    expect(r.soDuCuoiKyNo).toBe(0);
+    expect(r.soDuCuoiKyCo).toBe(0);
+  });
+
   it('gộp TK cha: chứng từ nội bộ 2 con sinh 2 dòng, số dư triệt tiêu', () => {
     const accountCha = { ma: '131', ten: 'Phải thu', loai: 'NO' };
     const rel = new Set(['131', '1311', '1312']);

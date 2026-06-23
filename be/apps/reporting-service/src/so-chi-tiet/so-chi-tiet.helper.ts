@@ -111,15 +111,17 @@ export function buildSoChiTiet(
   const legsOf = (
     v: NhatKyChungEntry,
   ): Array<{ no: number; co: number; tkDoiUng: string }> => {
-    const objMa = v.danhMuc?.doiTuong?.ma;
-    if (maDoiTuong && objMa !== maDoiTuong) return [];
     const tkNo = getTkNo(v);
     const tkCo = getTkCo(v);
+    // Đối tượng bên Nợ ghi ở doiTuong; bên Có ghi ở doiTuong2
+    // (fallback doiTuong cho dữ liệu cũ — đồng nhất aggregateBalanceByDoiTuong).
+    const objNo = v.danhMuc?.doiTuong?.ma;
+    const objCo = v.danhMuc?.doiTuong2?.ma ?? v.danhMuc?.doiTuong?.ma;
     const out: Array<{ no: number; co: number; tkDoiUng: string }> = [];
-    if (relevantCodes.has(tkNo)) {
+    if (relevantCodes.has(tkNo) && (!maDoiTuong || objNo === maDoiTuong)) {
       out.push({ no: v.soTien, co: 0, tkDoiUng: tkCo });
     }
-    if (relevantCodes.has(tkCo)) {
+    if (relevantCodes.has(tkCo) && (!maDoiTuong || objCo === maDoiTuong)) {
       out.push({ no: 0, co: v.soTien, tkDoiUng: tkNo });
     }
     return out;
