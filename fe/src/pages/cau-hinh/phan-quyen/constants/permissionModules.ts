@@ -51,6 +51,7 @@ export const permissionModules: PermissionModule[] = [
           { key: '/bao-cao/so-chi-tiet-cong-no', label: 'Sổ chi tiết công nợ' },
           { key: '/bao-cao/so-chi-tiet-phat-sinh', label: 'Sổ chi tiết phát sinh' },
           { key: '/bao-cao/bang-tong-hop', label: 'Bảng tổng hợp' },
+          { key: '/bao-cao/hop-dong', label: 'Báo cáo hợp đồng' },
         ],
       },
       {
@@ -65,6 +66,8 @@ export const permissionModules: PermissionModule[] = [
           { key: '/trung-tam-du-lieu/nguyen-lieu', label: 'Quản lý Nguyên liệu' },
           { key: '/trung-tam-du-lieu/dung-cu', label: 'Quản lý Dụng cụ' },
           { key: '/trung-tam-du-lieu/hop-dong', label: 'Quản lý Hợp đồng' },
+          { key: '/trung-tam-du-lieu/thu-tien-hop-dong', label: 'Thu tiền hợp đồng' },
+          { key: '/trung-tam-du-lieu/hd-ban-ra', label: 'Hóa đơn bán ra' },
           { key: '/trung-tam-du-lieu/nhan-su', label: 'Quản lý nhân sự' },
           { key: '/trung-tam-du-lieu/luong-bhxh', label: 'Lương & BHXH' },
         ],
@@ -84,6 +87,15 @@ export const permissionModules: PermissionModule[] = [
           { key: '/chung-tu/phan-bo-khau-hao', label: 'Phân bổ khấu hao TSCĐ' },
           { key: '/chung-tu/phieu-ke-toan', label: 'Phiếu kế toán' },
           { key: '/chung-tu/de-nghi-thanh-toan', label: 'Đề nghị thanh toán' },
+        ],
+      },
+      {
+        key: '/kho',
+        label: 'Kho',
+        children: [
+          { key: '/kho/nhap-kho', label: 'Nhập kho' },
+          { key: '/kho/xuat-kho', label: 'Xuất kho' },
+          { key: '/kho/chuyen-kho', label: 'Chuyển kho' },
         ],
       },
     ],
