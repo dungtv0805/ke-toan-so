@@ -10,8 +10,10 @@ export enum DoiTuongType {
 
 @Entity('doi_tuong')
 export class DoiTuong extends BaseEntity {
-  @Column({ type: 'enum', enum: DoiTuongType })
-  loai: DoiTuongType;
+  // Đối tượng có thể thuộc nhiều loại cùng lúc (vd vừa Khách hàng vừa NCC).
+  // MongoDB lưu mảng native; query { loai: X } tự match document có mảng chứa X.
+  @Column()
+  loai: DoiTuongType[];
 
   @Column()
   ma: string;

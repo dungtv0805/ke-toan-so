@@ -4,7 +4,7 @@ export const mockDoiTuong: DoiTuong[] = [
   // Khách hàng
   {
     id: '1',
-    loai: 'KHACH_HANG',
+    loai: ['KHACH_HANG'],
     ma: 'KH001',
     ten: 'Công ty TNHH ABC',
     diaChi: '123 Nguyễn Huệ, Quận 1, TP.HCM',
@@ -15,7 +15,7 @@ export const mockDoiTuong: DoiTuong[] = [
   },
   {
     id: '2',
-    loai: 'KHACH_HANG',
+    loai: ['KHACH_HANG'],
     ma: 'KH002',
     ten: 'Công ty CP XYZ',
     diaChi: '456 Lê Lợi, Quận 3, TP.HCM',
@@ -26,7 +26,7 @@ export const mockDoiTuong: DoiTuong[] = [
   },
   {
     id: '3',
-    loai: 'KHACH_HANG',
+    loai: ['KHACH_HANG'],
     ma: 'KH003',
     ten: 'Cửa hàng Minh Phát',
     diaChi: '789 Hai Bà Trưng, Quận 1, TP.HCM',
@@ -36,7 +36,7 @@ export const mockDoiTuong: DoiTuong[] = [
   },
   {
     id: '4',
-    loai: 'KHACH_HANG',
+    loai: ['KHACH_HANG'],
     ma: 'KH004',
     ten: 'Công ty TNHH Thành Công',
     diaChi: '321 Võ Văn Tần, Quận 3, TP.HCM',
@@ -49,7 +49,7 @@ export const mockDoiTuong: DoiTuong[] = [
   // Nhà cung cấp
   {
     id: '5',
-    loai: 'NHA_CUNG_CAP',
+    loai: ['NHA_CUNG_CAP'],
     ma: 'NCC001',
     ten: 'Công ty Vật liệu Xây dựng Đông Á',
     diaChi: '100 Quốc lộ 1A, Bình Chánh, TP.HCM',
@@ -60,7 +60,7 @@ export const mockDoiTuong: DoiTuong[] = [
   },
   {
     id: '6',
-    loai: 'NHA_CUNG_CAP',
+    loai: ['NHA_CUNG_CAP'],
     ma: 'NCC002',
     ten: 'Công ty Thiết bị Văn phòng VPS',
     diaChi: '200 Cách Mạng Tháng 8, Quận 10, TP.HCM',
@@ -71,7 +71,7 @@ export const mockDoiTuong: DoiTuong[] = [
   },
   {
     id: '7',
-    loai: 'NHA_CUNG_CAP',
+    loai: ['NHA_CUNG_CAP'],
     ma: 'NCC003',
     ten: 'Công ty TNHH Điện máy Thịnh Phát',
     diaChi: '88 Nguyễn Thị Minh Khai, Quận 3, TP.HCM',
@@ -84,7 +84,7 @@ export const mockDoiTuong: DoiTuong[] = [
   // Nhân viên
   {
     id: '8',
-    loai: 'NHAN_VIEN',
+    loai: ['NHAN_VIEN'],
     ma: 'NV001',
     ten: 'Nguyễn Văn Hùng',
     diaChi: '55 Phan Đăng Lưu, Phú Nhuận, TP.HCM',
@@ -93,7 +93,7 @@ export const mockDoiTuong: DoiTuong[] = [
   },
   {
     id: '9',
-    loai: 'NHAN_VIEN',
+    loai: ['NHAN_VIEN'],
     ma: 'NV002',
     ten: 'Trần Thị Mai',
     diaChi: '77 Lý Thường Kiệt, Quận 10, TP.HCM',
@@ -102,7 +102,7 @@ export const mockDoiTuong: DoiTuong[] = [
   },
   {
     id: '10',
-    loai: 'NHAN_VIEN',
+    loai: ['NHAN_VIEN'],
     ma: 'NV003',
     ten: 'Lê Văn Tâm',
     diaChi: '99 Nguyễn Đình Chiểu, Quận 3, TP.HCM',
@@ -113,7 +113,7 @@ export const mockDoiTuong: DoiTuong[] = [
   // Nhà thầu
   {
     id: '11',
-    loai: 'NHA_THAU',
+    loai: ['NHA_THAU'],
     ma: 'NT001',
     ten: 'Công ty Xây dựng Phú Cường',
     diaChi: '150 Điện Biên Phủ, Bình Thạnh, TP.HCM',
@@ -124,7 +124,7 @@ export const mockDoiTuong: DoiTuong[] = [
   },
   {
     id: '12',
-    loai: 'NHA_THAU',
+    loai: ['NHA_THAU'],
     ma: 'NT002',
     ten: 'Công ty TNHH Thi công Hoàng Long',
     diaChi: '250 Xô Viết Nghệ Tĩnh, Bình Thạnh, TP.HCM',

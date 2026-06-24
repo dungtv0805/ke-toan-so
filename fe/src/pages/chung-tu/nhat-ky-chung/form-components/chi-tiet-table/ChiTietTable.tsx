@@ -268,7 +268,8 @@ export function ChiTietTable() {
       doiTuongList as DoiTuong[],
       nganHangList as TaiKhoanNganHang[]
     );
-    if (currentLoai !== tk?.chiTietTheo) {
+    // Đối tượng đa loại: chỉ xoá khi KHÔNG khớp loại mà TK mới yêu cầu
+    if (!tk?.chiTietTheo || !currentLoai?.includes(tk.chiTietTheo)) {
       handleUpdateField(record.key, doiTuongField, undefined);
       handler.executeEvent("updateChiTietSnapshot", {
         key: record.key,
@@ -682,7 +683,7 @@ export function ChiTietTable() {
           onChange={(v) => handleNhanVienChange(record.key, v)}
           onFocus={() => { activeRowRef.current = index; }}
           options={(doiTuongList as DoiTuong[])
-            .filter((d) => d.loai === "NHAN_VIEN")
+            .filter((d) => d.loai.includes("NHAN_VIEN"))
             .map((nv) => ({
               value: nv.id,
               label: `${nv.ma} - ${nv.ten}`,

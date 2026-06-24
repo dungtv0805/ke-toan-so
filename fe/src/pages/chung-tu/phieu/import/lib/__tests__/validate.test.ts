@@ -3,7 +3,7 @@ import { validateAndBuild, ImportMasterData } from "../validate";
 import { RawImportRow } from "../columns";
 
 const masterData: ImportMasterData = {
-  doiTuongList: [{ id: "dt1", ma: "KH001", ten: "KH A", loai: "KHACH_HANG" }] as ImportMasterData["doiTuongList"],
+  doiTuongList: [{ id: "dt1", ma: "KH001", ten: "KH A", loai: ["KHACH_HANG"] }] as ImportMasterData["doiTuongList"],
   duAnList: [],
   boPhanList: [],
   sanPhamList: [],

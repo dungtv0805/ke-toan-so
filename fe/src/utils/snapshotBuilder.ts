@@ -31,7 +31,9 @@ export const buildDoiTuongSnapshot = (doiTuong: DoiTuong): DoiTuongSnapshot => (
   id: doiTuong.id,
   ma: doiTuong.ma,
   ten: doiTuong.ten,
-  loai: doiTuong.loai,
+  // Đối tượng có thể đa loại; snapshot.loai chỉ dùng để phân biệt ca NGAN_HANG_QUY
+  // (không phân biệt KH/NCC) nên lưu loại chính là đủ.
+  loai: doiTuong.loai[0],
   diaChi: doiTuong.diaChi,
   soDienThoai: doiTuong.soDienThoai,
   email: doiTuong.email,

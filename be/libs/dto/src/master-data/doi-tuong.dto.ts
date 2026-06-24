@@ -7,7 +7,7 @@ export type DoiTuongType =
 
 export interface DoiTuongResponse {
   _id: string;
-  loai: DoiTuongType;
+  loai: DoiTuongType[];
   ma: string;
   ten: string;
   diaChi?: string;
@@ -18,7 +18,7 @@ export interface DoiTuongResponse {
 }
 
 export interface CreateDoiTuongRequest {
-  loai: DoiTuongType;
+  loai: DoiTuongType[];
   ma: string;
   ten: string;
   diaChi?: string;

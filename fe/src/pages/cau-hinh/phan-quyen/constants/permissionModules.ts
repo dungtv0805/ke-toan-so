@@ -141,4 +141,16 @@ export const permissionModules: PermissionModule[] = [
       { key: '/huong-dan', label: 'Hướng dẫn' },
     ],
   },
+  {
+    key: 'cau-hinh',
+    label: 'CẤU HÌNH',
+    isSection: true,
+    children: [
+      // Phải khớp với BE PERMISSION_MODULES (tenant.service.ts) — nếu thiếu ở đây,
+      // mỗi lần lưu trên trang Phân quyền sẽ xoá mất các quyền này khỏi role.
+      { key: '/cau-hinh/vai-tro', label: 'Quản lý Vai trò' },
+      { key: '/cau-hinh/phan-quyen', label: 'Phân quyền' },
+      { key: '/cau-hinh/thanh-vien', label: 'Quản lý Thành viên' },
+    ],
+  },
 ];

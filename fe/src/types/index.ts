@@ -30,7 +30,7 @@ export interface TaiKhoan {
 
 export interface DoiTuong {
   id: string;
-  loai: 'KHACH_HANG' | 'NHA_CUNG_CAP' | 'NHAN_VIEN' | 'NHA_THAU';
+  loai: ('KHACH_HANG' | 'NHA_CUNG_CAP' | 'NHAN_VIEN' | 'NHA_THAU')[];
   ma: string;
   ten: string;
   diaChi?: string;

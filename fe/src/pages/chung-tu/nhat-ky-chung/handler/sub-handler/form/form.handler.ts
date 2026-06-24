@@ -181,7 +181,7 @@ export class FormHandler extends CSubHanlder<
     const result: Partial<InitFormResult> = {};
 
     // Đối tượng - filter by non-NHAN_VIEN
-    const generalDoiTuong = doiTuongList.filter((d) => d.loai !== "NHAN_VIEN");
+    const generalDoiTuong = doiTuongList.filter((d) => !d.loai.includes("NHAN_VIEN"));
     if (generalDoiTuong.length === 1) {
       const doiTuong = generalDoiTuong[0];
       result.doiTuongId = doiTuong.id;
@@ -218,7 +218,7 @@ export class FormHandler extends CSubHanlder<
     }
 
     // Nhân viên - filter NHAN_VIEN from doiTuongList
-    const nhanVienOnly = doiTuongList.filter((d) => d.loai === "NHAN_VIEN");
+    const nhanVienOnly = doiTuongList.filter((d) => d.loai.includes("NHAN_VIEN"));
     if (nhanVienOnly.length === 1) {
       const nhanVien = nhanVienOnly[0];
       result.nhanVienId = nhanVien.id;

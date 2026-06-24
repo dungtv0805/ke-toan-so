@@ -4,12 +4,16 @@ import {
   IsEnum,
   IsOptional,
   IsEmail,
+  IsArray,
+  ArrayNotEmpty,
 } from 'class-validator';
 import { DoiTuongType } from '@app/entities';
 
 export class CreateDoiTuongDto {
-  @IsEnum(DoiTuongType)
-  loai: DoiTuongType;
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsEnum(DoiTuongType, { each: true })
+  loai: DoiTuongType[];
 
   @IsString()
   @IsNotEmpty()

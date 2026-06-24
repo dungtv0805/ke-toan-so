@@ -69,7 +69,7 @@ export class DoiTuongService {
     let filteredItems = allItems.filter((item) => item.isActive !== false);
 
     if (loai) {
-      filteredItems = filteredItems.filter((item) => item.loai === loai);
+      filteredItems = filteredItems.filter((item) => item.loai?.includes(loai));
     }
 
     if (search) {
@@ -217,16 +217,16 @@ export class DoiTuongService {
 
     const tongDoiTuong = activeItems.length;
     const khachHang = activeItems.filter(
-      (item) => item.loai === DoiTuongType.KHACH_HANG,
+      (item) => item.loai?.includes(DoiTuongType.KHACH_HANG),
     ).length;
     const nhaCungCap = activeItems.filter(
-      (item) => item.loai === DoiTuongType.NHA_CUNG_CAP,
+      (item) => item.loai?.includes(DoiTuongType.NHA_CUNG_CAP),
     ).length;
     const nhanVien = activeItems.filter(
-      (item) => item.loai === DoiTuongType.NHAN_VIEN,
+      (item) => item.loai?.includes(DoiTuongType.NHAN_VIEN),
     ).length;
     const nhaThau = activeItems.filter(
-      (item) => item.loai === DoiTuongType.NHA_THAU,
+      (item) => item.loai?.includes(DoiTuongType.NHA_THAU),
     ).length;
 
     return {

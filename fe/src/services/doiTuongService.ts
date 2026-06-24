@@ -1,7 +1,7 @@
 import { DoiTuong } from '@/types';
 import { ServiceBase, PaginatedResponse, PaginationParams } from './base/service-base';
 
-type DoiTuongLoai = DoiTuong['loai'];
+type DoiTuongLoai = DoiTuong['loai'][number];
 
 interface DoiTuongResponse extends Omit<DoiTuong, 'id'> {
   _id?: string;

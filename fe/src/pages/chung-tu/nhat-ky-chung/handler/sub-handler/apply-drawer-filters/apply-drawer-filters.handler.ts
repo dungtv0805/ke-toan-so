@@ -3,6 +3,7 @@ import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler"
 import { nhatKyChungService, GetEntriesParams } from "@/services/nhatKyChungService";
 import "./apply-drawer-filters.event";
 import { ApplyDrawerFiltersParams } from "./apply-drawer-filters.event";
+import { saveFilters } from "../../filterPersistence";
 
 const DEFAULT_PAGE_SIZE = 100;
 
@@ -30,6 +31,9 @@ export class ApplyDrawerFiltersHandler extends CSubHanlder {
     this.setState("filterDuAn", filterDuAn);
     this.setState("filterBoPhan", filterBoPhan);
     this.setState("filterTaiKhoanCo", filterTaiKhoanCo);
+
+    // Persist so the filter survives navigating away to edit a voucher.
+    saveFilters(this);
 
     const currentLimit =
       (this.getState("pagination") as { limit: number } | undefined)?.limit ||
