@@ -3,7 +3,7 @@ import { buildTemplateWorkbook } from "../template";
 import { ImportMasterData } from "../validate";
 
 const md: ImportMasterData = {
-  doiTuongList: [{ id: "d1", ma: "KH001", ten: "KH A", loai: "KHACH_HANG" }] as ImportMasterData["doiTuongList"],
+  doiTuongList: [{ id: "d1", ma: "KH001", ten: "KH A", loai: ["KHACH_HANG"] }] as ImportMasterData["doiTuongList"],
   duAnList: [],
   boPhanList: [],
   sanPhamList: [],

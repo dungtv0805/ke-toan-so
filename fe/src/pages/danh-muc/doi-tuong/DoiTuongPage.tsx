@@ -45,7 +45,9 @@ const { Title, Text } = Typography;
 
 // Validation schema
 const doiTuongSchema = z.object({
-  loai: z.enum(["KHACH_HANG", "NHA_CUNG_CAP", "NHAN_VIEN", "NHA_THAU"]),
+  loai: z
+    .array(z.enum(["KHACH_HANG", "NHA_CUNG_CAP", "NHAN_VIEN", "NHA_THAU"]))
+    .min(1, "Vui lòng chọn ít nhất 1 loại"),
   ma: z.string().min(1, "Mã không được để trống").max(20, "Mã tối đa 20 ký tự"),
   ten: z
     .string()
@@ -105,7 +107,7 @@ const DoiTuongPage: React.FC = () => {
     page = pagination.current,
     pageSize = pagination.pageSize,
     search = searchText,
-    loai?: DoiTuong["loai"]
+    loai?: DoiTuong["loai"][number]
   ) => {
     setLoading(true);
     try {
@@ -134,7 +136,7 @@ const DoiTuongPage: React.FC = () => {
       1,
       pagination.pageSize,
       "",
-      activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"])
+      activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"][number])
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -146,7 +148,7 @@ const DoiTuongPage: React.FC = () => {
       1,
       pagination.pageSize,
       "",
-      key === "all" ? undefined : (key as DoiTuong["loai"])
+      key === "all" ? undefined : (key as DoiTuong["loai"][number])
     );
   };
 
@@ -157,7 +159,7 @@ const DoiTuongPage: React.FC = () => {
       1,
       pagination.pageSize,
       value,
-      activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"])
+      activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"][number])
     );
   };
 
@@ -169,7 +171,7 @@ const DoiTuongPage: React.FC = () => {
       paginationConfig.current || 1,
       paginationConfig.pageSize || 10,
       searchText,
-      activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"])
+      activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"][number])
     );
   };
 
@@ -181,9 +183,9 @@ const DoiTuongPage: React.FC = () => {
       setEditingRecord(null);
       form.resetFields();
       if (activeTab !== "all") {
-        form.setFieldsValue({ loai: activeTab });
+        form.setFieldsValue({ loai: [activeTab] });
       } else {
-        form.setFieldsValue({ loai: "KHACH_HANG" });
+        form.setFieldsValue({ loai: ["KHACH_HANG"] });
       }
     }
     setModalVisible(true);
@@ -214,7 +216,7 @@ const DoiTuongPage: React.FC = () => {
         pagination.current,
         pagination.pageSize,
         searchText,
-        activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"])
+        activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"][number])
       );
     } catch (error: any) {
       if (error.errorFields) return;
@@ -233,7 +235,7 @@ const DoiTuongPage: React.FC = () => {
         pagination.current,
         pagination.pageSize,
         searchText,
-        activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"])
+        activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"][number])
       );
     } catch (error: any) {
       message.error(error.message || "Không thể xóa");
@@ -271,11 +273,19 @@ const DoiTuongPage: React.FC = () => {
       title: "Loại",
       dataIndex: "loai",
       key: "loai",
-      width: 140,
-      render: (loai: string) => {
-        const info = getLoaiInfo(loai);
-        return <Tag color={info.color}>{info.label}</Tag>;
-      },
+      width: 180,
+      render: (loai: DoiTuong["loai"]) => (
+        <Space size={[0, 4]} wrap>
+          {(loai ?? []).map((l) => {
+            const info = getLoaiInfo(l);
+            return (
+              <Tag color={info.color} key={l}>
+                {info.label}
+              </Tag>
+            );
+          })}
+        </Space>
+      ),
     },
     {
       title: "Liên hệ",
@@ -477,7 +487,7 @@ const DoiTuongPage: React.FC = () => {
                 1,
                 pagination.pageSize,
                 searchText,
-                activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"])
+                activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"][number])
               ),
             placeholder: "Tìm kiếm theo mã, tên, SĐT, email...",
             width: 300,
@@ -488,7 +498,7 @@ const DoiTuongPage: React.FC = () => {
               1,
               pagination.pageSize,
               "",
-              activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"])
+              activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"][number])
             );
           }}
           actions={
@@ -556,7 +566,11 @@ const DoiTuongPage: React.FC = () => {
                 rules={[{ required: true, message: "Vui lòng chọn loại" }]}
                 className="mb-3"
               >
-                <Select options={loaiDoiTuong} />
+                <Select
+                  mode="multiple"
+                  options={loaiDoiTuong}
+                  placeholder="Chọn 1 hoặc nhiều loại"
+                />
               </Form.Item>
             </Col>
             <Col span={12}>

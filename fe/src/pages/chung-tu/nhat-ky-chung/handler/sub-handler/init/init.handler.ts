@@ -10,6 +10,7 @@ import "./init.event";
 import "./init.state";
 import { NhatKyChungStates } from "../../nhat-ky-chung.handler";
 import { InitEvent } from "./init.event";
+import { restoreFilters, saveFilters } from "../../filterPersistence";
 
 const DEFAULT_PAGE_SIZE = 100;
 const TAI_KHOAN_LIMIT = 500;
@@ -20,8 +21,15 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
   @HandlerDecorator("init")
   async init(): Promise<void> {
     this.initializeDefaultStates();
+    // Restore previously-applied filters (persisted before navigating away to
+    // edit a voucher) so the filter stays in place when the user comes back.
+    restoreFilters(this);
     await Promise.all([
-      this.loadEntries({ page: 1, limit: DEFAULT_PAGE_SIZE }),
+      this.loadEntries({
+        ...this.buildQueryParams(),
+        page: 1,
+        limit: DEFAULT_PAGE_SIZE,
+      }),
       this.loadTaiKhoanList(),
       this.loadKhoanMucList(),
       this.executeEvent("loadMasterData", {}),
@@ -30,6 +38,8 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
 
   @HandlerDecorator("refresh")
   async refresh(): Promise<void> {
+    // Keep persisted filters in sync — search/date/account/reset all funnel here.
+    saveFilters(this);
     const pagination = this.getState("pagination") as
       | { page: number; limit: number }
       | undefined;

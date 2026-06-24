@@ -69,6 +69,16 @@
 - `cfdc513` (2026-04-23) — "fix hệ thống phân quyền: load permissions từ DB, fix hiển thị quyền user"
 - Seeded default permissions cho 8 roles: `be/scripts/seeds/phan-quyen.seed.js`
 
+### [2026-06-24] Lệch catalog FE↔BE làm rớt quyền /cau-hinh/* của role khi Lưu Phân quyền (VERIFIED)
+- **Triệu chứng:** User role "Admin" của 1 tenant (vd ONENESS WORLD) không thấy cụm menu Cấu hình (Quản lý Vai trò / Phân quyền / Quản lý Thành viên), dù 3 tenant khác cùng user vẫn thấy.
+- **Flow:** Tạo tenant → `master-data-service` `TenantService.create()` → `ensureAdminRole()` → seed role `Admin` với `generateAllPermissions()`. Danh sách BE (`PERMISSION_MODULES` trong `tenant.service.ts`) **CÓ** `/cau-hinh/vai-tro|phan-quyen|thanh-vien`.
+- **Root cause:** Catalog FE `fe/src/pages/cau-hinh/phan-quyen/constants/permissionModules.ts` **KHÔNG có** nhóm Cấu hình (chưa từng có qua mọi commit). Trang Phân quyền lưu kiểu **thay thế toàn bộ**: `convertPermissionsToMatrix()` chỉ map quyền lên leaf-key của catalog (quyền `/cau-hinh/*` bị bỏ rơi vì không có leaf), `convertMatrixToPermissions()` xuất lại chỉ quyền trong catalog → PUT đè → **mọi `/cau-hinh/*` bị xoá vĩnh viễn**. Hễ ai mở role bất kỳ rồi bấm Lưu là role đó mất quyền Cấu hình. 3 tenant kia `phan_quyen.createdAt == updatedAt` (chưa từng sửa) nên còn quyền; ONENESS bị Lưu lại 11/06 → mất.
+- **Fix:** (1) Thêm section `cau-hinh` (3 key khớp BE) vào `permissionModules.ts` → ma trận giữ & cho tích quyền Cấu hình, không còn xoá oan + bảo vệ luôn các tenant khác. (2) Khôi phục DB: `$addToSet` 15 quyền `/cau-hinh/*` (3 module × 5 action) vào `phan_quyen {tenantId, vaiTro:"Admin"}`.
+- **Lưu ý:** menu **Quản lý Công ty (tenant)** + **Lĩnh vực** gated bằng `user.isSuperAdmin` (email === SUPER_ADMIN_EMAIL) ở `MainLayout.tsx` — KHÔNG cấp được qua role, chỉ SuperAdmin hệ thống thấy. Permissions nạp lúc login/select-tenant (auth-service đọc thẳng `phan_quyen`, không cache) → sửa quyền xong user phải **re-login**.
+- **Bài học:** Mọi thay đổi `PERMISSION_MODULES` ở BE (`tenant.service.ts`) PHẢI đồng bộ với `permissionModules.ts` ở FE, nếu không quyền sẽ bị rớt khi lưu.
+- **Verified:** YES (2026-06-24 — DB role Admin ONENESS 340→355 quyền có đủ 15 cau-hinh; bundle `PhanQuyenPage` deployed chứa key + section CẤU HÌNH)
+- **Files:** `fe/src/pages/cau-hinh/phan-quyen/constants/permissionModules.ts`, `fe/src/pages/cau-hinh/phan-quyen/utils/permissionConverter.ts`, `be/apps/master-data-service/src/tenant/tenant.service.ts`, `fe/src/components/layout/MainLayout.tsx`
+
 ### Security Implication
 - **Bất kỳ ai có valid JWT đều có thể gọi mọi API endpoint** — BE không chặn theo permission
 - FE chỉ ẩn UI, không ngăn được direct API calls

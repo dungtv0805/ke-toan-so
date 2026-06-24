@@ -32,20 +32,23 @@ export function getDoiTuongSelectConfig(
   return {
     disabled: false,
     options: doiTuongList
-      .filter((d) => d.loai === chiTietTheo)
+      .filter((d) => d.loai.includes(chiTietTheo as DoiTuong["loai"][number]))
       .map((d) => ({ value: d.id, label: `${d.ma} - ${d.ten}` })),
   };
 }
 
-/** Loại của đối tượng đang chọn; ngân hàng/quỹ quy về NGAN_HANG_QUY. */
+/**
+ * Các loại của đối tượng đang chọn (đối tượng có thể đa loại);
+ * ngân hàng/quỹ quy về [NGAN_HANG_QUY]. Undefined nếu không tìm thấy.
+ */
 export function getSelectedDoiTuongLoai(
   id: string | undefined,
   doiTuongList: DoiTuong[],
   nganHangList: TaiKhoanNganHang[],
-): string | undefined {
+): string[] | undefined {
   if (!id) return undefined;
   const dt = doiTuongList.find((d) => d.id === id);
   if (dt) return dt.loai;
-  if (nganHangList.some((nh) => nh.id === id)) return "NGAN_HANG_QUY";
+  if (nganHangList.some((nh) => nh.id === id)) return ["NGAN_HANG_QUY"];
   return undefined;
 }

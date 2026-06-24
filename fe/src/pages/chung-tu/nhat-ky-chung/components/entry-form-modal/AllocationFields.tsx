@@ -408,7 +408,7 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
                 optionFilterProp="label"
                 onChange={handleNhanVienChange}
                 options={doiTuongList
-                  ?.filter((dt: DoiTuong) => dt.loai === "NHAN_VIEN")
+                  ?.filter((dt: DoiTuong) => dt.loai.includes("NHAN_VIEN"))
                   .map((nv: DoiTuong) => ({
                     value: nv.id,
                     label: `${nv.ma} - ${nv.ten}`,

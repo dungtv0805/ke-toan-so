@@ -9,7 +9,7 @@ const masterData: ImportMasterData = {
   ],
   loaiGiaoDichList: [{ id: "1", ma: "PHIEU_THU", ten: "Phiếu thu" }] as ImportMasterData["loaiGiaoDichList"],
   quyChuanList: [{ id: "q1", loaiGiaoDich: "PHIEU_THU", nghiepVu: "NV01", taiKhoanNo: "111", taiKhoanCo: "511" }] as ImportMasterData["quyChuanList"],
-  doiTuongList: [{ id: "dt1", ma: "KH001", ten: "KH A", loai: "KHACH_HANG" }] as ImportMasterData["doiTuongList"],
+  doiTuongList: [{ id: "dt1", ma: "KH001", ten: "KH A", loai: ["KHACH_HANG"] }] as ImportMasterData["doiTuongList"],
   duAnList: [],
   boPhanList: [],
   sanPhamList: [],
