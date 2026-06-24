@@ -11,26 +11,29 @@ import {
   UseGuards,
   Req,
   Res,
-  ForbiddenException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { JwtGuard } from '@app/auth';
 import { TaiLieu_Service } from './tai-lieu.service';
+import { DocPermService } from './doc-perm.service';
 import { CreateFileDto, CreateYoutubeDto } from './dto';
 
 /**
  * Quyền phụ thuộc `category` runtime nên không thể dùng @Permissions tĩnh.
- * Chỉ dùng JwtGuard (gắn req.user.permissions) + kiểm thủ công qua requirePerm().
+ * JWT không mang permissions → kiểm qua DocPermService (nạp từ phan_quyen).
  */
 @Controller('tai-lieu')
 @UseGuards(JwtGuard)
 export class TaiLieu_Controller {
-  constructor(private readonly service: TaiLieu_Service) {}
+  constructor(
+    private readonly service: TaiLieu_Service,
+    private readonly perm: DocPermService,
+  ) {}
 
   @Get()
   async list(@Query('category') category: string, @Req() req: any) {
-    requirePerm(req, category, 'xem');
+    await this.perm.assertPerm(req.user, category, 'xem');
     return { success: true, data: await this.service.list(category) };
   }
 
@@ -41,7 +44,7 @@ export class TaiLieu_Controller {
     @Body() dto: CreateFileDto,
     @Req() req: any,
   ) {
-    requirePerm(req, dto.category, 'them');
+    await this.perm.assertPerm(req.user, dto.category, 'them');
     const data = await this.service.createFile(file, dto, {
       tenantId: req.user.tenantId,
       userId: req.user.id,
@@ -51,7 +54,7 @@ export class TaiLieu_Controller {
 
   @Post('youtube')
   async youtube(@Body() dto: CreateYoutubeDto, @Req() req: any) {
-    requirePerm(req, dto.category, 'them');
+    await this.perm.assertPerm(req.user, dto.category, 'them');
     const data = await this.service.createYoutube(dto, { userId: req.user.id });
     return { success: true, data };
   }
@@ -66,7 +69,7 @@ export class TaiLieu_Controller {
       id,
       req.user.tenantId,
     );
-    requirePerm(req, tl.category, 'xem');
+    await this.perm.assertPerm(req.user, tl.category, 'xem');
     const inline =
       tl.mimeType === 'application/pdf' || tl.mimeType?.startsWith('image/');
     res.setHeader('Content-Type', tl.mimeType || 'application/octet-stream');
@@ -82,17 +85,8 @@ export class TaiLieu_Controller {
   @Delete(':id')
   async remove(@Param('id') id: string, @Req() req: any) {
     const tl = await this.service.findOne(id);
-    requirePerm(req, tl.category, 'xoa');
+    await this.perm.assertPerm(req.user, tl.category, 'xoa');
     await this.service.remove(id);
     return { success: true };
-  }
-}
-
-function requirePerm(req: any, category: string, action: string) {
-  const perm = `/${category}:${action}`;
-  const perms: string[] = req.user?.permissions || [];
-  const isSuper = req.user?.isSuperAdmin;
-  if (!isSuper && !perms.includes('*') && !perms.includes(perm)) {
-    throw new ForbiddenException(`Bạn không có quyền: ${perm}`);
   }
 }
