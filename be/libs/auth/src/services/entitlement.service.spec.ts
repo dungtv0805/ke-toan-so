@@ -44,6 +44,14 @@ describe('EntitlementService', () => {
     expect(await svc.resolveOwningCodes('/kho/phieu/123')).toEqual(['KHO']);
   });
 
+  it('LinhVuc lưu key section "/kho" phủ menu_catalog leaf "/kho/nhap-kho" (prefix join)', async () => {
+    const svc = new EntitlementService(makeDataSource({
+      menuCatalog: [{ menuKey: '/kho/nhap-kho', apiPrefixes: ['/kho/phieu'] }],
+      linhVuc: [{ code: 'KHO', isActive: true, menuKeys: ['/kho'] }],
+    }));
+    expect(await svc.resolveOwningCodes('/kho/phieu/stats')).toEqual(['KHO']);
+  });
+
   it('menu chưa gán lĩnh vực nào → mặc định KE_TOAN', async () => {
     const svc = new EntitlementService(makeDataSource({
       menuCatalog: [{ menuKey: '/danh-muc/x', apiPrefixes: ['/master-data/x'] }],

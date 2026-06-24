@@ -23,10 +23,17 @@ export class EntitlementService {
     }
     if (matchedKeys.size === 0) return null;
 
+    // Lĩnh vực sở hữu menu nếu menuKeys của nó "phủ" menuKey khớp được — theo
+    // PREFIX semantics giống FE (LinhVuc lưu key section vd '/kho' phủ trang
+    // con '/kho/nhap-kho'). Join exact sẽ sót các trang con.
+    const matched = [...matchedKeys];
     const codes = new Set<string>();
     for (const lv of linhVucs) {
       if (lv.isActive === false) continue;
-      if ((lv.menuKeys ?? []).some((k) => matchedKeys.has(k))) codes.add(lv.code);
+      const owns = (lv.menuKeys ?? []).some((k) =>
+        matched.some((mk) => this.isPrefix(mk, k)),
+      );
+      if (owns) codes.add(lv.code);
     }
     if (codes.size === 0) return ['KE_TOAN'];
     return [...codes];
