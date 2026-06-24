@@ -64,4 +64,27 @@ describe('ModuleGuard', () => {
     await guard.canActivate(ctx({ authorization: 't' }, '/api/master-data/kho?x=1'));
     expect(entitlement.resolveOwningCodes).toHaveBeenCalledWith('/master-data/kho');
   });
+
+  // C1: SuperAdmin có tenantId vẫn bypass hoàn toàn
+  it('C1: SuperAdmin có tenantId → ALLOW, resolveOwningCodes KHÔNG được gọi', async () => {
+    jwtService.verify.mockReturnValue({ tenantId: 'tid', email: 'admin@company.com' });
+    expect(await guard.canActivate(ctx({ authorization: 't' }))).toBe(true);
+    expect(entitlement.resolveOwningCodes).not.toHaveBeenCalled();
+    expect(entitlement.getTenantModules).not.toHaveBeenCalled();
+  });
+
+  // I2: URL encoding bypass - path encoded phải được decode trước khi strip /api
+  it('I2: URL encoded path /api/master-data%2fkho → resolveOwningCodes được gọi với /master-data/kho', async () => {
+    jwtService.verify.mockReturnValue({ tenantId: 'tid' });
+    entitlement.resolveOwningCodes.mockResolvedValue(null);
+    await guard.canActivate(ctx({ authorization: 't' }, '/api/master-data%2fkho'));
+    expect(entitlement.resolveOwningCodes).toHaveBeenCalledWith('/master-data/kho');
+  });
+
+  it('I2: double slash /api//master-data/kho → resolveOwningCodes được gọi với /master-data/kho', async () => {
+    jwtService.verify.mockReturnValue({ tenantId: 'tid' });
+    entitlement.resolveOwningCodes.mockResolvedValue(null);
+    await guard.canActivate(ctx({ authorization: 't' }, '/api//master-data/kho'));
+    expect(entitlement.resolveOwningCodes).toHaveBeenCalledWith('/master-data/kho');
+  });
 });

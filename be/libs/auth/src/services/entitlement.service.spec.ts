@@ -68,4 +68,10 @@ describe('EntitlementService', () => {
     const svc = new EntitlementService(makeDataSource({ tenant: { modules: [] } }));
     expect(await svc.getTenantModules('507f1f77bcf86cd799439011')).toEqual(['KE_TOAN']);
   });
+
+  // I1: ObjectId không hợp lệ → fallback ['KE_TOAN'], không throw
+  it('I1: getTenantModules với tenantId không hợp lệ → trả [KE_TOAN] không throw', async () => {
+    const svc = new EntitlementService(makeDataSource({}));
+    await expect(svc.getTenantModules('not-a-valid-objectid')).resolves.toEqual(['KE_TOAN']);
+  });
 });

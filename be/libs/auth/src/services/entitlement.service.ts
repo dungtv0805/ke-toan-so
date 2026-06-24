@@ -33,12 +33,16 @@ export class EntitlementService {
   }
 
   async getTenantModules(tenantId: string): Promise<string[]> {
-    const { ObjectId } = await import('mongodb');
-    const tenant = await this.dataSource
-      .getRepository(Tenant)
-      .findOne({ where: { _id: new ObjectId(tenantId) as any } });
-    const mods = tenant?.modules;
-    return mods && mods.length ? mods : ['KE_TOAN'];
+    try {
+      const { ObjectId } = await import('mongodb');
+      const tenant = await this.dataSource
+        .getRepository(Tenant)
+        .findOne({ where: { _id: new ObjectId(tenantId) as any } });
+      const mods = tenant?.modules;
+      return mods && mods.length ? mods : ['KE_TOAN'];
+    } catch {
+      return ['KE_TOAN']; // ObjectId không hợp lệ hoặc lỗi DB → fallback an toàn
+    }
   }
 
   private isPrefix(fullPath: string, prefix: string): boolean {

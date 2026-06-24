@@ -3,6 +3,7 @@ import { Request } from 'express';
 import { JwtService } from '../services/jwt.service';
 import { EntitlementService } from '../services/entitlement.service';
 import { DecodedToken } from '../interfaces';
+import { SUPER_ADMIN_EMAIL } from '@app/entities';
 
 /**
  * Chặn truy cập API theo lĩnh vực (entitlement) công ty được cấp.
@@ -29,7 +30,8 @@ export class ModuleGuard implements CanActivate {
     } catch {
       return true; // token lỗi/hết hạn → downstream JwtGuard sẽ trả 401
     }
-    if (!decoded?.tenantId) return true; // SuperAdmin/temp token
+    if (decoded.email === SUPER_ADMIN_EMAIL) return true; // SuperAdmin bypass hoàn toàn
+    if (!decoded?.tenantId) return true; // temp token không có tenantId
 
     const fullPath = this.normalizePath(req);
     const owningCodes = await this.entitlement.resolveOwningCodes(fullPath);
@@ -48,8 +50,9 @@ export class ModuleGuard implements CanActivate {
   }
 
   private normalizePath(req: Request): string {
-    const raw = req.originalUrl || req.url || '';
-    const path = raw.split('?')[0];
+    let path = (req.originalUrl || req.url || '').split('?')[0];
+    try { path = decodeURIComponent(path); } catch { /* giữ raw nếu decode lỗi */ }
+    path = path.replace(/\/{2,}/g, '/');
     return path.replace(/^\/api/, '') || '/';
   }
 }
