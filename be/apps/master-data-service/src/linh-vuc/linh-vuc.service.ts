@@ -6,12 +6,14 @@ import {
   OnModuleInit,
   Logger,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
 import { LinhVuc, Tenant } from '@app/entities';
 import { CreateLinhVucDto, UpdateLinhVucDto } from '@app/dto';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 import { sanitizeUpdateDto } from '@app/core';
 import { DEFAULT_LINH_VUC_SEED } from './linh-vuc.seed';
+import { seedMenuCatalog } from '../menu-catalog/menu-catalog.seed';
 
 const DEFAULT_LINH_VUC_CODE = 'KE_TOAN';
 
@@ -24,10 +26,13 @@ export class LinhVucService implements OnModuleInit {
     private readonly linhVucRepository: Repository<LinhVuc>,
     @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`)
     private readonly tenantRepository: Repository<Tenant>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
   async onModuleInit(): Promise<void> {
     await this.seedDefaults();
+    await seedMenuCatalog(this.dataSource);
   }
 
   async seedDefaults(): Promise<void> {

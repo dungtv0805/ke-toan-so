@@ -5,3 +5,4 @@ export * from './permission.guard';
 export * from './super-admin.guard';
 export * from './tenant-active.guard';
 export * from './tenant-admin.guard';
+export * from './module.guard';

@@ -10,3 +10,4 @@ export * from './payable';
 export * from './config';
 export * from './tenant';
 export * from './linh-vuc';
+export * from './menu-catalog';
