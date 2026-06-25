@@ -11,3 +11,4 @@ export * from './config';
 export * from './tenant';
 export * from './linh-vuc';
 export * from './menu-catalog';
+export * from './tax';
