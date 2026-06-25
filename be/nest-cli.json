@@ -144,6 +144,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/kho-service/tsconfig.app.json"
       }
+    },
+    "tax-service": {
+      "type": "application",
+      "root": "apps/tax-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/tax-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/tax-service/tsconfig.app.json"
+      }
     }
   }
 }
