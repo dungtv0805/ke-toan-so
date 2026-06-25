@@ -13,6 +13,9 @@ import { Request } from 'express';
  *
  * Kiểm tra theo `vaiTro` (luôn có trong JWT) thay vì mảng `permissions` —
  * một số login path ký token với `permissions: []` nên mảng quyền không tin cậy.
+ *
+ * So sánh KHÔNG phân biệt hoa-thường: vai trò là chuỗi tự do (`vai_tro.ten`),
+ * dữ liệu thực tế dùng tên `"Admin"`; super admin có `vaiTro = 'SUPER_ADMIN'`.
  */
 @Injectable()
 export class AdminGuard implements CanActivate {
@@ -26,7 +29,8 @@ export class AdminGuard implements CanActivate {
       throw new ForbiddenException('Không tìm thấy thông tin người dùng');
     }
 
-    if (!AdminGuard.ADMIN_ROLES.includes(user.vaiTro)) {
+    const vaiTro = String(user.vaiTro ?? '').toUpperCase();
+    if (!AdminGuard.ADMIN_ROLES.includes(vaiTro)) {
       throw new ForbiddenException('Chỉ quản trị viên mới có quyền thực hiện');
     }
 

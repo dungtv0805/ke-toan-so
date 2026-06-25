@@ -13,8 +13,10 @@ describe('AdminGuard', () => {
       switchToHttp: () => ({ getRequest: () => ({ user }) }),
     }) as unknown as ExecutionContext;
 
-  it('allows tenant admin', () => {
+  it('allows tenant admin (case-insensitive — real data uses "Admin")', () => {
     expect(guard.canActivate(ctx({ vaiTro: 'ADMIN' }))).toBe(true);
+    expect(guard.canActivate(ctx({ vaiTro: 'Admin' }))).toBe(true);
+    expect(guard.canActivate(ctx({ vaiTro: 'admin' }))).toBe(true);
   });
 
   it('allows super admin', () => {
