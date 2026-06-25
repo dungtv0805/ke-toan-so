@@ -4,8 +4,9 @@ import { AuthModule } from '@app/auth';
 import { TenantModule } from '@app/core';
 import { DatabaseModule } from '@app/database';
 import { BangKeMuaVaoModule } from './bang-ke-mua-vao/bang-ke-mua-vao.module';
+import { BangKeBanRaModule } from './bang-ke-ban-ra/bang-ke-ban-ra.module';
 // Feature modules thêm dần ở các task sau:
-// BangKeBanRaModule, DieuChinhThueModule, BaoCaoModule
+// DieuChinhThueModule, BaoCaoModule
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { BangKeMuaVaoModule } from './bang-ke-mua-vao/bang-ke-mua-vao.module';
     DatabaseModule.forRoot(),
     AuthModule,
     BangKeMuaVaoModule,
+    BangKeBanRaModule,
   ],
 })
 export class TaxServiceModule {}
