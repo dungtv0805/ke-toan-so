@@ -55,6 +55,16 @@ export const permissionModules: PermissionModule[] = [
         ],
       },
       {
+        key: '/thue',
+        label: 'Thuế',
+        children: [
+          { key: '/thue/bang-ke-mua-vao', label: 'Bảng kê mua vào' },
+          { key: '/thue/bang-ke-ban-ra', label: 'Bảng kê bán ra' },
+          { key: '/thue/tong-hop', label: 'Tổng hợp thuế' },
+          { key: '/thue/bao-cao-tndn', label: 'Báo cáo nhanh thuế TNDN' },
+        ],
+      },
+      {
         key: '/trung-tam-du-lieu',
         label: 'Trung tâm dữ liệu',
         children: [
