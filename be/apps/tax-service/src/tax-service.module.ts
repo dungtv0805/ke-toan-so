@@ -3,8 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from '@app/auth';
 import { TenantModule } from '@app/core';
 import { DatabaseModule } from '@app/database';
+import { BangKeMuaVaoModule } from './bang-ke-mua-vao/bang-ke-mua-vao.module';
 // Feature modules thêm dần ở các task sau:
-// BangKeMuaVaoModule, BangKeBanRaModule, DieuChinhThueModule, BaoCaoModule
+// BangKeBanRaModule, DieuChinhThueModule, BaoCaoModule
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { DatabaseModule } from '@app/database';
     TenantModule,
     DatabaseModule.forRoot(),
     AuthModule,
+    BangKeMuaVaoModule,
   ],
 })
 export class TaxServiceModule {}
