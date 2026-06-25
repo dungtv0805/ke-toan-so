@@ -10,9 +10,30 @@ description: Use when deploying backend services or frontend to production serve
 - SSH config name: `kt`
 - Path: `/root/chimseo/digital-book-be/`
 - Container: `digital-book-app` (single container, all services via PM2 — see `pm2/ecosystem.config.js`)
-- Ports: 3000-3008 (only 3000 exposed externally; gateway proxies the rest on localhost)
+- Ports: 3000-3009 (only 3000 exposed externally; gateway proxies the rest on localhost)
 - Domain: masterceo.com.vn
-- Services hiện có: gateway(3000), auth(3001), master-data(3002), voucher(3003), cash-book(3004), payable(3005), reporting(3006), config(3007), kho(3008)
+- Services hiện có: gateway(3000), auth(3001), master-data(3002), voucher(3003), cash-book(3004), payable(3005), reporting(3006), config(3007), kho(3008), tax(3009)
+
+## ⚠️ Khi thêm MENU/PAGE mới — BẮT BUỘC khai báo PHÂN QUYỀN (nếu thiếu, trang bị ẩn/chặn với mọi role trừ superAdmin)
+
+Quyền dạng `"<route>:<action>"` (action: `xem|them|sua|xoa|xuat`). superAdmin (`admin@company.com`) bypass tất cả; role công ty (vd "Admin") lấy quyền từ collection `phan_quyen` → nạp vào JWT lúc login. Xem chi tiết khai báo trong skill `db-fe`. Tóm tắt 4 bước (đã verify khi thêm menu Thuế 2026-06-25):
+
+1. **Khai báo quyền — sửa 3 file** (thiếu → không hiện trong ma trận Phân quyền + bị chặn):
+   - FE `fe/src/config/routePermissions.ts` (map `'<route>': '<route>:xem'`)
+   - FE `fe/src/pages/cau-hinh/phan-quyen/constants/permissionModules.ts` (node cây — PHẢI KHỚP BE)
+   - BE `be/apps/master-data-service/src/tenant/tenant.service.ts` → `PERMISSION_MODULES`
+   - (Menu: `MainLayout.tsx` + `menuCatalog.ts`; thêm route vào `existingRoutes` để bỏ nhãn "coming soon".)
+2. **Deploy:** build + đẩy `master-data-service` (restart) + FE (reload nginx).
+3. **Cấp quyền cho role ĐÃ CÓ** — `generateAllPermissions` chỉ chạy lúc tạo tenant, role "Admin" cũ KHÔNG tự có quyền mới → $addToSet vào `phan_quyen` (container Mongo tên `mongo`):
+   ```bash
+   ssh kt "docker exec mongo mongosh 'mongodb://dbadmin:abcde12345-@localhost:27017/digital_book?authSource=admin' --quiet --eval '
+   var mods=[\"/<route1>\",\"/<route2>\"]; var acts=[\"xem\",\"them\",\"sua\",\"xoa\",\"xuat\"];
+   var keys=[]; mods.forEach(function(m){acts.forEach(function(a){keys.push(m+\":\"+a)})});
+   var r=db.phan_quyen.updateMany({vaiTro:\"Admin\"},{\$addToSet:{permissions:{\$each:keys}}});
+   print(\"modified=\"+r.modifiedCount);'"
+   ```
+   (Role khác cấp chọn lọc trong trang Phân quyền.)
+4. **Đăng xuất/đăng nhập lại** — quyền nạp vào JWT lúc login.
 
 ## ⚠️ Khi thêm DEPENDENCY npm MỚI (runtime) — BẮT BUỘC đọc
 
