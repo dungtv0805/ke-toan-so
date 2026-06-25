@@ -27,6 +27,12 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/bao-cao/bang-tong-hop', label: 'Bảng tổng hợp', parentLabel: 'Báo cáo' },
   { key: '/bao-cao/hop-dong', label: 'Báo cáo hợp đồng', parentLabel: 'Báo cáo' },
 
+  // ===== KẾ TOÁN — Thuế =====
+  { key: '/thue/bang-ke-mua-vao', label: 'Bảng kê mua vào', parentLabel: 'Thuế' },
+  { key: '/thue/bang-ke-ban-ra', label: 'Bảng kê bán ra', parentLabel: 'Thuế' },
+  { key: '/thue/tong-hop', label: 'Tổng hợp thuế', parentLabel: 'Thuế' },
+  { key: '/thue/bao-cao-tndn', label: 'Báo cáo nhanh thuế TNDN', parentLabel: 'Thuế' },
+
   // ===== KẾ TOÁN — Trung tâm dữ liệu =====
   { key: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch', parentLabel: 'Trung tâm dữ liệu' },
   { key: '/trung-tam-du-lieu/du-bao', label: 'Dự báo', parentLabel: 'Trung tâm dữ liệu' },

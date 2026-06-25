@@ -145,6 +145,11 @@ const existingRoutes = new Set([
   "/bao-cao/bang-tong-hop",
   "/bao-cao/hop-dong",
 
+  "/thue/bang-ke-mua-vao",
+  "/thue/bang-ke-ban-ra",
+  "/thue/tong-hop",
+  "/thue/bao-cao-tndn",
+
   "/bieu-mau",
   "/chinh-sach",
   "/huong-dan",
@@ -224,6 +229,13 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Sổ chi tiết phát sinh", "/bao-cao/so-chi-tiet-phat-sinh", <ProfileOutlined />),
     getMenuItem("Bảng tổng hợp", "/bao-cao/bang-tong-hop", <TableOutlined />),
     getMenuItem("Báo cáo hợp đồng", "/bao-cao/hop-dong", <FileProtectOutlined />),
+  ]),
+
+  getItem("Thuế", "/thue", <CalculatorOutlined />, [
+    getMenuItem("Bảng kê mua vào", "/thue/bang-ke-mua-vao", <FileAddOutlined />),
+    getMenuItem("Bảng kê bán ra", "/thue/bang-ke-ban-ra", <FileDoneOutlined />),
+    getMenuItem("Tổng hợp thuế", "/thue/tong-hop", <TableOutlined />),
+    getMenuItem("Báo cáo nhanh thuế TNDN", "/thue/bao-cao-tndn", <BarChartOutlined />),
   ]),
 
   getItem("Trung tâm dữ liệu", "/trung-tam-du-lieu", <DatabaseOutlined />, [
