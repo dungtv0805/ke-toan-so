@@ -242,3 +242,20 @@ export const SoThuTienPage = loadable(() => import('./trung-tam-du-lieu/thu-tien
 export const SoHoaDonBanRaPage = loadable(() => import('./trung-tam-du-lieu/hd-ban-ra/SoHoaDonBanRaPage'), {
   fallback: <PageLoader />
 });
+
+// Thuế
+export const BangKeMuaVaoPage = loadable(() => import('./thue/bang-ke-mua-vao/BangKeMuaVaoPage'), {
+  fallback: <PageLoader />
+});
+
+export const BangKeBanRaPage = loadable(() => import('./thue/bang-ke-ban-ra/BangKeBanRaPage'), {
+  fallback: <PageLoader />
+});
+
+export const TongHopThuePage = loadable(() => import('./thue/tong-hop/TongHopThuePage'), {
+  fallback: <PageLoader />
+});
+
+export const BaoCaoTNDNPage = loadable(() => import('./thue/bao-cao-tndn/BaoCaoTNDNPage'), {
+  fallback: <PageLoader />
+});

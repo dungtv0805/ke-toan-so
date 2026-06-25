@@ -65,6 +65,10 @@ import {
   BaoCaoHopDongPage,
   SoThuTienPage,
   SoHoaDonBanRaPage,
+  BangKeMuaVaoPage,
+  BangKeBanRaPage,
+  TongHopThuePage,
+  BaoCaoTNDNPage,
   NotFound
 } from "./pages/loadable";
 
@@ -404,6 +408,42 @@ const App = () => (
                     element={
                       <ProtectedRoute requiredPermission="/bao-cao/hop-dong:xem">
                         <BaoCaoHopDongPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                </Route>
+
+                {/* Thuế */}
+                <Route path="thue">
+                  <Route
+                    path="bang-ke-mua-vao"
+                    element={
+                      <ProtectedRoute requiredPermission="/thue/bang-ke-mua-vao:xem">
+                        <BangKeMuaVaoPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="bang-ke-ban-ra"
+                    element={
+                      <ProtectedRoute requiredPermission="/thue/bang-ke-ban-ra:xem">
+                        <BangKeBanRaPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="tong-hop"
+                    element={
+                      <ProtectedRoute requiredPermission="/thue/tong-hop:xem">
+                        <TongHopThuePage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="bao-cao-tndn"
+                    element={
+                      <ProtectedRoute requiredPermission="/thue/bao-cao-tndn:xem">
+                        <BaoCaoTNDNPage />
                       </ProtectedRoute>
                     }
                   />
