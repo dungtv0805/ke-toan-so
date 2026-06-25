@@ -1,43 +1,6 @@
-import { ChungTuChiTiet, TaiKhoanItem } from "../../init/init.state";
-import { QuyChuan, DoiTuong, TaiKhoan } from "@/types";
-import { buildDoiTuongSnapshot } from "@/utils/snapshotBuilder";
-
-/** Điền nghiệp vụ vào 1 dòng + auto-fill TK Nợ/Có/nội dung từ quy chuẩn (đồng nhất handleNghiepVuChange). */
-export function applyNghiepVu(item: ChungTuChiTiet, quyChuan: QuyChuan): ChungTuChiTiet {
-  return {
-    ...item,
-    nghiepVu: quyChuan.nghiepVu,
-    nghiepVuTen: quyChuan.nghiepVu,
-    taiKhoanNo: quyChuan.taiKhoanNo || item.taiKhoanNo,
-    taiKhoanCo: quyChuan.taiKhoanCo || item.taiKhoanCo,
-    noiDung: quyChuan.moTa || item.noiDung,
-  };
-}
-
-/** Map tài khoản vừa tạo về đúng shape TaiKhoanItem dùng trong dropdown của bảng. */
-export function toTaiKhoanItem(tk: TaiKhoan): TaiKhoanItem {
-  return {
-    ma: tk.ma,
-    ten: tk.ten,
-    loai: tk.loai,
-    nhom: tk.nhom,
-    chiTietTheo: tk.chiTietTheo ?? undefined,
-    fieldRules: (tk.fieldRules ?? null) as TaiKhoanItem["fieldRules"],
-  };
-}
-
-export function quickAddQuyChuanReducer(input: {
-  chiTietList: ChungTuChiTiet[];
-  quyChaunList: QuyChuan[];
-  key: string;
-  created: QuyChuan;
-}): { chiTietList: ChungTuChiTiet[]; quyChaunList: QuyChuan[] } {
-  const quyChaunList = [...input.quyChaunList, input.created];
-  const chiTietList = input.chiTietList.map((item) =>
-    item.key === input.key ? applyNghiepVu(item, input.created) : item
-  );
-  return { chiTietList, quyChaunList };
-}
+import { ChungTuChiTiet } from "../init/init.state";
+import { DoiTuong, SanPham } from "@/types";
+import { buildDoiTuongSnapshot, buildSanPhamSnapshot } from "@/utils/snapshotBuilder";
 
 export function quickAddDoiTuongReducer(input: {
   chiTietList: ChungTuChiTiet[];
@@ -56,16 +19,17 @@ export function quickAddDoiTuongReducer(input: {
   return { chiTietList, doiTuongList };
 }
 
-export function quickAddTaiKhoanReducer(input: {
+export function quickAddSanPhamReducer(input: {
   chiTietList: ChungTuChiTiet[];
-  taiKhoanList: TaiKhoanItem[];
+  sanPhamList: SanPham[];
   key: string;
-  field: "taiKhoanNo" | "taiKhoanCo";
-  created: TaiKhoan;
-}): { chiTietList: ChungTuChiTiet[]; taiKhoanList: TaiKhoanItem[] } {
-  const taiKhoanList = [...input.taiKhoanList, toTaiKhoanItem(input.created)];
+  created: SanPham;
+}): { chiTietList: ChungTuChiTiet[]; sanPhamList: SanPham[] } {
+  const sanPhamList = [...input.sanPhamList, input.created];
   const chiTietList = input.chiTietList.map((item) =>
-    item.key === input.key ? { ...item, [input.field]: input.created.ma } : item
+    item.key === input.key
+      ? { ...item, sanPhamId: input.created.id, sanPhamSnapshot: buildSanPhamSnapshot(input.created) }
+      : item
   );
-  return { chiTietList, taiKhoanList };
+  return { chiTietList, sanPhamList };
 }
