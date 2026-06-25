@@ -28,6 +28,11 @@ import {
 } from "@/utils/snapshotBuilder";
 import { useTableColumnResize } from "@/hooks/useTableColumnResize";
 import { getDoiTuongSelectConfig, getSelectedDoiTuongLoai } from "../../doiTuongConfig";
+import { SelectWithQuickAdd } from "../../quick-add/SelectWithQuickAdd";
+import { QuickAddQuyChuanModal } from "../../quick-add/QuickAddQuyChuanModal";
+import { QuickAddDoiTuongModal } from "../../quick-add/QuickAddDoiTuongModal";
+import { QuickAddTaiKhoanModal } from "../../quick-add/QuickAddTaiKhoanModal";
+import { toast } from "sonner";
 
 export function ChiTietTable() {
   const handler = useNhatKyChungFormHandler();
@@ -49,6 +54,19 @@ export function ChiTietTable() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+
+  // Quick-add modal state
+  type QuickAddState =
+    | { type: "quyChuan"; key: string }
+    | { type: "doiTuong"; key: string; field: "doiTuongId" | "doiTuong2Id"; loai: string[] }
+    | { type: "taiKhoan"; key: string; field: "taiKhoanNo" | "taiKhoanCo" }
+    | null;
+  const [quickAdd, setQuickAdd] = useState<QuickAddState>(null);
+
+  const taiKhoanSelectOptions = (taiKhoanList as TaiKhoanItem[]).map((tk) => ({
+    value: tk.ma,
+    label: `${tk.ma} - ${tk.ten}`,
+  }));
 
   // Lọc nghiệp vụ theo loại giao dịch từ header
   const typedHeader = header as ChungTuHeader | null;
@@ -419,7 +437,7 @@ export function ChiTietTable() {
       dataIndex: "nghiepVu",
       width: 180,
       render: (value: string, record: ChungTuChiTiet, index: number) => (
-        <Select
+        <SelectWithQuickAdd
           size="small"
           showSearch
           placeholder="Chọn nghiệp vụ"
@@ -433,6 +451,9 @@ export function ChiTietTable() {
           status={!value ? "error" : ""}
           popupMatchSelectWidth={280}
           disabled={!typedHeader?.loaiGiaoDich}
+          quickAddLabel="nghiệp vụ"
+          quickAddDisabled={!typedHeader?.loaiGiaoDich}
+          onQuickAdd={() => setQuickAdd({ type: "quyChuan", key: record.key })}
         />
       ),
     },
@@ -462,7 +483,7 @@ export function ChiTietTable() {
       dataIndex: "taiKhoanNo",
       width: 130,
       render: (value: string, record: ChungTuChiTiet, index: number) => (
-        <Select
+        <SelectWithQuickAdd
           size="small"
           showSearch
           placeholder="Chọn TK"
@@ -470,14 +491,13 @@ export function ChiTietTable() {
           value={value || undefined}
           onChange={(v) => handleTaiKhoanChange(record, "taiKhoanNo", v)}
           onFocus={() => { activeRowRef.current = index; }}
-          options={(taiKhoanList as TaiKhoanItem[]).map((tk) => ({
-            value: tk.ma,
-            label: `${tk.ma} - ${tk.ten}`,
-          }))}
+          options={taiKhoanSelectOptions}
           className="w-full excel-cell-input"
           variant="borderless"
           status={!value ? "error" : ""}
           popupMatchSelectWidth={280}
+          quickAddLabel="tài khoản"
+          onQuickAdd={() => setQuickAdd({ type: "taiKhoan", key: record.key, field: "taiKhoanNo" })}
         />
       ),
     },
@@ -490,7 +510,7 @@ export function ChiTietTable() {
       dataIndex: "taiKhoanCo",
       width: 130,
       render: (value: string, record: ChungTuChiTiet, index: number) => (
-        <Select
+        <SelectWithQuickAdd
           size="small"
           showSearch
           placeholder="Chọn TK"
@@ -498,14 +518,13 @@ export function ChiTietTable() {
           value={value || undefined}
           onChange={(v) => handleTaiKhoanChange(record, "taiKhoanCo", v)}
           onFocus={() => { activeRowRef.current = index; }}
-          options={(taiKhoanList as TaiKhoanItem[]).map((tk) => ({
-            value: tk.ma,
-            label: `${tk.ma} - ${tk.ten}`,
-          }))}
+          options={taiKhoanSelectOptions}
           className="w-full excel-cell-input"
           variant="borderless"
           status={!value ? "error" : ""}
           popupMatchSelectWidth={280}
+          quickAddLabel="tài khoản"
+          onQuickAdd={() => setQuickAdd({ type: "taiKhoan", key: record.key, field: "taiKhoanCo" })}
         />
       ),
     },
@@ -544,7 +563,7 @@ export function ChiTietTable() {
           nganHangList as TaiKhoanNganHang[]
         );
         return (
-          <Select
+          <SelectWithQuickAdd
             size="small"
             showSearch
             allowClear
@@ -558,6 +577,9 @@ export function ChiTietTable() {
             className="w-full excel-cell-input"
             variant="borderless"
             popupMatchSelectWidth={280}
+            quickAddLabel="đối tượng"
+            quickAddDisabled={cfg.disabled || tkNo?.chiTietTheo === "NGAN_HANG_QUY" || !tkNo?.chiTietTheo}
+            onQuickAdd={() => setQuickAdd({ type: "doiTuong", key: record.key, field: "doiTuongId", loai: tkNo?.chiTietTheo ? [tkNo.chiTietTheo] : [] })}
           />
         );
       },
@@ -574,7 +596,7 @@ export function ChiTietTable() {
           nganHangList as TaiKhoanNganHang[]
         );
         return (
-          <Select
+          <SelectWithQuickAdd
             size="small"
             showSearch
             allowClear
@@ -588,6 +610,9 @@ export function ChiTietTable() {
             className="w-full excel-cell-input"
             variant="borderless"
             popupMatchSelectWidth={280}
+            quickAddLabel="đối tượng"
+            quickAddDisabled={cfg.disabled || tkCo?.chiTietTheo === "NGAN_HANG_QUY" || !tkCo?.chiTietTheo}
+            onQuickAdd={() => setQuickAdd({ type: "doiTuong", key: record.key, field: "doiTuong2Id", loai: tkCo?.chiTietTheo ? [tkCo.chiTietTheo] : [] })}
           />
         );
       },
@@ -979,6 +1004,55 @@ export function ChiTietTable() {
           </span>
         </div>
       </div>
+
+      {quickAdd?.type === "quyChuan" && (
+        <QuickAddQuyChuanModal
+          open
+          onClose={() => setQuickAdd(null)}
+          loaiGiaoDichLabel={typedHeader?.loaiTen || typedHeader?.loaiGiaoDich || ""}
+          taiKhoanOptions={taiKhoanSelectOptions}
+          onSubmit={async (v) => {
+            const r = await handler.executeEvent("quickCreateQuyChuan", {
+              key: quickAdd.key,
+              loaiGiaoDich: typedHeader?.loaiGiaoDich || "",
+              ...v,
+            });
+            if (r?.ok) { toast.success("Đã thêm nghiệp vụ"); return true; }
+            toast.error("Thêm nghiệp vụ thất bại"); return false;
+          }}
+        />
+      )}
+      {quickAdd?.type === "doiTuong" && (
+        <QuickAddDoiTuongModal
+          open
+          onClose={() => setQuickAdd(null)}
+          defaultLoai={quickAdd.loai}
+          onSubmit={async (v) => {
+            const r = await handler.executeEvent("quickCreateDoiTuong", {
+              key: quickAdd.key,
+              field: quickAdd.field,
+              ...v,
+            });
+            if (r?.ok) { toast.success("Đã thêm đối tượng"); return true; }
+            toast.error("Thêm đối tượng thất bại"); return false;
+          }}
+        />
+      )}
+      {quickAdd?.type === "taiKhoan" && (
+        <QuickAddTaiKhoanModal
+          open
+          onClose={() => setQuickAdd(null)}
+          onSubmit={async (v) => {
+            const r = await handler.executeEvent("quickCreateTaiKhoan", {
+              key: quickAdd.key,
+              field: quickAdd.field,
+              ...v,
+            });
+            if (r?.ok) { toast.success("Đã thêm tài khoản"); return true; }
+            toast.error("Thêm tài khoản thất bại"); return false;
+          }}
+        />
+      )}
     </div>
   );
 }
