@@ -67,6 +67,8 @@ import {
   SoHoaDonBanRaPage,
   BangKeMuaVaoPage,
   BangKeBanRaPage,
+  TongHopThuePage,
+  BaoCaoTNDNPage,
   NotFound
 } from "./pages/loadable";
 
@@ -426,6 +428,22 @@ const App = () => (
                     element={
                       <ProtectedRoute requiredPermission="/thue/bang-ke-ban-ra:xem">
                         <BangKeBanRaPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="tong-hop"
+                    element={
+                      <ProtectedRoute requiredPermission="/thue/tong-hop:xem">
+                        <TongHopThuePage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="bao-cao-tndn"
+                    element={
+                      <ProtectedRoute requiredPermission="/thue/bao-cao-tndn:xem">
+                        <BaoCaoTNDNPage />
                       </ProtectedRoute>
                     }
                   />
