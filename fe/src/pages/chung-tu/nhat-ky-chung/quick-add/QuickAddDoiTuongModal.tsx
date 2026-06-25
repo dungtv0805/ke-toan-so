@@ -28,9 +28,12 @@ export function QuickAddDoiTuongModal({ open, onClose, defaultLoai, onSubmit }: 
     let v: Values;
     try { v = await form.validateFields(); } catch { return; }
     setSaving(true);
-    const ok = await onSubmit(v);
-    setSaving(false);
-    if (ok) onClose();
+    try {
+      const ok = await onSubmit(v);
+      if (ok) onClose();
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
