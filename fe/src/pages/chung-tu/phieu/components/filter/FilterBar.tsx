@@ -6,12 +6,14 @@ import {
 } from "@ant-design/icons";
 import type { Dayjs } from "dayjs";
 import { FilterBar as SharedFilterBar } from "@/components/common/FilterBar";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { usePhieuState, usePhieuHandler } from "../../PhieuHandlerContext";
 
 const { RangePicker } = DatePicker;
 
 export function FilterBar() {
   const handler = usePhieuHandler();
+  const isAdmin = useIsAdmin();
 
   const [searchText] = usePhieuState("searchText", "");
   const [dateRange] = usePhieuState("dateRange", null);
@@ -112,12 +114,14 @@ export function FilterBar() {
       }
       actions={
         <>
-          <Button
-            icon={<FileTextOutlined />}
-            onClick={() => setTemplateModalOpen(true)}
-          >
-            Mẫu in
-          </Button>
+          {isAdmin && (
+            <Button
+              icon={<FileTextOutlined />}
+              onClick={() => setTemplateModalOpen(true)}
+            >
+              Mẫu in
+            </Button>
+          )}
           <Button
             icon={<UploadOutlined />}
             onClick={() => setImportModalOpen(true)}

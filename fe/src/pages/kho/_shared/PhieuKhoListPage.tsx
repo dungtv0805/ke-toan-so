@@ -25,6 +25,7 @@ import type { PhieuKho, LoaiPhieuKho } from '@/types';
 import { phieuKhoService } from '@/services/phieuKhoService';
 import { khoTemplateService } from '@/services/khoTemplateService';
 import { usePagePermission } from '@/hooks/usePagePermission';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { formatCurrency } from '@/pages/chung-tu/phieu/lib/format';
 import { PhieuKhoEditorModal } from './PhieuKhoEditorModal';
 import { usePrintKhoPhieu } from './print/usePrintKhoPhieu';
@@ -41,6 +42,7 @@ interface Props {
 
 export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
   const { canCreate, canEdit, canDelete } = usePagePermission(route);
+  const isAdmin = useIsAdmin();
   const printPhieu = usePrintKhoPhieu();
 
   const [data, setData] = useState<PhieuKho[]>([]);
@@ -277,14 +279,16 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
             Tìm
           </Button>
           <Space style={{ marginLeft: 'auto' }} size={8}>
-            <Button
-              size="small"
-              icon={<FileTextOutlined />}
-              style={{ height: 28 }}
-              onClick={() => setTemplateModalOpen(true)}
-            >
-              Mẫu in
-            </Button>
+            {isAdmin && (
+              <Button
+                size="small"
+                icon={<FileTextOutlined />}
+                style={{ height: 28 }}
+                onClick={() => setTemplateModalOpen(true)}
+              >
+                Mẫu in
+              </Button>
+            )}
             {canCreate && (
               <Button
                 type="primary"
