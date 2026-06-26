@@ -41,4 +41,8 @@ export class UpdateTenantDto {
   @IsString({ each: true })
   @IsOptional()
   modules?: string[];
+
+  @IsString()
+  @IsOptional()
+  nganh?: string;
 }
