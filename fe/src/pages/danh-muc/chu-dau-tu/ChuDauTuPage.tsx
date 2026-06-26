@@ -29,11 +29,13 @@ import {
 import "./ChuDauTuPage.state";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useTerm } from "@/contexts/TermContext";
 
 const { Title, Text } = Typography;
 
 function ChuDauTuPageInner() {
   const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/chu-dau-tu");
+  const { t } = useTerm();
   const handler = useChuDauTuHandler();
   const [data] = useChuDauTuState("data", []);
   const [loading] = useChuDauTuState("loading", false);
@@ -113,7 +115,7 @@ function ChuDauTuPageInner() {
       render: (text: string) => <Text strong>{text}</Text>,
     },
     {
-      title: "Tên chủ đầu tư",
+      title: `Tên ${t("chuDauTu")}`,
       dataIndex: "ten",
       key: "ten",
       ellipsis: true,
@@ -175,7 +177,7 @@ function ChuDauTuPageInner() {
             ),
           },
           { title: "Danh mục" },
-          { title: "Chủ đầu tư" },
+          { title: t("chuDauTu") },
         ]}
       />
 
@@ -242,7 +244,7 @@ function ChuDauTuPageInner() {
           <div className="flex items-center gap-2">
             <BankOutlined className="text-primary" />
             <span>
-              {editingRecord ? "Sửa chủ đầu tư" : "Thêm chủ đầu tư mới"}
+              {editingRecord ? `Sửa ${t("chuDauTu")}` : `Thêm ${t("chuDauTu")} mới`}
             </span>
           </div>
         }
@@ -268,7 +270,7 @@ function ChuDauTuPageInner() {
           </Form.Item>
           <Form.Item
             name="ten"
-            label="Tên chủ đầu tư"
+            label={`Tên ${t("chuDauTu")}`}
             rules={[
               { required: true, message: "Vui lòng nhập tên" },
               { max: 200, message: "Tối đa 200 ký tự" },
