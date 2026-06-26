@@ -67,6 +67,7 @@ import {
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import type { MenuProps } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTerm } from "@/contexts/TermContext";
 import { TenantSwitcher } from "./TenantSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { isCommonKey, unionMenuKeys } from "@/config/modules";
@@ -203,6 +204,31 @@ function getMenuItem(
     label: createLabel(text, path),
     className: isComingSoon ? "menu-item-coming-soon" : undefined,
   } as MenuItem;
+}
+
+// Map menuKey → termKey cho các menu đổi tên theo ngành.
+const MENU_TERM_KEYS: Record<string, string> = {
+  "/danh-muc/chu-dau-tu": "chuDauTu",
+};
+
+// Trả mảng MỚI, thay label các item có termKey bằng nhãn động (đệ quy children).
+function relabelMenu(
+  items: MenuItem[],
+  t: (key: string, surface?: string) => string
+): MenuItem[] {
+  return items.map((item) => {
+    const mi = item as { key?: string; children?: MenuItem[] };
+    const key = mi.key as string;
+    let next: MenuItem = item;
+    if (mi.children && mi.children.length > 0) {
+      next = { ...(next as any), children: relabelMenu(mi.children, t) };
+    }
+    const termKey = MENU_TERM_KEYS[key];
+    if (termKey) {
+      next = { ...(next as any), label: createLabel(t(termKey), key) };
+    }
+    return next;
+  });
 }
 
 // ===== ĐIỀU HÀNH =====
@@ -347,6 +373,7 @@ const MainLayout: React.FC = () => {
     allModules,
     getModule,
   } = useAuth();
+  const { t } = useTerm();
   const currentRole = currentTenant?.role;
   const isSuperAdmin = user?.isSuperAdmin || false;
   const isMobile = useIsMobile();
@@ -419,11 +446,13 @@ const MainLayout: React.FC = () => {
   const byRole = (items: MenuItem[]): MenuItem[] =>
     isSuperAdmin ? items : filterMenuItems(items);
 
-  const filteredDieuHanhMenu = byRole(
-    filterByModule(dieuHanhMenuItems, allEffectiveKeys),
+  const filteredDieuHanhMenu = relabelMenu(
+    byRole(filterByModule(dieuHanhMenuItems, allEffectiveKeys)),
+    t
   );
-  const filteredThuVienMenu = byRole(
-    filterByModule(thuVienMenuItems, allEffectiveKeys),
+  const filteredThuVienMenu = relabelMenu(
+    byRole(filterByModule(thuVienMenuItems, allEffectiveKeys)),
+    t
   );
 
   // Khu nghiệp vụ: 1 section / phân hệ, tiêu đề = tên phân hệ.
@@ -433,7 +462,7 @@ const MainLayout: React.FC = () => {
         def.code === "KE_TOAN"
           ? [...def.menuKeys, ...unassignedKeys]
           : def.menuKeys;
-      const items = byRole(filterByModule(keToAnMenuItems, keys));
+      const items = relabelMenu(byRole(filterByModule(keToAnMenuItems, keys)), t);
       return { code: def.code, title: def.name.toUpperCase(), items };
     })
     .filter((s) => s.items.length > 0);

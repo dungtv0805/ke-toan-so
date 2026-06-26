@@ -7,6 +7,7 @@ import { ConfigProvider } from 'antd';
 import viVN from 'antd/locale/vi_VN';
 
 import { AuthProvider } from "./contexts/AuthContext";
+import { TermProvider } from "./contexts/TermContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 import MainLayout from "./components/layout/MainLayout";
@@ -104,7 +105,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
+            <TermProvider>
+              <Routes>
               {/* Public route */}
               <Route path="/login" element={<LoginPage />} />
 
@@ -553,6 +555,7 @@ const App = () => (
 
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </TermProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
