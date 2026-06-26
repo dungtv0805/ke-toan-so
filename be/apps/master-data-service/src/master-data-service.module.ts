@@ -23,6 +23,7 @@ import { HoaDonBanRaModule } from './hoa-don-ban-ra/hoa-don-ban-ra.module';
 import { SoDuDauKyModule } from './so-du-dau-ky/so-du-dau-ky.module';
 import { TenantModule } from './tenant/tenant.module';
 import { LinhVucModule } from './linh-vuc/linh-vuc.module';
+import { NganhModule } from './nganh/nganh.module';
 import { KhoModule } from './kho/kho.module';
 import { DonViTinhModule } from './don-vi-tinh/don-vi-tinh.module';
 import { NhomVatTuModule } from './nhom-vat-tu/nhom-vat-tu.module';
@@ -104,6 +105,7 @@ import {
     SoDuDauKyModule,
     TenantModule,
     LinhVucModule,
+    NganhModule,
     KhoModule,
     DonViTinhModule,
     NhomVatTuModule,
