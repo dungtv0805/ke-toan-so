@@ -12,6 +12,13 @@ export interface Tenant {
   modules?: string[];
 }
 
+export interface GlossaryItem {
+  label: string;
+  surfaces?: Record<string, string>;
+}
+
+export type Glossary = Record<string, GlossaryItem>;
+
 export interface TenantInfo {
   tenantId: string;
   tenantName: string;
@@ -19,6 +26,8 @@ export interface TenantInfo {
   role: string;
   // Lĩnh vực (module) công ty được cấp. BE luôn trả; optional để chịu data cũ.
   modules?: string[];
+  // Từ điển nhãn của công ty (theo ngành); BE trả trong /me. Optional cho data cũ.
+  glossary?: Glossary;
 }
 
 export interface UserTenant {
