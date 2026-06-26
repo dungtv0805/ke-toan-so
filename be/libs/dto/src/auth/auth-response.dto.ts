@@ -6,6 +6,8 @@ export interface TenantInfo {
   role: string;
   // Lĩnh vực (module) công ty được cấp, vd ['KE_TOAN','KHO'].
   modules: string[];
+  // Từ điển nhãn của công ty (theo ngành); FE dùng render nhãn động.
+  glossary?: Record<string, { label: string; surfaces?: Record<string, string> }>;
 }
 
 // User info for auth responses
