@@ -77,7 +77,7 @@ const { Header, Sider, Content } = Layout;
 
 type MenuItem = Required<MenuProps>["items"][number];
 
-// Hiện item nếu key thuộc COMMON hoặc nằm trong menuKeys của lĩnh vực đang chọn.
+// Item hiển thị nếu key thuộc COMMON hoặc nằm trong tập menuKeys được truyền vào.
 function keyMatches(key: string, moduleKeys: string[]): boolean {
   if (isCommonKey(key)) return true;
   return moduleKeys.some((k) => key === k || key.startsWith(k + "/"));

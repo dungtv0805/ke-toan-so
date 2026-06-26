@@ -3,8 +3,8 @@
  *
  * Danh sách lĩnh vực và mapping menu→lĩnh vực nay lưu ở DB
  * (collection `linh_vuc`, API `/master-data/linh-vuc`), nạp qua AuthContext.
- * File này chỉ giữ: kiểu code, whitelist icon (DB lưu tên string), menu COMMON,
- * helper tính lĩnh vực khả dụng và lưu lựa chọn ở localStorage.
+ * File này chỉ giữ: whitelist icon (DB lưu tên string), menu COMMON,
+ * helper tính lĩnh vực khả dụng + hợp nhất menuKeys từ nhiều lĩnh vực.
  */
 import React from 'react';
 import {
@@ -17,8 +17,6 @@ import {
   DatabaseOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
-
-export type ModuleCode = string;
 
 // Whitelist icon AntD cho lĩnh vực (DB lưu tên string).
 const ICON_MAP: Record<string, React.ComponentType> = {
