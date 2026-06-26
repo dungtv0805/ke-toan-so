@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { Tenant, User, UserCredential, UserTenant, UserStatus, VaiTro, PhanQuyen } from '@app/entities';
+import { Tenant, User, UserCredential, UserTenant, UserStatus, VaiTro, PhanQuyen, Nganh, Glossary } from '@app/entities';
 import {
   CreateTenantDto,
   UpdateTenantDto,
@@ -144,7 +144,17 @@ export class TenantService {
     private readonly vaiTroRepository: Repository<VaiTro>,
     @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`)
     private readonly phanQuyenRepository: Repository<PhanQuyen>,
+    @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`)
+    private readonly nganhRepository: Repository<Nganh>,
   ) {}
+
+  /** Clone (deep) glossary của ngành theo code; {} nếu không có code / không tìm thấy. */
+  async cloneGlossaryFromNganh(nganhCode?: string | null): Promise<Glossary> {
+    if (!nganhCode) return {};
+    const nganh = await this.nganhRepository.findOne({ where: { code: nganhCode } });
+    if (!nganh?.glossary) return {};
+    return JSON.parse(JSON.stringify(nganh.glossary)) as Glossary;
+  }
 
   async findAll(): Promise<TenantWithAdmin[]> {
     const tenants = await this.tenantRepository.find({
@@ -228,6 +238,7 @@ export class TenantService {
     }
 
     // Create tenant
+    const glossary = await this.cloneGlossaryFromNganh(createDto.nganh);
     const tenant = this.tenantRepository.create({
       name: createDto.name,
       slug: createDto.slug,
@@ -238,6 +249,8 @@ export class TenantService {
       nguoiDaiDien: createDto.nguoiDaiDien,
       isActive: createDto.isActive ?? true,
       modules: createDto.modules?.length ? createDto.modules : ['KE_TOAN'],
+      nganh: createDto.nganh ?? null,
+      glossary,
     });
     const savedTenant = await this.tenantRepository.save(tenant);
 
@@ -393,6 +406,9 @@ export class TenantService {
       }
     }
 
+    if (updateDto.nganh && updateDto.nganh !== tenant.nganh) {
+      tenant.glossary = await this.cloneGlossaryFromNganh(updateDto.nganh);
+    }
     Object.assign(tenant, sanitizeUpdateDto(updateDto));
     return this.tenantRepository.save(tenant);
   }
