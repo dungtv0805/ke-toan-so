@@ -21,14 +21,39 @@ export function resolveLoaiFromConfig(
   loaiGiaoDichToLoaiChungTu: Map<string, string>,
   loaiChungTuToPhanLoai: Map<string, PhanLoaiChungTu>,
 ): LoaiChungTu {
+  return resolveLoaiInfoFromConfig(
+    danhMuc,
+    fallbackLoai,
+    loaiGiaoDichToLoaiChungTu,
+    loaiChungTuToPhanLoai,
+  ).loai;
+}
+
+export interface LoaiInfo {
+  /** Phân hệ (PHIEU_THU/PHIEU_CHI/KHAC) — quyết định fallback PT/PC/NK. */
+  loai: LoaiChungTu;
+  /** Mã loại chứng từ — tiền tố số phiếu mới. Không có nếu loại giao dịch chưa cấu hình. */
+  maLoaiChungTu?: string;
+}
+
+/**
+ * Như {@link resolveLoaiFromConfig} nhưng trả thêm `maLoaiChungTu` (mã loại chứng từ)
+ * để dùng làm tiền tố số phiếu. Nếu loại giao dịch chưa liên kết loại chứng từ → chỉ trả `loai`.
+ */
+export function resolveLoaiInfoFromConfig(
+  danhMuc: DanhMuc | undefined | null,
+  fallbackLoai: LoaiChungTu,
+  loaiGiaoDichToLoaiChungTu: Map<string, string>,
+  loaiChungTuToPhanLoai: Map<string, PhanLoaiChungTu>,
+): LoaiInfo {
   const lgdMa = danhMuc?.loaiGiaoDich?.ma;
-  if (!lgdMa) return fallbackLoai;
+  if (!lgdMa) return { loai: fallbackLoai };
 
   const lctMa = loaiGiaoDichToLoaiChungTu.get(lgdMa);
-  if (!lctMa) return fallbackLoai;
+  if (!lctMa) return { loai: fallbackLoai };
 
   const phanLoai = loaiChungTuToPhanLoai.get(lctMa);
-  if (!phanLoai) return fallbackLoai;
+  const loai = phanLoai ? (PHAN_LOAI_TO_LOAI[phanLoai] ?? fallbackLoai) : fallbackLoai;
 
-  return PHAN_LOAI_TO_LOAI[phanLoai] ?? fallbackLoai;
+  return { loai, maLoaiChungTu: lctMa };
 }

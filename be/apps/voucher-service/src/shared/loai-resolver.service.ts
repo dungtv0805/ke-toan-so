@@ -9,7 +9,11 @@ import {
   type PhanLoaiChungTu,
 } from '@app/entities';
 import { TenantContextService } from '@app/core';
-import { resolveLoaiFromConfig } from './loai-resolver.helper';
+import {
+  resolveLoaiFromConfig,
+  resolveLoaiInfoFromConfig,
+  type LoaiInfo,
+} from './loai-resolver.helper';
 
 type CachedConfig = {
   at: number;
@@ -76,5 +80,22 @@ export class LoaiResolverService {
     if (!danhMuc?.loaiGiaoDich?.ma) return fallbackLoai;
     const { lgdToLct, lctToPhanLoai } = await this.getConfig();
     return resolveLoaiFromConfig(danhMuc, fallbackLoai, lgdToLct, lctToPhanLoai);
+  }
+
+  /**
+   * Như {@link resolveLoai} nhưng trả thêm `maLoaiChungTu` để làm tiền tố số phiếu.
+   */
+  async resolveLoaiInfo(
+    danhMuc: DanhMuc | undefined | null,
+    fallbackLoai: LoaiChungTu,
+  ): Promise<LoaiInfo> {
+    if (!danhMuc?.loaiGiaoDich?.ma) return { loai: fallbackLoai };
+    const { lgdToLct, lctToPhanLoai } = await this.getConfig();
+    return resolveLoaiInfoFromConfig(
+      danhMuc,
+      fallbackLoai,
+      lgdToLct,
+      lctToPhanLoai,
+    );
   }
 }
