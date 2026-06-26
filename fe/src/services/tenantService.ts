@@ -126,11 +126,10 @@ class TenantService extends ServiceBase {
   }
 
   async updateGlossary(glossary: import('@/types/tenant').Glossary): Promise<{ glossary: import('@/types/tenant').Glossary }> {
-    const res = await this.put<Record<string, unknown>>(
-      { glossary },
-      { endpoint: '/current/glossary' },
-    );
-    return { glossary: (res.glossary as import('@/types/tenant').Glossary) ?? {} };
+    const res = await this.put<Record<string, unknown>>({ glossary }, { endpoint: '/current/glossary' });
+    const saved = res.glossary as import('@/types/tenant').Glossary | undefined;
+    if (!saved) throw new Error('Phản hồi cập nhật glossary không hợp lệ');
+    return { glossary: saved };
   }
 
   async deleteTenant(id: string): Promise<void> {
