@@ -122,6 +122,14 @@ class TenantService extends ServiceBase {
     return this.transformTenant(response);
   }
 
+  async updateGlossary(glossary: import('@/types/tenant').Glossary): Promise<{ glossary: import('@/types/tenant').Glossary }> {
+    const res = await this.put<Record<string, unknown>>(
+      { glossary },
+      { endpoint: '/current/glossary' },
+    );
+    return { glossary: (res.glossary as import('@/types/tenant').Glossary) ?? {} };
+  }
+
   async deleteTenant(id: string): Promise<void> {
     await super.delete({ endpoint: `/${id}` });
   }
