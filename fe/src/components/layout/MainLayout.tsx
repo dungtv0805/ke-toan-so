@@ -69,15 +69,15 @@ import type { MenuProps } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
 import { TenantSwitcher } from "./TenantSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ModuleSelector, ModuleSwitchModal } from "@/components/auth";
-import { isCommonKey } from "@/config/modules";
+import { isCommonKey, unionMenuKeys } from "@/config/modules";
 import { MENU_CATALOG } from "@/config/menuCatalog";
+import type { LinhVuc } from "@/services/linhVucService";
 
 const { Header, Sider, Content } = Layout;
 
 type MenuItem = Required<MenuProps>["items"][number];
 
-// Hiện item nếu key thuộc COMMON hoặc nằm trong menuKeys của lĩnh vực đang chọn.
+// Item hiển thị nếu key thuộc COMMON hoặc nằm trong tập menuKeys được truyền vào.
 function keyMatches(key: string, moduleKeys: string[]): boolean {
   if (isCommonKey(key)) return true;
   return moduleKeys.some((k) => key === k || key.startsWith(k + "/"));
@@ -332,7 +332,6 @@ const MainLayout: React.FC = () => {
   // Initialize collapsed based on current URL - if on form screen, start collapsed
   const [collapsed, setCollapsed] = useState(() => isFormScreen(window.location.pathname));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [moduleModalOpen, setModuleModalOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
     return saved ? JSON.parse(saved) : false;
@@ -344,10 +343,7 @@ const MainLayout: React.FC = () => {
     logout,
     currentTenant,
     hasPermission,
-    selectedModule,
     availableModules,
-    needsModuleSelection,
-    setSelectedModule,
     allModules,
     getModule,
   } = useAuth();
@@ -396,35 +392,51 @@ const MainLayout: React.FC = () => {
       .filter(Boolean) as MenuItem[];
   };
 
-  const selectedModuleDef = selectedModule ? getModule(selectedModule) : undefined;
-  const selectedMenuKeys = selectedModuleDef?.menuKeys ?? [];
+  // Phân hệ khả dụng (đã sắp theo order) — hiển thị GỘP, không cần chọn.
+  const availableModuleDefs: LinhVuc[] = availableModules
+    .map((code) => getModule(code))
+    .filter((m): m is LinhVuc => !!m)
+    .sort((a, b) => a.order - b.order);
 
-  // Edge case: menu chưa gán cho BẤT KỲ lĩnh vực nào → mặc định thuộc KE_TOAN.
-  // Khi đang ở KE_TOAN, bổ sung các key (trong catalog) chưa được lĩnh vực nào nhận.
+  // Menu chưa gán cho phân hệ nào → coi như thuộc KE_TOAN.
   const isAssigned = (key: string): boolean =>
     allModules.some((m) =>
       m.menuKeys.some((k) => key === k || key.startsWith(k + "/")),
     );
-  const unassignedKeys =
-    selectedModule === "KE_TOAN"
-      ? MENU_CATALOG.map((e) => e.key).filter(
-          (key) => !isCommonKey(key) && !isAssigned(key),
-        )
-      : [];
-  const effectiveKeys = [...selectedMenuKeys, ...unassignedKeys];
+  const unassignedKeys = availableModules.includes("KE_TOAN")
+    ? MENU_CATALOG.map((e) => e.key).filter(
+        (key) => !isCommonKey(key) && !isAssigned(key),
+      )
+    : [];
 
-  // Lọc 2 tầng: (1) theo lĩnh vực đang chọn, (2) theo role (SuperAdmin bỏ qua role).
-  const applyFilters = (items: MenuItem[]): MenuItem[] => {
-    const byModule = selectedModule ? filterByModule(items, effectiveKeys) : items;
-    return isSuperAdmin ? byModule : filterMenuItems(byModule);
-  };
+  // Union menuKeys mọi phân hệ + phần chưa gán → dùng cho ĐIỀU HÀNH & THƯ VIỆN.
+  const allEffectiveKeys = [
+    ...unionMenuKeys(availableModuleDefs),
+    ...unassignedKeys,
+  ];
 
-  const filteredDieuHanhMenu = applyFilters(dieuHanhMenuItems);
-  const filteredKeToAnMenu = applyFilters(keToAnMenuItems);
-  const filteredThuVienMenu = applyFilters(thuVienMenuItems);
+  // Lọc theo vai trò (SuperAdmin bỏ qua).
+  const byRole = (items: MenuItem[]): MenuItem[] =>
+    isSuperAdmin ? items : filterMenuItems(items);
 
-  // Tiêu đề section nghiệp vụ = tên lĩnh vực đang chọn (KẾ TOÁN / KHO).
-  const moduleSectionTitle = (selectedModuleDef?.name ?? "Kế toán").toUpperCase();
+  const filteredDieuHanhMenu = byRole(
+    filterByModule(dieuHanhMenuItems, allEffectiveKeys),
+  );
+  const filteredThuVienMenu = byRole(
+    filterByModule(thuVienMenuItems, allEffectiveKeys),
+  );
+
+  // Khu nghiệp vụ: 1 section / phân hệ, tiêu đề = tên phân hệ.
+  const moduleSections = availableModuleDefs
+    .map((def) => {
+      const keys =
+        def.code === "KE_TOAN"
+          ? [...def.menuKeys, ...unassignedKeys]
+          : def.menuKeys;
+      const items = byRole(filterByModule(keToAnMenuItems, keys));
+      return { code: def.code, title: def.name.toUpperCase(), items };
+    })
+    .filter((s) => s.items.length > 0);
 
   useEffect(() => {
     if (darkMode) {
@@ -510,12 +522,6 @@ const MainLayout: React.FC = () => {
 
   // Settings menu items for gear icon dropdown
   const settingsMenuItems: MenuProps["items"] = [
-    ...(allModules.filter((m) => m.isActive).length > 1 ? [{
-      key: "doi-linh-vuc",
-      icon: <AppstoreOutlined />,
-      label: "Đổi lĩnh vực",
-      onClick: () => setModuleModalOpen(true),
-    }] : []),
     ...(canManageConfig ? [
       ...(hasPermission('/cau-hinh/vai-tro:xem') || user?.isSuperAdmin ? [{
         key: "vai-tro",
@@ -610,21 +616,23 @@ const MainLayout: React.FC = () => {
         />
       </div>
 
-      {/* KẾ TOÁN Section */}
-      <div className="sidebar-section">
-        <div className="sidebar-section-header">
-          <span className="sidebar-section-title">{moduleSectionTitle}</span>
+      {/* Nghiệp vụ — 1 section / phân hệ */}
+      {moduleSections.map((sec) => (
+        <div className="sidebar-section" key={sec.code}>
+          <div className="sidebar-section-header">
+            <span className="sidebar-section-title">{sec.title}</span>
+          </div>
+          <Menu
+            theme="dark"
+            mode="inline"
+            selectedKeys={getSelectedKeys()}
+            defaultOpenKeys={getOpenKeys()}
+            items={sec.items}
+            onClick={handleMenuClick}
+            className="!bg-transparent border-r-0 sidebar-menu"
+          />
         </div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={getSelectedKeys()}
-          defaultOpenKeys={getOpenKeys()}
-          items={filteredKeToAnMenu}
-          onClick={handleMenuClick}
-          className="!bg-transparent border-r-0 sidebar-menu"
-        />
-      </div>
+      ))}
 
       {/* THƯ VIỆN Section */}
       <div className="sidebar-section">
@@ -643,11 +651,6 @@ const MainLayout: React.FC = () => {
       </div>
     </Drawer>
   );
-
-  // Tenant có >1 lĩnh vực mà chưa chọn → hiển thị màn Chọn lĩnh vực.
-  if (needsModuleSelection) {
-    return <ModuleSelector />;
-  }
 
   return (
     <Layout className="min-h-screen">
@@ -727,23 +730,25 @@ const MainLayout: React.FC = () => {
               />
             </div>
 
-            {/* KẾ TOÁN Section */}
-            <div className="sidebar-section">
-              {!collapsed && (
-                <div className="sidebar-section-header">
-                  <span className="sidebar-section-title">{moduleSectionTitle}</span>
-                </div>
-              )}
-              <Menu
-                theme="dark"
-                mode="inline"
-                selectedKeys={getSelectedKeys()}
-                defaultOpenKeys={collapsed ? [] : getOpenKeys()}
-                items={filteredKeToAnMenu}
-                onClick={handleMenuClick}
-                className="!bg-transparent border-r-0 sidebar-menu"
-              />
-            </div>
+            {/* Nghiệp vụ — 1 section / phân hệ */}
+            {moduleSections.map((sec) => (
+              <div className="sidebar-section" key={sec.code}>
+                {!collapsed && (
+                  <div className="sidebar-section-header">
+                    <span className="sidebar-section-title">{sec.title}</span>
+                  </div>
+                )}
+                <Menu
+                  theme="dark"
+                  mode="inline"
+                  selectedKeys={getSelectedKeys()}
+                  defaultOpenKeys={collapsed ? [] : getOpenKeys()}
+                  items={sec.items}
+                  onClick={handleMenuClick}
+                  className="!bg-transparent border-r-0 sidebar-menu"
+                />
+              </div>
+            ))}
 
             {/* THƯ VIỆN Section */}
             <div className="sidebar-section">
@@ -877,19 +882,6 @@ const MainLayout: React.FC = () => {
         </Content>
       </Layout>
 
-      <ModuleSwitchModal
-        open={moduleModalOpen}
-        onClose={() => setModuleModalOpen(false)}
-        availableModules={availableModules}
-        selectedModule={selectedModule}
-        onSelect={(code) => {
-          setModuleModalOpen(false);
-          if (code !== selectedModule) {
-            setSelectedModule(code);
-            navigate("/");
-          }
-        }}
-      />
     </Layout>
   );
 };

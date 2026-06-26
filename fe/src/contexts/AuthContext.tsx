@@ -3,7 +3,7 @@ import { NguoiDung, TenantInfo } from '@/types';
 import { authService } from '@/services/authService';
 import { setAuthToken, getAuthToken, clearAuthToken, setCurrentTenant, getCurrentTenant, clearCurrentTenant } from '@/services/base/service-base';
 import { ApiError, ApiErrorType } from '@/config/api';
-import { getAvailableModuleCodes, getStoredModule, setStoredModule, type ModuleCode } from '@/config/modules';
+import { getAvailableModuleCodes } from '@/config/modules';
 import { linhVucService, type LinhVuc } from '@/services/linhVucService';
 
 function extractPermissionsFromToken(token: string): string[] {
@@ -24,15 +24,10 @@ interface AuthContextType {
   needsTenantSelection: boolean;
   availableTenants: TenantInfo[];
   currentTenant: TenantInfo | null;
-  // Lĩnh vực (module) đang chọn của tenant hiện tại; null = chưa chọn (cần hiện màn chọn).
-  selectedModule: ModuleCode | null;
   // Toàn bộ lĩnh vực từ API (gồm inactive, để admin thấy hết).
   allModules: LinhVuc[];
   // Code lĩnh vực user được phép xem ở tenant hiện tại (SuperAdmin = toàn bộ active).
   availableModules: string[];
-  // true khi tenant có >1 lĩnh vực mà chưa chọn → hiển thị màn Chọn lĩnh vực.
-  needsModuleSelection: boolean;
-  setSelectedModule: (code: ModuleCode | null) => void;
   // Tra cứu doc lĩnh vực theo code.
   getModule: (code: string) => LinhVuc | undefined;
   // Nạp lại danh sách lĩnh vực (sau khi admin sửa).
@@ -55,7 +50,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [needsTenantSelection, setNeedsTenantSelection] = useState(false);
   const [tempToken, setTempToken] = useState<string | null>(null);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
-  const [selectedModule, setSelectedModuleState] = useState<ModuleCode | null>(null);
   const [allModules, setAllModules] = useState<LinhVuc[]>([]);
 
   const refreshModules = useCallback(async () => {
@@ -88,44 +82,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     (code: string) => allModules.find((m) => m.code === code),
     [allModules],
   );
-
-  // Có lựa chọn để hiện màn chọn lĩnh vực: hoặc được cấp nhiều lĩnh vực,
-  // hoặc còn lĩnh vực active chưa cấp để giới thiệu (hiển thị dạng disabled).
-  const hasModuleChoice =
-    availableModules.length > 1 || activeCodes.length > availableModules.length;
-
-  // Khi đổi tenant (hoặc khôi phục phiên): chỉ tự chọn khi toàn hệ thống đúng 1
-  // lĩnh vực (không có gì để giới thiệu); ngược lại nạp lĩnh vực đã lưu, nếu chưa
-  // có → null để hiện màn chọn (kèm lĩnh vực chưa cấp dạng disabled).
-  useEffect(() => {
-    if (!currentTenant) {
-      setSelectedModuleState(null);
-      return;
-    }
-    const avail = getAvailableModuleCodes(
-      currentTenant.modules,
-      user?.isSuperAdmin || false,
-      activeCodes,
-    );
-    const stored = getStoredModule(currentTenant.tenantId) as ModuleCode | null;
-    if (stored && avail.includes(stored)) {
-      setSelectedModuleState(stored);
-    } else if (avail.length === 1 && activeCodes.length === 1) {
-      setStoredModule(currentTenant.tenantId, avail[0]);
-      setSelectedModuleState(avail[0]);
-    } else {
-      setSelectedModuleState(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTenant, user, allModules]);
-
-  const needsModuleSelection =
-    !!currentTenant && !selectedModule && hasModuleChoice;
-
-  const setSelectedModule = useCallback((code: ModuleCode | null) => {
-    if (currentTenant) setStoredModule(currentTenant.tenantId, code);
-    setSelectedModuleState(code);
-  }, [currentTenant]);
 
   // Check for existing token and fetch user on mount
   useEffect(() => {
@@ -194,8 +150,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setCurrentTenantState(response.tenant);
         setNeedsTenantSelection(false);
         setTempToken(null);
-        // Đăng nhập mới → quên lựa chọn lĩnh vực để hiện lại màn chọn.
-        setStoredModule(response.tenant.tenantId, null);
       } else if (response.tempToken && response.tenants && response.tenants.length > 0) {
         // Multiple tenants - need selection, save tempToken for later
         setTempToken(response.tempToken);
@@ -270,8 +224,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentTenantState(response.tenant);
       setNeedsTenantSelection(false);
       setTempToken(null);
-      // Chọn tenant (đăng nhập mới) → quên lựa chọn lĩnh vực để hiện lại màn chọn.
-      setStoredModule(response.tenant.tenantId, null);
 
       // Set permissions from API response or extract from JWT token
       if (response.permissions && response.permissions.length > 0) {
@@ -363,11 +315,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         needsTenantSelection,
         availableTenants,
         currentTenant,
-        selectedModule,
         allModules,
         availableModules,
-        needsModuleSelection,
-        setSelectedModule,
         getModule,
         refreshModules,
         login,

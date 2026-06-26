@@ -3,8 +3,8 @@
  *
  * Danh sách lĩnh vực và mapping menu→lĩnh vực nay lưu ở DB
  * (collection `linh_vuc`, API `/master-data/linh-vuc`), nạp qua AuthContext.
- * File này chỉ giữ: kiểu code, whitelist icon (DB lưu tên string), menu COMMON,
- * helper tính lĩnh vực khả dụng và lưu lựa chọn ở localStorage.
+ * File này chỉ giữ: whitelist icon (DB lưu tên string), menu COMMON,
+ * helper tính lĩnh vực khả dụng + hợp nhất menuKeys từ nhiều lĩnh vực.
  */
 import React from 'react';
 import {
@@ -17,8 +17,6 @@ import {
   DatabaseOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
-
-export type ModuleCode = string;
 
 // Whitelist icon AntD cho lĩnh vực (DB lưu tên string).
 const ICON_MAP: Record<string, React.ComponentType> = {
@@ -68,12 +66,18 @@ export function getAvailableModuleCodes(
   return allActiveCodes.includes('KE_TOAN') ? ['KE_TOAN'] : allActiveCodes.slice(0, 1);
 }
 
-const STORAGE_PREFIX = 'selectedModule:';
+/** Hợp nhất menuKeys của nhiều phân hệ, loại trùng, giữ thứ tự xuất hiện đầu. */
+export function unionMenuKeys(modules: { menuKeys: string[] }[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const m of modules) {
+    for (const k of m.menuKeys ?? []) {
+      if (!seen.has(k)) {
+        seen.add(k);
+        out.push(k);
+      }
+    }
+  }
+  return out;
+}
 
-export const getStoredModule = (tenantId: string): string | null =>
-  localStorage.getItem(STORAGE_PREFIX + tenantId);
-
-export const setStoredModule = (tenantId: string, code: string | null): void => {
-  if (code) localStorage.setItem(STORAGE_PREFIX + tenantId, code);
-  else localStorage.removeItem(STORAGE_PREFIX + tenantId);
-};
