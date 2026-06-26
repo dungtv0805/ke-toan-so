@@ -180,3 +180,34 @@ describe('TenantService.cloneGlossaryFromNganh', () => {
     expect(await built.service.cloneGlossaryFromNganh('KHONG_CO')).toEqual({});
   });
 });
+
+describe('TenantService.updateGlossary', () => {
+  it('ghi glossary mới vào tenant theo id', async () => {
+    const tenant: any = { _id: 'tid', glossary: {} };
+    const tenantRepo: any = {
+      findOne: jest.fn(async () => tenant),
+      save: jest.fn(async (x: any) => x),
+    };
+    const empty: any = { findOne: jest.fn(), find: jest.fn(async () => []), save: jest.fn(async (x: any) => x), create: jest.fn((x: any) => x), count: jest.fn(async () => 0) };
+    const { Test } = await import('@nestjs/testing');
+    const { RAW_REPOSITORY_TOKEN_PREFIX } = await import('@app/database');
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        TenantService,
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`, useValue: tenantRepo },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}User`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserCredential`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserTenant`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`, useValue: empty },
+      ],
+    }).compile();
+    const service = moduleRef.get(TenantService);
+    // findOne dùng ObjectId(id) → stub tenantRepo.findOne luôn trả tenant ở trên
+    const g = { chuDauTu: { label: 'Nhà tài trợ' } };
+    const res = await service.updateGlossary('tid', g as any);
+    expect(res.glossary).toEqual(g);
+    expect(tenantRepo.save).toHaveBeenCalled();
+  });
+});
