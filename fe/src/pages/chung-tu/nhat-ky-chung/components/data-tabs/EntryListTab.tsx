@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useTerm } from "@/contexts/TermContext";
+import { EditableTerm } from "@/components/glossary/EditableTerm";
 import type { Key } from "react";
 import { Table, Button, Space, Tooltip, Popconfirm } from "antd";
 import {
@@ -132,8 +132,7 @@ const EDITABLE_COLUMNS: Record<string, EditableColumnConfig> = {
 
 // Column definitions without width (static)
 const getColumnDefinitions = (
-  taiKhoanOptions: SelectOption[],
-  t: (key: string, surface?: string) => string
+  taiKhoanOptions: SelectOption[]
 ): Omit<ColumnType<NhatKyChung>, "width">[] => [
   {
     title: "Ngày",
@@ -343,7 +342,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: t("chuDauTu", "nkc.colMa"),
+    title: <EditableTerm tk="chuDauTu" surface="nkc.colMa" />,
     key: "chuDauTuMa",
     render: (_: unknown, record: NhatKyChung) => {
       const ma = getNkcChuDauTuMa(record);
@@ -363,7 +362,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: t("chuDauTu", "nkc.colTen"),
+    title: <EditableTerm tk="chuDauTu" surface="nkc.colTen" />,
     key: "chuDauTu",
     render: (_: unknown, record: NhatKyChung) => {
       const ten = getNkcChuDauTuTen(record);
@@ -766,7 +765,6 @@ export function EntryListTab() {
   );
   const [deletingBatch] = useNhatKyChungState("deletingBatch", false);
   const { canCreate, canDelete } = usePagePermission("/chung-tu/nhat-ky-chung");
-  const { t } = useTerm();
   const [importOpen, setImportOpen] = useState(false);
 
   // Enable column resize via DOM manipulation (no React re-renders)
@@ -801,11 +799,11 @@ export function EntryListTab() {
   // Memoize columns with widths - now depends on taiKhoanOptions
   const columns = useMemo(
     () =>
-      getColumnDefinitions(taiKhoanOptions, t).map((col) => ({
+      getColumnDefinitions(taiKhoanOptions).map((col) => ({
         ...col,
         width: col.width || DEFAULT_WIDTHS[col.key as string] || 100,
       })),
-    [taiKhoanOptions, t]
+    [taiKhoanOptions]
   );
 
   const handleCreateEntry = () => {
