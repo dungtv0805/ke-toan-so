@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Popover, Input, Radio, Button, Space, message } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import { useTerm } from '@/contexts/TermContext';
@@ -23,6 +23,10 @@ export function EditableTerm({ tk, surface }: Props) {
   const [scope, setScope] = useState<EditScope>(surface ? 'surface' : 'all');
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (!editMode) setOpen(false);
+  }, [editMode]);
+
   if (!editMode) return <>{label}</>;
 
   const onOpenChange = (o: boolean) => {
@@ -34,6 +38,11 @@ export function EditableTerm({ tk, surface }: Props) {
   };
 
   const handleSave = async () => {
+    if (saving) return;
+    if (!val.trim()) {
+      message.warning('Nhãn không được để trống');
+      return;
+    }
     setSaving(true);
     try {
       const base = t(tk); // nhãn nền (không surface)
@@ -59,7 +68,16 @@ export function EditableTerm({ tk, surface }: Props) {
         onPressEnter={handleSave}
       />
       {surface && (
-        <Radio.Group size="small" value={scope} onChange={(e) => setScope(e.target.value)}>
+        <Radio.Group
+          size="small"
+          value={scope}
+          onChange={(e) => {
+            const s = e.target.value as EditScope;
+            setScope(s);
+            if (s === 'all') setVal(t(tk));
+            else setVal(t(tk, surface));
+          }}
+        >
           <Radio value="all">Mọi nơi</Radio>
           <Radio value="surface">Chỉ chỗ này</Radio>
         </Radio.Group>

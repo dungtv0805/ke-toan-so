@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState } from 'react';
 
 interface EditModeContextType {
   editMode: boolean;
-  setEditMode: (v: boolean) => void;
+  setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const EditModeContext = createContext<EditModeContextType | undefined>(undefined);
