@@ -28,6 +28,8 @@ export interface TenantInfo {
   modules?: string[];
   // Từ điển nhãn của công ty (theo ngành); BE trả trong /me. Optional cho data cũ.
   glossary?: Glossary;
+  // Ngành công ty (vd 'XAY_DUNG'); FE dùng để 'Lưu thành chuẩn ngành'.
+  nganh?: string | null;
 }
 
 export interface UserTenant {

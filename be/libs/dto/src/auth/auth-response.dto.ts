@@ -8,6 +8,8 @@ export interface TenantInfo {
   modules: string[];
   // Từ điển nhãn của công ty (theo ngành); FE dùng render nhãn động.
   glossary?: Record<string, { label: string; surfaces?: Record<string, string> }>;
+  // Ngành công ty (vd 'XAY_DUNG'); FE dùng để 'Lưu thành chuẩn ngành'.
+  nganh?: string | null;
 }
 
 // User info for auth responses

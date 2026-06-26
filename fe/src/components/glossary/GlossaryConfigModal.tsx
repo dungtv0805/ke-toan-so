@@ -36,7 +36,7 @@ export function GlossaryConfigModal({ open, onClose }: Props) {
 
   useEffect(() => {
     if (open) setValue(initialValue(currentTenant?.glossary));
-  }, [open, currentTenant?.glossary]);
+  }, [open]);
 
   const buildGlossary = (): Glossary => {
     const g: Glossary = {};
@@ -46,7 +46,7 @@ export function GlossaryConfigModal({ open, onClose }: Props) {
       for (const s of Object.keys(v.surfaces)) {
         if (v.surfaces[s]?.trim()) surfaces[s] = v.surfaces[s].trim();
       }
-      g[key] = Object.keys(surfaces).length ? { label: v.label, surfaces } : { label: v.label };
+      g[key] = Object.keys(surfaces).length ? { label: v.label.trim(), surfaces } : { label: v.label.trim() };
     }
     return g;
   };
@@ -78,6 +78,7 @@ export function GlossaryConfigModal({ open, onClose }: Props) {
       }
       await nganhService.update(nganh.id, { glossary: buildGlossary() });
       message.success(`Đã lưu thành chuẩn ngành ${nganh.name}`);
+      onClose();
     } catch {
       message.error('Lưu chuẩn ngành thất bại');
     } finally {

@@ -586,7 +586,7 @@ const MainLayout: React.FC = () => {
       label: "Quản lý Lĩnh vực",
       onClick: () => navigate("/cau-hinh/linh-vuc"),
     }] : []),
-    ...(canManageConfig || user?.isSuperAdmin ? [{
+    ...(canManageConfig ? [{
       key: "cau-hinh-nhan",
       icon: <FontColorsOutlined />,
       label: "Cấu hình nhãn",
