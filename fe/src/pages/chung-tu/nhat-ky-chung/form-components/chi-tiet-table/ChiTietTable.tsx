@@ -470,6 +470,32 @@ export function ChiTietTable() {
       ),
     },
     {
+      title: "Sản phẩm",
+      dataIndex: "sanPhamId",
+      width: 130,
+      render: (value: string, record: ChungTuChiTiet, index: number) => (
+        <SelectWithQuickAdd
+          size="small"
+          showSearch
+          allowClear
+          placeholder="Chọn"
+          optionFilterProp="label"
+          value={value || undefined}
+          onChange={(v) => handleSanPhamChange(record.key, v)}
+          onFocus={() => { activeRowRef.current = index; }}
+          options={(sanPhamList as SanPham[]).map((sp) => ({
+            value: sp.id,
+            label: `${sp.ma} - ${sp.ten}`,
+          }))}
+          className="w-full excel-cell-input"
+          variant="borderless"
+          popupMatchSelectWidth={250}
+          quickAddLabel="sản phẩm"
+          onQuickAdd={() => setQuickAdd({ type: "sanPham", key: record.key })}
+        />
+      ),
+    },
+    {
       title: (
         <span>
           TK Nợ <span className="text-red-500">*</span>
@@ -707,32 +733,6 @@ export function ChiTietTable() {
           className="w-full excel-cell-input"
           variant="borderless"
           popupMatchSelectWidth={250}
-        />
-      ),
-    },
-    {
-      title: "Sản phẩm",
-      dataIndex: "sanPhamId",
-      width: 130,
-      render: (value: string, record: ChungTuChiTiet, index: number) => (
-        <SelectWithQuickAdd
-          size="small"
-          showSearch
-          allowClear
-          placeholder="Chọn"
-          optionFilterProp="label"
-          value={value || undefined}
-          onChange={(v) => handleSanPhamChange(record.key, v)}
-          onFocus={() => { activeRowRef.current = index; }}
-          options={(sanPhamList as SanPham[]).map((sp) => ({
-            value: sp.id,
-            label: `${sp.ma} - ${sp.ten}`,
-          }))}
-          className="w-full excel-cell-input"
-          variant="borderless"
-          popupMatchSelectWidth={250}
-          quickAddLabel="sản phẩm"
-          onQuickAdd={() => setQuickAdd({ type: "sanPham", key: record.key })}
         />
       ),
     },

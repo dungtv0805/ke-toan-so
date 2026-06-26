@@ -33,7 +33,7 @@ export function SelectWithQuickAdd({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={onQuickAdd}
               >
-                + Thêm nhanh {quickAddLabel}
+                Thêm nhanh {quickAddLabel}
               </Button>
             </>
           )}
