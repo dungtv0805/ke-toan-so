@@ -415,19 +415,7 @@ export class TenantService {
 
   /** Ghi đè glossary của 1 tenant (self-service: admin công ty sửa nhãn công ty mình). */
   async updateGlossary(tenantId: string, glossary: Glossary): Promise<Tenant> {
-    const { ObjectId } = await import('mongodb');
-    let idQuery: any;
-    try {
-      idQuery = new ObjectId(tenantId);
-    } catch {
-      idQuery = tenantId;
-    }
-    const tenant = await this.tenantRepository.findOne({
-      where: { _id: idQuery as any },
-    });
-    if (!tenant) {
-      throw new NotFoundException(`Không tìm thấy công ty với ID ${tenantId}`);
-    }
+    const tenant = await this.findOne(tenantId);
     tenant.glossary = glossary ?? {};
     return this.tenantRepository.save(tenant);
   }

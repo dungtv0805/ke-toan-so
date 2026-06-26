@@ -183,7 +183,8 @@ describe('TenantService.cloneGlossaryFromNganh', () => {
 
 describe('TenantService.updateGlossary', () => {
   it('ghi glossary mới vào tenant theo id', async () => {
-    const tenant: any = { _id: 'tid', glossary: {} };
+    const TID = '507f1f77bcf86cd799439011';
+    const tenant: any = { _id: TID, glossary: {} };
     const tenantRepo: any = {
       findOne: jest.fn(async () => tenant),
       save: jest.fn(async (x: any) => x),
@@ -204,9 +205,9 @@ describe('TenantService.updateGlossary', () => {
       ],
     }).compile();
     const service = moduleRef.get(TenantService);
-    // findOne dùng ObjectId(id) → stub tenantRepo.findOne luôn trả tenant ở trên
+    // findOne dùng new ObjectId(id) → stub tenantRepo.findOne luôn trả tenant ở trên
     const g = { chuDauTu: { label: 'Nhà tài trợ' } };
-    const res = await service.updateGlossary('tid', g as any);
+    const res = await service.updateGlossary(TID, g as any);
     expect(res.glossary).toEqual(g);
     expect(tenantRepo.save).toHaveBeenCalled();
   });
