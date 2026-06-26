@@ -47,3 +47,23 @@ describe('getAvailableModuleCodes', () => {
     expect(getAvailableModuleCodes(['XXX'], false, ['KHO', 'BAN_HANG'])).toEqual(['KHO']);
   });
 });
+
+import { unionMenuKeys } from './modules';
+
+describe('unionMenuKeys', () => {
+  it('gộp menuKeys nhiều phân hệ, loại trùng', () => {
+    const result = unionMenuKeys([
+      { menuKeys: ['/kho', '/chung-tu/phieu-nhap'] },
+      { menuKeys: ['/chung-tu/phieu-nhap', '/bao-cao/ton-kho'] },
+    ]);
+    expect(result).toEqual(['/kho', '/chung-tu/phieu-nhap', '/bao-cao/ton-kho']);
+  });
+
+  it('danh sách rỗng → []', () => {
+    expect(unionMenuKeys([])).toEqual([]);
+  });
+
+  it('phân hệ có menuKeys rỗng (vd KE_TOAN) → []', () => {
+    expect(unionMenuKeys([{ menuKeys: [] }])).toEqual([]);
+  });
+});

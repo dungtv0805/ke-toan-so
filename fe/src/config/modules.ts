@@ -68,6 +68,21 @@ export function getAvailableModuleCodes(
   return allActiveCodes.includes('KE_TOAN') ? ['KE_TOAN'] : allActiveCodes.slice(0, 1);
 }
 
+/** Hợp nhất menuKeys của nhiều phân hệ, loại trùng, giữ thứ tự xuất hiện đầu. */
+export function unionMenuKeys(modules: { menuKeys: string[] }[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const m of modules) {
+    for (const k of m.menuKeys ?? []) {
+      if (!seen.has(k)) {
+        seen.add(k);
+        out.push(k);
+      }
+    }
+  }
+  return out;
+}
+
 const STORAGE_PREFIX = 'selectedModule:';
 
 export const getStoredModule = (tenantId: string): string | null =>
