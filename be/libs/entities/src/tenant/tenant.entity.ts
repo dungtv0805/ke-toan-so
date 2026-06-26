@@ -35,7 +35,7 @@ export class Tenant extends BaseEntity {
 
   // Ngành (vd 'XAY_DUNG') — quyết định nhãn hiển thị.
   @Column({ nullable: true })
-  nganh?: string;
+  nganh?: string | null;
 
   // Từ điển nhãn của công ty (clone từ Nganh khi gán ngành, sửa riêng được).
   @Column({ type: 'json', default: {} })
