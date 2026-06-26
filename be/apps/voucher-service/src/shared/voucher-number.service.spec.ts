@@ -51,4 +51,34 @@ describe('VoucherNumberService.generateVoucherNumbers', () => {
     expect(result).toEqual([]);
     expect(repo.save).not.toHaveBeenCalled();
   });
+
+  it('có mã loại chứng từ → tiền tố theo mã + năm + tháng, số reset theo tháng', async () => {
+    const repo = makeRepoMock();
+    const service = new VoucherNumberService(repo as any);
+    const date = new Date('2026-06-15T00:00:00Z');
+
+    const result = await service.generateVoucherNumbers('KHAC', 2, {
+      maLoaiChungTu: 'BH',
+      date,
+    });
+
+    expect(result).toEqual(['BH202606/001', 'BH202606/002']);
+    // Khoá đếm theo (mã, năm, tháng)
+    expect(repo.findOne).toHaveBeenCalledWith({
+      where: { loai: 'BH', year: 2026, thang: 6 },
+    });
+    expect(repo._get().lastSequence).toBe(2);
+  });
+
+  it('generateVoucherNumber đơn lẻ theo mã loại chứng từ', async () => {
+    const repo = makeRepoMock();
+    const service = new VoucherNumberService(repo as any);
+
+    const result = await service.generateVoucherNumber('PHIEU_THU', {
+      maLoaiChungTu: 'PT',
+      date: new Date('2026-12-01T00:00:00Z'),
+    });
+
+    expect(result).toBe('PT202612/001');
+  });
 });

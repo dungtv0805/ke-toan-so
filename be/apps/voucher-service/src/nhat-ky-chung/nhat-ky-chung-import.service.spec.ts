@@ -19,7 +19,10 @@ describe('NhatKyChungService.importEntries', () => {
       }),
     };
     const tenantContext = { getCurrentTenantId: () => undefined };
-    const loaiResolver = { resolveLoai: async (_dm: any, fb: any) => fb };
+    const loaiResolver = {
+      resolveLoai: async (_dm: any, fb: any) => fb,
+      resolveLoaiInfo: async (_dm: any, fb: any) => ({ loai: fb }),
+    };
     const service = new NhatKyChungService(
       chungTuRepo as any,
       voucherNumberService as any,
@@ -56,8 +59,16 @@ describe('NhatKyChungService.importEntries', () => {
 
     await service.importEntries(items, 'u');
 
-    expect(voucherNumberService.generateVoucherNumbers).toHaveBeenCalledWith('PHIEU_THU', 2);
-    expect(voucherNumberService.generateVoucherNumbers).toHaveBeenCalledWith('PHIEU_CHI', 1);
+    expect(voucherNumberService.generateVoucherNumbers).toHaveBeenCalledWith(
+      'PHIEU_THU',
+      2,
+      { maLoaiChungTu: undefined, date: expect.any(Date) },
+    );
+    expect(voucherNumberService.generateVoucherNumbers).toHaveBeenCalledWith(
+      'PHIEU_CHI',
+      1,
+      { maLoaiChungTu: undefined, date: expect.any(Date) },
+    );
     const saved = chungTuRepo.save.mock.calls[0][0];
     // item index 0 và 2 là PHIEU_THU → PT1, PT2; index 1 là PHIEU_CHI → PC1
     expect(saved[0].soPhieu).toBe('PT1');

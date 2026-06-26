@@ -310,11 +310,14 @@ export class NhatKyChungService {
     createDto: CreateNhatKyChungDto,
     nguoiTaoId: string,
   ): Promise<{ success: boolean; data: ChungTu }> {
-    const loai = await this.loaiResolver.resolveLoai(
+    const { loai, maLoaiChungTu } = await this.loaiResolver.resolveLoaiInfo(
       createDto.danhMuc,
       createDto.loai,
     );
-    const soPhieu = await this.voucherNumberService.generateVoucherNumber(loai);
+    const soPhieu = await this.voucherNumberService.generateVoucherNumber(loai, {
+      maLoaiChungTu,
+      date: new Date(createDto.ngay),
+    });
 
     const chungTu = this.chungTuRepository.create({
       loai,
@@ -440,13 +443,16 @@ export class NhatKyChungService {
     }
 
     // 1 bút toán (cùng soPhieu) = 1 loai. Suy ra từ dòng đầu (fallback loai dòng đầu).
-    const loai = await this.loaiResolver.resolveLoai(
+    const { loai, maLoaiChungTu } = await this.loaiResolver.resolveLoaiInfo(
       items[0].danhMuc,
       items[0].loai,
     );
 
-    // Generate ONE soPhieu for all items
-    const soPhieu = await this.voucherNumberService.generateVoucherNumber(loai);
+    // Generate ONE soPhieu for all items (tiền tố theo mã loại chứng từ, số theo tháng).
+    const soPhieu = await this.voucherNumberService.generateVoucherNumber(loai, {
+      maLoaiChungTu,
+      date: new Date(items[0].ngay),
+    });
 
     const chungTuList = items.map((item) =>
       this.chungTuRepository.create({
@@ -479,27 +485,44 @@ export class NhatKyChungService {
       return { success: true, data: [] };
     }
 
-    // Suy ra loai từng dòng theo Loại giao dịch (fallback = loai dòng đó).
-    const loaiByIndex = await Promise.all(
-      items.map((item) => this.loaiResolver.resolveLoai(item.danhMuc, item.loai)),
+    // Suy ra loai + mã loại chứng từ từng dòng theo Loại giao dịch (fallback = loai dòng đó).
+    const infoByIndex = await Promise.all(
+      items.map((item) =>
+        this.loaiResolver.resolveLoaiInfo(item.danhMuc, item.loai),
+      ),
     );
 
-    // Gom index theo loai đã suy luận
-    const indicesByLoai = new Map<LoaiChungTu, number[]>();
-    loaiByIndex.forEach((l, idx) => {
-      const list = indicesByLoai.get(l) ?? [];
-      list.push(idx);
-      indicesByLoai.set(l, list);
+    // Gom index theo dải số chung:
+    // - Có mã loại chứng từ: theo (mã, năm, tháng) — số reset theo tháng.
+    // - Không có mã (fallback): theo (loai, năm) như cũ.
+    type Group = {
+      loai: LoaiChungTu;
+      maLoaiChungTu?: string;
+      date: Date;
+      indices: number[];
+    };
+    const groups = new Map<string, Group>();
+    items.forEach((item, idx) => {
+      const { loai, maLoaiChungTu } = infoByIndex[idx];
+      const date = new Date(item.ngay);
+      const year = date.getFullYear();
+      const key = maLoaiChungTu
+        ? `MA:${maLoaiChungTu}:${year}:${date.getMonth() + 1}`
+        : `LOAI:${loai}:${year}`;
+      const group = groups.get(key) ?? { loai, maLoaiChungTu, date, indices: [] };
+      group.indices.push(idx);
+      groups.set(key, group);
     });
 
-    // Đặt trước dải số phiếu cho từng loai, gán theo đúng index gốc
+    // Đặt trước dải số phiếu cho từng nhóm, gán theo đúng index gốc
     const soPhieuByIndex: string[] = new Array(items.length);
-    for (const [loai, indices] of indicesByLoai) {
+    for (const group of groups.values()) {
       const numbers = await this.voucherNumberService.generateVoucherNumbers(
-        loai,
-        indices.length,
+        group.loai,
+        group.indices.length,
+        { maLoaiChungTu: group.maLoaiChungTu, date: group.date },
       );
-      indices.forEach((origIdx, i) => {
+      group.indices.forEach((origIdx, i) => {
         soPhieuByIndex[origIdx] = numbers[i];
       });
     }

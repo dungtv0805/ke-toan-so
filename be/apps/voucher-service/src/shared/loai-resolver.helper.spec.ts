@@ -1,5 +1,9 @@
 import type { DanhMuc, PhanLoaiChungTu } from '@app/entities';
-import { resolveLoaiFromConfig, PHAN_LOAI_TO_LOAI } from './loai-resolver.helper';
+import {
+  resolveLoaiFromConfig,
+  resolveLoaiInfoFromConfig,
+  PHAN_LOAI_TO_LOAI,
+} from './loai-resolver.helper';
 
 describe('resolveLoaiFromConfig', () => {
   // Cấu hình mẫu sát dữ liệu MASTER CEO
@@ -54,6 +58,36 @@ describe('resolveLoaiFromConfig', () => {
 
   it('map phân loại đầy đủ 3 nhánh', () => {
     expect(PHAN_LOAI_TO_LOAI).toEqual({ THU: 'PHIEU_THU', CHI: 'PHIEU_CHI', KHAC: 'KHAC' });
+  });
+
+  describe('resolveLoaiInfoFromConfig (kèm mã loại chứng từ làm tiền tố)', () => {
+    it('trả mã loại chứng từ + loai khi đủ cấu hình', () => {
+      expect(
+        resolveLoaiInfoFromConfig(dm('BAN_HANG'), 'PHIEU_THU', lgdToLct, lctToPhanLoai),
+      ).toEqual({ loai: 'KHAC', maLoaiChungTu: 'BAN_HANG_NKC' });
+      expect(
+        resolveLoaiInfoFromConfig(dm('TANG_TM'), 'KHAC', lgdToLct, lctToPhanLoai),
+      ).toEqual({ loai: 'PHIEU_THU', maLoaiChungTu: 'THU_TM' });
+    });
+
+    it('không có loại giao dịch → chỉ trả loai fallback, không mã', () => {
+      expect(
+        resolveLoaiInfoFromConfig(dm(), 'PHIEU_CHI', lgdToLct, lctToPhanLoai),
+      ).toEqual({ loai: 'PHIEU_CHI' });
+    });
+
+    it('loại giao dịch chưa liên kết loại chứng từ → không mã', () => {
+      expect(
+        resolveLoaiInfoFromConfig(dm('CHUA_CAU_HINH'), 'PHIEU_THU', lgdToLct, lctToPhanLoai),
+      ).toEqual({ loai: 'PHIEU_THU' });
+    });
+
+    it('có mã nhưng loại chứng từ thiếu phân loại → vẫn trả mã, loai fallback', () => {
+      const lgd = new Map([['X', 'LCT_MO_COI']]);
+      expect(
+        resolveLoaiInfoFromConfig(dm('X'), 'PHIEU_CHI', lgd, lctToPhanLoai),
+      ).toEqual({ loai: 'PHIEU_CHI', maLoaiChungTu: 'LCT_MO_COI' });
+    });
   });
 
   it('oracle MASTER CEO: phân loại 6 loại giao dịch', () => {
