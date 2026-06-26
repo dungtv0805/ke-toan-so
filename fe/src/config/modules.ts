@@ -83,12 +83,3 @@ export function unionMenuKeys(modules: { menuKeys: string[] }[]): string[] {
   return out;
 }
 
-const STORAGE_PREFIX = 'selectedModule:';
-
-export const getStoredModule = (tenantId: string): string | null =>
-  localStorage.getItem(STORAGE_PREFIX + tenantId);
-
-export const setStoredModule = (tenantId: string, code: string | null): void => {
-  if (code) localStorage.setItem(STORAGE_PREFIX + tenantId, code);
-  else localStorage.removeItem(STORAGE_PREFIX + tenantId);
-};
