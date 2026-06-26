@@ -7,6 +7,7 @@ import './master-data';
 import './common';
 import './tenant';
 import './linh-vuc';
+import './nganh';
 import './user';
 import './reporting';
 
@@ -17,5 +18,6 @@ export * from './master-data';
 export * from './common';
 export * from './tenant';
 export * from './linh-vuc';
+export * from './nganh';
 export * from './user';
 export * from './reporting';

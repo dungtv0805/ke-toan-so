@@ -57,6 +57,11 @@ export class CreateTenantDto {
   @IsOptional()
   modules?: string[];
 
+  // Ngành công ty thuộc về (vd 'XAY_DUNG'). Clone glossary của ngành vào tenant.
+  @IsString()
+  @IsOptional()
+  nganh?: string;
+
   @ValidateNested()
   @Type(() => TenantAdminDto)
   @IsOptional()

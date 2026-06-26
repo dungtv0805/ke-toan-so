@@ -39,6 +39,7 @@ describe('TenantService - member profile & password', () => {
         { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserTenant`, useValue: userTenantRepo },
         { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`, useValue: stub },
         { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`, useValue: stub },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`, useValue: stub },
       ],
     }).compile();
 
@@ -116,5 +117,66 @@ describe('TenantService - member profile & password', () => {
         service.resetMemberPassword(TENANT_ID, USER_ID),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
+  });
+});
+
+// ─── Task 5: cloneGlossaryFromNganh ───────────────────────────────────────────
+
+function repoWith(items: any[] = []) {
+  const store = [...items];
+  return {
+    store,
+    find: jest.fn(async () => store),
+    findOne: jest.fn(async ({ where }: any) =>
+      store.find((x) =>
+        (where.code && x.code === where.code) ||
+        (where._id && String(x._id) === String(where._id)),
+      ) ?? null,
+    ),
+    create: jest.fn((x: any) => ({ ...x })),
+    save: jest.fn(async (x: any) => x),
+    count: jest.fn(async () => store.length),
+  } as any;
+}
+
+describe('TenantService.cloneGlossaryFromNganh', () => {
+  async function build(nganhItems: any[]) {
+    const empty = repoWith();
+    const nganhRepo = repoWith(nganhItems);
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        TenantService,
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}User`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserCredential`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserTenant`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`, useValue: nganhRepo },
+      ],
+    }).compile();
+    return { service: moduleRef.get(TenantService), nganhRepo };
+  }
+
+  const XD = { code: 'XAY_DUNG', glossary: { chuDauTu: { label: 'Chủ đầu tư' } } };
+
+  it('trả deep-copy glossary của ngành theo code', async () => {
+    const built = await build([XD]);
+    const g = await built.service.cloneGlossaryFromNganh('XAY_DUNG');
+    expect(g).toEqual({ chuDauTu: { label: 'Chủ đầu tư' } });
+    // deep copy: sửa kết quả không ảnh hưởng nguồn
+    g.chuDauTu.label = 'X';
+    expect(XD.glossary.chuDauTu.label).toBe('Chủ đầu tư');
+  });
+
+  it('không có code → {}', async () => {
+    const built = await build([XD]);
+    expect(await built.service.cloneGlossaryFromNganh(undefined)).toEqual({});
+    expect(await built.service.cloneGlossaryFromNganh(null)).toEqual({});
+  });
+
+  it('code không tồn tại → {}', async () => {
+    const built = await build([XD]);
+    expect(await built.service.cloneGlossaryFromNganh('KHONG_CO')).toEqual({});
   });
 });

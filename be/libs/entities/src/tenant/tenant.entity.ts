@@ -1,5 +1,6 @@
 import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '../base.entity';
+import type { Glossary } from '../nganh/nganh.entity';
 
 @Entity('tenants')
 export class Tenant extends BaseEntity {
@@ -31,4 +32,12 @@ export class Tenant extends BaseEntity {
   // Tầng entitlement (công ty đã mua gì) — độc lập với role/permission.
   @Column({ type: 'json', default: ['KE_TOAN'] })
   modules: string[];
+
+  // Ngành (vd 'XAY_DUNG') — quyết định nhãn hiển thị.
+  @Column({ nullable: true })
+  nganh?: string | null;
+
+  // Từ điển nhãn của công ty (clone từ Nganh khi gán ngành, sửa riêng được).
+  @Column({ type: 'json', default: {} })
+  glossary: Glossary;
 }
