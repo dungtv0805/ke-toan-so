@@ -17,6 +17,7 @@ export interface Tenant {
   nguoiDaiDien?: string;
   isActive: boolean;
   modules?: string[];
+  nganh?: string;
   admins?: TenantAdmin[];
   createdAt?: string;
   updatedAt?: string;
@@ -32,6 +33,7 @@ export interface CreateTenantDto {
   nguoiDaiDien?: string;
   isActive?: boolean;
   modules?: string[];
+  nganh?: string;
   admin?: {
     email: string;
     hoTen: string;
@@ -50,6 +52,7 @@ export interface UpdateTenantDto {
   nguoiDaiDien?: string;
   isActive?: boolean;
   modules?: string[];
+  nganh?: string;
 }
 
 export interface UserOption {
@@ -195,6 +198,7 @@ class TenantService extends ServiceBase {
       nguoiDaiDien: tenant.nguoiDaiDien as string | undefined,
       isActive: tenant.isActive as boolean,
       modules: tenant.modules as string[] | undefined,
+      nganh: tenant.nganh as string | undefined,
       admins: admins?.map((a) => ({
         id: (a._id as string) || (a.id as string),
         email: a.email as string,

@@ -4,6 +4,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UserOutlined,
 import { useAuth } from '@/contexts/AuthContext';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { tenantService, Tenant, CreateTenantDto, UpdateTenantDto } from '@/services/tenantService';
+import { nganhService, type Nganh } from '@/services/nganhService';
 import TenantMembersModal from './TenantMembersModal';
 
 const DEFAULT_PASSWORD = '123456';
@@ -22,6 +23,7 @@ const TenantPage = () => {
     .filter((m) => m.isActive)
     .map((m) => ({ value: m.code, label: m.name }));
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [nganhList, setNganhList] = useState<Nganh[]>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -66,6 +68,7 @@ const TenantPage = () => {
   useEffect(() => {
     fetchTenants();
     fetchUsers();
+    nganhService.getAll().then(setNganhList).catch(() => setNganhList([]));
   }, []);
 
   const handleCreate = () => {
@@ -93,6 +96,7 @@ const TenantPage = () => {
       nguoiDaiDien: tenant.nguoiDaiDien,
       isActive: tenant.isActive,
       modules: tenant.modules?.length ? tenant.modules : ['KE_TOAN'],
+      nganh: tenant.nganh,
     });
     setModalVisible(true);
   };
@@ -126,6 +130,7 @@ const TenantPage = () => {
           nguoiDaiDien: formValues.nguoiDaiDien,
           isActive: values.isActive,
           modules: formValues.modules?.length ? formValues.modules : ['KE_TOAN'],
+          nganh: formValues.nganh,
         };
 
         if (adminMode === 'existing' && formValues.existingUserId) {
@@ -388,6 +393,18 @@ const TenantPage = () => {
               mode="multiple"
               placeholder="Chọn lĩnh vực"
               options={moduleOptions}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="nganh"
+            label="Ngành"
+            extra="Chọn ngành để áp bộ nhãn hiển thị chuẩn (Chủ đầu tư, ...)"
+          >
+            <Select
+              allowClear
+              placeholder="Chọn ngành"
+              options={nganhList.map((n) => ({ value: n.code, label: n.name }))}
             />
           </Form.Item>
 
