@@ -63,7 +63,9 @@ import {
   SnippetsOutlined,
   NodeIndexOutlined,
   FileAddOutlined,
+  FontColorsOutlined,
 } from "@ant-design/icons";
+import { GlossaryConfigModal } from "@/components/glossary/GlossaryConfigModal";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import type { MenuProps } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
@@ -358,6 +360,7 @@ const MainLayout: React.FC = () => {
   // Initialize collapsed based on current URL - if on form screen, start collapsed
   const [collapsed, setCollapsed] = useState(() => isFormScreen(window.location.pathname));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [glossaryModalOpen, setGlossaryModalOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
     return saved ? JSON.parse(saved) : false;
@@ -582,6 +585,12 @@ const MainLayout: React.FC = () => {
       icon: <AppstoreOutlined />,
       label: "Quản lý Lĩnh vực",
       onClick: () => navigate("/cau-hinh/linh-vuc"),
+    }] : []),
+    ...(canManageConfig ? [{
+      key: "cau-hinh-nhan",
+      icon: <FontColorsOutlined />,
+      label: "Cấu hình nhãn",
+      onClick: () => setGlossaryModalOpen(true),
     }] : []),
   ];
 
@@ -911,6 +920,7 @@ const MainLayout: React.FC = () => {
         </Content>
       </Layout>
 
+      <GlossaryConfigModal open={glossaryModalOpen} onClose={() => setGlossaryModalOpen(false)} />
     </Layout>
   );
 };

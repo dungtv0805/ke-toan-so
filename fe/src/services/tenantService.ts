@@ -17,6 +17,7 @@ export interface Tenant {
   nguoiDaiDien?: string;
   isActive: boolean;
   modules?: string[];
+  nganh?: string;
   admins?: TenantAdmin[];
   createdAt?: string;
   updatedAt?: string;
@@ -32,6 +33,7 @@ export interface CreateTenantDto {
   nguoiDaiDien?: string;
   isActive?: boolean;
   modules?: string[];
+  nganh?: string;
   admin?: {
     email: string;
     hoTen: string;
@@ -50,6 +52,7 @@ export interface UpdateTenantDto {
   nguoiDaiDien?: string;
   isActive?: boolean;
   modules?: string[];
+  nganh?: string;
 }
 
 export interface UserOption {
@@ -122,6 +125,14 @@ class TenantService extends ServiceBase {
     return this.transformTenant(response);
   }
 
+  async updateGlossary(glossary: import('@/types/tenant').Glossary): Promise<{ glossary: import('@/types/tenant').Glossary }> {
+    const res = await this.put<Record<string, unknown>>(
+      { glossary },
+      { endpoint: '/current/glossary' },
+    );
+    return { glossary: (res.glossary as import('@/types/tenant').Glossary) ?? {} };
+  }
+
   async deleteTenant(id: string): Promise<void> {
     await super.delete({ endpoint: `/${id}` });
   }
@@ -187,6 +198,7 @@ class TenantService extends ServiceBase {
       nguoiDaiDien: tenant.nguoiDaiDien as string | undefined,
       isActive: tenant.isActive as boolean,
       modules: tenant.modules as string[] | undefined,
+      nganh: tenant.nganh as string | undefined,
       admins: admins?.map((a) => ({
         id: (a._id as string) || (a.id as string),
         email: a.email as string,

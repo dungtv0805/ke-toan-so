@@ -15,8 +15,9 @@ import {
   AddUserToTenantDto,
   UpdateTenantMemberDto,
   UpdateMemberProfileDto,
+  UpdateTenantGlossaryDto,
 } from '@app/dto';
-import { JwtGuard, SuperAdminGuard, TenantAdminGuard } from '@app/auth';
+import { JwtGuard, SuperAdminGuard, TenantAdminGuard, CurrentUser } from '@app/auth';
 
 @Controller('tenants')
 export class TenantController {
@@ -49,6 +50,16 @@ export class TenantController {
   @UseGuards(JwtGuard, SuperAdminGuard)
   async create(@Body() createDto: CreateTenantDto) {
     const data = await this.tenantService.create(createDto);
+    return { success: true, data };
+  }
+
+  @Put('current/glossary')
+  @UseGuards(JwtGuard)
+  async updateCurrentGlossary(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: UpdateTenantGlossaryDto,
+  ) {
+    const data = await this.tenantService.updateGlossary(tenantId, dto.glossary ?? {});
     return { success: true, data };
   }
 

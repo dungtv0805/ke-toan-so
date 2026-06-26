@@ -35,6 +35,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  applyGlossary: (glossary: import('@/types/tenant').Glossary) => void;
   selectTenant: (tenantId: string) => Promise<void>;
   switchTenant: (tenantId: string) => Promise<void>;
   hasPermission: (permission: string) => boolean;
@@ -290,6 +291,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  const applyGlossary = useCallback((glossary: import('@/types/tenant').Glossary) => {
+    setCurrentTenantState((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, glossary };
+      setCurrentTenant(next); // cập nhật cache localStorage
+      return next;
+    });
+  }, []);
+
   const hasPermission = useCallback((permission: string) => {
     if (!user) return false;
     if (user.isSuperAdmin) return true;
@@ -322,6 +332,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         logout,
         refreshUser,
+        applyGlossary,
         selectTenant,
         switchTenant,
         hasPermission,

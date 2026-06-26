@@ -413,6 +413,13 @@ export class TenantService {
     return this.tenantRepository.save(tenant);
   }
 
+  /** Ghi đè glossary của 1 tenant (self-service: admin công ty sửa nhãn công ty mình). */
+  async updateGlossary(tenantId: string, glossary: Glossary): Promise<Tenant> {
+    const tenant = await this.findOne(tenantId);
+    tenant.glossary = glossary ?? {};
+    return this.tenantRepository.save(tenant);
+  }
+
   async delete(id: string): Promise<void> {
     const tenant = await this.findOne(id);
     tenant.isActive = false;
