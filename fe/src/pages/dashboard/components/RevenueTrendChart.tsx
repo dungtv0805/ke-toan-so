@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { dashboardService } from '@/services/dashboardService';
 import { sliceToRange } from '../period';
-import { formatCurrency, formatShortCurrency, DASH_COLORS } from './format';
+import { formatCurrency, DASH_COLORS } from './format';
 
 interface Props { year: number; startMonth: number; endMonth: number; }
 
@@ -14,9 +14,13 @@ const TEAL = DASH_COLORS.revenue;
 const GRAY = 'hsl(var(--muted-foreground) / 0.35)';
 const ORANGE = '#F2994A';
 
+/** Số tiền → triệu (làm tròn), KPI luôn có số; nhãn trên cây bỏ qua giá trị 0. */
+const kpiTrieu = (v: number) => Math.round((v || 0) / 1e6).toLocaleString('vi-VN');
+const labelTrieu = (v: number) => (v ? Math.round(v / 1e6).toLocaleString('vi-VN') : '');
+
 const Kpi: React.FC<{ label: string; value: number; color: string }> = ({ label, value, color }) => (
   <div className="min-w-0">
-    <div className="text-lg sm:text-2xl font-bold truncate" style={{ color }}>{formatShortCurrency(value)}</div>
+    <div className="text-lg sm:text-2xl font-bold truncate" style={{ color }}>{kpiTrieu(value)}</div>
     <div className="text-muted-foreground text-[10px] sm:text-xs uppercase tracking-wide truncate">{label}</div>
   </div>
 );
@@ -38,7 +42,7 @@ const RevenueTrendChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
           <Kpi label="Chi phí" value={sum('chiPhi')} color="hsl(var(--muted-foreground))" />
           <Kpi label="Lợi nhuận" value={sum('loiNhuan')} color={ORANGE} />
         </div>
-        <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">Đvt: đồng</span>
+        <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">Đvt: triệu</span>
       </div>
       {isLoading ? (
         <Skeleton active paragraph={{ rows: 6 }} />
@@ -46,17 +50,21 @@ const RevenueTrendChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
         <Empty description="Chưa có dữ liệu" style={{ height: 280 }} className="flex flex-col items-center justify-center" />
       ) : (
         <ResponsiveContainer width="100%" height={280}>
-          <ComposedChart data={data} margin={{ left: -10, right: 8, top: 16 }}>
+          <ComposedChart data={data} margin={{ left: -10, right: 8, top: 18 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="thang" tickFormatter={(v) => `Th ${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
-            <YAxis tickFormatter={(v) => formatShortCurrency(v)} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={55} />
+            <YAxis tickFormatter={(v) => labelTrieu(v)} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={42} />
             <Tooltip formatter={(value: number) => formatCurrency(value)} labelFormatter={(l) => `Tháng ${l}`} />
             <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
             <Bar dataKey="doanhThu" name="Doanh thu" fill={TEAL} maxBarSize={26}>
-              <LabelList dataKey="doanhThu" position="top" formatter={(v: number) => (v ? formatShortCurrency(v) : '')} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />
+              <LabelList dataKey="doanhThu" position="top" formatter={labelTrieu} style={{ fontSize: 10, fill: TEAL }} />
             </Bar>
-            <Bar dataKey="chiPhi" name="Chi phí" fill={GRAY} maxBarSize={26} />
-            <Line type="monotone" dataKey="loiNhuan" name="Lợi nhuận" stroke={ORANGE} strokeWidth={2} dot={{ r: 3, fill: ORANGE }} />
+            <Bar dataKey="chiPhi" name="Chi phí" fill={GRAY} maxBarSize={26}>
+              <LabelList dataKey="chiPhi" position="top" formatter={labelTrieu} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />
+            </Bar>
+            <Line type="monotone" dataKey="loiNhuan" name="Lợi nhuận" stroke={ORANGE} strokeWidth={2} dot={{ r: 3, fill: ORANGE }}>
+              <LabelList dataKey="loiNhuan" position="top" formatter={labelTrieu} style={{ fontSize: 10, fill: ORANGE }} />
+            </Line>
           </ComposedChart>
         </ResponsiveContainer>
       )}
