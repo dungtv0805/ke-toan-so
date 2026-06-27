@@ -57,7 +57,6 @@ const Donut: React.FC<{ data: BreakdownSlice[] }> = ({ data }) => {
 interface Props { year: number; startMonth: number; endMonth: number; }
 
 const LN_DIMENSIONS = [
-  { label: 'Đối tượng', value: 'doi-tuong' },
   { label: 'Dự án', value: 'du-an' },
   { label: 'Đội', value: 'doi' },
   { label: 'Sản phẩm', value: 'san-pham' },
@@ -73,7 +72,7 @@ const renderBody = (slices: BreakdownSlice[] | undefined, loading: boolean) => {
 };
 
 const RevenueExpenseBreakdownCharts: React.FC<Props> = ({ year, startMonth, endMonth }) => {
-  const [lnDim, setLnDim] = useState('doi-tuong');
+  const [lnDim, setLnDim] = useState('du-an');
   const pnl = useQuery({
     queryKey: ['pnl-breakdown', year, startMonth, endMonth],
     queryFn: () => dashboardService.getPnlBreakdownByRange(year, startMonth, endMonth),
