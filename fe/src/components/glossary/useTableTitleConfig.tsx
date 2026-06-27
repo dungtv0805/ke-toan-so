@@ -8,6 +8,10 @@ import type { TitleTermSpec } from '@/config/titleConfig';
 /**
  * Bọc cột bảng để đổi tiêu đề theo lĩnh vực/công ty (lưu per-page).
  * Trả về columns (đã thay title = override ?? title gốc) và nút ⚙️ mở Drawer.
+ *
+ * LƯU Ý: mỗi BẢNG dùng 1 `pageKey` DUY NHẤT. Đừng dùng lại 1 pageKey cho 2 bảng
+ * khác nhau trên cùng trang — override lưu theo (pageKey, colKey) nên 2 bảng trùng
+ * pageKey sẽ chia sẻ nhãn theo colKey trùng.
  */
 export function useTableTitleConfig<T>(pageKey: string, columns: ColumnType<T>[]) {
   const { currentTenant, currentNganh } = useAuth();
