@@ -16,7 +16,7 @@ import type { TitleTermSpec } from '@/config/titleConfig';
 export function useTableTitleConfig<T>(pageKey: string, columns: ColumnType<T>[]) {
   const { currentTenant, currentLinhVuc } = useAuth();
   const tenantG = currentTenant?.glossary;
-  const nganhG = currentLinhVuc?.glossary;
+  const linhVucG = currentLinhVuc?.glossary;
 
   const colTitles = useMemo(() => extractColTitles(columns), [columns]);
 
@@ -36,10 +36,10 @@ export function useTableTitleConfig<T>(pageKey: string, columns: ColumnType<T>[]
       const key = (col as { key?: unknown; dataIndex?: unknown }).key ??
         (col as { dataIndex?: unknown }).dataIndex;
       if (key == null) return col;
-      const ov = lookupOverride(tenantG, nganhG, tableTermKey(pageKey, String(key)));
+      const ov = lookupOverride(tenantG, linhVucG, tableTermKey(pageKey, String(key)));
       return ov ? { ...col, title: ov } : col;
     });
-  }, [columns, tenantG, nganhG, pageKey]);
+  }, [columns, tenantG, linhVucG, pageKey]);
 
   const settingsButton =
     terms.length > 0 ? <TableTitleSettings terms={terms} defaults={defaults} /> : null;

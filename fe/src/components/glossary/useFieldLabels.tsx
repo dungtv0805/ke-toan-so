@@ -13,11 +13,11 @@ import { lookupOverride, tableTermKey } from '@/config/tableTitleConfig';
 export function useFieldLabels(pageKey: string) {
   const { currentTenant, currentLinhVuc } = useAuth();
   const tenantG = currentTenant?.glossary;
-  const nganhG = currentLinhVuc?.glossary;
+  const linhVucG = currentLinhVuc?.glossary;
 
   return useCallback(
     (field: string, def: string): string =>
-      lookupOverride(tenantG, nganhG, tableTermKey(pageKey, field)) ?? def,
-    [tenantG, nganhG, pageKey],
+      lookupOverride(tenantG, linhVucG, tableTermKey(pageKey, field)) ?? def,
+    [tenantG, linhVucG, pageKey],
   );
 }
