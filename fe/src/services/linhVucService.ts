@@ -1,4 +1,5 @@
 import { ServiceBase } from './base/service-base';
+import type { Glossary } from '@/types/tenant';
 
 export interface LinhVuc {
   id: string;
@@ -10,6 +11,7 @@ export interface LinhVuc {
   order: number;
   isActive: boolean;
   menuKeys: string[];
+  glossary: Glossary;
 }
 
 export interface CreateLinhVucDto {
@@ -21,6 +23,7 @@ export interface CreateLinhVucDto {
   order?: number;
   isActive?: boolean;
   menuKeys?: string[];
+  glossary?: Glossary;
 }
 
 export interface UpdateLinhVucDto {
@@ -31,6 +34,7 @@ export interface UpdateLinhVucDto {
   order?: number;
   isActive?: boolean;
   menuKeys?: string[];
+  glossary?: Glossary;
 }
 
 class LinhVucService extends ServiceBase {
@@ -68,6 +72,7 @@ class LinhVucService extends ServiceBase {
       order: (x.order as number) ?? 0,
       isActive: x.isActive as boolean,
       menuKeys: (x.menuKeys as string[]) ?? [],
+      glossary: (x.glossary as Glossary) ?? {},
     };
   }
 }
