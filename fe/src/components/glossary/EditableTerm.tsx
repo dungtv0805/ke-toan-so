@@ -4,8 +4,10 @@ import { EditOutlined } from '@ant-design/icons';
 import { useTerm } from '@/contexts/TermContext';
 import { useEditMode } from '@/contexts/EditModeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { applyGlossaryEdit, type EditScope } from '@/config/glossaryEdit';
+import { applyGlossaryEdit } from '@/config/glossaryEdit';
+import { buildSaveOptions } from '@/config/saveTarget';
 import { tenantService } from '@/services/tenantService';
+import { nganhService } from '@/services/nganhService';
 
 interface Props {
   tk: string;
@@ -15,12 +17,19 @@ interface Props {
 export function EditableTerm({ tk, surface }: Props) {
   const { t } = useTerm();
   const { editMode } = useEditMode();
-  const { currentTenant, applyGlossary } = useAuth();
+  const { user, currentTenant, currentNganh, applyGlossary, applyNganhGlossary } = useAuth();
   const label = t(tk, surface);
+
+  const options = buildSaveOptions({
+    isSuperAdmin: !!user?.isSuperAdmin,
+    hasNganh: !!currentNganh,
+    hasSurface: !!surface,
+    nganhName: currentNganh?.name,
+  });
 
   const [open, setOpen] = useState(false);
   const [val, setVal] = useState(label);
-  const [scope, setScope] = useState<EditScope>(surface ? 'surface' : 'all');
+  const [optValue, setOptValue] = useState(options[0]?.value ?? 'tenant-all');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -32,7 +41,7 @@ export function EditableTerm({ tk, surface }: Props) {
   const onOpenChange = (o: boolean) => {
     if (o) {
       setVal(label);
-      setScope(surface ? 'surface' : 'all');
+      setOptValue(options[0]?.value ?? 'tenant-all');
     }
     setOpen(o);
   };
@@ -43,12 +52,20 @@ export function EditableTerm({ tk, surface }: Props) {
       message.warning('Nhãn không được để trống');
       return;
     }
+    const opt = options.find((o) => o.value === optValue) ?? options[0];
+    if (!opt) return;
     setSaving(true);
     try {
       const base = t(tk); // nhãn nền (không surface)
-      const next = applyGlossaryEdit(currentTenant?.glossary, base, tk, val.trim(), scope, surface);
-      const res = await tenantService.updateGlossary(next);
-      applyGlossary(res.glossary);
+      if (opt.target === 'nganh' && currentNganh) {
+        const next = applyGlossaryEdit(currentNganh.glossary, base, tk, val.trim(), opt.scope, surface);
+        const res = await nganhService.update(currentNganh.id, { glossary: next });
+        applyNganhGlossary(res.glossary);
+      } else {
+        const next = applyGlossaryEdit(currentTenant?.glossary, base, tk, val.trim(), opt.scope, surface);
+        const res = await tenantService.updateGlossary(next);
+        applyGlossary(res.glossary);
+      }
       message.success('Đã lưu nhãn');
       setOpen(false);
     } catch {
@@ -62,24 +79,22 @@ export function EditableTerm({ tk, surface }: Props) {
     <Space direction="vertical" onClick={(e) => e.stopPropagation()}>
       <Input
         size="small"
-        style={{ width: 220 }}
+        style={{ width: 240 }}
         value={val}
         onChange={(e) => setVal(e.target.value)}
         onPressEnter={handleSave}
       />
-      {surface && (
+      {options.length > 1 && (
         <Radio.Group
           size="small"
-          value={scope}
-          onChange={(e) => {
-            const s = e.target.value as EditScope;
-            setScope(s);
-            if (s === 'all') setVal(t(tk));
-            else setVal(t(tk, surface));
-          }}
+          value={optValue}
+          onChange={(e) => setOptValue(e.target.value)}
         >
-          <Radio value="all">Mọi nơi</Radio>
-          <Radio value="surface">Chỉ chỗ này</Radio>
+          <Space direction="vertical" size={0}>
+            {options.map((o) => (
+              <Radio key={o.value} value={o.value}>{o.label}</Radio>
+            ))}
+          </Space>
         </Radio.Group>
       )}
       <Button type="primary" size="small" loading={saving} onClick={handleSave}>
