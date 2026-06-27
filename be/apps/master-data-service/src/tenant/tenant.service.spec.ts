@@ -181,6 +181,81 @@ describe('TenantService.cloneGlossaryFromNganh', () => {
   });
 });
 
+// ─── Task 2: create/update không clone glossary từ Nganh ─────────────────────
+
+describe('TenantService.create — glossary không clone từ Nganh', () => {
+  const XD = { code: 'XAY_DUNG', _id: 'nganh-1', glossary: { chuDauTu: { label: 'Chủ đầu tư' } } };
+
+  it('tạo tenant với nganh → glossary là {} (không clone từ Nganh)', async () => {
+    const FAKE_OBJ_ID = { toString: () => '507f1f77bcf86cd799439011' };
+    const tenantRepo = {
+      find: jest.fn(async () => []),
+      findOne: jest.fn(async () => null),
+      create: jest.fn((x: any) => ({ ...x, _id: FAKE_OBJ_ID })),
+      save: jest.fn(async (x: any) => ({ ...x, _id: FAKE_OBJ_ID })),
+    };
+    const empty = repoWith();
+    const nganhRepo = repoWith([XD]);
+
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        TenantService,
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`, useValue: tenantRepo },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}User`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserCredential`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserTenant`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`, useValue: nganhRepo },
+      ],
+    }).compile();
+    const service = moduleRef.get(TenantService);
+
+    await service.create({ name: 'Công ty XD', slug: 'cong-ty-xd', nganh: 'XAY_DUNG' } as any);
+
+    expect(tenantRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ glossary: {} }),
+    );
+  });
+});
+
+describe('TenantService.update — glossary không clone từ Nganh khi đổi nganh', () => {
+  it('đổi nganh → glossary KHÔNG được clone (giữ nguyên {})', async () => {
+    const TID = '507f1f77bcf86cd799439011';
+    const tenant: any = {
+      _id: { toString: () => TID },
+      slug: 'old-slug',
+      nganh: 'OLD',
+      glossary: {},
+    };
+    const tenantRepo = {
+      findOne: jest.fn(async () => tenant),
+      save: jest.fn(async (x: any) => x),
+    };
+    const XD = { code: 'XAY_DUNG', _id: 'nganh-1', glossary: { chuDauTu: { label: 'Chủ đầu tư' } } };
+    const nganhRepo = repoWith([XD]);
+    const empty = repoWith();
+
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        TenantService,
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`, useValue: tenantRepo },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}User`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserCredential`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserTenant`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`, useValue: empty },
+        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`, useValue: nganhRepo },
+      ],
+    }).compile();
+    const service = moduleRef.get(TenantService);
+
+    await service.update(TID, { nganh: 'XAY_DUNG' } as any);
+
+    expect(tenant.glossary).toEqual({});
+  });
+});
+
 describe('TenantService.updateGlossary', () => {
   it('ghi glossary mới vào tenant theo id', async () => {
     const TID = '507f1f77bcf86cd799439011';

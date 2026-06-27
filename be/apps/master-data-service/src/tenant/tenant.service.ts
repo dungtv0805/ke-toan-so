@@ -237,8 +237,8 @@ export class TenantService {
       throw new ConflictException(`Công ty với slug ${createDto.slug} đã tồn tại`);
     }
 
-    // Create tenant
-    const glossary = await this.cloneGlossaryFromNganh(createDto.nganh);
+    // Create tenant — glossary starts empty; nhãn đọc live từ LinhVuc
+    const glossary = {} as Glossary;
     const tenant = this.tenantRepository.create({
       name: createDto.name,
       slug: createDto.slug,
@@ -406,9 +406,6 @@ export class TenantService {
       }
     }
 
-    if (updateDto.nganh && updateDto.nganh !== tenant.nganh) {
-      tenant.glossary = await this.cloneGlossaryFromNganh(updateDto.nganh);
-    }
     Object.assign(tenant, sanitizeUpdateDto(updateDto));
     return this.tenantRepository.save(tenant);
   }
