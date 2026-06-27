@@ -14,9 +14,9 @@ import type { TitleTermSpec } from '@/config/titleConfig';
  * pageKey sẽ chia sẻ nhãn theo colKey trùng.
  */
 export function useTableTitleConfig<T>(pageKey: string, columns: ColumnType<T>[]) {
-  const { currentTenant, currentNganh } = useAuth();
+  const { currentTenant, currentLinhVuc } = useAuth();
   const tenantG = currentTenant?.glossary;
-  const nganhG = currentNganh?.glossary;
+  const nganhG = currentLinhVuc?.glossary;
 
   const colTitles = useMemo(() => extractColTitles(columns), [columns]);
 

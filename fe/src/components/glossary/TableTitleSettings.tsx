@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { resolveTerm, TERM_REGISTRY } from '@/config/termRegistry';
 import { buildTitleGlossary, titleKey, type TitleTermSpec } from '@/config/titleConfig';
 import { lookupOverride } from '@/config/tableTitleConfig';
-import { nganhService } from '@/services/nganhService';
+import { linhVucService } from '@/services/linhVucService';
 import { tenantService } from '@/services/tenantService';
 
 interface Props {
@@ -14,11 +14,11 @@ interface Props {
   buttonText?: string;
 }
 
-type Target = 'nganh' | 'tenant';
+type Target = 'linhVuc' | 'tenant';
 
 export function TableTitleSettings({ terms, defaults: propDefaults, buttonText }: Props) {
-  const { user, currentTenant, currentNganh, applyGlossary, applyNganhGlossary } = useAuth();
-  const canNganh = !!user?.isSuperAdmin && !!currentNganh;
+  const { user, currentTenant, currentLinhVuc, applyGlossary, applyLinhVucGlossary } = useAuth();
+  const canLinhVuc = !!user?.isSuperAdmin && !!currentLinhVuc;
 
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState<Target>('tenant');
@@ -37,10 +37,10 @@ export function TableTitleSettings({ terms, defaults: propDefaults, buttonText }
     const init: Record<string, string> = {};
     for (const term of terms)
       init[titleKey(term)] =
-        lookupOverride(currentTenant?.glossary, currentNganh?.glossary, term.tk, term.surface)
+        lookupOverride(currentTenant?.glossary, currentLinhVuc?.glossary, term.tk, term.surface)
         ?? defaultOf(term);
     setValues(init);
-    setTarget(canNganh ? 'nganh' : 'tenant');
+    setTarget(canLinhVuc ? 'linhVuc' : 'tenant');
     setOpen(true);
   };
 
@@ -48,10 +48,10 @@ export function TableTitleSettings({ terms, defaults: propDefaults, buttonText }
     if (saving) return;
     setSaving(true);
     try {
-      if (target === 'nganh' && currentNganh) {
-        const next = buildTitleGlossary(currentNganh.glossary, terms, values, defaultsMap);
-        const res = await nganhService.update(currentNganh.id, { glossary: next });
-        applyNganhGlossary(res.glossary);
+      if (target === 'linhVuc' && currentLinhVuc) {
+        const next = buildTitleGlossary(currentLinhVuc.glossary, terms, values, defaultsMap);
+        const res = await linhVucService.update(currentLinhVuc.id, { glossary: next });
+        applyLinhVucGlossary(res.glossary);
       } else {
         const next = buildTitleGlossary(currentTenant?.glossary, terms, values, defaultsMap);
         const res = await tenantService.updateGlossary(next);
@@ -90,9 +90,9 @@ export function TableTitleSettings({ terms, defaults: propDefaults, buttonText }
         }
       >
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
-          {canNganh && (
+          {canLinhVuc && (
             <Radio.Group value={target} onChange={(e) => setTarget(e.target.value)}>
-              <Radio value="nganh">Cả lĩnh vực{currentNganh ? ` (${currentNganh.name})` : ''}</Radio>
+              <Radio value="linhVuc">Cả lĩnh vực{currentLinhVuc ? ` (${currentLinhVuc.name})` : ''}</Radio>
               <Radio value="tenant">Chỉ công ty này</Radio>
             </Radio.Group>
           )}

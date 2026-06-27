@@ -5,7 +5,6 @@ import { setAuthToken, getAuthToken, clearAuthToken, setCurrentTenant, getCurren
 import { ApiError, ApiErrorType } from '@/config/api';
 import { getAvailableModuleCodes } from '@/config/modules';
 import { linhVucService, type LinhVuc } from '@/services/linhVucService';
-import { nganhService, type Nganh } from '@/services/nganhService';
 
 function extractPermissionsFromToken(token: string): string[] {
   try {
@@ -37,9 +36,8 @@ interface AuthContextType {
   logout: () => void;
   refreshUser: () => Promise<void>;
   applyGlossary: (glossary: import('@/types/tenant').Glossary) => void;
-  currentNganh: import('@/services/nganhService').Nganh | null;
-  refreshNganh: () => Promise<void>;
-  applyNganhGlossary: (glossary: import('@/types/tenant').Glossary) => void;
+  currentLinhVuc: LinhVuc | null;
+  applyLinhVucGlossary: (glossary: import('@/types/tenant').Glossary) => void;
   selectTenant: (tenantId: string) => Promise<void>;
   switchTenant: (tenantId: string) => Promise<void>;
   hasPermission: (permission: string) => boolean;
@@ -56,7 +54,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [tempToken, setTempToken] = useState<string | null>(null);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
   const [allModules, setAllModules] = useState<LinhVuc[]>([]);
-  const [nganhList, setNganhList] = useState<Nganh[]>([]);
 
   const refreshModules = useCallback(async () => {
     try {
@@ -76,23 +73,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const refreshNganh = useCallback(async () => {
-    try {
-      const list = await nganhService.getAll();
-      setNganhList(list);
-      localStorage.setItem('nganhCache', JSON.stringify(list));
-    } catch {
-      const cached = localStorage.getItem('nganhCache');
-      if (cached) {
-        try {
-          setNganhList(JSON.parse(cached));
-        } catch {
-          /* ignore */
-        }
-      }
-    }
-  }, []);
-
   // Code lĩnh vực đang active (nguồn để tính available + auto-chọn).
   const activeCodes = allModules.filter((m) => m.isActive).map((m) => m.code);
 
@@ -101,9 +81,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     ? getAvailableModuleCodes(currentTenant.modules, user?.isSuperAdmin || false, activeCodes)
     : [];
 
-  const currentNganh = currentTenant?.nganh
-    ? nganhList.find((n) => n.code === currentTenant.nganh) ?? null
-    : null;
+  const LINH_VUC_DEFAULT = 'KE_TOAN';
+  const currentLinhVucCode = currentTenant?.modules?.[0] ?? LINH_VUC_DEFAULT;
+  const currentLinhVuc = allModules.find((m) => m.code === currentLinhVucCode) ?? null;
 
   const getModule = useCallback(
     (code: string) => allModules.find((m) => m.code === code),
@@ -140,7 +120,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           // Nạp danh sách lĩnh vực động (sau khi đã có token hợp lệ).
           await refreshModules();
-          await refreshNganh();
         } catch (error) {
           // Token invalid or expired
           clearAuthToken();
@@ -199,7 +178,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Nạp lĩnh vực động khi đã có token (bỏ qua nếu còn chờ chọn tenant).
       if (response.accessToken) {
         await refreshModules();
-        await refreshNganh();
       }
 
       return { success: true };
@@ -218,7 +196,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return { success: false, error: 'Đã xảy ra lỗi. Vui lòng thử lại' };
     }
-  }, [refreshModules, refreshNganh]);
+  }, [refreshModules]);
 
   const logout = useCallback(async () => {
     try {
@@ -266,12 +244,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Nạp lĩnh vực động sau khi chọn tenant.
       await refreshModules();
-      await refreshNganh();
     } catch (error) {
       console.error('Failed to select tenant:', error);
       throw error;
     }
-  }, [tempToken, refreshModules, refreshNganh]);
+  }, [tempToken, refreshModules]);
 
   const switchTenant = useCallback(async (tenantId: string) => {
     try {
@@ -329,13 +306,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   }, []);
 
-  const applyNganhGlossary = useCallback((glossary: import('@/types/tenant').Glossary) => {
-    setNganhList((prev) =>
-      prev.map((n) =>
-        currentTenant?.nganh && n.code === currentTenant.nganh ? { ...n, glossary } : n,
-      ),
+  const applyLinhVucGlossary = useCallback((glossary: import('@/types/tenant').Glossary) => {
+    setAllModules((prev) =>
+      prev.map((m) => (m.code === currentLinhVucCode ? { ...m, glossary } : m)),
     );
-  }, [currentTenant?.nganh]);
+  }, [currentLinhVucCode]);
 
   const hasPermission = useCallback((permission: string) => {
     if (!user) return false;
@@ -370,9 +345,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         refreshUser,
         applyGlossary,
-        currentNganh,
-        refreshNganh,
-        applyNganhGlossary,
+        currentLinhVuc,
+        applyLinhVucGlossary,
         selectTenant,
         switchTenant,
         hasPermission,

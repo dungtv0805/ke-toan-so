@@ -11,9 +11,9 @@ import { lookupOverride, tableTermKey } from '@/config/tableTitleConfig';
  *       `<Form.Item label={fl('tenKhachHang', 'Tên khách hàng')} ...>`
  */
 export function useFieldLabels(pageKey: string) {
-  const { currentTenant, currentNganh } = useAuth();
+  const { currentTenant, currentLinhVuc } = useAuth();
   const tenantG = currentTenant?.glossary;
-  const nganhG = currentNganh?.glossary;
+  const nganhG = currentLinhVuc?.glossary;
 
   return useCallback(
     (field: string, def: string): string =>
