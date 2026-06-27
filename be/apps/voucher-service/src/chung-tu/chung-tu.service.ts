@@ -102,6 +102,59 @@ export class ChungTuService {
     return { success: true, data: result as SummaryItem[] };
   }
 
+  /**
+   * Tỷ trọng tiền thu/chi theo mã dòng tiền, phân loại theo tài khoản tiền:
+   * - thu: có dòng Nợ 111/112 (gồm TK con)
+   * - chi: có dòng Có 111/112
+   * Chỉ tính giao dịch có mã dòng tiền (bỏ qua nếu thiếu).
+   */
+  async getCashFlowComposition(
+    which: 'thu' | 'chi',
+    query: ChungTuQueryDto,
+  ): Promise<{ success: boolean; data: { ma: string; ten?: string; soTien: number }[] }> {
+    const { startDate, endDate } = query;
+    const match: Record<string, unknown> = {};
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    if (tenantId) match.tenantId = tenantId;
+    if (startDate || endDate) {
+      const ngay: Record<string, Date> = {};
+      if (startDate) {
+        const s = new Date(startDate);
+        s.setHours(0, 0, 0, 0);
+        ngay.$gte = s;
+      }
+      if (endDate) {
+        const e = new Date(endDate);
+        e.setHours(23, 59, 59, 999);
+        ngay.$lte = e;
+      }
+      match.ngay = ngay;
+    }
+    // thu: tài khoản tiền (111/112) ghi Nợ; chi: ghi Có. Khớp cả TK con (^11[12]).
+    const cashField = which === 'thu' ? 'danhMuc.taiKhoanNo.ma' : 'danhMuc.taiKhoanCo.ma';
+    match[cashField] = { $regex: '^11[12]' };
+    match['danhMuc.dongTien.ma'] = { $exists: true, $ne: null };
+
+    const pipeline: object[] = [
+      { $match: match },
+      {
+        $group: {
+          _id: '$danhMuc.dongTien.ma',
+          ten: { $first: '$danhMuc.dongTien.ten' },
+          soTien: { $sum: '$soTien' },
+        },
+      },
+      { $match: { _id: { $ne: null } } },
+      { $project: { _id: 0, ma: '$_id', ten: 1, soTien: 1 } },
+      { $sort: { soTien: -1 } },
+    ];
+    const result = await this.chungTuRepository.aggregate(pipeline).toArray();
+    return {
+      success: true,
+      data: result as { ma: string; ten?: string; soTien: number }[],
+    };
+  }
+
   async findAll(loai?: LoaiChungTu): Promise<ChungTu[]> {
     const where = loai ? { loai } : {};
     return this.chungTuRepository.find({ where, order: { createdAt: 'DESC' } });

@@ -110,6 +110,16 @@ export class ChungTuController {
     return this.chungTuService.getSummary('PHIEU_CHI', type as SummaryType, query);
   }
 
+  @Get('chung-tu/cash-flow-composition')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async cashFlowComposition(
+    @Query('which') which: string,
+    @Query() query: ChungTuQueryDto,
+  ) {
+    const w = which === 'chi' ? 'chi' : 'thu';
+    return this.chungTuService.getCashFlowComposition(w, query);
+  }
+
   @Post('phieu-thu/import')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
   async importPhieuThu(

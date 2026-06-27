@@ -18,6 +18,12 @@ export interface PhieuSummaryItem {
   soLuong: number;
 }
 
+export interface CashFlowCompositionItem {
+  ma: string;
+  ten?: string;
+  soTien: number;
+}
+
 export interface PhieuQueryParams {
   page?: number;
   limit?: number;
@@ -97,6 +103,18 @@ export class PhieuService extends ServiceBase {
 
   async getSummary(type: PhieuSummaryType, params?: PhieuQueryParams): Promise<PhieuSummaryItem[]> {
     return this.get<PhieuSummaryItem[]>({ endpoint: `/summary/${type}`, params });
+  }
+
+  /** Tỷ trọng tiền thu/chi theo mã dòng tiền (phân loại theo Nợ/Có 111/112). */
+  async getCashFlowComposition(
+    which: 'thu' | 'chi',
+    params?: PhieuQueryParams,
+  ): Promise<CashFlowCompositionItem[]> {
+    const data = await this.get<CashFlowCompositionItem[]>({
+      endpoint: '/../chung-tu/cash-flow-composition',
+      params: { ...params, which },
+    });
+    return Array.isArray(data) ? data : [];
   }
 
   async import(items: CreatePhieuDto[]): Promise<ChungTu[]> {

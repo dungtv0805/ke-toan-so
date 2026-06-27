@@ -116,12 +116,9 @@ export const dashboardService = {
       const startDate = new Date(year, startMonth - 1, 1).toISOString();
       const endDate = new Date(year, endMonth, 0, 23, 59, 59, 999).toISOString();
       const service: PhieuService = which === 'thu' ? phieuThuService : phieuChiService;
-      const rows = await service.getSummary('cash-flow', { startDate, endDate });
+      const rows = await service.getCashFlowComposition(which, { startDate, endDate });
       return rows
-        .map((r) => ({
-          ten: r.ten ?? r.key,
-          soTien: Math.max(Math.abs(r.phatSinhNo || 0), Math.abs(r.phatSinhCo || 0)),
-        }))
+        .map((r) => ({ ten: r.ten ?? r.ma, soTien: Math.abs(r.soTien || 0) }))
         .filter((r) => r.soTien > 0);
     } catch {
       return [];
