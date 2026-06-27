@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Select, Space, Typography, Segmented, ConfigProvider } from 'antd';
-import { CheckCircleOutlined } from '@ant-design/icons';
+import React, { useMemo, useState } from 'react';
+import { Select, Space, Typography, Segmented, ConfigProvider, Button, Tooltip, message } from 'antd';
+import { CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
+import { useQuery } from '@tanstack/react-query';
 import RevenueTrendChart from './components/RevenueTrendChart';
 import CashFlowChart from './components/CashFlowChart';
 import RevenueExpenseBreakdownCharts from './components/RevenueExpenseBreakdownCharts';
@@ -8,8 +9,11 @@ import CongNoChart from './components/CongNoChart';
 import BalanceStructureChart from './components/BalanceStructureChart';
 import ExecutionStatusCharts from './components/ExecutionStatusCharts';
 import MockTabDashboard, { MOCK_TABS } from './components/MockTabDashboard';
+import DashboardSettingsModal, { ALL_BLOCK_KEYS } from './components/DashboardSettingsModal';
 import { Row, Col } from 'antd';
 import { PERIOD_OPTIONS, resolvePeriod, type DashboardPeriod } from './period';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
+import { tenantService } from '@/services/tenantService';
 
 const { Text } = Typography;
 
@@ -27,6 +31,34 @@ const Dashboard: React.FC = () => {
   const [period, setPeriod] = useState<DashboardPeriod>('namNay');
   const { year, startMonth, endMonth } = resolvePeriod(period, CURRENT_YEAR);
   const [activeTab, setActiveTab] = useState<string>('tai-chinh');
+  const isAdmin = useIsAdmin();
+
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const { data: config, refetch: refetchConfig } = useQuery({
+    queryKey: ['dash-config'],
+    queryFn: () => tenantService.getDashboardConfig(),
+  });
+  // config null/undefined = chưa cấu hình → hiển thị tất cả khối.
+  const visibleKeys = useMemo(
+    () => (Array.isArray(config) ? config : ALL_BLOCK_KEYS),
+    [config],
+  );
+  const show = (key: string) => visibleKeys.includes(key);
+
+  const handleSaveConfig = async (blocks: string[]) => {
+    setSaving(true);
+    try {
+      await tenantService.updateDashboardConfig(blocks);
+      await refetchConfig();
+      message.success('Đã lưu cấu hình báo cáo');
+      setSettingsOpen(false);
+    } catch {
+      message.error('Lưu cấu hình thất bại');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -76,32 +108,49 @@ const Dashboard: React.FC = () => {
             showSearch
             optionFilterProp="label"
           />
+          {isAdmin && activeTab === 'tai-chinh' && (
+            <Tooltip title="Chọn báo cáo hiển thị">
+              <Button icon={<SettingOutlined />} onClick={() => setSettingsOpen(true)} />
+            </Tooltip>
+          )}
         </Space>
       </div>
 
       {activeTab === 'tai-chinh' ? (
         <>
           {/* Xu hướng: KQKD | Dòng tiền */}
-          <Row gutter={[12, 12]}>
-            <Col xs={24} lg={12}><RevenueTrendChart year={year} startMonth={startMonth} endMonth={endMonth} /></Col>
-            <Col xs={24} lg={12}><CashFlowChart year={year} startMonth={startMonth} endMonth={endMonth} /></Col>
-          </Row>
+          {(show('kqkd') || show('dongTien')) && (
+            <Row gutter={[12, 12]}>
+              {show('kqkd') && <Col xs={24} lg={12}><RevenueTrendChart year={year} startMonth={startMonth} endMonth={endMonth} /></Col>}
+              {show('dongTien') && <Col xs={24} lg={12}><CashFlowChart year={year} startMonth={startMonth} endMonth={endMonth} /></Col>}
+            </Row>
+          )}
 
           {/* Tình hình thực hiện */}
-          <ExecutionStatusCharts />
+          {show('tinhHinhThucHien') && <ExecutionStatusCharts />}
 
           {/* Tỷ trọng doanh thu / chi phí */}
-          <RevenueExpenseBreakdownCharts year={year} startMonth={startMonth} endMonth={endMonth} />
+          {show('tyTrong') && <RevenueExpenseBreakdownCharts year={year} startMonth={startMonth} endMonth={endMonth} />}
 
           {/* Công nợ | Cân đối tài chính */}
-          <Row gutter={[12, 12]}>
-            <Col xs={24} lg={12}><CongNoChart year={year} startMonth={startMonth} endMonth={endMonth} /></Col>
-            <Col xs={24} lg={12}><BalanceStructureChart /></Col>
-          </Row>
+          {(show('congNo') || show('canDoi')) && (
+            <Row gutter={[12, 12]}>
+              {show('congNo') && <Col xs={24} lg={12}><CongNoChart year={year} startMonth={startMonth} endMonth={endMonth} /></Col>}
+              {show('canDoi') && <Col xs={24} lg={12}><BalanceStructureChart /></Col>}
+            </Row>
+          )}
         </>
       ) : (
         <MockTabDashboard config={MOCK_TABS[activeTab]} />
       )}
+
+      <DashboardSettingsModal
+        open={settingsOpen}
+        value={visibleKeys}
+        saving={saving}
+        onSave={handleSaveConfig}
+        onClose={() => setSettingsOpen(false)}
+      />
     </div>
   );
 };

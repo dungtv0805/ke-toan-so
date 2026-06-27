@@ -132,6 +132,21 @@ class TenantService extends ServiceBase {
     return { glossary: saved };
   }
 
+  /** Đọc cấu hình khối dashboard của công ty hiện tại (null = hiển thị tất cả). */
+  async getDashboardConfig(): Promise<string[] | null> {
+    const res = await this.get<{ dashboardBlocks: string[] | null }>({ endpoint: '/current/dashboard' });
+    return res?.dashboardBlocks ?? null;
+  }
+
+  /** Lưu danh sách khối dashboard hiển thị (chỉ admin/superAdmin). */
+  async updateDashboardConfig(blocks: string[]): Promise<string[]> {
+    const res = await this.put<{ dashboardBlocks: string[] }>(
+      { dashboardBlocks: blocks },
+      { endpoint: '/current/dashboard' },
+    );
+    return res?.dashboardBlocks ?? blocks;
+  }
+
   async deleteTenant(id: string): Promise<void> {
     await super.delete({ endpoint: `/${id}` });
   }

@@ -417,6 +417,23 @@ export class TenantService {
     return this.tenantRepository.save(tenant);
   }
 
+  /** Đọc cấu hình khối dashboard của tenant; null = chưa cấu hình (hiển thị tất cả). */
+  async getDashboardBlocks(tenantId: string): Promise<string[] | null> {
+    const tenant = await this.findOne(tenantId);
+    return tenant.dashboardBlocks ?? null;
+  }
+
+  /** Ghi đè danh sách khối dashboard hiển thị của 1 tenant. */
+  async updateDashboardBlocks(
+    tenantId: string,
+    blocks: string[],
+  ): Promise<{ dashboardBlocks: string[] }> {
+    const tenant = await this.findOne(tenantId);
+    tenant.dashboardBlocks = Array.isArray(blocks) ? blocks : [];
+    await this.tenantRepository.save(tenant);
+    return { dashboardBlocks: tenant.dashboardBlocks };
+  }
+
   async delete(id: string): Promise<void> {
     const tenant = await this.findOne(id);
     tenant.isActive = false;

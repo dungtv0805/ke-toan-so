@@ -16,8 +16,9 @@ import {
   UpdateTenantMemberDto,
   UpdateMemberProfileDto,
   UpdateTenantGlossaryDto,
+  UpdateTenantDashboardDto,
 } from '@app/dto';
-import { JwtGuard, SuperAdminGuard, TenantAdminGuard, CurrentUser } from '@app/auth';
+import { JwtGuard, SuperAdminGuard, TenantAdminGuard, AdminGuard, CurrentUser } from '@app/auth';
 
 @Controller('tenants')
 export class TenantController {
@@ -60,6 +61,26 @@ export class TenantController {
     @Body() dto: UpdateTenantGlossaryDto,
   ) {
     const data = await this.tenantService.updateGlossary(tenantId, dto.glossary ?? {});
+    return { success: true, data };
+  }
+
+  @Get('current/dashboard')
+  @UseGuards(JwtGuard)
+  async getCurrentDashboard(@CurrentUser('tenantId') tenantId: string) {
+    const dashboardBlocks = await this.tenantService.getDashboardBlocks(tenantId);
+    return { success: true, data: { dashboardBlocks } };
+  }
+
+  @Put('current/dashboard')
+  @UseGuards(JwtGuard, AdminGuard)
+  async updateCurrentDashboard(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body() dto: UpdateTenantDashboardDto,
+  ) {
+    const data = await this.tenantService.updateDashboardBlocks(
+      tenantId,
+      dto.dashboardBlocks ?? [],
+    );
     return { success: true, data };
   }
 

@@ -40,4 +40,9 @@ export class Tenant extends BaseEntity {
   // Từ điển nhãn của công ty (clone từ Nganh khi gán ngành, sửa riêng được).
   @Column({ type: 'json', default: {} })
   glossary: Glossary;
+
+  // Các khối báo cáo dashboard công ty chọn hiển thị (vd ['kqkd','dongTien',...]).
+  // null = chưa cấu hình → hiển thị tất cả.
+  @Column({ type: 'json', nullable: true })
+  dashboardBlocks?: string[] | null;
 }
