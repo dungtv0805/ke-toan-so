@@ -29,6 +29,7 @@ import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
+import { useFieldLabels } from "@/components/glossary/useFieldLabels";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -253,6 +254,7 @@ const NhomVatTuPage: React.FC = () => {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.nhomVatTu', columns);
+  const fl = useFieldLabels('danhMuc.nhomVatTu');
 
   return (
     <div className="space-y-3">
@@ -334,7 +336,7 @@ const NhomVatTuPage: React.FC = () => {
             <Col span={8}>
               <Form.Item
                 name="ma"
-                label="Mã"
+                label={fl('ma', 'Mã')}
                 className="mb-3"
                 rules={[
                   { required: true, message: "Vui lòng nhập mã" },
@@ -347,7 +349,7 @@ const NhomVatTuPage: React.FC = () => {
             <Col span={16}>
               <Form.Item
                 name="ten"
-                label="Tên nhóm vật tư"
+                label={fl('ten', 'Tên nhóm vật tư')}
                 className="mb-3"
                 rules={[
                   { required: true, message: "Vui lòng nhập tên nhóm vật tư" },
@@ -361,7 +363,7 @@ const NhomVatTuPage: React.FC = () => {
 
           <Form.Item
             name="moTa"
-            label="Mô tả"
+            label={fl('moTa', 'Mô tả')}
             className="mb-0"
             rules={[{ max: 500, message: "Mô tả tối đa 500 ký tự" }]}
           >

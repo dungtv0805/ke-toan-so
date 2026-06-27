@@ -12,6 +12,7 @@ import {
 import { MENU_CATALOG } from '@/config/menuCatalog';
 import { ICON_WHITELIST, iconByName, isCommonKey } from '@/config/modules';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const DEFAULT_LINH_VUC_CODE = 'KE_TOAN';
 
@@ -247,6 +248,7 @@ const LinhVucPage = () => {
     },
   ];
 
+  const fl = useFieldLabels('cauHinh.linhVuc');
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('cauHinh.linhVuc', columns);
 
   return (
@@ -286,7 +288,7 @@ const LinhVucPage = () => {
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item
             name="code"
-            label="Code (định danh, không đổi sau khi tạo)"
+            label={fl('code', 'Code (định danh, không đổi sau khi tạo)')}
             rules={[
               { required: true, message: 'Vui lòng nhập code' },
               { pattern: /^[A-Z0-9_]+$/, message: 'Code chỉ gồm chữ HOA, số và gạch dưới' },
@@ -298,31 +300,31 @@ const LinhVucPage = () => {
 
           <Form.Item
             name="name"
-            label="Tên lĩnh vực"
+            label={fl('name', 'Tên lĩnh vực')}
             rules={[{ required: true, message: 'Vui lòng nhập tên lĩnh vực' }]}
           >
             <Input placeholder="VD: Bán hàng" />
           </Form.Item>
 
-          <Form.Item name="description" label="Mô tả">
+          <Form.Item name="description" label={fl('description', 'Mô tả')}>
             <Input.TextArea rows={2} placeholder="Mô tả ngắn về lĩnh vực" />
           </Form.Item>
 
           <div className="flex gap-3">
-            <Form.Item name="icon" label="Icon" className="flex-1">
+            <Form.Item name="icon" label={fl('icon', 'Icon')} className="flex-1">
               <Select options={iconOptions} placeholder="Chọn icon" />
             </Form.Item>
             <Form.Item
               name="color"
-              label="Màu"
+              label={fl('color', 'Màu')}
               getValueFromEvent={(color) => color.toHexString()}
             >
               <ColorPicker showText />
             </Form.Item>
-            <Form.Item name="order" label="Thứ tự">
+            <Form.Item name="order" label={fl('order', 'Thứ tự')}>
               <InputNumber min={0} />
             </Form.Item>
-            <Form.Item name="isActive" label="Kích hoạt" valuePropName="checked">
+            <Form.Item name="isActive" label={fl('isActive', 'Kích hoạt')} valuePropName="checked">
               <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
             </Form.Item>
           </div>

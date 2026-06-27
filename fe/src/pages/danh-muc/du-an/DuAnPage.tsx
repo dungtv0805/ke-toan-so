@@ -44,6 +44,7 @@ import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -406,6 +407,7 @@ const DuAnPage: React.FC = () => {
     },
   ];
 
+  const fl = useFieldLabels('danhMuc.duAn');
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.duAn', columns);
 
   const tabItems = [
@@ -615,7 +617,7 @@ const DuAnPage: React.FC = () => {
             <Col span={8}>
               <Form.Item
                 name="ma"
-                label="Mã dự án"
+                label={fl('ma', 'Mã dự án')}
                 rules={[
                   { required: true, message: "Vui lòng nhập mã dự án" },
                   { max: 20, message: "Mã tối đa 20 ký tự" },
@@ -628,7 +630,7 @@ const DuAnPage: React.FC = () => {
             <Col span={16}>
               <Form.Item
                 name="ten"
-                label="Tên dự án"
+                label={fl('ten', 'Tên dự án')}
                 rules={[
                   { required: true, message: "Vui lòng nhập tên dự án" },
                   { max: 200, message: "Tên tối đa 200 ký tự" },
@@ -640,7 +642,7 @@ const DuAnPage: React.FC = () => {
             </Col>
           </Row>
 
-          <Form.Item name="chuDauTuId" label="Chủ đầu tư" className="mb-3">
+          <Form.Item name="chuDauTuId" label={fl('chuDauTuId', 'Chủ đầu tư')} className="mb-3">
             <Select
               showSearch
               allowClear
@@ -657,7 +659,7 @@ const DuAnPage: React.FC = () => {
             <Col span={14}>
               <Form.Item
                 name="thoiGian"
-                label="Thời gian thực hiện"
+                label={fl('thoiGian', 'Thời gian thực hiện')}
                 className="mb-0"
               >
                 <RangePicker
@@ -670,7 +672,7 @@ const DuAnPage: React.FC = () => {
             <Col span={10}>
               <Form.Item
                 name="trangThai"
-                label="Trạng thái"
+                label={fl('trangThai', 'Trạng thái')}
                 rules={[
                   { required: true, message: "Vui lòng chọn trạng thái" },
                 ]}

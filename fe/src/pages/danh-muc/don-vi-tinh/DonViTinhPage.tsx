@@ -29,6 +29,7 @@ import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -253,6 +254,7 @@ const DonViTinhPage: React.FC = () => {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.donViTinh', columns);
+  const fl = useFieldLabels('danhMuc.donViTinh');
 
   return (
     <div className="space-y-3">
@@ -334,7 +336,7 @@ const DonViTinhPage: React.FC = () => {
             <Col span={8}>
               <Form.Item
                 name="ma"
-                label="Mã"
+                label={fl('ma', 'Mã')}
                 className="mb-3"
                 rules={[
                   { required: true, message: "Vui lòng nhập mã" },
@@ -347,7 +349,7 @@ const DonViTinhPage: React.FC = () => {
             <Col span={16}>
               <Form.Item
                 name="ten"
-                label="Tên đơn vị tính"
+                label={fl('ten', 'Tên đơn vị tính')}
                 className="mb-3"
                 rules={[
                   { required: true, message: "Vui lòng nhập tên đơn vị tính" },
@@ -361,7 +363,7 @@ const DonViTinhPage: React.FC = () => {
 
           <Form.Item
             name="moTa"
-            label="Mô tả"
+            label={fl('moTa', 'Mô tả')}
             className="mb-0"
             rules={[{ max: 500, message: "Mô tả tối đa 500 ký tự" }]}
           >

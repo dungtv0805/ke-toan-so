@@ -30,6 +30,7 @@ import { nganHangService } from "@/services/nganHangService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const { Text } = Typography;
 
@@ -280,6 +281,7 @@ const NganHangPage: React.FC = () => {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.nganHang', columns);
+  const fl = useFieldLabels('danhMuc.nganHang');
 
   return (
     <div className="space-y-3">
@@ -369,7 +371,7 @@ const NganHangPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="ma"
-                label="Mã tài khoản"
+                label={fl('ma', 'Mã tài khoản')}
                 className="mb-3"
                 rules={[
                   { required: true, message: "Vui lòng nhập mã" },
@@ -382,7 +384,7 @@ const NganHangPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="soTaiKhoan"
-                label="Số tài khoản"
+                label={fl('soTaiKhoan', 'Số tài khoản')}
                 className="mb-3"
                 rules={[{ max: 30, message: "Số TK tối đa 30 ký tự" }]}
               >
@@ -393,7 +395,7 @@ const NganHangPage: React.FC = () => {
 
           <Form.Item
             name="ten"
-            label="Tên tài khoản"
+            label={fl('ten', 'Tên tài khoản')}
             className="mb-3"
             rules={[
               { required: true, message: "Vui lòng nhập tên tài khoản" },
@@ -407,7 +409,7 @@ const NganHangPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="nganHang"
-                label="Tên ngân hàng"
+                label={fl('nganHang', 'Tên ngân hàng')}
                 className="mb-3"
                 rules={[{ max: 200, message: "Tên ngân hàng tối đa 200 ký tự" }]}
               >
@@ -417,7 +419,7 @@ const NganHangPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="chiNhanh"
-                label="Tên chi nhánh ngân hàng"
+                label={fl('chiNhanh', 'Tên chi nhánh ngân hàng')}
                 className="mb-3"
                 rules={[{ max: 200, message: "Tên chi nhánh tối đa 200 ký tự" }]}
               >
@@ -430,7 +432,7 @@ const NganHangPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="chuTaiKhoan"
-                label="Chủ tài khoản"
+                label={fl('chuTaiKhoan', 'Chủ tài khoản')}
                 className="mb-0"
                 rules={[{ max: 200, message: "Chủ tài khoản tối đa 200 ký tự" }]}
               >
@@ -440,7 +442,7 @@ const NganHangPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="trangThai"
-                label="Trạng thái"
+                label={fl('trangThai', 'Trạng thái')}
                 className="mb-0"
                 rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
               >

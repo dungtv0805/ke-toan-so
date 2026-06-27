@@ -29,6 +29,7 @@ import { loaiChungTuService, LoaiChungTuType, PhanLoaiChungTu } from "@/services
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -247,6 +248,7 @@ const LoaiChungTuPage: React.FC = () => {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.loaiChungTu', columns);
+  const fl = useFieldLabels('danhMuc.loaiChungTu');
 
   return (
     <div className="space-y-3">
@@ -327,7 +329,7 @@ const LoaiChungTuPage: React.FC = () => {
             <Col span={8}>
               <Form.Item
                 name="ma"
-                label="Mã loại chứng từ"
+                label={fl('ma', 'Mã loại chứng từ')}
                 className="mb-3"
                 rules={[
                   { required: true, message: "Vui lòng nhập mã" },
@@ -340,7 +342,7 @@ const LoaiChungTuPage: React.FC = () => {
             <Col span={16}>
               <Form.Item
                 name="ten"
-                label="Tên loại chứng từ"
+                label={fl('ten', 'Tên loại chứng từ')}
                 className="mb-3"
                 rules={[
                   { required: true, message: "Vui lòng nhập tên" },
@@ -354,7 +356,7 @@ const LoaiChungTuPage: React.FC = () => {
 
           <Form.Item
             name="phanLoai"
-            label="Phân loại (định tuyến phiếu)"
+            label={fl('phanLoai', 'Phân loại (định tuyến phiếu)')}
             className="mb-3"
             tooltip="Quyết định chứng từ vào phân hệ Phiếu thu, Phiếu chi hay Nhật ký chung"
             rules={[{ required: true, message: "Vui lòng chọn phân loại" }]}
@@ -367,7 +369,7 @@ const LoaiChungTuPage: React.FC = () => {
 
           <Form.Item
             name="moTa"
-            label="Mô tả"
+            label={fl('moTa', 'Mô tả')}
             className="mb-0"
             rules={[{ max: 500, message: "Mô tả tối đa 500 ký tự" }]}
           >

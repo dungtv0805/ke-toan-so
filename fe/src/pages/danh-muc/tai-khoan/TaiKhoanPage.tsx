@@ -28,6 +28,7 @@ import {
 } from "@ant-design/icons";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { TaiKhoan } from "@/types";
 import { taiKhoanService } from "@/services/taiKhoanService";
 import { loaiTaiKhoan, nhomTaiKhoan } from "@/mock-data/tai-khoan";
@@ -355,6 +356,7 @@ const TaiKhoanPage: React.FC = () => {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.taiKhoan', columns);
+  const fl = useFieldLabels('danhMuc.taiKhoan');
 
   return (
     <div className="space-y-3">
@@ -472,7 +474,7 @@ const TaiKhoanPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="ma"
-                label="Mã tài khoản"
+                label={fl('ma', 'Mã tài khoản')}
                 className="mb-3"
                 rules={[
                   { required: true, message: "Vui lòng nhập mã tài khoản" },
@@ -485,7 +487,7 @@ const TaiKhoanPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="parentId"
-                label="Tài khoản cha"
+                label={fl('parentId', 'Tài khoản cha')}
                 className="mb-3"
               >
                 <Select
@@ -512,7 +514,7 @@ const TaiKhoanPage: React.FC = () => {
 
           <Form.Item
             name="ten"
-            label="Tên tài khoản"
+            label={fl('ten', 'Tên tài khoản')}
             className="mb-3"
             rules={[
               { required: true, message: "Vui lòng nhập tên tài khoản" },
@@ -526,7 +528,7 @@ const TaiKhoanPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="loai"
-                label="Loại tài khoản"
+                label={fl('loai', 'Loại tài khoản')}
                 className="mb-3"
                 rules={[{ required: true, message: "Vui lòng chọn loại" }]}
               >
@@ -539,7 +541,7 @@ const TaiKhoanPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="nhom"
-                label="Nhóm tài khoản"
+                label={fl('nhom', 'Nhóm tài khoản')}
                 className="mb-3"
                 rules={[{ required: true, message: "Vui lòng chọn nhóm" }]}
               >
@@ -553,7 +555,7 @@ const TaiKhoanPage: React.FC = () => {
 
           <Form.Item
             name="chiTietTheo"
-            label="Chi tiết theo"
+            label={fl('chiTietTheo', 'Chi tiết theo')}
             className="mb-3"
             tooltip="Khi nhập số dư đầu kỳ, TK này sẽ nhập chi tiết theo từng đối tượng"
           >
@@ -588,7 +590,7 @@ const TaiKhoanPage: React.FC = () => {
 
           <Form.Item
             name="moTa"
-            label="Mô tả"
+            label={fl('moTa', 'Mô tả')}
             className="mb-0"
             rules={[{ max: 500, message: "Tối đa 500 ký tự" }]}
           >

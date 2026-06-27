@@ -31,12 +31,14 @@ import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTerm } from "@/contexts/TermContext";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
+import { useFieldLabels } from "@/components/glossary/useFieldLabels";
 
 const { Title, Text } = Typography;
 
 function ChuDauTuPageInner() {
   const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/chu-dau-tu");
   const { t } = useTerm();
+  const fl = useFieldLabels('danhMuc.chuDauTu');
   const handler = useChuDauTuHandler();
   const [data] = useChuDauTuState("data", []);
   const [loading] = useChuDauTuState("loading", false);
@@ -263,7 +265,7 @@ function ChuDauTuPageInner() {
         <Form form={form} layout="vertical" className="mt-2" size="small">
           <Form.Item
             name="ma"
-            label="Mã"
+            label={fl('ma', 'Mã')}
             rules={[
               { required: true, message: "Vui lòng nhập mã" },
               { max: 20, message: "Tối đa 20 ký tự" },
@@ -283,7 +285,7 @@ function ChuDauTuPageInner() {
           >
             <Input placeholder="VD: Công ty ABC" />
           </Form.Item>
-          <Form.Item name="moTa" label="Mô tả" className="mb-0">
+          <Form.Item name="moTa" label={fl('moTa', 'Mô tả')} className="mb-0">
             <Input.TextArea
               autoSize={{ minRows: 2, maxRows: 4 }}
               placeholder="Mô tả..."

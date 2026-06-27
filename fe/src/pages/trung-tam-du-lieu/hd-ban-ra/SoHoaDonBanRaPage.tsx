@@ -24,6 +24,7 @@ import { hoaDonBanRaService } from '@/services/hoaDonBanRaService';
 import { theoDoiHopDongService } from '@/services/theoDoiHopDongService';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const { Text } = Typography;
 const fmtCur = (v?: number) => (!v ? '-' : new Intl.NumberFormat('vi-VN').format(v));
@@ -172,6 +173,7 @@ export default function SoHoaDonBanRaPage() {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('trungTamDuLieu.soHoaDonBanRa', columns);
+  const fl = useFieldLabels('trungTamDuLieu.soHoaDonBanRa');
 
   const hdOptions = hdList.map((h) => ({
     value: h.hopDongId,
@@ -215,31 +217,31 @@ export default function SoHoaDonBanRaPage() {
         destroyOnClose
       >
         <Form form={form} layout="vertical" size="small" className="mt-2">
-          <Form.Item name="hopDongId" label="Hợp đồng" rules={[{ required: true, message: 'Chọn hợp đồng' }]}>
+          <Form.Item name="hopDongId" label={fl('hopDongId', 'Hợp đồng')} rules={[{ required: true, message: 'Chọn hợp đồng' }]}>
             <Select showSearch optionFilterProp="label" options={hdOptions} placeholder="Chọn hợp đồng" onChange={onHopDongChange} />
           </Form.Item>
           <Space size="large" className="flex">
-            <Form.Item name="soHoaDon" label="Số hóa đơn">
+            <Form.Item name="soHoaDon" label={fl('soHoaDon', 'Số hóa đơn')}>
               <Input />
             </Form.Item>
-            <Form.Item name="ngay" label="Ngày">
+            <Form.Item name="ngay" label={fl('ngay', 'Ngày')}>
               <DatePicker format="DD/MM/YYYY" className="w-full" />
             </Form.Item>
-            <Form.Item name="lan" label="Hóa đơn lần">
+            <Form.Item name="lan" label={fl('lan', 'Hóa đơn lần')}>
               <InputNumber min={1} className="w-full" />
             </Form.Item>
           </Space>
-          <Form.Item name="donViMua" label="Đơn vị mua">
+          <Form.Item name="donViMua" label={fl('donViMua', 'Đơn vị mua')}>
             <Input placeholder="Tên đơn vị mua" />
           </Form.Item>
-          <Form.Item name="noiDung" label="Nội dung">
+          <Form.Item name="noiDung" label={fl('noiDung', 'Nội dung')}>
             <Input />
           </Form.Item>
           <Space size="large" className="flex">
-            <Form.Item name="tienHang" label="Tiền hàng">
+            <Form.Item name="tienHang" label={fl('tienHang', 'Tiền hàng')}>
               <InputNumber {...moneyProps} style={{ width: 200 }} />
             </Form.Item>
-            <Form.Item name="tienThue" label="Tiền thuế">
+            <Form.Item name="tienThue" label={fl('tienThue', 'Tiền thuế')}>
               <InputNumber {...moneyProps} style={{ width: 160 }} />
             </Form.Item>
             <Form.Item label="Tổng">

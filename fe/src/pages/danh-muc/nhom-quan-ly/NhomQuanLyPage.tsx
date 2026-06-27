@@ -30,6 +30,7 @@ import {
 import "./NhomQuanLyPage.state";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
+import { useFieldLabels } from "@/components/glossary/useFieldLabels";
 
 const { Title, Text } = Typography;
 
@@ -162,6 +163,7 @@ function NhomQuanLyPageInner() {
     },
   ];
 
+  const fl = useFieldLabels('danhMuc.nhomQuanLy');
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.nhomQuanLy', columns);
 
   return (
@@ -258,7 +260,7 @@ function NhomQuanLyPageInner() {
         <Form form={form} layout="vertical" className="mt-2" size="small">
           <Form.Item
             name="ma"
-            label="Mã"
+            label={fl('ma', 'Mã')}
             rules={[{ required: true, message: "Vui lòng nhập mã" }]}
             className="mb-3"
           >
@@ -266,13 +268,13 @@ function NhomQuanLyPageInner() {
           </Form.Item>
           <Form.Item
             name="ten"
-            label="Tên"
+            label={fl('ten', 'Tên')}
             rules={[{ required: true, message: "Vui lòng nhập tên" }]}
             className="mb-3"
           >
             <Input placeholder="VD: Nhóm quản lý A" />
           </Form.Item>
-          <Form.Item name="moTa" label="Mô tả" className="mb-0">
+          <Form.Item name="moTa" label={fl('moTa', 'Mô tả')} className="mb-0">
             <Input.TextArea
               autoSize={{ minRows: 2, maxRows: 4 }}
               placeholder="Mô tả..."

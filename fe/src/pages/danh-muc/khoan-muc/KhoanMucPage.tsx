@@ -36,6 +36,7 @@ import { loaiKhoanMucOptions } from "@/mock-data/khoan-muc";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const { Text } = Typography;
 
@@ -318,6 +319,7 @@ const KhoanMucPage: React.FC = () => {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.khoanMuc', columns);
+  const fl = useFieldLabels('danhMuc.khoanMuc');
 
   const tabItems = [
     {
@@ -458,7 +460,7 @@ const KhoanMucPage: React.FC = () => {
             <Col span={10}>
               <Form.Item
                 name="ma"
-                label="Mã khoản mục"
+                label={fl('ma', 'Mã khoản mục')}
                 className="mb-3"
                 rules={[
                   { required: true, message: "Vui lòng nhập mã" },
@@ -471,7 +473,7 @@ const KhoanMucPage: React.FC = () => {
             <Col span={14}>
               <Form.Item
                 name="loai"
-                label="Loại khoản mục"
+                label={fl('loai', 'Loại khoản mục')}
                 className="mb-3"
                 rules={[{ required: true, message: "Vui lòng chọn loại" }]}
               >
@@ -498,7 +500,7 @@ const KhoanMucPage: React.FC = () => {
 
           <Form.Item
             name="ten"
-            label="Tên khoản mục"
+            label={fl('ten', 'Tên khoản mục')}
             className="mb-3"
             rules={[
               { required: true, message: "Vui lòng nhập tên khoản mục" },
@@ -510,7 +512,7 @@ const KhoanMucPage: React.FC = () => {
 
           <Form.Item
             name="nhom"
-            label="Nhóm khoản mục"
+            label={fl('nhom', 'Nhóm khoản mục')}
             className="mb-0"
             rules={[{ required: true, message: "Vui lòng chọn nhóm" }]}
           >

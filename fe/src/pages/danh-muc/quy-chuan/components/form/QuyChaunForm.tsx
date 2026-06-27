@@ -5,6 +5,7 @@ import { quyChauanService } from '@/services/quyChaunService';
 import { taiKhoanService } from '@/services/taiKhoanService';
 import { useQuyChaunHandler, useQuyChaunState } from '../../QuyChaunHandlerContext';
 import { LoaiGiaoDich } from '@/types';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import './QuyChaunForm.state';
 
 const quyChaunSchema = z.object({
@@ -17,6 +18,7 @@ const quyChaunSchema = z.object({
 
 export const QuyChaunForm: React.FC = () => {
   const handler = useQuyChaunHandler();
+  const fl = useFieldLabels('danhMuc.quyChuan');
   const [modalVisible] = useQuyChaunState('modalVisible', false);
   const [editingRecord] = useQuyChaunState('editingRecord', null);
   const [formLoading] = useQuyChaunState('formLoading', false);
@@ -98,7 +100,7 @@ export const QuyChaunForm: React.FC = () => {
       width={600}
     >
       <Form form={form} layout="vertical">
-        <Form.Item name="loaiGiaoDich" label="Loại giao dịch" rules={[{ required: true }]}>
+        <Form.Item name="loaiGiaoDich" label={fl('loaiGiaoDich', 'Loại giao dịch')} rules={[{ required: true }]}>
           <Select
             showSearch
             placeholder="Chọn loại giao dịch"
@@ -108,22 +110,22 @@ export const QuyChaunForm: React.FC = () => {
             }
           />
         </Form.Item>
-        <Form.Item name="nghiepVu" label="Nghiệp vụ" rules={[{ required: true, max: 100 }]}>
+        <Form.Item name="nghiepVu" label={fl('nghiepVu', 'Nghiệp vụ')} rules={[{ required: true, max: 100 }]}>
           <Input placeholder="Ví dụ: Thu tiền bán hàng" />
         </Form.Item>
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item name="taiKhoanNo" label="Tài khoản Nợ" rules={[{ required: true }]}>
+            <Form.Item name="taiKhoanNo" label={fl('taiKhoanNo', 'Tài khoản Nợ')} rules={[{ required: true }]}>
               <Select showSearch placeholder="Chọn TK Nợ" options={taiKhoanOptions} filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())} />
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="taiKhoanCo" label="Tài khoản Có" rules={[{ required: true }]}>
+            <Form.Item name="taiKhoanCo" label={fl('taiKhoanCo', 'Tài khoản Có')} rules={[{ required: true }]}>
               <Select showSearch placeholder="Chọn TK Có" options={taiKhoanOptions} filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())} />
             </Form.Item>
           </Col>
         </Row>
-        <Form.Item name="moTa" label="Mô tả" rules={[{ max: 255 }]}>
+        <Form.Item name="moTa" label={fl('moTa', 'Mô tả')} rules={[{ max: 255 }]}>
           <Input.TextArea rows={3} placeholder="Mô tả chi tiết về quy chuẩn hạch toán này" />
         </Form.Item>
       </Form>

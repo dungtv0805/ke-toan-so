@@ -30,6 +30,7 @@ import {
 import { nhomKhoanMucService, NhomKhoanMuc, NhomKhoanMucStats } from "@/services/nhomKhoanMucService";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 
@@ -215,6 +216,7 @@ const NhomKhoanMucPage: React.FC = () => {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.nhomKhoanMuc', columns);
+  const fl = useFieldLabels('danhMuc.nhomKhoanMuc');
 
   const tabItems = [
     { key: "all", label: <span>Tất cả <Tag className="ml-1">{stats.tongNhomKhoanMuc}</Tag></span> },
@@ -288,12 +290,12 @@ const NhomKhoanMucPage: React.FC = () => {
         <Form form={form} layout="vertical" size="small" className="mt-2">
           <Row gutter={12}>
             <Col span={10}>
-              <Form.Item name="ma" label="Mã nhóm" className="mb-3" rules={[{ required: true, message: "Vui lòng nhập mã" }, { max: 20, message: "Mã tối đa 20 ký tự" }]}>
+              <Form.Item name="ma" label={fl('ma', 'Mã nhóm')} className="mb-3" rules={[{ required: true, message: "Vui lòng nhập mã" }, { max: 20, message: "Mã tối đa 20 ký tự" }]}>
                 <Input placeholder="VD: NCP001" />
               </Form.Item>
             </Col>
             <Col span={14}>
-              <Form.Item name="loai" label="Loại" className="mb-3" rules={[{ required: true, message: "Vui lòng chọn loại" }]}>
+              <Form.Item name="loai" label={fl('loai', 'Loại')} className="mb-3" rules={[{ required: true, message: "Vui lòng chọn loại" }]}>
                 <Select
                   placeholder="Chọn loại"
                   options={loaiOptions.map((o) => ({
@@ -304,10 +306,10 @@ const NhomKhoanMucPage: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="ten" label="Tên nhóm khoản mục" className="mb-3" rules={[{ required: true, message: "Vui lòng nhập tên" }, { max: 200, message: "Tên tối đa 200 ký tự" }]}>
+          <Form.Item name="ten" label={fl('ten', 'Tên nhóm khoản mục')} className="mb-3" rules={[{ required: true, message: "Vui lòng nhập tên" }, { max: 200, message: "Tên tối đa 200 ký tự" }]}>
             <Input placeholder="Nhập tên nhóm khoản mục" />
           </Form.Item>
-          <Form.Item name="moTa" label="Mô tả" className="mb-0" rules={[{ max: 500, message: "Mô tả tối đa 500 ký tự" }]}>
+          <Form.Item name="moTa" label={fl('moTa', 'Mô tả')} className="mb-0" rules={[{ max: 500, message: "Mô tả tối đa 500 ký tự" }]}>
             <Input.TextArea rows={3} placeholder="Mô tả chi tiết (tùy chọn)" />
           </Form.Item>
         </Form>

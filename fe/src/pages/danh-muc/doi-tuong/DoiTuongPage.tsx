@@ -41,6 +41,7 @@ import { loaiDoiTuong } from "@/mock-data/doi-tuong";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const { Title, Text } = Typography;
 
@@ -362,6 +363,7 @@ const DoiTuongPage: React.FC = () => {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.doiTuong', columns);
+  const fl = useFieldLabels('danhMuc.doiTuong');
 
   const tabItems = [
     { key: "all", label: "Tất cả", icon: <TeamOutlined /> },
@@ -566,7 +568,7 @@ const DoiTuongPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="loai"
-                label="Loại đối tượng"
+                label={fl('loai', 'Loại đối tượng')}
                 rules={[{ required: true, message: "Vui lòng chọn loại" }]}
                 className="mb-3"
               >
@@ -580,7 +582,7 @@ const DoiTuongPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="ma"
-                label="Mã đối tượng"
+                label={fl('ma', 'Mã đối tượng')}
                 rules={[
                   { required: true, message: "Vui lòng nhập mã" },
                   { max: 20, message: "Tối đa 20 ký tự" },
@@ -594,7 +596,7 @@ const DoiTuongPage: React.FC = () => {
 
           <Form.Item
             name="ten"
-            label="Tên đối tượng"
+            label={fl('ten', 'Tên đối tượng')}
             rules={[
               { required: true, message: "Vui lòng nhập tên" },
               { max: 200, message: "Tối đa 200 ký tự" },
@@ -608,7 +610,7 @@ const DoiTuongPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="soDienThoai"
-                label="Số điện thoại"
+                label={fl('soDienThoai', 'Số điện thoại')}
                 rules={[{ max: 20, message: "Tối đa 20 ký tự" }]}
                 className="mb-3"
               >
@@ -618,7 +620,7 @@ const DoiTuongPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="email"
-                label="Email"
+                label={fl('email', 'Email')}
                 rules={[
                   { type: "email", message: "Email không hợp lệ" },
                   { max: 100, message: "Tối đa 100 ký tự" },
@@ -632,7 +634,7 @@ const DoiTuongPage: React.FC = () => {
 
           <Form.Item
             name="diaChi"
-            label="Địa chỉ"
+            label={fl('diaChi', 'Địa chỉ')}
             rules={[{ max: 500, message: "Tối đa 500 ký tự" }]}
             className="mb-3"
           >
@@ -646,7 +648,7 @@ const DoiTuongPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="maSoThue"
-                label="Mã số thuế"
+                label={fl('maSoThue', 'Mã số thuế')}
                 rules={[
                   { max: 20, message: "Tối đa 20 ký tự" },
                 ]}
@@ -658,7 +660,7 @@ const DoiTuongPage: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="nguoiLienHe"
-                label="Người liên hệ"
+                label={fl('nguoiLienHe', 'Người liên hệ')}
                 rules={[{ max: 100, message: "Tối đa 100 ký tự" }]}
                 className="mb-0"
               >

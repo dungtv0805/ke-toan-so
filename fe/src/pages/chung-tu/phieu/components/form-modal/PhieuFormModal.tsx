@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useFieldLabels } from "@/components/glossary/useFieldLabels";
 import dayjs, { Dayjs } from "dayjs";
 import { toast } from "sonner";
 import {
@@ -56,6 +57,7 @@ export function PhieuFormModal() {
   const [dongTienList] = usePhieuState("dongTienList", [] as DongTien[]);
   const [taiKhoanList] = usePhieuState("taiKhoanList", [] as TaiKhoanItem[]);
 
+  const fl = useFieldLabels('chungTu.phieu');
   const [form] = Form.useForm<FormValues>();
 
   useEffect(() => {
@@ -166,7 +168,7 @@ export function PhieuFormModal() {
           <Col span={12}>
             <Form.Item
               name="ngay"
-              label="Ngày"
+              label={fl('ngay', 'Ngày')}
               rules={[{ required: true, message: "Vui lòng chọn ngày" }]}
             >
               <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
@@ -175,7 +177,7 @@ export function PhieuFormModal() {
           <Col span={12}>
             <Form.Item
               name="soTien"
-              label="Số tiền"
+              label={fl('soTien', 'Số tiền')}
               rules={[
                 { required: true, message: "Vui lòng nhập số tiền" },
                 {
@@ -201,7 +203,7 @@ export function PhieuFormModal() {
 
         <Form.Item
           name="noiDung"
-          label="Nội dung"
+          label={fl('noiDung', 'Nội dung')}
           rules={[{ required: true, message: "Vui lòng nhập nội dung" }]}
         >
           <Input.TextArea rows={2} placeholder="Nội dung phiếu..." />
@@ -209,18 +211,18 @@ export function PhieuFormModal() {
 
         <Row gutter={12}>
           <Col span={12}>
-            <Form.Item name="nguoiGiaoDich" label="Người giao dịch">
+            <Form.Item name="nguoiGiaoDich" label={fl('nguoiGiaoDich', 'Người giao dịch')}>
               <Input placeholder="Tên người giao dịch" />
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="diaChi" label="Địa chỉ">
+            <Form.Item name="diaChi" label={fl('diaChi', 'Địa chỉ')}>
               <Input placeholder="Địa chỉ" />
             </Form.Item>
           </Col>
         </Row>
 
-        <Form.Item name="ghiChu" label="Ghi chú">
+        <Form.Item name="ghiChu" label={fl('ghiChu', 'Ghi chú')}>
           <Input.TextArea rows={2} placeholder="Ghi chú..." />
         </Form.Item>
 
@@ -230,7 +232,7 @@ export function PhieuFormModal() {
 
         <Row gutter={12}>
           <Col span={12}>
-            <Form.Item name="doiTuongMa" label="Đối tượng">
+            <Form.Item name="doiTuongMa" label={fl('doiTuongMa', 'Đối tượng')}>
               <Select
                 allowClear
                 showSearch
@@ -244,7 +246,7 @@ export function PhieuFormModal() {
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="taiKhoanNoMa" label="Tài khoản Nợ">
+            <Form.Item name="taiKhoanNoMa" label={fl('taiKhoanNoMa', 'Tài khoản Nợ')}>
               <Select
                 allowClear
                 showSearch
@@ -255,7 +257,7 @@ export function PhieuFormModal() {
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="taiKhoanCoMa" label="Tài khoản Có">
+            <Form.Item name="taiKhoanCoMa" label={fl('taiKhoanCoMa', 'Tài khoản Có')}>
               <Select
                 allowClear
                 showSearch
@@ -266,7 +268,7 @@ export function PhieuFormModal() {
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="duAnMa" label="Dự án">
+            <Form.Item name="duAnMa" label={fl('duAnMa', 'Dự án')}>
               <Select
                 allowClear
                 showSearch
@@ -280,7 +282,7 @@ export function PhieuFormModal() {
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="boPhanMa" label="Bộ phận">
+            <Form.Item name="boPhanMa" label={fl('boPhanMa', 'Bộ phận')}>
               <Select
                 allowClear
                 showSearch
@@ -294,7 +296,7 @@ export function PhieuFormModal() {
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="sanPhamMa" label="Sản phẩm">
+            <Form.Item name="sanPhamMa" label={fl('sanPhamMa', 'Sản phẩm')}>
               <Select
                 allowClear
                 showSearch
@@ -308,7 +310,7 @@ export function PhieuFormModal() {
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="dongTienMa" label="Dòng tiền">
+            <Form.Item name="dongTienMa" label={fl('dongTienMa', 'Dòng tiền')}>
               <Select
                 allowClear
                 showSearch

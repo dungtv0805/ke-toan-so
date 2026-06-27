@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { tenantService, TenantMember, AddMemberDto } from '@/services/tenantService';
 import { vaiTroService, VaiTroResponse } from '@/services/vaiTroService';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 
 const DEFAULT_PASSWORD = '123456';
@@ -240,6 +241,7 @@ const ThanhVienPage = () => {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('cauHinh.thanhVien', columns);
+  const fl = useFieldLabels('cauHinh.thanhVien');
 
   return (
     <div className="space-y-3">
@@ -293,7 +295,7 @@ const ThanhVienPage = () => {
           {addMode === 'existing' ? (
             <Form.Item
               name="userId"
-              label="Chọn User"
+              label={fl('userId', 'Chọn User')}
               rules={[{ required: true, message: 'Vui lòng chọn user' }]}
             >
               <Select
@@ -321,14 +323,14 @@ const ThanhVienPage = () => {
             <>
               <Form.Item
                 name="hoTen"
-                label="Họ tên"
+                label={fl('hoTen', 'Họ tên')}
                 rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
               >
                 <Input placeholder="VD: Nguyễn Văn A" />
               </Form.Item>
               <Form.Item
                 name="email"
-                label="Email"
+                label={fl('email', 'Email')}
                 rules={[
                   { required: true, message: 'Vui lòng nhập email' },
                   { type: 'email', message: 'Email không hợp lệ' },
@@ -338,7 +340,7 @@ const ThanhVienPage = () => {
               </Form.Item>
               <Form.Item
                 name="password"
-                label="Mật khẩu"
+                label={fl('password', 'Mật khẩu')}
                 extra={`Mặc định: ${DEFAULT_PASSWORD}`}
               >
                 <Input.Password placeholder="Nhập mật khẩu" />
@@ -348,7 +350,7 @@ const ThanhVienPage = () => {
 
           <Form.Item
             name="role"
-            label="Vai trò"
+            label={fl('role', 'Vai trò')}
             rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
           >
             <Select placeholder="Chọn vai trò" options={roles} />
@@ -375,14 +377,14 @@ const ThanhVienPage = () => {
         <Form form={editForm} layout="vertical">
           <Form.Item
             name="hoTen"
-            label="Họ tên"
+            label={fl('hoTen', 'Họ tên')}
             rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
           >
             <Input placeholder="VD: Nguyễn Văn A" />
           </Form.Item>
           <Form.Item
             name="email"
-            label="Email"
+            label={fl('email', 'Email')}
             rules={[
               { required: true, message: 'Vui lòng nhập email' },
               { type: 'email', message: 'Email không hợp lệ' },
@@ -390,7 +392,7 @@ const ThanhVienPage = () => {
           >
             <Input placeholder="VD: user@congty.com" />
           </Form.Item>
-          <Form.Item name="role" label="Vai trò">
+          <Form.Item name="role" label={fl('role', 'Vai trò')}>
             <Select options={roles} />
           </Form.Item>
         </Form>

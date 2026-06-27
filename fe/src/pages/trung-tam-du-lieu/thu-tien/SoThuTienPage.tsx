@@ -30,6 +30,7 @@ import { theoDoiHopDongService } from '@/services/theoDoiHopDongService';
 import { doiTuongService } from '@/services/doiTuongService';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const { Text } = Typography;
 const fmtCur = (v?: number) => (!v ? '-' : new Intl.NumberFormat('vi-VN').format(v));
@@ -170,6 +171,7 @@ export default function SoThuTienPage() {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('trungTamDuLieu.soThuTien', columns);
+  const fl = useFieldLabels('trungTamDuLieu.soThuTien');
 
   const hdOptions = hdList.map((h) => ({
     value: h.hopDongId,
@@ -214,30 +216,30 @@ export default function SoThuTienPage() {
         destroyOnClose
       >
         <Form form={form} layout="vertical" size="small" className="mt-2">
-          <Form.Item name="hopDongId" label="Hợp đồng" rules={[{ required: true, message: 'Chọn hợp đồng' }]}>
+          <Form.Item name="hopDongId" label={fl('hopDongId', 'Hợp đồng')} rules={[{ required: true, message: 'Chọn hợp đồng' }]}>
             <Select showSearch optionFilterProp="label" options={hdOptions} placeholder="Chọn hợp đồng" onChange={onHopDongChange} />
           </Form.Item>
-          <Form.Item name="doiTuongId" label="Khách hàng">
+          <Form.Item name="doiTuongId" label={fl('doiTuongId', 'Khách hàng')}>
             <Select showSearch allowClear optionFilterProp="label" options={dtOptions} placeholder="Chọn khách hàng" />
           </Form.Item>
-          <Form.Item name="noiDung" label="Nội dung">
+          <Form.Item name="noiDung" label={fl('noiDung', 'Nội dung')}>
             <Input placeholder="VD: Thanh toán lần 1" />
           </Form.Item>
           <Space size="large" className="flex">
-            <Form.Item name="soTien" label="Số tiền" rules={[{ required: true, message: 'Nhập số tiền' }]}>
+            <Form.Item name="soTien" label={fl('soTien', 'Số tiền')} rules={[{ required: true, message: 'Nhập số tiền' }]}>
               <InputNumber {...moneyProps} addonAfter="VNĐ" style={{ width: 220 }} />
             </Form.Item>
-            <Form.Item name="ngay" label="Ngày">
+            <Form.Item name="ngay" label={fl('ngay', 'Ngày')}>
               <DatePicker format="DD/MM/YYYY" className="w-full" />
             </Form.Item>
-            <Form.Item name="lan" label="Lần">
+            <Form.Item name="lan" label={fl('lan', 'Lần')}>
               <InputNumber min={1} className="w-full" />
             </Form.Item>
-            <Form.Item name="nam" label="Năm">
+            <Form.Item name="nam" label={fl('nam', 'Năm')}>
               <InputNumber min={1900} max={2200} controls={false} className="w-full" />
             </Form.Item>
           </Space>
-          <Form.Item name="ghiChu" label="Ghi chú">
+          <Form.Item name="ghiChu" label={fl('ghiChu', 'Ghi chú')}>
             <Input.TextArea autoSize={{ minRows: 1, maxRows: 3 }} />
           </Form.Item>
         </Form>

@@ -32,6 +32,7 @@ import { loaiChungTuService, LoaiChungTuType, PhanLoaiChungTu } from "@/services
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -291,6 +292,7 @@ const LoaiGiaoDichPage: React.FC = () => {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.loaiGiaoDich', columns);
+  const fl = useFieldLabels('danhMuc.loaiGiaoDich');
 
   return (
     <div className="space-y-3">
@@ -382,7 +384,7 @@ const LoaiGiaoDichPage: React.FC = () => {
         <Form form={form} layout="vertical" className="mt-2" size="small">
           <Form.Item
             name="ma"
-            label="Mã loại giao dịch"
+            label={fl('ma', 'Mã loại giao dịch')}
             rules={[
               { required: true, message: "Vui lòng nhập mã loại giao dịch" },
               { max: 50, message: "Mã tối đa 50 ký tự" },
@@ -394,7 +396,7 @@ const LoaiGiaoDichPage: React.FC = () => {
 
           <Form.Item
             name="ten"
-            label="Tên loại giao dịch"
+            label={fl('ten', 'Tên loại giao dịch')}
             rules={[
               { required: true, message: "Vui lòng nhập tên loại giao dịch" },
               { max: 200, message: "Tên tối đa 200 ký tự" },
@@ -406,7 +408,7 @@ const LoaiGiaoDichPage: React.FC = () => {
 
           <Form.Item
             name="loaiChungTuMa"
-            label="Loại chứng từ (quyết định Phiếu thu/chi/NKC)"
+            label={fl('loaiChungTuMa', 'Loại chứng từ (quyết định Phiếu thu/chi/NKC)')}
             tooltip="Chứng từ dùng loại giao dịch này sẽ vào phân hệ theo phân loại của Loại chứng từ được chọn"
             className="mb-3"
           >
@@ -424,7 +426,7 @@ const LoaiGiaoDichPage: React.FC = () => {
 
           <Form.Item
             name="color"
-            label="Màu sắc"
+            label={fl('color', 'Màu sắc')}
             rules={[{ max: 50, message: "Màu sắc tối đa 50 ký tự" }]}
             className="mb-3"
           >
@@ -433,7 +435,7 @@ const LoaiGiaoDichPage: React.FC = () => {
 
           <Form.Item
             name="moTa"
-            label="Mô tả"
+            label={fl('moTa', 'Mô tả')}
             rules={[{ max: 500, message: "Mô tả tối đa 500 ký tự" }]}
             className="mb-0"
           >

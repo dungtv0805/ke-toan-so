@@ -3,9 +3,11 @@ import { Modal, Form, Input, Switch } from "antd";
 import { useVaiTroHandler, useVaiTroState } from "../../VaiTroHandlerContext";
 import { VaiTroItem } from "../table/VaiTroTable.state";
 import "./VaiTroModal.state";
+import { useFieldLabels } from "@/components/glossary/useFieldLabels";
 
 export function VaiTroModal() {
   const handler = useVaiTroHandler();
+  const fl = useFieldLabels("cauHinh.vaiTro");
   const [modalVisible] = useVaiTroState("modalVisible", false);
   const [editingRecord] = useVaiTroState("editingRecord", null as VaiTroItem | null);
   const [form] = Form.useForm();
@@ -64,17 +66,17 @@ export function VaiTroModal() {
       <Form form={form} layout="vertical" initialValues={{ trangThai: true }}>
         <Form.Item
           name="ten"
-          label="Tên vai trò"
+          label={fl("ten", "Tên vai trò")}
           rules={[{ required: true, message: "Vui lòng nhập tên vai trò" }]}
         >
           <Input placeholder="Nhập tên vai trò" />
         </Form.Item>
 
-        <Form.Item name="moTa" label="Mô tả">
+        <Form.Item name="moTa" label={fl("moTa", "Mô tả")}>
           <Input.TextArea rows={3} placeholder="Nhập mô tả vai trò" />
         </Form.Item>
 
-        <Form.Item name="trangThai" label="Trạng thái" valuePropName="checked">
+        <Form.Item name="trangThai" label={fl("trangThai", "Trạng thái")} valuePropName="checked">
           <Switch checkedChildren="Hoạt động" unCheckedChildren="Khoá" />
         </Form.Item>
       </Form>

@@ -46,6 +46,7 @@ import { hoaDonBanRaService } from '@/services/hoaDonBanRaService';
 import { doiTuongService } from '@/services/doiTuongService';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const { Text, Title } = Typography;
 
@@ -90,6 +91,7 @@ interface ScalarForm {
 
 export default function QuanLyHopDongPage() {
   const { canEdit } = usePagePermission('/trung-tam-du-lieu/hop-dong');
+  const fl = useFieldLabels('trungTamDuLieu.hopDong');
 
   const [rows, setRows] = useState<TheoDoiHopDongRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -391,12 +393,12 @@ export default function QuanLyHopDongPage() {
             <Form form={form} layout="vertical" size="small">
               <Row gutter={12}>
                 <Col span={12}>
-                  <Form.Item name="phuTrachHoSo" label="Phụ trách hồ sơ">
+                  <Form.Item name="phuTrachHoSo" label={fl('phuTrachHoSo', 'Phụ trách hồ sơ')}>
                     <Input placeholder="Tên người phụ trách" />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
-                  <Form.Item name="trangThaiHoSo" label="Trạng thái hồ sơ">
+                  <Form.Item name="trangThaiHoSo" label={fl('trangThaiHoSo', 'Trạng thái hồ sơ')}>
                     <Input placeholder="VD: Đang theo dõi" />
                   </Form.Item>
                 </Col>
@@ -445,7 +447,7 @@ export default function QuanLyHopDongPage() {
                 </Col>
               </Row>
 
-              <Form.Item name="giamTru" label="Giảm trừ">
+              <Form.Item name="giamTru" label={fl('giamTru', 'Giảm trừ')}>
                 <InputNumber {...moneyProps} addonAfter="VNĐ" style={{ width: 240 }} />
               </Form.Item>
 
@@ -468,7 +470,7 @@ export default function QuanLyHopDongPage() {
                 </Form.Item>
               </Space>
 
-              <Form.Item name="ghiChu" label="Ghi chú" className="mt-3">
+              <Form.Item name="ghiChu" label={fl('ghiChu', 'Ghi chú')} className="mt-3">
                 <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} />
               </Form.Item>
             </Form>

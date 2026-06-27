@@ -37,6 +37,7 @@ import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -271,6 +272,7 @@ const DongTienPage: React.FC = () => {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.dongTien', columns);
+  const fl = useFieldLabels('danhMuc.dongTien');
 
   return (
     <div className="space-y-3">
@@ -403,7 +405,7 @@ const DongTienPage: React.FC = () => {
             <Col span={8}>
               <Form.Item
                 name="ma"
-                label="Mã dòng tiền"
+                label={fl('ma', 'Mã dòng tiền')}
                 className="mb-3"
                 rules={[
                   { required: true, message: "Vui lòng nhập mã" },
@@ -416,7 +418,7 @@ const DongTienPage: React.FC = () => {
             <Col span={16}>
               <Form.Item
                 name="ten"
-                label="Tên dòng tiền"
+                label={fl('ten', 'Tên dòng tiền')}
                 className="mb-3"
                 rules={[
                   { required: true, message: "Vui lòng nhập tên" },
@@ -430,7 +432,7 @@ const DongTienPage: React.FC = () => {
 
           <Form.Item
             name="loai"
-            label="Loại hoạt động"
+            label={fl('loai', 'Loại hoạt động')}
             className="mb-3"
             rules={[
               { required: true, message: "Vui lòng chọn loại hoạt động" },
@@ -447,7 +449,7 @@ const DongTienPage: React.FC = () => {
 
           <Form.Item
             name="moTa"
-            label="Mô tả"
+            label={fl('moTa', 'Mô tả')}
             className="mb-0"
             rules={[{ max: 500, message: "Mô tả tối đa 500 ký tự" }]}
           >

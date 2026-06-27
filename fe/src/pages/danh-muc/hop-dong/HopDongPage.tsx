@@ -35,6 +35,7 @@ import {
 } from "@ant-design/icons";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import dayjs, { Dayjs } from "dayjs";
 import { HopDong, DoiTuong, TrangThaiHopDong } from "@/types";
 import {
@@ -380,6 +381,7 @@ function HopDongPageInner() {
     },
   ];
 
+  const fl = useFieldLabels('danhMuc.hopDong');
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.hopDong', columns);
 
   const tabItems = [
@@ -392,7 +394,7 @@ function HopDongPageInner() {
             <Col span={9}>
               <Form.Item
                 name="soHopDong"
-                label="Số hợp đồng"
+                label={fl('soHopDong', 'Số hợp đồng')}
                 rules={[
                   { required: true, message: "Vui lòng nhập số hợp đồng" },
                   { max: 50, message: "Tối đa 50 ký tự" },
@@ -404,7 +406,7 @@ function HopDongPageInner() {
             <Col span={6}>
               <Form.Item
                 name="nam"
-                label="Năm"
+                label={fl('nam', 'Năm')}
               >
                 <InputNumber
                   className="w-full"
@@ -418,7 +420,7 @@ function HopDongPageInner() {
             <Col span={9}>
               <Form.Item
                 name="ngayKy"
-                label="Ngày ký"
+                label={fl('ngayKy', 'Ngày ký')}
               >
                 <DatePicker
                   format="DD/MM/YYYY"
@@ -436,7 +438,7 @@ function HopDongPageInner() {
           </Row>
           <Form.Item
             name="tenCongTrinh"
-            label="Tên công trình"
+            label={fl('tenCongTrinh', 'Tên công trình')}
             rules={[
               { required: true, message: "Vui lòng nhập tên công trình" },
               { max: 500, message: "Tối đa 500 ký tự" },
@@ -451,7 +453,7 @@ function HopDongPageInner() {
             <Col span={12}>
               <Form.Item
                 name="giaTriSauThue"
-                label="Giá trị sau thuế"
+                label={fl('giaTriSauThue', 'Giá trị sau thuế')}
               >
                 <InputNumber
                   className="w-full"
@@ -467,7 +469,7 @@ function HopDongPageInner() {
             <Col span={12}>
               <Form.Item
                 name="soLuongLuu"
-                label="Số lượng lưu"
+                label={fl('soLuongLuu', 'Số lượng lưu')}
               >
                 <InputNumber
                   className="w-full"
@@ -479,7 +481,7 @@ function HopDongPageInner() {
           </Row>
           <Form.Item
             name="trangThai"
-            label="Trạng thái"
+            label={fl('trangThai', 'Trạng thái')}
           >
             <Select
               placeholder="Chọn trạng thái"
@@ -568,7 +570,7 @@ function HopDongPageInner() {
         <div className="pt-2">
           <Form.Item
             name="doiTuongId"
-            label="Chủ đầu tư"
+            label={fl('doiTuongId', 'Chủ đầu tư')}
           >
             <Select
               placeholder="Chọn chủ đầu tư"
@@ -585,7 +587,7 @@ function HopDongPageInner() {
             <Col span={12}>
               <Form.Item
                 name="nguoiKy"
-                label="Người ký"
+                label={fl('nguoiKy', 'Người ký')}
               >
                 <Input placeholder="Nhập tên người ký" />
               </Form.Item>
@@ -593,7 +595,7 @@ function HopDongPageInner() {
             <Col span={12}>
               <Form.Item
                 name="chucVu"
-                label="Chức vụ"
+                label={fl('chucVu', 'Chức vụ')}
               >
                 <Input placeholder="Nhập chức vụ" />
               </Form.Item>
@@ -601,7 +603,7 @@ function HopDongPageInner() {
           </Row>
           <Form.Item
             name="nguoiGiaoDich"
-            label="Người giao dịch"
+            label={fl('nguoiGiaoDich', 'Người giao dịch')}
           >
             <Input placeholder="Nhập tên người giao dịch" />
           </Form.Item>

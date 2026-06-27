@@ -34,6 +34,7 @@ import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -339,6 +340,7 @@ const HangHoaVatTuPage: React.FC = () => {
     },
   ];
 
+  const fl = useFieldLabels('danhMuc.hangHoaVatTu');
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.hangHoaVatTu', columns);
 
   return (
@@ -423,7 +425,7 @@ const HangHoaVatTuPage: React.FC = () => {
             <Col span={8}>
               <Form.Item
                 name="ma"
-                label="Mã"
+                label={fl('ma', 'Mã')}
                 className="mb-3"
                 rules={[
                   { required: true, message: "Vui lòng nhập mã" },
@@ -436,7 +438,7 @@ const HangHoaVatTuPage: React.FC = () => {
             <Col span={16}>
               <Form.Item
                 name="ten"
-                label="Tên hàng hóa/vật tư"
+                label={fl('ten', 'Tên hàng hóa/vật tư')}
                 className="mb-3"
                 rules={[
                   { required: true, message: "Vui lòng nhập tên" },
@@ -450,7 +452,7 @@ const HangHoaVatTuPage: React.FC = () => {
 
           <Row gutter={12}>
             <Col span={8}>
-              <Form.Item name="tinhChat" label="Tính chất" className="mb-3">
+              <Form.Item name="tinhChat" label={fl('tinhChat', 'Tính chất')} className="mb-3">
                 <Select
                   placeholder="Chọn tính chất"
                   allowClear
@@ -459,7 +461,7 @@ const HangHoaVatTuPage: React.FC = () => {
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="donViTinhMa" label="Đơn vị tính" className="mb-3">
+              <Form.Item name="donViTinhMa" label={fl('donViTinhMa', 'Đơn vị tính')} className="mb-3">
                 <Select
                   placeholder="Chọn đơn vị tính"
                   allowClear
@@ -477,7 +479,7 @@ const HangHoaVatTuPage: React.FC = () => {
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="nhomVatTuMa" label="Nhóm vật tư" className="mb-3">
+              <Form.Item name="nhomVatTuMa" label={fl('nhomVatTuMa', 'Nhóm vật tư')} className="mb-3">
                 <Select
                   placeholder="Chọn nhóm vật tư"
                   allowClear
@@ -506,19 +508,19 @@ const HangHoaVatTuPage: React.FC = () => {
 
           <Row gutter={12}>
             <Col span={8}>
-              <Form.Item name="tkKho" label="TK Kho" className="mb-3">
+              <Form.Item name="tkKho" label={fl('tkKho', 'TK Kho')} className="mb-3">
                 <Input placeholder="VD: 1561" />
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="quyCach" label="Quy cách" className="mb-3">
+              <Form.Item name="quyCach" label={fl('quyCach', 'Quy cách')} className="mb-3">
                 <Input placeholder="Nhập quy cách" />
               </Form.Item>
             </Col>
             <Col span={8}>
               <Form.Item
                 name="donGia"
-                label="Đơn giá (VNĐ)"
+                label={fl('donGia', 'Đơn giá (VNĐ)')}
                 className="mb-3"
                 rules={[
                   { type: "number", min: 0, message: "Đơn giá không được âm" },
@@ -542,7 +544,7 @@ const HangHoaVatTuPage: React.FC = () => {
 
           <Form.Item
             name="moTa"
-            label="Mô tả"
+            label={fl('moTa', 'Mô tả')}
             className="mb-0"
             rules={[{ max: 500, message: "Mô tả tối đa 500 ký tự" }]}
           >

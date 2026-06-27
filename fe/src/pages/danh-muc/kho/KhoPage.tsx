@@ -29,6 +29,7 @@ import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -259,6 +260,7 @@ const KhoPage: React.FC = () => {
     },
   ];
 
+  const fl = useFieldLabels('danhMuc.kho');
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.kho', columns);
 
   return (
@@ -341,7 +343,7 @@ const KhoPage: React.FC = () => {
             <Col span={8}>
               <Form.Item
                 name="ma"
-                label="Mã kho"
+                label={fl('ma', 'Mã kho')}
                 className="mb-3"
                 rules={[
                   { required: true, message: "Vui lòng nhập mã kho" },
@@ -354,7 +356,7 @@ const KhoPage: React.FC = () => {
             <Col span={16}>
               <Form.Item
                 name="ten"
-                label="Tên kho"
+                label={fl('ten', 'Tên kho')}
                 className="mb-3"
                 rules={[
                   { required: true, message: "Vui lòng nhập tên kho" },
@@ -368,12 +370,12 @@ const KhoPage: React.FC = () => {
 
           <Row gutter={12}>
             <Col span={12}>
-              <Form.Item name="diaChi" label="Địa chỉ" className="mb-3">
+              <Form.Item name="diaChi" label={fl('diaChi', 'Địa chỉ')} className="mb-3">
                 <Input placeholder="Nhập địa chỉ kho" />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="thuKho" label="Thủ kho" className="mb-3">
+              <Form.Item name="thuKho" label={fl('thuKho', 'Thủ kho')} className="mb-3">
                 <Input placeholder="Nhập tên thủ kho" />
               </Form.Item>
             </Col>
@@ -381,7 +383,7 @@ const KhoPage: React.FC = () => {
 
           <Form.Item
             name="moTa"
-            label="Mô tả"
+            label={fl('moTa', 'Mô tả')}
             className="mb-0"
             rules={[{ max: 500, message: "Mô tả tối đa 500 ký tự" }]}
           >

@@ -31,6 +31,7 @@ import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -233,6 +234,7 @@ const BoPhanPage: React.FC = () => {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.boPhan', columns);
+  const fl = useFieldLabels('danhMuc.boPhan');
 
   return (
     <div className="space-y-3">
@@ -330,7 +332,7 @@ const BoPhanPage: React.FC = () => {
         <Form form={form} layout="vertical" className="mt-2" size="small">
           <Form.Item
             name="ma"
-            label="Mã bộ phận"
+            label={fl('ma', 'Mã bộ phận')}
             rules={[
               { required: true, message: "Vui lòng nhập mã bộ phận" },
               { max: 20, message: "Mã tối đa 20 ký tự" },
@@ -342,7 +344,7 @@ const BoPhanPage: React.FC = () => {
 
           <Form.Item
             name="ten"
-            label="Tên bộ phận"
+            label={fl('ten', 'Tên bộ phận')}
             rules={[
               { required: true, message: "Vui lòng nhập tên bộ phận" },
               { max: 200, message: "Tên tối đa 200 ký tự" },
@@ -354,7 +356,7 @@ const BoPhanPage: React.FC = () => {
 
           <Form.Item
             name="moTa"
-            label="Mô tả"
+            label={fl('moTa', 'Mô tả')}
             rules={[{ max: 500, message: "Mô tả tối đa 500 ký tự" }]}
             className="mb-0"
           >

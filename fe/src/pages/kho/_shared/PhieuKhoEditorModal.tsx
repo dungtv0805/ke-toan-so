@@ -21,6 +21,7 @@ import { makePhieuKhoSchema } from './phieuKhoSchema';
 import { usePhieuKhoForm } from './usePhieuKhoForm';
 import { ChiTietTable } from './ChiTietTable';
 import { formatCurrency } from '@/pages/chung-tu/phieu/lib/format';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const { Text } = Typography;
 
@@ -35,6 +36,8 @@ interface Props {
 export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSaved }: Props) {
   const { form, chiTiet, setChiTiet, tongTien, tongTienBangChu, buildPayload } =
     usePhieuKhoForm(loaiPhieu);
+
+  const fl = useFieldLabels('kho.phieu');
 
   const [khoList, setKhoList] = useState<Kho[]>([]);
   const [doiTuongList, setDoiTuongList] = useState<DoiTuong[]>([]);
@@ -195,7 +198,7 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
           {/* ---- Số phiếu + ngày ---- */}
           <Row gutter={12}>
             <Col span={6}>
-              <Form.Item label="Số phiếu" name="soPhieu">
+              <Form.Item label={fl('soPhieu', 'Số phiếu')} name="soPhieu">
                 <Input
                   placeholder={!editingId && nextSo ? `Dự kiến: ${nextSo}` : 'Tự động'}
                   disabled={!!editingId}
@@ -204,7 +207,7 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
             </Col>
             <Col span={6}>
               <Form.Item
-                label="Ngày hạch toán"
+                label={fl('ngayHachToan', 'Ngày hạch toán')}
                 name="ngayHachToan"
                 rules={[{ required: true, message: 'Vui lòng chọn ngày hạch toán' }]}
               >
@@ -212,12 +215,12 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
               </Form.Item>
             </Col>
             <Col span={6}>
-              <Form.Item label="Ngày chứng từ" name="ngayChungTu">
+              <Form.Item label={fl('ngayChungTu', 'Ngày chứng từ')} name="ngayChungTu">
                 <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
               </Form.Item>
             </Col>
             <Col span={6}>
-              <Form.Item label="Số CT gốc" name="soChungTuGoc">
+              <Form.Item label={fl('soChungTuGoc', 'Số CT gốc')} name="soChungTuGoc">
                 <Input placeholder="Số chứng từ gốc" />
               </Form.Item>
             </Col>
@@ -228,7 +231,7 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
             <>
               <Row gutter={12}>
                 <Col span={8}>
-                  <Form.Item label="Đối tượng" name="doiTuongMa">
+                  <Form.Item label={fl('doiTuongMa', 'Đối tượng')} name="doiTuongMa">
                     <Select
                       showSearch
                       allowClear
@@ -241,19 +244,19 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item label="Tên đối tượng" name="doiTuongTen">
+                  <Form.Item label={fl('doiTuongTen', 'Tên đối tượng')} name="doiTuongTen">
                     <Input placeholder="Tên đối tượng" />
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item label="Người giao" name="nguoiGiaoNhan">
+                  <Form.Item label={fl('nguoiGiaoNhan', 'Người giao')} name="nguoiGiaoNhan">
                     <Input placeholder="Người giao hàng" />
                   </Form.Item>
                 </Col>
               </Row>
               <Row gutter={12}>
                 <Col span={8}>
-                  <Form.Item label="Kho nhập" name="khoMa">
+                  <Form.Item label={fl('khoMa', 'Kho nhập')} name="khoMa">
                     <Select
                       showSearch
                       allowClear
@@ -266,7 +269,7 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
                   </Form.Item>
                 </Col>
                 <Col span={16}>
-                  <Form.Item label="Diễn giải" name="dienGiai">
+                  <Form.Item label={fl('dienGiai', 'Diễn giải')} name="dienGiai">
                     <Input placeholder="Diễn giải nội dung" />
                   </Form.Item>
                 </Col>
@@ -278,7 +281,7 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
             <>
               <Row gutter={12}>
                 <Col span={8}>
-                  <Form.Item label="Khách / Người nhận" name="doiTuongMa">
+                  <Form.Item label={fl('doiTuongMa', 'Khách / Người nhận')} name="doiTuongMa">
                     <Select
                       showSearch
                       allowClear
@@ -291,12 +294,12 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item label="Tên người nhận" name="doiTuongTen">
+                  <Form.Item label={fl('doiTuongTen', 'Tên người nhận')} name="doiTuongTen">
                     <Input placeholder="Tên người nhận" />
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item label="Kho xuất" name="khoMa">
+                  <Form.Item label={fl('khoMa', 'Kho xuất')} name="khoMa">
                     <Select
                       showSearch
                       allowClear
@@ -311,7 +314,7 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
               </Row>
               <Row gutter={12}>
                 <Col span={24}>
-                  <Form.Item label="Lý do xuất / Diễn giải" name="dienGiai">
+                  <Form.Item label={fl('dienGiai', 'Lý do xuất / Diễn giải')} name="dienGiai">
                     <Input placeholder="Lý do xuất kho" />
                   </Form.Item>
                 </Col>
@@ -323,7 +326,7 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
             <>
               <Row gutter={12}>
                 <Col span={8}>
-                  <Form.Item label="Kho xuất" name="khoXuatMa">
+                  <Form.Item label={fl('khoXuatMa', 'Kho xuất')} name="khoXuatMa">
                     <Select
                       showSearch
                       allowClear
@@ -336,7 +339,7 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item label="Kho nhập" name="khoNhapMa">
+                  <Form.Item label={fl('khoNhapMa', 'Kho nhập')} name="khoNhapMa">
                     <Select
                       showSearch
                       allowClear
@@ -349,24 +352,24 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item label="Người vận chuyển" name="nguoiVanChuyen">
+                  <Form.Item label={fl('nguoiVanChuyen', 'Người vận chuyển')} name="nguoiVanChuyen">
                     <Input placeholder="Người vận chuyển" />
                   </Form.Item>
                 </Col>
               </Row>
               <Row gutter={12}>
                 <Col span={8}>
-                  <Form.Item label="Phương tiện vận chuyển" name="phuongTienVC">
+                  <Form.Item label={fl('phuongTienVC', 'Phương tiện vận chuyển')} name="phuongTienVC">
                     <Input placeholder="Phương tiện" />
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item label="Lệnh điều động" name="lenhDieuDong">
+                  <Form.Item label={fl('lenhDieuDong', 'Lệnh điều động')} name="lenhDieuDong">
                     <Input placeholder="Số lệnh điều động" />
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item label="Về việc" name="veViec">
+                  <Form.Item label={fl('veViec', 'Về việc')} name="veViec">
                     <Input placeholder="Về việc" />
                   </Form.Item>
                 </Col>

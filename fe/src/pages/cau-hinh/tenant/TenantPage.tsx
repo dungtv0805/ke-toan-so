@@ -7,6 +7,7 @@ import { tenantService, Tenant, CreateTenantDto, UpdateTenantDto } from '@/servi
 import { nganhService, type Nganh } from '@/services/nganhService';
 import TenantMembersModal from './TenantMembersModal';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
 const DEFAULT_PASSWORD = '123456';
 
@@ -291,6 +292,7 @@ const TenantPage = () => {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('cauHinh.tenant', columns);
+  const fl = useFieldLabels('cauHinh.tenant');
 
   return (
     <div className="space-y-3">
@@ -335,7 +337,7 @@ const TenantPage = () => {
         >
           <Form.Item
             name="name"
-            label="Tên công ty"
+            label={fl('name', 'Tên công ty')}
             rules={[{ required: true, message: 'Vui lòng nhập tên công ty' }]}
           >
             <Input placeholder="VD: Công ty ABC" />
@@ -343,7 +345,7 @@ const TenantPage = () => {
 
           <Form.Item
             name="slug"
-            label="Slug (định danh)"
+            label={fl('slug', 'Slug (định danh)')}
             rules={[
               { required: true, message: 'Vui lòng nhập slug' },
               { pattern: /^[a-z0-9-]+$/, message: 'Slug chỉ chứa chữ thường, số và dấu gạch ngang' },
@@ -355,7 +357,7 @@ const TenantPage = () => {
 
           <Form.Item
             name="maSoThue"
-            label="Mã số thuế"
+            label={fl('maSoThue', 'Mã số thuế')}
             rules={[{ required: true, message: 'Vui lòng nhập mã số thuế' }]}
           >
             <Input placeholder="VD: 0123456789" />
@@ -363,27 +365,27 @@ const TenantPage = () => {
 
           <Form.Item
             name="diaChi"
-            label="Địa chỉ"
+            label={fl('diaChi', 'Địa chỉ')}
             rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}
           >
             <Input placeholder="VD: 123 Nguyễn Huệ, Q.1, TP.HCM" />
           </Form.Item>
 
-          <Form.Item name="dienThoai" label="Số điện thoại">
+          <Form.Item name="dienThoai" label={fl('dienThoai', 'Số điện thoại')}>
             <Input placeholder="VD: 028 1234 5678" />
           </Form.Item>
 
-          <Form.Item name="email" label="Email công ty">
+          <Form.Item name="email" label={fl('email', 'Email công ty')}>
             <Input placeholder="VD: info@congty.com" />
           </Form.Item>
 
-          <Form.Item name="nguoiDaiDien" label="Người đại diện pháp luật">
+          <Form.Item name="nguoiDaiDien" label={fl('nguoiDaiDien', 'Người đại diện pháp luật')}>
             <Input placeholder="VD: Nguyễn Văn A" />
           </Form.Item>
 
           <Form.Item
             name="isActive"
-            label="Trạng thái"
+            label={fl('isActive', 'Trạng thái')}
             valuePropName="checked"
           >
             <Switch checkedChildren="Hoạt động" unCheckedChildren="Ngừng" />
@@ -391,7 +393,7 @@ const TenantPage = () => {
 
           <Form.Item
             name="modules"
-            label="Lĩnh vực sử dụng"
+            label={fl('modules', 'Lĩnh vực sử dụng')}
             rules={[{ required: true, message: 'Vui lòng chọn ít nhất 1 lĩnh vực' }]}
             extra="Công ty sẽ thấy menu theo các lĩnh vực được cấp"
           >
@@ -404,7 +406,7 @@ const TenantPage = () => {
 
           <Form.Item
             name="nganh"
-            label="Ngành"
+            label={fl('nganh', 'Ngành')}
             extra="Chọn ngành để áp bộ nhãn hiển thị chuẩn (Chủ đầu tư, ...)"
           >
             <Select
@@ -423,7 +425,7 @@ const TenantPage = () => {
                 </span>
               </Divider>
 
-              <Form.Item name="adminMode" label="Chọn cách thêm Admin">
+              <Form.Item name="adminMode" label={fl('adminMode', 'Chọn cách thêm Admin')}>
                 <Radio.Group
                   value={adminMode}
                   onChange={(e) => setAdminMode(e.target.value)}
@@ -445,7 +447,7 @@ const TenantPage = () => {
 
                   <Form.Item
                     name="existingUserId"
-                    label="Chọn User"
+                    label={fl('existingUserId', 'Chọn User')}
                     rules={[{ required: true, message: 'Vui lòng chọn user' }]}
                   >
                     <Select
@@ -478,7 +480,7 @@ const TenantPage = () => {
 
                   <Form.Item
                     name="adminHoTen"
-                    label="Họ tên Admin"
+                    label={fl('adminHoTen', 'Họ tên Admin')}
                     rules={[{ required: true, message: 'Vui lòng nhập họ tên Admin' }]}
                   >
                     <Input placeholder="VD: Nguyễn Văn A" />
@@ -486,7 +488,7 @@ const TenantPage = () => {
 
                   <Form.Item
                     name="adminEmail"
-                    label="Email Admin"
+                    label={fl('adminEmail', 'Email Admin')}
                     rules={[
                       { required: true, message: 'Vui lòng nhập email Admin' },
                       { type: 'email', message: 'Email không hợp lệ' },
@@ -497,7 +499,7 @@ const TenantPage = () => {
 
                   <Form.Item
                     name="adminPassword"
-                    label="Mật khẩu"
+                    label={fl('adminPassword', 'Mật khẩu')}
                     extra={`Mật khẩu mặc định: ${DEFAULT_PASSWORD}`}
                   >
                     <Input.Password placeholder="Nhập mật khẩu" />
