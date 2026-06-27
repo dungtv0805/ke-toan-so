@@ -11,6 +11,7 @@ import { TermProvider } from "./contexts/TermContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 import MainLayout from "./components/layout/MainLayout";
+import InstallPWA from "./components/shared/InstallPWA";
 import {
   LoginPage,
   Dashboard,
@@ -103,6 +104,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <InstallPWA />
         <BrowserRouter>
           <AuthProvider>
             <TermProvider>
