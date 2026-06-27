@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Button, Drawer, Input, Radio, Space, Table, Tooltip, message } from 'antd';
 import { SettingOutlined } from '@ant-design/icons';
-import { useTerm } from '@/contexts/TermContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { resolveTerm, TERM_REGISTRY } from '@/config/termRegistry';
 import { buildTitleGlossary, titleKey, type TitleTermSpec } from '@/config/titleConfig';
@@ -18,7 +17,6 @@ interface Props {
 type Target = 'nganh' | 'tenant';
 
 export function TableTitleSettings({ terms, defaults: propDefaults, buttonText }: Props) {
-  const { t: _t } = useTerm();
   const { user, currentTenant, currentNganh, applyGlossary, applyNganhGlossary } = useAuth();
   const canNganh = !!user?.isSuperAdmin && !!currentNganh;
 
