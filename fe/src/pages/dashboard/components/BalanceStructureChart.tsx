@@ -1,12 +1,42 @@
 import React from 'react';
 import { Card, Skeleton, Empty } from 'antd';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LabelList, ResponsiveContainer } from 'recharts';
 import { balanceSheetService } from '@/services/balanceSheetService';
 import { formatCurrency } from './format';
 
-const NAVY = '#1F3864';
-const GOLD = '#C9A227';
+const COL = {
+  taiSan: '#82B366',
+  nguonVon: '#D9909A',
+  nganHan: '#ED9C3C',
+  daiHan: '#F2D14B',
+  noPhaiTra: '#2AC8E8',
+  vonCSH: '#7B3FBF',
+  tong: '#D6453B',
+};
+
+const trieu = (v: number) => Math.round((v || 0) / 1e6).toLocaleString('vi-VN');
+
+const Segment: React.FC<{
+  grow: number; bg: string; text: string; label: string; pct: number; value: number;
+}> = ({ grow, bg, text, label, pct, value }) => (
+  <div
+    style={{ flexGrow: grow, flexBasis: 0, minHeight: grow > 0 ? 28 : 0, background: bg, color: text }}
+    className="flex flex-col items-center justify-center px-1 text-center overflow-hidden border-t border-white/40"
+  >
+    {grow > 0 && (
+      <>
+        <span className="text-[11px] sm:text-xs font-semibold leading-tight">{label}</span>
+        <span className="text-[10px] sm:text-[11px] opacity-90">{pct.toFixed(0)}% · {trieu(value)} tr</span>
+      </>
+    )}
+  </div>
+);
+
+const Header: React.FC<{ bg: string; children: React.ReactNode }> = ({ bg, children }) => (
+  <div style={{ background: bg }} className="text-center text-xs sm:text-sm font-bold py-1.5 text-[#333]">
+    {children}
+  </div>
+);
 
 const BalanceStructureChart: React.FC = () => {
   const { data, isLoading } = useQuery({
@@ -22,47 +52,36 @@ const BalanceStructureChart: React.FC = () => {
   const tongNV = npt + vcsh;
   const pct = (v: number, t: number) => (t > 0 ? (v / t) * 100 : 0);
   const hasData = tongTS > 0 || tongNV > 0;
-
-  // 2 cột: Tài sản (ngắn/dài hạn), Nguồn vốn (nợ phải trả/vốn CSH) — chuẩn hóa %
-  const chartData = [
-    { name: 'Tài sản', a: pct(tsNH, tongTS), b: pct(tsDH, tongTS), aRaw: tsNH, bRaw: tsDH, aName: 'Ngắn hạn', bName: 'Dài hạn' },
-    { name: 'Nguồn vốn', a: pct(npt, tongNV), b: pct(vcsh, tongNV), aRaw: npt, bRaw: vcsh, aName: 'Nợ phải trả', bName: 'Vốn CSH' },
-  ];
+  const COL_H = 320;
 
   return (
-    <Card title={<span className="text-sm sm:text-base font-semibold">CÂN ĐỐI TÀI CHÍNH</span>}>
+    <Card title={<span className="text-sm sm:text-base font-semibold">CÂN ĐỐI TÀI CHÍNH</span>} bodyStyle={{ padding: 12 }}>
       {isLoading ? (
         <Skeleton active paragraph={{ rows: 6 }} />
       ) : !hasData ? (
-        <Empty description="Chưa có dữ liệu" style={{ height: 280 }} className="flex flex-col items-center justify-center" />
+        <Empty description="Chưa có dữ liệu" style={{ height: COL_H }} className="flex flex-col items-center justify-center" />
       ) : (
-        <>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={chartData} margin={{ left: -10, right: 8 }}>
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-              <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} width={40} />
-              <Tooltip
-                formatter={(value: number, _name, item) => {
-                  const p = item?.payload || {};
-                  const isA = item?.dataKey === 'a';
-                  const raw = isA ? p.aRaw : p.bRaw;
-                  const segName = isA ? p.aName : p.bName;
-                  return [`${value.toFixed(1)}% — ${formatCurrency(raw || 0)}`, segName];
-                }}
-              />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="a" stackId="s" name="Ngắn hạn / Nợ phải trả" fill={NAVY} maxBarSize={70}>
-                <LabelList dataKey="a" position="center" formatter={(v: number) => (v ? `${v.toFixed(0)}%` : '')} fill="#fff" style={{ fontSize: 11 }} />
-              </Bar>
-              <Bar dataKey="b" stackId="s" name="Dài hạn / Vốn CSH" fill={GOLD} maxBarSize={70}>
-                <LabelList dataKey="b" position="center" formatter={(v: number) => (v ? `${v.toFixed(0)}%` : '')} fill="#fff" style={{ fontSize: 11 }} />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-          <div className="text-center text-sm mt-1">
-            Tổng giá trị: <span className="font-semibold">{formatCurrency(tongTS)}</span>
+        <div>
+          <div className="grid grid-cols-2 gap-px bg-white/40">
+            <div className="flex flex-col">
+              <Header bg={COL.taiSan}>TÀI SẢN</Header>
+              <div className="flex flex-col" style={{ height: COL_H }}>
+                <Segment grow={tsNH} bg={COL.nganHan} text="#3a2a00" label="TÀI SẢN NGẮN HẠN" pct={pct(tsNH, tongTS)} value={tsNH} />
+                <Segment grow={tsDH} bg={COL.daiHan} text="#3a2a00" label="TÀI SẢN DÀI HẠN" pct={pct(tsDH, tongTS)} value={tsDH} />
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <Header bg={COL.nguonVon}>NGUỒN VỐN</Header>
+              <div className="flex flex-col" style={{ height: COL_H }}>
+                <Segment grow={npt} bg={COL.noPhaiTra} text="#063b45" label="NỢ PHẢI TRẢ" pct={pct(npt, tongNV)} value={npt} />
+                <Segment grow={vcsh} bg={COL.vonCSH} text="#fff" label="VỐN CHỦ SỞ HỮU" pct={pct(vcsh, tongNV)} value={vcsh} />
+              </div>
+            </div>
           </div>
-        </>
+          <div style={{ background: COL.tong }} className="text-center text-white font-bold text-xs sm:text-sm py-2 mt-px">
+            TỔNG GIÁ TRỊ: {formatCurrency(tongTS)}
+          </div>
+        </div>
       )}
     </Card>
   );
