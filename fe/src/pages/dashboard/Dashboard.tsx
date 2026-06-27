@@ -6,8 +6,6 @@ import CashFlowChart from './components/CashFlowChart';
 import RevenueExpenseBreakdownCharts from './components/RevenueExpenseBreakdownCharts';
 import CongNoChart from './components/CongNoChart';
 import BalanceStructureChart from './components/BalanceStructureChart';
-import AgingCharts from './components/AgingCharts';
-import OverdueTables from './components/OverdueTables';
 import ExecutionStatusCharts from './components/ExecutionStatusCharts';
 import MockTabDashboard, { MOCK_TABS } from './components/MockTabDashboard';
 import { Row, Col } from 'antd';
@@ -101,10 +99,6 @@ const Dashboard: React.FC = () => {
             <Col xs={24} lg={12}><CongNoChart year={year} startMonth={startMonth} endMonth={endMonth} /></Col>
             <Col xs={24} lg={12}><BalanceStructureChart /></Col>
           </Row>
-
-          {/* Tuổi nợ + quá hạn (giữ) */}
-          <AgingCharts />
-          <OverdueTables />
         </>
       ) : (
         <MockTabDashboard config={MOCK_TABS[activeTab]} />
