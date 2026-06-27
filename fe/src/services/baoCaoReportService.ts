@@ -70,6 +70,20 @@ class BaoCaoReportService extends ServiceBase {
     });
     return Array.isArray(data) ? data : [];
   }
+
+  /** Công nợ phải thu/phải trả theo tháng (hoặc tuần nếu có month) — từ TK có gán đối tượng. */
+  async getCongNoSeries(
+    year: number,
+    month?: number,
+  ): Promise<{ thang: number; phaiThu: number; phaiTra: number }[]> {
+    const data = await this.get<{ thang: number; phaiThu: number; phaiTra: number }[]>({
+      endpoint: '/cong-no-series',
+      params: month
+        ? { year: year.toString(), month: month.toString() }
+        : { year: year.toString() },
+    });
+    return Array.isArray(data) ? data : [];
+  }
 }
 
 export const baoCaoReportService = new BaoCaoReportService();

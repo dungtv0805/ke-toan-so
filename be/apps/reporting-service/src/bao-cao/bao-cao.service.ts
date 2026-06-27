@@ -291,6 +291,68 @@ export class BaoCaoService {
   }
 
   /**
+   * Công nợ theo thời gian: phải thu = số dư Nợ, phải trả = số dư Có của các tài khoản
+   * có gán đối tượng (chiTietTheo ∈ KH/NCC/nhà thầu/NV), lũy kế đến cuối mỗi kỳ.
+   * month có giá trị → chia theo tuần trong tháng; ngược lại 12 tháng. Tính từ đầu (lũy kế).
+   */
+  async getCongNoSeries(
+    year: number,
+    authToken?: string,
+    tenantId?: string,
+    month?: number,
+  ): Promise<{ thang: number; phaiThu: number; phaiTra: number }[]> {
+    const weekly = !!month && month >= 1 && month <= 12;
+    const periodEnd = weekly
+      ? new Date(year, month, 0, 23, 59, 59, 999)
+      : new Date(year, 11, 31, 23, 59, 59, 999);
+    const [vRes, aRes] = await Promise.all([
+      this.serviceClient.getNhatKyChung(
+        new Date(2000, 0, 1).toISOString(),
+        periodEnd.toISOString(),
+        authToken,
+        tenantId,
+      ),
+      this.serviceClient.getTaiKhoan(authToken, tenantId),
+    ]);
+    const vouchers: NhatKyChungEntry[] = vRes.success ? vRes.data || [] : [];
+    const accounts = aRes.success ? aRes.data || [] : [];
+    const congNoAccounts = accounts.filter(
+      (a) => a.chiTietTheo && DOI_TUONG_CHI_TIET_TYPES.has(a.chiTietTheo),
+    );
+
+    const computeAt = (cutoff: Date) => {
+      const upto = vouchers.filter((v) => new Date(v.ngay) <= cutoff);
+      let phaiThu = 0;
+      let phaiTra = 0;
+      for (const a of congNoAccounts) {
+        phaiThu += this.calculateAccountBalance(upto, a.ma, 'NO');
+        phaiTra += this.calculateAccountBalance(upto, a.ma, 'CO');
+      }
+      return { phaiThu, phaiTra };
+    };
+
+    const out: { thang: number; phaiThu: number; phaiTra: number }[] = [];
+    if (weekly) {
+      const daysInMonth = new Date(year, month, 0).getDate();
+      for (let w = 1; w <= 5; w++) {
+        if ((w - 1) * 7 + 1 > daysInMonth) {
+          out.push({ thang: w, phaiThu: 0, phaiTra: 0 });
+          continue;
+        }
+        const lastDay = Math.min(w * 7, daysInMonth);
+        const cutoff = new Date(year, month - 1, lastDay, 23, 59, 59, 999);
+        out.push({ thang: w, ...computeAt(cutoff) });
+      }
+    } else {
+      for (let m = 1; m <= 12; m++) {
+        const cutoff = new Date(year, m, 0, 23, 59, 59, 999);
+        out.push({ thang: m, ...computeAt(cutoff) });
+      }
+    }
+    return out;
+  }
+
+  /**
    * Generate Balance Sheet report
    */
   async getBalanceSheet(

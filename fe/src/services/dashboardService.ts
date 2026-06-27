@@ -144,10 +144,18 @@ export const dashboardService = {
     }
   },
 
-  /** Số dư công nợ phải thu/phải trả theo tháng (đến cuối mỗi tháng) của năm chọn. */
-  async getCongNoSeries(year: number): Promise<CongNoSeriesPoint[]> {
+  /**
+   * Số dư công nợ phải thu/phải trả lũy kế đến cuối mỗi kỳ (tháng, hoặc tuần nếu truyền month).
+   * Nguồn: số dư Nợ/Có của các TK có gán đối tượng (KH/NCC/nhà thầu/NV).
+   */
+  async getCongNoSeries(year: number, month?: number): Promise<CongNoSeriesPoint[]> {
     try {
-      return await congNoPhaiThuService.getSeries(year);
+      const rows = await baoCaoReportService.getCongNoSeries(year, month);
+      return rows.map((r) => ({
+        thang: r.thang,
+        tongPhaiThu: r.phaiThu ?? 0,
+        tongPhaiTra: r.phaiTra ?? 0,
+      }));
     } catch {
       return [];
     }

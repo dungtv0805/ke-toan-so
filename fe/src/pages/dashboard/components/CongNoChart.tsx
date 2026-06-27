@@ -9,11 +9,16 @@ import { formatCurrency, formatShortCurrency, DASH_COLORS } from './format';
 interface Props { year: number; startMonth: number; endMonth: number; }
 
 const CongNoChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
+  const isWeekly = startMonth === endMonth;
+  const month = isWeekly ? startMonth : undefined;
   const { data: full, isLoading } = useQuery({
-    queryKey: ['dash-congno-series', year],
-    queryFn: () => dashboardService.getCongNoSeries(year),
+    queryKey: ['dash-congno-series', year, month ?? 0],
+    queryFn: () => dashboardService.getCongNoSeries(year, month),
   });
-  const data = useMemo(() => sliceToRange(full ?? [], startMonth, endMonth), [full, startMonth, endMonth]);
+  const data = useMemo(
+    () => (isWeekly ? full ?? [] : sliceToRange(full ?? [], startMonth, endMonth)),
+    [full, isWeekly, startMonth, endMonth],
+  );
   const hasData = data.some((d) => d.tongPhaiThu || d.tongPhaiTra);
 
   return (
@@ -26,9 +31,9 @@ const CongNoChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={data} margin={{ left: -10, right: 8 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="thang" tickFormatter={(v) => `Th ${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
+            <XAxis dataKey="thang" tickFormatter={(v) => `${isWeekly ? 'Tuần' : 'Th'} ${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={(v) => formatShortCurrency(v)} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={55} />
-            <Tooltip formatter={(value: number) => formatCurrency(value)} labelFormatter={(l) => `Tháng ${l}`} />
+            <Tooltip formatter={(value: number) => formatCurrency(value)} labelFormatter={(l) => `${isWeekly ? 'Tuần' : 'Tháng'} ${l}`} />
             <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
             <Line type="monotone" dataKey="tongPhaiThu" name="Tổng phải thu" stroke={DASH_COLORS.revenue} strokeWidth={2} dot={{ r: 3 }} />
             <Line type="monotone" dataKey="tongPhaiTra" name="Tổng phải trả" stroke={DASH_COLORS.expense} strokeWidth={2} dot={{ r: 3 }} />
