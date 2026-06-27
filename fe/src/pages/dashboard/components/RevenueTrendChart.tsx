@@ -1,100 +1,62 @@
-import React, { useState, useMemo } from 'react';
-import { Card, Skeleton, Empty, Segmented } from 'antd';
-import { RiseOutlined } from '@ant-design/icons';
+import React, { useMemo } from 'react';
+import { Card, Skeleton, Empty } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import {
-  ComposedChart,
-  Bar,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
+  ComposedChart, Bar, Line, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { dashboardService } from '@/services/dashboardService';
+import { sliceToRange } from '../period';
 import { formatCurrency, formatShortCurrency, DASH_COLORS } from './format';
-import { pnlSeriesToQuarters } from '../period';
 
-interface Props {
-  year: number;
-  granularity: 'month' | 'quarter';
-}
+interface Props { year: number; startMonth: number; endMonth: number; }
 
-type Metric = 'all' | 'doanhThu' | 'chiPhi' | 'loiNhuan';
+const TEAL = DASH_COLORS.revenue;
+const GRAY = 'hsl(var(--muted-foreground) / 0.35)';
+const ORANGE = '#F2994A';
 
-const METRIC_OPTIONS: { label: string; value: Metric }[] = [
-  { label: 'Tất cả', value: 'all' },
-  { label: 'Doanh thu', value: 'doanhThu' },
-  { label: 'Chi phí', value: 'chiPhi' },
-  { label: 'Lợi nhuận', value: 'loiNhuan' },
-];
+const Kpi: React.FC<{ label: string; value: number; color: string }> = ({ label, value, color }) => (
+  <div className="min-w-0">
+    <div className="text-lg sm:text-2xl font-bold truncate" style={{ color }}>{formatShortCurrency(value)}</div>
+    <div className="text-muted-foreground text-[10px] sm:text-xs uppercase tracking-wide truncate">{label}</div>
+  </div>
+);
 
-const RevenueTrendChart: React.FC<Props> = ({ year, granularity }) => {
-  const [metric, setMetric] = useState<Metric>('all');
-  const isQuarter = granularity === 'quarter';
-
-  const { data: monthly, isLoading } = useQuery({
+const RevenueTrendChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
+  const { data: full, isLoading } = useQuery({
     queryKey: ['dash-pnl-series', year],
     queryFn: () => dashboardService.getPnlSeries(year),
   });
-
-  const data = useMemo(() => {
-    if (!monthly) return monthly;
-    return isQuarter ? pnlSeriesToQuarters(monthly) : monthly;
-  }, [monthly, isQuarter]);
-
-  const hasData = !!data && data.some((d) => d.doanhThu || d.chiPhi || d.loiNhuan);
+  const data = useMemo(() => sliceToRange(full ?? [], startMonth, endMonth), [full, startMonth, endMonth]);
+  const sum = (k: 'doanhThu' | 'chiPhi' | 'loiNhuan') => data.reduce((s, d) => s + (d[k] || 0), 0);
+  const hasData = data.some((d) => d.doanhThu || d.chiPhi || d.loiNhuan);
 
   return (
-    <Card
-      title={
-        <span className="text-sm sm:text-base">
-          <RiseOutlined className="text-primary mr-2" />
-          Doanh thu – Chi phí – Lợi nhuận theo {isQuarter ? 'quý' : 'tháng'}
-        </span>
-      }
-      extra={
-        <Segmented<Metric>
-          size="small"
-          value={metric}
-          onChange={(v) => setMetric(v)}
-          options={METRIC_OPTIONS}
-        />
-      }
-    >
+    <Card title={<span className="text-sm sm:text-base font-semibold">KẾT QUẢ KINH DOANH</span>}>
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="grid grid-cols-3 gap-3 flex-1">
+          <Kpi label="Doanh thu" value={sum('doanhThu')} color={TEAL} />
+          <Kpi label="Chi phí" value={sum('chiPhi')} color="hsl(var(--muted-foreground))" />
+          <Kpi label="Lợi nhuận" value={sum('loiNhuan')} color={ORANGE} />
+        </div>
+        <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">Đvt: đồng</span>
+      </div>
       {isLoading ? (
         <Skeleton active paragraph={{ rows: 6 }} />
       ) : !hasData ? (
-        <Empty description="Chưa có dữ liệu" style={{ height: 300 }} className="flex flex-col items-center justify-center" />
+        <Empty description="Chưa có dữ liệu" style={{ height: 280 }} className="flex flex-col items-center justify-center" />
       ) : (
-        <ResponsiveContainer width="100%" height={300}>
-          <ComposedChart data={data} margin={{ left: -10, right: 8 }}>
+        <ResponsiveContainer width="100%" height={280}>
+          <ComposedChart data={data} margin={{ left: -10, right: 8, top: 16 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="thang" tickFormatter={(v) => `${isQuarter ? 'Q' : 'T'}${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
+            <XAxis dataKey="thang" tickFormatter={(v) => `Th ${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={(v) => formatShortCurrency(v)} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={55} />
-            <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
-              labelFormatter={(label) => `${isQuarter ? 'Quý' : 'Tháng'} ${label}`}
-            />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            {metric === 'all' && (
-              <>
-                <Bar dataKey="doanhThu" name="Doanh thu" fill={DASH_COLORS.revenue} maxBarSize={28} />
-                <Bar dataKey="chiPhi" name="Chi phí" fill={DASH_COLORS.expense} maxBarSize={28} />
-                <Line type="monotone" dataKey="loiNhuan" name="Lợi nhuận" stroke={DASH_COLORS.balance} strokeWidth={2} dot={{ r: 3 }} />
-              </>
-            )}
-            {metric === 'doanhThu' && (
-              <Bar dataKey="doanhThu" name="Doanh thu" fill={DASH_COLORS.revenue} maxBarSize={28} />
-            )}
-            {metric === 'chiPhi' && (
-              <Bar dataKey="chiPhi" name="Chi phí" fill={DASH_COLORS.expense} maxBarSize={28} />
-            )}
-            {metric === 'loiNhuan' && (
-              <Bar dataKey="loiNhuan" name="Lợi nhuận" fill={DASH_COLORS.balance} maxBarSize={28} />
-            )}
+            <Tooltip formatter={(value: number) => formatCurrency(value)} labelFormatter={(l) => `Tháng ${l}`} />
+            <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
+            <Bar dataKey="doanhThu" name="Doanh thu" fill={TEAL} maxBarSize={26}>
+              <LabelList dataKey="doanhThu" position="top" formatter={(v: number) => (v ? formatShortCurrency(v) : '')} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />
+            </Bar>
+            <Bar dataKey="chiPhi" name="Chi phí" fill={GRAY} maxBarSize={26} />
+            <Line type="monotone" dataKey="loiNhuan" name="Lợi nhuận" stroke={ORANGE} strokeWidth={2} dot={{ r: 3, fill: ORANGE }} />
           </ComposedChart>
         </ResponsiveContainer>
       )}
