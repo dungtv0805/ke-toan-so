@@ -35,17 +35,6 @@ const TenantPage = () => {
   const [form] = Form.useForm();
   const { canCreate, canEdit, canDelete } = usePagePermission("/cau-hinh/tenant");
 
-  // Only super admin can access this page
-  if (!user?.isSuperAdmin) {
-    return (
-      <div className="space-y-3">
-        <div className="text-center text-red-500">
-          Bạn không có quyền truy cập trang này. Chỉ Super Admin mới có thể quản lý Tenant.
-        </div>
-      </div>
-    );
-  }
-
   const fetchTenants = async () => {
     setLoading(true);
     try {
@@ -293,6 +282,17 @@ const TenantPage = () => {
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('cauHinh.tenant', columns);
   const fl = useFieldLabels('cauHinh.tenant');
+
+  // Only super admin can access this page
+  if (!user?.isSuperAdmin) {
+    return (
+      <div className="space-y-3">
+        <div className="text-center text-red-500">
+          Bạn không có quyền truy cập trang này. Chỉ Super Admin mới có thể quản lý Tenant.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">

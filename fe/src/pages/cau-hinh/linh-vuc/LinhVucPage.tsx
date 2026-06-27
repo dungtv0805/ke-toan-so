@@ -105,14 +105,6 @@ const LinhVucPage = () => {
     fetchList();
   }, []);
 
-  if (!user?.isSuperAdmin) {
-    return (
-      <div className="text-center text-red-500 py-6">
-        Bạn không có quyền truy cập trang này. Chỉ Super Admin mới có thể quản lý lĩnh vực.
-      </div>
-    );
-  }
-
   const handleCreate = () => {
     setEditing(null);
     setCheckedKeys([]);
@@ -250,6 +242,14 @@ const LinhVucPage = () => {
 
   const fl = useFieldLabels('cauHinh.linhVuc');
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('cauHinh.linhVuc', columns);
+
+  if (!user?.isSuperAdmin) {
+    return (
+      <div className="text-center text-red-500 py-6">
+        Bạn không có quyền truy cập trang này. Chỉ Super Admin mới có thể quản lý lĩnh vực.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">

@@ -46,19 +46,8 @@ const ThanhVienPage = () => {
   const tenantId = currentTenant?.tenantId;
   const canEdit = hasPermission('/cau-hinh/thanh-vien:sua');
 
-  if (!tenantId) {
-    return (
-      <div className="space-y-3">
-        <Result
-          status="warning"
-          title="Chưa chọn công ty"
-          subTitle="Vui lòng chọn công ty trước khi quản lý thành viên."
-        />
-      </div>
-    );
-  }
-
   const fetchMembers = async () => {
+    if (!tenantId) return;
     setLoading(true);
     try {
       const data = await tenantService.getMembers(tenantId);
@@ -102,6 +91,7 @@ const ThanhVienPage = () => {
   }, [tenantId]);
 
   const handleAdd = async (values: Record<string, string>) => {
+    if (!tenantId) return;
     try {
       const dto: AddMemberDto = { role: values.role };
       if (addMode === 'existing') {
@@ -126,7 +116,7 @@ const ThanhVienPage = () => {
   };
 
   const handleEdit = async () => {
-    if (!editingMember) return;
+    if (!editingMember || !tenantId) return;
     try {
       const values = editForm.getFieldsValue() as { hoTen: string; email: string; role: string };
       if (values.hoTen !== editingMember.hoTen || values.email !== editingMember.email) {
@@ -147,6 +137,7 @@ const ThanhVienPage = () => {
   };
 
   const handleResetPassword = async (userId: string) => {
+    if (!tenantId) return;
     try {
       const res = await tenantService.resetMemberPassword(tenantId, userId);
       message.success(`Đã reset mật khẩu về ${res.defaultPassword}`);
@@ -156,6 +147,7 @@ const ThanhVienPage = () => {
   };
 
   const handleRemove = async (userId: string) => {
+    if (!tenantId) return;
     try {
       await tenantService.removeMember(tenantId, userId);
       message.success('Đã xóa thành viên khỏi công ty');
@@ -242,6 +234,18 @@ const ThanhVienPage = () => {
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('cauHinh.thanhVien', columns);
   const fl = useFieldLabels('cauHinh.thanhVien');
+
+  if (!tenantId) {
+    return (
+      <div className="space-y-3">
+        <Result
+          status="warning"
+          title="Chưa chọn công ty"
+          subTitle="Vui lòng chọn công ty trước khi quản lý thành viên."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
