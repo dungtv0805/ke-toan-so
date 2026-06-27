@@ -41,7 +41,15 @@ const BalanceStructureChart: React.FC = () => {
             <BarChart data={chartData} margin={{ left: -10, right: 8 }}>
               <XAxis dataKey="name" tick={{ fontSize: 12 }} />
               <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} width={40} />
-              <Tooltip formatter={(v: number) => `${v.toFixed(1)}%`} />
+              <Tooltip
+                formatter={(value: number, _name, item) => {
+                  const p = item?.payload || {};
+                  const isA = item?.dataKey === 'a';
+                  const raw = isA ? p.aRaw : p.bRaw;
+                  const segName = isA ? p.aName : p.bName;
+                  return [`${value.toFixed(1)}% — ${formatCurrency(raw || 0)}`, segName];
+                }}
+              />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="a" stackId="s" name="Ngắn hạn / Nợ phải trả" fill={NAVY} maxBarSize={70}>
                 <LabelList dataKey="a" position="center" formatter={(v: number) => (v ? `${v.toFixed(0)}%` : '')} fill="#fff" style={{ fontSize: 11 }} />

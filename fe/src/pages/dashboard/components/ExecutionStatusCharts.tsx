@@ -21,7 +21,7 @@ const Gauge: React.FC<{ percent: number; color: string }> = ({ percent, color })
       </RadialBarChart>
     </ResponsiveContainer>
     <div className="absolute inset-0 flex items-end justify-center pb-2">
-      <span className="text-lg font-semibold text-muted-foreground">{percent.toFixed(2)}%</span>
+      <span className="text-lg font-semibold text-muted-foreground">{percent.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>
     </div>
     <div className="flex justify-between px-6 text-[10px] text-muted-foreground -mt-1">
       <span>0%</span><span>150%</span>
