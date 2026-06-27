@@ -63,11 +63,7 @@ import {
   SnippetsOutlined,
   NodeIndexOutlined,
   FileAddOutlined,
-  FontColorsOutlined,
-  EditOutlined,
 } from "@ant-design/icons";
-import { GlossaryConfigModal } from "@/components/glossary/GlossaryConfigModal";
-import { useEditMode } from "@/contexts/EditModeContext";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import type { MenuProps } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
@@ -362,7 +358,6 @@ const MainLayout: React.FC = () => {
   // Initialize collapsed based on current URL - if on form screen, start collapsed
   const [collapsed, setCollapsed] = useState(() => isFormScreen(window.location.pathname));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [glossaryModalOpen, setGlossaryModalOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
     return saved ? JSON.parse(saved) : false;
@@ -379,7 +374,6 @@ const MainLayout: React.FC = () => {
     getModule,
   } = useAuth();
   const { t } = useTerm();
-  const { editMode, setEditMode } = useEditMode();
   const currentRole = currentTenant?.role;
   const isSuperAdmin = user?.isSuperAdmin || false;
   const isMobile = useIsMobile();
@@ -588,18 +582,6 @@ const MainLayout: React.FC = () => {
       icon: <AppstoreOutlined />,
       label: "Quản lý Lĩnh vực",
       onClick: () => navigate("/cau-hinh/linh-vuc"),
-    }] : []),
-    ...(canManageConfig ? [{
-      key: "cau-hinh-nhan",
-      icon: <FontColorsOutlined />,
-      label: "Cấu hình nhãn",
-      onClick: () => setGlossaryModalOpen(true),
-    }] : []),
-    ...(canManageConfig ? [{
-      key: "sua-nhan-tai-cho",
-      icon: <EditOutlined />,
-      label: editMode ? "Tắt sửa nhãn tại chỗ" : "Đổi tiêu đề/nhãn",
-      onClick: () => setEditMode(!editMode),
     }] : []),
   ];
 
@@ -929,7 +911,6 @@ const MainLayout: React.FC = () => {
         </Content>
       </Layout>
 
-      <GlossaryConfigModal open={glossaryModalOpen} onClose={() => setGlossaryModalOpen(false)} />
     </Layout>
   );
 };

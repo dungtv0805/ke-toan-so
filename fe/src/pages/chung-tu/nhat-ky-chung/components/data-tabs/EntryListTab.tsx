@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { EditableTerm } from "@/components/glossary/EditableTerm";
+import { TermText } from "@/components/glossary/TermText";
 import type { Key } from "react";
 import { Table, Button, Space, Tooltip, Popconfirm } from "antd";
 import {
@@ -282,7 +282,7 @@ const getColumnDefinitions = (
     ),
   },
   {
-    title: <EditableTerm tk="doiTuong" surface="nkc.dtNoMa" />,
+    title: <TermText tk="doiTuong" surface="nkc.dtNoMa" />,
     key: "doiTuongMa",
     render: (_: unknown, record: NhatKyChung) => {
       const ma = getNkcDoiTuongMa(record);
@@ -297,7 +297,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="doiTuong" surface="nkc.dtNo" />,
+    title: <TermText tk="doiTuong" surface="nkc.dtNo" />,
     key: "doiTuong",
     render: (_: unknown, record: NhatKyChung) => {
       const ten = getNkcDoiTuongTen(record);
@@ -312,7 +312,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="doiTuong" surface="nkc.dtCoMa" />,
+    title: <TermText tk="doiTuong" surface="nkc.dtCoMa" />,
     key: "doiTuong2Ma",
     render: (_: unknown, record: NhatKyChung) => {
       const ma = getNkcDoiTuong2Ma(record);
@@ -327,7 +327,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="doiTuong" surface="nkc.dtCo" />,
+    title: <TermText tk="doiTuong" surface="nkc.dtCo" />,
     key: "doiTuong2",
     render: (_: unknown, record: NhatKyChung) => {
       const ten = getNkcDoiTuong2Ten(record);
@@ -342,7 +342,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="chuDauTu" surface="nkc.colMa" />,
+    title: <TermText tk="chuDauTu" surface="nkc.colMa" />,
     key: "chuDauTuMa",
     render: (_: unknown, record: NhatKyChung) => {
       const ma = getNkcChuDauTuMa(record);
@@ -362,7 +362,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="chuDauTu" surface="nkc.colTen" />,
+    title: <TermText tk="chuDauTu" surface="nkc.colTen" />,
     key: "chuDauTu",
     render: (_: unknown, record: NhatKyChung) => {
       const ten = getNkcChuDauTuTen(record);
@@ -382,7 +382,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="duAn" surface="nkc.colMa" />,
+    title: <TermText tk="duAn" surface="nkc.colMa" />,
     key: "duAnMa",
     render: (_: unknown, record: NhatKyChung) => {
       const ma = getNkcDuAnMa(record);
@@ -397,7 +397,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="duAn" surface="nkc.colTen" />,
+    title: <TermText tk="duAn" surface="nkc.colTen" />,
     key: "duAn",
     render: (_: unknown, record: NhatKyChung) => {
       const ten = getNkcDuAnTen(record);
@@ -412,7 +412,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="sanPham" surface="nkc.colMa" />,
+    title: <TermText tk="sanPham" surface="nkc.colMa" />,
     key: "sanPhamMa",
     render: (_: unknown, record: NhatKyChung) => {
       const ma = getNkcSanPhamMa(record);
@@ -427,7 +427,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="sanPham" surface="nkc.colTen" />,
+    title: <TermText tk="sanPham" surface="nkc.colTen" />,
     key: "sanPham",
     render: (_: unknown, record: NhatKyChung) => {
       const ten = getNkcSanPhamTen(record);
@@ -442,7 +442,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="boPhan" surface="nkc.colMa" />,
+    title: <TermText tk="boPhan" surface="nkc.colMa" />,
     key: "boPhanMa",
     render: (_: unknown, record: NhatKyChung) => {
       const ma = getNkcBoPhanMa(record);
@@ -457,7 +457,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="boPhan" surface="nkc.colTen" />,
+    title: <TermText tk="boPhan" surface="nkc.colTen" />,
     key: "boPhan",
     render: (_: unknown, record: NhatKyChung) => {
       const ten = getNkcBoPhanTen(record);
@@ -472,7 +472,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="doi" surface="nkc.colMa" />,
+    title: <TermText tk="doi" surface="nkc.colMa" />,
     key: "doiMa",
     render: (_: unknown, record: NhatKyChung) => {
       const ma = getNkcDoiMa(record);
@@ -487,7 +487,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="doi" surface="nkc.colTen" />,
+    title: <TermText tk="doi" surface="nkc.colTen" />,
     key: "doi",
     render: (_: unknown, record: NhatKyChung) => {
       const ten = getNkcDoiTen(record);
@@ -502,7 +502,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="nhanVien" surface="nkc.colMa" />,
+    title: <TermText tk="nhanVien" surface="nkc.colMa" />,
     key: "nhanVienMa",
     render: (_: unknown, record: NhatKyChung) => {
       const ma = getNkcNhanVienMa(record);
@@ -517,7 +517,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="nhanVien" surface="nkc.colTen" />,
+    title: <TermText tk="nhanVien" surface="nkc.colTen" />,
     key: "nhanVien",
     render: (_: unknown, record: NhatKyChung) => {
       const ten = getNkcNhanVienTen(record);
@@ -532,7 +532,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="dongTien" surface="nkc.colMa" />,
+    title: <TermText tk="dongTien" surface="nkc.colMa" />,
     key: "dongTienMa",
     render: (_: unknown, record: NhatKyChung) => {
       const ma = getNkcDongTienMa(record);
@@ -547,7 +547,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="dongTien" surface="nkc.colTen" />,
+    title: <TermText tk="dongTien" surface="nkc.colTen" />,
     key: "dongTien",
     render: (_: unknown, record: NhatKyChung) => {
       const ten = getNkcDongTienTen(record);
@@ -562,7 +562,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="khoanMuc" surface="nkc.colMa" />,
+    title: <TermText tk="khoanMuc" surface="nkc.colMa" />,
     key: "khoanMucMa",
     render: (_: unknown, record: NhatKyChung) => {
       const ma = getNkcKhoanMucMa(record);
@@ -577,7 +577,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="khoanMuc" surface="nkc.colTen" />,
+    title: <TermText tk="khoanMuc" surface="nkc.colTen" />,
     key: "khoanMuc",
     render: (_: unknown, record: NhatKyChung) => {
       const ten = getNkcKhoanMucTen(record);
@@ -592,7 +592,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="nhomKhuyenMai" surface="nkc.colMa" />,
+    title: <TermText tk="nhomKhuyenMai" surface="nkc.colMa" />,
     key: "nhomKhuyenMaiMa",
     render: (_: unknown, record: NhatKyChung) => {
       const ma = getNkcNhomKhuyenMaiMa(record);
@@ -607,7 +607,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="nhomKhuyenMai" surface="nkc.colTen" />,
+    title: <TermText tk="nhomKhuyenMai" surface="nkc.colTen" />,
     key: "nhomKhuyenMai",
     render: (_: unknown, record: NhatKyChung) => {
       const ten = getNkcNhomKhuyenMaiTen(record);
@@ -622,7 +622,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="nhomQuanLy" surface="nkc.colMa" />,
+    title: <TermText tk="nhomQuanLy" surface="nkc.colMa" />,
     key: "nhomQuanLyMa",
     render: (_: unknown, record: NhatKyChung) => {
       const ma = getNkcNhomQuanLyMa(record);
@@ -637,7 +637,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="nhomQuanLy" surface="nkc.colTen" />,
+    title: <TermText tk="nhomQuanLy" surface="nkc.colTen" />,
     key: "nhomQuanLy",
     render: (_: unknown, record: NhatKyChung) => {
       const ten = getNkcNhomQuanLyTen(record);
@@ -652,7 +652,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="hopDong" surface="nkc.colMa" />,
+    title: <TermText tk="hopDong" surface="nkc.colMa" />,
     key: "hopDongSo",
     render: (_: unknown, record: NhatKyChung) => {
       const so = getNkcHopDongSo(record);
@@ -667,7 +667,7 @@ const getColumnDefinitions = (
     },
   },
   {
-    title: <EditableTerm tk="hopDong" surface="nkc.colTen" />,
+    title: <TermText tk="hopDong" surface="nkc.colTen" />,
     key: "hopDong",
     render: (_: unknown, record: NhatKyChung) => {
       const ten = getNkcHopDongTen(record);

@@ -13,7 +13,7 @@ export interface Tenant {
 }
 
 export interface GlossaryItem {
-  label: string;
+  label?: string;
   surfaces?: Record<string, string>;
 }
 

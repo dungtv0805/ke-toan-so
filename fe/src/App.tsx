@@ -8,7 +8,6 @@ import viVN from 'antd/locale/vi_VN';
 
 import { AuthProvider } from "./contexts/AuthContext";
 import { TermProvider } from "./contexts/TermContext";
-import { EditModeProvider } from "./contexts/EditModeContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 import MainLayout from "./components/layout/MainLayout";
@@ -107,8 +106,7 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <TermProvider>
-              <EditModeProvider>
-                <Routes>
+              <Routes>
               {/* Public route */}
               <Route path="/login" element={<LoginPage />} />
 
@@ -557,7 +555,6 @@ const App = () => (
 
               <Route path="*" element={<NotFound />} />
                 </Routes>
-              </EditModeProvider>
             </TermProvider>
           </AuthProvider>
         </BrowserRouter>
