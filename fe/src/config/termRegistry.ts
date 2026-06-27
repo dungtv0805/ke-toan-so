@@ -6,6 +6,14 @@ export const TERM_REGISTRY: Glossary = {
     label: 'Chủ đầu tư',
     surfaces: { 'nkc.colMa': 'Mã CĐT', 'nkc.colTen': 'CĐT' },
   },
+  duAn: {
+    label: 'Dự án',
+    surfaces: { 'nkc.colMa': 'Mã dự án', 'nkc.colTen': 'Dự án' },
+  },
+  doiTuong: {
+    label: 'Đối tượng',
+    surfaces: { 'nkc.colMa': 'Mã đối tượng', 'nkc.colTen': 'Đối tượng' },
+  },
 };
 
 /**

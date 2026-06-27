@@ -39,4 +39,10 @@ describe('resolveTerm', () => {
     expect(resolveTerm(undefined, undefined, reg, 'khongCo')).toBe('khongCo');
     expect(resolveTerm(undefined, undefined, reg, 'khongCo', 'x')).toBe('khongCo');
   });
+
+  it('registry có các term cần dùng cho rollout NKC', () => {
+    expect(TERM_REGISTRY.chuDauTu).toBeTruthy();
+    expect(TERM_REGISTRY.duAn?.label).toBe('Dự án');
+    expect(TERM_REGISTRY.doiTuong?.label).toBe('Đối tượng');
+  });
 });
