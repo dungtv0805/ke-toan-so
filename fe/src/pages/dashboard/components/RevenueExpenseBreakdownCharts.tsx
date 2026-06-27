@@ -1,5 +1,5 @@
-import React from 'react';
-import { Card, Row, Col, Skeleton, Empty } from 'antd';
+import React, { useState } from 'react';
+import { Card, Row, Col, Skeleton, Empty, Select } from 'antd';
 import { PieChartOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -56,7 +56,24 @@ const Donut: React.FC<{ data: BreakdownSlice[] }> = ({ data }) => {
 
 interface Props { year: number; startMonth: number; endMonth: number; }
 
+const LN_DIMENSIONS = [
+  { label: 'Đối tượng', value: 'doi-tuong' },
+  { label: 'Dự án', value: 'du-an' },
+  { label: 'Đội', value: 'doi' },
+  { label: 'Sản phẩm', value: 'san-pham' },
+];
+
+const renderBody = (slices: BreakdownSlice[] | undefined, loading: boolean) => {
+  if (loading) return <Skeleton active paragraph={{ rows: 5 }} />;
+  const grouped = groupTopN(slices ?? []);
+  if (grouped.length === 0) {
+    return <Empty description="Chưa có dữ liệu" style={{ height: 260 }} className="flex flex-col items-center justify-center" />;
+  }
+  return <Donut data={grouped} />;
+};
+
 const RevenueExpenseBreakdownCharts: React.FC<Props> = ({ year, startMonth, endMonth }) => {
+  const [lnDim, setLnDim] = useState('doi-tuong');
   const pnl = useQuery({
     queryKey: ['pnl-breakdown', year, startMonth, endMonth],
     queryFn: () => dashboardService.getPnlBreakdownByRange(year, startMonth, endMonth),
@@ -69,34 +86,45 @@ const RevenueExpenseBreakdownCharts: React.FC<Props> = ({ year, startMonth, endM
     queryKey: ['tien-chi-breakdown', year, startMonth, endMonth],
     queryFn: () => dashboardService.getCashCompositionByRange('chi', year, startMonth, endMonth),
   });
+  const loiNhuan = useQuery({
+    queryKey: ['loi-nhuan-breakdown', year, startMonth, endMonth, lnDim],
+    queryFn: () => dashboardService.getLoiNhuanBreakdown(year, startMonth, endMonth, lnDim),
+  });
 
-  const renderBody = (slices: BreakdownSlice[] | undefined, loading: boolean) => {
-    if (loading) return <Skeleton active paragraph={{ rows: 5 }} />;
-    const grouped = groupTopN(slices ?? []);
-    if (grouped.length === 0) {
-      return <Empty description="Chưa có dữ liệu" style={{ height: 260 }} className="flex flex-col items-center justify-center" />;
-    }
-    return <Donut data={grouped} />;
-  };
-
-  const cards: { title: string; slices?: BreakdownSlice[]; loading: boolean }[] = [
-    { title: 'Tỷ trọng doanh thu', slices: pnl.data?.doanhThu, loading: pnl.isLoading },
-    { title: 'Tỷ trọng chi phí', slices: pnl.data?.chiPhi, loading: pnl.isLoading },
-    // Lợi nhuận theo sản phẩm: chưa có endpoint → để trống
-    { title: 'Tỷ trọng lợi nhuận', slices: [], loading: false },
-    { title: 'Tỷ trọng tiền thu', slices: tienThu.data, loading: tienThu.isLoading },
-    { title: 'Tỷ trọng tiền chi', slices: tienChi.data, loading: tienChi.isLoading },
-  ];
+  const cardTitle = (t: string) => (
+    <span className="text-sm sm:text-base"><PieChartOutlined className="text-primary mr-2" />{t}</span>
+  );
 
   return (
     <Row gutter={[12, 12]}>
-      {cards.map((c) => (
-        <Col xs={24} md={12} xl={8} key={c.title}>
-          <Card title={<span className="text-sm sm:text-base"><PieChartOutlined className="text-primary mr-2" />{c.title}</span>}>
-            {renderBody(c.slices, c.loading)}
-          </Card>
-        </Col>
-      ))}
+      <Col xs={24} md={12} xl={8}>
+        <Card title={cardTitle('Tỷ trọng doanh thu')}>{renderBody(pnl.data?.doanhThu, pnl.isLoading)}</Card>
+      </Col>
+      <Col xs={24} md={12} xl={8}>
+        <Card title={cardTitle('Tỷ trọng chi phí')}>{renderBody(pnl.data?.chiPhi, pnl.isLoading)}</Card>
+      </Col>
+      <Col xs={24} md={12} xl={8}>
+        <Card
+          title={cardTitle('Tỷ trọng lợi nhuận')}
+          extra={
+            <Select
+              size="small"
+              value={lnDim}
+              onChange={setLnDim}
+              options={LN_DIMENSIONS}
+              style={{ width: 110 }}
+            />
+          }
+        >
+          {renderBody(loiNhuan.data, loiNhuan.isLoading)}
+        </Card>
+      </Col>
+      <Col xs={24} md={12} xl={8}>
+        <Card title={cardTitle('Tỷ trọng tiền thu')}>{renderBody(tienThu.data, tienThu.isLoading)}</Card>
+      </Col>
+      <Col xs={24} md={12} xl={8}>
+        <Card title={cardTitle('Tỷ trọng tiền chi')}>{renderBody(tienChi.data, tienChi.isLoading)}</Card>
+      </Col>
     </Row>
   );
 };

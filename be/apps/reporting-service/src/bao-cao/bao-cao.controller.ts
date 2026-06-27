@@ -52,6 +52,25 @@ export class BaoCaoController {
     return { success: true, data };
   }
 
+  @Get('loi-nhuan-theo')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async getLoiNhuanByDimension(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Query('dimension') dimension: string,
+    @Headers('authorization') authToken: string,
+    @CurrentUser() user: UserPayload,
+  ) {
+    const data = await this.baoCaoService.getLoiNhuanByDimension(
+      new Date(startDate),
+      new Date(endDate),
+      dimension || 'doi-tuong',
+      authToken,
+      user.tenantId,
+    );
+    return { success: true, data };
+  }
+
   @Get('cong-no-series')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getCongNoSeries(

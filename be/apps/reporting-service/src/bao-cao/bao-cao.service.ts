@@ -353,6 +353,51 @@ export class BaoCaoService {
   }
 
   /**
+   * Lợi nhuận theo chiều (đối tượng/dự án/đội/sản phẩm) trong khoảng kỳ.
+   * lợi nhuận(giá trị chiều) = doanh thu (Có TK 5xx) − chi phí (Nợ TK 6xx) gắn chiều đó.
+   */
+  async getLoiNhuanByDimension(
+    startDate: Date,
+    endDate: Date,
+    dimension: string,
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<{ ten: string; soTien: number }[]> {
+    const fieldMap: Record<string, string> = {
+      'doi-tuong': 'doiTuong',
+      'du-an': 'duAn',
+      doi: 'doi',
+      'san-pham': 'sanPham',
+    };
+    const field = fieldMap[dimension] || 'doiTuong';
+    const vRes = await this.serviceClient.getNhatKyChung(
+      startDate.toISOString(),
+      endDate.toISOString(),
+      authToken,
+      tenantId,
+    );
+    const vouchers: NhatKyChungEntry[] = vRes.success ? vRes.data || [] : [];
+    const map = new Map<string, { ten: string; rev: number; exp: number }>();
+    for (const v of vouchers) {
+      const dm = v.danhMuc as unknown as Record<
+        string,
+        { ma?: string; ten?: string }
+      >;
+      const dim = dm?.[field];
+      if (!dim?.ma) continue;
+      const maTKNo = v.danhMuc?.taiKhoanNo?.ma ?? v.taiKhoanNo;
+      const maTKCo = v.danhMuc?.taiKhoanCo?.ma ?? v.taiKhoanCo;
+      const e = map.get(dim.ma) || { ten: dim.ten || dim.ma, rev: 0, exp: 0 };
+      if (maTKCo?.startsWith('5')) e.rev += v.soTien;
+      if (maTKNo?.startsWith('6')) e.exp += v.soTien;
+      map.set(dim.ma, e);
+    }
+    return Array.from(map.values())
+      .map((e) => ({ ten: e.ten, soTien: e.rev - e.exp }))
+      .filter((e) => e.soTien !== 0);
+  }
+
+  /**
    * Generate Balance Sheet report
    */
   async getBalanceSheet(

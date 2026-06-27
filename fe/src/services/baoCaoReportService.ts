@@ -71,6 +71,19 @@ class BaoCaoReportService extends ServiceBase {
     return Array.isArray(data) ? data : [];
   }
 
+  /** Lợi nhuận theo chiều (doi-tuong/du-an/doi/san-pham) trong khoảng kỳ. */
+  async getLoiNhuanByDimension(
+    startDate: string,
+    endDate: string,
+    dimension: string,
+  ): Promise<{ ten: string; soTien: number }[]> {
+    const data = await this.get<{ ten: string; soTien: number }[]>({
+      endpoint: '/loi-nhuan-theo',
+      params: { startDate, endDate, dimension },
+    });
+    return Array.isArray(data) ? data : [];
+  }
+
   /** Công nợ phải thu/phải trả theo tháng (hoặc tuần nếu có month) — từ TK có gán đối tượng. */
   async getCongNoSeries(
     year: number,

@@ -105,6 +105,22 @@ export const dashboardService = {
     }
   },
 
+  /** Tỷ trọng lợi nhuận theo chiều (đối tượng/dự án/đội/sản phẩm) trong khoảng kỳ. */
+  async getLoiNhuanBreakdown(
+    year: number,
+    startMonth: number,
+    endMonth: number,
+    dimension: string,
+  ): Promise<BreakdownSlice[]> {
+    try {
+      const startDate = new Date(year, startMonth - 1, 1).toISOString();
+      const endDate = new Date(year, endMonth, 0, 23, 59, 59, 999).toISOString();
+      return await baoCaoReportService.getLoiNhuanByDimension(startDate, endDate, dimension);
+    } catch {
+      return [];
+    }
+  },
+
   /** Tỷ trọng tiền thu/chi theo loại dòng tiền (cash-flow) trong khoảng kỳ. */
   async getCashCompositionByRange(
     which: 'thu' | 'chi',
