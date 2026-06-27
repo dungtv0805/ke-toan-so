@@ -30,10 +30,14 @@ describe('CongNoService.getCongNoSeries', () => {
   });
 
   it('lọc theo tenantId khi có', async () => {
-    const { repo } = await build([], 'tenant-A');
-    // method gọi find với where tenantId
-    const { svc } = await build([], 'tenant-A');
+    const { svc, repo } = await build([], 'tenant-A');
     await svc.getCongNoSeries(2026);
-    expect(repo.find).toBeDefined();
+    expect(repo.find).toHaveBeenCalledWith({ where: { tenantId: 'tenant-A' } });
+  });
+
+  it('không lọc tenant khi không có tenantId', async () => {
+    const { svc, repo } = await build([]);
+    await svc.getCongNoSeries(2026);
+    expect(repo.find).toHaveBeenCalledWith({ where: {} });
   });
 });
