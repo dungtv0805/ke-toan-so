@@ -8,8 +8,10 @@ import CompositionCharts from './components/CompositionCharts';
 import RevenueExpenseBreakdownCharts from './components/RevenueExpenseBreakdownCharts';
 import AgingCharts from './components/AgingCharts';
 import OverdueTables from './components/OverdueTables';
+import ExecutionStatusCharts from './components/ExecutionStatusCharts';
 import MockTabDashboard, { MOCK_TABS } from './components/MockTabDashboard';
 import { Row, Col } from 'antd';
+import { resolvePeriod, type DashboardPeriod } from './period';
 
 const { Text } = Typography;
 
@@ -21,22 +23,18 @@ const TAB_OPTIONS = [
 ];
 
 const now = new Date();
-const CURRENT_MONTH = now.getMonth() + 1;
 const CURRENT_YEAR = now.getFullYear();
 
-const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
-  value: i + 1,
-  label: `Tháng ${i + 1}`,
-}));
-
-const YEAR_OPTIONS = Array.from({ length: 6 }, (_, i) => {
-  const y = CURRENT_YEAR - i;
-  return { value: y, label: `Năm ${y}` };
-});
+const PERIOD_OPTIONS: { label: string; value: DashboardPeriod }[] = [
+  { label: '12 tháng', value: 'thang12' },
+  { label: '4 quý', value: 'quy4' },
+  { label: 'Năm nay', value: 'namNay' },
+  { label: 'Năm trước', value: 'namTruoc' },
+];
 
 const Dashboard: React.FC = () => {
-  const [month, setMonth] = useState<number>(CURRENT_MONTH);
-  const [year, setYear] = useState<number>(CURRENT_YEAR);
+  const [period, setPeriod] = useState<DashboardPeriod>('thang12');
+  const { year, granularity } = resolvePeriod(period, CURRENT_YEAR);
   const [activeTab, setActiveTab] = useState<string>('tai-chinh');
 
   return (
@@ -80,16 +78,10 @@ const Dashboard: React.FC = () => {
         </ConfigProvider>
         <Space wrap>
           <Select
-            value={month}
-            onChange={setMonth}
-            options={MONTH_OPTIONS}
-            style={{ width: 120 }}
-          />
-          <Select
-            value={year}
-            onChange={setYear}
-            options={YEAR_OPTIONS}
-            style={{ width: 120 }}
+            value={period}
+            onChange={setPeriod}
+            options={PERIOD_OPTIONS}
+            style={{ width: 140 }}
           />
         </Space>
       </div>
@@ -97,20 +89,23 @@ const Dashboard: React.FC = () => {
       {activeTab === 'tai-chinh' ? (
         <>
           {/* KPI */}
-          <KpiCards month={month} year={year} />
+          <KpiCards year={year} />
 
           {/* Xu hướng */}
           <Row gutter={[12, 12]}>
             <Col xs={24} lg={12}>
-              <RevenueTrendChart year={year} />
+              <RevenueTrendChart year={year} granularity={granularity} />
             </Col>
             <Col xs={24} lg={12}>
-              <CashFlowChart year={year} />
+              <CashFlowChart year={year} granularity={granularity} />
             </Col>
           </Row>
 
+          {/* Tình hình thực hiện (Kế hoạch vs Thực hiện) — chưa có dữ liệu */}
+          <ExecutionStatusCharts />
+
           {/* Tỷ trọng doanh thu / chi phí */}
-          <RevenueExpenseBreakdownCharts month={month} year={year} />
+          <RevenueExpenseBreakdownCharts year={year} />
 
           {/* Cơ cấu */}
           <CompositionCharts />
