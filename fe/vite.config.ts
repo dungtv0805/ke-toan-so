@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -17,6 +18,41 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react({ tsDecorators: true }),
     mode === "development" && componentTagger(),
+    VitePWA({
+      registerType: "autoUpdate",
+      includeAssets: ["favicon.ico", "apple-touch-icon.png", "logo.jpg"],
+      manifest: {
+        name: "Master CEO",
+        short_name: "Master CEO",
+        description: "Phần mềm kế toán số Master CEO",
+        lang: "vi",
+        theme_color: "#1F3864",
+        background_color: "#ffffff",
+        display: "standalone",
+        orientation: "portrait",
+        start_url: "/",
+        scope: "/",
+        icons: [
+          { src: "/pwa-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "/pwa-512x512.png", sizes: "512x512", type: "image/png" },
+          { src: "/pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+        ],
+      },
+      workbox: {
+        // App shell precache + SPA fallback; KHÔNG cache API (dữ liệu tài chính phải mới).
+        globPatterns: ["**/*.{js,css,html,ico,png,jpg,svg,woff,woff2}"],
+        navigateFallback: "/index.html",
+        navigateFallbackDenylist: [/^\/api/],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith("/api"),
+            handler: "NetworkOnly",
+          },
+        ],
+        cleanupOutdatedCaches: true,
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+      },
+    }),
   ].filter(Boolean),
   optimizeDeps: {
     esbuildOptions: {
