@@ -125,25 +125,22 @@ export const dashboardService = {
     }
   },
 
-  /** Dòng tiền 12 tháng (thu/chi/số dư cuối kỳ) từ sổ quỹ. */
+  /** Dòng tiền 12 tháng: thu=Nợ 111/112, chi=Có 111/112 (aggregation); số dư = lũy kế trong năm. */
   async getCashSeries(year: number): Promise<CashSeriesPoint[]> {
-    const months = Array.from({ length: 12 }, (_, i) => i + 1);
-    const results = await Promise.allSettled(
-      months.map((m) => soQuyService.getByMonth(m, year)),
-    );
-    return months.map((thang, idx) => {
-      const r = results[idx];
-      if (r.status !== 'fulfilled' || !r.value) {
-        return { thang, thu: 0, chi: 0, soDu: 0 };
-      }
-      const v = r.value;
-      return {
-        thang,
-        thu: v.tongThu || 0,
-        chi: v.tongChi || 0,
-        soDu: v.soDuCuoiKy || 0,
-      };
-    });
+    try {
+      const rows = await phieuThuService.getCashFlowSeries(year);
+      const byMonth = new Map(rows.map((r) => [r.thang, r]));
+      let soDu = 0;
+      return Array.from({ length: 12 }, (_, i) => {
+        const r = byMonth.get(i + 1);
+        const thu = r?.thu || 0;
+        const chi = r?.chi || 0;
+        soDu += thu - chi;
+        return { thang: i + 1, thu, chi, soDu };
+      });
+    } catch {
+      return Array.from({ length: 12 }, (_, i) => ({ thang: i + 1, thu: 0, chi: 0, soDu: 0 }));
+    }
   },
 
   /** Số dư công nợ phải thu/phải trả theo tháng (đến cuối mỗi tháng) của năm chọn. */

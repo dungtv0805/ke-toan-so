@@ -120,6 +120,13 @@ export class ChungTuController {
     return this.chungTuService.getCashFlowComposition(w, query);
   }
 
+  @Get('chung-tu/cash-flow-series')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async cashFlowSeries(@Query('year') year?: string) {
+    const y = Number(year) || new Date().getFullYear();
+    return this.chungTuService.getCashFlowSeries(y);
+  }
+
   @Post('phieu-thu/import')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
   async importPhieuThu(

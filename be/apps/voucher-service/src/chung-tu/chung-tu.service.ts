@@ -155,6 +155,52 @@ export class ChungTuService {
     };
   }
 
+  /**
+   * Dòng tiền theo tháng cho năm chọn: thu = Nợ 111/112, chi = Có 111/112 (gồm TK con),
+   * tính trực tiếp bằng aggregation (không qua sổ quỹ phân trang). Lọc theo tenant.
+   */
+  async getCashFlowSeries(
+    year: number,
+  ): Promise<{ success: boolean; data: { thang: number; thu: number; chi: number }[] }> {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    const match: Record<string, unknown> = {
+      ngay: {
+        $gte: new Date(year, 0, 1, 0, 0, 0, 0),
+        $lte: new Date(year, 11, 31, 23, 59, 59, 999),
+      },
+    };
+    if (tenantId) match.tenantId = tenantId;
+
+    const pipeline: object[] = [
+      { $match: match },
+      {
+        $facet: {
+          thu: [
+            { $match: { 'danhMuc.taiKhoanNo.ma': { $regex: '^11[12]' } } },
+            { $group: { _id: { $month: '$ngay' }, v: { $sum: '$soTien' } } },
+          ],
+          chi: [
+            { $match: { 'danhMuc.taiKhoanCo.ma': { $regex: '^11[12]' } } },
+            { $group: { _id: { $month: '$ngay' }, v: { $sum: '$soTien' } } },
+          ],
+        },
+      },
+    ];
+    const agg = (await this.chungTuRepository.aggregate(pipeline).toArray()) as {
+      thu: { _id: number; v: number }[];
+      chi: { _id: number; v: number }[];
+    }[];
+    const facet = agg[0] || { thu: [], chi: [] };
+    const thuByMonth = new Map(facet.thu.map((g) => [g._id, g.v]));
+    const chiByMonth = new Map(facet.chi.map((g) => [g._id, g.v]));
+    const data = Array.from({ length: 12 }, (_, i) => ({
+      thang: i + 1,
+      thu: thuByMonth.get(i + 1) || 0,
+      chi: chiByMonth.get(i + 1) || 0,
+    }));
+    return { success: true, data };
+  }
+
   async findAll(loai?: LoaiChungTu): Promise<ChungTu[]> {
     const where = loai ? { loai } : {};
     return this.chungTuRepository.find({ where, order: { createdAt: 'DESC' } });

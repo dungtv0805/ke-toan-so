@@ -12,24 +12,7 @@ interface ChungTu {
   doiTuongId?: string;
   taiKhoanNo: string;
   taiKhoanCo: string;
-  danhMuc?: {
-    taiKhoanNo?: { ma?: string };
-    taiKhoanCo?: { ma?: string };
-  };
   trangThai: string;
-}
-
-/** Tài khoản tiền: 111/112 (gồm tài khoản con: 1111, 1121…). */
-function isCashAccount(ma?: string): boolean {
-  return !!ma && /^11[12]/.test(ma);
-}
-
-/** Thu = tiền (111/112) ghi Nợ; Chi = tiền ghi Có. Phân loại theo tài khoản, không theo loại phiếu. */
-function voucherThu(v: ChungTu): number {
-  return isCashAccount(v.danhMuc?.taiKhoanNo?.ma) ? v.soTien : 0;
-}
-function voucherChi(v: ChungTu): number {
-  return isCashAccount(v.danhMuc?.taiKhoanCo?.ma) ? v.soTien : 0;
 }
 
 export interface SoQuyEntry {
@@ -117,7 +100,11 @@ export class SoQuyService {
 
     let soDuDauKy = 0;
     for (const v of vouchersBefore) {
-      soDuDauKy += voucherThu(v) - voucherChi(v);
+      if (v.loai === 'PHIEU_THU') {
+        soDuDauKy += v.soTien;
+      } else {
+        soDuDauKy -= v.soTien;
+      }
     }
 
     // Get vouchers for this month
@@ -132,8 +119,11 @@ export class SoQuyService {
     let tongThu = 0;
     let tongChi = 0;
     for (const v of monthVouchers) {
-      tongThu += voucherThu(v);
-      tongChi += voucherChi(v);
+      if (v.loai === 'PHIEU_THU') {
+        tongThu += v.soTien;
+      } else {
+        tongChi += v.soTien;
+      }
     }
 
     return {
@@ -159,12 +149,13 @@ export class SoQuyService {
     let soPhieuChi = 0;
 
     for (const v of vouchers) {
-      const thu = voucherThu(v);
-      const chi = voucherChi(v);
-      tongThu += thu;
-      tongChi += chi;
-      if (thu) soPhieuThu++;
-      if (chi) soPhieuChi++;
+      if (v.loai === 'PHIEU_THU') {
+        tongThu += v.soTien;
+        soPhieuThu++;
+      } else {
+        tongChi += v.soTien;
+        soPhieuChi++;
+      }
     }
 
     // tonDauKy is 0 for now (could be configured or calculated from previous period)
@@ -196,8 +187,8 @@ export class SoQuyService {
     const entries: SoQuyEntry[] = [];
 
     for (const v of sorted) {
-      const thu = voucherThu(v);
-      const chi = voucherChi(v);
+      const thu = v.loai === 'PHIEU_THU' ? v.soTien : 0;
+      const chi = v.loai === 'PHIEU_CHI' ? v.soTien : 0;
       soDu = soDu + thu - chi;
 
       entries.push({
