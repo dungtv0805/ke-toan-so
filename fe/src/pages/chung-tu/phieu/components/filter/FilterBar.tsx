@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Select, DatePicker, Button } from "antd";
 import {
   PlusOutlined,
@@ -11,7 +12,7 @@ import { usePhieuState, usePhieuHandler } from "../../PhieuHandlerContext";
 
 const { RangePicker } = DatePicker;
 
-export function FilterBar() {
+export function FilterBar({ settingsButton }: { settingsButton?: ReactNode }) {
   const handler = usePhieuHandler();
   const isAdmin = useIsAdmin();
 
@@ -114,6 +115,7 @@ export function FilterBar() {
       }
       actions={
         <>
+          {settingsButton}
           {isAdmin && (
             <Button
               icon={<FileTextOutlined />}

@@ -19,7 +19,11 @@ const DEFAULT_PAGINATION: PaginationMeta = {
   totalPages: 0,
 };
 
-export const QuyChaunHeader: React.FC = () => {
+interface QuyChaunHeaderProps {
+  settingsButton?: React.ReactNode;
+}
+
+export const QuyChaunHeader: React.FC<QuyChaunHeaderProps> = ({ settingsButton }) => {
   const handler = useQuyChaunHandler();
   const { canCreate, canExport } = usePagePermission("/danh-muc/quy-chuan");
   const [searchText] = useQuyChaunState('searchText', '');
@@ -78,6 +82,7 @@ export const QuyChaunHeader: React.FC = () => {
         onReset={handleRefresh}
         actions={
           <>
+            {settingsButton}
             {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
             {canCreate && (
               <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>

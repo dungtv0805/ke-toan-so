@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useEffect } from "react";
 import { Table, Tag, Space, Button, Popconfirm, Tabs, Tooltip } from "antd";
 import { EditOutlined, DeleteOutlined, SwapOutlined } from "@ant-design/icons";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
@@ -8,8 +8,13 @@ import {
   useQuyChaunState,
 } from "../../QuyChaunHandlerContext";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 import "./QuyChaunTable.state";
 import { PaginationMeta } from "./QuyChaunTable.state";
+
+interface QuyChaunTableProps {
+  onSettingsButton?: (btn: React.ReactNode) => void;
+}
 
 const DEFAULT_PAGINATION: PaginationMeta = {
   total: 0,
@@ -18,7 +23,7 @@ const DEFAULT_PAGINATION: PaginationMeta = {
   totalPages: 0,
 };
 
-export const QuyChaunTable: React.FC = () => {
+export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton }) => {
   const handler = useQuyChaunHandler();
   const { canEdit, canDelete } = usePagePermission("/danh-muc/quy-chuan");
   const [quyChaunList] = useQuyChaunState("quyChaunList", []);
@@ -158,7 +163,15 @@ export const QuyChaunTable: React.FC = () => {
     },
   ];
 
-  const columnsWithoutLoai = columns.filter((c) => c.key !== "loaiGiaoDich");
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig(
+    "danhMuc.quyChuan",
+    columns,
+  );
+  const columnsWithoutLoai = cfgColumns.filter((c) => c.key !== "loaiGiaoDich");
+
+  useEffect(() => {
+    onSettingsButton?.(settingsButton);
+  }, [settingsButton, onSettingsButton]);
 
   // Calculate counts for tabs from stats (stats is updated with search keyword)
   const [stats] = useQuyChaunState("stats", null);
@@ -214,7 +227,7 @@ export const QuyChaunTable: React.FC = () => {
       label: `Tất cả (${tabCounts.all})`,
       children: (
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={quyChaunList}
           rowKey="id"
           loading={loading}

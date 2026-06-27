@@ -4,7 +4,11 @@ import { useVaiTroHandler, useVaiTroState } from "../../VaiTroHandlerContext";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import "./VaiTroHeader.state";
 
-export function VaiTroHeader() {
+interface VaiTroHeaderProps {
+  settingsButton?: React.ReactNode;
+}
+
+export function VaiTroHeader({ settingsButton }: VaiTroHeaderProps) {
   const handler = useVaiTroHandler();
   const [loading] = useVaiTroState("loading", false);
   const { canCreate } = usePagePermission("/cau-hinh/vai-tro");
@@ -20,6 +24,7 @@ export function VaiTroHeader() {
         <p className="text-muted-foreground">Quản lý các vai trò và phân quyền trong hệ thống</p>
       </div>
       <Space>
+        {settingsButton}
         {canCreate && (
           <Button
             type="primary"

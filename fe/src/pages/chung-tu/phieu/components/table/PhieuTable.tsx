@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import { Table, Button, Space, Tooltip, Popconfirm, Typography } from "antd";
+import type { ColumnType } from "antd/es/table";
 import {
   PrinterOutlined,
   EyeOutlined,
@@ -14,18 +15,11 @@ import { ChungTu } from "@/types";
 
 const { Text } = Typography;
 
-export function PhieuTable() {
+/** Hook xuất mảng cột gốc (chưa áp override nhãn) để parent có thể bọc qua useTableTitleConfig. */
+export function usePhieuTableColumns(): ColumnType<ChungTu>[] {
   const handler = usePhieuHandler();
   const config = usePhieuConfig();
   const print = usePrintPhieu();
-  const [data] = usePhieuState("data", [] as ChungTu[]);
-  const [loading] = usePhieuState("loading", false);
-  const [pagination] = usePhieuState("pagination", {
-    total: 0,
-    page: 1,
-    limit: 50,
-    totalPages: 0,
-  });
   const [, setViewModalPhieu] = usePhieuState("viewModalPhieu", null);
   const [, setEditingPhieu] = usePhieuState("editingPhieu", null);
   const [, setFormModalOpen] = usePhieuState("formModalOpen", false);
@@ -42,7 +36,7 @@ export function PhieuTable() {
 
   const moneyColor = config.loai === "PHIEU_THU" ? "#16a34a" : "#dc2626";
 
-  const columns = [
+  return [
     {
       title: "Số phiếu",
       dataIndex: "soPhieu",
@@ -150,6 +144,18 @@ export function PhieuTable() {
       ),
     },
   ];
+}
+
+export function PhieuTable({ columns }: { columns: ColumnType<ChungTu>[] }) {
+  const handler = usePhieuHandler();
+  const [data] = usePhieuState("data", [] as ChungTu[]);
+  const [loading] = usePhieuState("loading", false);
+  const [pagination] = usePhieuState("pagination", {
+    total: 0,
+    page: 1,
+    limit: 50,
+    totalPages: 0,
+  });
 
   return (
     <Table<ChungTu>

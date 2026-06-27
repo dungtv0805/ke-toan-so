@@ -1,0 +1,23 @@
+import { useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { lookupOverride, tableTermKey } from '@/config/tableTitleConfig';
+
+/**
+ * Resolve nhãn field cho form Thêm/Sửa theo CÙNG key với cột bảng
+ * (`tbl:<pageKey>:<field>`). Dùng cùng `pageKey` với bảng của trang đó →
+ * đổi tên cột bằng ⚙️ thì label form tự ăn theo (khi `field` trùng key cột).
+ *
+ * Dùng: `const fl = useFieldLabels('danhMuc.khachHang');`
+ *       `<Form.Item label={fl('tenKhachHang', 'Tên khách hàng')} ...>`
+ */
+export function useFieldLabels(pageKey: string) {
+  const { currentTenant, currentNganh } = useAuth();
+  const tenantG = currentTenant?.glossary;
+  const nganhG = currentNganh?.glossary;
+
+  return useCallback(
+    (field: string, def: string): string =>
+      lookupOverride(tenantG, nganhG, tableTermKey(pageKey, field)) ?? def,
+    [tenantG, nganhG, pageKey],
+  );
+}

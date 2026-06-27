@@ -5,17 +5,21 @@ import { PhieuHandlerProvider, usePhieuHandler, usePhieuConfig, usePhieuState } 
 import { PhieuConfig } from "./phieuConfig";
 import { StatsCards } from "./components/stats/StatsCards";
 import { FilterBar } from "./components/filter/FilterBar";
-import { PhieuTable } from "./components/table/PhieuTable";
+import { PhieuTable, usePhieuTableColumns } from "./components/table/PhieuTable";
 import { PhieuFormModal } from "./components/form-modal/PhieuFormModal";
 import { PhieuViewModal } from "./components/view-modal/PhieuViewModal";
 import { SummaryTabs } from "./components/summary/SummaryTabs";
 import { TemplateModal } from "./components/template-modal/TemplateModal";
 import { ImportExcelModal } from "./import/ImportExcelModal";
+import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 
 function PhieuListPageInner() {
   const handler = usePhieuHandler();
   const config = usePhieuConfig();
   const [importModalOpen, setImportModalOpen] = usePhieuState("importModalOpen", false);
+
+  const rawColumns = usePhieuTableColumns();
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('chungTu.phieu', rawColumns);
 
   useEffect(() => {
     handler.executeEvent("init", { config });
@@ -43,8 +47,8 @@ function PhieuListPageInner() {
               label: "Danh sách",
               children: (
                 <>
-                  <FilterBar />
-                  <PhieuTable />
+                  <FilterBar settingsButton={settingsButton} />
+                  <PhieuTable columns={cfgColumns} />
                 </>
               ),
             },

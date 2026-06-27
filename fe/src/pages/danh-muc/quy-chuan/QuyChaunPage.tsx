@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card, Space } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { QuyChaunHandlerProvider, useQuyChaunHandler } from './QuyChaunHandlerContext';
@@ -9,6 +9,10 @@ import { QuyChaunForm } from './components/form/QuyChaunForm';
 
 const QuyChaunPageInner: React.FC = () => {
   const handler = useQuyChaunHandler();
+  const [settingsButton, setSettingsButton] = useState<React.ReactNode>(null);
+  const handleSettingsButton = useCallback((btn: React.ReactNode) => {
+    setSettingsButton(btn);
+  }, []);
 
   useEffect(() => {
     handler.executeEvent('init', {});
@@ -16,15 +20,15 @@ const QuyChaunPageInner: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <QuyChaunHeader />
-      
+      <QuyChaunHeader settingsButton={settingsButton} />
+
       <Card style={{ marginTop: 16 }}>
         <QuyChaunStats />
-        
-        <div style={{ 
-          marginBottom: 16, 
-          padding: '12px 16px', 
-          backgroundColor: '#e6f7ff', 
+
+        <div style={{
+          marginBottom: 16,
+          padding: '12px 16px',
+          backgroundColor: '#e6f7ff',
           borderRadius: 6,
           border: '1px solid #91d5ff'
         }}>
@@ -36,7 +40,7 @@ const QuyChaunPageInner: React.FC = () => {
           </Space>
         </div>
 
-        <QuyChaunTable />
+        <QuyChaunTable onSettingsButton={handleSettingsButton} />
       </Card>
 
       <QuyChaunForm />

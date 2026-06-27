@@ -1,12 +1,18 @@
 import { Table, Tag, Button, Space, Popconfirm } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
+import { useEffect } from "react";
 import { useVaiTroHandler, useVaiTroState } from "../../VaiTroHandlerContext";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { VaiTroItem } from "./VaiTroTable.state";
 import "./VaiTroTable.state";
+import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 
-export function VaiTroTable() {
+interface VaiTroTableProps {
+  onSettingsButton?: (node: React.ReactNode) => void;
+}
+
+export function VaiTroTable({ onSettingsButton }: VaiTroTableProps) {
   const handler = useVaiTroHandler();
   const [vaiTroList] = useVaiTroState("vaiTroList", [] as VaiTroItem[]);
   const [loading] = useVaiTroState("loading", false);
@@ -80,9 +86,15 @@ export function VaiTroTable() {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig<VaiTroItem>('cauHinh.vaiTro', columns);
+
+  useEffect(() => {
+    onSettingsButton?.(settingsButton);
+  }, [settingsButton, onSettingsButton]);
+
   return (
     <Table<VaiTroItem>
-      columns={columns}
+      columns={cfgColumns}
       dataSource={vaiTroList}
       rowKey="id"
       loading={loading}
