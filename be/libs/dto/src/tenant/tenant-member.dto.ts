@@ -7,6 +7,7 @@ import {
   IsMongoId,
   ValidateIf,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class AddUserToTenantDto {
   @IsMongoId()
@@ -48,6 +49,7 @@ export class UpdateMemberProfileDto {
   @IsNotEmpty()
   hoTen?: string;
 
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsOptional()
   @IsEmail()
   email?: string;

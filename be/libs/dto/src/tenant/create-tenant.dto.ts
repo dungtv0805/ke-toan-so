@@ -1,5 +1,5 @@
 import { IsString, IsNotEmpty, IsOptional, IsBoolean, Matches, IsEmail, ValidateNested, IsMongoId, IsArray } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export class TenantAdminDto {
   @IsEmail()
@@ -39,6 +39,7 @@ export class CreateTenantDto {
   @IsOptional()
   dienThoai?: string;
 
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsEmail()
   @IsOptional()
   email?: string;

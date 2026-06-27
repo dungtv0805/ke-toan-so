@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsNumber, IsIn, IsArray, ValidateNested, IsDateString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ChiTietPhieuKhoDto } from './chi-tiet-phieu-kho.dto';
 
 export class CreatePhieuKhoDto {
@@ -7,7 +7,7 @@ export class CreatePhieuKhoDto {
   @IsString() @IsOptional() soPhieu?: string;          // BE tự sinh nếu rỗng
   @IsString() @IsOptional() loaiNghiepVu?: string;
   @IsDateString() ngayHachToan: string;
-  @IsDateString() @IsOptional() ngayChungTu?: string;
+  @Transform(({ value }) => (value === '' ? undefined : value)) @IsDateString() @IsOptional() ngayChungTu?: string;
   @IsString() @IsOptional() soChungTuGoc?: string;
   @IsString() @IsOptional() thamChieu?: string;
   @IsString() @IsOptional() doiTuongMa?: string;
@@ -28,7 +28,7 @@ export class CreatePhieuKhoDto {
   @IsString() @IsOptional() lenhDieuDong?: string;
   @IsString() @IsOptional() veViec?: string;
   @IsArray() @ValidateNested({ each: true }) @Type(() => ChiTietPhieuKhoDto) chiTiet: ChiTietPhieuKhoDto[];
-  @IsNumber() @IsOptional() tongTien?: number;
+  @Transform(({ value }) => (value === '' ? undefined : value)) @IsNumber() @IsOptional() tongTien?: number;
   @IsString() @IsOptional() tongTienBangChu?: string;
   @IsString() @IsOptional() trangThai?: string;
 }

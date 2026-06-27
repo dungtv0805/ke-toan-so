@@ -1,5 +1,5 @@
 import { IsEmail, IsString, IsArray, ValidateNested, IsNotEmpty, IsEnum, IsOptional, IsBoolean } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { UserStatus } from '@app/entities';
 
 export class UserTenantDto {
@@ -23,6 +23,7 @@ export class CreateUserDto {
   @Type(() => UserTenantDto)
   tenants: UserTenantDto[];
 
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsOptional()
   @IsEnum(UserStatus)
   trangThai?: UserStatus;

@@ -192,6 +192,8 @@ const SanPhamPage: React.FC = () => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         error.errors.forEach((err) => message.error(err.message));
+      } else if (!(error as any)?.errorFields) {
+        message.error((error as any)?.message || "Không thể lưu, vui lòng thử lại");
       }
     }
   };

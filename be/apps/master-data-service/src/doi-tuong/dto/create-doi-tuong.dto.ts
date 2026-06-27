@@ -7,6 +7,7 @@ import {
   IsArray,
   ArrayNotEmpty,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { DoiTuongType } from '@app/entities';
 
 export class CreateDoiTuongDto {
@@ -31,6 +32,7 @@ export class CreateDoiTuongDto {
   @IsOptional()
   soDienThoai?: string;
 
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsEmail()
   @IsOptional()
   email?: string;

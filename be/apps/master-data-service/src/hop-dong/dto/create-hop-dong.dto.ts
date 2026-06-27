@@ -10,14 +10,19 @@ import {
   Min,
   IsMongoId,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { TrangThaiHopDong } from '@app/entities/master-data/hop-dong.entity';
 
+const emptyToUndefined = ({ value }: { value: unknown }) =>
+  value === '' ? undefined : value;
+
 export class PhuLucDto {
+  @Transform(emptyToUndefined)
   @IsOptional()
   @IsNumber()
   giaTri?: number;
 
+  @Transform(emptyToUndefined)
   @IsOptional()
   @Type(() => Date)
   @IsDate()
@@ -25,20 +30,24 @@ export class PhuLucDto {
 }
 
 export class DieuKhoanThanhToanDto {
+  @Transform(emptyToUndefined)
   @IsOptional()
   @IsNumber()
   tamUng?: number;
 
+  @Transform(emptyToUndefined)
   @IsOptional()
   @IsNumber()
   thanhToanGiaiDoan?: number;
 
+  @Transform(emptyToUndefined)
   @IsOptional()
   @IsNumber()
   quyetToan?: number;
 }
 
 export class BaoHanhDto {
+  @Transform(emptyToUndefined)
   @IsOptional()
   @IsNumber()
   giaTri?: number;
@@ -53,16 +62,19 @@ export class BaoHanhDto {
 }
 
 export class TienDoThiCongDto {
+  @Transform(emptyToUndefined)
   @IsOptional()
   @IsInt()
   @Min(0)
   soNgay?: number;
 
+  @Transform(emptyToUndefined)
   @IsOptional()
   @Type(() => Date)
   @IsDate()
   tuNgay?: Date;
 
+  @Transform(emptyToUndefined)
   @IsOptional()
   @Type(() => Date)
   @IsDate()
@@ -78,15 +90,18 @@ export class CreateHopDongDto {
   @IsNotEmpty()
   tenCongTrinh: string;
 
+  @Transform(emptyToUndefined)
   @IsOptional()
   @IsInt()
   @Min(1900)
   nam?: number;
 
+  @Transform(emptyToUndefined)
   @IsOptional()
   @IsNumber()
   giaTriSauThue?: number;
 
+  @Transform(emptyToUndefined)
   @IsOptional()
   @Type(() => Date)
   @IsDate()
@@ -133,10 +148,12 @@ export class CreateHopDongDto {
   @Type(() => TienDoThiCongDto)
   tienDoThiCong?: TienDoThiCongDto;
 
+  @Transform(emptyToUndefined)
   @IsOptional()
   @IsEnum(TrangThaiHopDong)
   trangThai?: TrangThaiHopDong;
 
+  @Transform(emptyToUndefined)
   @IsOptional()
   @IsInt()
   @Min(0)

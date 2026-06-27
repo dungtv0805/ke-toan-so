@@ -6,13 +6,16 @@ import {
   IsString,
   Min,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import type { DanhMuc } from '@app/entities';
 
 export class UpdateNhatKyChungDto {
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsOptional()
   @IsDateString()
   ngay?: string;
 
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsOptional()
   @IsNumber()
   @Min(1, { message: 'Số tiền phải lớn hơn 0' })

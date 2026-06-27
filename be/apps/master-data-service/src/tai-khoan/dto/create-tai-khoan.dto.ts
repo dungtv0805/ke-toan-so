@@ -8,6 +8,7 @@ import {
   Min,
   Max,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { LoaiTaiKhoan, NhomTaiKhoan, ChiTietTheo, FieldRules } from '@app/entities';
 
 export class CreateTaiKhoanDto {
@@ -38,6 +39,7 @@ export class CreateTaiKhoanDto {
   @IsOptional()
   moTa?: string;
 
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsEnum(ChiTietTheo)
   @IsOptional()
   chiTietTheo?: ChiTietTheo;

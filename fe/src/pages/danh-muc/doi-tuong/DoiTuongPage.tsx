@@ -62,12 +62,14 @@ const doiTuongSchema = z.object({
     .email("Email không hợp lệ")
     .max(100, "Email tối đa 100 ký tự")
     .optional()
+    .nullable()
     .or(z.literal("")),
-  maSoThue: z.string().max(20, "MST tối đa 20 ký tự").optional().or(z.literal("")),
+  maSoThue: z.string().max(20, "MST tối đa 20 ký tự").optional().nullable().or(z.literal("")),
   nguoiLienHe: z
     .string()
     .max(100, "Tên người liên hệ tối đa 100 ký tự")
-    .optional(),
+    .optional()
+    .nullable(),
 });
 
 const DoiTuongPage: React.FC = () => {

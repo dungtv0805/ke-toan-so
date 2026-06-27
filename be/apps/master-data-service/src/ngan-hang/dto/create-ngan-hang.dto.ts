@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsBoolean,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { NganHangLoai } from '@app/entities';
 
 export class CreateNganHangDto {
@@ -20,6 +21,7 @@ export class CreateNganHangDto {
   @IsEnum(NganHangLoai)
   loai: NganHangLoai;
 
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsNumber()
   @IsOptional()
   soDu?: number;

@@ -56,7 +56,7 @@ const loaiChungTuSchema = z.object({
     .min(1, "Tên không được để trống")
     .max(200, "Tên tối đa 200 ký tự"),
   moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").optional().nullable(),
-  phanLoai: z.enum(["THU", "CHI", "KHAC"]).optional(),
+  phanLoai: z.enum(["THU", "CHI", "KHAC"]).optional().nullable(),
 });
 
 const LoaiChungTuPage: React.FC = () => {
@@ -157,6 +157,8 @@ const LoaiChungTuPage: React.FC = () => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         error.errors.forEach((err) => message.error(err.message));
+      } else if (!(error as any)?.errorFields) {
+        message.error((error as any)?.message || "Không thể lưu, vui lòng thử lại");
       }
     }
   };

@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsDateString,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { DuAnStatus } from '@app/entities';
 
 export class CreateDuAnDto {
@@ -16,10 +17,12 @@ export class CreateDuAnDto {
   @IsNotEmpty()
   ten: string;
 
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsDateString()
   @IsOptional()
   ngayBatDau?: string;
 
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsDateString()
   @IsOptional()
   ngayKetThuc?: string;
@@ -36,6 +39,7 @@ export class CreateDuAnDto {
   @IsOptional()
   chuDuAn?: string;
 
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsEnum(DuAnStatus)
   @IsOptional()
   trangThai?: DuAnStatus;

@@ -1,4 +1,5 @@
 import { IsString, IsNotEmpty, IsOptional, IsNumber } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateSanPhamDto {
   @IsString()
@@ -13,6 +14,7 @@ export class CreateSanPhamDto {
   @IsOptional()
   donVi?: string;
 
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsNumber()
   @IsOptional()
   giaBan?: number;

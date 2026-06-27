@@ -8,28 +8,31 @@ import {
   IsArray,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
+
+const emptyToUndefined = ({ value }: { value: unknown }) =>
+  value === '' ? undefined : value;
 
 export class QuyetToanHDDto {
   @IsOptional() @IsString() so?: string;
-  @IsOptional() @Type(() => Date) @IsDate() ngay?: Date;
-  @IsOptional() @IsNumber() giaTri?: number;
+  @Transform(emptyToUndefined) @IsOptional() @Type(() => Date) @IsDate() ngay?: Date;
+  @Transform(emptyToUndefined) @IsOptional() @IsNumber() giaTri?: number;
 }
 
 export class BaoHanhTheoDoiDto {
-  @IsOptional() @IsNumber() giaTri?: number;
-  @IsOptional() @IsInt() soNgay?: number;
-  @IsOptional() @Type(() => Date) @IsDate() ngayGiaiToaBL?: Date;
+  @Transform(emptyToUndefined) @IsOptional() @IsNumber() giaTri?: number;
+  @Transform(emptyToUndefined) @IsOptional() @IsInt() soNgay?: number;
+  @Transform(emptyToUndefined) @IsOptional() @Type(() => Date) @IsDate() ngayGiaiToaBL?: Date;
   @IsOptional() @IsString() trangThai?: string;
 }
 
 export class DotThanhToanDto {
-  @IsOptional() @IsNumber() tiLe?: number;
-  @IsOptional() @IsNumber() soTien?: number;
+  @Transform(emptyToUndefined) @IsOptional() @IsNumber() tiLe?: number;
+  @Transform(emptyToUndefined) @IsOptional() @IsNumber() soTien?: number;
 }
 
 export class DotHoaDonDto {
-  @IsOptional() @IsNumber() soTien?: number;
+  @Transform(emptyToUndefined) @IsOptional() @IsNumber() soTien?: number;
 }
 
 export class TinhTrangHoSoDto {
@@ -38,7 +41,7 @@ export class TinhTrangHoSoDto {
   @IsOptional() @IsBoolean() nt2?: boolean;
   @IsOptional() @IsBoolean() ntSuDung?: boolean;
   @IsOptional() @IsBoolean() thanhLy?: boolean;
-  @IsOptional() @IsInt() namQuyetToan?: number;
+  @Transform(emptyToUndefined) @IsOptional() @IsInt() namQuyetToan?: number;
 }
 
 export class UpsertTheoDoiHopDongDto {
@@ -55,7 +58,7 @@ export class UpsertTheoDoiHopDongDto {
   @Type(() => BaoHanhTheoDoiDto)
   baoHanhTheoDoi?: BaoHanhTheoDoiDto;
 
-  @IsOptional() @IsNumber() giamTru?: number;
+  @Transform(emptyToUndefined) @IsOptional() @IsNumber() giamTru?: number;
 
   @IsOptional()
   @IsArray()
