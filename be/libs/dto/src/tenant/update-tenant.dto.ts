@@ -1,4 +1,5 @@
 import { IsString, IsOptional, IsBoolean, IsEmail, Matches, IsArray } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class UpdateTenantDto {
   @IsString()
@@ -24,6 +25,7 @@ export class UpdateTenantDto {
   @IsOptional()
   dienThoai?: string;
 
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsEmail()
   @IsOptional()
   email?: string;

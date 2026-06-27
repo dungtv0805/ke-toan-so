@@ -1,4 +1,5 @@
 import { IsString, IsOptional, IsBoolean, IsArray, IsInt } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class UpdateLinhVucDto {
   @IsString()
@@ -17,6 +18,7 @@ export class UpdateLinhVucDto {
   @IsOptional()
   color?: string;
 
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsInt()
   @IsOptional()
   order?: number;

@@ -1,4 +1,5 @@
 import { IsString, IsOptional, IsNumber } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class ChiTietPhieuKhoDto {
   @IsNumber() stt: number;
@@ -11,8 +12,8 @@ export class ChiTietPhieuKhoDto {
   @IsString() @IsOptional() tkNo?: string;
   @IsString() @IsOptional() tkCo?: string;
   @IsNumber() soLuong: number;
-  @IsNumber() @IsOptional() soLuongChungTu?: number;
-  @IsNumber() @IsOptional() soLuongThucTe?: number;
+  @Transform(({ value }) => (value === '' ? undefined : value)) @IsNumber() @IsOptional() soLuongChungTu?: number;
+  @Transform(({ value }) => (value === '' ? undefined : value)) @IsNumber() @IsOptional() soLuongThucTe?: number;
   @IsNumber() donGia: number;
   @IsNumber() thanhTien: number;
 }
