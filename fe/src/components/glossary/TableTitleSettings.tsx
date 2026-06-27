@@ -5,18 +5,20 @@ import { useTerm } from '@/contexts/TermContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { resolveTerm, TERM_REGISTRY } from '@/config/termRegistry';
 import { buildTitleGlossary, titleKey, type TitleTermSpec } from '@/config/titleConfig';
+import { lookupOverride } from '@/config/tableTitleConfig';
 import { nganhService } from '@/services/nganhService';
 import { tenantService } from '@/services/tenantService';
 
 interface Props {
   terms: TitleTermSpec[];
+  defaults?: Record<string, string>;
   buttonText?: string;
 }
 
 type Target = 'nganh' | 'tenant';
 
-export function TableTitleSettings({ terms, buttonText }: Props) {
-  const { t } = useTerm();
+export function TableTitleSettings({ terms, defaults: propDefaults, buttonText }: Props) {
+  const { t: _t } = useTerm();
   const { user, currentTenant, currentNganh, applyGlossary, applyNganhGlossary } = useAuth();
   const canNganh = !!user?.isSuperAdmin && !!currentNganh;
 
@@ -25,14 +27,20 @@ export function TableTitleSettings({ terms, buttonText }: Props) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
-  const defaults: Record<string, string> = {};
-  for (const term of terms) {
-    defaults[titleKey(term)] = resolveTerm(undefined, undefined, TERM_REGISTRY, term.tk, term.surface);
-  }
+  const defaultOf = (term: TitleTermSpec): string => {
+    const k = titleKey(term);
+    return propDefaults?.[k] ?? resolveTerm(undefined, undefined, TERM_REGISTRY, term.tk, term.surface);
+  };
+
+  const defaultsMap: Record<string, string> = {};
+  for (const term of terms) defaultsMap[titleKey(term)] = defaultOf(term);
 
   const onOpen = () => {
     const init: Record<string, string> = {};
-    for (const term of terms) init[titleKey(term)] = t(term.tk, term.surface);
+    for (const term of terms)
+      init[titleKey(term)] =
+        lookupOverride(currentTenant?.glossary, currentNganh?.glossary, term.tk, term.surface)
+        ?? defaultOf(term);
     setValues(init);
     setTarget(canNganh ? 'nganh' : 'tenant');
     setOpen(true);
@@ -43,11 +51,11 @@ export function TableTitleSettings({ terms, buttonText }: Props) {
     setSaving(true);
     try {
       if (target === 'nganh' && currentNganh) {
-        const next = buildTitleGlossary(currentNganh.glossary, terms, values, defaults);
+        const next = buildTitleGlossary(currentNganh.glossary, terms, values, defaultsMap);
         const res = await nganhService.update(currentNganh.id, { glossary: next });
         applyNganhGlossary(res.glossary);
       } else {
-        const next = buildTitleGlossary(currentTenant?.glossary, terms, values, defaults);
+        const next = buildTitleGlossary(currentTenant?.glossary, terms, values, defaultsMap);
         const res = await tenantService.updateGlossary(next);
         applyGlossary(res.glossary);
       }
@@ -62,7 +70,7 @@ export function TableTitleSettings({ terms, buttonText }: Props) {
 
   const dataSource = terms.map((term) => {
     const key = titleKey(term);
-    return { key, def: defaults[key], term };
+    return { key, def: defaultsMap[key], term };
   });
 
   return (
