@@ -307,9 +307,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const applyLinhVucGlossary = useCallback((glossary: import('@/types/tenant').Glossary) => {
-    setAllModules((prev) =>
-      prev.map((m) => (m.code === currentLinhVucCode ? { ...m, glossary } : m)),
-    );
+    setAllModules((prev) => {
+      const next = prev.map((m) => (m.code === currentLinhVucCode ? { ...m, glossary } : m));
+      localStorage.setItem('linhVucCache', JSON.stringify(next)); // đồng bộ cache như refreshModules
+      return next;
+    });
   }, [currentLinhVucCode]);
 
   const hasPermission = useCallback((permission: string) => {
