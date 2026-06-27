@@ -1,5 +1,6 @@
 import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '../base.entity';
+import { Glossary } from '../nganh/nganh.entity';
 
 // Lĩnh vực (entitlement) — danh mục động, quản lý qua UI SuperAdmin.
 // menuKeys: các menu key (= path route) thuộc lĩnh vực này. Nhiều-nhiều:
@@ -29,4 +30,7 @@ export class LinhVuc extends BaseEntity {
 
   @Column({ type: 'json', default: [] })
   menuKeys: string[];
+
+  @Column({ type: 'json', default: {} })
+  glossary: Glossary;
 }

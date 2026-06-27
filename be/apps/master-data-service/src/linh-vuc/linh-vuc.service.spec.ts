@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { ConflictException } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 import { LinhVucService } from './linh-vuc.service';
 
@@ -33,6 +34,7 @@ describe('LinhVucService', () => {
         LinhVucService,
         { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}LinhVuc`, useValue: linhVucRepo },
         { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`, useValue: tenantRepo },
+        { provide: DataSource, useValue: {} },
       ],
     }).compile();
     service = moduleRef.get(LinhVucService);
@@ -52,5 +54,13 @@ describe('LinhVucService', () => {
     const saved = await service.create({ code: 'KHO', name: 'Kho' } as any);
     tenantRepo.store.push({ _id: 't1', modules: ['KE_TOAN', 'KHO'] });
     await expect(service.delete(String(saved._id))).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('update ghi glossary vào linh_vuc', async () => {
+    const saved = await service.create({ code: 'XAY_DUNG', name: 'Xây dựng' } as any);
+    const g = { chuDauTu: { label: 'Chủ đầu tư' } };
+    const res = await service.update(String(saved._id), { glossary: g } as any);
+    expect(res.glossary).toEqual(g);
+    expect(linhVucRepo.save).toHaveBeenCalled();
   });
 });

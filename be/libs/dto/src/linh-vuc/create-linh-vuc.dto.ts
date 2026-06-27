@@ -34,4 +34,7 @@ export class CreateLinhVucDto {
   @IsString({ each: true })
   @IsOptional()
   menuKeys?: string[];
+
+  @IsOptional()
+  glossary?: Record<string, { label?: string; surfaces?: Record<string, string> }>;
 }
