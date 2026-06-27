@@ -122,9 +122,10 @@ export class ChungTuController {
 
   @Get('chung-tu/cash-flow-series')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
-  async cashFlowSeries(@Query('year') year?: string) {
+  async cashFlowSeries(@Query('year') year?: string, @Query('month') month?: string) {
     const y = Number(year) || new Date().getFullYear();
-    return this.chungTuService.getCashFlowSeries(y);
+    const m = month ? Number(month) : undefined;
+    return this.chungTuService.getCashFlowSeries(y, m);
   }
 
   @Post('phieu-thu/import')

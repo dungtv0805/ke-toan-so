@@ -25,14 +25,20 @@ const Kpi: React.FC<{ label: string; value: number; color: string }> = ({ label,
 );
 
 const CashFlowChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
+  const isWeekly = startMonth === endMonth;
+  const month = isWeekly ? startMonth : undefined;
   const { data: full, isLoading } = useQuery({
-    queryKey: ['dash-cash-series', year],
-    queryFn: () => dashboardService.getCashSeries(year),
+    queryKey: ['dash-cash-series', year, month ?? 0],
+    queryFn: () => dashboardService.getCashSeries(year, month),
   });
   // chi vẽ âm (dưới trục 0)
   const data = useMemo(
-    () => sliceToRange(full ?? [], startMonth, endMonth).map((d) => ({ ...d, chiNeg: -(d.chi || 0) })),
-    [full, startMonth, endMonth],
+    () =>
+      (isWeekly ? full ?? [] : sliceToRange(full ?? [], startMonth, endMonth)).map((d) => ({
+        ...d,
+        chiNeg: -(d.chi || 0),
+      })),
+    [full, isWeekly, startMonth, endMonth],
   );
   const sum = (k: 'thu' | 'chi') => data.reduce((s, d) => s + (d[k] || 0), 0);
   const ton = data.length ? data[data.length - 1].soDu : 0;
@@ -56,12 +62,12 @@ const CashFlowChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
         <ResponsiveContainer width="100%" height={280}>
           <ComposedChart data={data} margin={{ left: -10, right: 8, top: 16, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="thang" tickFormatter={(v) => `Th ${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
+            <XAxis dataKey="thang" tickFormatter={(v) => `${isWeekly ? 'Tuần' : 'Th'} ${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={(v) => labelTrieu(v)} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={42} />
             <ReferenceLine y={0} stroke="hsl(var(--border))" />
             <Tooltip
               formatter={(value: number, name: string) => [formatCurrency(Math.abs(value)), name]}
-              labelFormatter={(l) => `Tháng ${l}`}
+              labelFormatter={(l) => `${isWeekly ? 'Tuần' : 'Tháng'} ${l}`}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
             <Bar dataKey="thu" name="Thu" fill={TEAL} maxBarSize={22}>

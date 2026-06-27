@@ -224,11 +224,16 @@ export class BaoCaoService {
     year: number,
     authToken?: string,
     tenantId?: string,
+    month?: number,
   ): Promise<
     { thang: number; doanhThu: number; chiPhi: number; loiNhuan: number }[]
   > {
-    const start = new Date(year, 0, 1);
-    const end = new Date(year, 11, 31, 23, 59, 59, 999);
+    // month có giá trị → chia theo TUẦN trong tháng đó (Tuần 1–5); ngược lại theo 12 tháng.
+    const weekly = !!month && month >= 1 && month <= 12;
+    const start = weekly ? new Date(year, month - 1, 1) : new Date(year, 0, 1);
+    const end = weekly
+      ? new Date(year, month, 0, 23, 59, 59, 999)
+      : new Date(year, 11, 31, 23, 59, 59, 999);
     const [vouchersRes, accountsRes] = await Promise.all([
       this.serviceClient.getNhatKyChung(
         start.toISOString(),
@@ -245,24 +250,42 @@ export class BaoCaoService {
     const revenueAccounts = accounts.filter((a) => a.ma?.startsWith('5'));
     const expenseAccounts = accounts.filter((a) => a.ma?.startsWith('6'));
 
-    const out: {
-      thang: number;
-      doanhThu: number;
-      chiPhi: number;
-      loiNhuan: number;
-    }[] = [];
-    for (let m = 0; m < 12; m++) {
-      const mv = vouchers.filter((v) => {
-        const d = new Date(v.ngay);
-        return d.getFullYear() === year && d.getMonth() === m;
-      });
+    const compute = (mv: NhatKyChungEntry[]) => {
       let doanhThu = 0;
       let chiPhi = 0;
       for (const a of revenueAccounts)
         doanhThu += this.calculateAccountBalance(mv, a.ma, 'CO');
       for (const a of expenseAccounts)
         chiPhi += this.calculateAccountBalance(mv, a.ma, 'NO');
-      out.push({ thang: m + 1, doanhThu, chiPhi, loiNhuan: doanhThu - chiPhi });
+      return { doanhThu, chiPhi, loiNhuan: doanhThu - chiPhi };
+    };
+
+    const out: {
+      thang: number;
+      doanhThu: number;
+      chiPhi: number;
+      loiNhuan: number;
+    }[] = [];
+    if (weekly) {
+      for (let w = 1; w <= 5; w++) {
+        const wv = vouchers.filter((v) => {
+          const d = new Date(v.ngay);
+          return (
+            d.getFullYear() === year &&
+            d.getMonth() === month - 1 &&
+            Math.ceil(d.getDate() / 7) === w
+          );
+        });
+        out.push({ thang: w, ...compute(wv) });
+      }
+    } else {
+      for (let m = 0; m < 12; m++) {
+        const mv = vouchers.filter((v) => {
+          const d = new Date(v.ngay);
+          return d.getFullYear() === year && d.getMonth() === m;
+        });
+        out.push({ thang: m + 1, ...compute(mv) });
+      }
     }
     return out;
   }

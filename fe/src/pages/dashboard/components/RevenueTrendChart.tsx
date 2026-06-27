@@ -26,11 +26,16 @@ const Kpi: React.FC<{ label: string; value: number; color: string }> = ({ label,
 );
 
 const RevenueTrendChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
+  const isWeekly = startMonth === endMonth;
+  const month = isWeekly ? startMonth : undefined;
   const { data: full, isLoading } = useQuery({
-    queryKey: ['dash-pnl-series', year],
-    queryFn: () => dashboardService.getPnlSeries(year),
+    queryKey: ['dash-pnl-series', year, month ?? 0],
+    queryFn: () => dashboardService.getPnlSeries(year, month),
   });
-  const data = useMemo(() => sliceToRange(full ?? [], startMonth, endMonth), [full, startMonth, endMonth]);
+  const data = useMemo(
+    () => (isWeekly ? full ?? [] : sliceToRange(full ?? [], startMonth, endMonth)),
+    [full, isWeekly, startMonth, endMonth],
+  );
   const sum = (k: 'doanhThu' | 'chiPhi' | 'loiNhuan') => data.reduce((s, d) => s + (d[k] || 0), 0);
   const hasData = data.some((d) => d.doanhThu || d.chiPhi || d.loiNhuan);
 
@@ -52,9 +57,9 @@ const RevenueTrendChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
         <ResponsiveContainer width="100%" height={280}>
           <ComposedChart data={data} margin={{ left: -10, right: 8, top: 18 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="thang" tickFormatter={(v) => `Th ${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
+            <XAxis dataKey="thang" tickFormatter={(v) => `${isWeekly ? 'Tuần' : 'Th'} ${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={(v) => labelTrieu(v)} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={42} />
-            <Tooltip formatter={(value: number) => formatCurrency(value)} labelFormatter={(l) => `Tháng ${l}`} />
+            <Tooltip formatter={(value: number) => formatCurrency(value)} labelFormatter={(l) => `${isWeekly ? 'Tuần' : 'Tháng'} ${l}`} />
             <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
             <Bar dataKey="doanhThu" name="Doanh thu" fill={TEAL} maxBarSize={26}>
               <LabelList dataKey="doanhThu" position="top" formatter={labelTrieu} style={{ fontSize: 10, fill: TEAL }} />

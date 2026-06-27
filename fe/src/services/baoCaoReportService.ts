@@ -61,10 +61,12 @@ class BaoCaoReportService extends ServiceBase {
     };
   }
 
-  async getPnlSeries(year: number): Promise<PnlSeriesPoint[]> {
+  async getPnlSeries(year: number, month?: number): Promise<PnlSeriesPoint[]> {
     const data = await this.get<PnlSeriesPoint[]>({
       endpoint: '/pnl-series',
-      params: { year: year.toString() },
+      params: month
+        ? { year: year.toString(), month: month.toString() }
+        : { year: year.toString() },
     });
     return Array.isArray(data) ? data : [];
   }

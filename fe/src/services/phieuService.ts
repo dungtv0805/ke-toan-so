@@ -105,11 +105,11 @@ export class PhieuService extends ServiceBase {
     return this.get<PhieuSummaryItem[]>({ endpoint: `/summary/${type}`, params });
   }
 
-  /** Dòng tiền theo tháng (thu=Nợ 111/112, chi=Có 111/112) bằng aggregation. */
-  async getCashFlowSeries(year: number): Promise<{ thang: number; thu: number; chi: number }[]> {
+  /** Dòng tiền theo tháng (hoặc theo tuần nếu có month) — thu=Nợ 111/112, chi=Có 111/112. */
+  async getCashFlowSeries(year: number, month?: number): Promise<{ thang: number; thu: number; chi: number }[]> {
     const data = await this.get<{ thang: number; thu: number; chi: number }[]>({
       endpoint: '/../chung-tu/cash-flow-series',
-      params: { year },
+      params: month ? { year, month } : { year },
     });
     return Array.isArray(data) ? data : [];
   }

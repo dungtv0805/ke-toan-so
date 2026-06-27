@@ -37,14 +37,17 @@ export class BaoCaoController {
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getPnlSeries(
     @Query('year') year: string,
+    @Query('month') month: string,
     @Headers('authorization') authToken: string,
     @CurrentUser() user: UserPayload,
   ) {
     const y = parseInt(year, 10) || new Date().getFullYear();
+    const m = month ? parseInt(month, 10) : undefined;
     const data = await this.baoCaoService.getPnlSeries(
       y,
       authToken,
       user.tenantId,
+      m,
     );
     return { success: true, data };
   }

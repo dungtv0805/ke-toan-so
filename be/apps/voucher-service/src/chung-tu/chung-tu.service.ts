@@ -161,15 +161,28 @@ export class ChungTuService {
    */
   async getCashFlowSeries(
     year: number,
+    month?: number,
   ): Promise<{ success: boolean; data: { thang: number; thu: number; chi: number }[] }> {
     const tenantId = this.tenantContext.getCurrentTenantId();
+    // month có giá trị → chia theo TUẦN trong tháng (Tuần 1–5); ngược lại theo 12 tháng.
+    const weekly = !!month && month >= 1 && month <= 12;
     const match: Record<string, unknown> = {
-      ngay: {
-        $gte: new Date(year, 0, 1, 0, 0, 0, 0),
-        $lte: new Date(year, 11, 31, 23, 59, 59, 999),
-      },
+      ngay: weekly
+        ? {
+            $gte: new Date(year, month - 1, 1, 0, 0, 0, 0),
+            $lte: new Date(year, month, 0, 23, 59, 59, 999),
+          }
+        : {
+            $gte: new Date(year, 0, 1, 0, 0, 0, 0),
+            $lte: new Date(year, 11, 31, 23, 59, 59, 999),
+          },
     };
     if (tenantId) match.tenantId = tenantId;
+
+    // Khoá nhóm: tháng (1–12) hoặc tuần trong tháng (ceil(ngày/7) → 1–5).
+    const bucket = weekly
+      ? { $ceil: { $divide: [{ $dayOfMonth: '$ngay' }, 7] } }
+      : { $month: '$ngay' };
 
     const pipeline: object[] = [
       { $match: match },
@@ -177,11 +190,11 @@ export class ChungTuService {
         $facet: {
           thu: [
             { $match: { 'danhMuc.taiKhoanNo.ma': { $regex: '^11[12]' } } },
-            { $group: { _id: { $month: '$ngay' }, v: { $sum: '$soTien' } } },
+            { $group: { _id: bucket, v: { $sum: '$soTien' } } },
           ],
           chi: [
             { $match: { 'danhMuc.taiKhoanCo.ma': { $regex: '^11[12]' } } },
-            { $group: { _id: { $month: '$ngay' }, v: { $sum: '$soTien' } } },
+            { $group: { _id: bucket, v: { $sum: '$soTien' } } },
           ],
         },
       },
@@ -191,12 +204,13 @@ export class ChungTuService {
       chi: { _id: number; v: number }[];
     }[];
     const facet = agg[0] || { thu: [], chi: [] };
-    const thuByMonth = new Map(facet.thu.map((g) => [g._id, g.v]));
-    const chiByMonth = new Map(facet.chi.map((g) => [g._id, g.v]));
-    const data = Array.from({ length: 12 }, (_, i) => ({
+    const thuBy = new Map(facet.thu.map((g) => [g._id, g.v]));
+    const chiBy = new Map(facet.chi.map((g) => [g._id, g.v]));
+    const buckets = weekly ? 5 : 12;
+    const data = Array.from({ length: buckets }, (_, i) => ({
       thang: i + 1,
-      thu: thuByMonth.get(i + 1) || 0,
-      chi: chiByMonth.get(i + 1) || 0,
+      thu: thuBy.get(i + 1) || 0,
+      chi: chiBy.get(i + 1) || 0,
     }));
     return { success: true, data };
   }

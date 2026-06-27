@@ -75,10 +75,10 @@ function computeDelta(current: number, previous: number): number | null {
 // ============ Service ============
 
 export const dashboardService = {
-  /** 12 tháng doanh thu/chi phí/lợi nhuận của năm chọn. */
-  async getPnlSeries(year: number): Promise<PnlSeriesPoint[]> {
+  /** Doanh thu/chi phí/lợi nhuận theo tháng (12) hoặc theo tuần nếu truyền month. */
+  async getPnlSeries(year: number, month?: number): Promise<PnlSeriesPoint[]> {
     try {
-      const data = await baoCaoReportService.getPnlSeries(year);
+      const data = await baoCaoReportService.getPnlSeries(year, month);
       return data.map((p) => ({
         thang: p.thang,
         doanhThu: p.doanhThu ?? 0,
@@ -125,21 +125,22 @@ export const dashboardService = {
     }
   },
 
-  /** Dòng tiền 12 tháng: thu=Nợ 111/112, chi=Có 111/112 (aggregation); số dư = lũy kế trong năm. */
-  async getCashSeries(year: number): Promise<CashSeriesPoint[]> {
+  /** Dòng tiền theo tháng (hoặc theo tuần nếu truyền month): thu=Nợ 111/112, chi=Có 111/112; số dư lũy kế. */
+  async getCashSeries(year: number, month?: number): Promise<CashSeriesPoint[]> {
+    const buckets = month ? 5 : 12;
     try {
-      const rows = await phieuThuService.getCashFlowSeries(year);
-      const byMonth = new Map(rows.map((r) => [r.thang, r]));
+      const rows = await phieuThuService.getCashFlowSeries(year, month);
+      const by = new Map(rows.map((r) => [r.thang, r]));
       let soDu = 0;
-      return Array.from({ length: 12 }, (_, i) => {
-        const r = byMonth.get(i + 1);
+      return Array.from({ length: buckets }, (_, i) => {
+        const r = by.get(i + 1);
         const thu = r?.thu || 0;
         const chi = r?.chi || 0;
         soDu += thu - chi;
         return { thang: i + 1, thu, chi, soDu };
       });
     } catch {
-      return Array.from({ length: 12 }, (_, i) => ({ thang: i + 1, thu: 0, chi: 0, soDu: 0 }));
+      return Array.from({ length: buckets }, (_, i) => ({ thang: i + 1, thu: 0, chi: 0, soDu: 0 }));
     }
   },
 
