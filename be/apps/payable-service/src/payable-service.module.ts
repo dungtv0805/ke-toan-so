@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from '@app/auth';
-import { TenantModule } from '@app/core';
+import { TenantModule, TenantMiddleware } from '@app/core';
 import { DatabaseModule } from '@app/database';
 import { CongNoModule } from './cong-no/cong-no.module';
 
@@ -16,4 +16,8 @@ import { CongNoModule } from './cong-no/cong-no.module';
     CongNoModule,
   ],
 })
-export class PayableServiceModule {}
+export class PayableServiceModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(TenantMiddleware).forRoutes('*');
+  }
+}

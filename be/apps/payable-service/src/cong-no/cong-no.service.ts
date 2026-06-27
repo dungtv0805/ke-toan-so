@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CongNo, LoaiCongNo } from '@app/entities';
+import { TenantContextService } from '@app/core';
 
 export interface AgingBucket {
   range: string;
@@ -32,6 +33,7 @@ export class CongNoService {
   constructor(
     @InjectRepository(CongNo)
     private readonly congNoRepository: Repository<CongNo>,
+    private readonly tenantContext: TenantContextService,
   ) {}
 
   async findAll(loai?: LoaiCongNo): Promise<CongNo[]> {
@@ -318,6 +320,33 @@ export class CongNoService {
     }
 
     return result;
+  }
+
+  /**
+   * Số dư công nợ cộng dồn đến cuối mỗi tháng của năm chọn, tách phải thu/phải trả.
+   * Dùng conLai hiện tại + ngayPhatSinh (BE không lưu lịch sử thanh toán theo ngày).
+   */
+  async getCongNoSeries(
+    year: number,
+  ): Promise<{ thang: number; tongPhaiThu: number; tongPhaiTra: number }[]> {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    const where: Record<string, unknown> = {};
+    if (tenantId) where.tenantId = tenantId;
+    const all = await this.congNoRepository.find({ where });
+
+    return Array.from({ length: 12 }, (_, i) => {
+      const thang = i + 1;
+      const endOfMonth = new Date(year, thang, 0, 23, 59, 59, 999);
+      let tongPhaiThu = 0;
+      let tongPhaiTra = 0;
+      for (const c of all) {
+        if (!c.ngayPhatSinh) continue;
+        if (new Date(c.ngayPhatSinh) > endOfMonth) continue;
+        if (c.loai === 'PHAI_THU') tongPhaiThu += c.conLai || 0;
+        else if (c.loai === 'PHAI_TRA') tongPhaiTra += c.conLai || 0;
+      }
+      return { thang, tongPhaiThu, tongPhaiTra };
+    });
   }
 
   /**
