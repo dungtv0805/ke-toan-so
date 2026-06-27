@@ -38,7 +38,7 @@ import {
   BalanceSheetStats,
 } from '@/services/balanceSheetService';
 import { pnlService, PnLComparisonData } from '@/services/pnlService';
-import { PeriodFilter, PeriodFilterParams } from '@/components/shared/PeriodFilter';
+import { PeriodFilter, PeriodFilterParams, defaultYearParams } from '@/components/shared/PeriodFilter';
 import { FilterBar } from "@/components/common/FilterBar";
 import { ExpandCollapseButtons } from "@/components/common/ExpandCollapseButtons";
 import { kqkdService, KqkdReport } from '@/services/kqkdService';
@@ -108,12 +108,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('1');
   const [loading, setLoading] = useState(false);
 
-  const [filterParams, setFilterParams] = useState<PeriodFilterParams>(() => {
-    const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
-    return { periodType: 'thang' as const, startDate, endDate };
-  });
+  const [filterParams, setFilterParams] = useState<PeriodFilterParams>(() => defaultYearParams());
 
   const [tbState, setTbState] = useState<TrialBalanceState>({
     trialBalance: [],
