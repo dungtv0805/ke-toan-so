@@ -22,10 +22,9 @@ const TAB_OPTIONS = [
 
 const now = new Date();
 const CURRENT_YEAR = now.getFullYear();
-const CURRENT_MONTH = now.getMonth() + 1;
 
 const Dashboard: React.FC = () => {
-  const [period, setPeriod] = useState<DashboardPeriod>(`thang${CURRENT_MONTH}` as DashboardPeriod);
+  const [period, setPeriod] = useState<DashboardPeriod>('namNay');
   const { year, startMonth, endMonth } = resolvePeriod(period, CURRENT_YEAR);
   const [activeTab, setActiveTab] = useState<string>('tai-chinh');
 
