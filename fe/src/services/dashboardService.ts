@@ -151,6 +151,21 @@ export const dashboardService = {
     }
   },
 
+  /** Tỷ trọng doanh thu/chi phí theo tài khoản trong khoảng kỳ. */
+  async getPnlBreakdownByRange(year: number, startMonth: number, endMonth: number): Promise<PnlBreakdown> {
+    try {
+      const start = new Date(year, startMonth - 1, 1).toISOString();
+      const end = new Date(year, endMonth, 0, 23, 59, 59, 999).toISOString();
+      const pnl = await baoCaoReportService.getPnl({ startDate: start, endDate: end, periodType: 'tuyChon' });
+      return {
+        doanhThu: (pnl.doanhThu ?? []).map((e) => ({ ten: e.ten, soTien: e.soTien })),
+        chiPhi: (pnl.chiPhi ?? []).map((e) => ({ ten: e.ten, soTien: e.soTien })),
+      };
+    } catch {
+      return { doanhThu: [], chiPhi: [] };
+    }
+  },
+
   /** Dòng tiền 12 tháng (thu/chi/số dư cuối kỳ) từ sổ quỹ. */
   async getCashSeries(year: number): Promise<CashSeriesPoint[]> {
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
