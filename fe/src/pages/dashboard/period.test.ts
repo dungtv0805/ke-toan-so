@@ -1,50 +1,44 @@
 import { describe, it, expect } from 'vitest';
-import { resolvePeriod, pnlSeriesToQuarters, cashSeriesToQuarters } from './period';
-import type { PnlSeriesPoint, CashSeriesPoint } from '@/services/dashboardService';
+import { resolvePeriod, sliceToRange, periodDateRange, PERIOD_OPTIONS } from './period';
 
 describe('resolvePeriod', () => {
-  it('12 tháng → năm nay, month', () => {
-    expect(resolvePeriod('thang12', 2026)).toEqual({ year: 2026, granularity: 'month' });
+  it('tháng cụ thể', () => {
+    expect(resolvePeriod('thang3', 2026)).toEqual({ year: 2026, startMonth: 3, endMonth: 3 });
   });
-  it('4 quý → năm nay, quarter', () => {
-    expect(resolvePeriod('quy4', 2026)).toEqual({ year: 2026, granularity: 'quarter' });
+  it('quý', () => {
+    expect(resolvePeriod('quy2', 2026)).toEqual({ year: 2026, startMonth: 4, endMonth: 6 });
   });
-  it('Năm nay → năm nay, month', () => {
-    expect(resolvePeriod('namNay', 2026)).toEqual({ year: 2026, granularity: 'month' });
+  it('nửa đầu / nửa cuối', () => {
+    expect(resolvePeriod('nuaDau', 2026)).toEqual({ year: 2026, startMonth: 1, endMonth: 6 });
+    expect(resolvePeriod('nuaCuoi', 2026)).toEqual({ year: 2026, startMonth: 7, endMonth: 12 });
   });
-  it('Năm trước → năm trước, month', () => {
-    expect(resolvePeriod('namTruoc', 2026)).toEqual({ year: 2025, granularity: 'month' });
-  });
-});
-
-const pnl12: PnlSeriesPoint[] = Array.from({ length: 12 }, (_, i) => ({
-  thang: i + 1,
-  doanhThu: i + 1,      // T1=1 ... T12=12
-  chiPhi: 1,
-  loiNhuan: i,
-}));
-
-describe('pnlSeriesToQuarters', () => {
-  it('gộp 12 tháng thành 4 quý, cộng dồn', () => {
-    const q = pnlSeriesToQuarters(pnl12);
-    expect(q).toHaveLength(4);
-    expect(q[0]).toEqual({ thang: 1, doanhThu: 6, chiPhi: 3, loiNhuan: 3 });   // T1+T2+T3 = 1+2+3
-    expect(q[3]).toEqual({ thang: 4, doanhThu: 33, chiPhi: 3, loiNhuan: 30 }); // T10+T11+T12 = 10+11+12
+  it('năm nay / năm trước', () => {
+    expect(resolvePeriod('namNay', 2026)).toEqual({ year: 2026, startMonth: 1, endMonth: 12 });
+    expect(resolvePeriod('namTruoc', 2026)).toEqual({ year: 2025, startMonth: 1, endMonth: 12 });
   });
 });
 
-const cash12: CashSeriesPoint[] = Array.from({ length: 12 }, (_, i) => ({
-  thang: i + 1,
-  thu: 1,
-  chi: 1,
-  soDu: (i + 1) * 10,   // T1=10 ... T12=120
-}));
+describe('PERIOD_OPTIONS', () => {
+  it('có đủ 20 mục, mở đầu Tháng 1, kết Năm trước', () => {
+    expect(PERIOD_OPTIONS).toHaveLength(20);
+    expect(PERIOD_OPTIONS[0]).toEqual({ label: 'Tháng 1', value: 'thang1' });
+    expect(PERIOD_OPTIONS[19]).toEqual({ label: 'Năm trước', value: 'namTruoc' });
+  });
+});
 
-describe('cashSeriesToQuarters', () => {
-  it('thu/chi cộng dồn, soDu lấy tháng cuối quý', () => {
-    const q = cashSeriesToQuarters(cash12);
-    expect(q).toHaveLength(4);
-    expect(q[0]).toEqual({ thang: 1, thu: 3, chi: 3, soDu: 30 });   // soDu của T3
-    expect(q[3]).toEqual({ thang: 4, thu: 3, chi: 3, soDu: 120 });  // soDu của T12
+describe('sliceToRange', () => {
+  const s = Array.from({ length: 12 }, (_, i) => ({ thang: i + 1, v: i + 1 }));
+  it('cắt theo [startMonth,endMonth]', () => {
+    expect(sliceToRange(s, 4, 6).map((x) => x.thang)).toEqual([4, 5, 6]);
+    expect(sliceToRange(s, 3, 3).map((x) => x.thang)).toEqual([3]);
+  });
+});
+
+describe('periodDateRange', () => {
+  it('start = đầu tháng start, end = cuối tháng end', () => {
+    const { start, end } = periodDateRange({ year: 2026, startMonth: 2, endMonth: 4 });
+    expect(start.startsWith('2026-0')).toBe(true);
+    expect(new Date(end).getMonth()).toBe(3); // tháng 4 (0-based 3)
+    expect(new Date(start).getMonth()).toBe(1); // tháng 2
   });
 });

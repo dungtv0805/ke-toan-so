@@ -111,6 +111,14 @@ class CongNoPhaiThuService extends ServiceBase {
     return this.get<CongNoStats>({ endpoint: '/stats' });
   }
 
+  async getSeries(year: number): Promise<{ thang: number; tongPhaiThu: number; tongPhaiTra: number }[]> {
+    const data = await this.get<{ thang: number; tongPhaiThu: number; tongPhaiTra: number }[]>({
+      endpoint: '/../cong-no/series',
+      params: { year },
+    });
+    return Array.isArray(data) ? data : [];
+  }
+
   async updatePayment(id: string, soTienTra: number): Promise<CongNoWithOverdue> {
     const data = await this.put<CongNo>({ soTienTra }, { endpoint: `/../cong-no/${id}/payment` });
     return this.mapCongNo(data);

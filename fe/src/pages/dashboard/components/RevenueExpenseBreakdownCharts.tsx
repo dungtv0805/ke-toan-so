@@ -6,15 +6,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 import { dashboardService, type BreakdownSlice } from '@/services/dashboardService';
 import { formatCurrency } from './format';
 
-const PALETTE = [
-  'hsl(var(--primary))',
-  'hsl(var(--brand-gold))',
-  'hsl(var(--success))',
-  'hsl(var(--destructive))',
-  'hsl(var(--muted-foreground))',
-  'hsl(var(--accent-foreground))',
-  'hsl(var(--secondary-foreground))',
-];
+const PALETTE = ['#1F3864', '#C9A227', '#2F5597', '#E0C158', '#8497B0', '#BFA15F'];
 
 const TOP_N = 6;
 
@@ -62,14 +54,12 @@ const Donut: React.FC<{ data: BreakdownSlice[] }> = ({ data }) => {
   );
 };
 
-interface Props {
-  year: number;
-}
+interface Props { year: number; startMonth: number; endMonth: number; }
 
-const RevenueExpenseBreakdownCharts: React.FC<Props> = ({ year }) => {
+const RevenueExpenseBreakdownCharts: React.FC<Props> = ({ year, startMonth, endMonth }) => {
   const { data, isLoading } = useQuery({
-    queryKey: ['pnl-breakdown', year],
-    queryFn: () => dashboardService.getPnlBreakdownByYear(year),
+    queryKey: ['pnl-breakdown', year, startMonth, endMonth],
+    queryFn: () => dashboardService.getPnlBreakdownByRange(year, startMonth, endMonth),
   });
 
   const renderBody = (slices: BreakdownSlice[] | undefined) => {

@@ -1,76 +1,68 @@
 import React, { useMemo } from 'react';
 import { Card, Skeleton, Empty } from 'antd';
-import { WalletOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import {
-  ComposedChart,
-  Area,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
+  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer,
 } from 'recharts';
 import { dashboardService } from '@/services/dashboardService';
+import { sliceToRange } from '../period';
 import { formatCurrency, formatShortCurrency, DASH_COLORS } from './format';
-import { cashSeriesToQuarters } from '../period';
 
-interface Props {
-  year: number;
-  granularity: 'month' | 'quarter';
-}
+interface Props { year: number; startMonth: number; endMonth: number; }
+const TEAL = DASH_COLORS.revenue;
+const GRAY = 'hsl(var(--muted-foreground) / 0.35)';
+const ORANGE = '#F2994A';
 
-const CashFlowChart: React.FC<Props> = ({ year, granularity }) => {
-  const isQuarter = granularity === 'quarter';
+const Kpi: React.FC<{ label: string; value: number; color: string }> = ({ label, value, color }) => (
+  <div className="min-w-0">
+    <div className="text-lg sm:text-2xl font-bold truncate" style={{ color }}>{formatShortCurrency(value)}</div>
+    <div className="text-muted-foreground text-[10px] sm:text-xs uppercase tracking-wide truncate">{label}</div>
+  </div>
+);
 
-  const { data: monthly, isLoading } = useQuery({
+const CashFlowChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
+  const { data: full, isLoading } = useQuery({
     queryKey: ['dash-cash-series', year],
     queryFn: () => dashboardService.getCashSeries(year),
   });
-
-  const data = useMemo(() => {
-    if (!monthly) return monthly;
-    return isQuarter ? cashSeriesToQuarters(monthly) : monthly;
-  }, [monthly, isQuarter]);
-
-  const hasData = !!data && data.some((d) => d.thu || d.chi || d.soDu);
+  // chi vẽ âm (dưới trục 0)
+  const data = useMemo(
+    () => sliceToRange(full ?? [], startMonth, endMonth).map((d) => ({ ...d, chiNeg: -(d.chi || 0) })),
+    [full, startMonth, endMonth],
+  );
+  const sum = (k: 'thu' | 'chi') => data.reduce((s, d) => s + (d[k] || 0), 0);
+  const ton = data.length ? data[data.length - 1].soDu : 0;
+  const hasData = data.some((d) => d.thu || d.chi || d.soDu);
 
   return (
-    <Card
-      title={
-        <span className="text-sm sm:text-base">
-          <WalletOutlined className="text-primary mr-2" />
-          Dòng tiền ({year})
-        </span>
-      }
-    >
+    <Card title={<span className="text-sm sm:text-base font-semibold">DÒNG TIỀN</span>}>
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="grid grid-cols-3 gap-3 flex-1">
+          <Kpi label="Tổng thu" value={sum('thu')} color={TEAL} />
+          <Kpi label="Tổng chi" value={sum('chi')} color="hsl(var(--muted-foreground))" />
+          <Kpi label="Tồn" value={ton} color={ORANGE} />
+        </div>
+        <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">Đvt: đồng</span>
+      </div>
       {isLoading ? (
         <Skeleton active paragraph={{ rows: 6 }} />
       ) : !hasData ? (
-        <Empty description="Chưa có dữ liệu" style={{ height: 300 }} className="flex flex-col items-center justify-center" />
+        <Empty description="Chưa có dữ liệu" style={{ height: 280 }} className="flex flex-col items-center justify-center" />
       ) : (
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={280}>
           <ComposedChart data={data} margin={{ left: -10, right: 8 }}>
-            <defs>
-              <linearGradient id="cf-thu" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0.02} />
-              </linearGradient>
-              <linearGradient id="cf-chi" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="thang" tickFormatter={(v) => `${isQuarter ? 'Q' : 'T'}${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
+            <XAxis dataKey="thang" tickFormatter={(v) => `Th ${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={(v) => formatShortCurrency(v)} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={55} />
-            <Tooltip formatter={(value: number) => formatCurrency(value)} labelFormatter={(label) => `${isQuarter ? 'Quý' : 'Tháng'} ${label}`} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Area type="monotone" dataKey="thu" name="Thu" stroke={DASH_COLORS.revenue} fill="url(#cf-thu)" strokeWidth={2} />
-            <Area type="monotone" dataKey="chi" name="Chi" stroke={DASH_COLORS.expense} fill="url(#cf-chi)" strokeWidth={2} />
-            <Line type="monotone" dataKey="soDu" name="Số dư" stroke={DASH_COLORS.balance} strokeWidth={2} dot={{ r: 3 }} />
+            <ReferenceLine y={0} stroke="hsl(var(--border))" />
+            <Tooltip
+              formatter={(value: number, name: string) => [formatCurrency(Math.abs(value)), name]}
+              labelFormatter={(l) => `Tháng ${l}`}
+            />
+            <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
+            <Bar dataKey="thu" name="Thu" fill={TEAL} maxBarSize={22} />
+            <Bar dataKey="chiNeg" name="Chi" fill={GRAY} maxBarSize={22} />
+            <Line type="monotone" dataKey="soDu" name="Tồn" stroke={ORANGE} strokeWidth={2} dot={{ r: 3, fill: ORANGE }} />
           </ComposedChart>
         </ResponsiveContainer>
       )}

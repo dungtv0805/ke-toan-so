@@ -114,6 +114,14 @@ export class CongNoController {
     return { success: true, data };
   }
 
+  @Get('cong-no/series')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_CONG_NO', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async getCongNoSeries(@Query('year') year?: string) {
+    const y = Number(year) || new Date().getFullYear();
+    const data = await this.congNoService.getCongNoSeries(y);
+    return { success: true, data };
+  }
+
   @Get('cong-no/:id')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_CONG_NO', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async findOne(@Param('id') id: string) {

@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { Select, Space, Typography, Segmented, ConfigProvider } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
-import KpiCards from './components/KpiCards';
 import RevenueTrendChart from './components/RevenueTrendChart';
 import CashFlowChart from './components/CashFlowChart';
-import CompositionCharts from './components/CompositionCharts';
 import RevenueExpenseBreakdownCharts from './components/RevenueExpenseBreakdownCharts';
+import CongNoChart from './components/CongNoChart';
+import BalanceStructureChart from './components/BalanceStructureChart';
 import AgingCharts from './components/AgingCharts';
 import OverdueTables from './components/OverdueTables';
 import ExecutionStatusCharts from './components/ExecutionStatusCharts';
 import MockTabDashboard, { MOCK_TABS } from './components/MockTabDashboard';
 import { Row, Col } from 'antd';
-import { resolvePeriod, type DashboardPeriod } from './period';
+import { PERIOD_OPTIONS, resolvePeriod, type DashboardPeriod } from './period';
 
 const { Text } = Typography;
 
@@ -24,17 +24,11 @@ const TAB_OPTIONS = [
 
 const now = new Date();
 const CURRENT_YEAR = now.getFullYear();
-
-const PERIOD_OPTIONS: { label: string; value: DashboardPeriod }[] = [
-  { label: '12 tháng', value: 'thang12' },
-  { label: '4 quý', value: 'quy4' },
-  { label: 'Năm nay', value: 'namNay' },
-  { label: 'Năm trước', value: 'namTruoc' },
-];
+const CURRENT_MONTH = now.getMonth() + 1;
 
 const Dashboard: React.FC = () => {
-  const [period, setPeriod] = useState<DashboardPeriod>('thang12');
-  const { year, granularity } = resolvePeriod(period, CURRENT_YEAR);
+  const [period, setPeriod] = useState<DashboardPeriod>(`thang${CURRENT_MONTH}` as DashboardPeriod);
+  const { year, startMonth, endMonth } = resolvePeriod(period, CURRENT_YEAR);
   const [activeTab, setActiveTab] = useState<string>('tai-chinh');
 
   return (
@@ -81,39 +75,35 @@ const Dashboard: React.FC = () => {
             value={period}
             onChange={setPeriod}
             options={PERIOD_OPTIONS}
-            style={{ width: 140 }}
+            style={{ width: 180 }}
+            showSearch
+            optionFilterProp="label"
           />
         </Space>
       </div>
 
       {activeTab === 'tai-chinh' ? (
         <>
-          {/* KPI */}
-          <KpiCards year={year} />
-
-          {/* Xu hướng */}
+          {/* Xu hướng: KQKD | Dòng tiền */}
           <Row gutter={[12, 12]}>
-            <Col xs={24} lg={12}>
-              <RevenueTrendChart year={year} granularity={granularity} />
-            </Col>
-            <Col xs={24} lg={12}>
-              <CashFlowChart year={year} granularity={granularity} />
-            </Col>
+            <Col xs={24} lg={12}><RevenueTrendChart year={year} startMonth={startMonth} endMonth={endMonth} /></Col>
+            <Col xs={24} lg={12}><CashFlowChart year={year} startMonth={startMonth} endMonth={endMonth} /></Col>
           </Row>
 
-          {/* Tình hình thực hiện (Kế hoạch vs Thực hiện) — chưa có dữ liệu */}
+          {/* Tình hình thực hiện */}
           <ExecutionStatusCharts />
 
           {/* Tỷ trọng doanh thu / chi phí */}
-          <RevenueExpenseBreakdownCharts year={year} />
+          <RevenueExpenseBreakdownCharts year={year} startMonth={startMonth} endMonth={endMonth} />
 
-          {/* Cơ cấu */}
-          <CompositionCharts />
+          {/* Công nợ | Cân đối tài chính */}
+          <Row gutter={[12, 12]}>
+            <Col xs={24} lg={12}><CongNoChart year={year} startMonth={startMonth} endMonth={endMonth} /></Col>
+            <Col xs={24} lg={12}><BalanceStructureChart /></Col>
+          </Row>
 
-          {/* Tuổi nợ */}
+          {/* Tuổi nợ + quá hạn (giữ) */}
           <AgingCharts />
-
-          {/* Công nợ quá hạn */}
           <OverdueTables />
         </>
       ) : (
