@@ -10,19 +10,22 @@ export const TERM_REGISTRY: Glossary = {
 
 /**
  * Giải nhãn theo chuỗi fallback:
- * tenant.surfaces[surface] → tenant.label → registry.surfaces[surface] → registry.label → key
+ * tenant.surfaces[surface] → tenant.label
+ * → nganh.surfaces[surface] → nganh.label
+ * → registry.surfaces[surface] → registry.label → key
  */
 export function resolveTerm(
-  glossary: Glossary | undefined,
+  tenantGlossary: Glossary | undefined,
+  nganhGlossary: Glossary | undefined,
   registry: Glossary,
   key: string,
   surface?: string,
 ): string {
-  const tenant = glossary?.[key];
-  if (surface && tenant?.surfaces?.[surface]) return tenant.surfaces[surface];
-  if (tenant?.label) return tenant.label;
-  const def = registry?.[key];
-  if (surface && def?.surfaces?.[surface]) return def.surfaces[surface];
-  if (def?.label) return def.label;
+  for (const g of [tenantGlossary, nganhGlossary, registry]) {
+    const entry = g?.[key];
+    if (!entry) continue;
+    if (surface && entry.surfaces?.[surface]) return entry.surfaces[surface];
+    if (entry.label) return entry.label;
+  }
   return key;
 }
