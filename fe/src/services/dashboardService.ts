@@ -84,6 +84,12 @@ function monthRange(month: number, year: number): { start: string; end: string }
   return { start: start.toISOString(), end: end.toISOString() };
 }
 
+function yearRange(year: number): { start: string; end: string } {
+  const start = new Date(year, 0, 1);
+  const end = new Date(year, 11, 31, 23, 59, 59, 999);
+  return { start: start.toISOString(), end: end.toISOString() };
+}
+
 // ============ Service ============
 
 export const dashboardService = {
@@ -103,6 +109,31 @@ export const dashboardService = {
     const chiPhi = pnl?.tongChiPhi ?? 0;
     const loiNhuan = pnl?.loiNhuan ?? doanhThu - chiPhi;
 
+    const prev = pnl?.kyTruoc;
+
+    return {
+      soDuQuy: { value: soDuQuy, delta: null },
+      doanhThu: { value: doanhThu, delta: prev ? computeDelta(doanhThu, prev.tongDoanhThu) : null },
+      chiPhi: { value: chiPhi, delta: prev ? computeDelta(chiPhi, prev.tongChiPhi) : null },
+      loiNhuan: { value: loiNhuan, delta: prev ? computeDelta(loiNhuan, prev.loiNhuan) : null },
+    };
+  },
+
+  /** KPI cho cả năm chọn (so với năm trước qua pnl comparison). */
+  async getKpiByYear(year: number): Promise<DashboardKpi> {
+    const { start, end } = yearRange(year);
+    const [statsRes, pnlRes] = await Promise.allSettled([
+      soQuyService.getStats(),
+      baoCaoReportService.getPnl({ startDate: start, endDate: end, periodType: 'nam' }),
+    ]);
+
+    const stats = statsRes.status === 'fulfilled' ? statsRes.value : null;
+    const pnl = pnlRes.status === 'fulfilled' ? pnlRes.value : null;
+
+    const soDuQuy = stats?.tonCuoiKy ?? 0;
+    const doanhThu = pnl?.tongDoanhThu ?? 0;
+    const chiPhi = pnl?.tongChiPhi ?? 0;
+    const loiNhuan = pnl?.loiNhuan ?? doanhThu - chiPhi;
     const prev = pnl?.kyTruoc;
 
     return {
@@ -136,6 +167,24 @@ export const dashboardService = {
         startDate: start,
         endDate: end,
         periodType: 'thang',
+      });
+      return {
+        doanhThu: (pnl.doanhThu ?? []).map((e) => ({ ten: e.ten, soTien: e.soTien })),
+        chiPhi: (pnl.chiPhi ?? []).map((e) => ({ ten: e.ten, soTien: e.soTien })),
+      };
+    } catch {
+      return { doanhThu: [], chiPhi: [] };
+    }
+  },
+
+  /** Tỷ trọng doanh thu/chi phí theo tài khoản, tính cho cả năm chọn. */
+  async getPnlBreakdownByYear(year: number): Promise<PnlBreakdown> {
+    try {
+      const { start, end } = yearRange(year);
+      const pnl = await baoCaoReportService.getPnl({
+        startDate: start,
+        endDate: end,
+        periodType: 'nam',
       });
       return {
         doanhThu: (pnl.doanhThu ?? []).map((e) => ({ ten: e.ten, soTien: e.soTien })),
