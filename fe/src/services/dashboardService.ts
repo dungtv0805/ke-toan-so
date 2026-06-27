@@ -33,6 +33,12 @@ export interface CashSeriesPoint {
   soDu: number;
 }
 
+export interface CongNoSeriesPoint {
+  thang: number;
+  tongPhaiThu: number;
+  tongPhaiTra: number;
+}
+
 export interface CompositionSlice {
   ma: string;
   ten: string;
@@ -164,6 +170,15 @@ export const dashboardService = {
         soDu: v.soDuCuoiKy || 0,
       };
     });
+  },
+
+  /** Số dư công nợ phải thu/phải trả theo tháng (đến cuối mỗi tháng) của năm chọn. */
+  async getCongNoSeries(year: number): Promise<CongNoSeriesPoint[]> {
+    try {
+      return await congNoPhaiThuService.getSeries(year);
+    } catch {
+      return [];
+    }
   },
 
   /** Cơ cấu tài sản (top-level groups của balance sheet). */
