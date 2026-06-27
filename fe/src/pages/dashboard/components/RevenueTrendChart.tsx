@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, Skeleton, Empty, Segmented } from 'antd';
 import { RiseOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
@@ -15,9 +15,11 @@ import {
 } from 'recharts';
 import { dashboardService } from '@/services/dashboardService';
 import { formatCurrency, formatShortCurrency, DASH_COLORS } from './format';
+import { pnlSeriesToQuarters } from '../period';
 
 interface Props {
   year: number;
+  granularity: 'month' | 'quarter';
 }
 
 type Metric = 'all' | 'doanhThu' | 'chiPhi' | 'loiNhuan';
@@ -29,13 +31,19 @@ const METRIC_OPTIONS: { label: string; value: Metric }[] = [
   { label: 'Lợi nhuận', value: 'loiNhuan' },
 ];
 
-const RevenueTrendChart: React.FC<Props> = ({ year }) => {
+const RevenueTrendChart: React.FC<Props> = ({ year, granularity }) => {
   const [metric, setMetric] = useState<Metric>('all');
+  const isQuarter = granularity === 'quarter';
 
-  const { data, isLoading } = useQuery({
+  const { data: monthly, isLoading } = useQuery({
     queryKey: ['dash-pnl-series', year],
     queryFn: () => dashboardService.getPnlSeries(year),
   });
+
+  const data = useMemo(() => {
+    if (!monthly) return monthly;
+    return isQuarter ? pnlSeriesToQuarters(monthly) : monthly;
+  }, [monthly, isQuarter]);
 
   const hasData = !!data && data.some((d) => d.doanhThu || d.chiPhi || d.loiNhuan);
 
@@ -44,7 +52,7 @@ const RevenueTrendChart: React.FC<Props> = ({ year }) => {
       title={
         <span className="text-sm sm:text-base">
           <RiseOutlined className="text-primary mr-2" />
-          Doanh thu – Chi phí – Lợi nhuận theo tháng
+          Doanh thu – Chi phí – Lợi nhuận theo {isQuarter ? 'quý' : 'tháng'}
         </span>
       }
       extra={
@@ -64,11 +72,11 @@ const RevenueTrendChart: React.FC<Props> = ({ year }) => {
         <ResponsiveContainer width="100%" height={300}>
           <ComposedChart data={data} margin={{ left: -10, right: 8 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="thang" tickFormatter={(v) => `T${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
+            <XAxis dataKey="thang" tickFormatter={(v) => `${isQuarter ? 'Q' : 'T'}${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={(v) => formatShortCurrency(v)} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={55} />
             <Tooltip
               formatter={(value: number) => formatCurrency(value)}
-              labelFormatter={(label) => `Tháng ${label}`}
+              labelFormatter={(label) => `${isQuarter ? 'Quý' : 'Tháng'} ${label}`}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} />
             {metric === 'all' && (
