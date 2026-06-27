@@ -9,12 +9,14 @@ interface TermContextType {
 const TermContext = createContext<TermContextType | undefined>(undefined);
 
 export const TermProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentTenant } = useAuth();
-  const glossary = currentTenant?.glossary;
+  const { currentTenant, currentNganh } = useAuth();
+  const tenantGlossary = currentTenant?.glossary;
+  const nganhGlossary = currentNganh?.glossary;
 
   const t = useCallback(
-    (key: string, surface?: string) => resolveTerm(glossary, TERM_REGISTRY, key, surface),
-    [glossary],
+    (key: string, surface?: string) =>
+      resolveTerm(tenantGlossary, nganhGlossary, TERM_REGISTRY, key, surface),
+    [tenantGlossary, nganhGlossary],
   );
 
   return <TermContext.Provider value={{ t }}>{children}</TermContext.Provider>;
