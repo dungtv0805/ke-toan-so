@@ -63,14 +63,13 @@ const Donut: React.FC<{ data: BreakdownSlice[] }> = ({ data }) => {
 };
 
 interface Props {
-  month: number;
   year: number;
 }
 
-const RevenueExpenseBreakdownCharts: React.FC<Props> = ({ month, year }) => {
+const RevenueExpenseBreakdownCharts: React.FC<Props> = ({ year }) => {
   const { data, isLoading } = useQuery({
-    queryKey: ['pnl-breakdown', month, year],
-    queryFn: () => dashboardService.getPnlBreakdown(month, year),
+    queryKey: ['pnl-breakdown', year],
+    queryFn: () => dashboardService.getPnlBreakdownByYear(year),
   });
 
   const renderBody = (slices: BreakdownSlice[] | undefined) => {

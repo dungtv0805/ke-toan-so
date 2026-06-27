@@ -8,7 +8,6 @@ import { formatShortCurrency } from './format';
 const { Text } = Typography;
 
 interface KpiCardsProps {
-  month: number;
   year: number;
 }
 
@@ -38,10 +37,10 @@ const DeltaTag: React.FC<{ delta: number | null; inverse?: boolean }> = ({ delta
   );
 };
 
-const KpiCards: React.FC<KpiCardsProps> = ({ month, year }) => {
+const KpiCards: React.FC<KpiCardsProps> = ({ year }) => {
   const { data, isLoading } = useQuery({
-    queryKey: ['dash-kpi', month, year],
-    queryFn: () => dashboardService.getKpi(month, year),
+    queryKey: ['dash-kpi', year],
+    queryFn: () => dashboardService.getKpiByYear(year),
   });
 
   if (isLoading || !data) {
