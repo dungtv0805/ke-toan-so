@@ -4,7 +4,6 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UserOutlined,
 import { useAuth } from '@/contexts/AuthContext';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { tenantService, Tenant, CreateTenantDto, UpdateTenantDto } from '@/services/tenantService';
-import { nganhService, type Nganh } from '@/services/nganhService';
 import TenantMembersModal from './TenantMembersModal';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
@@ -25,7 +24,6 @@ const TenantPage = () => {
     .filter((m) => m.isActive)
     .map((m) => ({ value: m.code, label: m.name }));
   const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [nganhList, setNganhList] = useState<Nganh[]>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -59,7 +57,6 @@ const TenantPage = () => {
   useEffect(() => {
     fetchTenants();
     fetchUsers();
-    nganhService.getAll().then(setNganhList).catch(() => setNganhList([]));
   }, []);
 
   const handleCreate = () => {
@@ -68,7 +65,7 @@ const TenantPage = () => {
     form.resetFields();
     form.setFieldsValue({
       isActive: true,
-      modules: ['KE_TOAN'],
+      modules: 'KE_TOAN',
       adminPassword: DEFAULT_PASSWORD,
       adminMode: 'new',
     });
@@ -86,8 +83,7 @@ const TenantPage = () => {
       email: tenant.email,
       nguoiDaiDien: tenant.nguoiDaiDien,
       isActive: tenant.isActive,
-      modules: tenant.modules?.length ? tenant.modules : ['KE_TOAN'],
-      nganh: tenant.nganh,
+      modules: tenant.modules?.[0] ?? 'KE_TOAN',
     });
     setModalVisible(true);
   };
@@ -105,7 +101,12 @@ const TenantPage = () => {
   const handleSubmit = async (values: CreateTenantDto | UpdateTenantDto) => {
     try {
       if (editingTenant) {
-        await tenantService.update(editingTenant.id, values);
+        const selectedModule = form.getFieldValue('modules') as string | undefined;
+        const updateData = {
+          ...values,
+          modules: selectedModule ? [selectedModule] : ['KE_TOAN'],
+        };
+        await tenantService.update(editingTenant.id, updateData);
         message.success('Đã cập nhật công ty');
       } else {
         // Add admin info based on mode
@@ -120,8 +121,7 @@ const TenantPage = () => {
           email: formValues.email,
           nguoiDaiDien: formValues.nguoiDaiDien,
           isActive: values.isActive,
-          modules: formValues.modules?.length ? formValues.modules : ['KE_TOAN'],
-          nganh: formValues.nganh,
+          modules: formValues.modules ? [formValues.modules] : ['KE_TOAN'],
         };
 
         if (adminMode === 'existing' && formValues.existingUserId) {
@@ -393,26 +393,13 @@ const TenantPage = () => {
 
           <Form.Item
             name="modules"
-            label={fl('modules', 'Lĩnh vực sử dụng')}
-            rules={[{ required: true, message: 'Vui lòng chọn ít nhất 1 lĩnh vực' }]}
-            extra="Công ty sẽ thấy menu theo các lĩnh vực được cấp"
+            label={fl('modules', 'Lĩnh vực')}
+            rules={[{ required: true, message: 'Vui lòng chọn lĩnh vực' }]}
+            extra="Lĩnh vực quyết định menu và bộ nhãn hiển thị của công ty"
           >
             <Select
-              mode="multiple"
               placeholder="Chọn lĩnh vực"
               options={moduleOptions}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="nganh"
-            label={fl('nganh', 'Ngành')}
-            extra="Chọn ngành để áp bộ nhãn hiển thị chuẩn (Chủ đầu tư, ...)"
-          >
-            <Select
-              allowClear
-              placeholder="Chọn ngành"
-              options={nganhList.map((n) => ({ value: n.code, label: n.name }))}
             />
           </Form.Item>
 
