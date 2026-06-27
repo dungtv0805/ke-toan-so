@@ -33,6 +33,7 @@ import {
 } from '@/services/congNoPhaiThuService';
 import { FilterBar } from "@/components/common/FilterBar";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const CongNoPhaiThuPage: React.FC = () => {
   const { canExport } = usePagePermission("/cong-no/phai-thu");
@@ -222,6 +223,8 @@ const CongNoPhaiThuPage: React.FC = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('congNo.phaiThu', columns);
+
   const summaryColumns: ColumnsType<CongNoSummaryByCustomer> = [
     {
       title: 'Mã KH',
@@ -348,7 +351,7 @@ const CongNoPhaiThuPage: React.FC = () => {
           </Space>
 
           <Table
-            columns={columns}
+            columns={cfgColumns}
             dataSource={filteredData}
             rowKey="id"
             loading={loading}
@@ -513,6 +516,7 @@ const CongNoPhaiThuPage: React.FC = () => {
         }}
         actions={
           <>
+            {settingsButton}
             {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
             <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData}>
               Làm mới

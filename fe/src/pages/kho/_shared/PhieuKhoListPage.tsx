@@ -31,6 +31,7 @@ import { PhieuKhoEditorModal } from './PhieuKhoEditorModal';
 import { usePrintKhoPhieu } from './print/usePrintKhoPhieu';
 import { KhoTemplateModal } from './print/KhoTemplateModal';
 import { KHO_TEMPLATE_KEY } from './print/khoPrintTemplates';
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const { RangePicker } = DatePicker;
 
@@ -222,6 +223,8 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('kho.phieu', columns);
+
   const groupLabel =
     loaiPhieu === 'NHAP' ? 'Nhập kho' : loaiPhieu === 'XUAT' ? 'Xuất kho' : 'Chuyển kho';
 
@@ -279,6 +282,7 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
             Tìm
           </Button>
           <Space style={{ marginLeft: 'auto' }} size={8}>
+            {settingsButton}
             {isAdmin && (
               <Button
                 size="small"
@@ -305,7 +309,7 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
 
         <Table<PhieuKho>
           dataSource={data}
-          columns={columns}
+          columns={cfgColumns}
           rowKey="id"
           loading={loading}
           size="small"

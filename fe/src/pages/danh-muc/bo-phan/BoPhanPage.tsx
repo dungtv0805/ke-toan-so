@@ -30,6 +30,7 @@ import { boPhanService, BoPhanStats } from "@/services/boPhanService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -231,6 +232,8 @@ const BoPhanPage: React.FC = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.boPhan', columns);
+
   return (
     <div className="space-y-3">
       {/* Breadcrumb */}
@@ -258,6 +261,7 @@ const BoPhanPage: React.FC = () => {
           }}
           actions={
             <>
+              {settingsButton}
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}
@@ -281,7 +285,7 @@ const BoPhanPage: React.FC = () => {
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}
