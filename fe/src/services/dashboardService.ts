@@ -3,6 +3,7 @@ import { balanceSheetService } from './balanceSheetService';
 import { baoCaoReportService } from './baoCaoReportService';
 import { congNoPhaiThuService } from './congNoPhaiThuService';
 import { congNoPhaiTraService } from './congNoPhaiTraService';
+import { phieuThuService, phieuChiService, type PhieuService } from './phieuService';
 
 // ============ Types ============
 
@@ -101,6 +102,29 @@ export const dashboardService = {
       };
     } catch {
       return { doanhThu: [], chiPhi: [] };
+    }
+  },
+
+  /** Tỷ trọng tiền thu/chi theo loại dòng tiền (cash-flow) trong khoảng kỳ. */
+  async getCashCompositionByRange(
+    which: 'thu' | 'chi',
+    year: number,
+    startMonth: number,
+    endMonth: number,
+  ): Promise<BreakdownSlice[]> {
+    try {
+      const startDate = new Date(year, startMonth - 1, 1).toISOString();
+      const endDate = new Date(year, endMonth, 0, 23, 59, 59, 999).toISOString();
+      const service: PhieuService = which === 'thu' ? phieuThuService : phieuChiService;
+      const rows = await service.getSummary('cash-flow', { startDate, endDate });
+      return rows
+        .map((r) => ({
+          ten: r.ten ?? r.key,
+          soTien: Math.max(Math.abs(r.phatSinhNo || 0), Math.abs(r.phatSinhCo || 0)),
+        }))
+        .filter((r) => r.soTien > 0);
+    } catch {
+      return [];
     }
   },
 
