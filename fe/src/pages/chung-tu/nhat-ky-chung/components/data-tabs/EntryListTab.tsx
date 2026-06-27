@@ -46,6 +46,8 @@ import {
 } from "../../NhatKyChungHandlerContext";
 import { FilterDrawer } from "../filter-drawer/FilterDrawer";
 import { EntryActions } from "../entry-actions/EntryActions";
+import { TableTitleSettings } from '@/components/glossary/TableTitleSettings';
+import { NKC_TITLE_TERMS } from './nkcTitleTerms';
 import { DetailPopover } from "./DetailPopover";
 import { EditableCell, SelectOption } from "../editable-cell";
 import dayjs from "dayjs";
@@ -885,6 +887,7 @@ export function EntryListTab() {
             icon={<ReloadOutlined />}
             onClick={handleRefresh}
           />
+          <TableTitleSettings terms={NKC_TITLE_TERMS} />
           <FilterDrawer />
         </Space>
       </div>
