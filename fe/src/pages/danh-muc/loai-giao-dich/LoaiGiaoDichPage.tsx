@@ -31,6 +31,7 @@ import { loaiGiaoDichService, LoaiGiaoDichStats } from "@/services/loaiGiaoDichS
 import { loaiChungTuService, LoaiChungTuType, PhanLoaiChungTu } from "@/services/loaiChungTuService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -289,6 +290,8 @@ const LoaiGiaoDichPage: React.FC = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.loaiGiaoDich', columns);
+
   return (
     <div className="space-y-3">
       {/* Breadcrumb */}
@@ -316,6 +319,7 @@ const LoaiGiaoDichPage: React.FC = () => {
           }}
           actions={
             <>
+              {settingsButton}
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}
@@ -333,7 +337,7 @@ const LoaiGiaoDichPage: React.FC = () => {
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}

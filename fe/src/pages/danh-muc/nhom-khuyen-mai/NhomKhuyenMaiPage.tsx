@@ -29,6 +29,7 @@ import {
 } from "./NhomKhuyenMaiHandlerContext";
 import "./NhomKhuyenMaiPage.state";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 
 const { Title, Text } = Typography;
 
@@ -163,6 +164,8 @@ function NhomKhuyenMaiPageInner() {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.nhomKhuyenMai', columns);
+
   return (
     <div className="space-y-3">
       <Breadcrumb
@@ -205,6 +208,7 @@ function NhomKhuyenMaiPageInner() {
           }}
           actions={
             <>
+              {settingsButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -219,7 +223,7 @@ function NhomKhuyenMaiPageInner() {
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}

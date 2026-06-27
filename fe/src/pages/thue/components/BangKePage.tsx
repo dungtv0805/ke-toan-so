@@ -27,6 +27,7 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import {
   BangKeRecord,
@@ -259,6 +260,8 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('thue.bangKe', columns);
+
   return (
     <div className="space-y-3">
       <Breadcrumb
@@ -307,12 +310,13 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
                   Thêm hóa đơn
                 </Button>
               )}
+              {settingsButton}
             </>
           }
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}

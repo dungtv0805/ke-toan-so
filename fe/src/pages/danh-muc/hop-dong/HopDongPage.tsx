@@ -34,6 +34,7 @@ import {
   FileUnknownOutlined,
 } from "@ant-design/icons";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import dayjs, { Dayjs } from "dayjs";
 import { HopDong, DoiTuong, TrangThaiHopDong } from "@/types";
 import {
@@ -378,6 +379,8 @@ function HopDongPageInner() {
       ),
     },
   ];
+
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.hopDong', columns);
 
   const tabItems = [
     {
@@ -821,6 +824,7 @@ function HopDongPageInner() {
           }}
           actions={
             <>
+              {settingsButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -835,7 +839,7 @@ function HopDongPageInner() {
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}

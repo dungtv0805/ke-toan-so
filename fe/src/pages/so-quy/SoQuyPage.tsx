@@ -30,6 +30,7 @@ import { useIntroAnimation } from '@/hooks/useIntroAnimation';
 import dayjs from 'dayjs';
 import { FilterBar } from "@/components/common/FilterBar";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -196,6 +197,8 @@ const SoQuyPage: React.FC = () => {
       ),
     },
   ];
+
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('soQuy.main', detailColumns);
 
   const dailyColumns = [
     {
@@ -406,7 +409,10 @@ const SoQuyPage: React.FC = () => {
                       />
                     }
                     actions={
-                      canExport ? <Button icon={<ExportOutlined />}>Xuất Excel</Button> : undefined
+                      <>
+                        {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+                        {settingsButton}
+                      </>
                     }
                   />
 
@@ -420,7 +426,7 @@ const SoQuyPage: React.FC = () => {
 
                   {/* Table */}
                   <Table
-                    columns={detailColumns}
+                    columns={cfgColumns}
                     dataSource={data}
                     rowKey="id"
                     loading={loading}

@@ -17,6 +17,7 @@ import { UserAddOutlined, DeleteOutlined, EditOutlined, UserOutlined, TeamOutlin
 import { useAuth } from '@/contexts/AuthContext';
 import { tenantService, TenantMember, AddMemberDto } from '@/services/tenantService';
 import { vaiTroService, VaiTroResponse } from '@/services/vaiTroService';
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 
 const DEFAULT_PASSWORD = '123456';
@@ -238,6 +239,8 @@ const ThanhVienPage = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('cauHinh.thanhVien', columns);
+
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center mb-6">
@@ -249,13 +252,16 @@ const ThanhVienPage = () => {
             Quản lý thành viên trong {currentTenant?.tenantName || 'công ty'}
           </p>
         </div>
-        <Button type="primary" icon={<UserAddOutlined />} onClick={openAddModal}>
-          Thêm thành viên
-        </Button>
+        <Space>
+          {settingsButton}
+          <Button type="primary" icon={<UserAddOutlined />} onClick={openAddModal}>
+            Thêm thành viên
+          </Button>
+        </Space>
       </div>
 
       <Table
-        columns={columns}
+        columns={cfgColumns}
         dataSource={members}
         rowKey="id"
         loading={loading}

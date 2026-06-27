@@ -35,6 +35,7 @@ import { nhomKhoanMucService, NhomKhoanMuc } from "@/services/nhomKhoanMucServic
 import { loaiKhoanMucOptions } from "@/mock-data/khoan-muc";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const { Text } = Typography;
 
@@ -316,6 +317,8 @@ const KhoanMucPage: React.FC = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.khoanMuc', columns);
+
   const tabItems = [
     {
       key: "all",
@@ -400,6 +403,7 @@ const KhoanMucPage: React.FC = () => {
           }}
           actions={
             <>
+              {settingsButton}
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}
@@ -417,7 +421,7 @@ const KhoanMucPage: React.FC = () => {
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}

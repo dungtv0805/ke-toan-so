@@ -45,6 +45,7 @@ import { thuTienHopDongService } from '@/services/thuTienHopDongService';
 import { hoaDonBanRaService } from '@/services/hoaDonBanRaService';
 import { doiTuongService } from '@/services/doiTuongService';
 import { usePagePermission } from '@/hooks/usePagePermission';
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const { Text, Title } = Typography;
 
@@ -280,6 +281,8 @@ export default function QuanLyHopDongPage() {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('trungTamDuLieu.hopDong', columns);
+
   // Danh sách khoản thu (read-only, từ Sổ thu tiền)
   const receiptCols: ColumnsType<ThuTienHopDong> = [
     { title: 'Ngày', dataIndex: 'ngay', width: 100, render: (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '-') },
@@ -336,19 +339,22 @@ export default function QuanLyHopDongPage() {
             setNam(undefined);
           }}
           actions={
-            <Select
-              allowClear
-              placeholder="Lọc theo năm"
-              style={{ width: 140 }}
-              options={NAM_OPTIONS}
-              value={nam}
-              onChange={(v) => setNam(v)}
-            />
+            <>
+              <Select
+                allowClear
+                placeholder="Lọc theo năm"
+                style={{ width: 140 }}
+                options={NAM_OPTIONS}
+                value={nam}
+                onChange={(v) => setNam(v)}
+              />
+              {settingsButton}
+            </>
           }
         />
 
         <Table<TheoDoiHopDongRow>
-          columns={columns}
+          columns={cfgColumns}
           dataSource={rows}
           rowKey="hopDongId"
           loading={loading}

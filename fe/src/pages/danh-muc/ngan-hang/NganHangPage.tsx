@@ -29,6 +29,7 @@ import { FilterBar } from "@/components/common/FilterBar";
 import { nganHangService } from "@/services/nganHangService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const { Text } = Typography;
 
@@ -278,6 +279,8 @@ const NganHangPage: React.FC = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.nganHang', columns);
+
   return (
     <div className="space-y-3">
       {/* Breadcrumb */}
@@ -305,6 +308,7 @@ const NganHangPage: React.FC = () => {
           }}
           actions={
             <>
+              {settingsButton}
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}
@@ -322,7 +326,7 @@ const NganHangPage: React.FC = () => {
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}

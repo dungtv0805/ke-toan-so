@@ -28,6 +28,7 @@ import { nhomVatTuService } from "@/services/nhomVatTuService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -251,6 +252,8 @@ const NhomVatTuPage: React.FC = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.nhomVatTu', columns);
+
   return (
     <div className="space-y-3">
       <Breadcrumb
@@ -280,6 +283,7 @@ const NhomVatTuPage: React.FC = () => {
               >
                 Làm mới
               </Button>
+              {settingsButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -294,7 +298,7 @@ const NhomVatTuPage: React.FC = () => {
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}

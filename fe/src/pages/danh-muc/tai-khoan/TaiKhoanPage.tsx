@@ -27,6 +27,7 @@ import {
   HomeOutlined,
 } from "@ant-design/icons";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { TaiKhoan } from "@/types";
 import { taiKhoanService } from "@/services/taiKhoanService";
 import { loaiTaiKhoan, nhomTaiKhoan } from "@/mock-data/tai-khoan";
@@ -353,6 +354,8 @@ const TaiKhoanPage: React.FC = () => {
     }] : []),
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.taiKhoan', columns);
+
   return (
     <div className="space-y-3">
       {/* Breadcrumb */}
@@ -423,13 +426,14 @@ const TaiKhoanPage: React.FC = () => {
                   Thêm tài khoản
                 </Button>
               )}
+              {settingsButton}
             </>
           }
         />
 
         {/* Table */}
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={filteredData}
           rowKey="id"
           loading={loading}

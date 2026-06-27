@@ -34,6 +34,7 @@ import {
 } from '@/services/congNoPhaiTraService';
 import { FilterBar } from "@/components/common/FilterBar";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const CongNoPhaiTraPage: React.FC = () => {
   const { canExport } = usePagePermission("/cong-no/phai-tra");
@@ -223,6 +224,8 @@ const CongNoPhaiTraPage: React.FC = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('congNo.phaiTra', columns);
+
   const summaryColumns: ColumnsType<CongNoSummaryBySupplier> = [
     {
       title: 'Mã NCC',
@@ -349,7 +352,7 @@ const CongNoPhaiTraPage: React.FC = () => {
           </Space>
 
           <Table
-            columns={columns}
+            columns={cfgColumns}
             dataSource={filteredData}
             rowKey="id"
             loading={loading}
@@ -514,6 +517,7 @@ const CongNoPhaiTraPage: React.FC = () => {
         }}
         actions={
           <>
+            {settingsButton}
             {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
             <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData}>
               Làm mới

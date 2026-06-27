@@ -43,6 +43,7 @@ import { trangThaiDuAnOptions } from "@/mock-data/du-an";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -405,6 +406,8 @@ const DuAnPage: React.FC = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.duAn', columns);
+
   const tabItems = [
     {
       key: "all",
@@ -542,6 +545,7 @@ const DuAnPage: React.FC = () => {
           }}
           actions={
             <>
+              {settingsButton}
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}
@@ -574,7 +578,7 @@ const DuAnPage: React.FC = () => {
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}

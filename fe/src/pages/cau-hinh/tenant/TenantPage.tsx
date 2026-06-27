@@ -6,6 +6,7 @@ import { usePagePermission } from '@/hooks/usePagePermission';
 import { tenantService, Tenant, CreateTenantDto, UpdateTenantDto } from '@/services/tenantService';
 import { nganhService, type Nganh } from '@/services/nganhService';
 import TenantMembersModal from './TenantMembersModal';
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const DEFAULT_PASSWORD = '123456';
 
@@ -289,6 +290,8 @@ const TenantPage = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('cauHinh.tenant', columns);
+
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center mb-6">
@@ -300,15 +303,18 @@ const TenantPage = () => {
             Quản lý danh sách các công ty trong hệ thống
           </p>
         </div>
-        {canCreate && (
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            Thêm công ty
-          </Button>
-        )}
+        <Space>
+          {settingsButton}
+          {canCreate && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+              Thêm công ty
+            </Button>
+          )}
+        </Space>
       </div>
 
       <Table
-        columns={columns}
+        columns={cfgColumns}
         dataSource={tenants}
         rowKey="id"
         loading={loading}

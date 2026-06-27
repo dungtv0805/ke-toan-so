@@ -30,6 +30,7 @@ import "./ChuDauTuPage.state";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTerm } from "@/contexts/TermContext";
+import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 
 const { Title, Text } = Typography;
 
@@ -164,6 +165,8 @@ function ChuDauTuPageInner() {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.chuDauTu', columns);
+
   return (
     <div className="space-y-3">
       <Breadcrumb
@@ -206,6 +209,7 @@ function ChuDauTuPageInner() {
           }}
           actions={
             <>
+              {settingsButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -220,7 +224,7 @@ function ChuDauTuPageInner() {
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}

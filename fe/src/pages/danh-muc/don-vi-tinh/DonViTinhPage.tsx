@@ -28,6 +28,7 @@ import { donViTinhService } from "@/services/donViTinhService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -251,6 +252,8 @@ const DonViTinhPage: React.FC = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.donViTinh', columns);
+
   return (
     <div className="space-y-3">
       <Breadcrumb
@@ -289,12 +292,13 @@ const DonViTinhPage: React.FC = () => {
                   Thêm đơn vị tính
                 </Button>
               )}
+              {settingsButton}
             </>
           }
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}

@@ -29,6 +29,7 @@ import { thuTienHopDongService } from '@/services/thuTienHopDongService';
 import { theoDoiHopDongService } from '@/services/theoDoiHopDongService';
 import { doiTuongService } from '@/services/doiTuongService';
 import { usePagePermission } from '@/hooks/usePagePermission';
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const { Text } = Typography;
 const fmtCur = (v?: number) => (!v ? '-' : new Intl.NumberFormat('vi-VN').format(v));
@@ -168,6 +169,8 @@ export default function SoThuTienPage() {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('trungTamDuLieu.soThuTien', columns);
+
   const hdOptions = hdList.map((h) => ({
     value: h.hopDongId,
     label: `${h.soHopDong}${h.tenCongTrinh ? ' — ' + h.tenCongTrinh : ''}`,
@@ -187,10 +190,10 @@ export default function SoThuTienPage() {
         <FilterBar
           search={{ value: search, onChange: setSearch, onSearch: load, placeholder: 'Tìm số HĐ, khách hàng, nội dung...', width: 320 }}
           onReset={() => { setSearch(''); load(); }}
-          actions={canCreate && <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>Thêm phiếu thu</Button>}
+          actions={<>{settingsButton}{canCreate && <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>Thêm phiếu thu</Button>}</>}
         />
         <Table<ThuTienHopDong>
-          columns={columns}
+          columns={cfgColumns}
           dataSource={rows}
           rowKey="id"
           loading={loading}

@@ -36,6 +36,7 @@ import { loaiDongTienOptions } from "@/mock-data/dong-tien";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -269,6 +270,8 @@ const DongTienPage: React.FC = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.dongTien', columns);
+
   return (
     <div className="space-y-3">
       {/* Breadcrumb */}
@@ -357,12 +360,13 @@ const DongTienPage: React.FC = () => {
                   Thêm dòng tiền
                 </Button>
               )}
+              {settingsButton}
             </>
           }
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}

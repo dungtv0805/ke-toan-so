@@ -29,6 +29,7 @@ import {
 } from "./NhomQuanLyHandlerContext";
 import "./NhomQuanLyPage.state";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 
 const { Title, Text } = Typography;
 
@@ -161,6 +162,8 @@ function NhomQuanLyPageInner() {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.nhomQuanLy', columns);
+
   return (
     <div className="space-y-3">
       <Breadcrumb
@@ -203,6 +206,7 @@ function NhomQuanLyPageInner() {
           }}
           actions={
             <>
+              {settingsButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -217,7 +221,7 @@ function NhomQuanLyPageInner() {
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}

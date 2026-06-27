@@ -33,6 +33,7 @@ import { nhomVatTuService } from "@/services/nhomVatTuService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -338,6 +339,8 @@ const HangHoaVatTuPage: React.FC = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.hangHoaVatTu', columns);
+
   return (
     <div className="space-y-3">
       <Breadcrumb
@@ -358,6 +361,7 @@ const HangHoaVatTuPage: React.FC = () => {
           }}
           actions={
             <>
+              {settingsButton}
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}
@@ -381,7 +385,7 @@ const HangHoaVatTuPage: React.FC = () => {
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}

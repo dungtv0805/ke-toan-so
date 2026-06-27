@@ -33,6 +33,7 @@ import { donViOptions } from "@/mock-data/san-pham";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -302,6 +303,8 @@ const SanPhamPage: React.FC = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.sanPham', columns);
+
   return (
     <div className="space-y-3">
       {/* Breadcrumb */}
@@ -324,6 +327,7 @@ const SanPhamPage: React.FC = () => {
           }}
           actions={
             <>
+              {settingsButton}
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}
@@ -347,7 +351,7 @@ const SanPhamPage: React.FC = () => {
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}

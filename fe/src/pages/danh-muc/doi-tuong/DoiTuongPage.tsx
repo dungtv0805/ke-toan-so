@@ -40,6 +40,7 @@ import { doiTuongService } from "@/services/doiTuongService";
 import { loaiDoiTuong } from "@/mock-data/doi-tuong";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const { Title, Text } = Typography;
 
@@ -360,6 +361,8 @@ const DoiTuongPage: React.FC = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.doiTuong', columns);
+
   const tabItems = [
     { key: "all", label: "Tất cả", icon: <TeamOutlined /> },
     {
@@ -503,6 +506,7 @@ const DoiTuongPage: React.FC = () => {
           }}
           actions={
             <>
+              {settingsButton}
               {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
               {canCreate && (
                 <Button
@@ -519,7 +523,7 @@ const DoiTuongPage: React.FC = () => {
 
         {/* Table */}
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}

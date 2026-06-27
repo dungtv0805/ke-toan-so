@@ -23,6 +23,7 @@ import type { HoaDonBanRa, TheoDoiHopDongRow } from '@/types';
 import { hoaDonBanRaService } from '@/services/hoaDonBanRaService';
 import { theoDoiHopDongService } from '@/services/theoDoiHopDongService';
 import { usePagePermission } from '@/hooks/usePagePermission';
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const { Text } = Typography;
 const fmtCur = (v?: number) => (!v ? '-' : new Intl.NumberFormat('vi-VN').format(v));
@@ -170,6 +171,8 @@ export default function SoHoaDonBanRaPage() {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('trungTamDuLieu.soHoaDonBanRa', columns);
+
   const hdOptions = hdList.map((h) => ({
     value: h.hopDongId,
     label: `${h.soHopDong}${h.tenCongTrinh ? ' — ' + h.tenCongTrinh : ''}`,
@@ -188,10 +191,10 @@ export default function SoHoaDonBanRaPage() {
         <FilterBar
           search={{ value: search, onChange: setSearch, onSearch: load, placeholder: 'Tìm số HĐ, công trình, đơn vị mua...', width: 320 }}
           onReset={() => { setSearch(''); load(); }}
-          actions={canCreate && <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>Thêm hóa đơn</Button>}
+          actions={<>{canCreate && <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>Thêm hóa đơn</Button>}{settingsButton}</>}
         />
         <Table<HoaDonBanRa>
-          columns={columns}
+          columns={cfgColumns}
           dataSource={rows}
           rowKey="id"
           loading={loading}

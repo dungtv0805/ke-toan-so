@@ -11,6 +11,7 @@ import {
 } from '@/services/linhVucService';
 import { MENU_CATALOG } from '@/config/menuCatalog';
 import { ICON_WHITELIST, iconByName, isCommonKey } from '@/config/modules';
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const DEFAULT_LINH_VUC_CODE = 'KE_TOAN';
 
@@ -246,6 +247,8 @@ const LinhVucPage = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('cauHinh.linhVuc', columns);
+
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center mb-6">
@@ -257,13 +260,16 @@ const LinhVucPage = () => {
             Cấu hình danh mục lĩnh vực và gán menu hiển thị cho từng lĩnh vực
           </p>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-          Thêm lĩnh vực
-        </Button>
+        <Space>
+          {settingsButton}
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+            Thêm lĩnh vực
+          </Button>
+        </Space>
       </div>
 
       <Table
-        columns={columns}
+        columns={cfgColumns}
         dataSource={list}
         rowKey="id"
         loading={loading}

@@ -29,6 +29,7 @@ import {
 } from "@ant-design/icons";
 import { nhomKhoanMucService, NhomKhoanMuc, NhomKhoanMucStats } from "@/services/nhomKhoanMucService";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 
@@ -213,6 +214,8 @@ const NhomKhoanMucPage: React.FC = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.nhomKhoanMuc', columns);
+
   const tabItems = [
     { key: "all", label: <span>Tất cả <Tag className="ml-1">{stats.tongNhomKhoanMuc}</Tag></span> },
     { key: "CHI_PHI", label: <span><FallOutlined className="mr-1" />Chi phí <Tag color="red" className="ml-1">{stats.chiPhi}</Tag></span> },
@@ -240,6 +243,7 @@ const NhomKhoanMucPage: React.FC = () => {
           }}
           actions={
             <>
+              {settingsButton}
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}
@@ -253,7 +257,7 @@ const NhomKhoanMucPage: React.FC = () => {
         />
 
         <Table
-          columns={columns}
+          columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           loading={loading}
