@@ -27,6 +27,9 @@ export function EditableTerm({ tk, surface }: Props) {
     nganhName: currentNganh?.name,
   });
 
+  const valForScope = (scope: 'all' | 'surface') =>
+    scope === 'surface' ? t(tk, surface) : t(tk);
+
   const [open, setOpen] = useState(false);
   const [val, setVal] = useState(label);
   const [optValue, setOptValue] = useState(options[0]?.value ?? 'tenant-all');
@@ -40,7 +43,7 @@ export function EditableTerm({ tk, surface }: Props) {
 
   const onOpenChange = (o: boolean) => {
     if (o) {
-      setVal(label);
+      setVal(valForScope(options[0]?.scope ?? 'all'));
       setOptValue(options[0]?.value ?? 'tenant-all');
     }
     setOpen(o);
@@ -88,7 +91,11 @@ export function EditableTerm({ tk, surface }: Props) {
         <Radio.Group
           size="small"
           value={optValue}
-          onChange={(e) => setOptValue(e.target.value)}
+          onChange={(e) => {
+            setOptValue(e.target.value);
+            const opt = options.find((o) => o.value === e.target.value);
+            if (opt) setVal(valForScope(opt.scope));
+          }}
         >
           <Space direction="vertical" size={0}>
             {options.map((o) => (
