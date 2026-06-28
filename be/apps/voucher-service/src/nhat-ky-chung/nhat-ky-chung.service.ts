@@ -293,6 +293,45 @@ export class NhatKyChungService {
     return { success: true, data };
   }
 
+  /**
+   * Gom chi phí không được trừ theo quý + nhóm chi phí.
+   * Phục vụ tax-service tự điền dòng "chi phí không được trừ" trong báo cáo TNDN nhanh.
+   */
+  async aggregateNonDeductible(
+    nam: number,
+    tenantId?: string,
+  ): Promise<{ success: boolean; data: { quy: number; nhom: number; soTien: number }[] }> {
+    const start = new Date(Date.UTC(nam, 0, 1));
+    const end = new Date(Date.UTC(nam, 11, 31, 23, 59, 59, 999));
+    const pipeline: object[] = [
+      {
+        $match: {
+          ...(tenantId ? { tenantId } : {}),
+          'kiemSoat.trangThai': 'KHONG_DUOC_TRU',
+          ngay: { $gte: start, $lte: end },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            quy: { $ceil: { $divide: [{ $month: '$ngay' }, 3] } },
+            nhom: { $ifNull: ['$kiemSoat.nhomChiPhi', 4] },
+          },
+          soTien: {
+            $sum: { $ifNull: ['$kiemSoat.soTienKhongTru', '$soTien'] },
+          },
+        },
+      },
+    ];
+    const rows = await this.chungTuRepository.aggregate(pipeline).toArray();
+    const data = rows.map((r: any) => ({
+      quy: r._id.quy,
+      nhom: r._id.nhom,
+      soTien: r.soTien || 0,
+    }));
+    return { success: true, data };
+  }
+
   async findById(id: string): Promise<{ success: boolean; data: ChungTu }> {
     const { ObjectId } = await import('mongodb');
     const chungTu = await this.chungTuRepository.findOne({
