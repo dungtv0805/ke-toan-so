@@ -12,6 +12,7 @@ import { hopDongService } from "@/services/hopDongService";
 import { loaiChungTuService } from "@/services/loaiChungTuService";
 import { loaiGiaoDichService } from "@/services/loaiGiaoDichService";
 import { nganHangService } from "@/services/nganHangService";
+import { hoSoChungTuService } from "@/services/hoSoChungTuService";
 import "./master-data.event";
 import "./master-data.state";
 import { NhatKyChungStates, NhatKyChungEvents } from "../../../handler/nhat-ky-chung.handler";
@@ -26,7 +27,7 @@ export class MasterDataHandler extends CSubHanlder<NhatKyChungEvents, NhatKyChun
     this.setState("masterDataLoading", true);
 
     try {
-      const [doiTuong, duAn, boPhan, sanPham, dongTien, quyChuan, nhomKhuyenMai, nhomQuanLy, hopDong, loaiChungTu, loaiGiaoDich, nganHangRes] =
+      const [doiTuong, duAn, boPhan, sanPham, dongTien, quyChuan, nhomKhuyenMai, nhomQuanLy, hopDong, loaiChungTu, loaiGiaoDich, nganHangRes, hoSoChungTu] =
         await Promise.all([
           doiTuongService.getAll(),
           duAnService.getAll(),
@@ -40,6 +41,7 @@ export class MasterDataHandler extends CSubHanlder<NhatKyChungEvents, NhatKyChun
           loaiChungTuService.getAll(),
           loaiGiaoDichService.getAll(),
           nganHangService.getPaginated({ limit: 500 }),
+          hoSoChungTuService.getAll(),
         ]);
 
       this.setState("doiTuongList", doiTuong);
@@ -54,6 +56,7 @@ export class MasterDataHandler extends CSubHanlder<NhatKyChungEvents, NhatKyChun
       this.setState("loaiChungTuList", loaiChungTu);
       this.setState("loaiGiaoDichList", loaiGiaoDich);
       this.setState("nganHangList", nganHangRes.data);
+      this.setState("hoSoChungTuList", hoSoChungTu);
       this.setState("masterDataLoaded", true);
     } catch (error) {
       console.error("Error loading master data:", error);
