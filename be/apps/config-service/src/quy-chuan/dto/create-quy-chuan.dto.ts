@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsArray } from 'class-validator';
 
 export class CreateQuyChuan_Dto {
   @IsString()
@@ -20,4 +20,8 @@ export class CreateQuyChuan_Dto {
   @IsString()
   @IsOptional()
   moTa?: string;
+
+  @IsArray()
+  @IsOptional()
+  hoSoChungTu?: { id: string; ma: string; ten: string }[];
 }

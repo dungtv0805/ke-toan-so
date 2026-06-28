@@ -18,6 +18,9 @@ export class QuyChuan extends BaseEntity {
   @Column({ nullable: true })
   moTa: string;
 
+  @Column({ type: 'simple-json', nullable: true })
+  hoSoChungTu?: { id: string; ma: string; ten: string }[];
+
   @Column({ default: true })
   isActive: boolean;
 }
