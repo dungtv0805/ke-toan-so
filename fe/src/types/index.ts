@@ -437,6 +437,8 @@ export interface ChungTuResponse {
   nguoiTaoId: string;
   ngayTao: string | Date;
   danhMuc?: DanhMuc;
+  hoSoChungTu?: HoSoChungTuItem[];
+  kiemSoat?: KiemSoatChungTu;
 }
 
 // ===== SNAPSHOT INTERFACES (Legacy - kept for backward compatibility) =====
@@ -626,6 +628,10 @@ export interface NhatKyChung {
 
   // Full danhMuc object for detailed views
   danhMuc?: DanhMuc;
+
+  // Kiểm soát hồ sơ hạch toán
+  hoSoChungTu?: HoSoChungTuItem[];
+  kiemSoat?: KiemSoatChungTu;
 }
 
 // ===== SỔ QUỸ =====
@@ -736,6 +742,26 @@ export interface HoSoChungTu {
   ma: string;
   ten: string;
   moTa?: string;
+}
+
+// ===== KIỂM SOÁT CHỨNG TỪ =====
+
+export type KiemSoatTrangThai = 'HOP_LE' | 'KHONG_DUOC_TRU';
+
+export interface HoSoChungTuItem {
+  id: string;
+  ma: string;
+  ten: string;
+  daCo: boolean;
+}
+
+export interface KiemSoatChungTu {
+  trangThai: KiemSoatTrangThai;
+  nhomChiPhi?: 1 | 2 | 3 | 4;
+  soTienKhongTru?: number;
+  yKien?: string;
+  nguoiKiemSoat?: string;
+  ngayKiemSoat?: string;
 }
 
 // ===== DASHBOARD =====
