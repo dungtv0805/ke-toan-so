@@ -8,6 +8,7 @@ import RevenueExpenseBreakdownCharts from './components/RevenueExpenseBreakdownC
 import CongNoChart from './components/CongNoChart';
 import BalanceStructureChart from './components/BalanceStructureChart';
 import ExecutionStatusCharts from './components/ExecutionStatusCharts';
+import NghiaVuChinhSachTable from './components/NghiaVuChinhSachTable';
 import MockTabDashboard, { MOCK_TABS } from './components/MockTabDashboard';
 import DashboardSettingsModal, { ALL_BLOCK_KEYS } from './components/DashboardSettingsModal';
 import { Row, Col } from 'antd';
@@ -139,6 +140,9 @@ const Dashboard: React.FC = () => {
               {show('canDoi') && <Col xs={24} lg={12}><BalanceStructureChart /></Col>}
             </Row>
           )}
+
+          {/* Tình hình thực hiện nghĩa vụ chính sách */}
+          {show('nghiaVuChinhSach') && <NghiaVuChinhSachTable year={year} />}
         </>
       ) : (
         <MockTabDashboard config={MOCK_TABS[activeTab]} />

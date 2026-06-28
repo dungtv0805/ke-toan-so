@@ -38,15 +38,15 @@ describe('columnVisibility', () => {
 
   it('JSON hỏng → null', () => {
     const s = memoryStorage();
-    s.setItem('tblcols:p1', '{not json');
+    s.setItem('tblcols:_:p1', '{not json');
     expect(readSavedKeys('p1', s)).toBeNull();
   });
 
   it('không phải mảng string → null', () => {
     const s = memoryStorage();
-    s.setItem('tblcols:p1', JSON.stringify([1, 2, 3]));
+    s.setItem('tblcols:_:p1', JSON.stringify([1, 2, 3]));
     expect(readSavedKeys('p1', s)).toBeNull();
-    s.setItem('tblcols:p2', JSON.stringify({ a: 1 }));
+    s.setItem('tblcols:_:p2', JSON.stringify({ a: 1 }));
     expect(readSavedKeys('p2', s)).toBeNull();
   });
 
@@ -55,9 +55,25 @@ describe('columnVisibility', () => {
     expect(() => saveVisibleKeys('p1', ['a'], undefined)).not.toThrow();
   });
 
-  it('dùng đúng prefix khoá lưu', () => {
+  it('dùng đúng prefix khoá lưu (chưa có công ty → scope `_`)', () => {
     const s = memoryStorage();
     saveVisibleKeys('soQuy.main', ['ngay'], s);
-    expect(s.dump()['tblcols:soQuy.main']).toBe(JSON.stringify(['ngay']));
+    expect(s.dump()['tblcols:_:soQuy.main']).toBe(JSON.stringify(['ngay']));
+  });
+
+  it('tách riêng theo công ty: mỗi tenant một bộ cột', () => {
+    const s = memoryStorage();
+    s.setItem('current_tenant', JSON.stringify({ tenantId: 'cty-A' }));
+    saveVisibleKeys('p1', ['a'], s);
+    expect(s.dump()['tblcols:cty-A:p1']).toBe(JSON.stringify(['a']));
+
+    // Đổi sang công ty B → đọc chưa có preference, lưu sang khoá khác.
+    s.setItem('current_tenant', JSON.stringify({ tenantId: 'cty-B' }));
+    expect(readSavedKeys('p1', s)).toBeNull();
+    saveVisibleKeys('p1', ['b'], s);
+
+    // Quay lại công ty A → vẫn giữ bộ cột cũ của A.
+    s.setItem('current_tenant', JSON.stringify({ tenantId: 'cty-A' }));
+    expect(readSavedKeys('p1', s)).toEqual(['a']);
   });
 });

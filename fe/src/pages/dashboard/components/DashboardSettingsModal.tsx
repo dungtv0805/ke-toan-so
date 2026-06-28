@@ -25,6 +25,7 @@ export const DASHBOARD_BLOCKS: { key: string; label: string }[] = [
   { key: 'tyTrong', label: 'Tỷ trọng' },
   { key: 'congNo', label: 'Công nợ' },
   { key: 'canDoi', label: 'Cân đối tài chính' },
+  { key: 'nghiaVuChinhSach', label: 'Nghĩa vụ chính sách' },
 ];
 
 export const ALL_BLOCK_KEYS = DASHBOARD_BLOCKS.map((b) => b.key);
@@ -93,6 +94,19 @@ const PreviewCanDoi: React.FC = () => (
   </div>
 );
 
+const PreviewNvcs: React.FC = () => (
+  <div className="flex flex-col gap-[3px]" style={{ width: PW, height: PH, padding: 4 }}>
+    <div style={{ height: 12, background: GRAY, opacity: 0.6, borderRadius: 2 }} />
+    {[NAVY, TEAL, GOLD].map((c, i) => (
+      <div key={i} className="flex gap-[3px]" style={{ flex: 1 }}>
+        <div style={{ width: 56, background: c, opacity: 0.25, borderRadius: 2 }} />
+        <div style={{ flex: 1, background: c, opacity: 0.45, borderRadius: 2 }} />
+        <div style={{ flex: 1, background: c, opacity: 0.45, borderRadius: 2 }} />
+      </div>
+    ))}
+  </div>
+);
+
 const PREVIEWS: Record<string, React.FC> = {
   kqkd: PreviewKQKD,
   dongTien: PreviewDongTien,
@@ -100,6 +114,7 @@ const PREVIEWS: Record<string, React.FC> = {
   tyTrong: PreviewDonut,
   congNo: PreviewCongNo,
   canDoi: PreviewCanDoi,
+  nghiaVuChinhSach: PreviewNvcs,
 };
 
 interface Props {

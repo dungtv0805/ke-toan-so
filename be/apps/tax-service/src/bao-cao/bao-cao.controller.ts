@@ -48,4 +48,14 @@ export class BaoCaoController {
     const data = await this.service.baoCaoTNDN(nam, authToken);
     return { success: true, data };
   }
+
+  @Get('nghia-vu-chinh-sach')
+  @Roles(...KE_TOAN_ROLES)
+  async nghiaVuChinhSach(
+    @Query('nam', ParseIntPipe) nam: number,
+    @Headers('authorization') authToken: string,
+  ) {
+    const data = await this.service.nghiaVuChinhSach(nam, authToken);
+    return { success: true, data };
+  }
 }

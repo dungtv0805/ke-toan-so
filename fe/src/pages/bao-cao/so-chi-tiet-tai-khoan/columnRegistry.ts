@@ -4,6 +4,9 @@ import dayjs from 'dayjs';
 import type { SoChiTietReport } from '@/services/soChiTietTaiKhoanService';
 
 const STORAGE_KEY = 'sct-visible-columns';
+// Khoá lưu công ty hiện tại (service-base/setCurrentTenant). Mỗi công ty một bộ cột.
+const TENANT_STORAGE_KEY = 'current_tenant';
+const NO_TENANT_SCOPE = '_';
 
 export type Kind = 'opening' | 'entry' | 'cong' | 'cuoi';
 
@@ -122,10 +125,26 @@ export interface StorageLike {
 const browserStorage = (): StorageLike | undefined =>
   typeof localStorage !== 'undefined' ? localStorage : undefined;
 
+/** ID công ty đang chọn, lấy từ chính storage (key `current_tenant`). */
+function currentTenantScope(storage: StorageLike): string {
+  try {
+    const raw = storage.getItem(TENANT_STORAGE_KEY);
+    if (!raw) return NO_TENANT_SCOPE;
+    const tenantId = (JSON.parse(raw) as { tenantId?: unknown } | null)?.tenantId;
+    return typeof tenantId === 'string' && tenantId !== '' ? tenantId : NO_TENANT_SCOPE;
+  } catch {
+    return NO_TENANT_SCOPE;
+  }
+}
+
+// Khoá lưu tách theo công ty: `sct-visible-columns:{tenantId}`.
+const scopedStorageKey = (storage: StorageLike): string =>
+  `${STORAGE_KEY}:${currentTenantScope(storage)}`;
+
 export function loadVisibleKeys(storage: StorageLike | undefined = browserStorage()): string[] {
   if (!storage) return defaultVisibleKeys();
   try {
-    const raw = storage.getItem(STORAGE_KEY);
+    const raw = storage.getItem(scopedStorageKey(storage));
     if (!raw) return defaultVisibleKeys();
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.some((k) => typeof k !== 'string')) {
@@ -144,7 +163,7 @@ export function saveVisibleKeys(
   storage: StorageLike | undefined = browserStorage(),
 ): void {
   if (!storage) return;
-  storage.setItem(STORAGE_KEY, JSON.stringify(keys));
+  storage.setItem(scopedStorageKey(storage), JSON.stringify(keys));
 }
 
 function leafColumn(c: ColumnDef): ColumnType<DisplayRow> {

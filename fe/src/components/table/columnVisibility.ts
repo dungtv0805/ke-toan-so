@@ -1,6 +1,10 @@
 const STORAGE_PREFIX = 'tblcols:';
 
-const storageKey = (pageKey: string) => `${STORAGE_PREFIX}${pageKey}`;
+// Khoá lưu công ty hiện tại (service-base/setCurrentTenant). Đọc trực tiếp từ
+// cùng storage để module này không phụ thuộc service-base mà vẫn test được.
+const TENANT_STORAGE_KEY = 'current_tenant';
+// Scope dùng khi chưa chọn công ty (vd chưa đăng nhập) — tách khỏi data theo cty.
+const NO_TENANT_SCOPE = '_';
 
 export interface StorageLike {
   getItem: (key: string) => string | null;
@@ -9,6 +13,23 @@ export interface StorageLike {
 
 const browserStorage = (): StorageLike | undefined =>
   typeof localStorage !== 'undefined' ? localStorage : undefined;
+
+/** ID công ty đang chọn, lấy từ chính storage (key `current_tenant`). */
+const currentTenantScope = (storage: StorageLike | undefined): string => {
+  if (!storage) return NO_TENANT_SCOPE;
+  try {
+    const raw = storage.getItem(TENANT_STORAGE_KEY);
+    if (!raw) return NO_TENANT_SCOPE;
+    const tenantId = (JSON.parse(raw) as { tenantId?: unknown } | null)?.tenantId;
+    return typeof tenantId === 'string' && tenantId !== '' ? tenantId : NO_TENANT_SCOPE;
+  } catch {
+    return NO_TENANT_SCOPE;
+  }
+};
+
+// Khoá lưu tách theo công ty: `tblcols:{tenantId}:{pageKey}` → mỗi cty một bộ cột.
+const storageKey = (pageKey: string, storage: StorageLike | undefined) =>
+  `${STORAGE_PREFIX}${currentTenantScope(storage)}:${pageKey}`;
 
 /**
  * Đọc lựa chọn cột đã lưu cho 1 bảng (theo pageKey).
@@ -22,7 +43,7 @@ export function readSavedKeys(
 ): string[] | null {
   if (!storage) return null;
   try {
-    const raw = storage.getItem(storageKey(pageKey));
+    const raw = storage.getItem(storageKey(pageKey, storage));
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.some((k) => typeof k !== 'string')) {
@@ -41,7 +62,7 @@ export function saveVisibleKeys(
 ): void {
   if (!storage) return;
   try {
-    storage.setItem(storageKey(pageKey), JSON.stringify(keys));
+    storage.setItem(storageKey(pageKey, storage), JSON.stringify(keys));
   } catch {
     /* ignore quota / private mode */
   }

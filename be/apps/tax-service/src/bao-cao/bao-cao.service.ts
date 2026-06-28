@@ -13,6 +13,11 @@ import {
 } from './tax-calc';
 import { quyToRange, inDateRange } from '../shared/tax-helpers';
 import { buildCpKhongTru } from './chi-phi-khong-tru.util';
+import {
+  buildNvcsSections,
+  NghiaVuChinhSach,
+  NvcsVatQuy,
+} from './nghia-vu-chinh-sach.util';
 
 interface AggRow {
   ma: string;
@@ -178,6 +183,42 @@ export class BaoCaoService {
     };
 
     return { nam, quy, luyKe };
+  }
+
+  /** Ma trận rút gọn báo cáo nghĩa vụ chính sách (TNDN/GTGT/TNCN/BHXH) theo quý + lũy kế. */
+  async nghiaVuChinhSach(
+    nam: number,
+    authToken?: string,
+  ): Promise<NghiaVuChinhSach> {
+    const [tndn, muaVaoAll, banRaAll, dieuChinh] = await Promise.all([
+      this.baoCaoTNDN(nam, authToken),
+      this.muaVaoRepo.find({ where: this.getTenantFilter() as any }),
+      this.banRaRepo.find({ where: this.getTenantFilter() as any }),
+      this.dieuChinhService.getOrDefault(nam),
+    ]);
+
+    const vatPerQuy: NvcsVatQuy[] = [1, 2, 3, 4].map((q) => {
+      const range = quyToRange(q, nam);
+      const muaVao = muaVaoAll.filter(
+        (i) => i.isActive !== false && inDateRange(i.ngayHoaDon, range),
+      );
+      const banRa = banRaAll.filter(
+        (i) => i.isActive !== false && inDateRange(i.ngayHoaDon, range),
+      );
+      const vatDauVao = tongVatTheoKy(muaVao);
+      const vatDauRa = tongVatTheoKy(banRa);
+      return {
+        vatDauVao,
+        vatDauRa,
+        vatPhaiNop: Math.max(0, vatDauRa - vatDauVao),
+        vatConKhauTru: Math.max(0, vatDauVao - vatDauRa),
+      };
+    });
+
+    return {
+      nam,
+      sections: buildNvcsSections(tndn, vatPerQuy, dieuChinh as any),
+    };
   }
 
   /** Tổng hợp thuế GTGT + nghĩa vụ ngân sách cho một kỳ. */

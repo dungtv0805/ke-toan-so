@@ -148,6 +148,27 @@ export interface DieuChinhThue {
   bhtn3386: number[];
 }
 
+export interface NvcsRow {
+  tt: string;
+  chiTieu: string;
+  q1: number;
+  q2: number;
+  q3: number;
+  q4: number;
+  luyKe: number;
+}
+
+export interface NvcsSection {
+  ma: 'TNDN' | 'GTGT' | 'TNCN' | 'BHXH';
+  tieuDe: string;
+  rows: NvcsRow[];
+}
+
+export interface NghiaVuChinhSach {
+  nam: number;
+  sections: NvcsSection[];
+}
+
 class TaxReportService extends ServiceBase {
   constructor() {
     super({ endpoint: '/tax' });
@@ -159,6 +180,13 @@ class TaxReportService extends ServiceBase {
 
   async getBaoCaoTNDN(nam: number): Promise<BaoCaoTNDN> {
     return this.get<BaoCaoTNDN>({ endpoint: '/bao-cao-tndn', params: { nam } });
+  }
+
+  async getNghiaVuChinhSach(nam: number): Promise<NghiaVuChinhSach> {
+    return this.get<NghiaVuChinhSach>({
+      endpoint: '/nghia-vu-chinh-sach',
+      params: { nam },
+    });
   }
 
   async getDieuChinh(nam: number): Promise<DieuChinhThue> {
