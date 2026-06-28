@@ -68,7 +68,7 @@ class LinhVucService extends ServiceBase {
       name: x.name as string,
       description: x.description as string | undefined,
       icon: (x.icon as string) || 'AppstoreOutlined',
-      color: (x.color as string) || '#1B3A6B',
+      color: (x.color as string) || '#1f7769',
       order: (x.order as number) ?? 0,
       isActive: x.isActive as boolean,
       menuKeys: (x.menuKeys as string[]) ?? [],
