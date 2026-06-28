@@ -1,5 +1,7 @@
-import { useCallback, useMemo, useState } from "react";
+import { isValidElement, useCallback, useMemo, useState } from "react";
 import { TermText } from "@/components/glossary/TermText";
+import { useTerm } from "@/contexts/TermContext";
+import { useColumnVisibility } from "@/components/table/useColumnVisibility";
 import type { Key } from "react";
 import { Table, Button, Space, Tooltip, Popconfirm } from "antd";
 import {
@@ -811,6 +813,8 @@ export function EntryListTab() {
   // storageKey bump 'v2': cấu trúc cột đổi (thêm cột Ngày ghi sổ) → bỏ width cũ lưu theo chỉ số (đã lệch).
   useTableColumnResize("resizable-table", "table-col-widths-nkc-v2");
 
+  const { t } = useTerm();
+
   // Convert taiKhoanList to select options
   const taiKhoanOptions: SelectOption[] = useMemo(
     () =>
@@ -858,6 +862,36 @@ export function EntryListTab() {
         width: col.width || DEFAULT_WIDTHS[col.key as string] || 100,
       })),
     [taiKhoanOptions, quyChaunList, hoSoChungTuList, handleRefresh]
+  );
+
+  // Ẩn/hiện cột. Tiêu đề cột có thể là chuỗi hoặc node <TermText> → lấy nhãn tương ứng.
+  const labelOf = useCallback(
+    (col: ColumnType<NhatKyChung>): string | null => {
+      const title = col.title as unknown;
+      if (typeof title === "string") return title.trim() || null;
+      if (isValidElement(title) && title.type === TermText) {
+        const props = title.props as { tk: string; surface?: string };
+        return t(props.tk, props.surface);
+      }
+      return null; // cột thao tác / không nhãn → luôn hiển thị
+    },
+    [t]
+  );
+
+  const { columns: visibleColumns, chooserButton } = useColumnVisibility(
+    "nkc.entryList",
+    columns,
+    labelOf,
+    {
+      // Width resize lưu theo CHỈ SỐ cột → ẩn/hiện làm lệch. Xoá để cột về width mặc định.
+      onChange: () => {
+        try {
+          localStorage.removeItem("table-col-widths-nkc-v2");
+        } catch {
+          /* ignore */
+        }
+      },
+    }
   );
 
   const handleCreateEntry = () => {
@@ -932,6 +966,7 @@ export function EntryListTab() {
             icon={<ReloadOutlined />}
             onClick={handleRefresh}
           />
+          {chooserButton}
           <TableTitleSettings terms={NKC_TITLE_TERMS} />
           <FilterDrawer />
         </Space>
@@ -939,7 +974,7 @@ export function EntryListTab() {
 
       {/* Table */}
       <Table
-        columns={columns}
+        columns={visibleColumns}
         dataSource={data || []}
         rowKey="id"
         rowSelection={rowSelection}
@@ -958,7 +993,10 @@ export function EntryListTab() {
         size="small"
         bordered
         scroll={{
-          x: TOTAL_WIDTH,
+          x: visibleColumns.reduce(
+            (sum, c) => sum + (typeof c.width === "number" ? c.width : 100),
+            0
+          ) || TOTAL_WIDTH,
           y: "calc(100vh - 250px)",
         }}
       />

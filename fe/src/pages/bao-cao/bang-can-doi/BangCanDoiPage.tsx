@@ -37,6 +37,7 @@ import {
   BalanceSheetStats,
 } from '@/services/balanceSheetService';
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 
 const COLORS = ['#1890ff', '#52c41a', '#faad14', '#ff4d4f', '#722ed1', '#13c2c2'];
 
@@ -155,6 +156,11 @@ const BangCanDoiPage: React.FC = () => {
     },
   ];
 
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig(
+    'baoCao.bangCanDoi',
+    columns,
+  );
+
   // Chart data
   const assetPieData = stats ? [
     { name: 'TS ngắn hạn', value: stats.taiSanNganHan },
@@ -189,6 +195,7 @@ const BangCanDoiPage: React.FC = () => {
         }
         extra={
           <Space>
+            {settingsButton}
             {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
             <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
               Làm mới
@@ -274,7 +281,7 @@ const BangCanDoiPage: React.FC = () => {
                     style={{ marginBottom: 16 }}
                   >
                     <Table
-                      columns={columns}
+                      columns={cfgColumns}
                       dataSource={data.taiSan}
                       rowKey="ma"
                       loading={loading}
@@ -293,7 +300,7 @@ const BangCanDoiPage: React.FC = () => {
                     size="small"
                   >
                     <Table
-                      columns={columns}
+                      columns={cfgColumns}
                       dataSource={data.nguonVon}
                       rowKey="ma"
                       loading={loading}

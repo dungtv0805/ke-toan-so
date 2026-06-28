@@ -18,7 +18,8 @@ type Target = 'linhVuc' | 'tenant';
 
 export function TableTitleSettings({ terms, defaults: propDefaults, buttonText }: Props) {
   const { user, currentTenant, currentLinhVuc, applyGlossary, applyLinhVucGlossary } = useAuth();
-  const canLinhVuc = !!user?.isSuperAdmin && !!currentLinhVuc;
+  const isSuperAdmin = !!user?.isSuperAdmin;
+  const canLinhVuc = isSuperAdmin && !!currentLinhVuc;
 
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState<Target>('tenant');
@@ -70,6 +71,9 @@ export function TableTitleSettings({ terms, defaults: propDefaults, buttonText }
     const key = titleKey(term);
     return { key, def: defaultsMap[key], term };
   });
+
+  // Đổi tiêu đề hiển thị: CHỈ superAdmin. User thường không thấy nút.
+  if (!isSuperAdmin) return null;
 
   return (
     <>
