@@ -3,6 +3,7 @@ import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler"
 import { quyChauanService } from "@/services/quyChaunService";
 import { loaiChungTuService } from "@/services/loaiChungTuService";
 import { loaiGiaoDichService } from "@/services/loaiGiaoDichService";
+import { hoSoChungTuService } from "@/services/hoSoChungTuService";
 import { message } from "antd";
 import "./init.event";
 
@@ -23,6 +24,7 @@ export class InitHandler extends CSubHanlder {
     this.setState("formLoading", false);
     this.setState("loaiChungTuList", []);
     this.setState("loaiGiaoDichList", []);
+    this.setState("hoSoChungTuList", []);
     this.setState("pagination", {
       total: 0,
       page: 1,
@@ -32,11 +34,12 @@ export class InitHandler extends CSubHanlder {
 
     try {
       // Fetch initial data with pagination
-      const [paginatedResult, stats, loaiChungTuList, loaiGiaoDichList] = await Promise.all([
+      const [paginatedResult, stats, loaiChungTuList, loaiGiaoDichList, hoSoList] = await Promise.all([
         quyChauanService.getAllPaginated({ page: 1, limit: DEFAULT_PAGE_SIZE }),
         quyChauanService.getStats(),
         loaiChungTuService.getAll(),
         loaiGiaoDichService.getAll(),
+        hoSoChungTuService.getAll(),
       ]);
 
       this.setState("quyChaunList", paginatedResult.data);
@@ -44,6 +47,7 @@ export class InitHandler extends CSubHanlder {
       this.setState("stats", stats);
       this.setState("loaiChungTuList", loaiChungTuList);
       this.setState("loaiGiaoDichList", loaiGiaoDichList);
+      this.setState("hoSoChungTuList", hoSoList);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Lỗi khi tải dữ liệu";
       message.error(errorMessage);

@@ -660,6 +660,8 @@ export interface CongNo {
 
 // ===== QUY CHUẨN HẠCH TOÁN =====
 
+export interface HoSoChungTuRef { id: string; ma: string; ten: string; }
+
 export interface QuyChuan {
   id: string;
   loaiGiaoDich: string;
@@ -667,6 +669,7 @@ export interface QuyChuan {
   taiKhoanNo: string;
   taiKhoanCo: string;
   moTa?: string;
+  hoSoChungTu?: HoSoChungTuRef[];
 }
 
 // ===== BÁO CÁO =====
