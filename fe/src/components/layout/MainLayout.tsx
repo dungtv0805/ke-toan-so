@@ -122,6 +122,7 @@ const existingRoutes = new Set([
   "/danh-muc/loai-giao-dich",
   "/danh-muc/hop-dong",
   "/danh-muc/quy-chuan",
+  "/danh-muc/ho-so-chung-tu",
   "/danh-muc/kho",
   "/danh-muc/don-vi-tinh",
   "/danh-muc/nhom-vat-tu",
@@ -326,6 +327,7 @@ const thuVienMenuItems: MenuItem[] = [
       getMenuItem("Loại chứng từ", "/danh-muc/loai-chung-tu", <FileTextOutlined />),
       getMenuItem("Loại giao dịch", "/danh-muc/loai-giao-dich", <SwapOutlined />),
       getMenuItem("Quy chuẩn hạch toán", "/danh-muc/quy-chuan", <AuditOutlined />),
+      getMenuItem("Hồ sơ chứng từ", "/danh-muc/ho-so-chung-tu", <FileTextOutlined />),
     ]),
   ]),
 
