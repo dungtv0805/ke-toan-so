@@ -46,9 +46,17 @@ export function useTableColumnResize(tableClassName: string, storageKey?: string
     // Check if colgroups exist
     if (!headerColgroup && !bodyColgroup) return;
 
+    // Danh sách th để nhận diện cột ghim trái (bỏ qua, không áp width đã lưu).
+    const allHeaderCells = headerTable
+      ? headerTable.querySelectorAll<HTMLTableCellElement>('thead th')
+      : tableWrapper.querySelectorAll<HTMLTableCellElement>('.ant-table-thead th');
+
     Object.entries(savedWidths).forEach(([indexStr, width]) => {
       const index = parseInt(indexStr, 10);
       const widthStr = `${width}px`;
+
+      // Cột ghim trái: để Ant Design tự quản, không áp width đã lưu.
+      if (allHeaderCells[index]?.classList.contains('ant-table-cell-fix-left')) return;
 
       if (headerColgroup && headerColgroup.children[index]) {
         const col = headerColgroup.children[index] as HTMLElement;
@@ -97,6 +105,8 @@ export function useTableColumnResize(tableClassName: string, storageKey?: string
     applySavedWidths(tableWrapper);
 
     headerCells.forEach((th, index) => {
+      // Cột ghim trái (fixed): để Ant Design tự quản width + offset sticky, KHÔNG gắn resize.
+      if (th.classList.contains('ant-table-cell-fix-left')) return;
       if (th.querySelector('.col-resize-handle')) return;
 
       const handle = document.createElement('div');
