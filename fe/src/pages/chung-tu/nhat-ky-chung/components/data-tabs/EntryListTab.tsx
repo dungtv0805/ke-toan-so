@@ -833,7 +833,6 @@ export function EntryListTab() {
     ? {
         selectedRowKeys: selectedEntryIds,
         onChange: (keys: Key[]) => setSelectedEntryIds(keys.map(String)),
-        fixed: true as const,
       }
     : undefined;
 
