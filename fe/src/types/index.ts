@@ -726,6 +726,15 @@ export interface PhieuKho {
   chiTiet: ChiTietPhieuKho[]; tongTien?: number; tongTienBangChu?: string; trangThai?: string;
 }
 
+// ===== HỒ SƠ CHỨNG TỪ =====
+
+export interface HoSoChungTu {
+  id: string;
+  ma: string;
+  ten: string;
+  moTa?: string;
+}
+
 // ===== DASHBOARD =====
 
 export interface ThongKeTongQuan {
