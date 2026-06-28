@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Modal } from 'antd';
-import { DownloadOutlined, ShareAltOutlined } from '@ant-design/icons';
+import { DownloadOutlined, ShareAltOutlined, CloseOutlined } from '@ant-design/icons';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
+
+const DISMISS_KEY = 'pwa-install-banner-dismissed';
+const BANNER_HEIGHT = 48;
 
 const isStandalone = (): boolean =>
   window.matchMedia?.('(display-mode: standalone)').matches ||
@@ -13,18 +16,33 @@ const isStandalone = (): boolean =>
 
 const isIOS = (): boolean => /iphone|ipad|ipod/i.test(navigator.userAgent);
 
-/** Nút "Cài đặt ứng dụng" nổi: Android/desktop gọi prompt; iOS hiện hướng dẫn thủ công. */
+/** Chỉ mobile/tablet (gồm iPad iPadOS 13+ báo là Macintosh). Desktop web → false (ẩn hẳn). */
+const isMobileOrTablet = (): boolean => {
+  const ua = navigator.userAgent;
+  if (/android|iphone|ipod|ipad/i.test(ua)) return true;
+  if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true;
+  return false;
+};
+
+/**
+ * Banner cài đặt ứng dụng — CHỈ hiện trên iPad/điện thoại, dạng thanh trên cùng đẩy nội dung
+ * xuống (không đè), tắt được (nhớ trong localStorage). Trên web desktop: không hiện gì.
+ * Android: bấm gọi prompt cài đặt; iOS: mở hướng dẫn Add to Home Screen.
+ */
 const InstallPWA: React.FC = () => {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [iosOpen, setIosOpen] = useState(false);
-  const [hidden, setHidden] = useState<boolean>(isStandalone());
+  const [dismissed, setDismissed] = useState<boolean>(
+    () => localStorage.getItem(DISMISS_KEY) === '1',
+  );
+  const [installed, setInstalled] = useState<boolean>(isStandalone());
 
   useEffect(() => {
     const onPrompt = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
     };
-    const onInstalled = () => setHidden(true);
+    const onInstalled = () => setInstalled(true);
     window.addEventListener('beforeinstallprompt', onPrompt);
     window.addEventListener('appinstalled', onInstalled);
     return () => {
@@ -33,32 +51,80 @@ const InstallPWA: React.FC = () => {
     };
   }, []);
 
-  if (hidden) return null;
   const ios = isIOS();
-  // Chỉ hiện khi: có sẵn prompt (Android/desktop) HOẶC đang iOS (hướng dẫn thủ công).
-  if (!deferred && !ios) return null;
+  // Hiện khi: là mobile/tablet, chưa cài, chưa tắt, và (Android có prompt HOẶC iOS).
+  const visible = isMobileOrTablet() && !installed && !dismissed && (!!deferred || ios);
 
-  const handleClick = async () => {
+  // Đẩy nội dung xuống bằng padding-top trên body để banner không che Header.
+  useEffect(() => {
+    if (visible) {
+      document.body.style.paddingTop = `${BANNER_HEIGHT}px`;
+      return () => {
+        document.body.style.paddingTop = '';
+      };
+    }
+  }, [visible]);
+
+  if (!visible) return null;
+
+  const handleInstall = async () => {
     if (deferred) {
       await deferred.prompt();
       const res = await deferred.userChoice;
-      if (res.outcome === 'accepted') setHidden(true);
+      if (res.outcome === 'accepted') setInstalled(true);
       setDeferred(null);
     } else {
       setIosOpen(true);
     }
   };
 
+  const handleDismiss = () => {
+    localStorage.setItem(DISMISS_KEY, '1');
+    setDismissed(true);
+  };
+
   return (
     <>
-      <Button
-        type="primary"
-        icon={<DownloadOutlined />}
-        onClick={handleClick}
-        style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 1100, boxShadow: '0 2px 8px rgba(0,0,0,.25)' }}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: BANNER_HEIGHT,
+          zIndex: 2000,
+          background: '#1F3864',
+          color: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '0 12px',
+          boxShadow: '0 2px 8px rgba(0,0,0,.25)',
+        }}
       >
-        Cài đặt ứng dụng
-      </Button>
+        <DownloadOutlined style={{ fontSize: 18, flexShrink: 0 }} />
+        <span
+          style={{
+            flex: 1,
+            fontSize: 14,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          Cài đặt ứng dụng Master CEO
+        </span>
+        <Button size="small" type="default" icon={<DownloadOutlined />} onClick={handleInstall}>
+          Cài đặt
+        </Button>
+        <Button
+          size="small"
+          type="text"
+          aria-label="Đóng"
+          icon={<CloseOutlined style={{ color: '#fff' }} />}
+          onClick={handleDismiss}
+        />
+      </div>
 
       <Modal
         title="Cài đặt lên màn hình chính (iPhone/iPad)"
