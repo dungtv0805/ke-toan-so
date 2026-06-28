@@ -12,6 +12,7 @@ import {
   TNDNQuyResult,
 } from './tax-calc';
 import { quyToRange, inDateRange } from '../shared/tax-helpers';
+import { buildCpKhongTru } from './chi-phi-khong-tru.util';
 
 interface AggRow {
   ma: string;
@@ -29,6 +30,7 @@ export interface TNDNQuyData extends TNDNQuyResult {
   cp642: number;
   cp811: number;
   chiPhiKhongTru: number;
+  cpKhongTruAuto?: number[];
   thuNhapMien: number;
   loChuyen: number;
   doanhThuLuyKe: number;
@@ -82,13 +84,20 @@ export class BaoCaoService {
     nam: number,
     authToken?: string,
   ): Promise<{ nam: number; quy: TNDNQuyData[]; luyKe: TNDNQuyData }> {
-    const [aggQuarters, dieuChinh] = await Promise.all([
+    const [aggQuarters, dieuChinh, autoRes] = await Promise.all([
       this.aggByQuy(nam, authToken),
       this.dieuChinhService.getOrDefault(nam),
+      this.serviceClient.aggregateNonDeductible(nam, authToken),
     ]);
 
     const arr = (f: string, i: number): number =>
       Number(((dieuChinh as any)[f] || [])[i]) || 0;
+
+    // Chi phí không được trừ = auto (từ chứng từ kiểm soát) + điều chỉnh tay.
+    const cp = buildCpKhongTru(
+      autoRes?.success ? autoRes.data || [] : [],
+      dieuChinh as any,
+    );
 
     let doanhThuLuyKe = 0;
     const quy: TNDNQuyData[] = aggQuarters.map((rows, i) => {
@@ -100,11 +109,8 @@ export class BaoCaoService {
       const cp642 = this.sumByPrefix(rows, '642', 'periodNo');
       const cp811 = this.sumByPrefix(rows, '811', 'periodNo');
 
-      const chiPhiKhongTru =
-        arr('cpkdtDichVuHangHoa', i) +
-        arr('cpkdtTscdCcdc', i) +
-        arr('cpkdtNhanCong', i) +
-        arr('cpkdtTaiChinhKhac', i);
+      // tổng đã bao gồm cả điều chỉnh tay (tránh cộng tay hai lần).
+      const chiPhiKhongTru = cp.tongPerQuy[i];
       const thuNhapMien = arr('thuNhapMienThue', i);
       const loChuyen = arr('loDuocChuyen', i);
 
@@ -135,6 +141,7 @@ export class BaoCaoService {
         cp642,
         cp811,
         chiPhiKhongTru,
+        cpKhongTruAuto: cp.perQuy[i],
         thuNhapMien,
         loChuyen,
         doanhThuLuyKe,
@@ -156,6 +163,9 @@ export class BaoCaoService {
       cp642: sum((q) => q.cp642),
       cp811: sum((q) => q.cp811),
       chiPhiKhongTru: sum((q) => q.chiPhiKhongTru),
+      cpKhongTruAuto: [0, 1, 2, 3].map((n) =>
+        cp.perQuy.reduce((s, nhomArr) => s + (nhomArr[n] || 0), 0),
+      ),
       thuNhapMien: sum((q) => q.thuNhapMien),
       loChuyen: sum((q) => q.loChuyen),
       doanhThuLuyKe,
