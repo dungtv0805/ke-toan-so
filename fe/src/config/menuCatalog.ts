@@ -89,6 +89,7 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/danh-muc/loai-chung-tu', label: 'Loại chứng từ', parentLabel: 'Danh mục › Khác' },
   { key: '/danh-muc/loai-giao-dich', label: 'Loại giao dịch', parentLabel: 'Danh mục › Khác' },
   { key: '/danh-muc/quy-chuan', label: 'Quy chuẩn hạch toán', parentLabel: 'Danh mục › Khác' },
+  { key: '/danh-muc/ho-so-chung-tu', label: 'Hồ sơ chứng từ', parentLabel: 'Danh mục › Khác' },
 
   // ===== THƯ VIỆN — gốc =====
   { key: '/cau-hinh/linh-vuc', label: 'Lĩnh vực', parentLabel: 'Cấu hình' },

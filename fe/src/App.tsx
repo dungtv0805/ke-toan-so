@@ -57,6 +57,7 @@ import {
   ChinhSachPage,
   HuongDanPage,
   QuyChaunPage,
+  HoSoChungTuPage,
   PhanQuyenPage,
   VaiTroPage,
   ThanhVienPage,
@@ -220,6 +221,11 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
+                  <Route path="ho-so-chung-tu" element={
+                    <ProtectedRoute requiredPermission="/danh-muc/ho-so-chung-tu:xem">
+                      <HoSoChungTuPage />
+                    </ProtectedRoute>
+                  } />
                   <Route path="kho" element={
                     <ProtectedRoute requiredPermission="/danh-muc/kho:xem">
                       <KhoPage />

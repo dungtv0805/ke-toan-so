@@ -140,6 +140,7 @@ export const permissionModules: PermissionModule[] = [
           { key: '/danh-muc/loai-chung-tu', label: 'Loại chứng từ' },
           { key: '/danh-muc/loai-giao-dich', label: 'Loại giao dịch' },
           { key: '/danh-muc/quy-chuan', label: 'Quy chuẩn hạch toán' },
+          { key: '/danh-muc/ho-so-chung-tu', label: 'Hồ sơ chứng từ' },
         ],
       },
       { key: '/so-quy', label: 'Sổ quỹ' },
