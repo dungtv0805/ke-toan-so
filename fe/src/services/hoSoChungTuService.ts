@@ -28,14 +28,6 @@ class HoSoChungTuService extends ServiceBase {
     };
   }
 
-  async getTotal(search?: string): Promise<number> {
-    const result = await this.get<{ total: number }>({
-      endpoint: '/total',
-      params: { search },
-    });
-    return result.total;
-  }
-
   async getAll(): Promise<HoSoChungTu[]> {
     const data = await this.get<HoSoChungTuResponse[]>({ endpoint: '/all' });
     return data.map((item) => this.mapItem(item));

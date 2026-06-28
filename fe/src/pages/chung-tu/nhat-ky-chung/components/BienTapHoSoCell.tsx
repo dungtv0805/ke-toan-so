@@ -25,7 +25,9 @@ export function BienTapHoSoCell({
   // Danh sách mặc định từ quy chuẩn khớp với nghiệp vụ (và loại giao dịch nếu có)
   const defaultFromQuyChuan = useMemo((): HoSoChungTuItem[] => {
     const nv = entry.danhMuc?.nghiepVu?.ten;
-    const loaiGD = entry.danhMuc?.loaiGiaoDich?.ten;
+    // QuyChuan.loaiGiaoDich stores the loại-giao-dịch CODE (ma), not the display name.
+    // DanhMucLoaiGiaoDich snapshot exposes both .ma and .ten — compare .ma so both sides are codes.
+    const loaiGD = entry.danhMuc?.loaiGiaoDich?.ma;
     if (!nv) return [];
     const matches = quyChaunList.filter((q) => q.nghiepVu === nv);
     const qc =
@@ -37,7 +39,7 @@ export function BienTapHoSoCell({
       ten: h.ten,
       daCo: false,
     }));
-  }, [entry.danhMuc?.nghiepVu?.ten, entry.danhMuc?.loaiGiaoDich?.ten, quyChaunList]);
+  }, [entry.danhMuc?.nghiepVu?.ten, entry.danhMuc?.loaiGiaoDich?.ma, quyChaunList]);
 
   const initialItems = useMemo(
     (): HoSoChungTuItem[] =>
