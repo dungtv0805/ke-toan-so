@@ -4,10 +4,11 @@ import {
   IsDateString,
   IsObject,
   IsString,
+  IsArray,
   Min,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import type { DanhMuc } from '@app/entities';
+import type { DanhMuc, HoSoChungTuChungTu, KiemSoatChungTu } from '@app/entities';
 
 export class UpdateNhatKyChungDto {
   @Transform(({ value }) => (value === '' ? undefined : value))
@@ -40,4 +41,12 @@ export class UpdateNhatKyChungDto {
   @IsOptional()
   @IsString()
   diaChi: string;
+
+  @IsOptional()
+  @IsArray()
+  hoSoChungTu?: HoSoChungTuChungTu[];
+
+  @IsOptional()
+  @IsObject()
+  kiemSoat?: KiemSoatChungTu;
 }

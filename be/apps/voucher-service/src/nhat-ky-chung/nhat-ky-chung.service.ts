@@ -374,6 +374,15 @@ export class NhatKyChungService {
     if (updateDto.nguoiGiaoDich !== undefined) {
       chungTu.nguoiGiaoDich = updateDto.nguoiGiaoDich;
     }
+    if (updateDto.hoSoChungTu !== undefined) {
+      chungTu.hoSoChungTu = updateDto.hoSoChungTu;
+    }
+    if (updateDto.kiemSoat !== undefined) {
+      // Stamp ngayKiemSoat nếu chưa có; nguoiKiemSoat do FE gửi (UserPayload không có tên).
+      updateDto.kiemSoat.ngayKiemSoat =
+        updateDto.kiemSoat.ngayKiemSoat || new Date().toISOString();
+      chungTu.kiemSoat = updateDto.kiemSoat;
+    }
 
     const saved = await this.chungTuRepository.save(chungTu);
     return { success: true, data: saved };

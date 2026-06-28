@@ -117,6 +117,18 @@ export interface DanhMuc {
   loaiChungTu?: DanhMucLoaiChungTu;
 }
 
+// Types cho kiểm soát hồ sơ & hạch toán
+export interface HoSoChungTuChungTu { id: string; ma: string; ten: string; daCo: boolean; }
+export type KiemSoatTrangThai = 'HOP_LE' | 'KHONG_DUOC_TRU';
+export interface KiemSoatChungTu {
+  trangThai: KiemSoatTrangThai;
+  nhomChiPhi?: 1 | 2 | 3 | 4;
+  soTienKhongTru?: number;
+  yKien?: string;
+  nguoiKiemSoat?: string;
+  ngayKiemSoat?: string;
+}
+
 @Entity('chung_tu')
 export class ChungTu extends BaseEntity {
   @Column()
@@ -149,6 +161,12 @@ export class ChungTu extends BaseEntity {
   // Gộp tất cả danh mục vào 1 field
   @Column({ type: 'simple-json', nullable: true })
   danhMuc: DanhMuc;
+
+  @Column({ type: 'simple-json', nullable: true })
+  hoSoChungTu?: HoSoChungTuChungTu[];
+
+  @Column({ type: 'simple-json', nullable: true })
+  kiemSoat?: KiemSoatChungTu;
 }
 
 export interface ChungTuEntities {
