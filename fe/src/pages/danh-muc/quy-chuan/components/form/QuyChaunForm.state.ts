@@ -1,5 +1,5 @@
 import { BaseStates } from "@/common/c-handler/core/actions/c-state.action";
-import { QuyChuan } from "@/types";
+import { QuyChuan, HoSoChungTuRef } from "@/types";
 import { LoaiChungTuType } from "@/services/loaiChungTuService";
 
 export interface QuyChaunFormStates extends BaseStates {
@@ -7,6 +7,7 @@ export interface QuyChaunFormStates extends BaseStates {
   editingRecord: QuyChuan | null;
   formLoading: boolean;
   loaiChungTuList: LoaiChungTuType[];
+  hoSoChungTuList: HoSoChungTuRef[];
 }
 
 declare module "../../quyChaunHandler" {

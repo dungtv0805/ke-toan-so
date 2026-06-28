@@ -437,6 +437,8 @@ export interface ChungTuResponse {
   nguoiTaoId: string;
   ngayTao: string | Date;
   danhMuc?: DanhMuc;
+  hoSoChungTu?: HoSoChungTuItem[];
+  kiemSoat?: KiemSoatChungTu;
 }
 
 // ===== SNAPSHOT INTERFACES (Legacy - kept for backward compatibility) =====
@@ -626,6 +628,10 @@ export interface NhatKyChung {
 
   // Full danhMuc object for detailed views
   danhMuc?: DanhMuc;
+
+  // Kiểm soát hồ sơ hạch toán
+  hoSoChungTu?: HoSoChungTuItem[];
+  kiemSoat?: KiemSoatChungTu;
 }
 
 // ===== SỔ QUỸ =====
@@ -660,6 +666,8 @@ export interface CongNo {
 
 // ===== QUY CHUẨN HẠCH TOÁN =====
 
+export interface HoSoChungTuRef { id: string; ma: string; ten: string; }
+
 export interface QuyChuan {
   id: string;
   loaiGiaoDich: string;
@@ -667,6 +675,7 @@ export interface QuyChuan {
   taiKhoanNo: string;
   taiKhoanCo: string;
   moTa?: string;
+  hoSoChungTu?: HoSoChungTuRef[];
 }
 
 // ===== BÁO CÁO =====
@@ -724,6 +733,35 @@ export interface PhieuKho {
   khoMa?: string; khoTen?: string; khoXuatMa?: string; khoXuatTen?: string; khoNhapMa?: string; khoNhapTen?: string;
   nguoiVanChuyen?: string; hopDongVC?: string; phuongTienVC?: string; lenhDieuDong?: string; veViec?: string;
   chiTiet: ChiTietPhieuKho[]; tongTien?: number; tongTienBangChu?: string; trangThai?: string;
+}
+
+// ===== HỒ SƠ CHỨNG TỪ =====
+
+export interface HoSoChungTu {
+  id: string;
+  ma: string;
+  ten: string;
+  moTa?: string;
+}
+
+// ===== KIỂM SOÁT CHỨNG TỪ =====
+
+export type KiemSoatTrangThai = 'HOP_LE' | 'KHONG_DUOC_TRU';
+
+export interface HoSoChungTuItem {
+  id: string;
+  ma: string;
+  ten: string;
+  daCo: boolean;
+}
+
+export interface KiemSoatChungTu {
+  trangThai: KiemSoatTrangThai;
+  nhomChiPhi?: 1 | 2 | 3 | 4;
+  soTienKhongTru?: number;
+  yKien?: string;
+  nguoiKiemSoat?: string;
+  ngayKiemSoat?: string;
 }
 
 // ===== DASHBOARD =====

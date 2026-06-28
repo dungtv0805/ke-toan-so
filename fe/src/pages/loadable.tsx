@@ -194,6 +194,10 @@ export const QuyChaunPage = loadable(() => import('./danh-muc/quy-chuan/QuyChaun
   fallback: <PageLoader />
 });
 
+export const HoSoChungTuPage = loadable(() => import('./danh-muc/ho-so-chung-tu/HoSoChungTuPage'), {
+  fallback: <PageLoader />
+});
+
 export const PhanQuyenPage = loadable(() => import('./cau-hinh/phan-quyen/PhanQuyenPage'), {
   fallback: <PageLoader />
 });

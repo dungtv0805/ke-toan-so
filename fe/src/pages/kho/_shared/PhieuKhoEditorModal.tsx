@@ -403,7 +403,7 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
                 <Text type="secondary" style={{ fontSize: 13 }}>
                   Tổng cộng:{' '}
                 </Text>
-                <Text strong style={{ fontSize: 14, color: '#1B3A6B' }}>
+                <Text strong style={{ fontSize: 14, color: '#1f7769' }}>
                   {formatCurrency(tongTien)}
                 </Text>
               </div>

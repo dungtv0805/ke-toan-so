@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { quyChauanService } from '@/services/quyChaunService';
 import { taiKhoanService } from '@/services/taiKhoanService';
 import { useQuyChaunHandler, useQuyChaunState } from '../../QuyChaunHandlerContext';
-import { LoaiGiaoDich } from '@/types';
+import { LoaiGiaoDich, HoSoChungTuRef } from '@/types';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import './QuyChaunForm.state';
 
@@ -23,6 +23,7 @@ export const QuyChaunForm: React.FC = () => {
   const [editingRecord] = useQuyChaunState('editingRecord', null);
   const [formLoading] = useQuyChaunState('formLoading', false);
   const [loaiGiaoDichList] = useQuyChaunState('loaiGiaoDichList', [] as LoaiGiaoDich[]);
+  const [hoSoChungTuList] = useQuyChaunState('hoSoChungTuList', [] as HoSoChungTuRef[]);
   const [form] = Form.useForm();
   const [taiKhoanOptions, setTaiKhoanOptions] = useState<{ value: string; label: string }[]>([]);
 
@@ -41,7 +42,10 @@ export const QuyChaunForm: React.FC = () => {
 
   useEffect(() => {
     if (modalVisible && editingRecord) {
-      form.setFieldsValue(editingRecord);
+      form.setFieldsValue({
+        ...editingRecord,
+        hoSoChungTu: editingRecord.hoSoChungTu?.map((h) => h.ma),
+      });
     } else if (modalVisible) {
       form.resetFields();
     }
@@ -72,10 +76,16 @@ export const QuyChaunForm: React.FC = () => {
         return;
       }
 
+      const hoSoRefs = (values.hoSoChungTu || []).map((ma: string) => {
+        const h = hoSoChungTuList.find((x) => x.ma === ma);
+        return { id: h?.id ?? '', ma, ten: h?.ten ?? ma };
+      });
+      const payload = { ...values, hoSoChungTu: hoSoRefs };
+
       if (editingRecord) {
-        await handler.executeEvent('update', { id: editingRecord.id, data: values });
+        await handler.executeEvent('update', { id: editingRecord.id, data: payload });
       } else {
-        await handler.executeEvent('create', values);
+        await handler.executeEvent('create', payload);
       }
     } catch (error) {
       // Form validation error handled by antd
@@ -127,6 +137,15 @@ export const QuyChaunForm: React.FC = () => {
         </Row>
         <Form.Item name="moTa" label={fl('moTa', 'Mô tả')} rules={[{ max: 255 }]}>
           <Input.TextArea rows={3} placeholder="Mô tả chi tiết về quy chuẩn hạch toán này" />
+        </Form.Item>
+        <Form.Item name="hoSoChungTu" label="Biên tập hồ sơ">
+          <Select
+            mode="multiple"
+            showSearch
+            placeholder="Chọn hồ sơ chứng từ..."
+            options={hoSoChungTuList.map((h) => ({ value: h.ma, label: h.ten }))}
+            optionFilterProp="label"
+          />
         </Form.Item>
       </Form>
     </Modal>

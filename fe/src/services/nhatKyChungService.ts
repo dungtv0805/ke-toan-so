@@ -1,4 +1,4 @@
-import { NhatKyChung, ChungTuResponse, LoaiChungTu, DanhMuc } from '@/types';
+import { NhatKyChung, ChungTuResponse, LoaiChungTu, DanhMuc, HoSoChungTuItem, KiemSoatChungTu } from '@/types';
 import { ServiceBase, PaginatedResponse } from './base/service-base';
 
 export interface NhatKyChungStats {
@@ -71,6 +71,8 @@ export interface UpdateEntryDto {
   diaChi?: string;
   ghiChu?: string;
   danhMuc?: DanhMuc;
+  hoSoChungTu?: HoSoChungTuItem[];
+  kiemSoat?: KiemSoatChungTu;
 }
 
 export interface NhatKyChungPaginatedResponse {
@@ -116,6 +118,8 @@ class NhatKyChungService extends ServiceBase {
       sanPham: danhMuc?.sanPham?.ten,
       dongTien: danhMuc?.dongTien?.ten,
       danhMuc,
+      hoSoChungTu: item.hoSoChungTu,
+      kiemSoat: item.kiemSoat,
     };
   }
 

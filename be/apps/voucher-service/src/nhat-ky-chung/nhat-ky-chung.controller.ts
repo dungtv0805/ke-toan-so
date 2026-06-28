@@ -9,6 +9,7 @@ import {
   Body,
   Headers,
   UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { NhatKyChungService } from './nhat-ky-chung.service';
@@ -105,6 +106,22 @@ export class NhatKyChungController {
       );
     }
     return this.nhatKyChungService.getSummary(type as SummaryType, query);
+  }
+
+  @Get('chi-phi-khong-duoc-tru')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KIEM_SOAT', 'MANAGER')
+  async chiPhiKhongDuocTru(
+    @Query('nam', ParseIntPipe) nam: number,
+    @Headers('authorization') authToken?: string,
+  ) {
+    let tenantId: string | undefined;
+    if (authToken?.startsWith('Bearer ')) {
+      try {
+        const decoded = jwt.decode(authToken.substring(7)) as { tenantId?: string } | null;
+        tenantId = decoded?.tenantId;
+      } catch {}
+    }
+    return this.nhatKyChungService.aggregateNonDeductible(nam, tenantId);
   }
 
   @Get(':id')

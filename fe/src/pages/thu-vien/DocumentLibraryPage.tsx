@@ -67,7 +67,7 @@ const renderTypeIcon = (item: TaiLieu): React.ReactNode => {
   if (mime.startsWith("image/"))
     return <FileImageOutlined style={{ color: "#13A8A8", fontSize: 18 }} />;
   if (mime.includes("word"))
-    return <FileWordOutlined style={{ color: "#1B3A6B", fontSize: 18 }} />;
+    return <FileWordOutlined style={{ color: "#1f7769", fontSize: 18 }} />;
   if (mime.includes("excel") || mime.includes("spreadsheet"))
     return <FileExcelOutlined style={{ color: "#389E0D", fontSize: 18 }} />;
   if (mime.includes("powerpoint") || mime.includes("presentation"))

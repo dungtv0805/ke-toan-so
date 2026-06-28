@@ -309,4 +309,19 @@ export class ServiceClient extends BaseServiceClient {
       query: { startDate, endDate },
     });
   }
+
+  async aggregateNonDeductible(
+    nam: number,
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<ServiceResponse<Array<{ quy: number; nhom: number; soTien: number }>>> {
+    const headers: Record<string, string> = {};
+    if (authToken) headers['Authorization'] = authToken;
+    if (tenantId) headers['x-tenant-id'] = tenantId;
+
+    return this.get('voucher', '/nhat-ky-chung/chi-phi-khong-duoc-tru', {
+      headers: Object.keys(headers).length ? headers : undefined,
+      query: { nam },
+    });
+  }
 }

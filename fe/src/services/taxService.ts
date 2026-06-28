@@ -123,6 +123,9 @@ export interface TNDNQuyData {
   thuNhapTinhThue: number;
   thueTNDN: number;
   lnSauThue: number;
+  /** Tổng chi phí không được trừ tự tính (từ chứng từ) + điều chỉnh tay, per nhóm.
+   *  Index: 0=DV/hàng hóa, 1=TSCĐ/CCDC, 2=nhân công, 3=tài chính/khác */
+  cpKhongTruAuto?: number[];
 }
 
 export interface BaoCaoTNDN {

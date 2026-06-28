@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { TermText } from "@/components/glossary/TermText";
 import type { Key } from "react";
 import { Table, Button, Space, Tooltip, Popconfirm } from "antd";
@@ -9,7 +9,7 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import { NhatKyChung } from "@/types";
+import { NhatKyChung, QuyChuan, HoSoChungTu } from "@/types";
 import { useTableColumnResize } from "@/hooks/useTableColumnResize";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import {
@@ -50,6 +50,8 @@ import { TableTitleSettings } from '@/components/glossary/TableTitleSettings';
 import { NKC_TITLE_TERMS } from './nkcTitleTerms';
 import { DetailPopover } from "./DetailPopover";
 import { EditableCell, SelectOption } from "../editable-cell";
+import { BienTapHoSoCell } from "../BienTapHoSoCell";
+import { KiemSoatCell } from "../KiemSoatCell";
 import dayjs from "dayjs";
 import type { TablePaginationConfig } from "antd/es/table";
 import type { ColumnType } from "antd/es/table";
@@ -112,6 +114,8 @@ const DEFAULT_WIDTHS: Record<string, number> = {
   nguoiGiaoDich: 100,
   diaChi: 120,
   ghiChu: 120,
+  hoSoChungTu: 160,
+  kiemSoat: 150,
   action: 70,
 };
 
@@ -134,7 +138,10 @@ const EDITABLE_COLUMNS: Record<string, EditableColumnConfig> = {
 
 // Column definitions without width (static)
 const getColumnDefinitions = (
-  taiKhoanOptions: SelectOption[]
+  taiKhoanOptions: SelectOption[],
+  quyChaunList: QuyChuan[],
+  hoSoChungTuList: HoSoChungTu[],
+  onRefresh: () => void
 ): Omit<ColumnType<NhatKyChung>, "width">[] => [
   {
     title: "Ngày",
@@ -735,6 +742,27 @@ const getColumnDefinitions = (
     ),
   },
   {
+    title: "Biên tập hồ sơ",
+    key: "hoSoChungTu",
+    align: "center" as const,
+    render: (_: unknown, record: NhatKyChung) => (
+      <BienTapHoSoCell
+        entry={record}
+        quyChaunList={quyChaunList}
+        hoSoChungTuList={hoSoChungTuList}
+        onSaved={onRefresh}
+      />
+    ),
+  },
+  {
+    title: "Kiểm soát",
+    key: "kiemSoat",
+    align: "center" as const,
+    render: (_: unknown, record: NhatKyChung) => (
+      <KiemSoatCell entry={record} onSaved={onRefresh} />
+    ),
+  },
+  {
     title: "",
     key: "action",
     width: 120,
@@ -759,6 +787,8 @@ export function EntryListTab() {
     totalPages: 0,
   });
   const [taiKhoanList] = useNhatKyChungState("taiKhoanList", []);
+  const [quyChaunList] = useNhatKyChungState("quyChaunList", []);
+  const [hoSoChungTuList] = useNhatKyChungState("hoSoChungTuList", []);
   const [editingRowId] = useNhatKyChungState("editingRowId", null);
   const [exportingExcel] = useNhatKyChungState("exportingExcel", false);
   const [selectedEntryIds, setSelectedEntryIds] = useNhatKyChungState(
@@ -798,25 +828,32 @@ export function EntryListTab() {
       }
     : undefined;
 
+  // Read pagination from handler state at call time to avoid stale closure in memoised columns
+  const handleRefresh = useCallback(() => {
+    const currentPagination = handler.getState("pagination");
+    handler.executeEvent("loadPage", {
+      page: currentPagination?.page || 1,
+      limit: currentPagination?.limit || 100,
+    });
+  }, [handler]);
+
   // Memoize columns with widths - now depends on taiKhoanOptions
   const columns = useMemo(
     () =>
-      getColumnDefinitions(taiKhoanOptions).map((col) => ({
+      getColumnDefinitions(
+        taiKhoanOptions,
+        quyChaunList,
+        hoSoChungTuList,
+        handleRefresh
+      ).map((col) => ({
         ...col,
         width: col.width || DEFAULT_WIDTHS[col.key as string] || 100,
       })),
-    [taiKhoanOptions]
+    [taiKhoanOptions, quyChaunList, hoSoChungTuList, handleRefresh]
   );
 
   const handleCreateEntry = () => {
     navigate("/chung-tu/nhat-ky-chung/tao-moi");
-  };
-
-  const handleRefresh = () => {
-    handler.executeEvent("loadPage", {
-      page: pagination?.page || 1,
-      limit: pagination?.limit || 100,
-    });
   };
 
   // Row class name for highlighting editing row

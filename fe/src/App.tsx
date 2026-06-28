@@ -57,6 +57,7 @@ import {
   ChinhSachPage,
   HuongDanPage,
   QuyChaunPage,
+  HoSoChungTuPage,
   PhanQuyenPage,
   VaiTroPage,
   ThanhVienPage,
@@ -82,8 +83,8 @@ const App = () => (
       locale={viVN}
       theme={{
         token: {
-          // Màu thương hiệu Master CEO: navy đậm (gold #C9A227 dùng làm accent).
-          colorPrimary: '#1B3A6B',
+          // Màu thương hiệu MasterCEO: teal logo (gold #b6954e dùng làm accent).
+          colorPrimary: '#1f7769',
           // Đồng bộ toàn dự án: bo góc = 0 (giữ tròn cho avatar/chấm/spinner riêng).
           borderRadius: 0,
           borderRadiusLG: 0,
@@ -220,6 +221,11 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
+                  <Route path="ho-so-chung-tu" element={
+                    <ProtectedRoute requiredPermission="/danh-muc/ho-so-chung-tu:xem">
+                      <HoSoChungTuPage />
+                    </ProtectedRoute>
+                  } />
                   <Route path="kho" element={
                     <ProtectedRoute requiredPermission="/danh-muc/kho:xem">
                       <KhoPage />

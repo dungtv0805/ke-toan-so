@@ -2,7 +2,7 @@ import React, { useMemo, useCallback, useEffect } from "react";
 import { Table, Tag, Space, Button, Popconfirm, Tabs, Tooltip } from "antd";
 import { EditOutlined, DeleteOutlined, SwapOutlined } from "@ant-design/icons";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
-import { QuyChuan, LoaiGiaoDich } from "@/types";
+import { QuyChuan, LoaiGiaoDich, HoSoChungTuRef } from "@/types";
 import {
   useQuyChaunHandler,
   useQuyChaunState,
@@ -130,6 +130,14 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton }
       key: "moTa",
       ellipsis: true,
       render: (text) => text || "-",
+    },
+    {
+      title: "Biên tập hồ sơ",
+      dataIndex: "hoSoChungTu",
+      key: "hoSoChungTu",
+      width: 220,
+      render: (refs?: HoSoChungTuRef[]) =>
+        refs?.length ? <Space wrap>{refs.map((r) => <Tag key={r.id || r.ma}>{r.ten}</Tag>)}</Space> : "-",
     },
     {
       title: "Thao tác",

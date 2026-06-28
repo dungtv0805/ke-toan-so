@@ -38,6 +38,14 @@ interface RowDef {
   note?: string;
 }
 
+/** Maps inputKey of the 4 non-deductible rows → cpKhongTruAuto array index */
+const NHOM_INDEX: Record<string, number> = {
+  cpkdtDichVuHangHoa: 0,
+  cpkdtTscdCcdc: 1,
+  cpkdtNhanCong: 2,
+  cpkdtTaiChinhKhac: 3,
+};
+
 const ROWS: RowDef[] = [
   { key: "r1", tt: "1", label: "Doanh thu thuần bán hàng", kind: "calc", calcKey: "dt511", note: "Có TK 511" },
   { key: "r2", tt: "2", label: "Doanh thu tài chính, lãi tiền gửi/cho vay", kind: "calc", calcKey: "dt515", note: "Có TK 515" },
@@ -138,16 +146,28 @@ const BaoCaoTNDNPage: React.FC = () => {
     }
     // input
     const arr = (dc?.[row.inputKey as InputKey] as number[]) || [0, 0, 0, 0];
+    const nhomIdx = NHOM_INDEX[row.inputKey as string];
+    const autoTotal =
+      nhomIdx !== undefined
+        ? (bao?.quy?.[qi]?.cpKhongTruAuto?.[nhomIdx] ?? 0)
+        : null;
     return (
-      <InputNumber
-        size="small"
-        value={arr[qi]}
-        disabled={!canEdit}
-        onChange={(val) => handleInputChange(row.inputKey as InputKey, qi, val)}
-        style={{ width: "100%" }}
-        formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-        parser={(v) => Number((v || "").replace(/,/g, ""))}
-      />
+      <div>
+        <InputNumber
+          size="small"
+          value={arr[qi]}
+          disabled={!canEdit}
+          onChange={(val) => handleInputChange(row.inputKey as InputKey, qi, val)}
+          style={{ width: "100%" }}
+          formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+          parser={(v) => Number((v || "").replace(/,/g, ""))}
+        />
+        {autoTotal !== null && (
+          <div style={{ fontSize: 11, color: "#888", marginTop: 2, textAlign: "right" }}>
+            Tổng (gồm tự tính): {fmt(autoTotal)}
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -162,7 +182,21 @@ const BaoCaoTNDNPage: React.FC = () => {
       return `${Math.round(r * 100)}%`;
     }
     const arr = (dc?.[row.inputKey as InputKey] as number[]) || [0, 0, 0, 0];
-    return <Text strong>{fmt(arr.reduce((s, x) => s + (x || 0), 0))}</Text>;
+    const nhomIdxLK = NHOM_INDEX[row.inputKey as string];
+    const autoTotalLK =
+      nhomIdxLK !== undefined
+        ? (bao?.luyKe?.cpKhongTruAuto?.[nhomIdxLK] ?? 0)
+        : null;
+    return (
+      <div style={{ textAlign: "right" }}>
+        <Text strong>{fmt(arr.reduce((s, x) => s + (x || 0), 0))}</Text>
+        {autoTotalLK !== null && (
+          <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>
+            Tổng (gồm tự tính): {fmt(autoTotalLK)}
+          </div>
+        )}
+      </div>
+    );
   };
 
   const quarterCol = (qi: number) => ({

@@ -30,6 +30,7 @@ const seeds = [
   { name: 'loai-giao-dich', module: require('./loai-giao-dich.seed') },
   { name: 'quy-chuan', module: require('./quy-chuan.seed') },
   { name: 'loai-chung-tu', module: require('./loai-chung-tu.seed') },
+  { name: 'ho-so-chung-tu', module: require('./ho-so-chung-tu.seed') },
   // Transaction data (giao dịch)
   { name: 'chung-tu', module: require('./chung-tu.seed') },
   { name: 'cong-no', module: require('./cong-no.seed') },
