@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { Button, Dropdown, Checkbox, Space, Divider } from 'antd';
-import { SettingOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Checkbox, Space, Divider, Tooltip } from 'antd';
+import { ControlOutlined } from '@ant-design/icons';
 import { REGISTRY, defaultVisibleKeys, type ChooserGroup } from './columnRegistry';
 
 const GROUP_ORDER: ChooserGroup[] = [
@@ -71,7 +71,9 @@ const ColumnChooser: React.FC<Props> = ({ visibleKeys, onChange }) => {
 
   return (
     <Dropdown trigger={['click']} dropdownRender={() => panel}>
-      <Button icon={<SettingOutlined />}>Chọn cột</Button>
+      <Tooltip title="Chọn cột">
+        <Button size="small" icon={<ControlOutlined />} />
+      </Tooltip>
     </Dropdown>
   );
 };
