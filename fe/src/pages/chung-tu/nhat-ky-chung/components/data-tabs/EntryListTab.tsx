@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { TermText } from "@/components/glossary/TermText";
 import type { Key } from "react";
 import { Table, Button, Space, Tooltip, Popconfirm } from "antd";
@@ -818,12 +818,14 @@ export function EntryListTab() {
       }
     : undefined;
 
-  const handleRefresh = () => {
+  // Read pagination from handler state at call time to avoid stale closure in memoised columns
+  const handleRefresh = useCallback(() => {
+    const currentPagination = handler.getState("pagination");
     handler.executeEvent("loadPage", {
-      page: pagination?.page || 1,
-      limit: pagination?.limit || 100,
+      page: currentPagination?.page || 1,
+      limit: currentPagination?.limit || 100,
     });
-  };
+  }, [handler]);
 
   // Memoize columns with widths - now depends on taiKhoanOptions
   const columns = useMemo(
@@ -837,8 +839,7 @@ export function EntryListTab() {
         ...col,
         width: col.width || DEFAULT_WIDTHS[col.key as string] || 100,
       })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [taiKhoanOptions, quyChaunList, hoSoChungTuList]
+    [taiKhoanOptions, quyChaunList, hoSoChungTuList, handleRefresh]
   );
 
   const handleCreateEntry = () => {
