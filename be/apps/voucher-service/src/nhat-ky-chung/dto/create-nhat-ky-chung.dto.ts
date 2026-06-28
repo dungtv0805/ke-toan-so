@@ -19,6 +19,11 @@ export class CreateNhatKyChungDto {
   @IsDateString()
   ngay: string;
 
+  // Ngày ghi sổ (mặc định = ngày phát sinh CT nếu không truyền). Không ảnh hưởng logic báo cáo.
+  @IsOptional()
+  @IsDateString()
+  ngayGhiSo?: string;
+
   @IsNotEmpty()
   @IsNumber()
   @Min(1, { message: 'Số tiền phải lớn hơn 0' })

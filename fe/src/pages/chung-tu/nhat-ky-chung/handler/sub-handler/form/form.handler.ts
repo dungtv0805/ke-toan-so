@@ -109,6 +109,7 @@ export class FormHandler extends CSubHanlder<
     return {
       loai: values.loai,
       ngay: values.ngay.format("YYYY-MM-DD"),
+      ngayGhiSo: (values.ngayGhiSo ?? values.ngay).format("YYYY-MM-DD"),
       soTien: values.soTien,
       noiDung: values.noiDung,
       nguoiGiaoDich: values.nguoiGiaoDich,
@@ -143,6 +144,7 @@ export class FormHandler extends CSubHanlder<
         id: editingEntry.id,
         data: {
           ngay: submitData.ngay,
+          ngayGhiSo: submitData.ngayGhiSo,
           soTien: submitData.soTien,
           noiDung: submitData.noiDung,
           nguoiGiaoDich: submitData.nguoiGiaoDich,
@@ -155,6 +157,7 @@ export class FormHandler extends CSubHanlder<
       await this.executeEvent("createEntry", {
         loai: submitData.loai as "PHIEU_THU" | "PHIEU_CHI",
         ngay: submitData.ngay,
+        ngayGhiSo: submitData.ngayGhiSo,
         soTien: submitData.soTien,
         noiDung: submitData.noiDung,
         nguoiGiaoDich: submitData.nguoiGiaoDich,
@@ -442,6 +445,7 @@ export class FormHandler extends CSubHanlder<
 
       const baseValues: InitFormResult = {
         ngay: dayjs(editingEntry.ngay),
+        ngayGhiSo: dayjs(editingEntry.ngayGhiSo || editingEntry.ngay),
         loai: loaiMa,
         soTien: editingEntry.soTien,
         noiDung: editingEntry.dienGiai,
@@ -463,6 +467,7 @@ export class FormHandler extends CSubHanlder<
       // Create mode - không mặc định loại chứng từ
       const baseValues: InitFormResult = {
         ngay: dayjs(),
+        ngayGhiSo: dayjs(),
       };
 
       // Auto-fill single value master data

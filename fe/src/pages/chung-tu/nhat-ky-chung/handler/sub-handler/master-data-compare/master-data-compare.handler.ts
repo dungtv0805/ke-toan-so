@@ -241,6 +241,7 @@ export class MasterDataCompareHandler extends CSubHanlder<
       id: editingEntry.id,
       data: {
         ngay: pendingData.ngay as string,
+        ngayGhiSo: pendingData.ngayGhiSo as string,
         soTien: pendingData.soTien as number,
         noiDung: pendingData.noiDung as string,
         danhMuc: pendingData.danhMuc as DanhMuc,
@@ -299,6 +300,7 @@ export class MasterDataCompareHandler extends CSubHanlder<
       id: editingEntry.id,
       data: {
         ngay: pendingData.ngay as string,
+        ngayGhiSo: pendingData.ngayGhiSo as string,
         soTien: pendingData.soTien as number,
         noiDung: pendingData.noiDung as string,
         danhMuc: pendingData.danhMuc as DanhMuc,

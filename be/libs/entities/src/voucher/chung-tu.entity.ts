@@ -140,6 +140,10 @@ export class ChungTu extends BaseEntity {
   @Column()
   ngay: Date;
 
+  // Ngày ghi sổ (mặc định = ngày phát sinh). Chỉ lưu/hiển thị, không dùng cho báo cáo.
+  @Column({ nullable: true })
+  ngayGhiSo?: Date;
+
   @Column()
   soTien: number;
 

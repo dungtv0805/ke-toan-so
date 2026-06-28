@@ -4,6 +4,7 @@ export interface FormValues {
   loai: string;
   loaiTen?: string;
   ngay: { format: (f: string) => string };
+  ngayGhiSo?: { format: (f: string) => string };
   soTien: number;
   noiDung: string;
   nguoiGiaoDich?: string;
@@ -28,6 +29,7 @@ export interface FormValues {
 export interface SubmitData {
   loai: string;
   ngay: string;
+  ngayGhiSo?: string;
   soTien: number;
   noiDung: string;
   nguoiGiaoDich?: string;
@@ -38,6 +40,7 @@ export interface SubmitData {
 
 export interface InitFormResult {
   ngay: unknown;
+  ngayGhiSo?: unknown;
   loai?: string;
   loaiTen?: string;
   soTien?: number;

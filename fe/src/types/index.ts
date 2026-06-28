@@ -429,6 +429,7 @@ export interface ChungTuResponse {
   soPhieu: string;
   loai: LoaiChungTu;
   ngay: string | Date;
+  ngayGhiSo?: string | Date;
   soTien: number;
   noiDung: string;
   nguoiGiaoDich?: string;
@@ -605,6 +606,7 @@ export interface ChungTu {
 export interface NhatKyChung {
   id: string;
   ngay: string;
+  ngayGhiSo?: string;
   soPhieu: string;
   loaiChungTu: string;
   dienGiai: string;

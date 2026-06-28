@@ -18,6 +18,11 @@ export class UpdateNhatKyChungDto {
 
   @Transform(({ value }) => (value === '' ? undefined : value))
   @IsOptional()
+  @IsDateString()
+  ngayGhiSo?: string;
+
+  @Transform(({ value }) => (value === '' ? undefined : value))
+  @IsOptional()
   @IsNumber()
   @Min(1, { message: 'Số tiền phải lớn hơn 0' })
   soTien?: number;

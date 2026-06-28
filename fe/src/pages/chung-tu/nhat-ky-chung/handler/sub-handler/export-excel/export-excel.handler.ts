@@ -14,7 +14,8 @@ import { ExportExcelEvent } from "./export-excel.event";
 import { NhatKyChungStates } from "../../nhat-ky-chung.handler";
 
 const EXCEL_COLUMNS: ExcelColumn[] = [
-  { header: "Ngày", dataKey: "ngay", width: 12 },
+  { header: "Ngày Phát Sinh CT", dataKey: "ngay", width: 16 },
+  { header: "Ngày ghi sổ", dataKey: "ngayGhiSo", width: 14 },
   { header: "Số CT", dataKey: "soPhieu", width: 12 },
   { header: "Loại GD", dataKey: "loaiGiaoDich", width: 15 },
   { header: "Nghiệp vụ", dataKey: "nghiepVu", width: 20 },
@@ -70,6 +71,7 @@ export class ExportExcelHandler extends CSubHanlder<ExportExcelEvent, NhatKyChun
 
       const data = allEntries.map((entry: NhatKyChung) => ({
         ngay: dayjs(entry.ngay).format("DD/MM/YYYY"),
+        ngayGhiSo: dayjs(entry.ngayGhiSo || entry.ngay).format("DD/MM/YYYY"),
         soPhieu: entry.soPhieu,
         loaiGiaoDich: entry.danhMuc?.loaiGiaoDich?.ten ?? "",
         nghiepVu: entry.danhMuc?.nghiepVu?.ten ?? "",

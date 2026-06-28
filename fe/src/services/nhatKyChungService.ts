@@ -43,6 +43,7 @@ export interface GetEntriesParams {
 export interface CreateEntryDto {
   loai: LoaiChungTu;
   ngay: string;
+  ngayGhiSo?: string;
   soTien: number;
   noiDung: string;
   nguoiGiaoDich?: string;
@@ -55,6 +56,7 @@ export interface BatchItemDto {
   id?: string; // undefined = create new, string = update existing
   loai: LoaiChungTu;
   ngay: string;
+  ngayGhiSo?: string;
   soTien: number;
   noiDung: string;
   nguoiGiaoDich?: string;
@@ -65,6 +67,7 @@ export interface BatchItemDto {
 
 export interface UpdateEntryDto {
   ngay?: string;
+  ngayGhiSo?: string;
   soTien?: number;
   noiDung?: string;
   nguoiGiaoDich?: string;
@@ -97,9 +100,18 @@ class NhatKyChungService extends ServiceBase {
     const loaiChungTu = item.loai === 'PHIEU_THU' ? 'Phiếu thu' : 'Phiếu chi';
     const danhMuc = item.danhMuc;
 
+    const ngayStr =
+      typeof item.ngay === 'string' ? item.ngay : (item.ngay as Date).toISOString();
+    const ngayGhiSoStr = item.ngayGhiSo
+      ? typeof item.ngayGhiSo === 'string'
+        ? item.ngayGhiSo
+        : (item.ngayGhiSo as Date).toISOString()
+      : ngayStr; // dữ liệu cũ chưa có ngayGhiSo → hiển thị theo ngày phát sinh
+
     return {
       id: item._id,
-      ngay: typeof item.ngay === 'string' ? item.ngay : (item.ngay as Date).toISOString(),
+      ngay: ngayStr,
+      ngayGhiSo: ngayGhiSoStr,
       soPhieu: item.soPhieu,
       loaiChungTu,
       dienGiai: item.noiDung,

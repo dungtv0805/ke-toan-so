@@ -25,11 +25,20 @@ export function BasicInfoFields({ isEditing, form }: BasicInfoFieldsProps) {
         <Col span={8}>
           <Form.Item
             name="ngay"
-            label="Ngày chứng từ"
+            label="Ngày Phát Sinh CT"
             rules={[{ required: true, message: "Vui lòng chọn ngày" }]}
             className="mb-2"
           >
             <DatePicker format="DD/MM/YYYY" className="w-full" />
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item
+            name="ngayGhiSo"
+            label="Ngày ghi sổ"
+            className="mb-2"
+          >
+            <DatePicker format="DD/MM/YYYY" className="w-full" placeholder="Mặc định = ngày phát sinh" />
           </Form.Item>
         </Col>
         <Col span={8}>

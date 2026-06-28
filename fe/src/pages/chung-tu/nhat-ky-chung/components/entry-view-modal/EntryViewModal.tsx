@@ -74,8 +74,11 @@ export function EntryViewModal() {
             {entry.soPhieu}
           </Text>
         </Descriptions.Item>
-        <Descriptions.Item label="Ngày" span={1}>
+        <Descriptions.Item label="Ngày Phát Sinh CT" span={1}>
           {dayjs(entry.ngay).format("DD/MM/YYYY")}
+        </Descriptions.Item>
+        <Descriptions.Item label="Ngày ghi sổ" span={1}>
+          {dayjs(entry.ngayGhiSo || entry.ngay).format("DD/MM/YYYY")}
         </Descriptions.Item>
         <Descriptions.Item label="Thu/Chi" span={1}>
           <Tag color={isPhieuThu ? "success" : "error"}>

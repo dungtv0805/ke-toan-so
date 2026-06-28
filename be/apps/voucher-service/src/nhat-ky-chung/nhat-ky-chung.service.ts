@@ -367,6 +367,7 @@ export class NhatKyChungService {
       nguoiGiaoDich: createDto.nguoiGiaoDich,
       diaChi: createDto.diaChi,
       ngay: new Date(createDto.ngay),
+      ngayGhiSo: new Date(createDto.ngayGhiSo || createDto.ngay),
       soPhieu,
       nguoiTaoId,
     });
@@ -394,6 +395,9 @@ export class NhatKyChungService {
 
     if (updateDto.ngay) {
       chungTu.ngay = new Date(updateDto.ngay);
+    }
+    if (updateDto.ngayGhiSo !== undefined) {
+      chungTu.ngayGhiSo = new Date(updateDto.ngayGhiSo);
     }
     if (updateDto.soTien !== undefined) {
       chungTu.soTien = updateDto.soTien;
@@ -512,6 +516,7 @@ export class NhatKyChungService {
         nguoiGiaoDich: item.nguoiGiaoDich,
         diaChi: item.diaChi,
         ngay: new Date(item.ngay),
+        ngayGhiSo: new Date(item.ngayGhiSo || item.ngay),
         soPhieu, // Same soPhieu for all
         nguoiTaoId,
       }),
@@ -585,6 +590,7 @@ export class NhatKyChungService {
         nguoiGiaoDich: item.nguoiGiaoDich,
         diaChi: item.diaChi,
         ngay: new Date(item.ngay),
+        ngayGhiSo: new Date(item.ngayGhiSo || item.ngay),
         soPhieu: soPhieuByIndex[idx],
         nguoiTaoId,
       }),
@@ -681,6 +687,7 @@ export class NhatKyChungService {
         nguoiGiaoDich: item.nguoiGiaoDich,
         diaChi: item.diaChi,
         ngay: new Date(item.ngay),
+        ngayGhiSo: new Date(item.ngayGhiSo || item.ngay),
         soPhieu, // Same soPhieu
         nguoiTaoId,
       });

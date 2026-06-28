@@ -23,6 +23,10 @@ export class BatchItemDto {
   @IsDateString()
   ngay: string;
 
+  @IsOptional()
+  @IsDateString()
+  ngayGhiSo?: string;
+
   @IsNotEmpty()
   @IsNumber()
   @Min(0)

@@ -76,7 +76,8 @@ const renderEllipsisText = (text: string | undefined | null) => {
 
 // Default column widths
 const DEFAULT_WIDTHS: Record<string, number> = {
-  ngay: 85,
+  ngay: 120,
+  ngayGhiSo: 100,
   soPhieu: 90,
   loaiGiaoDich: 120,
   nghiepVu: 150,
@@ -144,9 +145,10 @@ const getColumnDefinitions = (
   onRefresh: () => void
 ): Omit<ColumnType<NhatKyChung>, "width">[] => [
   {
-    title: "Ngày",
+    title: "Ngày Phát Sinh CT",
     dataIndex: "ngay",
     key: "ngay",
+    fixed: "left" as const,
     sorter: (a: NhatKyChung, b: NhatKyChung) =>
       new Date(a.ngay).getTime() - new Date(b.ngay).getTime(),
     render: (date: string, record: NhatKyChung) => (
@@ -161,9 +163,18 @@ const getColumnDefinitions = (
     ),
   },
   {
+    title: "Ngày ghi sổ",
+    dataIndex: "ngayGhiSo",
+    key: "ngayGhiSo",
+    fixed: "left" as const,
+    render: (_: unknown, record: NhatKyChung) =>
+      dayjs(record.ngayGhiSo || record.ngay).format("DD/MM/YY"),
+  },
+  {
     title: "Số CT",
     dataIndex: "soPhieu",
     key: "soPhieu",
+    fixed: "left" as const,
     render: (text: string, record: NhatKyChung) => (
       <span
         className={`font-semibold ${
@@ -177,6 +188,7 @@ const getColumnDefinitions = (
   {
     title: "Loại GD",
     key: "loaiGiaoDich",
+    fixed: "left" as const,
     render: (_: unknown, record: NhatKyChung) => {
       const loaiGD = record.danhMuc?.loaiGiaoDich?.ten;
       return loaiGD ? (

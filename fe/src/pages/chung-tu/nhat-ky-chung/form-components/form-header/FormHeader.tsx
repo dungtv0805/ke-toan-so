@@ -42,7 +42,7 @@ export function FormHeader() {
         )}
         <div className="nkc-field flex-1" style={{ minWidth: 100 }}>
           <label className="nkc-label">
-            Ngày CT <span className="text-red-500">*</span>
+            Ngày Phát Sinh CT <span className="text-red-500">*</span>
           </label>
           <DatePicker
             format="DD/MM/YYYY"
