@@ -12,6 +12,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 
 import MainLayout from "./components/layout/MainLayout";
 import InstallPWA from "./components/shared/InstallPWA";
+import PWAUpdatePrompt from "./components/shared/PWAUpdatePrompt";
 import {
   LoginPage,
   Dashboard,
@@ -105,6 +106,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <PWAUpdatePrompt />
         <InstallPWA />
         <BrowserRouter>
           <AuthProvider>

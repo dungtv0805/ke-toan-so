@@ -19,7 +19,10 @@ export default defineConfig(({ mode }) => ({
     react({ tsDecorators: true }),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: "autoUpdate",
+      // 'prompt': có bản mới → hiện thông báo cho người dùng bấm Tải lại (không tự reload giữa lúc nhập liệu).
+      registerType: "prompt",
+      // Tự đăng ký thủ công qua PWAUpdatePrompt (virtual:pwa-register) để kiểm soát thông báo cập nhật.
+      injectRegister: false,
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "logo.jpg"],
       manifest: {
         name: "Master CEO",

@@ -43,11 +43,18 @@ const InstallPWA: React.FC = () => {
       setDeferred(e as BeforeInstallPromptEvent);
     };
     const onInstalled = () => setInstalled(true);
+    // Cho phép menu "Cài đặt ứng dụng" gọi hiện lại banner sau khi đã tắt.
+    const onReopen = () => {
+      localStorage.removeItem(DISMISS_KEY);
+      setDismissed(false);
+    };
     window.addEventListener('beforeinstallprompt', onPrompt);
     window.addEventListener('appinstalled', onInstalled);
+    window.addEventListener('open-install-pwa', onReopen);
     return () => {
       window.removeEventListener('beforeinstallprompt', onPrompt);
       window.removeEventListener('appinstalled', onInstalled);
+      window.removeEventListener('open-install-pwa', onReopen);
     };
   }, []);
 

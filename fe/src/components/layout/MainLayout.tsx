@@ -20,6 +20,7 @@ import {
   SettingOutlined,
   UserOutlined,
   LogoutOutlined,
+  DownloadOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   BankOutlined,
@@ -77,6 +78,11 @@ import type { LinhVuc } from "@/services/linhVucService";
 const { Header, Sider, Content } = Layout;
 
 type MenuItem = Required<MenuProps>["items"][number];
+
+// Mobile/tablet (gồm iPad iPadOS 13+ báo là Macintosh) → hiện mục "Cài đặt ứng dụng" trong menu user.
+const IS_MOBILE_OR_TABLET =
+  /android|iphone|ipod|ipad/i.test(navigator.userAgent) ||
+  (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 
 // Item hiển thị nếu key thuộc COMMON hoặc nằm trong tập menuKeys được truyền vào.
 function keyMatches(key: string, moduleKeys: string[]): boolean {
@@ -537,6 +543,17 @@ const MainLayout: React.FC = () => {
       label: "Thông tin cá nhân",
       onClick: () => navigate("/profile"),
     },
+    ...(IS_MOBILE_OR_TABLET
+      ? ([
+          { type: "divider" as const },
+          {
+            key: "install-pwa",
+            icon: <DownloadOutlined />,
+            label: "Cài đặt ứng dụng",
+            onClick: () => window.dispatchEvent(new Event("open-install-pwa")),
+          },
+        ] as MenuProps["items"])
+      : []),
     {
       type: "divider",
     },
