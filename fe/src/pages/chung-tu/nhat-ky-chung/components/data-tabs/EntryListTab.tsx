@@ -9,7 +9,7 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import { NhatKyChung } from "@/types";
+import { NhatKyChung, QuyChuan, HoSoChungTu } from "@/types";
 import { useTableColumnResize } from "@/hooks/useTableColumnResize";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import {
@@ -50,6 +50,7 @@ import { TableTitleSettings } from '@/components/glossary/TableTitleSettings';
 import { NKC_TITLE_TERMS } from './nkcTitleTerms';
 import { DetailPopover } from "./DetailPopover";
 import { EditableCell, SelectOption } from "../editable-cell";
+import { BienTapHoSoCell } from "../BienTapHoSoCell";
 import dayjs from "dayjs";
 import type { TablePaginationConfig } from "antd/es/table";
 import type { ColumnType } from "antd/es/table";
@@ -112,6 +113,7 @@ const DEFAULT_WIDTHS: Record<string, number> = {
   nguoiGiaoDich: 100,
   diaChi: 120,
   ghiChu: 120,
+  hoSoChungTu: 160,
   action: 70,
 };
 
@@ -134,7 +136,10 @@ const EDITABLE_COLUMNS: Record<string, EditableColumnConfig> = {
 
 // Column definitions without width (static)
 const getColumnDefinitions = (
-  taiKhoanOptions: SelectOption[]
+  taiKhoanOptions: SelectOption[],
+  quyChaunList: QuyChuan[],
+  hoSoChungTuList: HoSoChungTu[],
+  onRefresh: () => void
 ): Omit<ColumnType<NhatKyChung>, "width">[] => [
   {
     title: "Ngày",
@@ -735,6 +740,19 @@ const getColumnDefinitions = (
     ),
   },
   {
+    title: "Biên tập hồ sơ",
+    key: "hoSoChungTu",
+    align: "center" as const,
+    render: (_: unknown, record: NhatKyChung) => (
+      <BienTapHoSoCell
+        entry={record}
+        quyChaunList={quyChaunList}
+        hoSoChungTuList={hoSoChungTuList}
+        onSaved={onRefresh}
+      />
+    ),
+  },
+  {
     title: "",
     key: "action",
     width: 120,
@@ -759,6 +777,8 @@ export function EntryListTab() {
     totalPages: 0,
   });
   const [taiKhoanList] = useNhatKyChungState("taiKhoanList", []);
+  const [quyChaunList] = useNhatKyChungState("quyChaunList", []);
+  const [hoSoChungTuList] = useNhatKyChungState("hoSoChungTuList", []);
   const [editingRowId] = useNhatKyChungState("editingRowId", null);
   const [exportingExcel] = useNhatKyChungState("exportingExcel", false);
   const [selectedEntryIds, setSelectedEntryIds] = useNhatKyChungState(
@@ -798,25 +818,31 @@ export function EntryListTab() {
       }
     : undefined;
 
-  // Memoize columns with widths - now depends on taiKhoanOptions
-  const columns = useMemo(
-    () =>
-      getColumnDefinitions(taiKhoanOptions).map((col) => ({
-        ...col,
-        width: col.width || DEFAULT_WIDTHS[col.key as string] || 100,
-      })),
-    [taiKhoanOptions]
-  );
-
-  const handleCreateEntry = () => {
-    navigate("/chung-tu/nhat-ky-chung/tao-moi");
-  };
-
   const handleRefresh = () => {
     handler.executeEvent("loadPage", {
       page: pagination?.page || 1,
       limit: pagination?.limit || 100,
     });
+  };
+
+  // Memoize columns with widths - now depends on taiKhoanOptions
+  const columns = useMemo(
+    () =>
+      getColumnDefinitions(
+        taiKhoanOptions,
+        quyChaunList,
+        hoSoChungTuList,
+        handleRefresh
+      ).map((col) => ({
+        ...col,
+        width: col.width || DEFAULT_WIDTHS[col.key as string] || 100,
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [taiKhoanOptions, quyChaunList, hoSoChungTuList]
+  );
+
+  const handleCreateEntry = () => {
+    navigate("/chung-tu/nhat-ky-chung/tao-moi");
   };
 
   // Row class name for highlighting editing row
