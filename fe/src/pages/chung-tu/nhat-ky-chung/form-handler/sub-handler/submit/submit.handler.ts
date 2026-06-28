@@ -101,6 +101,7 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
           id: ct.id, // Include id for existing items (undefined for new)
           loai,
           ngay: header.ngay.format("YYYY-MM-DD"),
+          ngayGhiSo: (header.ngayGhiSo || header.ngay).format("YYYY-MM-DD"),
           soTien: ct.soTien,
           noiDung: ct.noiDung || header.dienGiaiChung || "",
           soTaiKhoan: ct.soTaiKhoan,
@@ -118,6 +119,7 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
         const items: CreateEntryDto[] = chiTietList.map((ct) => ({
           loai,
           ngay: header.ngay.format("YYYY-MM-DD"),
+          ngayGhiSo: (header.ngayGhiSo || header.ngay).format("YYYY-MM-DD"),
           soTien: ct.soTien,
           noiDung: ct.noiDung || header.dienGiaiChung || "",
           soTaiKhoan: ct.soTaiKhoan,
@@ -146,6 +148,7 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
   async resetForm(): Promise<void> {
     this.setState("header", {
       ngay: dayjs(),
+      ngayGhiSo: dayjs(),
       loaiGiaoDich: undefined,
       loai: undefined,
       loaiTen: undefined,

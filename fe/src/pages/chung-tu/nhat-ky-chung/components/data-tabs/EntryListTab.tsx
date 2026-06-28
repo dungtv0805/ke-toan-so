@@ -812,7 +812,8 @@ export function EntryListTab() {
   const [importOpen, setImportOpen] = useState(false);
 
   // Enable column resize via DOM manipulation (no React re-renders)
-  useTableColumnResize("resizable-table");
+  // storageKey bump 'v2': cấu trúc cột đổi (thêm cột Ngày ghi sổ) → bỏ width cũ lưu theo chỉ số (đã lệch).
+  useTableColumnResize("resizable-table", "table-col-widths-nkc-v2");
 
   // Convert taiKhoanList to select options
   const taiKhoanOptions: SelectOption[] = useMemo(

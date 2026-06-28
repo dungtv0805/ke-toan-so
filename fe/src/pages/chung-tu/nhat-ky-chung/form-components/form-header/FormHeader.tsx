@@ -53,6 +53,17 @@ export function FormHeader() {
             size="small"
           />
         </div>
+        <div className="nkc-field flex-1" style={{ minWidth: 100 }}>
+          <label className="nkc-label">Ngày ghi sổ</label>
+          <DatePicker
+            format="DD/MM/YYYY"
+            className="w-full"
+            value={header?.ngayGhiSo}
+            onChange={(date) => handleFieldChange("ngayGhiSo", date)}
+            placeholder="Mặc định = ngày phát sinh"
+            size="small"
+          />
+        </div>
         <div className="nkc-field flex-1" style={{ minWidth: 120 }}>
           <label className="nkc-label">
             Loại GD <span className="text-red-500">*</span>

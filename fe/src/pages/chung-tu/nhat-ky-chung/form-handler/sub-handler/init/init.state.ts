@@ -24,6 +24,7 @@ export interface KhoanMucItem {
 export interface ChungTuHeader {
   soPhieu?: string;
   ngay: Dayjs;
+  ngayGhiSo?: Dayjs;       // Ngày ghi sổ (mặc định = ngày phát sinh)
   loaiGiaoDich?: string;  // PHIEU_THU | PHIEU_CHI | BAO_CO | BAO_NO
   loai?: string;          // nghiepVu code
   loaiTen?: string;       // nghiepVu name

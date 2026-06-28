@@ -31,6 +31,7 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
         const header: ChungTuHeader = {
           soPhieu: first.soPhieu,
           ngay: dayjs(first.ngay),
+          ngayGhiSo: dayjs(first.ngayGhiSo || first.ngay),
           loaiGiaoDich: loaiGiaoDich,
           loai: nghiepVu,
           loaiTen: first.danhMuc?.nghiepVu?.ten || first.danhMuc?.loaiChungTu?.ten || first.danhMuc?.loaiGiaoDich?.ten || first.loaiChungTu,
