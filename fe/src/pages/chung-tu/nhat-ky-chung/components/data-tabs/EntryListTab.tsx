@@ -51,6 +51,7 @@ import { NKC_TITLE_TERMS } from './nkcTitleTerms';
 import { DetailPopover } from "./DetailPopover";
 import { EditableCell, SelectOption } from "../editable-cell";
 import { BienTapHoSoCell } from "../BienTapHoSoCell";
+import { KiemSoatCell } from "../KiemSoatCell";
 import dayjs from "dayjs";
 import type { TablePaginationConfig } from "antd/es/table";
 import type { ColumnType } from "antd/es/table";
@@ -114,6 +115,7 @@ const DEFAULT_WIDTHS: Record<string, number> = {
   diaChi: 120,
   ghiChu: 120,
   hoSoChungTu: 160,
+  kiemSoat: 150,
   action: 70,
 };
 
@@ -750,6 +752,14 @@ const getColumnDefinitions = (
         hoSoChungTuList={hoSoChungTuList}
         onSaved={onRefresh}
       />
+    ),
+  },
+  {
+    title: "Kiểm soát",
+    key: "kiemSoat",
+    align: "center" as const,
+    render: (_: unknown, record: NhatKyChung) => (
+      <KiemSoatCell entry={record} onSaved={onRefresh} />
     ),
   },
   {
