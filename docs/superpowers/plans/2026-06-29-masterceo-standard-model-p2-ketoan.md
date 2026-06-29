@@ -247,6 +247,13 @@ if (require.main === module) {
 
 ## Task 8: DEPLOY P2 (production, tương tác — KHÔNG subagent)
 
+> **Final-review checklist bắt buộc (live DB):**
+> - **(I2) Parity _id**: xác nhận `masterceo_identity.users._id == digital_book.users._id` và `…tenants._id` cho cùng thực thể (cut-over đã "giữ _id" — verify lại). Nếu lệch → mọi lookup app_user_roles/tenant_app_config trả null → toàn bộ KIEM_SOAT + modules mặc định.
+> - **(8.2) Sau migrate**: COUNT khớp — mọi `user_tenants` → có `app_user_roles`; mọi `tenants` active → có `tenant_app_config` (spot-check modules/nganh/glossary/dashboardBlocks).
+> - **(M3) Unique index**: tạo tay index `app_user_roles (userId,tenantId) unique` trên prod (synchronize off): `db.app_user_roles.createIndex({userId:1,tenantId:1},{unique:true})`.
+> - **(C1 fix) Smoke**: 1 tenant có module ≠ KE_TOAN (vd KHO) → user vào được endpoint module đó qua gateway (không 403 oan).
+> - JWT_SECRET không đổi (token vẫn do ke-toan-so auth-service phát) — chỉ verify env không drift.
+
 - [ ] **8.1 Backup** digital_book + masterceo_identity (mongodump).
 - [ ] **8.2 Migrate** (mongosh trên container mongo, idempotent): tạo `app_user_roles` từ `user_tenants` (role chức năng) + `tenant_app_config` từ `tenants` (modules/nganh/glossary/dashboardBlocks) **trong digital_book**. (Identity đã có users/tenants/memberships từ cut-over + P1.) Verify count.
 - [ ] **8.3 env** trên server: thêm `IDENTITY_MONGODB_DATABASE=masterceo_identity` vào `env/db.env` ke-toan-so.
