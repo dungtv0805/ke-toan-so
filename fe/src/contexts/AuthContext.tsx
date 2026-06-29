@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { NguoiDung, TenantInfo } from '@/types';
 import { authService } from '@/services/authService';
 import { setAuthToken, getAuthToken, clearAuthToken, setCurrentTenant, getCurrentTenant, clearCurrentTenant } from '@/services/base/service-base';
+import { ssoHandoff } from '@/services/ssoHandoff';
 import { ApiError, ApiErrorType } from '@/config/api';
 import { getAvailableModuleCodes } from '@/config/modules';
 import { linhVucService, type LinhVuc } from '@/services/linhVucService';
@@ -93,6 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check for existing token and fetch user on mount
   useEffect(() => {
     const initAuth = async () => {
+      await ssoHandoff(); // SSO từ Portal: nếu có ?tenant, nạp token trước
       const token = getAuthToken();
       if (token) {
         try {
