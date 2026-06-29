@@ -24,6 +24,17 @@ const { Text, Title } = Typography;
 
 const fmt = (n?: number) => (n ?? 0).toLocaleString("vi-VN");
 
+// Dòng "Tổng (gồm tự tính)" — 1 dòng, không wrap, cắt gọn nếu dài.
+const autoTotalStyle: React.CSSProperties = {
+  fontSize: 11,
+  color: "#8c8c8c",
+  marginTop: 2,
+  textAlign: "right",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+};
+
 type CalcKey = keyof TNDNQuyData;
 type InputKey = keyof Omit<DieuChinhThue, "nam">;
 
@@ -151,8 +162,6 @@ const BaoCaoTNDNPage: React.FC = () => {
       nhomIdx !== undefined
         ? (bao?.quy?.[qi]?.cpKhongTruAuto?.[nhomIdx] ?? 0)
         : null;
-    // Không có quyền sửa → hiện thẳng số (tổng gồm tự tính nếu có), bỏ ô nhập.
-    if (!canEdit) return fmt(autoTotal !== null ? autoTotal : arr[qi] || 0);
     return (
       <div>
         <InputNumber
@@ -163,10 +172,11 @@ const BaoCaoTNDNPage: React.FC = () => {
           style={{ width: "100%" }}
           formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
           parser={(v) => Number((v || "").replace(/,/g, ""))}
+          controls={false}
         />
         {autoTotal !== null && (
-          <div style={{ fontSize: 11, color: "#888", marginTop: 2, textAlign: "right" }}>
-            Tổng (gồm tự tính): {fmt(autoTotal)}
+          <div style={autoTotalStyle} title={`Tổng gồm tự tính: ${fmt(autoTotal)}`}>
+            Tổng: {fmt(autoTotal)}
           </div>
         )}
       </div>
@@ -190,14 +200,12 @@ const BaoCaoTNDNPage: React.FC = () => {
         ? (bao?.luyKe?.cpKhongTruAuto?.[nhomIdxLK] ?? 0)
         : null;
     const sumManual = arr.reduce((s, x) => s + (x || 0), 0);
-    if (!canEdit)
-      return <Text strong>{fmt(autoTotalLK !== null ? autoTotalLK : sumManual)}</Text>;
     return (
       <div style={{ textAlign: "right" }}>
         <Text strong>{fmt(sumManual)}</Text>
         {autoTotalLK !== null && (
-          <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>
-            Tổng (gồm tự tính): {fmt(autoTotalLK)}
+          <div style={autoTotalStyle} title={`Tổng gồm tự tính: ${fmt(autoTotalLK)}`}>
+            Tổng: {fmt(autoTotalLK)}
           </div>
         )}
       </div>
@@ -207,7 +215,7 @@ const BaoCaoTNDNPage: React.FC = () => {
   const quarterCol = (qi: number) => ({
     title: `Quý ${qi + 1}`,
     key: `q${qi}`,
-    width: 130,
+    width: 160,
     align: "right" as const,
     onCell: (row: RowDef) =>
       row.kind === "section" ? { colSpan: 0 } : {},
@@ -244,7 +252,7 @@ const BaoCaoTNDNPage: React.FC = () => {
     {
       title: "Lũy kế",
       key: "luyKe",
-      width: 150,
+      width: 170,
       align: "right" as const,
       onCell: (row: RowDef) =>
         row.kind === "section" ? { colSpan: 0 } : {},
@@ -306,7 +314,7 @@ const BaoCaoTNDNPage: React.FC = () => {
           loading={loading}
           pagination={false}
           size="small"
-          scroll={{ x: 1100, y: "calc(100vh - 280px)" }}
+          scroll={{ x: 1240, y: "calc(100vh - 280px)" }}
         />
       </Card>
     </div>
