@@ -11,6 +11,7 @@ import { User, UserCredential, Tenant, UserTenant, PhanQuyen } from '@app/entiti
     TenantModule,
     AuthModule,
     DatabaseModule.forRoot(),
+    DatabaseModule.forRootIdentity(),
     DatabaseModule.forFeature([User, UserCredential, Tenant, UserTenant]),
     DatabaseModule.forFeatureRaw([PhanQuyen]),
   ],
