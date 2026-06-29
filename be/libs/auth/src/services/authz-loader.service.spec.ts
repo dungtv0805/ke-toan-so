@@ -1,0 +1,53 @@
+import { AuthzLoaderService } from './authz-loader.service';
+
+function fakeDataSource(opts: { userTenant?: any; phanQuyen?: any }) {
+  return {
+    getRepository: (entity: any) => ({
+      findOne: async () => {
+        const name = entity?.name || entity;
+        if (String(name).includes('UserTenant')) return opts.userTenant ?? null;
+        if (String(name).includes('PhanQuyen')) return opts.phanQuyen ?? null;
+        return null;
+      },
+    }),
+  } as any;
+}
+
+describe('AuthzLoaderService', () => {
+  it('super admin theo email → SUPER_ADMIN + [*]', async () => {
+    const svc = new AuthzLoaderService(fakeDataSource({}));
+    const r = await svc.load('u1', 't1', 'admin@company.com');
+    expect(r).toEqual({ vaiTro: 'SUPER_ADMIN', permissions: ['*'] });
+  });
+
+  it('user thường → vaiTro từ user_tenants, permissions từ phan_quyen', async () => {
+    const svc = new AuthzLoaderService(
+      fakeDataSource({
+        userTenant: { role: 'Admin' },
+        phanQuyen: { permissions: ['/chung-tu/phieu-thu:xem', '/chung-tu/phieu-thu:them'] },
+      }),
+    );
+    const r = await svc.load('u1', 't1', 'user@x.com');
+    expect(r.vaiTro).toBe('Admin');
+    expect(r.permissions).toContain('/chung-tu/phieu-thu:xem');
+  });
+
+  it('không có membership → vaiTro mặc định KIEM_SOAT, permissions []', async () => {
+    const svc = new AuthzLoaderService(fakeDataSource({}));
+    const r = await svc.load('u1', 't1', 'user@x.com');
+    expect(r.vaiTro).toBe('KIEM_SOAT');
+    expect(r.permissions).toEqual([]);
+  });
+
+  it('cache: lần 2 không gọi lại findOne', async () => {
+    let calls = 0;
+    const ds: any = {
+      getRepository: () => ({ findOne: async () => { calls++; return null; } }),
+    };
+    const svc = new AuthzLoaderService(ds);
+    await svc.load('u1', 't1', 'user@x.com');
+    const before = calls;
+    await svc.load('u1', 't1', 'user@x.com');
+    expect(calls).toBe(before); // hit cache
+  });
+});
