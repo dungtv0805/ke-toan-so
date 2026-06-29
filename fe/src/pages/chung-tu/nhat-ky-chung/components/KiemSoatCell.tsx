@@ -37,7 +37,9 @@ const formatDate = (iso?: string) => {
 
 export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
   const { user } = useAuth();
-  const currentUserName = user?.hoTen || user?.email || "";
+  // Lưu cả tên + username (email) để biết rõ ai kiểm soát, không chỉ vai trò.
+  const currentUserName =
+    [user?.hoTen, user?.email].filter(Boolean).join(" - ") || "";
 
   const tkNo = entry.taiKhoanNo || entry.danhMuc?.taiKhoanNo?.ma;
 
