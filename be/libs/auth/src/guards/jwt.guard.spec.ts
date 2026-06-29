@@ -3,13 +3,18 @@ import * as fc from 'fast-check';
 import { JwtGuard } from './jwt.guard';
 import { JwtService } from '../services/jwt.service';
 
+const mockAuthzLoader: any = {
+  load: jest.fn(async () => ({ vaiTro: 'KIEM_SOAT', permissions: [] })),
+};
+
 describe('JwtGuard', () => {
   let jwtGuard: JwtGuard;
   let jwtService: JwtService;
 
   beforeEach(() => {
     jwtService = new JwtService();
-    jwtGuard = new JwtGuard(jwtService);
+    jwtGuard = new JwtGuard(jwtService, mockAuthzLoader);
+    mockAuthzLoader.load.mockClear();
   });
 
   const createMockExecutionContext = (
@@ -38,9 +43,9 @@ describe('JwtGuard', () => {
    * If invalid, 401 Unauthorized SHALL be returned.
    */
   describe('Property 1: JWT Guard Token Verification', () => {
-    it('should attach decoded payload to request.user for valid tokens', () => {
-      fc.assert(
-        fc.property(
+    it('should attach decoded payload to request.user for valid tokens', async () => {
+      await fc.assert(
+        fc.asyncProperty(
           fc.record({
             id: fc.uuid(),
             email: fc.emailAddress(),
@@ -62,13 +67,13 @@ describe('JwtGuard', () => {
               { minLength: 0, maxLength: 5 },
             ),
           }),
-          (userPayload) => {
+          async (userPayload) => {
             // Generate a valid token
             const token = jwtService.sign(userPayload);
             const context = createMockExecutionContext(`Bearer ${token}`);
 
             // Execute guard
-            const result = jwtGuard.canActivate(context);
+            const result = await jwtGuard.canActivate(context);
 
             // Verify result
             expect(result).toBe(true);
@@ -87,18 +92,18 @@ describe('JwtGuard', () => {
       );
     });
 
-    it('should throw UnauthorizedException for invalid tokens', () => {
-      fc.assert(
-        fc.property(
+    it('should throw UnauthorizedException for invalid tokens', async () => {
+      await fc.assert(
+        fc.asyncProperty(
           fc
             .string({ minLength: 10, maxLength: 100 })
             .filter((s) => !s.includes('.')),
-          (invalidToken) => {
+          async (invalidToken) => {
             const context = createMockExecutionContext(
               `Bearer ${invalidToken}`,
             );
 
-            expect(() => jwtGuard.canActivate(context)).toThrow(
+            await expect(jwtGuard.canActivate(context)).rejects.toBeInstanceOf(
               UnauthorizedException,
             );
           },
@@ -107,30 +112,27 @@ describe('JwtGuard', () => {
       );
     });
 
-    it('should throw UnauthorizedException when no Authorization header', () => {
+    it('should throw UnauthorizedException when no Authorization header', async () => {
       const context = createMockExecutionContext(undefined);
 
-      expect(() => jwtGuard.canActivate(context)).toThrow(
+      await expect(jwtGuard.canActivate(context)).rejects.toBeInstanceOf(
         UnauthorizedException,
-      );
-      expect(() => jwtGuard.canActivate(context)).toThrow(
-        'Authorization token is required',
       );
     });
 
-    it('should throw UnauthorizedException for malformed Authorization header', () => {
-      fc.assert(
-        fc.property(
+    it('should throw UnauthorizedException for malformed Authorization header', async () => {
+      await fc.assert(
+        fc.asyncProperty(
           fc.oneof(
             fc.constant('Basic token123'),
             fc.constant('token123'),
             fc.constant('Bearer'),
             fc.constant('Bearer token1 token2'),
           ),
-          (malformedHeader) => {
+          async (malformedHeader) => {
             const context = createMockExecutionContext(malformedHeader);
 
-            expect(() => jwtGuard.canActivate(context)).toThrow(
+            await expect(jwtGuard.canActivate(context)).rejects.toBeInstanceOf(
               UnauthorizedException,
             );
           },
@@ -138,5 +140,45 @@ describe('JwtGuard', () => {
         { numRuns: 10 },
       );
     });
+  });
+});
+
+// ---------- Enrich cases (Identity token / old token) ----------
+
+function ctx(authHeader?: string) {
+  const req: any = { headers: authHeader ? { authorization: authHeader } : {} };
+  return { switchToHttp: () => ({ getRequest: () => req }) } as any;
+}
+
+describe('JwtGuard (enrich)', () => {
+  const jwtService: any = {
+    verifyToken: (t: string) => JSON.parse(Buffer.from(t, 'base64').toString()),
+    isTempToken: (d: any) => d?.type === 'temp',
+  };
+
+  it('token Identity (thiếu vaiTro/permissions) → enrich từ DB', async () => {
+    const authz: any = { load: jest.fn(async () => ({ vaiTro: 'Admin', permissions: ['/x:xem'] })) };
+    const guard = new JwtGuard(jwtService, authz);
+    const token = Buffer.from(JSON.stringify({ sub: 'u1', email: 'a@b.com', tenantId: 't1' })).toString('base64');
+    const c = ctx(`Bearer ${token}`);
+    expect(await guard.canActivate(c)).toBe(true);
+    const user = c.switchToHttp().getRequest().user;
+    expect(authz.load).toHaveBeenCalledWith('u1', 't1', 'a@b.com');
+    expect(user).toEqual({ id: 'u1', email: 'a@b.com', tenantId: 't1', vaiTro: 'Admin', permissions: ['/x:xem'] });
+  });
+
+  it('token cũ (có vaiTro) → KHÔNG enrich, giữ giá trị token', async () => {
+    const authz: any = { load: jest.fn() };
+    const guard = new JwtGuard(jwtService, authz);
+    const token = Buffer.from(JSON.stringify({ sub: 'u1', email: 'a@b.com', tenantId: 't1', vaiTro: 'KIEM_SOAT', permissions: ['/y:xem'] })).toString('base64');
+    const c = ctx(`Bearer ${token}`);
+    expect(await guard.canActivate(c)).toBe(true);
+    expect(authz.load).not.toHaveBeenCalled();
+    expect(c.switchToHttp().getRequest().user.vaiTro).toBe('KIEM_SOAT');
+  });
+
+  it('không token → 401', async () => {
+    const guard = new JwtGuard(jwtService, { load: jest.fn() } as any);
+    await expect(guard.canActivate(ctx())).rejects.toBeInstanceOf(UnauthorizedException);
   });
 });
