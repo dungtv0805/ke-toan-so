@@ -1,11 +1,17 @@
-import { Modal, Descriptions, Tag, Typography } from "antd";
+import { Modal, Descriptions, Tag, Typography, Dropdown, Button } from "antd";
 import {
   EyeOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
+  PrinterOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
+import type { ChungTu, LoaiChungTu } from "@/types";
+import { phieuTemplateService } from "@/services/phieuTemplateService";
+import { printPhieu } from "../../../phieu/lib/printPhieu";
+import { getDefaultTemplate } from "../../../phieu/lib/printTemplates";
 import {
   useNhatKyChungState,
   useNhatKyChungHandler,
@@ -24,6 +30,7 @@ const formatCurrency = (value: number) => {
 export function EntryViewModal() {
   const handler = useNhatKyChungHandler();
   const isMobile = useIsMobile();
+  const { currentTenant } = useAuth();
   const [visible] = useNhatKyChungState("viewModalVisible", false);
   const [entry] = useNhatKyChungState("viewingEntry", null);
 
@@ -36,6 +43,34 @@ export function EntryViewModal() {
   const isPhieuThu = entry.loaiChungTu === "Phiếu thu";
   const danhMuc = entry.danhMuc;
 
+  // In bút toán theo mẫu config của Phiếu thu / Phiếu chi (chọn loại khi in).
+  const handlePrint = async (loai: LoaiChungTu) => {
+    let template: string;
+    try {
+      const tpl = await phieuTemplateService.getByLoai(loai);
+      template = tpl?.html || getDefaultTemplate(loai);
+    } catch {
+      template = getDefaultTemplate(loai);
+    }
+    const phieu = {
+      soPhieu: entry.soPhieu,
+      ngay: entry.ngay,
+      nguoiGiaoDich: entry.nguoiGiaoDich,
+      diaChi: entry.diaChi,
+      noiDung: entry.dienGiai,
+      soTien: entry.soTien,
+      ghiChu: entry.ghiChu,
+      danhMuc: {
+        taiKhoanNo: { ma: entry.taiKhoanNo ?? danhMuc?.taiKhoanNo?.ma },
+        taiKhoanCo: { ma: entry.taiKhoanCo ?? danhMuc?.taiKhoanCo?.ma },
+      },
+    } as unknown as ChungTu;
+    printPhieu(phieu, template, {
+      tenCongTy: currentTenant?.tenantName ?? "",
+      diaChiCongTy: "",
+    });
+  };
+
   return (
     <Modal
       title={
@@ -46,8 +81,24 @@ export function EntryViewModal() {
       }
       open={visible}
       onCancel={handleClose}
-      footer={null}
-      width={isMobile ? "95%" : 700}
+      footer={
+        <div style={{ textAlign: "right" }}>
+          <Dropdown
+            menu={{
+              items: [
+                { key: "PHIEU_THU", label: "Phiếu thu" },
+                { key: "PHIEU_CHI", label: "Phiếu chi" },
+              ],
+              onClick: ({ key }) => handlePrint(key as LoaiChungTu),
+            }}
+          >
+            <Button type="primary" icon={<PrinterOutlined />}>
+              In phiếu
+            </Button>
+          </Dropdown>
+        </div>
+      }
+      width={isMobile ? "95%" : 1040}
       style={{ top: isMobile ? 10 : 20 }}
       styles={{
         body: {
@@ -60,7 +111,7 @@ export function EntryViewModal() {
     >
       <Descriptions
         bordered
-        column={isMobile ? 1 : 2}
+        column={isMobile ? 1 : 4}
         size="small"
         className="mt-2 sm:mt-4"
         labelStyle={isMobile ? { width: "40%", padding: "6px 8px", fontSize: "12px" } : undefined}
@@ -94,10 +145,10 @@ export function EntryViewModal() {
             {formatCurrency(entry.soTien)}
           </Text>
         </Descriptions.Item>
-        <Descriptions.Item label="Nội dung" span={2}>
+        <Descriptions.Item label="Nội dung" span={4}>
           {entry.dienGiai}
         </Descriptions.Item>
-        <Descriptions.Item label="Nghiệp vụ" span={2}>
+        <Descriptions.Item label="Nghiệp vụ" span={4}>
           {danhMuc?.loaiGiaoDich?.ten ? (
             <Tag color="geekblue">{danhMuc.loaiGiaoDich.ten}</Tag>
           ) : (
@@ -292,13 +343,13 @@ export function EntryViewModal() {
         </Descriptions.Item>
 
         {/* Thông tin bổ sung */}
-        <Descriptions.Item label="Người giao dịch" span={2}>
+        <Descriptions.Item label="Người giao dịch" span={4}>
           {entry.nguoiGiaoDich || <Text type="secondary">-</Text>}
         </Descriptions.Item>
-        <Descriptions.Item label="Địa chỉ" span={2}>
+        <Descriptions.Item label="Địa chỉ" span={4}>
           {entry.diaChi || <Text type="secondary">-</Text>}
         </Descriptions.Item>
-        <Descriptions.Item label="Ghi chú" span={2}>
+        <Descriptions.Item label="Ghi chú" span={4}>
           {entry.ghiChu || <Text type="secondary">-</Text>}
         </Descriptions.Item>
       </Descriptions>
