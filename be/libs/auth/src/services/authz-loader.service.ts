@@ -24,20 +24,19 @@ export class AuthzLoaderService {
     const cached = this.cache.get(key);
     if (cached && now - cached.at < TTL_MS) return cached.data;
 
-    let data: LoadedAuthz = { vaiTro: '', permissions: [] };
     try {
       const ut = await this.dataSource
         .getRepository(UserTenant)
         .findOne({ where: { userId, tenantId, isActive: true } as any });
-      const vaiTro = ut?.role || 'KIEM_SOAT';
+      const vaiTro = ut?.role ?? 'KIEM_SOAT';
       const pq = await this.dataSource
         .getRepository(PhanQuyen)
         .findOne({ where: { vaiTro, tenantId, isActive: true } as any });
-      data = { vaiTro, permissions: pq?.permissions ?? [] };
+      const data = { vaiTro, permissions: pq?.permissions ?? [] };
+      this.cache.set(key, { at: now, data }); // chỉ cache khi thành công
+      return data;
     } catch {
-      data = { vaiTro: '', permissions: [] }; // fallback an toàn
+      return { vaiTro: '', permissions: [] }; // KHÔNG cache lỗi → request sau retry DB
     }
-    this.cache.set(key, { at: now, data });
-    return data;
   }
 }

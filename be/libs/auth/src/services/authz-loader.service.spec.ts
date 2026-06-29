@@ -1,4 +1,5 @@
 import { AuthzLoaderService } from './authz-loader.service';
+import { SUPER_ADMIN_EMAIL } from '@app/entities';
 
 function fakeDataSource(opts: { userTenant?: any; phanQuyen?: any }) {
   return {
@@ -16,7 +17,7 @@ function fakeDataSource(opts: { userTenant?: any; phanQuyen?: any }) {
 describe('AuthzLoaderService', () => {
   it('super admin theo email → SUPER_ADMIN + [*]', async () => {
     const svc = new AuthzLoaderService(fakeDataSource({}));
-    const r = await svc.load('u1', 't1', 'admin@company.com');
+    const r = await svc.load('u1', 't1', SUPER_ADMIN_EMAIL);
     expect(r).toEqual({ vaiTro: 'SUPER_ADMIN', permissions: ['*'] });
   });
 
@@ -49,5 +50,16 @@ describe('AuthzLoaderService', () => {
     const before = calls;
     await svc.load('u1', 't1', 'user@x.com');
     expect(calls).toBe(before); // hit cache
+  });
+
+  it('lỗi DB KHÔNG cache — lần sau retry', async () => {
+    let calls = 0;
+    const ds: any = { getRepository: () => ({ findOne: async () => { calls++; throw new Error('db down'); } }) };
+    const svc = new AuthzLoaderService(ds);
+    const r1 = await svc.load('u1', 't1', 'user@x.com');
+    expect(r1).toEqual({ vaiTro: '', permissions: [] });
+    const after1 = calls;
+    await svc.load('u1', 't1', 'user@x.com');
+    expect(calls).toBeGreaterThan(after1); // đã retry, không dùng cache lỗi
   });
 });
