@@ -64,7 +64,9 @@
     "migrate:tenant": "env-cmd -e db -- ts-node scripts/migrations/add-default-tenant.ts",
     "migrate:tenant:dry-run": "env-cmd -e db -- ts-node scripts/migrations/add-default-tenant.ts --dry-run",
     "migrate:reclassify-loai": "env-cmd -e db -- node scripts/reclassify-chung-tu-loai.js",
-    "migrate:reclassify-loai:dry-run": "env-cmd -e db -- node scripts/reclassify-chung-tu-loai.js"
+    "migrate:reclassify-loai:dry-run": "env-cmd -e db -- node scripts/reclassify-chung-tu-loai.js",
+    "migrate:p2-split": "env-cmd -e db -- node scripts/migrate-p2-split.js",
+    "migrate:p2-split:dry-run": "env-cmd -e db -- node scripts/migrate-p2-split.js --dry-run"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
