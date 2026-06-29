@@ -16,4 +16,6 @@ export class ChungTuQueryDto {
   @IsOptional() @IsString() boPhan?: string;
   @IsOptional() @IsString() taiKhoanNo?: string;
   @IsOptional() @IsString() taiKhoanCo?: string;
+  // 'thu' | 'chi' — dùng bởi cash-flow-composition (whitelist để ValidationPipe không chặn).
+  @IsOptional() @IsString() which?: string;
 }
