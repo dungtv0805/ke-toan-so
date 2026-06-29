@@ -23,6 +23,7 @@ import './don-vi-tinh.entity';
 import './nhom-vat-tu.entity';
 import './hang-hoa-vat-tu.entity';
 import './ho-so-chung-tu.entity';
+import './ly-do-khong-hop-le.entity';
 
 // Re-export all entities
 export * from './tai-khoan.entity';
@@ -49,3 +50,4 @@ export * from './don-vi-tinh.entity';
 export * from './nhom-vat-tu.entity';
 export * from './hang-hoa-vat-tu.entity';
 export * from './ho-so-chung-tu.entity';
+export * from './ly-do-khong-hop-le.entity';

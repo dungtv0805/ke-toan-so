@@ -29,6 +29,7 @@ import { DonViTinhModule } from './don-vi-tinh/don-vi-tinh.module';
 import { NhomVatTuModule } from './nhom-vat-tu/nhom-vat-tu.module';
 import { HangHoaVatTuModule } from './hang-hoa-vat-tu/hang-hoa-vat-tu.module';
 import { HoSoChungTuModule } from './ho-so-chung-tu/ho-so-chung-tu.module';
+import { LyDoKhongHopLeModule } from './ly-do-khong-hop-le/ly-do-khong-hop-le.module';
 import {
   TaiKhoan,
   DoiTuong,
@@ -54,6 +55,7 @@ import {
   NhomVatTu,
   HangHoaVatTu,
   HoSoChungTu,
+  LyDoKhongHopLe,
 } from '@app/entities';
 
 @Module({
@@ -86,6 +88,7 @@ import {
       NhomVatTu,
       HangHoaVatTu,
       HoSoChungTu,
+      LyDoKhongHopLe,
     ]),
     TaiKhoanModule,
     DoiTuongModule,
@@ -114,6 +117,7 @@ import {
     NhomVatTuModule,
     HangHoaVatTuModule,
     HoSoChungTuModule,
+    LyDoKhongHopLeModule,
   ],
 })
 export class MasterDataServiceModule {}

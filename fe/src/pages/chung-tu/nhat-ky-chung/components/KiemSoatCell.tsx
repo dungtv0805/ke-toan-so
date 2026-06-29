@@ -11,6 +11,7 @@ import {
 } from "antd";
 import type { NhatKyChung, KiemSoatChungTu, KiemSoatTrangThai } from "@/types";
 import { nhatKyChungService } from "@/services/nhatKyChungService";
+import { lyDoKhongHopLeService } from "@/services/lyDoKhongHopLeService";
 import { useAuth } from "@/contexts/AuthContext";
 import { suggestNhomChiPhi, type NhomChiPhi } from "../nhomChiPhi";
 
@@ -51,6 +52,24 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
     entry.kiemSoat?.soTienKhongTru ?? entry.soTien ?? 0
   );
   const [yKien, setYKien] = useState<string>(entry.kiemSoat?.yKien ?? "");
+  const [lyDo, setLyDo] = useState<string>(entry.kiemSoat?.lyDo ?? "");
+
+  // Options "Lý do không hợp lệ" (load 1 lần khi mở popover)
+  const [lyDoOptions, setLyDoOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
+  const [lyDoLoaded, setLyDoLoaded] = useState(false);
+
+  const loadLyDoOptions = async () => {
+    if (lyDoLoaded) return;
+    setLyDoLoaded(true);
+    try {
+      const data = await lyDoKhongHopLeService.getAll();
+      setLyDoOptions(data.map((x) => ({ value: x.ten, label: x.ten })));
+    } catch {
+      setLyDoOptions([]);
+    }
+  };
 
   // Đồng bộ lại form theo dữ liệu mới nhất của entry (sau refresh)
   const syncFromEntry = () => {
@@ -58,6 +77,7 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
     setNhom(entry.kiemSoat?.nhomChiPhi ?? suggestNhomChiPhi(tkNo));
     setSoTien(entry.kiemSoat?.soTienKhongTru ?? entry.soTien ?? 0);
     setYKien(entry.kiemSoat?.yKien ?? "");
+    setLyDo(entry.kiemSoat?.lyDo ?? "");
   };
 
   useEffect(() => {
@@ -68,6 +88,7 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
   const handleOpenChange = (next: boolean) => {
     if (next) {
       syncFromEntry();
+      void loadLyDoOptions();
     }
     setOpen(next);
   };
@@ -83,6 +104,7 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
       if (trangThai === "KHONG_DUOC_TRU") {
         kiemSoat.nhomChiPhi = nhom;
         kiemSoat.soTienKhongTru = soTien;
+        kiemSoat.lyDo = lyDo || undefined;
       }
       await nhatKyChungService.update(entry.id, { kiemSoat });
       message.success("Đã lưu kiểm soát");
@@ -139,6 +161,22 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
                 `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
               }
               parser={(v) => Number((v || "").replace(/,/g, ""))}
+            />
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: 12, color: "#666", marginBottom: 2 }}>
+              Lý do không hợp lệ
+            </div>
+            <Select
+              size="small"
+              style={{ width: "100%" }}
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              value={lyDo || undefined}
+              onChange={(v) => setLyDo(v ?? "")}
+              options={lyDoOptions}
+              placeholder="Chọn lý do..."
             />
           </div>
         </>

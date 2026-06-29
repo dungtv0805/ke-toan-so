@@ -761,6 +761,7 @@ export interface KiemSoatChungTu {
   trangThai: KiemSoatTrangThai;
   nhomChiPhi?: 1 | 2 | 3 | 4;
   soTienKhongTru?: number;
+  lyDo?: string;
   yKien?: string;
   nguoiKiemSoat?: string;
   ngayKiemSoat?: string;

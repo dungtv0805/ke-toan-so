@@ -95,6 +95,10 @@ export const DonViTinhPage = loadable(() => import('./danh-muc/don-vi-tinh/DonVi
   fallback: <PageLoader />
 });
 
+export const LyDoKhongHopLePage = loadable(() => import('./danh-muc/ly-do-khong-hop-le/LyDoKhongHopLePage'), {
+  fallback: <PageLoader />
+});
+
 export const NhomVatTuPage = loadable(() => import('./danh-muc/nhom-vat-tu/NhomVatTuPage'), {
   fallback: <PageLoader />
 });

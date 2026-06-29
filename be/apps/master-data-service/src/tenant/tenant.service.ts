@@ -80,6 +80,7 @@ const PERMISSION_MODULES = [
   '/danh-muc/loai-giao-dich',
   '/danh-muc/quy-chuan',
   '/danh-muc/ho-so-chung-tu',
+  '/danh-muc/ly-do-khong-hop-le',
   '/so-quy',
   '/cong-no/phai-thu',
   '/cong-no/phai-tra',

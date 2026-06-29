@@ -77,6 +77,7 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/danh-muc/kho', label: 'Kho', parentLabel: 'Danh mục' },
   { key: '/danh-muc/hang-hoa-vat-tu', label: 'Hàng hóa vật tư', parentLabel: 'Danh mục' },
   { key: '/danh-muc/don-vi-tinh', label: 'Đơn vị tính', parentLabel: 'Danh mục' },
+  { key: '/danh-muc/ly-do-khong-hop-le', label: 'Lý do không hợp lệ', parentLabel: 'Danh mục' },
   { key: '/danh-muc/nhom-vat-tu', label: 'Nhóm vật tư', parentLabel: 'Danh mục' },
 
   // ===== THƯ VIỆN — Danh mục › Khác =====

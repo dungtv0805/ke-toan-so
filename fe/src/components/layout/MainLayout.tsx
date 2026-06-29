@@ -64,6 +64,7 @@ import {
   SnippetsOutlined,
   NodeIndexOutlined,
   FileAddOutlined,
+  StopOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import type { MenuProps } from "antd";
@@ -131,6 +132,7 @@ const existingRoutes = new Set([
   "/danh-muc/ho-so-chung-tu",
   "/danh-muc/kho",
   "/danh-muc/don-vi-tinh",
+  "/danh-muc/ly-do-khong-hop-le",
   "/danh-muc/nhom-vat-tu",
   "/danh-muc/hang-hoa-vat-tu",
   "/kho/nhap-kho",
@@ -322,6 +324,7 @@ const thuVienMenuItems: MenuItem[] = [
     getMenuItem("Kho", "/danh-muc/kho", <InboxOutlined />),
     getMenuItem("Hàng hóa vật tư", "/danh-muc/hang-hoa-vat-tu", <InboxOutlined />),
     getMenuItem("Đơn vị tính", "/danh-muc/don-vi-tinh", <TagOutlined />),
+    getMenuItem("Lý do không hợp lệ", "/danh-muc/ly-do-khong-hop-le", <StopOutlined />),
     getMenuItem("Nhóm vật tư", "/danh-muc/nhom-vat-tu", <AppstoreOutlined />),
     getItem("Khác", "/danh-muc/khac", <AppstoreOutlined />, [
       getMenuItem("Chủ đầu tư", "/danh-muc/chu-dau-tu", <UserOutlined />),
