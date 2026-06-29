@@ -26,7 +26,9 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
         const quyChaunList = (this.getState("quyChaunList") as QuyChuan[]) || [];
         const nghiepVu = first.danhMuc?.nghiepVu?.ma || first.danhMuc?.loaiChungTu?.ma || first.danhMuc?.loaiGiaoDich?.ma;
         const quyChuan = quyChaunList.find((qc) => qc.nghiepVu === nghiepVu);
-        const loaiGiaoDich = quyChuan?.loaiGiaoDich || first.danhMuc?.loaiGiaoDich?.ma;
+        // Ưu tiên loaiGiaoDich đã lưu trên phiếu; chỉ suy luận từ quyChuan khi phiếu chưa có.
+        // Tránh trường hợp cùng nghiệp vụ dùng cho cả bán hàng lẫn mua hàng → .find() lấy nhầm quy chuẩn đầu tiên.
+        const loaiGiaoDich = first.danhMuc?.loaiGiaoDich?.ma || quyChuan?.loaiGiaoDich;
 
         const header: ChungTuHeader = {
           soPhieu: first.soPhieu,

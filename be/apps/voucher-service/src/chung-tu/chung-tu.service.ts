@@ -281,6 +281,12 @@ export class ChungTuService {
     }
     if (updateDto.danhMuc !== undefined) {
       chungTu.danhMuc = updateDto.danhMuc;
+      // Đổi danhMuc (loaiGiaoDich) → suy lại loai để không lệch với cấu hình.
+      // Giữ loai hiện tại làm fallback khi cấu hình không đủ để suy luận.
+      chungTu.loai = await this.loaiResolver.resolveLoai(
+        updateDto.danhMuc,
+        chungTu.loai,
+      );
     }
 
     return this.chungTuRepository.save(chungTu);

@@ -6,15 +6,18 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { JwtService } from '../services/jwt.service';
+import { AuthzLoaderService } from '../services/authz-loader.service';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly authzLoader: AuthzLoaderService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractToken(request);
-
     if (!token) {
       throw new UnauthorizedException('Yêu cầu token xác thực');
     }
@@ -22,20 +25,32 @@ export class JwtGuard implements CanActivate {
     try {
       const decoded = this.jwtService.verifyToken(token);
 
-      // Reject temp tokens - they don't have tenantId
       if (this.jwtService.isTempToken(decoded)) {
         throw new UnauthorizedException(
           'Access token required. Temp token is not allowed for this endpoint.',
         );
       }
 
-      // Attach decoded user to request
+      let vaiTro = decoded.vaiTro;
+      let permissions = decoded.permissions;
+
+      // Token Identity không mang vaiTro → nạp role/quyền từ DB theo userId+tenantId
+      if (vaiTro === undefined || vaiTro === null) {
+        const authz = await this.authzLoader.load(
+          decoded.sub,
+          decoded.tenantId,
+          decoded.email,
+        );
+        vaiTro = authz.vaiTro;
+        permissions = authz.permissions;
+      }
+
       (request as Request & { user: unknown }).user = {
         id: decoded.sub,
         email: decoded.email,
         tenantId: decoded.tenantId,
-        vaiTro: decoded.vaiTro,
-        permissions: decoded.permissions,
+        vaiTro,
+        permissions: permissions ?? [],
       };
       return true;
     } catch (error) {
