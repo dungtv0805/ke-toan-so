@@ -198,6 +198,26 @@ export function BienTapHoSoCell({
     </div>
   );
 
+  // Xem nhanh danh sách hồ sơ khi hover (chỉ đọc).
+  const hoverContent =
+    items.length > 0 ? (
+      <div style={{ maxWidth: 300 }}>
+        <div style={{ fontWeight: 600, marginBottom: 4 }}>
+          Đã có {daCoCount}/{total}
+        </div>
+        {items.map((i) => (
+          <div key={i.id}>
+            <span style={{ color: i.daCo ? "#52c41a" : "#bbb" }}>
+              {i.daCo ? "✓" : "○"}
+            </span>{" "}
+            {i.ten}
+          </div>
+        ))}
+      </div>
+    ) : (
+      "Chưa có hồ sơ chứng từ"
+    );
+
   return (
     <Popover
       open={open}
@@ -207,25 +227,27 @@ export function BienTapHoSoCell({
       title="Biên tập hồ sơ chứng từ"
       content={popoverContent}
     >
-      {total > 0 ? (
-        <Button
-          size="small"
-          type="link"
-          icon={<FileTextOutlined />}
-          style={{ padding: 0 }}
-        >
-          Đã có {daCoCount}/{total}
-        </Button>
-      ) : (
-        <Button
-          size="small"
-          type="link"
-          icon={<PlusOutlined />}
-          style={{ padding: 0, color: "#999" }}
-        >
-          —
-        </Button>
-      )}
+      <Tooltip title={hoverContent} open={open ? false : undefined}>
+        {total > 0 ? (
+          <Button
+            size="small"
+            type="link"
+            icon={<FileTextOutlined />}
+            style={{ padding: 0 }}
+          >
+            Đã có {daCoCount}/{total}
+          </Button>
+        ) : (
+          <Button
+            size="small"
+            type="link"
+            icon={<PlusOutlined />}
+            style={{ padding: 0, color: "#999" }}
+          >
+            —
+          </Button>
+        )}
+      </Tooltip>
     </Popover>
   );
 }

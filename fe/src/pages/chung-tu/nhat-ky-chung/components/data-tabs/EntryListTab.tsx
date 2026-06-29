@@ -147,6 +147,27 @@ const getColumnDefinitions = (
   onRefresh: () => void
 ): Omit<ColumnType<NhatKyChung>, "width">[] => [
   {
+    title: "Biên tập hồ sơ",
+    key: "hoSoChungTu",
+    align: "center" as const,
+    render: (_: unknown, record: NhatKyChung) => (
+      <BienTapHoSoCell
+        entry={record}
+        quyChaunList={quyChaunList}
+        hoSoChungTuList={hoSoChungTuList}
+        onSaved={onRefresh}
+      />
+    ),
+  },
+  {
+    title: "Kiểm soát",
+    key: "kiemSoat",
+    align: "center" as const,
+    render: (_: unknown, record: NhatKyChung) => (
+      <KiemSoatCell entry={record} onSaved={onRefresh} />
+    ),
+  },
+  {
     title: "Ngày Phát Sinh CT",
     dataIndex: "ngay",
     key: "ngay",
@@ -749,27 +770,6 @@ const getColumnDefinitions = (
       >
         {renderEllipsisText(text)}
       </EditableCell>
-    ),
-  },
-  {
-    title: "Biên tập hồ sơ",
-    key: "hoSoChungTu",
-    align: "center" as const,
-    render: (_: unknown, record: NhatKyChung) => (
-      <BienTapHoSoCell
-        entry={record}
-        quyChaunList={quyChaunList}
-        hoSoChungTuList={hoSoChungTuList}
-        onSaved={onRefresh}
-      />
-    ),
-  },
-  {
-    title: "Kiểm soát",
-    key: "kiemSoat",
-    align: "center" as const,
-    render: (_: unknown, record: NhatKyChung) => (
-      <KiemSoatCell entry={record} onSaved={onRefresh} />
     ),
   },
   {

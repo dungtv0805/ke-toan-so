@@ -7,6 +7,7 @@ import {
   InputNumber,
   Input,
   Tag,
+  Tooltip,
   message,
 } from "antd";
 import type { NhatKyChung, KiemSoatChungTu, KiemSoatTrangThai } from "@/types";
@@ -235,6 +236,39 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
       <span style={{ cursor: "pointer", color: "#999" }}>—</span>
     );
 
+  // Nội dung xem nhanh khi hover (chỉ đọc).
+  const ks = entry.kiemSoat;
+  const hoverContent = ks ? (
+    <div style={{ maxWidth: 300 }}>
+      <div style={{ fontWeight: 600, marginBottom: 2 }}>
+        {ks.trangThai === "HOP_LE" ? "Hợp lệ" : "Không được trừ"}
+      </div>
+      {ks.trangThai === "KHONG_DUOC_TRU" && (
+        <>
+          {ks.nhomChiPhi && (
+            <div>
+              Nhóm:{" "}
+              {NHOM_CHI_PHI_OPTIONS.find((o) => o.value === ks.nhomChiPhi)?.label}
+            </div>
+          )}
+          {ks.soTienKhongTru != null && (
+            <div>Số tiền: {ks.soTienKhongTru.toLocaleString("vi-VN")}</div>
+          )}
+          {ks.lyDo && <div>Lý do: {ks.lyDo}</div>}
+        </>
+      )}
+      {ks.yKien && <div>Ý kiến: {ks.yKien}</div>}
+      {(ks.nguoiKiemSoat || ks.ngayKiemSoat) && (
+        <div style={{ fontSize: 11, color: "#bbb", marginTop: 2 }}>
+          Bởi {ks.nguoiKiemSoat || "-"}
+          {ks.ngayKiemSoat ? ` · ${formatDate(ks.ngayKiemSoat)}` : ""}
+        </div>
+      )}
+    </div>
+  ) : (
+    "Chưa kiểm soát"
+  );
+
   return (
     <Popover
       open={open}
@@ -244,7 +278,9 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
       title="Kiểm soát hạch toán"
       content={popoverContent}
     >
-      <span>{tag}</span>
+      <Tooltip title={hoverContent} open={open ? false : undefined}>
+        <span>{tag}</span>
+      </Tooltip>
     </Popover>
   );
 }
