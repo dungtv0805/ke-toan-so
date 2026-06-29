@@ -20,6 +20,7 @@
 - **Không đụng** code/đang chạy của ke-toan-so và task-management trong sub-plan này. Identity chạy song song.
 - **Migrate phải idempotent + có `--dry-run`**; chạy thật chỉ sau khi backup.
 - Collections danh tính là **tenant-exempt** → KHÔNG cần tenant-aware proxy; dùng TypeORM repository thường.
+- **Test KHÔNG phụ thuộc Mongo ngoài:** mọi test/e2e dùng `mongodb-memory-server` (Mongo tạm trong RAM). Helper `src/test-utils/mongo-memory.ts` set `process.env.MONGODB_URI/MONGODB_DATABASE` **trước khi** compile Nest module (vì `DatabaseModule` đọc env lúc `forRoot`). CHỈ Task 8 (migrate thật + smoke test) mới cần Mongo thật của bạn ở `localhost:27017`.
 
 ---
 
@@ -98,6 +99,7 @@ identity-service/
 - Create: `identity-service/.gitignore`
 - Create: `identity-service/jest.config.js`
 - Create: `identity-service/test/jest-e2e.json`
+- Create: `identity-service/src/test-utils/mongo-memory.ts`
 - Create: `identity-service/src/main.ts`
 - Create: `identity-service/src/app.module.ts`
 
@@ -145,6 +147,7 @@ identity-service/
     "@types/supertest": "^6.0.2",
     "env-cmd": "^10.1.0",
     "jest": "^29.7.0",
+    "mongodb-memory-server": "^9.1.6",
     "supertest": "^7.0.0",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
@@ -227,7 +230,7 @@ identity-service/
 }
 ```
 
-- [ ] **Step 5: Tạo `.gitignore`, `jest.config.js`, `test/jest-e2e.json`**
+- [ ] **Step 5: Tạo `.gitignore`, `jest.config.js`, `test/jest-e2e.json`, `src/test-utils/mongo-memory.ts`**
 
 `.gitignore`:
 ```
@@ -237,7 +240,7 @@ dist
 .env
 ```
 
-`jest.config.js`:
+`jest.config.js` (testTimeout cao để memory-server tải/khởi động lần đầu):
 ```js
 module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
@@ -247,6 +250,7 @@ module.exports = {
   collectCoverageFrom: ['**/*.(t|j)s'],
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
+  testTimeout: 60000,
 };
 ```
 
@@ -257,7 +261,29 @@ module.exports = {
   "rootDir": ".",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
-  "transform": { "^.+\\.(t|j)s$": "ts-jest" }
+  "transform": { "^.+\\.(t|j)s$": "ts-jest" },
+  "testTimeout": 60000
+}
+```
+
+`src/test-utils/mongo-memory.ts` (helper bật Mongo tạm — tất cả test dùng):
+```ts
+import { MongoMemoryServer } from 'mongodb-memory-server';
+
+let mongod: MongoMemoryServer | undefined;
+
+/** Bật Mongo in-memory và set env TRƯỚC khi compile Nest module. Trả về uri. */
+export async function startMemoryMongo(dbName = 'identity_test'): Promise<string> {
+  mongod = await MongoMemoryServer.create();
+  const uri = mongod.getUri();
+  process.env.MONGODB_URI = uri;
+  process.env.MONGODB_DATABASE = dbName;
+  process.env.NODE_ENV = 'test';
+  return uri;
+}
+
+export async function stopMemoryMongo(): Promise<void> {
+  if (mongod) { await mongod.stop(); mongod = undefined; }
 }
 ```
 
@@ -297,7 +323,7 @@ Run:
 ```bash
 cd /Users/os_anhvt/Documents/Dino/identity-service && npm install && npm run build
 ```
-Expected: build PASS, không lỗi TypeScript.
+Expected: build PASS, không lỗi TypeScript. (Lần `npm install` đầu, `mongodb-memory-server` sẽ tải binary `mongod` về cache — cần mạng; nếu offline thì set `MONGOMS_SYSTEM_BINARY` trỏ tới mongod có sẵn.)
 
 - [ ] **Step 8: Commit**
 
@@ -505,15 +531,16 @@ export class AppModule {}
 ```ts
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { DatabaseModule } from './database.module';
 import { App } from '../entities/app.entity';
-import { Repository } from 'typeorm';
+import { startMemoryMongo, stopMemoryMongo } from '../test-utils/mongo-memory';
 
 describe('DatabaseModule', () => {
+  afterAll(async () => { await stopMemoryMongo(); });
+
   it('kết nối DB và inject được repository App', async () => {
-    process.env.MONGODB_URI = 'mongodb://dbadmin:abcde12345-@localhost:27017/?authSource=admin';
-    process.env.MONGODB_DATABASE = 'masterceo_identity_test';
-    process.env.NODE_ENV = 'test';
+    await startMemoryMongo('masterceo_identity_test'); // set env trước khi compile
     const moduleRef = await Test.createTestingModule({ imports: [DatabaseModule] }).compile();
     const repo = moduleRef.get<Repository<App>>(getRepositoryToken(App));
     expect(repo).toBeDefined();
@@ -525,7 +552,7 @@ describe('DatabaseModule', () => {
 - [ ] **Step 7: Chạy test**
 
 Run: `cd /Users/os_anhvt/Documents/Dino/identity-service && npm test -- database.module.spec`
-Expected: PASS (yêu cầu Mongo local đang chạy).
+Expected: PASS (Mongo tạm tự bật, không cần Mongo ngoài).
 
 - [ ] **Step 8: Commit**
 
@@ -884,6 +911,7 @@ import { User, UserStatus } from '../src/entities/user.entity';
 import { UserCredential } from '../src/entities/user-credential.entity';
 import { UserTenant } from '../src/entities/user-tenant.entity';
 import { Tenant } from '../src/entities/tenant.entity';
+import { startMemoryMongo, stopMemoryMongo } from '../src/test-utils/mongo-memory';
 
 describe('Auth (e2e)', () => {
   let app: INestApplication;
@@ -893,6 +921,7 @@ describe('Auth (e2e)', () => {
   let tenants: Repository<Tenant>;
 
   beforeAll(async () => {
+    await startMemoryMongo('masterceo_identity_test'); // set env trước khi compile AppModule
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
@@ -906,7 +935,7 @@ describe('Auth (e2e)', () => {
     await uts.deleteMany({}); await tenants.deleteMany({});
   });
 
-  afterAll(async () => { await app.close(); });
+  afterAll(async () => { await app.close(); await stopMemoryMongo(); });
 
   it('login user 1 tenant → trả accessToken danh tính', async () => {
     const t = await tenants.save(tenants.create({ name: 'Cty A', slug: 'cty-a', isActive: true, modules: ['KE_TOAN'], apps: ['ke-toan'] }));
@@ -1232,11 +1261,13 @@ import { UserCredential } from '../src/entities/user-credential.entity';
 import { UserTenant } from '../src/entities/user-tenant.entity';
 import { Tenant } from '../src/entities/tenant.entity';
 import { App } from '../src/entities/app.entity';
+import { startMemoryMongo, stopMemoryMongo } from '../src/test-utils/mongo-memory';
 
 describe('Platform (e2e)', () => {
   let app: INestApplication; let token: string; let moduleRef: any;
 
   beforeAll(async () => {
+    await startMemoryMongo('masterceo_identity_test'); // set env trước khi compile AppModule
     moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
@@ -1256,7 +1287,7 @@ describe('Platform (e2e)', () => {
     const login = await request(app.getHttpServer()).post('/login').send({ email: 'p1@test.com', password: 'pass123' });
     token = login.body.data.accessToken;
   });
-  afterAll(async () => { await app.close(); });
+  afterAll(async () => { await app.close(); await stopMemoryMongo(); });
 
   it('GET /me/apps chỉ trả app mà công ty của user có (ke-toan)', async () => {
     const res = await request(app.getHttpServer()).get('/me/apps').set('Authorization', `Bearer ${token}`).expect(200);
@@ -1457,39 +1488,39 @@ git add -A && git commit -m "feat(identity): apps registry + GET /me/apps + GET 
 ```ts
 import { MongoClient } from 'mongodb';
 import { migrateIdentity } from './migrate-identity';
+import { startMemoryMongo, stopMemoryMongo } from '../test-utils/mongo-memory';
 
-const URI = 'mongodb://dbadmin:abcde12345-@localhost:27017/?authSource=admin';
 const SRC = 'mig_src_test';
 const DST = 'mig_dst_test';
 
 describe('migrateIdentity', () => {
   let client: MongoClient;
+  let uri: string;
   beforeAll(async () => {
-    client = await MongoClient.connect(URI);
-    await client.db(SRC).dropDatabase();
-    await client.db(DST).dropDatabase();
+    uri = await startMemoryMongo(); // 1 instance, 2 db (src + dst)
+    client = await MongoClient.connect(uri);
     await client.db(SRC).collection('users').insertOne({ email: 'a@b.com', hoTen: 'A' });
     await client.db(SRC).collection('tenants').insertOne({ name: 'Cty', slug: 'cty' });
   });
   afterAll(async () => {
-    await client.db(SRC).dropDatabase(); await client.db(DST).dropDatabase(); await client.close();
+    await client.close(); await stopMemoryMongo();
   });
 
   it('dry-run KHÔNG ghi gì', async () => {
-    const report = await migrateIdentity({ uri: URI, sourceDb: SRC, targetDb: DST, dryRun: true });
+    const report = await migrateIdentity({ uri, sourceDb: SRC, targetDb: DST, dryRun: true });
     expect(report.copied.users).toBe(1);
     const count = await client.db(DST).collection('users').countDocuments();
     expect(count).toBe(0);
   });
 
   it('chạy thật copy dữ liệu', async () => {
-    await migrateIdentity({ uri: URI, sourceDb: SRC, targetDb: DST, dryRun: false });
+    await migrateIdentity({ uri, sourceDb: SRC, targetDb: DST, dryRun: false });
     expect(await client.db(DST).collection('users').countDocuments()).toBe(1);
     expect(await client.db(DST).collection('tenants').countDocuments()).toBe(1);
   });
 
   it('chạy lại idempotent — không nhân đôi', async () => {
-    const report = await migrateIdentity({ uri: URI, sourceDb: SRC, targetDb: DST, dryRun: false });
+    const report = await migrateIdentity({ uri, sourceDb: SRC, targetDb: DST, dryRun: false });
     expect(report.skipped.users).toBe(1);
     expect(await client.db(DST).collection('users').countDocuments()).toBe(1);
   });
@@ -1576,6 +1607,8 @@ git add -A && git commit -m "feat(identity): script migrate danh tính digital_b
 **Interfaces:**
 - Consumes: toàn bộ Task 1–7.
 - Produces: DB `masterceo_identity` đã có dữ liệu thật của ke-toan-so; Identity service chạy port 3020; login bằng tài khoản thật trả accessToken.
+
+> **Task này là bước VẬN HÀNH (không TDD), cần Mongo THẬT của bạn** (`localhost:27017`) đang chạy + dữ liệu thật + tools `mongodump`/`mongosh`. Hiện máy chưa có Mongo local + chưa có mongo CLI tools → **chỉ chạy Task này khi bạn đã bật Mongo thật và cài tools** (`brew install mongodb-database-tools mongosh`, hoặc bật Docker Desktop + container Mongo). Task 1–7 (toàn bộ code + test) KHÔNG cần Mongo thật vì đã dùng in-memory.
 
 - [ ] **Step 1: Backup DB nguồn trước khi migrate thật**
 
