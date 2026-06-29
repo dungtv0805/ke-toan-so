@@ -31,8 +31,9 @@ const BOLD_ROWS = new Set([
   'Lợi nhuận sau thuế',
   'Chi phí không được trừ',
 ]);
-// Dòng nghĩa vụ "... phải nộp" → chữ đỏ (đậm).
-const isPhaiNop = (chiTieu: string) => chiTieu.includes('phải nộp');
+// Dòng chữ đỏ (đậm): "... phải nộp" + "Chi phí không được trừ".
+const isRedRow = (chiTieu: string) =>
+  chiTieu.includes('phải nộp') || chiTieu === 'Chi phí không được trừ';
 
 const NghiaVuChinhSachTable: React.FC<Props> = ({ year }) => {
   const { data, isLoading } = useQuery({
@@ -135,7 +136,7 @@ const NghiaVuChinhSachTable: React.FC<Props> = ({ year }) => {
           scroll={{ x: 'max-content' }}
           onRow={(row) => {
             if (row.isHeader) return {};
-            const red = isPhaiNop(row.chiTieu);
+            const red = isRedRow(row.chiTieu);
             const bold = red || BOLD_ROWS.has(row.chiTieu);
             if (!bold && !red) return {};
             return {
