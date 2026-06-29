@@ -219,17 +219,29 @@ if (require.main === module) {
 
 ---
 
-## Task 7: master-data/tenant repoint (quản lý công ty + thành viên)
+## Task 7a: master-data/tenant — CRUD công ty + config + cấp admin
 
-**Files:** Modify `be/apps/master-data-service/src/tenant/tenant.service.ts` (+ module).
+**Files:** Modify `be/apps/master-data-service/src/tenant/tenant.module.ts`, `tenant.service.ts` (constructor + cloneGlossaryFromNganh/findAll/findOne/findBySlug/create/update/updateGlossary/getDashboardBlocks/updateDashboardBlocks/delete/hardDelete/getAllUsers + ensureAdminRole).
 
-**Interfaces:** Tenant CRUD → identity (định danh); modules/nganh/glossary/dashboardBlocks → `tenant_app_config`; member mgmt: User/Credential/Membership → identity, role chức năng → app_user_roles; ensureAdminRole: phan_quyen (digital_book) như cũ + tạo app_user_roles role 'Admin' cho admin user + membership.role='admin' ở identity.
+**Interfaces:** identity repos (`Tenant/User/UserCredential/UserTenant`) qua connection `'identity'`; `VaiTro/PhanQuyen/Nganh` giữ RAW (digital_book); thêm `AppUserRole` + `TenantAppConfig` (default). Config (`modules/nganh/glossary/dashboardBlocks`) đọc/ghi `TenantAppConfig` (KHÔNG dùng field trên `Tenant` nữa). Cấp admin: membership identity `UserTenant.role='admin'` + functional role `AppUserRole.role='Admin'` + `VaiTro/PhanQuyen` (digital_book) như cũ.
 
-- [ ] **Step 1: module** forFeatureRaw đổi: identity entities qua forFeatureIdentity; thêm AppUserRole/TenantAppConfig (digital_book). 
-- [ ] **Step 2: service** — repoint từng method theo bản đồ (findAll/create/update/delete/members/addUser/updateMember/resetPassword/removeMember): Tenant/User/Credential/Membership → identity; modules/glossary/nganh/dashboardBlocks → tenant_app_config; role chức năng → app_user_roles; create tenant cũng tạo tenant_app_config + (entitlement tenant_apps? — entitlement là superAdmin/Portal; ở đây tạo tenant_app cho ke-toan để công ty mới dùng được Kế toán) + ensureAdminRole (phan_quyen + app_user_roles 'Admin' + membership admin).
-- [ ] **Step 3: Build + commit.**
+- [ ] **Step 1: module** — `forFeatureIdentity([Tenant, User, UserCredential, UserTenant])` (thay 4 cái khỏi forFeatureRaw); giữ `forFeatureRaw([VaiTro, PhanQuyen, Nganh])`; thêm `forFeature([AppUserRole, TenantAppConfig])`. (Giữ forFeatureIdentity([UserTenant]) cho TenantAdminGuard — gộp vào danh sách identity ở trên.)
+- [ ] **Step 2: constructor** — identity repos `@InjectRepository(Tenant,'identity')` v.v.; VaiTro/PhanQuyen/Nganh giữ RAW token; thêm `@InjectRepository(AppUserRole)` + `@InjectRepository(TenantAppConfig)` (default).
+- [ ] **Step 3: config → TenantAppConfig** — `findAll`/`findOne` trả `modules/nganh/glossary/dashboardBlocks` đọc từ TenantAppConfig theo `tenant._id.toString()` (không đọc `tenant.modules`...). `create`: tạo Tenant (identity, KHÔNG set modules/glossary/nganh trên Tenant) + tạo 1 row `TenantAppConfig` (modules từ dto || ['KE_TOAN'], nganh, glossary clone từ Nganh). `update`: thông tin định danh → Tenant(identity); modules/nganh → TenantAppConfig (upsert). `updateGlossary`/`getDashboardBlocks`/`updateDashboardBlocks` → TenantAppConfig.
+- [ ] **Step 4: cấp admin (create + ensureAdminRole)** — admin user: User/UserCredential/UserTenant(identity), `UserTenant.role='admin'` (membership); functional role → `AppUserRole.role='Admin'` (digital_book); `ensureAdminRole`: VaiTro + PhanQuyen 'Admin' (digital_book, giữ nguyên `generateAllPermissions`). delete/hardDelete: Tenant + memberships(identity) + deactivate AppUserRole + (cleanup TenantAppConfig tuỳ — giữ cũng được).
+- [ ] **Step 5: Build** `npx nest build master-data-service` + jest nếu có. Commit.
+> `tenant_apps` (entitlement identity) cho công ty mới: để **P3/Portal** xử lý (tối thiểu superAdmin set tay). Không bắt buộc ở 7a.
 
-> Lưu ý: `tenant_apps` (entitlement, identity) — khi tạo công ty mới ở đây, set tenant_apps(tenantId,'ke-toan') để công ty dùng được Kế toán (nếu không Portal sẽ không hiện). Cân nhắc để Portal (P3) làm; tối thiểu tạo entitlement ke-toan cho công ty tạo từ Kế toán.
+---
+
+## Task 7b: master-data/tenant — quản lý thành viên
+
+**Files:** Modify `be/apps/master-data-service/src/tenant/tenant.service.ts` (getTenantMembers/addUserToTenant/updateTenantMember/updateMemberProfile/resetMemberPassword/removeTenantMember).
+
+**Interfaces:** User/UserCredential/membership → identity; functional role hiển thị/sửa → `AppUserRole` (digital_book) theo (userId, tenantId). membership identity `UserTenant.role` = admin/member (mặc định 'member' khi thêm; 'admin' nếu set admin công ty).
+
+- [ ] **Step 1:** `getTenantMembers`: membership từ identity; user info từ identity; role hiển thị (`m.role`) → lấy từ AppUserRole theo (userId, tenantId). `addUserToTenant`: User/Cred/membership(identity, role='member'); functional role → AppUserRole (upsert dto.role). `updateTenantMember`: nếu đổi functional role → AppUserRole; nếu đổi admin/member → membership identity. `updateMemberProfile`: User identity. `resetMemberPassword`: UserCredential identity. `removeTenantMember`: soft-delete membership(identity) + deactivate AppUserRole.
+- [ ] **Step 2: Build + commit.**
 
 ---
 
