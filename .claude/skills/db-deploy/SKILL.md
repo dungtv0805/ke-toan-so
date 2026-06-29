@@ -5,6 +5,27 @@ description: Use when deploying backend services or frontend to production serve
 
 # Digital Books — Deploy Skill
 
+## ⭐ Deploy thường ngày → dùng CI (GitHub Actions), KHÔNG làm tay
+
+File `.github/workflows/deploy.yml` (runner GitHub-hosted, SSH vào server qua secrets `KT_HOST`/`KT_SSH_KEY`).
+- **Tự động khi push/merge vào `master`**: tự nhận diện thay đổi → deploy đúng phần:
+  - đổi `fe/**` → deploy FE; đổi `be/apps/<svc>/**` → deploy service đó;
+  - đổi `be/libs/**` (hoặc package.json/yarn.lock/nest-cli.json/tsconfig) → deploy TẤT CẢ service.
+- **Chạy tay**: Actions → "Deploy production" → Run workflow (chọn FE và/hoặc `be_services`).
+- CI làm: build → scp `main.js`/`dist` → `docker restart digital-book-app` / nginx reload (đúng các lệnh thủ công bên dưới).
+
+> Điều kiện CI hoạt động: code đã push lên GitHub + đã khai báo secrets (`KT_HOST`, `KT_SSH_KEY`, tuỳ chọn `KT_USER`/`KT_PORT`).
+
+## Khi nào VẪN phải làm THỦ CÔNG (CI chỉ copy code + restart, không đụng thư viện/PM2/DB)
+
+1. **Thêm dependency npm mới (runtime)** → cài vào container + `docker commit` (mục "Khi thêm DEPENDENCY npm MỚI"). CI chỉ đẩy `main.js` → thiếu module → crash.
+2. **Thêm microservice MỚI** → sửa `pm2/ecosystem.config.js` + tạo dist + gateway route (mục "Deploy a NEW Microservice").
+3. **Cấp quyền cho menu/trang mới** → lệnh Mongo `$addToSet` vào `phan_quyen` + đăng nhập lại (mục ⚠️ phân quyền). CI không chạm database.
+4. **Debug / xem log / verify env** trên server (mục Check Logs / Verify Env).
+5. CI chưa cấu hình (chưa push / chưa có secrets) → tạm dùng các bước thủ công bên dưới.
+
+> Các mục thủ công bên dưới là nguồn tham chiếu cho 5 trường hợp trên (và là logic mà CI tự động hoá).
+
 ## Server Info
 
 - SSH config name: `kt`
