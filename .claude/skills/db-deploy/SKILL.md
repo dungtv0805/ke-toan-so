@@ -5,26 +5,15 @@ description: Use when deploying backend services or frontend to production serve
 
 # Digital Books — Deploy Skill
 
-## ⭐ Deploy thường ngày → dùng CI (GitHub Actions), KHÔNG làm tay
+## ⚠️ Hiện tại (giai đoạn DEV): deploy THỦ CÔNG theo các bước bên dưới
 
-File `.github/workflows/deploy.yml` (runner GitHub-hosted, SSH vào server qua secrets `KT_HOST`/`KT_SSH_KEY`).
-- **Tự động khi push/merge vào `master`**: tự nhận diện thay đổi → deploy đúng phần:
-  - đổi `fe/**` → deploy FE; đổi `be/apps/<svc>/**` → deploy service đó;
-  - đổi `be/libs/**` (hoặc package.json/yarn.lock/nest-cli.json/tsconfig) → deploy TẤT CẢ service.
-- **Chạy tay**: Actions → "Deploy production" → Run workflow (chọn FE và/hoặc `be_services`).
-- CI làm: build → scp `main.js`/`dist` → `docker restart digital-book-app` / nginx reload (đúng các lệnh thủ công bên dưới).
+CI/CD (GitHub Actions) đang **TẮT** — sẽ setup lại khi lên môi trường prod (lúc đó có chiến lược nhánh
+rõ ràng hơn). Tạm thời mọi deploy đi qua các bước thủ công trong skill này:
+build → scp `main.js`/`dist` → `docker restart digital-book-app` / nginx reload.
 
-> Điều kiện CI hoạt động: code đã push lên GitHub + đã khai báo secrets (`KT_HOST`, `KT_SSH_KEY`, tuỳ chọn `KT_USER`/`KT_PORT`).
-
-## Khi nào VẪN phải làm THỦ CÔNG (CI chỉ copy code + restart, không đụng thư viện/PM2/DB)
-
-1. **Thêm dependency npm mới (runtime)** → cài vào container + `docker commit` (mục "Khi thêm DEPENDENCY npm MỚI"). CI chỉ đẩy `main.js` → thiếu module → crash.
-2. **Thêm microservice MỚI** → sửa `pm2/ecosystem.config.js` + tạo dist + gateway route (mục "Deploy a NEW Microservice").
-3. **Cấp quyền cho menu/trang mới** → lệnh Mongo `$addToSet` vào `phan_quyen` + đăng nhập lại (mục ⚠️ phân quyền). CI không chạm database.
-4. **Debug / xem log / verify env** trên server (mục Check Logs / Verify Env).
-5. CI chưa cấu hình (chưa push / chưa có secrets) → tạm dùng các bước thủ công bên dưới.
-
-> Các mục thủ công bên dưới là nguồn tham chiếu cho 5 trường hợp trên (và là logic mà CI tự động hoá).
+> Khi setup lại CI: dùng GitHub-hosted runner + SSH (secrets `KT_HOST`/`KT_SSH_KEY`), auto-detect theo
+> path (`fe/**`, `be/apps/<svc>/**`, `be/libs/**` → all). Đã có mẫu workflow trong lịch sử git
+> (commit `9b0bb04`, file `.github/workflows/deploy.yml`) để tham khảo.
 
 ## Server Info
 
