@@ -21,6 +21,7 @@ import {
   VaiTro,
   AppUserRole,
   TenantAppConfig,
+  TenantApp,
 } from '@app/entities';
 import { AuthServiceService } from './auth-service.service';
 import { JwtService } from '@app/auth';
@@ -47,6 +48,7 @@ async function buildService(overrides: Record<string, any> = {}) {
     [getRepositoryToken(UserCredential, 'identity') as string]: stubRepo(),
     [getRepositoryToken(Tenant, 'identity') as string]: stubRepo(),
     [getRepositoryToken(UserTenant, 'identity') as string]: stubRepo(),
+    [getRepositoryToken(TenantApp, 'identity') as string]: stubRepo(),
     [`${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`]: stubRepo(),
     [`${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`]: stubRepo(),
     [getRepositoryToken(AppUserRole) as string]: stubRepo(),

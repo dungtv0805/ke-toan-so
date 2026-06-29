@@ -12,4 +12,5 @@ export const TENANT_EXEMPT_ENTITIES = [
   'UserTenant', // User-tenant membership is cross-tenant
   'AppUserRole', // Queried by userId+tenantId explicitly; exempt like UserTenant
   'TenantAppConfig', // Queried by tenantId explicitly; login happens before tenant context
+  'TenantApp', // Identity-side entitlement; queried by tenantId+appId, no ke-toan tenantId context
 ];

@@ -3,7 +3,7 @@ import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { CoreModule, TenantModule } from '@app/core';
 import { AuthModule, EntitlementService, ModuleGuard } from '@app/auth';
 import { DatabaseModule } from '@app/database';
-import { Tenant, LinhVuc, MenuCatalog } from '@app/entities';
+import { LinhVuc, MenuCatalog } from '@app/entities';
 import { controllers } from './controllers';
 import { TenantHeaderInterceptor } from './interceptors';
 
@@ -14,7 +14,7 @@ import { TenantHeaderInterceptor } from './interceptors';
     AuthModule,
     DatabaseModule.forRoot(),
     DatabaseModule.forRootIdentity(),
-    DatabaseModule.forFeatureRaw([Tenant, LinhVuc, MenuCatalog]),
+    DatabaseModule.forFeatureRaw([LinhVuc, MenuCatalog]),
   ],
   controllers,
   providers: [
