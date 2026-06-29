@@ -1,0 +1,133 @@
+# Deploy production (server "kt") — chạy thủ công từ tab Actions.
+#
+# Secrets cần khai báo (Settings → Secrets and variables → Actions):
+#   KT_HOST     : IP/hostname server (vd 1.2.3.4)
+#   KT_SSH_KEY  : private key SSH (toàn bộ nội dung, có quyền vào server)
+#   KT_USER     : (tuỳ chọn) user SSH, mặc định "root"
+#   KT_PORT     : (tuỳ chọn) cổng SSH, mặc định "22"
+#
+# Cách dùng: Actions → "Deploy production" → Run workflow:
+#   - deploy_fe   : tick để deploy Frontend (nginx)
+#   - be_services : danh sách service BE cách nhau dấu cách
+#                   (vd "tax-service voucher-service"); để trống = không deploy BE;
+#                   "all" = tất cả service.
+#
+# ⚠️ Nếu service BE có THÊM dependency npm mới (runtime): workflow này chỉ đẩy main.js,
+#    sẽ thiếu module trong container. Khi đó phải cài dep vào container + docker commit
+#    theo skill db-deploy (làm thủ công), KHÔNG dựa vào workflow này.
+
+name: Deploy production
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_fe:
+        description: "Deploy Frontend (nginx)"
+        type: boolean
+        default: true
+      be_services:
+        description: 'BE services (cách nhau dấu cách; rỗng = không; "all" = tất cả)'
+        type: string
+        default: ""
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  SSH_USER: ${{ secrets.KT_USER || 'root' }}
+  SSH_PORT: ${{ secrets.KT_PORT || '22' }}
+  BE_DIR: /root/chimseo/digital-book-be
+  FE_DIR: /root/chimseo/nginx/build4
+
+jobs:
+  frontend:
+    if: ${{ inputs.deploy_fe }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: fe/package-lock.json
+
+      - name: Install & build FE
+        working-directory: fe
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.KT_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "$SSH_PORT" -H "${{ secrets.KT_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Upload build & reload nginx
+        run: |
+          SSH="ssh -i ~/.ssh/id_deploy -p $SSH_PORT $SSH_USER@${{ secrets.KT_HOST }}"
+          scp -i ~/.ssh/id_deploy -P "$SSH_PORT" -r fe/dist/* \
+            "$SSH_USER@${{ secrets.KT_HOST }}:$FE_DIR/"
+          $SSH "docker exec digital-book-nginx nginx -s reload"
+          echo "✅ FE deployed."
+
+  backend:
+    if: ${{ inputs.be_services != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: yarn
+          cache-dependency-path: be/yarn.lock
+
+      - name: Install deps
+        working-directory: be
+        run: yarn install --frozen-lockfile
+
+      - name: Resolve service list
+        id: svc
+        run: |
+          ALL="gateway auth-service master-data-service voucher-service cash-book-service payable-service reporting-service config-service kho-service tax-service"
+          IN="${{ inputs.be_services }}"
+          if [ "$IN" = "all" ]; then LIST="$ALL"; else LIST="$IN"; fi
+          # Validate từng service nằm trong danh sách hợp lệ.
+          for s in $LIST; do
+            echo "$ALL" | tr ' ' '\n' | grep -qx "$s" || { echo "::error::Service không hợp lệ: $s"; exit 1; }
+          done
+          echo "list=$LIST" >> "$GITHUB_OUTPUT"
+          echo "Sẽ build & deploy: $LIST"
+
+      - name: Build services
+        working-directory: be
+        run: |
+          for s in ${{ steps.svc.outputs.list }}; do
+            echo "▶ nest build $s"
+            npx nest build "$s"
+          done
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.KT_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "$SSH_PORT" -H "${{ secrets.KT_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Upload main.js & restart container
+        run: |
+          SSH="ssh -i ~/.ssh/id_deploy -p $SSH_PORT $SSH_USER@${{ secrets.KT_HOST }}"
+          for s in ${{ steps.svc.outputs.list }}; do
+            $SSH "mkdir -p $BE_DIR/dist/apps/$s"
+            scp -i ~/.ssh/id_deploy -P "$SSH_PORT" "be/dist/apps/$s/main.js" \
+              "$SSH_USER@${{ secrets.KT_HOST }}:$BE_DIR/dist/apps/$s/main.js"
+            echo "  ⬆ $s/main.js"
+          done
+          $SSH "docker restart digital-book-app"
+          echo "✅ BE deployed: ${{ steps.svc.outputs.list }}"
+          echo "ℹ️ Nếu có dependency npm MỚI, nhớ cài vào container + docker commit (skill db-deploy)."
