@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { UserTenant, PhanQuyen, SUPER_ADMIN_EMAIL } from '@app/entities';
+import { AppUserRole, PhanQuyen, SUPER_ADMIN_EMAIL } from '@app/entities';
 
 export interface LoadedAuthz {
   vaiTro: string;
@@ -26,7 +26,7 @@ export class AuthzLoaderService {
 
     try {
       const ut = await this.dataSource
-        .getRepository(UserTenant)
+        .getRepository(AppUserRole)
         .findOne({ where: { userId, tenantId, isActive: true } as any });
       if (!ut) {
         const data = { vaiTro: '', permissions: [] };

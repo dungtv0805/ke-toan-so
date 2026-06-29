@@ -3,12 +3,12 @@ import { EntitlementService } from './entitlement.service';
 function makeDataSource(opts: {
   menuCatalog?: any[];
   linhVuc?: any[];
-  tenant?: any;
+  tenantAppConfig?: any;
 }) {
   const repos: Record<string, any> = {
     MenuCatalog: { find: jest.fn().mockResolvedValue(opts.menuCatalog ?? []) },
     LinhVuc: { find: jest.fn().mockResolvedValue(opts.linhVuc ?? []) },
-    Tenant: { findOne: jest.fn().mockResolvedValue(opts.tenant ?? null) },
+    TenantAppConfig: { findOne: jest.fn().mockResolvedValue(opts.tenantAppConfig ?? null) },
   };
   return {
     getRepository: (entity: { name: string }) => repos[entity.name],
@@ -67,19 +67,19 @@ describe('EntitlementService', () => {
 
   it('getTenantModules trả modules của tenant', async () => {
     const svc = new EntitlementService(makeDataSource({
-      tenant: { modules: ['KE_TOAN', 'KHO'] },
+      tenantAppConfig: { modules: ['KE_TOAN', 'KHO'] },
     }));
-    expect(await svc.getTenantModules('507f1f77bcf86cd799439011')).toEqual(['KE_TOAN', 'KHO']);
+    expect(await svc.getTenantModules('tenant-abc')).toEqual(['KE_TOAN', 'KHO']);
   });
 
   it('getTenantModules fallback KE_TOAN khi rỗng/null', async () => {
-    const svc = new EntitlementService(makeDataSource({ tenant: { modules: [] } }));
-    expect(await svc.getTenantModules('507f1f77bcf86cd799439011')).toEqual(['KE_TOAN']);
+    const svc = new EntitlementService(makeDataSource({ tenantAppConfig: { modules: [] } }));
+    expect(await svc.getTenantModules('tenant-abc')).toEqual(['KE_TOAN']);
   });
 
-  // I1: ObjectId không hợp lệ → fallback ['KE_TOAN'], không throw
-  it('I1: getTenantModules với tenantId không hợp lệ → trả [KE_TOAN] không throw', async () => {
+  // I1: tenantAppConfig không tồn tại → fallback ['KE_TOAN'], không throw
+  it('I1: getTenantModules khi không tìm thấy TenantAppConfig → trả [KE_TOAN] không throw', async () => {
     const svc = new EntitlementService(makeDataSource({}));
-    await expect(svc.getTenantModules('not-a-valid-objectid')).resolves.toEqual(['KE_TOAN']);
+    await expect(svc.getTenantModules('tenant-not-found')).resolves.toEqual(['KE_TOAN']);
   });
 });

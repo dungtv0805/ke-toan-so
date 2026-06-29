@@ -10,7 +10,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User, UserCredential, Tenant, UserStatus, UserTenant, PhanQuyen, SUPER_ADMIN_EMAIL } from '@app/entities';
+import { User, UserCredential, Tenant, UserStatus, UserTenant, PhanQuyen, SUPER_ADMIN_EMAIL, AppUserRole, TenantAppConfig } from '@app/entities';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 import {
   LoginDto,
@@ -34,16 +34,20 @@ const SALT_ROUNDS = 10;
 @Injectable()
 export class AuthServiceService {
   constructor(
-    @InjectRepository(User)
+    @InjectRepository(User, 'identity')
     private readonly userRepository: Repository<User>,
-    @InjectRepository(UserCredential)
+    @InjectRepository(UserCredential, 'identity')
     private readonly userCredentialRepository: Repository<UserCredential>,
-    @InjectRepository(Tenant)
+    @InjectRepository(Tenant, 'identity')
     private readonly tenantRepository: Repository<Tenant>,
-    @InjectRepository(UserTenant)
+    @InjectRepository(UserTenant, 'identity')
     private readonly userTenantRepository: Repository<UserTenant>,
     @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`)
     private readonly phanQuyenRepo: Repository<PhanQuyen>,
+    @InjectRepository(AppUserRole)
+    private readonly appUserRoleRepo: Repository<AppUserRole>,
+    @InjectRepository(TenantAppConfig)
+    private readonly tenantAppConfigRepo: Repository<TenantAppConfig>,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -63,20 +67,21 @@ export class AuthServiceService {
   }
 
   /**
-   * Build TenantInfo from UserTenant and Tenant entity
+   * Build TenantInfo from role, Tenant entity, and TenantAppConfig
    */
   private buildTenantInfo(
-    userTenant: UserTenant,
+    role: string,
     tenant: Tenant,
+    cfg: TenantAppConfig | null,
   ): TenantInfo {
     return {
       tenantId: tenant._id.toString(),
       tenantName: tenant.name,
       tenantSlug: tenant.slug,
-      role: userTenant.role,
-      modules: tenant.modules?.length ? tenant.modules : ['KE_TOAN'],
-      glossary: tenant.glossary ?? {},
-      nganh: tenant.nganh ?? null,
+      role,
+      modules: cfg?.modules?.length ? cfg.modules : ['KE_TOAN'],
+      glossary: cfg?.glossary ?? {},
+      nganh: cfg?.nganh ?? null,
     };
   }
 
@@ -157,15 +162,12 @@ export class AuthServiceService {
       }
 
       // Super admin with tenants - let them choose
-      const tenantInfoList: TenantInfo[] = allTenants.map((tenant) => ({
-        tenantId: tenant._id.toString(),
-        tenantName: tenant.name,
-        tenantSlug: tenant.slug,
-        role: 'SUPER_ADMIN',
-        modules: tenant.modules?.length ? tenant.modules : ['KE_TOAN'],
-        glossary: tenant.glossary ?? {},
-        nganh: tenant.nganh ?? null,
-      }));
+      const tenantInfoList: TenantInfo[] = await Promise.all(
+        allTenants.map(async (tenant) => {
+          const cfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId: tenant._id.toString() } as any });
+          return this.buildTenantInfo('SUPER_ADMIN', tenant, cfg);
+        }),
+      );
 
       if (tenantInfoList.length === 1) {
         const tenantInfo = tenantInfoList[0];
@@ -224,13 +226,16 @@ export class AuthServiceService {
       throw new ForbiddenException('Không tìm thấy công ty hoạt động');
     }
 
-    // Build tenant info list
-    const tenantInfoList: TenantInfo[] = tenants.map((tenant) => {
-      const userTenant = userTenants.find(
-        (ut) => ut.tenantId === tenant._id.toString(),
-      );
-      return this.buildTenantInfo(userTenant!, tenant);
-    });
+    // Build tenant info list — role from AppUserRole, config from TenantAppConfig
+    const tenantInfoList: TenantInfo[] = await Promise.all(
+      tenants.map(async (tenant) => {
+        const tenantId = tenant._id.toString();
+        const aur = await this.appUserRoleRepo.findOne({ where: { userId: user._id.toString(), tenantId, isActive: true } as any });
+        const role = aur?.role || 'KIEM_SOAT';
+        const cfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId } as any });
+        return this.buildTenantInfo(role, tenant, cfg);
+      }),
+    );
 
     // Case 1: Single tenant - return accessToken directly
     if (tenantInfoList.length === 1) {
@@ -305,15 +310,8 @@ export class AuthServiceService {
 
     // Super admin can access any tenant
     if (this.isSuperAdmin(user)) {
-      const tenantInfo: TenantInfo = {
-        tenantId: tenant._id.toString(),
-        tenantName: tenant.name,
-        tenantSlug: tenant.slug,
-        role: 'SUPER_ADMIN',
-        modules: tenant.modules?.length ? tenant.modules : ['KE_TOAN'],
-        glossary: tenant.glossary ?? {},
-        nganh: tenant.nganh ?? null,
-      };
+      const cfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId: tenant._id.toString() } as any });
+      const tenantInfo = this.buildTenantInfo('SUPER_ADMIN', tenant, cfg);
 
       const payload: UserPayload = {
         id: user._id.toString(),
@@ -346,7 +344,11 @@ export class AuthServiceService {
       throw new ForbiddenException('Người dùng không thuộc công ty này');
     }
 
-    const tenantInfo = this.buildTenantInfo(userTenant, tenant);
+    // Read functional role from AppUserRole, config from TenantAppConfig
+    const aur = await this.appUserRoleRepo.findOne({ where: { userId: user._id.toString(), tenantId: dto.tenantId, isActive: true } as any });
+    const role = aur?.role || 'KIEM_SOAT';
+    const cfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId: dto.tenantId } as any });
+    const tenantInfo = this.buildTenantInfo(role, tenant, cfg);
 
     // Create access token without permissions (too large for JWT/headers)
     const permissions = await this.loadPermissions(tenantInfo.role, tenantInfo.tenantId);
@@ -385,7 +387,7 @@ export class AuthServiceService {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-    // Create user
+    // Create user (identity connection)
     const user = this.userRepository.create({
       email,
       hoTen,
@@ -394,7 +396,7 @@ export class AuthServiceService {
 
     const savedUser = await this.userRepository.save(user);
 
-    // Create UserCredential with hashed password
+    // Create UserCredential with hashed password (identity connection)
     const credential = this.userCredentialRepository.create({
       userId: savedUser._id.toString(),
       password: hashedPassword,
@@ -403,7 +405,7 @@ export class AuthServiceService {
 
     await this.userCredentialRepository.save(credential);
 
-    // Create UserTenant membership if tenantId provided
+    // Create UserTenant membership if tenantId provided (identity connection)
     if (tenantId) {
       const userTenant = this.userTenantRepository.create({
         userId: savedUser._id.toString(),
@@ -412,6 +414,15 @@ export class AuthServiceService {
         isActive: true,
       });
       await this.userTenantRepository.save(userTenant);
+
+      // Create functional role in AppUserRole (digital_book connection)
+      const appUserRole = this.appUserRoleRepo.create({
+        userId: savedUser._id.toString(),
+        tenantId,
+        role: role || 'KIEM_SOAT',
+        isActive: true,
+      });
+      await this.appUserRoleRepo.save(appUserRole);
     }
 
     return {
@@ -463,15 +474,13 @@ export class AuthServiceService {
         where: { isActive: true },
       });
 
-      const availableTenants: TenantInfo[] = allTenants.map((t) => ({
-        tenantId: t._id.toString(),
-        tenantName: t.name,
-        tenantSlug: t.slug,
-        role: 'SUPER_ADMIN',
-        modules: t.modules?.length ? t.modules : ['KE_TOAN'],
-        glossary: t.glossary ?? {},
-        nganh: t.nganh ?? null,
-      }));
+      // Config from TenantAppConfig for each tenant
+      const availableTenants: TenantInfo[] = await Promise.all(
+        allTenants.map(async (t) => {
+          const cfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId: t._id.toString() } as any });
+          return this.buildTenantInfo('SUPER_ADMIN', t, cfg);
+        }),
+      );
 
       if (!tenantId) {
         return {
@@ -486,17 +495,11 @@ export class AuthServiceService {
         throw new ForbiddenException('Không tìm thấy công ty');
       }
 
+      const currentCfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId } as any });
+
       return {
         user: this.buildUserResponse(user),
-        tenant: {
-          tenantId: tenant._id.toString(),
-          tenantName: tenant.name,
-          tenantSlug: tenant.slug,
-          role: 'SUPER_ADMIN',
-          modules: tenant.modules?.length ? tenant.modules : ['KE_TOAN'],
-          glossary: tenant.glossary ?? {},
-          nganh: tenant.nganh ?? null,
-        },
+        tenant: this.buildTenantInfo('SUPER_ADMIN', tenant, currentCfg),
         availableTenants,
         permissions: ['*'],
       };
@@ -514,18 +517,16 @@ export class AuthServiceService {
         })
       : [];
 
-    const availableTenants: TenantInfo[] = allTenants.map((t) => {
-      const ut = allUserTenants.find((m) => m.tenantId === t._id.toString());
-      return {
-        tenantId: t._id.toString(),
-        tenantName: t.name,
-        tenantSlug: t.slug,
-        role: ut?.role || 'KIEM_SOAT',
-        modules: t.modules?.length ? t.modules : ['KE_TOAN'],
-        glossary: t.glossary ?? {},
-        nganh: t.nganh ?? null,
-      };
-    });
+    // Role from AppUserRole, config from TenantAppConfig for each tenant
+    const availableTenants: TenantInfo[] = await Promise.all(
+      allTenants.map(async (t) => {
+        const tId = t._id.toString();
+        const aur = await this.appUserRoleRepo.findOne({ where: { userId: user._id.toString(), tenantId: tId, isActive: true } as any });
+        const role = aur?.role || 'KIEM_SOAT';
+        const cfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId: tId } as any });
+        return this.buildTenantInfo(role, t, cfg);
+      }),
+    );
 
     // Current tenant info
     const currentUserTenant = allUserTenants.find((ut) => ut.tenantId === tenantId);
@@ -538,11 +539,15 @@ export class AuthServiceService {
       throw new ForbiddenException('Không tìm thấy công ty');
     }
 
+    const currentAur = await this.appUserRoleRepo.findOne({ where: { userId: user._id.toString(), tenantId, isActive: true } as any });
+    const currentRole = currentAur?.role || 'KIEM_SOAT';
+    const currentCfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId } as any });
+
     return {
       user: this.buildUserResponse(user),
-      tenant: this.buildTenantInfo(currentUserTenant, currentTenant),
+      tenant: this.buildTenantInfo(currentRole, currentTenant, currentCfg),
       availableTenants,
-      permissions: await this.loadPermissions(currentUserTenant.role, tenantId),
+      permissions: await this.loadPermissions(currentRole, tenantId),
     };
   }
 
@@ -574,15 +579,8 @@ export class AuthServiceService {
 
     // Super admin can access any tenant
     if (this.isSuperAdmin(user)) {
-      const tenantInfo: TenantInfo = {
-        tenantId: tenant._id.toString(),
-        tenantName: tenant.name,
-        tenantSlug: tenant.slug,
-        role: 'SUPER_ADMIN',
-        modules: tenant.modules?.length ? tenant.modules : ['KE_TOAN'],
-        glossary: tenant.glossary ?? {},
-        nganh: tenant.nganh ?? null,
-      };
+      const cfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId: tenant._id.toString() } as any });
+      const tenantInfo = this.buildTenantInfo('SUPER_ADMIN', tenant, cfg);
 
       const payload: UserPayload = {
         id: user._id.toString(),
@@ -615,7 +613,11 @@ export class AuthServiceService {
       throw new ForbiddenException('Người dùng không thuộc công ty này');
     }
 
-    const tenantInfo = this.buildTenantInfo(userTenant, tenant);
+    // Read functional role from AppUserRole, config from TenantAppConfig
+    const aur = await this.appUserRoleRepo.findOne({ where: { userId: user._id.toString(), tenantId, isActive: true } as any });
+    const role = aur?.role || 'KIEM_SOAT';
+    const cfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId } as any });
+    const tenantInfo = this.buildTenantInfo(role, tenant, cfg);
 
     const permissions = await this.loadPermissions(tenantInfo.role, tenantInfo.tenantId);
     const payload: UserPayload = {

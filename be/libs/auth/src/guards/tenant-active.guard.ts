@@ -4,6 +4,7 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
 import { Request } from 'express';
 import { SUPER_ADMIN_EMAIL, Tenant } from '@app/entities';
 import { DataSource } from 'typeorm';
@@ -16,7 +17,7 @@ import { DataSource } from 'typeorm';
  */
 @Injectable()
 export class TenantActiveGuard implements CanActivate {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(@InjectDataSource('identity') private readonly dataSource: DataSource) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();

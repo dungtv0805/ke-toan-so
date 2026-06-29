@@ -14,6 +14,7 @@ import { NhatKyChungModule } from './nhat-ky-chung/nhat-ky-chung.module';
     }),
     TenantModule,
     DatabaseModule.forRoot(),
+    DatabaseModule.forRootIdentity(),
     AuthModule,
     ServiceClientModule.forRoot(),
     ChungTuModule,

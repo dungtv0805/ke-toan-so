@@ -24,12 +24,12 @@ describe('TenantAdminGuard', () => {
     expect(repo.findOne).not.toHaveBeenCalled();
   });
 
-  it('cho phép user là Admin (role "Admin") của tenant', async () => {
-    repo.findOne.mockResolvedValue({ userId: 'u1', tenantId: TENANT_ID, role: 'Admin', isActive: true });
+  it('cho phép user là Admin (role "admin") của tenant', async () => {
+    repo.findOne.mockResolvedValue({ userId: 'u1', tenantId: TENANT_ID, role: 'admin', isActive: true });
     await expect(guard.canActivate(ctx({ email: 'a@b.com', id: 'u1' }))).resolves.toBe(true);
-    // xác nhận query dùng role 'Admin' (đúng casing), không phải 'ADMIN'
+    // xác nhận query dùng role 'admin' (identity memberships dùng lowercase)
     expect(repo.findOne).toHaveBeenCalledWith(
-      expect.objectContaining({ where: expect.objectContaining({ role: 'Admin', tenantId: TENANT_ID, userId: 'u1', isActive: true }) }),
+      expect.objectContaining({ where: expect.objectContaining({ role: 'admin', tenantId: TENANT_ID, userId: 'u1', isActive: true }) }),
     );
   });
 

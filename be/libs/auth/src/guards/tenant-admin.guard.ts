@@ -3,12 +3,11 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
-  Inject,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Request } from 'express';
 import { Repository } from 'typeorm';
 import { SUPER_ADMIN_EMAIL, UserTenant } from '@app/entities';
-import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 
 /**
  * Guard cho phép Super Admin hoặc user có role ADMIN trong tenant đó.
@@ -18,7 +17,7 @@ import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 @Injectable()
 export class TenantAdminGuard implements CanActivate {
   constructor(
-    @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}UserTenant`)
+    @InjectRepository(UserTenant, 'identity')
     private readonly userTenantRepository: Repository<UserTenant>,
   ) {}
 
@@ -40,12 +39,12 @@ export class TenantAdminGuard implements CanActivate {
       throw new ForbiddenException('Không tìm thấy mã công ty');
     }
 
-    // Check if user has role 'Admin' in this tenant
+    // Check if user has role 'admin' in this tenant (identity memberships use lowercase)
     const membership = await this.userTenantRepository.findOne({
       where: {
         userId: user.id,
         tenantId,
-        role: 'Admin',
+        role: 'admin',
         isActive: true,
       },
     });

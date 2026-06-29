@@ -1,6 +1,8 @@
 import { Test } from '@nestjs/testing';
 import { ConflictException } from '@nestjs/common';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
+import { TenantAppConfig } from '@app/entities';
 import { NganhService } from './nganh.service';
 
 function mockRepo(initial: any[] = []) {
@@ -23,16 +25,16 @@ function mockRepo(initial: any[] = []) {
 describe('NganhService', () => {
   let service: NganhService;
   let nganhRepo: any;
-  let tenantRepo: any;
+  let tenantAppConfigRepo: any;
 
   beforeEach(async () => {
     nganhRepo = mockRepo();
-    tenantRepo = mockRepo();
+    tenantAppConfigRepo = mockRepo();
     const moduleRef = await Test.createTestingModule({
       providers: [
         NganhService,
         { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`, useValue: nganhRepo },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`, useValue: tenantRepo },
+        { provide: getRepositoryToken(TenantAppConfig), useValue: tenantAppConfigRepo },
       ],
     }).compile();
     service = moduleRef.get(NganhService);
@@ -52,7 +54,7 @@ describe('NganhService', () => {
 
   it('delete chặn khi còn tenant dùng ngành', async () => {
     const created = await service.create({ code: 'XAY_DUNG', name: 'Xây dựng' } as any);
-    tenantRepo.store.push({ nganh: 'XAY_DUNG' });
+    tenantAppConfigRepo.store.push({ tenantId: 't1', nganh: 'XAY_DUNG' });
     await expect(service.delete(String(created._id))).rejects.toBeInstanceOf(ConflictException);
   });
 });
