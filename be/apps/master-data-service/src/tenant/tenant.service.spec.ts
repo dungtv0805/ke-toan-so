@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
+import { Tenant, User, UserCredential, UserTenant, AppUserRole, TenantAppConfig, Nganh } from '@app/entities';
 import { TenantService } from './tenant.service';
 
 const USER_ID = '507f1f77bcf86cd799439011';
@@ -18,6 +20,45 @@ function makeUser(overrides: any = {}) {
   };
 }
 
+/** Minimal stub repo used for dependencies we don't care about in a given test. */
+function stubRepo() {
+  return {
+    find: jest.fn(async () => []),
+    findOne: jest.fn(async () => null),
+    create: jest.fn((x: any) => ({ ...x })),
+    save: jest.fn(async (x: any) => x),
+    remove: jest.fn(async () => undefined),
+    count: jest.fn(async () => 0),
+  };
+}
+
+/** Build a test module with the new 7a injection tokens. */
+async function buildModule(overrides: Record<string, any> = {}) {
+  const defaults: Record<string, any> = {
+    [getRepositoryToken(Tenant, 'identity') as string]: stubRepo(),
+    [getRepositoryToken(User, 'identity') as string]: stubRepo(),
+    [getRepositoryToken(UserCredential, 'identity') as string]: stubRepo(),
+    [getRepositoryToken(UserTenant, 'identity') as string]: stubRepo(),
+    [`${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`]: stubRepo(),
+    [`${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`]: stubRepo(),
+    [`${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`]: stubRepo(),
+    [getRepositoryToken(AppUserRole) as string]: stubRepo(),
+    [getRepositoryToken(TenantAppConfig) as string]: stubRepo(),
+  };
+  const repos = { ...defaults, ...overrides };
+
+  const module: TestingModule = await Test.createTestingModule({
+    providers: [
+      TenantService,
+      ...Object.entries(repos).map(([token, value]) => ({ provide: token, useValue: value })),
+    ],
+  }).compile();
+
+  return { module, service: module.get<TenantService>(TenantService), repos };
+}
+
+// ─── 7b: Member profile & password (DI tokens updated; methods unchanged) ──────
+
 describe('TenantService - member profile & password', () => {
   let service: TenantService;
   let userRepo: any;
@@ -28,22 +69,13 @@ describe('TenantService - member profile & password', () => {
     userRepo = { find: jest.fn(), findOne: jest.fn(), create: jest.fn(), save: jest.fn() };
     credentialRepo = { find: jest.fn(), findOne: jest.fn(), create: jest.fn(), save: jest.fn() };
     userTenantRepo = { find: jest.fn(), findOne: jest.fn(), create: jest.fn(), save: jest.fn() };
-    const stub = { find: jest.fn(), findOne: jest.fn(), create: jest.fn(), save: jest.fn() };
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        TenantService,
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`, useValue: stub },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}User`, useValue: userRepo },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserCredential`, useValue: credentialRepo },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserTenant`, useValue: userTenantRepo },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`, useValue: stub },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`, useValue: stub },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`, useValue: stub },
-      ],
-    }).compile();
-
-    service = module.get<TenantService>(TenantService);
+    const built = await buildModule({
+      [getRepositoryToken(User, 'identity') as string]: userRepo,
+      [getRepositoryToken(UserCredential, 'identity') as string]: credentialRepo,
+      [getRepositoryToken(UserTenant, 'identity') as string]: userTenantRepo,
+    });
+    service = built.service;
   });
 
   describe('updateMemberProfile', () => {
@@ -130,35 +162,27 @@ function repoWith(items: any[] = []) {
     findOne: jest.fn(async ({ where }: any) =>
       store.find((x) =>
         (where.code && x.code === where.code) ||
-        (where._id && String(x._id) === String(where._id)),
+        (where._id && String(x._id) === String(where._id)) ||
+        (where.tenantId && x.tenantId === where.tenantId),
       ) ?? null,
     ),
     create: jest.fn((x: any) => ({ ...x })),
     save: jest.fn(async (x: any) => x),
+    remove: jest.fn(async () => undefined),
     count: jest.fn(async () => store.length),
   } as any;
 }
 
 describe('TenantService.cloneGlossaryFromNganh', () => {
-  async function build(nganhItems: any[]) {
-    const empty = repoWith();
-    const nganhRepo = repoWith(nganhItems);
-    const moduleRef = await Test.createTestingModule({
-      providers: [
-        TenantService,
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}User`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserCredential`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserTenant`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`, useValue: nganhRepo },
-      ],
-    }).compile();
-    return { service: moduleRef.get(TenantService), nganhRepo };
-  }
-
   const XD = { code: 'XAY_DUNG', glossary: { chuDauTu: { label: 'Chủ đầu tư' } } };
+
+  async function build(nganhItems: any[]) {
+    const nganhRepo = repoWith(nganhItems);
+    const built = await buildModule({
+      [`${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`]: nganhRepo,
+    });
+    return { service: built.service, nganhRepo };
+  }
 
   it('trả deep-copy glossary của ngành theo code', async () => {
     const built = await build([XD]);
@@ -181,46 +205,54 @@ describe('TenantService.cloneGlossaryFromNganh', () => {
   });
 });
 
-// ─── Task 2: create/update không clone glossary từ Nganh ─────────────────────
+// ─── Task 7a: create → TenantAppConfig nhận glossary clone từ Nganh ─────────
 
-describe('TenantService.create — glossary không clone từ Nganh', () => {
+describe('TenantService.create — TenantAppConfig được tạo với config đúng', () => {
   const XD = { code: 'XAY_DUNG', _id: 'nganh-1', glossary: { chuDauTu: { label: 'Chủ đầu tư' } } };
 
-  it('tạo tenant với nganh → glossary là {} (không clone từ Nganh)', async () => {
+  it('tạo TenantAppConfig với glossary clone từ Nganh và modules mặc định', async () => {
     const FAKE_OBJ_ID = { toString: () => '507f1f77bcf86cd799439011' };
     const tenantRepo = {
       find: jest.fn(async () => []),
-      findOne: jest.fn(async () => null),
+      findOne: jest.fn(async () => null),   // findBySlug → null (no duplicate)
       create: jest.fn((x: any) => ({ ...x, _id: FAKE_OBJ_ID })),
       save: jest.fn(async (x: any) => ({ ...x, _id: FAKE_OBJ_ID })),
     };
-    const empty = repoWith();
-    const nganhRepo = repoWith([XD]);
+    const appConfigRepo = {
+      findOne: jest.fn(async () => null),
+      create: jest.fn((x: any) => ({ ...x })),
+      save: jest.fn(async (x: any) => x),
+    };
 
-    const moduleRef = await Test.createTestingModule({
-      providers: [
-        TenantService,
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`, useValue: tenantRepo },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}User`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserCredential`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserTenant`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`, useValue: nganhRepo },
-      ],
-    }).compile();
-    const service = moduleRef.get(TenantService);
+    const built = await buildModule({
+      [getRepositoryToken(Tenant, 'identity') as string]: tenantRepo,
+      [`${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`]: repoWith([XD]),
+      [getRepositoryToken(TenantAppConfig) as string]: appConfigRepo,
+    });
 
-    await service.create({ name: 'Công ty XD', slug: 'cong-ty-xd', nganh: 'XAY_DUNG' } as any);
+    await built.service.create({ name: 'Công ty XD', slug: 'cong-ty-xd', nganh: 'XAY_DUNG' } as any);
 
+    // Tenant (identity) should NOT have glossary/nganh/modules
     expect(tenantRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ glossary: {} }),
+      expect.not.objectContaining({ glossary: expect.anything() }),
+    );
+
+    // TenantAppConfig should be created with cloned glossary and correct fields
+    expect(appConfigRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: '507f1f77bcf86cd799439011',
+        nganh: 'XAY_DUNG',
+        modules: ['KE_TOAN'],
+        glossary: { chuDauTu: { label: 'Chủ đầu tư' } },
+      }),
     );
   });
 });
 
-describe('TenantService.update — glossary không clone từ Nganh khi đổi nganh', () => {
-  it('đổi nganh → glossary KHÔNG được clone (giữ nguyên {})', async () => {
+// ─── Task 7a: update → nganh đổi không clone glossary (chỉ cập nhật TenantAppConfig.nganh) ─
+
+describe('TenantService.update — đổi nganh chỉ cập nhật TenantAppConfig, không clone glossary', () => {
+  it('đổi nganh → TenantAppConfig.nganh được cập nhật, glossary giữ nguyên', async () => {
     const TID = '507f1f77bcf86cd799439011';
     const tenant: any = {
       _id: { toString: () => TID },
@@ -232,58 +264,63 @@ describe('TenantService.update — glossary không clone từ Nganh khi đổi n
       findOne: jest.fn(async () => tenant),
       save: jest.fn(async (x: any) => x),
     };
+    const existingConfig: any = { tenantId: TID, nganh: 'OLD', modules: ['KE_TOAN'], glossary: {}, dashboardBlocks: null };
+    const appConfigRepo = {
+      findOne: jest.fn(async () => existingConfig),
+      create: jest.fn((x: any) => ({ ...x })),
+      save: jest.fn(async (x: any) => x),
+    };
     const XD = { code: 'XAY_DUNG', _id: 'nganh-1', glossary: { chuDauTu: { label: 'Chủ đầu tư' } } };
-    const nganhRepo = repoWith([XD]);
-    const empty = repoWith();
 
-    const moduleRef = await Test.createTestingModule({
-      providers: [
-        TenantService,
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`, useValue: tenantRepo },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}User`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserCredential`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserTenant`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`, useValue: nganhRepo },
-      ],
-    }).compile();
-    const service = moduleRef.get(TenantService);
+    const built = await buildModule({
+      [getRepositoryToken(Tenant, 'identity') as string]: tenantRepo,
+      [`${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`]: repoWith([XD]),
+      [getRepositoryToken(TenantAppConfig) as string]: appConfigRepo,
+    });
+    const service = built.service;
 
-    await service.update(TID, { nganh: 'XAY_DUNG' } as any);
+    const result = await service.update(TID, { nganh: 'XAY_DUNG' } as any);
 
-    expect(tenant.glossary).toEqual({});
+    // Only nganh in config should be updated, glossary should remain {}
+    expect(existingConfig.nganh).toBe('XAY_DUNG');
+    expect(result.glossary).toEqual({});
+    // Tenant identity save was called
+    expect(tenantRepo.save).toHaveBeenCalled();
+    // TenantAppConfig save was called
+    expect(appConfigRepo.save).toHaveBeenCalled();
   });
 });
 
+// ─── Task 7a: updateGlossary → ghi vào TenantAppConfig, không ghi vào Tenant ──
+
 describe('TenantService.updateGlossary', () => {
-  it('ghi glossary mới vào tenant theo id', async () => {
+  it('ghi glossary mới vào TenantAppConfig, trả tenant với glossary mới', async () => {
     const TID = '507f1f77bcf86cd799439011';
-    const tenant: any = { _id: TID, glossary: {} };
+    const tenant: any = { _id: { toString: () => TID }, glossary: {} };
     const tenantRepo: any = {
       findOne: jest.fn(async () => tenant),
       save: jest.fn(async (x: any) => x),
     };
-    const empty: any = { findOne: jest.fn(), find: jest.fn(async () => []), save: jest.fn(async (x: any) => x), create: jest.fn((x: any) => x), count: jest.fn(async () => 0) };
-    const { Test } = await import('@nestjs/testing');
-    const { RAW_REPOSITORY_TOKEN_PREFIX } = await import('@app/database');
-    const moduleRef = await Test.createTestingModule({
-      providers: [
-        TenantService,
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`, useValue: tenantRepo },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}User`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserCredential`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}UserTenant`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`, useValue: empty },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`, useValue: empty },
-      ],
-    }).compile();
-    const service = moduleRef.get(TenantService);
-    // findOne dùng new ObjectId(id) → stub tenantRepo.findOne luôn trả tenant ở trên
+    const appConfigRepo: any = {
+      findOne: jest.fn(async () => null),  // no existing config → will create
+      create: jest.fn((x: any) => ({ ...x })),
+      save: jest.fn(async (x: any) => x),
+    };
+
+    const built = await buildModule({
+      [getRepositoryToken(Tenant, 'identity') as string]: tenantRepo,
+      [getRepositoryToken(TenantAppConfig) as string]: appConfigRepo,
+    });
+    const service = built.service;
+
     const g = { chuDauTu: { label: 'Nhà tài trợ' } };
     const res = await service.updateGlossary(TID, g as any);
+
+    // TenantAppConfig should be saved (not tenantRepo)
+    expect(appConfigRepo.save).toHaveBeenCalled();
+    expect(tenantRepo.save).not.toHaveBeenCalled();
+
+    // Returned tenant should have the new glossary
     expect(res.glossary).toEqual(g);
-    expect(tenantRepo.save).toHaveBeenCalled();
   });
 });
