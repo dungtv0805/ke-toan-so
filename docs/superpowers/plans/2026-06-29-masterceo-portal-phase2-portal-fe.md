@@ -1,207 +1,164 @@
-# MasterCeo Portal — Phần 2: Portal FE Implementation Plan
+# MasterCeo Portal — Phần 2: Portal FE (GỘP vào identity-service) Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development. Steps use checkbox (`- [ ]`) syntax.
+> **REVISED:** Portal FE sống trong `identity-service/portal/` (KHÔNG repo riêng); identity-service **serve static** portal/dist và đặt **global prefix `/api`** cho API → Portal cùng origin với identity → **không cần CORS cho Portal**. Dev: Vite proxy `/api` → identity:3020.
 
-**Goal:** Dựng app FE độc lập **MasterCeo Portal**: đăng nhập 1 lần (qua identity, cookie phiên) → lưới **chọn App** (`/me/apps`) → **chọn Công ty** (`/me/tenants?app`) → **redirect** sang FE app kèm `?tenant=<id>`.
+**Goal:** Portal MasterCeo: login 1 lần (cookie phiên) → lưới **chọn App** → **chọn Công ty** → **redirect** sang FE app kèm `?tenant=<id>`. Portal nằm trong identity-service, dùng path API tương đối `/api/*`.
 
-**Architecture:** Vite + React 18 + TypeScript, Ant Design (theme teal `#1f7769`) — không Tailwind/shadcn (portal chỉ 3 màn, giữ gọn). Không React Router — một state machine `step` ('login'|'apps'|'tenants'). Mọi gọi identity dùng `fetch(..., { credentials: 'include' })` để cookie `mc_session` đi kèm. Redirect tách ra hàm tiêm được để test. Test: Vitest + Testing Library (mock `fetch`).
+**Architecture:** Vite + React + TS + Ant Design (theme teal `#1f7769`) tại `identity-service/portal/`. State machine `step` ('login'|'apps'|'tenants'), không React Router. fetch `credentials:'include'`, base **tương đối `/api`**. Dev: Vite proxy `/api`→`http://localhost:3020`. Prod: identity `ServeStaticModule` phục vụ `portal/dist`, API dưới `/api`. Test: Vitest + Testing Library (mock fetch).
 
-**Tech Stack:** Vite 5, React 18, TypeScript 5, antd 5, Vitest, @testing-library/react, jsdom.
+**Tech Stack:** identity-service NestJS (+ @nestjs/serve-static); portal: Vite + React 19 + antd 6 + Vitest (đã scaffold).
 
 ## Global Constraints
 
-- Repo MỚI: `/Users/os_anhvt/Documents/Dino/masterceo-portal` (repo git riêng, như identity-service). Dev port **5174** (tránh 8080 của ke-toan-so, 3020 identity).
-- Backend = identity-service; base URL từ `import.meta.env.VITE_IDENTITY_URL` (dev `http://localhost:3020`). MỌI fetch `credentials: 'include'`.
-- Endpoints identity dùng: `POST /login {email,password}`, `GET /me/apps`, `GET /me/tenants?app=<appId>`, `POST /logout`. Response bọc `{ success, data }`.
-  - `/me/apps` data: `AppInfo[] = { appId, name, description?, iconUrl?, feUrl }`.
-  - `/me/tenants` data: `TenantInfo[] = { tenantId, tenantName, tenantSlug, modules, glossary, nganh, apps }`.
-- Luồng: chọn app → chọn công ty → `redirect` tới `<app.feUrl>?tenant=<tenantId>`.
-- 401 từ `/me/apps` → hiển thị màn Login. Có nút Đăng xuất (`POST /logout`).
-- UI theme: Ant Design `ConfigProvider` token `colorPrimary: '#1f7769'`, `borderRadius: 0` (đồng bộ ke-toan-so).
-- KHÔNG hardcode app URL — luôn từ `app.feUrl` trả về.
-- Redirect phải tách thành hàm riêng (`src/lib/redirect.ts`) để test spy được (không điều hướng thật trong test).
+- Portal ở `/Users/os_anhvt/Documents/Dino/identity-service/portal/` (đã scaffold, port dev 5174). API identity chuyển sang **global prefix `/api`**.
+- Portal gọi API bằng **đường dẫn tương đối `/api/...`** (KHÔNG dùng host tuyệt đối) → cùng origin (prod identity serve; dev Vite proxy). MỌI fetch `credentials:'include'`.
+- Endpoints (sau prefix): `POST /api/login`, `GET /api/me/apps`, `GET /api/me/tenants?app=`, `POST /api/logout`. Response `{success,data}`.
+- identity `ServeStaticModule` phục vụ `portal/dist`, **exclude `/api{*path}`** (API không bị static che).
+- Redirect tách hàm `src/lib/redirect.ts` (test spy được).
+- CORS giữ nguyên cho app khác (ke-toan-so subdomain gọi `/api/refresh`) — Portal thì khỏi cần vì cùng origin.
+- Theme AntD teal `#1f7769`, borderRadius 0.
 
-## File Structure (trong masterceo-portal)
-
+## File Structure
 ```
-masterceo-portal/
-├── package.json, tsconfig*.json, vite.config.ts, index.html, .gitignore, README.md
-├── .env.development            # VITE_IDENTITY_URL=http://localhost:3020
-├── vitest.config.ts, src/test/setup.ts
-├── src/
-│   ├── main.tsx                # ReactDOM + ConfigProvider theme
-│   ├── App.tsx                 # state machine step + điều phối màn
-│   ├── lib/
-│   │   ├── api.ts              # fetch wrapper credentials + login/getApps/getTenants/logout
-│   │   ├── api.test.ts
-│   │   └── redirect.ts         # redirectToApp(feUrl, tenantId)
-│   ├── types.ts                # AppInfo, TenantInfo
-│   └── screens/
-│       ├── LoginScreen.tsx + LoginScreen.test.tsx
-│       ├── AppPicker.tsx + AppPicker.test.tsx
-│       └── TenantPicker.tsx + TenantPicker.test.tsx
+identity-service/
+├── src/main.ts                 # + setGlobalPrefix('api')
+├── src/app.module.ts           # + ServeStaticModule(portal/dist, exclude /api*)
+├── test/*.e2e-spec.ts          # SỬA: mọi path → /api/...
+├── package.json                # + build:portal script; dep @nestjs/serve-static
+└── portal/                     # (đã scaffold, đã dời)
+    ├── vite.config.ts          # + server.proxy /api → :3020
+    ├── src/types.ts            # AppInfo, TenantInfo
+    ├── src/lib/{api.ts,api.test.ts,redirect.ts}
+    ├── src/App.tsx             # state machine
+    └── src/screens/{LoginScreen,AppPicker,TenantPicker}{.tsx,.test.tsx}
 ```
 
 ---
 
-## Task 1: Scaffold portal (Vite + React + TS + AntD + Vitest)
+## Task 1: (ĐÃ XONG) Scaffold + dời vào identity-service/portal
+Scaffold Vite+React+antd+Vitest (port 5174) đã tạo và **đã dời** vào `identity-service/portal/`, build OK (commit identity `bacdd11`). Không cần làm lại. (Ghi để đủ mạch.)
 
-**Files:** tạo toàn bộ khung dưới `/Users/os_anhvt/Documents/Dino/masterceo-portal`.
+---
 
-**Interfaces:** Produces: app Vite boot port 5174; `npm run build` PASS; `npm test` chạy (0 test ban đầu OK); `ConfigProvider` theme teal ở `main.tsx`.
+## Task 2: Identity — global prefix /api + serve portal static
 
-- [ ] **Step 1: Scaffold non-interactive**
-```bash
-cd /Users/os_anhvt/Documents/Dino && npm create vite@latest masterceo-portal -- --template react-ts
-cd masterceo-portal && npm install && npm install antd && npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom @testing-library/user-event
+**Files (identity-service):**
+- Modify: `src/main.ts`
+- Modify: `src/app.module.ts`
+- Modify: `test/auth.e2e-spec.ts`, `test/session.e2e-spec.ts`, `test/platform.e2e-spec.ts`
+- Modify: `package.json`
+
+**Interfaces:** Produces: API phục vụ dưới `/api/*`; identity phục vụ `portal/dist` ở `/` (trừ `/api*`). e2e cập nhật path.
+
+- [ ] **Step 1: Cài dep.** `cd /Users/os_anhvt/Documents/Dino/identity-service && npm install @nestjs/serve-static`
+
+- [ ] **Step 2: `main.ts`** — thêm prefix TRƯỚC `await app.listen` (sau ValidationPipe/cors/cookieParser):
+```ts
+app.setGlobalPrefix('api');
 ```
 
-- [ ] **Step 2: `vite.config.ts`** — set port 5174:
+- [ ] **Step 3: `app.module.ts`** — thêm ServeStaticModule:
+```ts
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+// trong imports[]:
+ServeStaticModule.forRoot({
+  rootPath: join(__dirname, '..', 'portal', 'dist'),
+  exclude: ['/api{*path}'],
+}),
+```
+(Giữ các module hiện có: DatabaseModule, AuthModule, PlatformModule.)
+
+- [ ] **Step 4: Cập nhật e2e** — trong cả 3 file `test/*.e2e-spec.ts`, **mọi** request path thêm tiền tố `/api`: phải gọi `app.setGlobalPrefix('api')` trên app test trước `init()` (để khớp prod), và đổi `'/login'`→`'/api/login'`, `'/me/apps'`→`'/api/me/apps'`, `'/me/tenants?...'`→`'/api/me/tenants?...'`, `'/refresh'`→`'/api/refresh'`, `'/logout'`→`'/api/logout'`, `'/select-tenant'`→`'/api/select-tenant'`, v.v.
+  Trong `beforeAll` mỗi e2e, sau `createNestApplication()` thêm: `app.setGlobalPrefix('api');` (trước `app.init()`), giữ `app.use(cookieParser())` (session e2e).
+
+- [ ] **Step 5: `package.json` script** — thêm: `"build:portal": "cd portal && npm install && npm run build"`.
+
+- [ ] **Step 6: Chạy.** `npm run build` (BE) OK; `npm run test:e2e` → tất cả PASS với path `/api/*`; `npm test` (unit) PASS.
+  (ServeStaticModule trỏ portal/dist có thể chưa tồn tại lúc test — không crash, chỉ 404 static; API vẫn chạy. Nếu test fail do thiếu dist, chạy `npm run build:portal` trước.)
+
+- [ ] **Step 7: Commit + push.** `git add -A && git commit -m "feat(identity): global prefix /api + serve portal static (ServeStaticModule)" && git push`
+
+---
+
+## Task 3: Portal — Vite proxy + API client + types + redirect
+
+**Files (identity-service/portal):**
+- Modify: `vite.config.ts`
+- Create: `src/types.ts`, `src/lib/api.ts`, `src/lib/redirect.ts`
+- Test: `src/lib/api.test.ts`
+- Remove: `src/smoke.test.ts` (thay bằng api.test)
+
+**Interfaces:** Produces: `AppInfo`/`TenantInfo`; `login/getApps/getTenants/logout` (base `/api`, credentials include, unwrap data, `ApiError{status}`); `redirectToApp(feUrl,tenantId)`.
+
+- [ ] **Step 1: `vite.config.ts`** — thêm proxy:
 ```ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
-  server: { port: 5174, host: true },
+  server: {
+    port: 5174,
+    host: true,
+    proxy: { '/api': { target: 'http://localhost:3020', changeOrigin: true } },
+  },
 });
 ```
 
-- [ ] **Step 3: `vitest.config.ts` + `src/test/setup.ts`**
-`vitest.config.ts`:
-```ts
-import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
-export default defineConfig({
-  plugins: [react()],
-  test: { environment: 'jsdom', globals: true, setupFiles: ['./src/test/setup.ts'] },
-});
-```
-`src/test/setup.ts`:
-```ts
-import '@testing-library/jest-dom';
-```
-Thêm vào `package.json` scripts: `"test": "vitest run"`, `"test:watch": "vitest"`.
-
-- [ ] **Step 4: `.env.development`**
-```
-VITE_IDENTITY_URL=http://localhost:3020
-```
-
-- [ ] **Step 5: `src/main.tsx`** — ConfigProvider theme + render App:
-```tsx
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { ConfigProvider } from 'antd';
-import App from './App';
-import 'antd/dist/reset.css';
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <ConfigProvider theme={{ token: { colorPrimary: '#1f7769', borderRadius: 0 } }}>
-      <App />
-    </ConfigProvider>
-  </React.StrictMode>,
-);
-```
-
-- [ ] **Step 6: `src/App.tsx`** (tạm để build) :
-```tsx
-export default function App() {
-  return <div>MasterCeo Portal</div>;
-}
-```
-Xoá file mẫu thừa (`src/App.css`, `src/index.css` import trong main mẫu) nếu gây lỗi — đảm bảo `main.tsx` không import file không tồn tại.
-
-- [ ] **Step 7: Build + test khung**
-```bash
-cd /Users/os_anhvt/Documents/Dino/masterceo-portal && npm run build && npm test
-```
-Expected: build PASS; `npm test` chạy (no tests = exit 0).
-
-- [ ] **Step 8: git init + commit**
-```bash
-cd /Users/os_anhvt/Documents/Dino/masterceo-portal && git init -q && printf "node_modules\ndist\n*.log\n.env\n" > .gitignore && git add -A && git commit -m "chore(portal): scaffold Vite+React+TS+AntD+Vitest (port 5174)"
-```
-
----
-
-## Task 2: Types + API client (fetch credentials)
-
-**Files:**
-- Create: `src/types.ts`
-- Create: `src/lib/api.ts`
-- Create: `src/lib/redirect.ts`
-- Test: `src/lib/api.test.ts`
-
-**Interfaces:**
-- Produces:
-  - `types.ts`: `AppInfo { appId, name, description?, iconUrl?, feUrl }`; `TenantInfo { tenantId, tenantName, tenantSlug, modules: string[], nganh: string|null, apps: string[] }`.
-  - `api.ts`: `login(email,password): Promise<void>` (throws on fail), `getApps(): Promise<AppInfo[]>`, `getTenants(appId): Promise<TenantInfo[]>`, `logout(): Promise<void>`; tất cả `credentials:'include'`; ném `ApiError{status}` khi !ok.
-  - `redirect.ts`: `redirectToApp(feUrl, tenantId): void` (mặc định set `window.location.href`).
-
-- [ ] **Step 1: `types.ts`**
+- [ ] **Step 2: `src/types.ts`**
 ```ts
 export interface AppInfo { appId: string; name: string; description?: string; iconUrl?: string; feUrl: string; }
 export interface TenantInfo { tenantId: string; tenantName: string; tenantSlug: string; modules: string[]; nganh: string | null; apps: string[]; }
 ```
 
-- [ ] **Step 2: Viết test thất bại** — `src/lib/api.test.ts`:
+- [ ] **Step 3: Test thất bại** — `src/lib/api.test.ts`:
 ```ts
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { login, getApps, getTenants, ApiError } from './api';
 
-const BASE = 'http://localhost:3020';
-beforeEach(() => { vi.restoreAllMocks(); (import.meta as any).env = { VITE_IDENTITY_URL: BASE }; });
-
+beforeEach(() => vi.restoreAllMocks());
 function mockFetch(status: number, body: unknown) {
   return vi.fn().mockResolvedValue({ ok: status >= 200 && status < 300, status, json: async () => body });
 }
-
 describe('api', () => {
-  it('login gọi POST /login credentials include', async () => {
-    const f = mockFetch(200, { success: true, data: { user: { id: 'u1' } } });
-    vi.stubGlobal('fetch', f);
+  it('login POST /api/login credentials include', async () => {
+    const f = mockFetch(200, { success: true, data: {} }); vi.stubGlobal('fetch', f);
     await login('a@b.com', '123456');
-    const [url, opts] = f.mock.calls[0];
-    expect(url).toBe(`${BASE}/login`);
-    expect(opts.method).toBe('POST');
-    expect(opts.credentials).toBe('include');
+    expect(f.mock.calls[0][0]).toBe('/api/login');
+    expect(f.mock.calls[0][1].method).toBe('POST');
+    expect(f.mock.calls[0][1].credentials).toBe('include');
   });
-
-  it('login sai → ApiError với status', async () => {
+  it('login lỗi → ApiError status', async () => {
     vi.stubGlobal('fetch', mockFetch(401, { success: false }));
     await expect(login('a@b.com', 'x')).rejects.toMatchObject({ status: 401 });
   });
-
-  it('getApps trả data, credentials include', async () => {
+  it('getApps → /api/me/apps, trả data', async () => {
     const f = mockFetch(200, { success: true, data: [{ appId: 'ke-toan', name: 'Kế toán', feUrl: 'http://localhost:8080' }] });
     vi.stubGlobal('fetch', f);
     const apps = await getApps();
+    expect(f.mock.calls[0][0]).toBe('/api/me/apps');
     expect(apps[0].appId).toBe('ke-toan');
-    expect(f.mock.calls[0][1].credentials).toBe('include');
   });
-
-  it('getTenants?app=... truyền query', async () => {
-    const f = mockFetch(200, { success: true, data: [] });
-    vi.stubGlobal('fetch', f);
+  it('getTenants → /api/me/tenants?app=', async () => {
+    const f = mockFetch(200, { success: true, data: [] }); vi.stubGlobal('fetch', f);
     await getTenants('ke-toan');
-    expect(f.mock.calls[0][0]).toBe(`${BASE}/me/tenants?app=ke-toan`);
+    expect(f.mock.calls[0][0]).toBe('/api/me/tenants?app=ke-toan');
   });
 });
 ```
 
-- [ ] **Step 3: Chạy → FAIL.** `cd /Users/os_anhvt/Documents/Dino/masterceo-portal && npm test -- api.test` → FAIL (module chưa có).
+- [ ] **Step 4: Chạy → FAIL.** `cd /Users/os_anhvt/Documents/Dino/identity-service/portal && npm test -- api.test` → FAIL.
 
-- [ ] **Step 4: `src/lib/api.ts`**
+- [ ] **Step 5: `src/lib/api.ts`** (base tương đối `/api`):
 ```ts
 import type { AppInfo, TenantInfo } from '../types';
 
-const BASE = () => (import.meta as any).env.VITE_IDENTITY_URL as string;
-
+const BASE = '/api';
 export class ApiError extends Error { constructor(public status: number, msg?: string) { super(msg); } }
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE()}${path}`, {
+  const res = await fetch(`${BASE}${path}`, {
     ...init,
     credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
@@ -210,7 +167,6 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   if (!res.ok) throw new ApiError(res.status, (body as any)?.message);
   return (body as any).data as T;
 }
-
 export async function login(email: string, password: string): Promise<void> {
   await call('/login', { method: 'POST', body: JSON.stringify({ email, password }) });
 }
@@ -221,7 +177,7 @@ export function getTenants(appId: string): Promise<TenantInfo[]> {
 export async function logout(): Promise<void> { await call('/logout', { method: 'POST' }); }
 ```
 
-- [ ] **Step 5: `src/lib/redirect.ts`**
+- [ ] **Step 6: `src/lib/redirect.ts`**
 ```ts
 export function redirectToApp(feUrl: string, tenantId: string): void {
   const sep = feUrl.includes('?') ? '&' : '?';
@@ -229,24 +185,17 @@ export function redirectToApp(feUrl: string, tenantId: string): void {
 }
 ```
 
-- [ ] **Step 6: Chạy → PASS.** `npm test -- api.test` → PASS (4 test).
+- [ ] **Step 7: Xoá `src/smoke.test.ts`.** Chạy `npm test -- api.test` → PASS (4). `npm run build` → OK.
 
-- [ ] **Step 7: Commit.** `git add -A && git commit -m "feat(portal): types + API client (fetch credentials) + redirect helper"`
+- [ ] **Step 8: Commit.** `git -C /Users/os_anhvt/Documents/Dino/identity-service add -A && git -C /Users/os_anhvt/Documents/Dino/identity-service commit -m "feat(portal): API client (relative /api, credentials) + types + redirect + Vite proxy"`
 
 ---
 
-## Task 3: Auth shell + LoginScreen
+## Task 4: Portal — App shell + LoginScreen
 
-**Files:**
-- Create: `src/screens/LoginScreen.tsx`
-- Test: `src/screens/LoginScreen.test.tsx`
-- Modify: `src/App.tsx`
+**Files (identity-service/portal):** `src/screens/LoginScreen.tsx` + test; `src/App.tsx`.
 
-**Interfaces:**
-- Consumes: `login`, `getApps` (Task 2).
-- Produces:
-  - `LoginScreen` props `{ onLoggedIn: () => void }` — form email/pw, gọi `login()` → `onLoggedIn()`; hiện lỗi khi sai.
-  - `App` state machine: mount → thử `getApps()`; 200 → step `'apps'`; lỗi 401 → step `'login'`. (AppPicker/TenantPicker nối ở Task 4 — tạm render placeholder cho 'apps'.)
+**Interfaces:** `LoginScreen{onLoggedIn}`; `App` probe `getApps()` → 'apps' | 'login'.
 
 - [ ] **Step 1: Test LoginScreen thất bại** — `src/screens/LoginScreen.test.tsx`:
 ```tsx
@@ -257,7 +206,7 @@ import LoginScreen from './LoginScreen';
 import * as api from '../lib/api';
 
 describe('LoginScreen', () => {
-  it('submit gọi login rồi onLoggedIn', async () => {
+  it('submit → login rồi onLoggedIn', async () => {
     vi.spyOn(api, 'login').mockResolvedValue();
     const onLoggedIn = vi.fn();
     render(<LoginScreen onLoggedIn={onLoggedIn} />);
@@ -267,7 +216,6 @@ describe('LoginScreen', () => {
     expect(api.login).toHaveBeenCalledWith('a@b.com', '123456');
     await vi.waitFor(() => expect(onLoggedIn).toHaveBeenCalled());
   });
-
   it('login lỗi → hiện thông báo, không onLoggedIn', async () => {
     vi.spyOn(api, 'login').mockRejectedValue(new api.ApiError(401));
     const onLoggedIn = vi.fn();
@@ -275,7 +223,7 @@ describe('LoginScreen', () => {
     await userEvent.type(screen.getByLabelText(/email/i), 'a@b.com');
     await userEvent.type(screen.getByLabelText(/mật khẩu/i), 'x');
     await userEvent.click(screen.getByRole('button', { name: /đăng nhập/i }));
-    await vi.waitFor(() => expect(screen.getByText(/đăng nhập không thành công/i)).toBeInTheDocument());
+    await vi.waitFor(() => expect(screen.getByText(/không thành công/i)).toBeInTheDocument());
     expect(onLoggedIn).not.toHaveBeenCalled();
   });
 });
@@ -283,7 +231,7 @@ describe('LoginScreen', () => {
 
 - [ ] **Step 2: Chạy → FAIL.** `npm test -- LoginScreen` → FAIL.
 
-- [ ] **Step 3: `src/screens/LoginScreen.tsx`**
+- [ ] **Step 3: `src/screens/LoginScreen.tsx`** (AntD; label liên kết để getByLabelText chạy):
 ```tsx
 import { useState } from 'react';
 import { Card, Form, Input, Button, Alert, Typography } from 'antd';
@@ -292,14 +240,12 @@ import { login } from '../lib/api';
 export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  async function onFinish(values: { email: string; password: string }) {
+  async function onFinish(v: { email: string; password: string }) {
     setLoading(true); setError(null);
-    try { await login(values.email, values.password); onLoggedIn(); }
+    try { await login(v.email, v.password); onLoggedIn(); }
     catch { setError('Đăng nhập không thành công. Kiểm tra email/mật khẩu.'); }
     finally { setLoading(false); }
   }
-
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f2f5' }}>
       <Card style={{ width: 360 }}>
@@ -319,9 +265,8 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
   );
 }
 ```
-> AntD `Form.Item label="Email"` liên kết label với input → `getByLabelText(/email/i)` hoạt động.
 
-- [ ] **Step 4: `src/App.tsx`** — state machine (placeholder cho 'apps' tới Task 4):
+- [ ] **Step 4: `src/App.tsx`** (probe; placeholder 'apps' tới Task 5):
 ```tsx
 import { useEffect, useState } from 'react';
 import { Spin } from 'antd';
@@ -329,64 +274,45 @@ import LoginScreen from './screens/LoginScreen';
 import { getApps } from './lib/api';
 
 type Step = 'loading' | 'login' | 'apps';
-
 export default function App() {
   const [step, setStep] = useState<Step>('loading');
-
-  async function probe() {
-    try { await getApps(); setStep('apps'); }
-    catch { setStep('login'); }
-  }
-  useEffect(() => { probe(); }, []);
-
+  useEffect(() => { getApps().then(() => setStep('apps')).catch(() => setStep('login')); }, []);
   if (step === 'loading') return <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center' }}><Spin /></div>;
   if (step === 'login') return <LoginScreen onLoggedIn={() => setStep('apps')} />;
   return <div>TODO apps</div>;
 }
 ```
 
-- [ ] **Step 5: Chạy → PASS.** `npm test -- LoginScreen` → PASS. `npm run build` → no TS errors.
+- [ ] **Step 5: Chạy → PASS + build.** `npm test -- LoginScreen` PASS; `npm run build` OK.
 
-- [ ] **Step 6: Commit.** `git add -A && git commit -m "feat(portal): App state machine + LoginScreen (probe /me/apps → login/apps)"`
+- [ ] **Step 6: Commit.** `git -C /Users/os_anhvt/Documents/Dino/identity-service add -A && git -C /Users/os_anhvt/Documents/Dino/identity-service commit -m "feat(portal): App state machine + LoginScreen"`
 
 ---
 
-## Task 4: AppPicker + TenantPicker + redirect + wire flow
+## Task 5: Portal — AppPicker + TenantPicker + wire + README + push
 
-**Files:**
-- Create: `src/screens/AppPicker.tsx` + `src/screens/AppPicker.test.tsx`
-- Create: `src/screens/TenantPicker.tsx` + `src/screens/TenantPicker.test.tsx`
-- Modify: `src/App.tsx`
-- Create: `README.md`
+**Files (identity-service/portal):** `src/screens/AppPicker.tsx`+test; `src/screens/TenantPicker.tsx`+test; `src/App.tsx`; `portal/README.md`.
 
-**Interfaces:**
-- Consumes: `getApps`, `getTenants`, `logout` (Task 2), `redirectToApp` (Task 2), `AppInfo`/`TenantInfo`.
-- Produces:
-  - `AppPicker` props `{ onPick: (app: AppInfo) => void; onLogout: () => void }` — `getApps()` → lưới card; click → `onPick(app)`.
-  - `TenantPicker` props `{ app: AppInfo; onBack: () => void }` — `getTenants(app.appId)` → danh sách (search); click → `redirectToApp(app.feUrl, tenant.tenantId)`.
-  - `App`: nối step 'apps' → AppPicker; chọn app → step 'tenants' (giữ selectedApp); logout → step 'login'.
+**Interfaces:** `AppPicker{onPick,onLogout}`; `TenantPicker{app,onBack}`; App nối 'apps'→'tenants'→redirect.
 
-- [ ] **Step 1: Test AppPicker + TenantPicker thất bại**
-`src/screens/AppPicker.test.tsx`:
+- [ ] **Step 1: Test thất bại** — `AppPicker.test.tsx`:
 ```tsx
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AppPicker from './AppPicker';
 import * as api from '../lib/api';
-
 describe('AppPicker', () => {
-  it('hiển thị app từ getApps, click → onPick', async () => {
+  it('hiển thị app, click → onPick', async () => {
     vi.spyOn(api, 'getApps').mockResolvedValue([{ appId: 'ke-toan', name: 'Kế toán', feUrl: 'http://localhost:8080' }]);
     const onPick = vi.fn();
     render(<AppPicker onPick={onPick} onLogout={() => {}} />);
-    const card = await screen.findByText('Kế toán');
-    await userEvent.click(card);
+    await userEvent.click(await screen.findByText('Kế toán'));
     expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ appId: 'ke-toan' }));
   });
 });
 ```
-`src/screens/TenantPicker.test.tsx`:
+`TenantPicker.test.tsx`:
 ```tsx
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -394,18 +320,13 @@ import userEvent from '@testing-library/user-event';
 import TenantPicker from './TenantPicker';
 import * as api from '../lib/api';
 import * as redir from '../lib/redirect';
-
 const app = { appId: 'ke-toan', name: 'Kế toán', feUrl: 'http://localhost:8080' };
-
 describe('TenantPicker', () => {
   it('chọn công ty → redirectToApp(feUrl, tenantId)', async () => {
-    vi.spyOn(api, 'getTenants').mockResolvedValue([
-      { tenantId: 't1', tenantName: 'Công ty A', tenantSlug: 'a', modules: [], nganh: null, apps: ['ke-toan'] },
-    ]);
+    vi.spyOn(api, 'getTenants').mockResolvedValue([{ tenantId: 't1', tenantName: 'Công ty A', tenantSlug: 'a', modules: [], nganh: null, apps: ['ke-toan'] }]);
     const spy = vi.spyOn(redir, 'redirectToApp').mockImplementation(() => {});
     render(<TenantPicker app={app as any} onBack={() => {}} />);
-    const row = await screen.findByText('Công ty A');
-    await userEvent.click(row);
+    await userEvent.click(await screen.findByText('Công ty A'));
     expect(spy).toHaveBeenCalledWith('http://localhost:8080', 't1');
   });
 });
@@ -413,13 +334,12 @@ describe('TenantPicker', () => {
 
 - [ ] **Step 2: Chạy → FAIL.** `npm test -- AppPicker TenantPicker` → FAIL.
 
-- [ ] **Step 3: `src/screens/AppPicker.tsx`**
+- [ ] **Step 3: `AppPicker.tsx`**
 ```tsx
 import { useEffect, useState } from 'react';
 import { Card, Row, Col, Button, Spin, Empty, Typography } from 'antd';
 import { getApps } from '../lib/api';
 import type { AppInfo } from '../types';
-
 export default function AppPicker({ onPick, onLogout }: { onPick: (a: AppInfo) => void; onLogout: () => void }) {
   const [apps, setApps] = useState<AppInfo[] | null>(null);
   useEffect(() => { getApps().then(setApps).catch(() => setApps([])); }, []);
@@ -433,9 +353,7 @@ export default function AppPicker({ onPick, onLogout }: { onPick: (a: AppInfo) =
         <Row gutter={[16, 16]}>
           {apps.map((a) => (
             <Col key={a.appId} xs={24} sm={12} md={8}>
-              <Card hoverable onClick={() => onPick(a)}>
-                <Card.Meta title={a.name} description={a.description || a.appId} />
-              </Card>
+              <Card hoverable onClick={() => onPick(a)}><Card.Meta title={a.name} description={a.description || a.appId} /></Card>
             </Col>
           ))}
         </Row>
@@ -445,22 +363,18 @@ export default function AppPicker({ onPick, onLogout }: { onPick: (a: AppInfo) =
 }
 ```
 
-- [ ] **Step 4: `src/screens/TenantPicker.tsx`**
+- [ ] **Step 4: `TenantPicker.tsx`**
 ```tsx
 import { useEffect, useMemo, useState } from 'react';
 import { Card, Input, List, Button, Spin, Typography } from 'antd';
 import { getTenants } from '../lib/api';
 import { redirectToApp } from '../lib/redirect';
 import type { AppInfo, TenantInfo } from '../types';
-
 export default function TenantPicker({ app, onBack }: { app: AppInfo; onBack: () => void }) {
   const [tenants, setTenants] = useState<TenantInfo[] | null>(null);
   const [q, setQ] = useState('');
   useEffect(() => { getTenants(app.appId).then(setTenants).catch(() => setTenants([])); }, [app.appId]);
-  const filtered = useMemo(
-    () => (tenants || []).filter((t) => t.tenantName.toLowerCase().includes(q.toLowerCase())),
-    [tenants, q],
-  );
+  const filtered = useMemo(() => (tenants || []).filter((t) => t.tenantName.toLowerCase().includes(q.toLowerCase())), [tenants, q]);
   return (
     <div style={{ maxWidth: 640, margin: '40px auto', padding: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -470,14 +384,9 @@ export default function TenantPicker({ app, onBack }: { app: AppInfo; onBack: ()
       <Input.Search placeholder="Tìm công ty" value={q} onChange={(e) => setQ(e.target.value)} style={{ marginBottom: 16 }} />
       {tenants === null ? <Spin /> : (
         <Card>
-          <List
-            dataSource={filtered}
-            renderItem={(t) => (
-              <List.Item onClick={() => redirectToApp(app.feUrl, t.tenantId)} style={{ cursor: 'pointer' }}>
-                {t.tenantName}
-              </List.Item>
-            )}
-          />
+          <List dataSource={filtered} renderItem={(t) => (
+            <List.Item onClick={() => redirectToApp(app.feUrl, t.tenantId)} style={{ cursor: 'pointer' }}>{t.tenantName}</List.Item>
+          )} />
         </Card>
       )}
     </div>
@@ -485,7 +394,7 @@ export default function TenantPicker({ app, onBack }: { app: AppInfo; onBack: ()
 }
 ```
 
-- [ ] **Step 5: `src/App.tsx`** — nối đủ flow:
+- [ ] **Step 5: `src/App.tsx`** — nối đủ:
 ```tsx
 import { useEffect, useState } from 'react';
 import { Spin } from 'antd';
@@ -494,17 +403,12 @@ import AppPicker from './screens/AppPicker';
 import TenantPicker from './screens/TenantPicker';
 import { getApps, logout } from './lib/api';
 import type { AppInfo } from './types';
-
 type Step = 'loading' | 'login' | 'apps' | 'tenants';
-
 export default function App() {
   const [step, setStep] = useState<Step>('loading');
   const [selectedApp, setSelectedApp] = useState<AppInfo | null>(null);
-
   useEffect(() => { getApps().then(() => setStep('apps')).catch(() => setStep('login')); }, []);
-
   async function onLogout() { try { await logout(); } finally { setSelectedApp(null); setStep('login'); } }
-
   if (step === 'loading') return <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center' }}><Spin /></div>;
   if (step === 'login') return <LoginScreen onLoggedIn={() => setStep('apps')} />;
   if (step === 'apps') return <AppPicker onPick={(a) => { setSelectedApp(a); setStep('tenants'); }} onLogout={onLogout} />;
@@ -512,28 +416,24 @@ export default function App() {
 }
 ```
 
-- [ ] **Step 6: Chạy test + build.** `npm test` (tất cả) → PASS; `npm run build` → no TS errors.
+- [ ] **Step 6: Test all + build.** `npm test` PASS; `npm run build` OK.
 
-- [ ] **Step 7: `README.md`** — cách chạy (npm run dev → 5174; cần identity 3020 + seed:dev; luồng login→app→tenant→redirect), env `VITE_IDENTITY_URL`, lưu ý cookie dev localhost.
+- [ ] **Step 7: `portal/README.md`** — cách chạy dev (identity 3020 + seed:dev; portal `npm run dev` 5174, Vite proxy /api→3020; prod: `npm run build:portal` rồi identity serve). Luồng login→app→tenant→redirect; cookie cùng origin.
 
-- [ ] **Step 8: Commit + push**
-```bash
-cd /Users/os_anhvt/Documents/Dino/masterceo-portal && git add -A && git commit -m "feat(portal): AppPicker + TenantPicker + wire flow login→app→tenant→redirect" 
-# tạo repo GitHub + push do user thực hiện (như identity-service)
-```
+- [ ] **Step 8: Commit + push.** `git -C /Users/os_anhvt/Documents/Dino/identity-service add -A && git -C /Users/os_anhvt/Documents/Dino/identity-service commit -m "feat(portal): AppPicker + TenantPicker + wire flow + README" && git -C /Users/os_anhvt/Documents/Dino/identity-service push`
 
 ---
 
-## Smoke thủ công (sau khi code xong — cần Mongo)
-1. Bật Mongo (Docker/local), chạy `identity-service`: `npm run start:dev` (3020) + `npm run seed:dev`.
-2. Chạy portal: `npm run dev` (5174).
-3. Mở `http://localhost:5174` → login `single@test.com`/`123456` → thấy app "Kế toán" → chọn → thấy "Công ty A" → chọn → trình duyệt điều hướng tới `http://localhost:8080?tenant=<id>` (Kế toán FE — hiện vẫn màn login riêng, hook nhận token là đợt sau).
-4. Kiểm cookie `mc_session` set trên `localhost` (DevTools → Application → Cookies).
+## Smoke thủ công (cần Mongo)
+1. Mongo on; identity: `npm run start:dev` (3020) + `npm run seed:dev`.
+2. portal: `cd portal && npm run dev` (5174).
+3. `http://localhost:5174` → login `single@test.com`/`123456` → app "Kế toán" → "Công ty A" → redirect `http://localhost:8080?tenant=<id>`. Kiểm cookie `mc_session` (cùng origin, không CORS).
 
 ## Self-Review
-**Spec coverage (spec §5):** §5 màn Login/AppPicker/TenantPicker → Task 3,4; redirect `feUrl?tenant=` → Task 2 redirect + Task 4; `credentials:'include'` + `VITE_IDENTITY_URL` → Task 2; 401 → Login → Task 3 App probe; logout → Task 4; theme teal → Task 1; §5.1 test mock fetch → Task 2,3,4. §6 smoke/seed → mục Smoke (seed:dev đã có ở Phần 1).
-**Placeholder scan:** không TBD; mọi step có code/lệnh. Task 1 Step 6 lưu ý xoá import file mẫu thừa.
-**Type consistency:** `AppInfo`/`TenantInfo` (Task 2) dùng nhất quán ở api + screens (Task 3,4); `redirectToApp(feUrl,tenantId)` (Task 2) khớp test + TenantPicker; props `onPick/onLogout/onBack/app/onLoggedIn` khớp giữa App và screens.
+**Spec coverage:** Portal 3 màn + redirect + credentials + 401→login + logout + theme → Task 3-5; serve static + cùng origin (bỏ CORS portal) qua prefix /api + ServeStaticModule → Task 2; test mock fetch → Task 3-5. Gộp vào identity-service (quyết định mới) → Task 1 (đã dời) + Task 2.
+**Placeholder scan:** không TBD; mọi step có code/lệnh.
+**Type consistency:** AppInfo/TenantInfo (T3) dùng nhất quán screens (T4,5); redirectToApp(feUrl,tenantId) khớp; props onPick/onLogout/onBack/app/onLoggedIn khớp App↔screens. API base `/api` nhất quán với prefix identity (T2) + proxy dev (T3).
+**Lưu ý:** Task 2 sửa e2e Phần 1 thêm /api — cơ học nhưng phải đủ (auth/session/platform). Cookie path '/' vẫn phủ /api/*.
 
 ## Execution
-superpowers:subagent-driven-development. 4 task tuần tự (1→2→3→4).
+subagent-driven-development. Task 2→3→4→5 (Task 1 đã xong). Task 2 (identity) trước để chốt /api; portal tasks sau.
