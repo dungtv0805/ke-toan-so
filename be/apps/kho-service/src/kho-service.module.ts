@@ -10,6 +10,7 @@ import { PhieuKhoModule } from './phieu-kho/phieu-kho.module';
     ConfigModule.forRoot({ isGlobal: true }),
     TenantModule,
     DatabaseModule.forRoot(),
+    DatabaseModule.forRootIdentity(),
     AuthModule,
     PhieuKhoModule,
   ],

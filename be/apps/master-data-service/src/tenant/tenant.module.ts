@@ -9,6 +9,7 @@ import { TenantAdminGuard } from '@app/auth';
   imports: [
     // Use forFeatureRaw to bypass tenant filtering for SuperAdmin operations
     DatabaseModule.forFeatureRaw([Tenant, User, UserCredential, UserTenant, VaiTro, PhanQuyen, Nganh]),
+    DatabaseModule.forFeatureIdentity([UserTenant]),
   ],
   controllers: [TenantController],
   providers: [TenantService, TenantAdminGuard],

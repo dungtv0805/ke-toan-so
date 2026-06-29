@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { MenuCatalog, LinhVuc, Tenant } from '@app/entities';
+import { MenuCatalog, LinhVuc, TenantAppConfig } from '@app/entities';
 
 const CONFIG_TTL_MS = 60_000;
 
@@ -41,14 +41,11 @@ export class EntitlementService {
 
   async getTenantModules(tenantId: string): Promise<string[]> {
     try {
-      const { ObjectId } = await import('mongodb');
-      const tenant = await this.dataSource
-        .getRepository(Tenant)
-        .findOne({ where: { _id: new ObjectId(tenantId) as any } });
-      const mods = tenant?.modules;
+      const cfg = await this.dataSource.getRepository(TenantAppConfig).findOne({ where: { tenantId } as any });
+      const mods = cfg?.modules;
       return mods && mods.length ? mods : ['KE_TOAN'];
     } catch {
-      return ['KE_TOAN']; // ObjectId không hợp lệ hoặc lỗi DB → fallback an toàn
+      return ['KE_TOAN'];
     }
   }
 

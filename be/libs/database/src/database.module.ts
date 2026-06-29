@@ -5,6 +5,7 @@ import { TenantModule, TenantContextService, TENANT_EXEMPT_ENTITIES } from '@app
 import { TenantActiveGuard } from '@app/auth';
 import { TenantSubscriber } from './tenant.subscriber';
 import { DataSource, ObjectLiteral, Repository } from 'typeorm';
+import { User, UserCredential, Tenant, UserTenant } from '@app/entities';
 
 export interface DatabaseModuleOptions {
   uri?: string;
@@ -242,7 +243,7 @@ export class DatabaseModule {
       password: pwd,
       synchronize: false,
       logging: process.env.NODE_ENV === 'development',
-      autoLoadEntities: true,
+      entities: [User, UserCredential, Tenant, UserTenant],
     };
     return {
       module: DatabaseModule,
