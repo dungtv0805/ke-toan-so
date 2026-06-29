@@ -151,6 +151,8 @@ const BaoCaoTNDNPage: React.FC = () => {
       nhomIdx !== undefined
         ? (bao?.quy?.[qi]?.cpKhongTruAuto?.[nhomIdx] ?? 0)
         : null;
+    // Không có quyền sửa → hiện thẳng số (tổng gồm tự tính nếu có), bỏ ô nhập.
+    if (!canEdit) return fmt(autoTotal !== null ? autoTotal : arr[qi] || 0);
     return (
       <div>
         <InputNumber
@@ -187,9 +189,12 @@ const BaoCaoTNDNPage: React.FC = () => {
       nhomIdxLK !== undefined
         ? (bao?.luyKe?.cpKhongTruAuto?.[nhomIdxLK] ?? 0)
         : null;
+    const sumManual = arr.reduce((s, x) => s + (x || 0), 0);
+    if (!canEdit)
+      return <Text strong>{fmt(autoTotalLK !== null ? autoTotalLK : sumManual)}</Text>;
     return (
       <div style={{ textAlign: "right" }}>
-        <Text strong>{fmt(arr.reduce((s, x) => s + (x || 0), 0))}</Text>
+        <Text strong>{fmt(sumManual)}</Text>
         {autoTotalLK !== null && (
           <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>
             Tổng (gồm tự tính): {fmt(autoTotalLK)}
