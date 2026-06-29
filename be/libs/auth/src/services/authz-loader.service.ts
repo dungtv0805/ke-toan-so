@@ -28,7 +28,12 @@ export class AuthzLoaderService {
       const ut = await this.dataSource
         .getRepository(UserTenant)
         .findOne({ where: { userId, tenantId, isActive: true } as any });
-      const vaiTro = ut?.role ?? 'KIEM_SOAT';
+      if (!ut) {
+        const data = { vaiTro: '', permissions: [] };
+        this.cache.set(key, { at: now, data }); // non-member: no role, no perms
+        return data;
+      }
+      const vaiTro = ut.role || 'KIEM_SOAT';
       const pq = await this.dataSource
         .getRepository(PhanQuyen)
         .findOne({ where: { vaiTro, tenantId, isActive: true } as any });

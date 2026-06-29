@@ -14,6 +14,27 @@ function fakeDataSource(opts: { userTenant?: any; phanQuyen?: any }) {
   } as any;
 }
 
+function spyDataSource(opts: { userTenant?: any; phanQuyen?: any }) {
+  const phanQuyenCalls: number[] = [];
+  const ds = {
+    getRepository: (entity: any) => {
+      const name = entity?.name || entity;
+      if (String(name).includes('PhanQuyen')) {
+        return {
+          findOne: async () => {
+            phanQuyenCalls.push(1);
+            return opts.phanQuyen ?? null;
+          },
+        };
+      }
+      return {
+        findOne: async () => opts.userTenant ?? null,
+      };
+    },
+  } as any;
+  return { ds, phanQuyenCalls };
+}
+
 describe('AuthzLoaderService', () => {
   it('super admin theo email → SUPER_ADMIN + [*]', async () => {
     const svc = new AuthzLoaderService(fakeDataSource({}));
@@ -33,11 +54,24 @@ describe('AuthzLoaderService', () => {
     expect(r.permissions).toContain('/chung-tu/phieu-thu:xem');
   });
 
-  it('không có membership → vaiTro mặc định KIEM_SOAT, permissions []', async () => {
-    const svc = new AuthzLoaderService(fakeDataSource({}));
+  it("không có membership → '' + [] (không kế thừa KIEM_SOAT)", async () => {
+    const { ds, phanQuyenCalls } = spyDataSource({});
+    const svc = new AuthzLoaderService(ds);
+    const r = await svc.load('u1', 't1', 'user@x.com');
+    expect(r).toEqual({ vaiTro: '', permissions: [] });
+    expect(phanQuyenCalls).toHaveLength(0); // phan_quyen KHÔNG được query
+  });
+
+  it('membership có nhưng role rỗng → fallback KIEM_SOAT', async () => {
+    const svc = new AuthzLoaderService(
+      fakeDataSource({
+        userTenant: { role: '' },
+        phanQuyen: { permissions: ['/bao-cao:xem'] },
+      }),
+    );
     const r = await svc.load('u1', 't1', 'user@x.com');
     expect(r.vaiTro).toBe('KIEM_SOAT');
-    expect(r.permissions).toEqual([]);
+    expect(r.permissions).toContain('/bao-cao:xem');
   });
 
   it('cache: lần 2 không gọi lại findOne', async () => {
