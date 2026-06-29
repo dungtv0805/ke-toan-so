@@ -1,12 +1,12 @@
 import { AuthzLoaderService } from './authz-loader.service';
 import { SUPER_ADMIN_EMAIL } from '@app/entities';
 
-function fakeDataSource(opts: { userTenant?: any; phanQuyen?: any }) {
+function fakeDataSource(opts: { appUserRole?: any; phanQuyen?: any }) {
   return {
     getRepository: (entity: any) => ({
       findOne: async () => {
         const name = entity?.name || entity;
-        if (String(name).includes('UserTenant')) return opts.userTenant ?? null;
+        if (String(name).includes('AppUserRole')) return opts.appUserRole ?? null;
         if (String(name).includes('PhanQuyen')) return opts.phanQuyen ?? null;
         return null;
       },
@@ -14,7 +14,7 @@ function fakeDataSource(opts: { userTenant?: any; phanQuyen?: any }) {
   } as any;
 }
 
-function spyDataSource(opts: { userTenant?: any; phanQuyen?: any }) {
+function spyDataSource(opts: { appUserRole?: any; phanQuyen?: any }) {
   const phanQuyenCalls: number[] = [];
   const ds = {
     getRepository: (entity: any) => {
@@ -28,7 +28,7 @@ function spyDataSource(opts: { userTenant?: any; phanQuyen?: any }) {
         };
       }
       return {
-        findOne: async () => opts.userTenant ?? null,
+        findOne: async () => opts.appUserRole ?? null,
       };
     },
   } as any;
@@ -42,10 +42,10 @@ describe('AuthzLoaderService', () => {
     expect(r).toEqual({ vaiTro: 'SUPER_ADMIN', permissions: ['*'] });
   });
 
-  it('user thường → vaiTro từ user_tenants, permissions từ phan_quyen', async () => {
+  it('user thường → vaiTro từ app_user_roles, permissions từ phan_quyen', async () => {
     const svc = new AuthzLoaderService(
       fakeDataSource({
-        userTenant: { role: 'Admin' },
+        appUserRole: { role: 'Admin' },
         phanQuyen: { permissions: ['/chung-tu/phieu-thu:xem', '/chung-tu/phieu-thu:them'] },
       }),
     );
@@ -54,7 +54,7 @@ describe('AuthzLoaderService', () => {
     expect(r.permissions).toContain('/chung-tu/phieu-thu:xem');
   });
 
-  it("không có membership → '' + [] (không kế thừa KIEM_SOAT)", async () => {
+  it("không có app_user_roles → '' + [] (không kế thừa KIEM_SOAT)", async () => {
     const { ds, phanQuyenCalls } = spyDataSource({});
     const svc = new AuthzLoaderService(ds);
     const r = await svc.load('u1', 't1', 'user@x.com');
@@ -62,10 +62,10 @@ describe('AuthzLoaderService', () => {
     expect(phanQuyenCalls).toHaveLength(0); // phan_quyen KHÔNG được query
   });
 
-  it('membership có nhưng role rỗng → fallback KIEM_SOAT', async () => {
+  it('app_user_roles có nhưng role rỗng → fallback KIEM_SOAT', async () => {
     const svc = new AuthzLoaderService(
       fakeDataSource({
-        userTenant: { role: '' },
+        appUserRole: { role: '' },
         phanQuyen: { permissions: ['/bao-cao:xem'] },
       }),
     );
