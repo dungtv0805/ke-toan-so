@@ -1,0 +1,186 @@
+# Deploy production (server "kt").
+#
+# 2 cách kích hoạt:
+#  1) Tự động khi push/merge vào master → tự nhận diện FE / service BE thay đổi.
+#  2) Chạy tay (Actions → Run workflow) → tự chọn FE và/hoặc service BE.
+#
+# Quy tắc tự nhận diện BE (vì monorepo dùng chung libs/):
+#  - Đổi trong be/apps/<service>/**          → deploy đúng service đó.
+#  - Đổi trong be/libs/** hoặc file gốc BE   → deploy TẤT CẢ service (libs được bundle
+#    vào main.js của mọi service).
+#
+# Secrets cần khai báo (Settings → Secrets and variables → Actions):
+#   KT_HOST     : IP/hostname server (bắt buộc)
+#   KT_SSH_KEY  : private key SSH vào server (bắt buộc)
+#   KT_USER     : (tuỳ chọn) user SSH, mặc định "root"
+#   KT_PORT     : (tuỳ chọn) cổng SSH, mặc định "22"
+#
+# ⚠️ Nếu service BE có THÊM dependency npm mới (runtime): workflow chỉ đẩy main.js, sẽ
+#    thiếu module trong container. Khi đó cài dep vào container + docker commit theo
+#    skill db-deploy (thủ công).
+
+name: Deploy production
+
+# ⏸️ TẠM TẮT trong giai đoạn dev: KHÔNG auto-deploy khi push/merge — chỉ chạy khi bấm tay
+# (Actions → Run workflow). Khi lên prod + có nhánh rõ ràng: thêm lại trigger `push`
+# (hoặc theo nhánh deploy) + cân nhắc cổng duyệt qua GitHub Environment.
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_fe:
+        description: "Deploy Frontend (nginx)"
+        type: boolean
+        default: true
+      be_services:
+        description: 'BE services (cách nhau dấu cách; rỗng = không; "all" = tất cả)'
+        type: string
+        default: ""
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  SSH_USER: ${{ secrets.KT_USER || 'root' }}
+  SSH_PORT: ${{ secrets.KT_PORT || '22' }}
+  BE_DIR: /root/chimseo/digital-book-be
+  FE_DIR: /root/chimseo/nginx/build4
+  ALL_SERVICES: "gateway auth-service master-data-service voucher-service cash-book-service payable-service reporting-service config-service kho-service tax-service"
+
+jobs:
+  # ── Quyết định cần deploy gì ──────────────────────────────────────────────
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      fe: ${{ steps.decide.outputs.fe }}
+      services: ${{ steps.decide.outputs.services }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Path filter (chỉ dùng khi push)
+        id: filter
+        if: github.event_name == 'push'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            fe: ['fe/**']
+            libs: ['be/libs/**', 'be/package.json', 'be/yarn.lock', 'be/nest-cli.json', 'be/tsconfig*.json']
+            gateway: ['be/apps/gateway/**']
+            auth-service: ['be/apps/auth-service/**']
+            master-data-service: ['be/apps/master-data-service/**']
+            voucher-service: ['be/apps/voucher-service/**']
+            cash-book-service: ['be/apps/cash-book-service/**']
+            payable-service: ['be/apps/payable-service/**']
+            reporting-service: ['be/apps/reporting-service/**']
+            config-service: ['be/apps/config-service/**']
+            kho-service: ['be/apps/kho-service/**']
+            tax-service: ['be/apps/tax-service/**']
+
+      - name: Quyết định danh sách deploy
+        id: decide
+        env:
+          CHANGED: ${{ steps.filter.outputs.changes }}
+          LIBS: ${{ steps.filter.outputs.libs }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Chạy tay: dùng input.
+            FE="${{ inputs.deploy_fe }}"
+            IN="${{ inputs.be_services }}"
+            if [ "$IN" = "all" ]; then SERVICES="$ALL_SERVICES"; else SERVICES="$IN"; fi
+          else
+            # Push: suy từ path filter. CHANGED là JSON mảng các filter trúng.
+            echo "$CHANGED" | grep -q '"fe"' && FE="true" || FE="false"
+            if [ "$LIBS" = "true" ]; then
+              SERVICES="$ALL_SERVICES"
+            else
+              SERVICES=""
+              for s in $ALL_SERVICES; do
+                echo "$CHANGED" | grep -q "\"$s\"" && SERVICES="$SERVICES $s"
+              done
+            fi
+          fi
+          # Validate + chuẩn hoá khoảng trắng.
+          CLEAN=""
+          for s in $SERVICES; do
+            echo "$ALL_SERVICES" | tr ' ' '\n' | grep -qx "$s" || { echo "::error::Service không hợp lệ: $s"; exit 1; }
+            CLEAN="$CLEAN $s"
+          done
+          CLEAN="$(echo $CLEAN | xargs)"
+          echo "fe=$FE" >> "$GITHUB_OUTPUT"
+          echo "services=$CLEAN" >> "$GITHUB_OUTPUT"
+          echo "▶ FE=$FE | BE services=[$CLEAN]"
+
+  # ── Frontend ──────────────────────────────────────────────────────────────
+  frontend:
+    needs: changes
+    if: ${{ needs.changes.outputs.fe == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: fe/package-lock.json
+      - name: Install & build FE
+        working-directory: fe
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.KT_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "$SSH_PORT" -H "${{ secrets.KT_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+      - name: Upload & reload nginx
+        run: |
+          SSH="ssh -i ~/.ssh/id_deploy -p $SSH_PORT $SSH_USER@${{ secrets.KT_HOST }}"
+          scp -i ~/.ssh/id_deploy -P "$SSH_PORT" -r fe/dist/* \
+            "$SSH_USER@${{ secrets.KT_HOST }}:$FE_DIR/"
+          $SSH "docker exec digital-book-nginx nginx -s reload"
+          echo "✅ FE deployed."
+
+  # ── Backend ───────────────────────────────────────────────────────────────
+  backend:
+    needs: changes
+    if: ${{ needs.changes.outputs.services != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: yarn
+          cache-dependency-path: be/yarn.lock
+      - name: Install deps
+        working-directory: be
+        run: yarn install --frozen-lockfile
+      - name: Build services
+        working-directory: be
+        run: |
+          for s in ${{ needs.changes.outputs.services }}; do
+            echo "▶ nest build $s"
+            npx nest build "$s"
+          done
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.KT_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "$SSH_PORT" -H "${{ secrets.KT_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+      - name: Upload main.js & restart container
+        run: |
+          SSH="ssh -i ~/.ssh/id_deploy -p $SSH_PORT $SSH_USER@${{ secrets.KT_HOST }}"
+          for s in ${{ needs.changes.outputs.services }}; do
+            $SSH "mkdir -p $BE_DIR/dist/apps/$s"
+            scp -i ~/.ssh/id_deploy -P "$SSH_PORT" "be/dist/apps/$s/main.js" \
+              "$SSH_USER@${{ secrets.KT_HOST }}:$BE_DIR/dist/apps/$s/main.js"
+            echo "  ⬆ $s/main.js"
+          done
+          $SSH "docker restart digital-book-app"
+          echo "✅ BE deployed: ${{ needs.changes.outputs.services }}"
+          echo "ℹ️ Có dependency npm MỚI? Nhớ cài vào container + docker commit (skill db-deploy)."

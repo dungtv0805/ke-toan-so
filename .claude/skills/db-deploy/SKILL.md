@@ -7,13 +7,14 @@ description: Use when deploying backend services or frontend to production serve
 
 ## ⚠️ Hiện tại (giai đoạn DEV): deploy THỦ CÔNG theo các bước bên dưới
 
-CI/CD (GitHub Actions) đang **TẮT** — sẽ setup lại khi lên môi trường prod (lúc đó có chiến lược nhánh
-rõ ràng hơn). Tạm thời mọi deploy đi qua các bước thủ công trong skill này:
+CI/CD (GitHub Actions) **không auto-deploy**. File `.github/workflows/deploy.yml` vẫn còn nhưng đã
+gỡ trigger `push` — chỉ còn `workflow_dispatch` (chạy tay), và cũng chưa push + chưa có secrets nên
+thực tế chưa chạy. Tạm thời mọi deploy đi qua các bước thủ công trong skill này:
 build → scp `main.js`/`dist` → `docker restart digital-book-app` / nginx reload.
 
-> Khi setup lại CI: dùng GitHub-hosted runner + SSH (secrets `KT_HOST`/`KT_SSH_KEY`), auto-detect theo
-> path (`fe/**`, `be/apps/<svc>/**`, `be/libs/**` → all). Đã có mẫu workflow trong lịch sử git
-> (commit `9b0bb04`, file `.github/workflows/deploy.yml`) để tham khảo.
+> Khi lên prod: thêm lại trigger `push` (hoặc theo nhánh deploy) + cổng duyệt Environment, khai báo
+> secrets `KT_HOST`/`KT_SSH_KEY`. Workflow đã có sẵn auto-detect theo path
+> (`fe/**`, `be/apps/<svc>/**`, `be/libs/**` → all).
 
 ## Server Info
 
