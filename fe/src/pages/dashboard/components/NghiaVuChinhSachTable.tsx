@@ -23,6 +23,17 @@ interface FlatRow {
 const nf = new Intl.NumberFormat('vi-VN');
 const fmt = (v: number) => (v ? nf.format(v) : '');
 
+// Dòng tổng/derived + chi phí không được trừ → in đậm.
+const BOLD_ROWS = new Set([
+  'Tổng CP phát sinh',
+  'Lợi nhuận trước thuế',
+  'Thu nhập tính thuế',
+  'Lợi nhuận sau thuế',
+  'Chi phí không được trừ',
+]);
+// Dòng nghĩa vụ "... phải nộp" → chữ đỏ (đậm).
+const isPhaiNop = (chiTieu: string) => chiTieu.includes('phải nộp');
+
 const NghiaVuChinhSachTable: React.FC<Props> = ({ year }) => {
   const { data, isLoading } = useQuery({
     queryKey: ['nvcs', year],
@@ -122,6 +133,18 @@ const NghiaVuChinhSachTable: React.FC<Props> = ({ year }) => {
           size="small"
           bordered
           scroll={{ x: 'max-content' }}
+          onRow={(row) => {
+            if (row.isHeader) return {};
+            const red = isPhaiNop(row.chiTieu);
+            const bold = red || BOLD_ROWS.has(row.chiTieu);
+            if (!bold && !red) return {};
+            return {
+              style: {
+                ...(bold ? { fontWeight: 600 } : {}),
+                ...(red ? { color: '#cf1322' } : {}),
+              },
+            };
+          }}
         />
       )}
     </Card>
