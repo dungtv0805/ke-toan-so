@@ -214,6 +214,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserPermissions([]);
       clearAuthToken();
       clearCurrentTenant();
+
+      // SSO: đăng xuất cũng kết thúc phiên ở MasterCeo Portal rồi quay về cổng chính.
+      const identityUrl = import.meta.env.VITE_IDENTITY_URL as string | undefined;
+      if (identityUrl) {
+        try {
+          await fetch(`${identityUrl}/api/logout`, { method: 'POST', credentials: 'include' });
+        } catch {
+          /* bỏ qua — vẫn điều hướng về Portal */
+        }
+        window.location.href = identityUrl;
+      }
     }
   }, []);
 
