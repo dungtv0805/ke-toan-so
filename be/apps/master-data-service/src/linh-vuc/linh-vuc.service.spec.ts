@@ -1,7 +1,9 @@
 import { Test } from '@nestjs/testing';
 import { ConflictException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
+import { TenantAppConfig } from '@app/entities';
 import { LinhVucService } from './linh-vuc.service';
 
 function mockRepo(initial: any[] = []) {
@@ -24,16 +26,16 @@ function mockRepo(initial: any[] = []) {
 describe('LinhVucService', () => {
   let service: LinhVucService;
   let linhVucRepo: any;
-  let tenantRepo: any;
+  let tenantAppConfigRepo: any;
 
   beforeEach(async () => {
     linhVucRepo = mockRepo();
-    tenantRepo = mockRepo();
+    tenantAppConfigRepo = mockRepo();
     const moduleRef = await Test.createTestingModule({
       providers: [
         LinhVucService,
         { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}LinhVuc`, useValue: linhVucRepo },
-        { provide: `${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`, useValue: tenantRepo },
+        { provide: getRepositoryToken(TenantAppConfig), useValue: tenantAppConfigRepo },
         { provide: DataSource, useValue: {} },
       ],
     }).compile();
@@ -52,7 +54,7 @@ describe('LinhVucService', () => {
 
   it('delete chặn khi còn tenant tham chiếu', async () => {
     const saved = await service.create({ code: 'KHO', name: 'Kho' } as any);
-    tenantRepo.store.push({ _id: 't1', modules: ['KE_TOAN', 'KHO'] });
+    tenantAppConfigRepo.store.push({ tenantId: 't1', modules: ['KE_TOAN', 'KHO'] });
     await expect(service.delete(String(saved._id))).rejects.toBeInstanceOf(ConflictException);
   });
 

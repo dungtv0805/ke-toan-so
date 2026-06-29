@@ -1,6 +1,6 @@
 import { Module, Global } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppUserRole, PhanQuyen } from '@app/entities';
+import { AppUserRole, PhanQuyen, TenantAppConfig } from '@app/entities';
 import { JwtService } from './services/jwt.service';
 import { AuthzLoaderService } from './services/authz-loader.service';
 import { JwtGuard } from './guards/jwt.guard';
@@ -10,7 +10,7 @@ import { TenantActiveGuard } from './guards/tenant-active.guard';
 
 @Global()
 @Module({
-  imports: [TypeOrmModule.forFeature([AppUserRole, PhanQuyen])],
+  imports: [TypeOrmModule.forFeature([AppUserRole, PhanQuyen, TenantAppConfig])],
   providers: [JwtService, AuthzLoaderService, JwtGuard, RoleGuard, PermissionGuard, TenantActiveGuard],
   exports: [JwtService, AuthzLoaderService, JwtGuard, RoleGuard, PermissionGuard, TenantActiveGuard],
 })

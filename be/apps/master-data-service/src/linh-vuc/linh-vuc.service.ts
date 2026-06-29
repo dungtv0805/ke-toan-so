@@ -7,8 +7,8 @@ import {
   Logger,
 } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { LinhVuc, Tenant } from '@app/entities';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { LinhVuc, TenantAppConfig } from '@app/entities';
 import { CreateLinhVucDto, UpdateLinhVucDto } from '@app/dto';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 import { sanitizeUpdateDto } from '@app/core';
@@ -24,8 +24,8 @@ export class LinhVucService implements OnModuleInit {
   constructor(
     @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}LinhVuc`)
     private readonly linhVucRepository: Repository<LinhVuc>,
-    @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`)
-    private readonly tenantRepository: Repository<Tenant>,
+    @InjectRepository(TenantAppConfig)
+    private readonly tenantAppConfigRepository: Repository<TenantAppConfig>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
@@ -100,8 +100,8 @@ export class LinhVucService implements OnModuleInit {
       );
     }
 
-    const tenants = await this.tenantRepository.find();
-    const inUse = tenants.filter((t) => (t.modules ?? []).includes(linhVuc.code));
+    const configs = await this.tenantAppConfigRepository.find();
+    const inUse = configs.filter((c) => (c.modules ?? []).includes(linhVuc.code));
     if (inUse.length > 0) {
       throw new ConflictException(
         `Không thể xóa: còn ${inUse.length} công ty đang dùng lĩnh vực này`,

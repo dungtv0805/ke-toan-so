@@ -7,7 +7,8 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { Nganh } from '@app/entities';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Nganh, TenantAppConfig } from '@app/entities';
 import { CreateNganhDto, UpdateNganhDto } from '@app/dto';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 import { sanitizeUpdateDto } from '@app/core';
@@ -20,8 +21,8 @@ export class NganhService implements OnModuleInit {
   constructor(
     @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}Nganh`)
     private readonly nganhRepository: Repository<Nganh>,
-    @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}Tenant`)
-    private readonly tenantRepository: Repository<{ nganh?: string }>,
+    @InjectRepository(TenantAppConfig)
+    private readonly tenantAppConfigRepository: Repository<TenantAppConfig>,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -81,8 +82,8 @@ export class NganhService implements OnModuleInit {
 
   async delete(id: string): Promise<void> {
     const nganh = await this.findOne(id);
-    const tenants = await this.tenantRepository.find();
-    const inUse = tenants.filter((t) => t.nganh === nganh.code);
+    const configs = await this.tenantAppConfigRepository.find();
+    const inUse = configs.filter((c) => c.nganh === nganh.code);
     if (inUse.length > 0) {
       throw new ConflictException(
         `Không thể xóa: còn ${inUse.length} công ty đang dùng ngành này`,
