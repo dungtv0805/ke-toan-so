@@ -319,13 +319,27 @@ export class AuthServiceService {
 
     // Case 1: Single tenant - return accessToken directly
     if (tenantInfoList.length === 1) {
-      const tenantInfo = tenantInfoList[0];
-      const permissions = await this.loadPermissions(tenantInfo.role, tenantInfo.tenantId);
+      const tenant = tenants[0];
+      const tenantId = tenant._id.toString();
+      // Lazy-provision Kế toán config/role nếu công ty tạo từ Portal chưa có (P3)
+      const membership = userTenants.find((ut) => ut.tenantId === tenantId);
+      const isCompanyAdmin = membership?.role === 'admin';
+      try {
+        await this.ensureKeToanProvisioned(tenantId, user._id.toString(), isCompanyAdmin);
+      } catch (err) {
+        this.logger.warn(`ensureKeToanProvisioned failed for tenant ${tenantId}: ${(err as Error).message}`);
+      }
+      // Đọc lại role + config sau provisioning
+      const aur = await this.appUserRoleRepo.findOne({ where: { userId: user._id.toString(), tenantId, isActive: true } as any });
+      const role = aur?.role || 'KIEM_SOAT';
+      const cfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId } as any });
+      const tenantInfo = this.buildTenantInfo(role, tenant, cfg);
+      const permissions = await this.loadPermissions(role, tenantId);
       const payload: UserPayload = {
         id: user._id.toString(),
         email: user.email,
-        tenantId: tenantInfo.tenantId,
-        vaiTro: tenantInfo.role,
+        tenantId,
+        vaiTro: role,
         permissions: [],
       };
 
