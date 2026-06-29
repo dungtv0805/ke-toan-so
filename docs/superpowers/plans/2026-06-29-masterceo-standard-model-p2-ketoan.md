@@ -118,11 +118,12 @@ export class TenantAppConfig extends BaseEntity {
 }
 ```
 
-- [ ] **Step 3: `tenant.entity.ts`** — bỏ `modules/nganh/glossary/dashboardBlocks` (giữ name/slug/maSoThue/diaChi/dienThoai/email/nguoiDaiDien/isActive). (Entity này giờ map collection `tenants` ở **connection identity**.)
+- [ ] **Step 3: TENANT_EXEMPT_ENTITIES** (`be/libs/core/src/tenant/index.ts`) — thêm `'AppUserRole'` và `'TenantAppConfig'` (như `UserTenant`/`Tenant`: tra theo userId/tenantId tường minh; KHÔNG để tenant-proxy chèn filter — login pre-tenant chưa có request tenant context).
+> **KHÔNG slim Tenant entity ở P2** (dời P4). Giữ `modules/nganh/glossary/dashboardBlocks` trên `Tenant` tới khi MỌI reader repoint xong (Task 5 + Task 7); slim sớm sẽ vỡ build vì tenant.service/auth-service còn đọc field này. `TenantAppConfig` là nguồn mới; field cũ trên Tenant thành vô dụng nhưng vô hại tới P4.
 
-- [ ] **Step 4: export entities** (entities index) + thêm `AppUserRole`/`TenantAppConfig` vào TENANT_EXEMPT_ENTITIES nếu danh sách đó liệt kê tên. Build.
+- [ ] **Step 4: export entities** — thêm AppUserRole vào `be/libs/entities/src/auth/index.ts` (import + re-export theo pattern), TenantAppConfig vào `be/libs/entities/src/tenant/index.ts`. Build (`npx nest build master-data-service`).
 
-- [ ] **Step 5: Commit.** `git add be/libs/entities && git commit -m "feat(entities): AppUserRole + TenantAppConfig + Tenant slim (tách identity/config)"`
+- [ ] **Step 5: Commit.** `git add be/libs/entities be/libs/core && git commit -m "feat(entities): AppUserRole + TenantAppConfig (tách role/config khỏi identity)"`
 
 ---
 
@@ -176,17 +177,33 @@ if (require.main === module) {
 
 ---
 
-## Task 5: auth-service + EntitlementService + guards repoint
+## Task 5a: Cross-cutting — identity connection toàn bộ service + guards + EntitlementService
 
-**Files:** Modify `be/apps/auth-service/src/auth-service.service.ts` (+ module), `be/libs/auth/src/services/entitlement.service.ts`, `be/libs/auth/src/guards/tenant-active.guard.ts`, `tenant-admin.guard.ts`.
+**Lý do tách:** `TenantActiveGuard` là APP_GUARD toàn cục (chạy ở MỌI service) đọc `Tenant.isActive`. Tenant chuyển sang identity → mọi service cần connection identity (cùng Mongo instance nên không tăng failure domain). Phải đăng ký entity identity **explicit** để metadata có ở mọi process.
 
-**Interfaces:** auth-service đọc User/UserCredential/Tenant/Membership từ connection `identity`; functional role từ `app_user_roles`; modules/glossary/nganh từ `tenant_app_config`. EntitlementService.getTenantModules đọc `tenant_app_config`. TenantActiveGuard đọc Tenant (identity). TenantAdminGuard đọc membership.role==='admin' (identity).
+**Files:** Modify `be/libs/database/src/database.module.ts` (forRootIdentity), 7 service root modules (gateway/voucher/cash-book/payable/reporting/kho/tax), `be/libs/auth/src/guards/tenant-active.guard.ts`, `be/apps/master-data-service/src/tenant/tenant.module.ts` + `tenant-admin.guard.ts`, `be/libs/auth/src/services/entitlement.service.ts` + spec.
 
-- [ ] **Step 1: auth-service module** — `forFeatureIdentity([User, UserCredential, Tenant, UserTenant])` (thay forFeature); `forFeature([AppUserRole, TenantAppConfig])` (digital_book); giữ `forFeatureRaw([PhanQuyen])`. Inject identity repos với `@InjectRepository(X,'identity')`.
-- [ ] **Step 2: auth-service.service** — login/select/switch/getMe/register/changePassword/updateProfile: User/UserCredential/Tenant/UserTenant qua identity repo. `buildTenantInfo`: định danh từ Tenant(identity) + modules/glossary/nganh từ `tenant_app_config` (đọc theo tenantId). `loadPermissions`: role từ `app_user_roles` (theo userId+tenantId) → phan_quyen. register/changePassword WRITE vào identity (User/Credential/Membership) + app_user_roles (role chức năng).
-- [ ] **Step 3: EntitlementService.getTenantModules** → đọc `tenant_app_config.modules` (digital_book) theo tenantId (thay Tenant.modules). Wire AppUserRole/TenantAppConfig repo vào libs/auth nơi cần.
-- [ ] **Step 4: guards** — TenantActiveGuard: Tenant từ identity. TenantAdminGuard: membership(identity).role==='admin'.
-- [ ] **Step 5: Build các service + test libs/auth.** `npx nest build auth-service && yarn jest libs/auth`. Commit.
+- [ ] **Step 1: forRootIdentity explicit entities** — sửa `forRootIdentity()`: thay `autoLoadEntities: true` bằng `entities: [User, UserCredential, Tenant, UserTenant]` (import từ `@app/entities`). Lý do: TenantActiveGuard chạy ở service không gọi forFeatureIdentity (vd voucher) — autoLoad sẽ rỗng → `getRepository(Tenant)` trên identity throw. Explicit đảm bảo 4 entity luôn có metadata trên connection 'identity' ở mọi service import forRootIdentity. (libs/database import @app/entities: một chiều, không circular.)
+- [ ] **Step 2: forRootIdentity() vào 7 service còn lại** — thêm `DatabaseModule.forRootIdentity()` vào imports root module: gateway, voucher, cash-book, payable, reporting, kho, tax (auth/config/master-data đã có từ Task 1). Đặt ngay sau `DatabaseModule.forRoot()`.
+- [ ] **Step 3: TenantActiveGuard** — inject `@InjectDataSource('identity') private readonly identityDs: DataSource` thay `DataSource` mặc định; `this.identityDs.getRepository(Tenant).findOne(...)`. Logic còn lại giữ nguyên (super-admin bypass, skip khi chưa auth).
+- [ ] **Step 4: TenantAdminGuard** (chỉ master-data) — đọc membership từ identity: `@InjectRepository(UserTenant, 'identity')` (thêm `DatabaseModule.forFeatureIdentity([UserTenant])` vào tenant.module imports, bỏ token RAW UserTenant nếu chỉ guard dùng). Đổi `role: 'Admin'` → `role: 'admin'` (membership identity P1 = admin/member). super-admin bypass giữ nguyên.
+- [ ] **Step 5: EntitlementService.getTenantModules** → đọc `TenantAppConfig` (digital_book, default `dataSource`) theo `tenantId` (string, KHÔNG ObjectId — tenant_app_config.tenantId là string): `getRepository(TenantAppConfig).findOne({ where: { tenantId } })`; `cfg?.modules?.length ? cfg.modules : ['KE_TOAN']`. Bỏ import Tenant + ObjectId ở hàm này. Cập nhật `entitlement.service.spec.ts`: mock `TenantAppConfig` thay `Tenant`, field `modules`.
+- [ ] **Step 6: Build TẤT CẢ service** (`npx nest build gateway voucher-service cash-book-service payable-service reporting-service kho-service tax-service config-service master-data-service auth-service`) + `npx jest libs/auth/src/services/entitlement.service.spec.ts`. Sửa tenant-admin.guard.spec nếu vỡ. Commit.
+
+---
+
+## Task 5b: auth-service.service repoint (login/getMe/select/switch/register/...)
+
+**Files:** Modify `be/apps/auth-service/src/auth-service.module.ts`, `be/apps/auth-service/src/auth-service.service.ts`.
+
+**Interfaces:** auth-service đọc User/UserCredential/Tenant/UserTenant(membership) từ connection `identity`; functional role từ `AppUserRole`; modules/glossary/nganh từ `TenantAppConfig`. `buildTenantInfo(role: string, tenant: Tenant, cfg: TenantAppConfig|null)`.
+
+- [ ] **Step 1: module** — đổi `DatabaseModule.forFeature([User, UserCredential, Tenant, UserTenant])` → `DatabaseModule.forFeatureIdentity([User, UserCredential, Tenant, UserTenant])`; thêm `DatabaseModule.forFeature([AppUserRole, TenantAppConfig])`; giữ `forFeatureRaw([PhanQuyen])` + `forRootIdentity()` (đã có).
+- [ ] **Step 2: service constructor** — 4 identity repo inject thêm tham số connection: `@InjectRepository(User, 'identity')`, `(UserCredential,'identity')`, `(Tenant,'identity')`, `(UserTenant,'identity')`; thêm `@InjectRepository(AppUserRole)` + `@InjectRepository(TenantAppConfig)` (default). Giữ phanQuyenRepo RAW.
+- [ ] **Step 3: buildTenantInfo đổi chữ ký** → `(role: string, tenant: Tenant, cfg: TenantAppConfig | null)`: `role` (từ AppUserRole) thay `userTenant.role`; `modules: cfg?.modules?.length ? cfg.modules : ['KE_TOAN']`; `glossary: cfg?.glossary ?? {}`; `nganh: cfg?.nganh ?? null`. Cập nhật mọi caller: trước khi build, đọc `appUserRole` theo (userId, tenantId) → role; đọc `tenantAppConfig` theo tenantId → cfg.
+- [ ] **Step 4: loadPermissions / role** — nơi cần role chức năng (login/select/switch/getMe build JWT + TenantInfo): lấy từ `appUserRoleRepo.findOne({where:{userId, tenantId, isActive:true}})` → `role || 'KIEM_SOAT'` (membership tồn tại nhưng chưa có app_user_role) hoặc '' nếu không là thành viên. phanQuyen theo role+tenantId như cũ. (membership/tenant list vẫn từ identity UserTenant.)
+- [ ] **Step 5: writes** — register: tạo User/UserCredential vào identity; membership (UserTenant identity) nếu có tenantId; role chức năng → `AppUserRole` (digital_book). changePassword/updateProfile: ghi identity (UserCredential/User). (register hiện super-admin-only — giữ.)
+- [ ] **Step 6: Build** `npx nest build auth-service` + chạy auth e2e nếu có (`npx jest apps/auth-service`). Commit.
 
 ---
 
