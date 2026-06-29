@@ -837,6 +837,7 @@ export function EntryListTab() {
     ? {
         selectedRowKeys: selectedEntryIds,
         onChange: (keys: Key[]) => setSelectedEntryIds(keys.map(String)),
+        columnWidth: 32,
       }
     : undefined;
 
