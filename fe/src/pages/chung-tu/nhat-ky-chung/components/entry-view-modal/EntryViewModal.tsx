@@ -1,4 +1,4 @@
-import { Modal, Descriptions, Tag, Typography, Dropdown, Button } from "antd";
+import { Modal, Descriptions, Tag, Typography, Button } from "antd";
 import {
   EyeOutlined,
   ArrowUpOutlined,
@@ -83,19 +83,22 @@ export function EntryViewModal() {
       onCancel={handleClose}
       footer={
         <div style={{ textAlign: "right" }}>
-          <Dropdown
-            menu={{
-              items: [
-                { key: "PHIEU_THU", label: "Phiếu thu" },
-                { key: "PHIEU_CHI", label: "Phiếu chi" },
-              ],
-              onClick: ({ key }) => handlePrint(key as LoaiChungTu),
-            }}
+          <Button
+            type="primary"
+            ghost
+            icon={<PrinterOutlined />}
+            onClick={() => handlePrint("PHIEU_THU")}
+            style={{ marginRight: 8 }}
           >
-            <Button type="primary" icon={<PrinterOutlined />}>
-              In phiếu
-            </Button>
-          </Dropdown>
+            In phiếu thu
+          </Button>
+          <Button
+            type="primary"
+            icon={<PrinterOutlined />}
+            onClick={() => handlePrint("PHIEU_CHI")}
+          >
+            In phiếu chi
+          </Button>
         </div>
       }
       width={isMobile ? "95%" : 1040}
