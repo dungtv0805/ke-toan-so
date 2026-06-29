@@ -10,4 +10,6 @@ export const TENANT_EXEMPT_ENTITIES = [
   'User',   // Users can belong to multiple tenants
   'UserCredential', // Credentials are user-level, not tenant-level
   'UserTenant', // User-tenant membership is cross-tenant
+  'AppUserRole', // Queried by userId+tenantId explicitly; exempt like UserTenant
+  'TenantAppConfig', // Queried by tenantId explicitly; login happens before tenant context
 ];
