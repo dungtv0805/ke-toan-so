@@ -6,7 +6,13 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User, UserCredential, UserTenant, UserStatus } from '@app/entities';
+import {
+  User,
+  UserCredential,
+  UserTenant,
+  UserStatus,
+  AppUserRole,
+} from '@app/entities';
 import { TenantContextService } from '@app/core';
 import {
   CreateNguoiDungDto,
@@ -50,12 +56,16 @@ export interface UserWithTenant {
 @Injectable()
 export class NguoiDung_Service {
   constructor(
-    @InjectRepository(User)
+    // Identity connection (masterceo_identity) — user identity data
+    @InjectRepository(User, 'identity')
     private readonly repo: Repository<User>,
-    @InjectRepository(UserCredential)
+    @InjectRepository(UserCredential, 'identity')
     private readonly credentialRepo: Repository<UserCredential>,
-    @InjectRepository(UserTenant)
+    @InjectRepository(UserTenant, 'identity')
     private readonly userTenantRepo: Repository<UserTenant>,
+    // Default connection (digital_book) — functional accounting role
+    @InjectRepository(AppUserRole)
+    private readonly appUserRoleRepo: Repository<AppUserRole>,
     private readonly tenantContext: TenantContextService,
   ) {}
 
@@ -64,13 +74,12 @@ export class NguoiDung_Service {
     const currentTenantId = this.tenantContext.getCurrentTenantId();
     const isSuperAdmin = this.tenantContext.isSuperAdmin();
 
-    // Get all user-tenant memberships for current tenant (or all if super admin)
+    // Step 1: Get memberships from identity DB (who is in this tenant)
     let userTenants: UserTenant[];
     if (isSuperAdmin && !currentTenantId) {
-      // Super admin without tenant context - get all memberships
+      // Super admin without tenant context — get all memberships across tenants
       userTenants = await this.userTenantRepo.find({ where: { isActive: true } });
     } else if (currentTenantId) {
-      // Filter by current tenant
       userTenants = await this.userTenantRepo.find({
         where: { tenantId: currentTenantId, isActive: true },
       });
@@ -78,19 +87,37 @@ export class NguoiDung_Service {
       userTenants = [];
     }
 
-    // Filter by role if specified
-    if (vaiTro) {
-      userTenants = userTenants.filter((ut) => ut.role === vaiTro);
+    const memberUserIds = [...new Set(userTenants.map((ut) => ut.userId))];
+
+    if (memberUserIds.length === 0) {
+      return { data: [], total: 0, page, limit, totalPages: 0 };
     }
 
-    // Get unique user IDs
-    const userIds = [...new Set(userTenants.map((ut) => ut.userId))];
+    // Step 2: Load functional roles from AppUserRole (digital_book)
+    // tenantRole is the ACCOUNTING role displayed/filtered in this UI — NOT userTenant.role
+    const whereRole: Record<string, any> = {
+      userId: { $in: memberUserIds } as any,
+      isActive: true,
+    };
+    if (currentTenantId) {
+      whereRole.tenantId = currentTenantId;
+    }
+    const appUserRoles = await this.appUserRoleRepo.find({ where: whereRole as any });
+
+    // Step 3: Apply vaiTro filter via AppUserRole (functional role), not userTenant.role
+    let userIds: string[];
+    if (vaiTro) {
+      const filteredRoles = appUserRoles.filter((aur) => aur.role === vaiTro);
+      userIds = filteredRoles.map((aur) => aur.userId);
+    } else {
+      userIds = memberUserIds;
+    }
 
     if (userIds.length === 0) {
       return { data: [], total: 0, page, limit, totalPages: 0 };
     }
 
-    // Fetch users
+    // Step 4: Fetch user details from identity DB
     const { ObjectId } = await import('mongodb');
     const objectIds = userIds.map((id) => new ObjectId(id));
 
@@ -105,7 +132,7 @@ export class NguoiDung_Service {
 
     let allUsers = await this.repo.find({ where: where as any });
 
-    // Filter by search if provided
+    // Step 5: Filter by search if provided
     if (search) {
       const searchLower = search.toLowerCase();
       allUsers = allUsers.filter(
@@ -115,12 +142,14 @@ export class NguoiDung_Service {
       );
     }
 
-    // Map users with their tenant role
+    // Step 6: Map users with functional role from AppUserRole
+    // Members with no AppUserRole row default to 'KIEM_SOAT' (consistent with auth-service convention)
     const usersWithTenant: UserWithTenant[] = allUsers.map((user) => {
-      const userTenant = userTenants.find((ut) => ut.userId === user._id.toString());
+      const userId = user._id.toString();
+      const appUserRole = appUserRoles.find((aur) => aur.userId === userId);
       return {
-        _id: user._id.toString(),
-        id: user._id.toString(),
+        _id: userId,
+        id: userId,
         email: user.email,
         hoTen: user.hoTen,
         trangThai: user.trangThai,
@@ -128,7 +157,7 @@ export class NguoiDung_Service {
         isSuperAdmin: user.isSuperAdmin,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
-        tenantRole: userTenant?.role,
+        tenantRole: appUserRole?.role ?? 'KIEM_SOAT',
       };
     });
 
@@ -170,7 +199,7 @@ export class NguoiDung_Service {
 
     const tenantId = this.tenantContext.getCurrentTenantId();
 
-    // Create user
+    // Create user in identity DB
     const item = this.repo.create({
       email: dto.email.toLowerCase(),
       hoTen: dto.hoTen,
@@ -180,7 +209,7 @@ export class NguoiDung_Service {
 
     const savedUser = await this.repo.save(item);
 
-    // Create UserCredential with hashed default password
+    // Create UserCredential in identity DB
     const credential = this.credentialRepo.create({
       userId: savedUser._id.toString(),
       password: hashedPassword,
@@ -189,15 +218,24 @@ export class NguoiDung_Service {
 
     await this.credentialRepo.save(credential);
 
-    // Create UserTenant membership if tenantId provided
-    if (tenantId && dto.vaiTro) {
+    if (tenantId) {
+      // Create membership in identity DB — role='member' (membership tier, NOT functional role)
       const userTenant = this.userTenantRepo.create({
         userId: savedUser._id.toString(),
         tenantId,
-        role: dto.vaiTro,
+        role: 'member',
         isActive: true,
       });
       await this.userTenantRepo.save(userTenant);
+
+      // Create functional role in AppUserRole (digital_book)
+      const appUserRole = this.appUserRoleRepo.create({
+        userId: savedUser._id.toString(),
+        tenantId,
+        role: dto.vaiTro || 'KIEM_SOAT',
+        isActive: true,
+      });
+      await this.appUserRoleRepo.save(appUserRole);
     }
 
     return savedUser;
@@ -214,27 +252,36 @@ export class NguoiDung_Service {
       dto.email = dto.email.toLowerCase();
     }
 
-    // Update user basic info
+    // Update user basic info in identity DB
     if (dto.hoTen) item.hoTen = dto.hoTen;
     if (dto.email) item.email = dto.email;
     if (dto.trangThai) item.trangThai = dto.trangThai;
 
     const savedUser = await this.repo.save(item);
 
-    // Update role in UserTenant if vaiTro provided
+    // Update functional role in AppUserRole (digital_book) — NOT userTenant.role
     if (dto.vaiTro) {
       const currentTenantId = this.tenantContext.getCurrentTenantId();
       if (currentTenantId) {
-        const userTenant = await this.userTenantRepo.findOne({
+        const appUserRole = await this.appUserRoleRepo.findOne({
           where: {
             userId: item._id.toString(),
             tenantId: currentTenantId,
-          },
+          } as any,
         });
 
-        if (userTenant) {
-          userTenant.role = dto.vaiTro;
-          await this.userTenantRepo.save(userTenant);
+        if (appUserRole) {
+          appUserRole.role = dto.vaiTro;
+          await this.appUserRoleRepo.save(appUserRole);
+        } else {
+          // Create if missing (e.g. user existed before AppUserRole table was introduced)
+          const newRole = this.appUserRoleRepo.create({
+            userId: item._id.toString(),
+            tenantId: currentTenantId,
+            role: dto.vaiTro,
+            isActive: true,
+          });
+          await this.appUserRoleRepo.save(newRole);
         }
       }
     }
@@ -245,11 +292,11 @@ export class NguoiDung_Service {
   async delete(id: string): Promise<void> {
     const item = await this.findOne(id);
 
-    // Soft delete user
+    // Soft delete user in identity DB
     item.isActive = false;
     await this.repo.save(item);
 
-    // Soft delete corresponding UserCredential
+    // Soft delete UserCredential in identity DB
     const credential = await this.credentialRepo.findOne({
       where: { userId: item._id.toString() },
     });
@@ -259,7 +306,7 @@ export class NguoiDung_Service {
       await this.credentialRepo.save(credential);
     }
 
-    // Soft delete UserTenant memberships
+    // Soft delete UserTenant memberships in identity DB
     const userTenants = await this.userTenantRepo.find({
       where: { userId: item._id.toString() },
     });
@@ -267,6 +314,17 @@ export class NguoiDung_Service {
     for (const ut of userTenants) {
       ut.isActive = false;
       await this.userTenantRepo.save(ut);
+    }
+
+    // Deactivate AppUserRole rows in digital_book
+    // Ensures deleted user loses functional role access
+    const appUserRoles = await this.appUserRoleRepo.find({
+      where: { userId: item._id.toString() } as any,
+    });
+
+    for (const aur of appUserRoles) {
+      aur.isActive = false;
+      await this.appUserRoleRepo.save(aur);
     }
   }
 
@@ -294,7 +352,7 @@ export class NguoiDung_Service {
       throw new ConflictException('Không xác định được công ty hiện tại');
     }
 
-    // Check existing membership
+    // Check existing membership in identity DB
     const existingMembership = await this.userTenantRepo.findOne({
       where: { userId: user._id.toString(), tenantId },
     });
@@ -303,18 +361,37 @@ export class NguoiDung_Service {
       if (existingMembership.isActive) {
         throw new ConflictException('Người dùng đã là thành viên của công ty này');
       }
-      // Reactivate inactive membership
+      // Reactivate membership — membership tier stays 'member'
       existingMembership.isActive = true;
-      existingMembership.role = dto.vaiTro;
+      existingMembership.role = 'member';
       await this.userTenantRepo.save(existingMembership);
     } else {
       const userTenant = this.userTenantRepo.create({
         userId: user._id.toString(),
         tenantId,
-        role: dto.vaiTro,
+        role: 'member',
         isActive: true,
       });
       await this.userTenantRepo.save(userTenant);
+    }
+
+    // Update or create functional role in AppUserRole (digital_book)
+    const existingAppUserRole = await this.appUserRoleRepo.findOne({
+      where: { userId: user._id.toString(), tenantId } as any,
+    });
+
+    if (existingAppUserRole) {
+      existingAppUserRole.role = dto.vaiTro;
+      existingAppUserRole.isActive = true;
+      await this.appUserRoleRepo.save(existingAppUserRole);
+    } else {
+      const newRole = this.appUserRoleRepo.create({
+        userId: user._id.toString(),
+        tenantId,
+        role: dto.vaiTro,
+        isActive: true,
+      });
+      await this.appUserRoleRepo.save(newRole);
     }
 
     return {
@@ -331,17 +408,19 @@ export class NguoiDung_Service {
     };
   }
 
-  async searchUsersNotInTenant(search?: string): Promise<Array<{ id: string; email: string; hoTen: string }>> {
+  async searchUsersNotInTenant(
+    search?: string,
+  ): Promise<Array<{ id: string; email: string; hoTen: string }>> {
     const tenantId = this.tenantContext.getCurrentTenantId();
     if (!tenantId) return [];
 
-    // Get user IDs already in this tenant
+    // Get user IDs already in this tenant from identity DB
     const existingMemberships = await this.userTenantRepo.find({
       where: { tenantId, isActive: true },
     });
     const existingUserIds = new Set(existingMemberships.map((m) => m.userId));
 
-    // Get all active users
+    // Get all active users from identity DB
     let allUsers = await this.repo.find({ where: { isActive: true } });
 
     // Filter out users already in tenant
@@ -368,7 +447,7 @@ export class NguoiDung_Service {
     const currentTenantId = this.tenantContext.getCurrentTenantId();
     const isSuperAdmin = this.tenantContext.isSuperAdmin();
 
-    // Get user-tenant memberships
+    // Get memberships from identity DB
     let userTenants: UserTenant[];
     if (isSuperAdmin && !currentTenantId) {
       userTenants = await this.userTenantRepo.find({ where: { isActive: true } });
@@ -380,7 +459,7 @@ export class NguoiDung_Service {
       userTenants = [];
     }
 
-    // Get unique user IDs
+    // Get unique user IDs from memberships
     const userIds = [...new Set(userTenants.map((ut) => ut.userId))];
 
     if (userIds.length === 0) {
@@ -392,7 +471,7 @@ export class NguoiDung_Service {
       };
     }
 
-    // Fetch users
+    // Fetch users from identity DB
     const { ObjectId } = await import('mongodb');
     const objectIds = userIds.map((id) => new ObjectId(id));
 
@@ -403,10 +482,20 @@ export class NguoiDung_Service {
       },
     });
 
-    // Count by role dynamically
+    // Get functional roles from AppUserRole (digital_book) for theoVaiTro stats
+    const whereRole: Record<string, any> = {
+      userId: { $in: userIds } as any,
+      isActive: true,
+    };
+    if (currentTenantId) {
+      whereRole.tenantId = currentTenantId;
+    }
+    const appUserRoles = await this.appUserRoleRepo.find({ where: whereRole as any });
+
+    // Count by functional role from AppUserRole
     const theoVaiTro: Record<string, number> = {};
-    for (const ut of userTenants) {
-      theoVaiTro[ut.role] = (theoVaiTro[ut.role] || 0) + 1;
+    for (const aur of appUserRoles) {
+      theoVaiTro[aur.role] = (theoVaiTro[aur.role] || 0) + 1;
     }
 
     return {

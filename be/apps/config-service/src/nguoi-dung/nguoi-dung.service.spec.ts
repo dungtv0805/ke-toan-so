@@ -2,7 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import * as fc from 'fast-check';
 import { NguoiDung_Service, PaginatedResult } from './nguoi-dung.service';
-import { User, UserRole, UserStatus } from '@app/entities';
+import { User, UserCredential, UserTenant, AppUserRole, UserRole, UserStatus } from '@app/entities';
+import { TenantContextService } from '@app/core';
 
 /**
  * **Feature: phan-quyen-api-refactor, Property 2: Paginated Response Structure**
@@ -11,13 +12,19 @@ import { User, UserRole, UserStatus } from '@app/entities';
 describe('NguoiDung_Service - Property Tests', () => {
   let service: NguoiDung_Service;
   let mockRepo: any;
+  let mockCredentialRepo: any;
+  let mockUserTenantRepo: any;
+  let mockAppUserRoleRepo: any;
+  let mockTenantContext: any;
+
+  // A single valid 24-char hex ObjectId to satisfy identity DB membership mock
+  const DUMMY_MEMBERSHIP_USER_ID = '000000000000000000000001';
 
   const createMockUser = (overrides: Partial<User> = {}): User => ({
     _id: { toString: () => 'mock-id' } as any,
     id: 'mock-id',
     email: 'test@example.com',
     hoTen: 'Test User',
-    tenants: [{ tenantId: 'test-tenant-id', role: UserRole.KIEM_SOAT }],
     trangThai: UserStatus.HOAT_DONG,
     isActive: true,
     createdAt: new Date(),
@@ -33,12 +40,67 @@ describe('NguoiDung_Service - Property Tests', () => {
       save: jest.fn(),
     };
 
+    mockCredentialRepo = {
+      find: jest.fn(),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      save: jest.fn(),
+    };
+
+    mockUserTenantRepo = {
+      find: jest.fn(),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      save: jest.fn(),
+    };
+
+    mockAppUserRoleRepo = {
+      find: jest.fn(),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      save: jest.fn(),
+    };
+
+    mockTenantContext = {
+      getCurrentTenantId: jest.fn().mockReturnValue('test-tenant'),
+      isSuperAdmin: jest.fn().mockReturnValue(false),
+    };
+
+    // Default: identity DB has one membership so findAll doesn't early-return
+    mockUserTenantRepo.find.mockResolvedValue([
+      {
+        userId: DUMMY_MEMBERSHIP_USER_ID,
+        tenantId: 'test-tenant',
+        role: 'member',
+        isActive: true,
+      },
+    ]);
+
+    // Default: no functional roles (users get 'KIEM_SOAT' fallback)
+    mockAppUserRoleRepo.find.mockResolvedValue([]);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NguoiDung_Service,
         {
-          provide: getRepositoryToken(User),
+          provide: getRepositoryToken(User, 'identity'),
           useValue: mockRepo,
+        },
+        {
+          provide: getRepositoryToken(UserCredential, 'identity'),
+          useValue: mockCredentialRepo,
+        },
+        {
+          provide: getRepositoryToken(UserTenant, 'identity'),
+          useValue: mockUserTenantRepo,
+        },
+        {
+          provide: getRepositoryToken(AppUserRole),
+          useValue: mockAppUserRoleRepo,
+        },
+        {
+          provide: TenantContextService,
+          useValue: mockTenantContext,
         },
       ],
     }).compile();
@@ -70,6 +132,8 @@ describe('NguoiDung_Service - Property Tests', () => {
               }),
             );
 
+            // userTenantRepo returns one valid membership (default from beforeEach);
+            // repo.find() returns all mockUsers (mock ignores $in filter)
             mockRepo.find.mockResolvedValue(mockUsers);
 
             const result = await service.findAll({ page, limit });
@@ -142,17 +206,51 @@ describe('NguoiDung_Service - Property Tests', () => {
         fc.asyncProperty(
           fc.constantFrom(...Object.values(UserRole)),
           async (filterVaiTro) => {
-            const mockUsers = Object.values(UserRole).flatMap((role) =>
-              Array.from({ length: 3 }, (_, i) =>
-                createMockUser({
-                  _id: { toString: () => `${role}-${i}` } as any,
-                  email: `${role.toLowerCase()}${i}@example.com`,
-                }),
-              ),
+            // Build mock users with valid 24-char hex ObjectId strings
+            // so new ObjectId(userId) succeeds when filtering via AppUserRole
+            const roles = Object.values(UserRole);
+            const mockUsersWithRoles: Array<{ user: User; role: string }> = [];
+            roles.forEach((role, rIdx) => {
+              for (let i = 0; i < 3; i++) {
+                const userId = (rIdx * 3 + i + 1).toString(16).padStart(24, '0');
+                mockUsersWithRoles.push({
+                  user: createMockUser({
+                    _id: { toString: () => userId } as any,
+                    email: `user${rIdx * 3 + i}@example.com`,
+                  }),
+                  role,
+                });
+              }
+            });
+
+            const allMockUsers = mockUsersWithRoles.map(({ user }) => user);
+
+            // Identity DB memberships for all users
+            mockUserTenantRepo.find.mockResolvedValue(
+              allMockUsers.map((u) => ({
+                userId: u._id.toString(),
+                tenantId: 'test-tenant',
+                role: 'member',
+                isActive: true,
+              })),
             );
 
-            // Mock repo to return all users (filtering happens in service)
-            mockRepo.find.mockResolvedValue(mockUsers);
+            // Functional roles in AppUserRole (digital_book)
+            mockAppUserRoleRepo.find.mockResolvedValue(
+              mockUsersWithRoles.map(({ user, role }) => ({
+                userId: user._id.toString(),
+                tenantId: 'test-tenant',
+                role,
+                isActive: true,
+              })),
+            );
+
+            // repo.find() returns only users with the matching functional role
+            // (service pre-filters userIds via AppUserRole before calling repo.find)
+            const matchingUsers = mockUsersWithRoles
+              .filter(({ role }) => role === filterVaiTro)
+              .map(({ user }) => user);
+            mockRepo.find.mockResolvedValue(matchingUsers);
 
             const result = await service.findAll({
               page: 1,
@@ -187,6 +285,8 @@ describe('NguoiDung_Service - Property Tests', () => {
               ),
             );
 
+            // userTenantRepo default mock (one valid membership) lets service proceed past early-return;
+            // repo.find() mock filters by trangThai (the service passes it in where clause)
             mockRepo.find.mockImplementation(({ where }) => {
               if (where.trangThai) {
                 return Promise.resolve(
@@ -236,6 +336,7 @@ describe('NguoiDung_Service - Property Tests', () => {
               }),
             ];
 
+            // repo.find() returns all users; service filters by search keyword
             mockRepo.find.mockResolvedValue(mockUsers);
 
             const result = await service.findAll({
