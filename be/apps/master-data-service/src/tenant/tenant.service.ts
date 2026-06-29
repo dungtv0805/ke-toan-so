@@ -715,6 +715,12 @@ export class TenantService {
 
     const userMap = new Map(users.map((u) => [u._id.toString(), u]));
 
+    // Load functional roles from AppUserRole (digital_book) — keyed by userId
+    const appRoles = await this.appUserRoleRepository.find({
+      where: { tenantId },
+    });
+    const appRoleMap = new Map(appRoles.map((r) => [r.userId, r.role]));
+
     return memberships
       .map((m) => {
         const user = userMap.get(m.userId);
@@ -723,7 +729,8 @@ export class TenantService {
           id: user._id.toString(),
           email: user.email,
           hoTen: user.hoTen,
-          role: m.role,
+          // Functional role comes from AppUserRole, NOT from membership.role
+          role: appRoleMap.get(m.userId) ?? '',
           isActive: m.isActive,
           membershipId: m._id.toString(),
         };
@@ -794,18 +801,38 @@ export class TenantService {
       if (existingMembership.isActive) {
         throw new ConflictException('User đã là thành viên của công ty này');
       }
-      // Reactivate inactive membership
+      // Reactivate inactive membership — tier is always 'member' for added users
       existingMembership.isActive = true;
-      existingMembership.role = dto.role;
+      existingMembership.role = 'member';
       await this.userTenantRepository.save(existingMembership);
     } else {
+      // Identity membership tier: 'member' (NOT the functional accounting role)
       const userTenant = this.userTenantRepository.create({
         userId: user._id.toString(),
         tenantId,
-        role: dto.role,
+        role: 'member',
         isActive: true,
       });
       await this.userTenantRepository.save(userTenant);
+    }
+
+    // Upsert functional role in AppUserRole (digital_book)
+    const existingAppRole = await this.appUserRoleRepository.findOne({
+      where: { userId: user._id.toString(), tenantId },
+    });
+    if (existingAppRole) {
+      existingAppRole.role = dto.role;
+      existingAppRole.isActive = true;
+      await this.appUserRoleRepository.save(existingAppRole);
+    } else {
+      await this.appUserRoleRepository.save(
+        this.appUserRoleRepository.create({
+          userId: user._id.toString(),
+          tenantId,
+          role: dto.role,
+          isActive: true,
+        }),
+      );
     }
 
     return {
@@ -828,10 +855,32 @@ export class TenantService {
       throw new NotFoundException('Không tìm thấy thành viên trong công ty này');
     }
 
-    if (dto.role !== undefined) membership.role = dto.role;
-    if (dto.isActive !== undefined) membership.isActive = dto.isActive;
+    // dto.isActive → update membership active state in identity DB
+    if (dto.isActive !== undefined) {
+      membership.isActive = dto.isActive;
+      await this.userTenantRepository.save(membership);
+    }
 
-    await this.userTenantRepository.save(membership);
+    // dto.role → upsert FUNCTIONAL role in AppUserRole (digital_book), NOT membership.role
+    if (dto.role !== undefined) {
+      const existingAppRole = await this.appUserRoleRepository.findOne({
+        where: { userId, tenantId },
+      });
+      if (existingAppRole) {
+        existingAppRole.role = dto.role;
+        existingAppRole.isActive = true;
+        await this.appUserRoleRepository.save(existingAppRole);
+      } else {
+        await this.appUserRoleRepository.save(
+          this.appUserRoleRepository.create({
+            userId,
+            tenantId,
+            role: dto.role,
+            isActive: true,
+          }),
+        );
+      }
+    }
   }
 
   async updateMemberProfile(
@@ -913,5 +962,14 @@ export class TenantService {
 
     membership.isActive = false;
     await this.userTenantRepository.save(membership);
+
+    // Also deactivate the member's functional role in AppUserRole (digital_book)
+    const appRole = await this.appUserRoleRepository.findOne({
+      where: { userId, tenantId },
+    });
+    if (appRole) {
+      appRole.isActive = false;
+      await this.appUserRoleRepository.save(appRole);
+    }
   }
 }
