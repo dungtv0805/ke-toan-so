@@ -11,7 +11,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User, UserCredential, Tenant, UserStatus, UserTenant, PhanQuyen, VaiTro, SUPER_ADMIN_EMAIL, AppUserRole, TenantAppConfig } from '@app/entities';
+import { User, UserCredential, Tenant, UserStatus, UserTenant, PhanQuyen, VaiTro, SUPER_ADMIN_EMAIL, AppUserRole, TenantAppConfig, TenantApp } from '@app/entities';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 import { generateAllPermissions } from '@app/core';
 import {
@@ -32,6 +32,7 @@ import {
 
 const SALT_ROUNDS = 10;
 const ADMIN_ROLE_NAME = 'Admin';
+const KE_TOAN_APP_ID = 'ke-toan';
 
 @Injectable()
 export class AuthServiceService {
@@ -54,8 +55,32 @@ export class AuthServiceService {
     private readonly appUserRoleRepo: Repository<AppUserRole>,
     @InjectRepository(TenantAppConfig)
     private readonly tenantAppConfigRepo: Repository<TenantAppConfig>,
+    @InjectRepository(TenantApp, 'identity')
+    private readonly tenantAppRepo: Repository<TenantApp>,
     private readonly jwtService: JwtService,
   ) {}
+
+  /**
+   * Check if tenant has ke-toan app enabled in identity tenant_apps collection.
+   */
+  private async isKeToanEnabled(tenantId: string): Promise<boolean> {
+    return !!(await this.tenantAppRepo.findOne({
+      where: { tenantId, appId: KE_TOAN_APP_ID, isActive: true } as any,
+    }));
+  }
+
+  /**
+   * Filter a list of tenants to those entitled for ke-toan (batch check).
+   */
+  private async filterEntitledTenants(tenants: Tenant[]): Promise<Tenant[]> {
+    const results = await Promise.all(
+      tenants.map(async (t) => ({
+        tenant: t,
+        enabled: await this.isKeToanEnabled(t._id.toString()),
+      })),
+    );
+    return results.filter((r) => r.enabled).map((r) => r.tenant);
+  }
 
   /**
    * Load permissions from PhanQuyen entity by role name and tenant
@@ -218,32 +243,20 @@ export class AuthServiceService {
 
     // Super admin can login without tenant
     if (this.isSuperAdmin(user)) {
-      // Get all tenants for super admin to choose
+      // Get all tenants for super admin to choose, then filter to ke-toan entitled
       const allTenants = await this.tenantRepository.find({
         where: { isActive: true },
       });
 
-      if (allTenants.length === 0) {
-        // Super admin with no tenants - create token without tenantId
-        const payload: UserPayload = {
-          id: user._id.toString(),
-          email: user.email,
-          tenantId: '', // Empty for super admin without tenant
-          vaiTro: 'SUPER_ADMIN',
-          permissions: ['*'],
-        };
+      const entitledTenants = await this.filterEntitledTenants(allTenants);
 
-        const accessToken = this.jwtService.sign(payload);
-
-        return {
-          accessToken,
-          user: userResponse,
-        };
+      if (entitledTenants.length === 0) {
+        throw new ForbiddenException('Tài khoản chưa được cấp quyền sử dụng Kế toán ở công ty nào');
       }
 
-      // Super admin with tenants - let them choose
+      // Super admin with entitled tenants - let them choose
       const tenantInfoList: TenantInfo[] = await Promise.all(
-        allTenants.map(async (tenant) => {
+        entitledTenants.map(async (tenant) => {
           const cfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId: tenant._id.toString() } as any });
           return this.buildTenantInfo('SUPER_ADMIN', tenant, cfg);
         }),
@@ -306,9 +319,15 @@ export class AuthServiceService {
       throw new ForbiddenException('Không tìm thấy công ty hoạt động');
     }
 
+    // Filter tenants to those with ke-toan entitlement
+    const entitledTenants = await this.filterEntitledTenants(tenants);
+    if (entitledTenants.length === 0) {
+      throw new ForbiddenException('Tài khoản chưa được cấp quyền sử dụng Kế toán ở công ty nào');
+    }
+
     // Build tenant info list — role from AppUserRole, config from TenantAppConfig
     const tenantInfoList: TenantInfo[] = await Promise.all(
-      tenants.map(async (tenant) => {
+      entitledTenants.map(async (tenant) => {
         const tenantId = tenant._id.toString();
         const aur = await this.appUserRoleRepo.findOne({ where: { userId: user._id.toString(), tenantId, isActive: true } as any });
         const role = aur?.role || 'KIEM_SOAT';
@@ -317,9 +336,9 @@ export class AuthServiceService {
       }),
     );
 
-    // Case 1: Single tenant - return accessToken directly
+    // Case 1: Single entitled tenant - return accessToken directly
     if (tenantInfoList.length === 1) {
-      const tenant = tenants[0];
+      const tenant = entitledTenants[0];
       const tenantId = tenant._id.toString();
       // Lazy-provision Kế toán config/role nếu công ty tạo từ Portal chưa có (P3)
       const membership = userTenants.find((ut) => ut.tenantId === tenantId);
@@ -402,7 +421,12 @@ export class AuthServiceService {
       throw new ForbiddenException('Không tìm thấy công ty hoặc công ty đã ngừng hoạt động');
     }
 
-    // Super admin can access any tenant
+    // Enforce ke-toan entitlement (applies to all users, including super-admin)
+    if (!(await this.isKeToanEnabled(dto.tenantId))) {
+      throw new ForbiddenException('Công ty chưa kích hoạt ứng dụng Kế toán');
+    }
+
+    // Super admin can access any entitled tenant
     if (this.isSuperAdmin(user)) {
       const cfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId: tenant._id.toString() } as any });
       const tenantInfo = this.buildTenantInfo('SUPER_ADMIN', tenant, cfg);
@@ -570,15 +594,17 @@ export class AuthServiceService {
       throw new UnauthorizedException('Không tìm thấy người dùng');
     }
 
-    // Super admin - get all active tenants
+    // Super admin - get all active tenants, filter to ke-toan entitled
     if (this.isSuperAdmin(user)) {
       const allTenants = await this.tenantRepository.find({
         where: { isActive: true },
       });
 
-      // Config from TenantAppConfig for each tenant
+      const entitledTenants = await this.filterEntitledTenants(allTenants);
+
+      // Config from TenantAppConfig for entitled tenants only
       const availableTenants: TenantInfo[] = await Promise.all(
-        allTenants.map(async (t) => {
+        entitledTenants.map(async (t) => {
           const cfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId: t._id.toString() } as any });
           return this.buildTenantInfo('SUPER_ADMIN', t, cfg);
         }),
@@ -592,6 +618,7 @@ export class AuthServiceService {
         };
       }
 
+      // Current tenant looked up from full list (token already validated at issue time)
       const tenant = allTenants.find((t) => t._id.toString() === tenantId);
       if (!tenant) {
         throw new ForbiddenException('Không tìm thấy công ty');
@@ -619,9 +646,12 @@ export class AuthServiceService {
         })
       : [];
 
-    // Role from AppUserRole, config from TenantAppConfig for each tenant
+    // Filter membership tenants to ke-toan entitled ones for availableTenants
+    const entitledTenants = await this.filterEntitledTenants(allTenants);
+
+    // Role from AppUserRole, config from TenantAppConfig for entitled tenants only
     const availableTenants: TenantInfo[] = await Promise.all(
-      allTenants.map(async (t) => {
+      entitledTenants.map(async (t) => {
         const tId = t._id.toString();
         const aur = await this.appUserRoleRepo.findOne({ where: { userId: user._id.toString(), tenantId: tId, isActive: true } as any });
         const role = aur?.role || 'KIEM_SOAT';
@@ -679,7 +709,12 @@ export class AuthServiceService {
       throw new ForbiddenException('Không tìm thấy công ty hoặc công ty đã ngừng hoạt động');
     }
 
-    // Super admin can access any tenant
+    // Enforce ke-toan entitlement (applies to all users, including super-admin)
+    if (!(await this.isKeToanEnabled(tenantId))) {
+      throw new ForbiddenException('Công ty chưa kích hoạt ứng dụng Kế toán');
+    }
+
+    // Super admin can access any entitled tenant
     if (this.isSuperAdmin(user)) {
       const cfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId: tenant._id.toString() } as any });
       const tenantInfo = this.buildTenantInfo('SUPER_ADMIN', tenant, cfg);
