@@ -1,6 +1,7 @@
 import {
   Injectable,
   Inject,
+  Logger,
   UnauthorizedException,
   ConflictException,
   InternalServerErrorException,
@@ -10,8 +11,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User, UserCredential, Tenant, UserStatus, UserTenant, PhanQuyen, SUPER_ADMIN_EMAIL, AppUserRole, TenantAppConfig } from '@app/entities';
+import { User, UserCredential, Tenant, UserStatus, UserTenant, PhanQuyen, VaiTro, SUPER_ADMIN_EMAIL, AppUserRole, TenantAppConfig } from '@app/entities';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
+import { generateAllPermissions } from '@app/core';
 import {
   LoginDto,
   RegisterDto,
@@ -29,10 +31,12 @@ import {
 } from '@app/dto';
 
 const SALT_ROUNDS = 10;
-
+const ADMIN_ROLE_NAME = 'Admin';
 
 @Injectable()
 export class AuthServiceService {
+  private readonly logger = new Logger(AuthServiceService.name);
+
   constructor(
     @InjectRepository(User, 'identity')
     private readonly userRepository: Repository<User>,
@@ -44,6 +48,8 @@ export class AuthServiceService {
     private readonly userTenantRepository: Repository<UserTenant>,
     @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`)
     private readonly phanQuyenRepo: Repository<PhanQuyen>,
+    @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`)
+    private readonly vaiTroRepo: Repository<VaiTro>,
     @InjectRepository(AppUserRole)
     private readonly appUserRoleRepo: Repository<AppUserRole>,
     @InjectRepository(TenantAppConfig)
@@ -64,6 +70,80 @@ export class AuthServiceService {
    */
   private isSuperAdmin(user: User): boolean {
     return user.email === SUPER_ADMIN_EMAIL;
+  }
+
+  /**
+   * Lazy-provision Kế toán-side config for a tenant that was created by the Portal
+   * (Portal only writes identity data; it does NOT create TenantAppConfig, VaiTro,
+   * PhanQuyen, or AppUserRole).
+   *
+   * Idempotent: each step is guarded by a findOne — subsequent calls are cheap.
+   * Called inside selectTenant / switchTenant, wrapped in try/catch so provisioning
+   * failure never blocks login.
+   */
+  async ensureKeToanProvisioned(
+    tenantId: string,
+    userId: string,
+    isCompanyAdmin: boolean,
+  ): Promise<void> {
+    // Step 1: Ensure TenantAppConfig exists
+    const existingConfig = await this.tenantAppConfigRepo.findOne({ where: { tenantId } as any });
+    if (!existingConfig) {
+      const newConfig = this.tenantAppConfigRepo.create({
+        tenantId,
+        modules: ['KE_TOAN'],
+        glossary: {},
+        nganh: null,
+        dashboardBlocks: null,
+      });
+      await this.tenantAppConfigRepo.save(newConfig);
+    }
+
+    // Steps 2-3 only for company admins (identity membership.role === 'admin')
+    if (!isCompanyAdmin) return;
+
+    // Step 2: Ensure VaiTro 'Admin' exists + PhanQuyen for this tenant
+    const existingVaiTro = await this.vaiTroRepo.findOne({ where: { ten: ADMIN_ROLE_NAME } } as any);
+    if (!existingVaiTro) {
+      const adminVaiTro = this.vaiTroRepo.create({
+        ten: ADMIN_ROLE_NAME,
+        moTa: 'Quản trị viên - toàn quyền',
+        isActive: true,
+      });
+      await this.vaiTroRepo.save(adminVaiTro);
+    }
+
+    const existingPhanQuyen = await this.phanQuyenRepo.findOne({
+      where: { vaiTro: ADMIN_ROLE_NAME, tenantId },
+    } as any);
+    if (!existingPhanQuyen) {
+      const phanQuyen = this.phanQuyenRepo.create({
+        vaiTro: ADMIN_ROLE_NAME,
+        ten: ADMIN_ROLE_NAME,
+        moTa: 'Toàn quyền hệ thống',
+        tenantId,
+        permissions: generateAllPermissions(),
+        isActive: true,
+      });
+      await this.phanQuyenRepo.save(phanQuyen);
+    } else if (!existingPhanQuyen.permissions || existingPhanQuyen.permissions.length === 0) {
+      existingPhanQuyen.permissions = generateAllPermissions();
+      await this.phanQuyenRepo.save(existingPhanQuyen);
+    }
+
+    // Step 3: Ensure AppUserRole 'Admin' exists for this user
+    const existingAppRole = await this.appUserRoleRepo.findOne({
+      where: { userId, tenantId, isActive: true },
+    } as any);
+    if (!existingAppRole) {
+      const appRole = this.appUserRoleRepo.create({
+        userId,
+        tenantId,
+        role: ADMIN_ROLE_NAME,
+        isActive: true,
+      });
+      await this.appUserRoleRepo.save(appRole);
+    }
   }
 
   /**
@@ -239,13 +319,27 @@ export class AuthServiceService {
 
     // Case 1: Single tenant - return accessToken directly
     if (tenantInfoList.length === 1) {
-      const tenantInfo = tenantInfoList[0];
-      const permissions = await this.loadPermissions(tenantInfo.role, tenantInfo.tenantId);
+      const tenant = tenants[0];
+      const tenantId = tenant._id.toString();
+      // Lazy-provision Kế toán config/role nếu công ty tạo từ Portal chưa có (P3)
+      const membership = userTenants.find((ut) => ut.tenantId === tenantId);
+      const isCompanyAdmin = membership?.role === 'admin';
+      try {
+        await this.ensureKeToanProvisioned(tenantId, user._id.toString(), isCompanyAdmin);
+      } catch (err) {
+        this.logger.warn(`ensureKeToanProvisioned failed for tenant ${tenantId}: ${(err as Error).message}`);
+      }
+      // Đọc lại role + config sau provisioning
+      const aur = await this.appUserRoleRepo.findOne({ where: { userId: user._id.toString(), tenantId, isActive: true } as any });
+      const role = aur?.role || 'KIEM_SOAT';
+      const cfg = await this.tenantAppConfigRepo.findOne({ where: { tenantId } as any });
+      const tenantInfo = this.buildTenantInfo(role, tenant, cfg);
+      const permissions = await this.loadPermissions(role, tenantId);
       const payload: UserPayload = {
         id: user._id.toString(),
         email: user.email,
-        tenantId: tenantInfo.tenantId,
-        vaiTro: tenantInfo.role,
+        tenantId,
+        vaiTro: role,
         permissions: [],
       };
 
@@ -342,6 +436,14 @@ export class AuthServiceService {
 
     if (!userTenant) {
       throw new ForbiddenException('Người dùng không thuộc công ty này');
+    }
+
+    // Lazy-provision Kế toán config + Admin role for Portal-created tenants
+    const isCompanyAdmin = userTenant.role === 'admin';
+    try {
+      await this.ensureKeToanProvisioned(dto.tenantId, user._id.toString(), isCompanyAdmin);
+    } catch (err) {
+      this.logger.warn(`ensureKeToanProvisioned failed for tenant ${dto.tenantId}: ${(err as Error).message}`);
     }
 
     // Read functional role from AppUserRole, config from TenantAppConfig
@@ -611,6 +713,14 @@ export class AuthServiceService {
 
     if (!userTenant) {
       throw new ForbiddenException('Người dùng không thuộc công ty này');
+    }
+
+    // Lazy-provision Kế toán config + Admin role for Portal-created tenants
+    const isCompanyAdmin = userTenant.role === 'admin';
+    try {
+      await this.ensureKeToanProvisioned(tenantId, user._id.toString(), isCompanyAdmin);
+    } catch (err) {
+      this.logger.warn(`ensureKeToanProvisioned failed for tenant ${tenantId}: ${(err as Error).message}`);
     }
 
     // Read functional role from AppUserRole, config from TenantAppConfig

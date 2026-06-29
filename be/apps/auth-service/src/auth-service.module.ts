@@ -4,7 +4,7 @@ import { AuthServiceService } from './auth-service.service';
 import { AuthModule } from '@app/auth';
 import { TenantModule } from '@app/core';
 import { DatabaseModule } from '@app/database';
-import { User, UserCredential, Tenant, UserTenant, PhanQuyen, AppUserRole, TenantAppConfig } from '@app/entities';
+import { User, UserCredential, Tenant, UserTenant, PhanQuyen, VaiTro, AppUserRole, TenantAppConfig } from '@app/entities';
 
 @Module({
   imports: [
@@ -14,7 +14,7 @@ import { User, UserCredential, Tenant, UserTenant, PhanQuyen, AppUserRole, Tenan
     DatabaseModule.forRootIdentity(),
     DatabaseModule.forFeatureIdentity([User, UserCredential, Tenant, UserTenant]),
     DatabaseModule.forFeature([AppUserRole, TenantAppConfig]),
-    DatabaseModule.forFeatureRaw([PhanQuyen]),
+    DatabaseModule.forFeatureRaw([PhanQuyen, VaiTro]),
   ],
   controllers: [AuthServiceController],
   providers: [AuthServiceService],

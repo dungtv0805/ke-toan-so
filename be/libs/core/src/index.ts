@@ -6,3 +6,4 @@ export * from './logger';
 export * from './middlewares/request-context.middleware';
 export * from './services/request-context';
 export * from './utils/dto.utils';
+export * from './permissions/all-permissions';
