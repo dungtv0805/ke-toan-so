@@ -3,6 +3,7 @@ import { NguoiDung, TenantInfo } from '@/types';
 import { authService } from '@/services/authService';
 import { setAuthToken, getAuthToken, clearAuthToken, setCurrentTenant, getCurrentTenant, clearCurrentTenant } from '@/services/base/service-base';
 import { ssoHandoff } from '@/services/ssoHandoff';
+import { redirectToIdentityLogin } from '@/services/identityRedirect';
 import { ApiError, ApiErrorType } from '@/config/api';
 import { getAvailableModuleCodes } from '@/config/modules';
 import { linhVucService, type LinhVuc } from '@/services/linhVucService';
@@ -96,10 +97,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initAuth = async () => {
       await ssoHandoff(); // SSO từ Portal: nếu có ?tenant, nạp token trước
       const token = getAuthToken();
+      let hasValidSession = false;
       if (token) {
         try {
           const response = await authService.getMe();
           setUser(response.user);
+          hasValidSession = true;
 
           // Set current tenant from response
           if (response.tenant) {
@@ -129,6 +132,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('Failed to restore session:', error);
         }
       }
+      // Nếu không có phiên hợp lệ → redirect sang portal identity (nếu được cấu hình).
+      // Khi redirect: giữ màn loading (trang sắp điều hướng đi, không render LoginPage).
+      // Khi không redirect (VITE_IDENTITY_URL rỗng): hiển thị LoginPage cục bộ (fallback dev).
+      if (!hasValidSession && redirectToIdentityLogin()) return;
       setIsLoading(false);
     };
 
