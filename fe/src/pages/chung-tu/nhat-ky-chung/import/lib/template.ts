@@ -46,12 +46,11 @@ const COLUMN_TO_SHEET: Partial<Record<ImportColumnKey, string>> = {
   nhomQuanLy: "DM_NhomQuanLy",
 };
 
-/** Giá trị ví dụ cho dòng mẫu (các cột không-danh-mục). */
-const EXAMPLE_ROW: Partial<Record<ImportColumnKey, string>> = {
-  ngay: "01/06/2026",
-  soTien: "1000000",
-  dienGiai: "Ví dụ: thu tiền bán hàng",
-};
+/** 2 dòng ví dụ cùng "Nhóm chứng từ" = 1 chứng từ nhiều dòng. */
+const EXAMPLE_ROWS: Partial<Record<ImportColumnKey, string>>[] = [
+  { ngay: "01/06/2026", ngayGhiSo: "01/06/2026", soTien: "1000000", dienGiai: "Hoá đơn 001 - dòng 1", nhomGop: "HD001" },
+  { ngay: "01/06/2026", soTien: "500000", dienGiai: "Hoá đơn 001 - dòng 2", nhomGop: "HD001" },
+];
 
 /** Dựng workbook template (đồng bộ, test được). */
 export function buildTemplateWorkbook(md: ImportMasterData): ExcelJS.Workbook {
@@ -60,7 +59,9 @@ export function buildTemplateWorkbook(md: ImportMasterData): ExcelJS.Workbook {
   // Sheet chính
   const main = wb.addWorksheet("NhatKyChung");
   main.addRow(IMPORT_COLUMNS.map((c) => c.header));
-  main.addRow(IMPORT_COLUMNS.map((c) => EXAMPLE_ROW[c.key] ?? ""));
+  for (const ex of EXAMPLE_ROWS) {
+    main.addRow(IMPORT_COLUMNS.map((c) => ex[c.key] ?? ""));
+  }
 
   // 12 sheet danh mục: cột A = "Mã - Tên", bắt đầu từ hàng 1 (không header)
   for (const ref of REF_SHEETS) {

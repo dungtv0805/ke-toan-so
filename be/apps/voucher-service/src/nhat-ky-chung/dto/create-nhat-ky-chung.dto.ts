@@ -48,4 +48,9 @@ export class CreateNhatKyChungDto {
   @IsOptional()
   @IsString()
   diaChi: string;
+
+  // Khoá gom dòng khi import: các dòng cùng nhomGop → 1 chứng từ (chung soPhieu). Không lưu DB.
+  @IsOptional()
+  @IsString()
+  nhomGop?: string;
 }

@@ -49,6 +49,7 @@ export interface CreateEntryDto {
   nguoiGiaoDich?: string;
   diaChi?: string;
   ghiChu?: string;
+  nhomGop?: string;
   danhMuc?: DanhMuc;
 }
 

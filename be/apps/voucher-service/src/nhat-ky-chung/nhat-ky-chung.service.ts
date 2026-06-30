@@ -538,63 +538,87 @@ export class NhatKyChungService {
       return { success: true, data: [] };
     }
 
-    // Suy ra loai + mã loại chứng từ từng dòng theo Loại giao dịch (fallback = loai dòng đó).
+    // Suy loai + mã loại chứng từ từng dòng (fallback = loai dòng đó)
     const infoByIndex = await Promise.all(
       items.map((item) =>
         this.loaiResolver.resolveLoaiInfo(item.danhMuc, item.loai),
       ),
     );
 
-    // Gom index theo dải số chung:
-    // - Có mã loại chứng từ: theo (mã, năm, tháng) — số reset theo tháng.
-    // - Không có mã (fallback): theo (loai, năm) như cũ.
-    type Group = {
+    // 1) Gom dòng thành "chứng từ": cùng nhomGop (khác rỗng) → 1 nhóm; trống → mỗi dòng 1 nhóm.
+    type VGroup = { repIdx: number; indices: number[] };
+    const vgroups: VGroup[] = [];
+    const byNhom = new Map<string, VGroup>();
+    items.forEach((item, idx) => {
+      const nhom = (item.nhomGop ?? '').trim();
+      if (nhom) {
+        const existing = byNhom.get(nhom);
+        if (existing) {
+          existing.indices.push(idx);
+          return;
+        }
+        const g: VGroup = { repIdx: idx, indices: [idx] };
+        byNhom.set(nhom, g);
+        vgroups.push(g);
+      } else {
+        vgroups.push({ repIdx: idx, indices: [idx] });
+      }
+    });
+
+    // 2) Cấp 1 soPhieu cho mỗi nhóm, batch theo bucket đánh số (giữ số tuần tự).
+    type Bucket = {
       loai: LoaiChungTu;
       maLoaiChungTu?: string;
       date: Date;
-      indices: number[];
+      groups: VGroup[];
     };
-    const groups = new Map<string, Group>();
-    items.forEach((item, idx) => {
-      const { loai, maLoaiChungTu } = infoByIndex[idx];
-      const date = new Date(item.ngay);
+    const buckets = new Map<string, Bucket>();
+    for (const g of vgroups) {
+      const { loai, maLoaiChungTu } = infoByIndex[g.repIdx];
+      const date = new Date(items[g.repIdx].ngay);
       const year = date.getFullYear();
-      const key = maLoaiChungTu
+      const bkey = maLoaiChungTu
         ? `MA:${maLoaiChungTu}:${year}:${date.getMonth() + 1}`
         : `LOAI:${loai}:${year}`;
-      const group = groups.get(key) ?? { loai, maLoaiChungTu, date, indices: [] };
-      group.indices.push(idx);
-      groups.set(key, group);
-    });
-
-    // Đặt trước dải số phiếu cho từng nhóm, gán theo đúng index gốc
-    const soPhieuByIndex: string[] = new Array(items.length);
-    for (const group of groups.values()) {
+      const b = buckets.get(bkey) ?? { loai, maLoaiChungTu, date, groups: [] };
+      b.groups.push(g);
+      buckets.set(bkey, b);
+    }
+    const soPhieuByGroup = new Map<VGroup, string>();
+    for (const b of buckets.values()) {
       const numbers = await this.voucherNumberService.generateVoucherNumbers(
-        group.loai,
-        group.indices.length,
-        { maLoaiChungTu: group.maLoaiChungTu, date: group.date },
+        b.loai,
+        b.groups.length,
+        { maLoaiChungTu: b.maLoaiChungTu, date: b.date },
       );
-      group.indices.forEach((origIdx, i) => {
-        soPhieuByIndex[origIdx] = numbers[i];
-      });
+      b.groups.forEach((g, i) => soPhieuByGroup.set(g, numbers[i]));
     }
 
-    const chungTuList = items.map((item, idx) =>
-      this.chungTuRepository.create({
-        loai: item.loai,
-        soTien: item.soTien,
-        noiDung: item.noiDung,
-        danhMuc: item.danhMuc,
-        ghiChu: item.ghiChu,
-        nguoiGiaoDich: item.nguoiGiaoDich,
-        diaChi: item.diaChi,
-        ngay: new Date(item.ngay),
-        ngayGhiSo: new Date(item.ngayGhiSo || item.ngay),
-        soPhieu: soPhieuByIndex[idx],
-        nguoiTaoId,
-      }),
-    );
+    // 3) Dựng ChungTu: header theo dòng đầu nhóm; hạch toán riêng từng dòng.
+    // Lưu ý: kết quả gom theo nhóm (group-contiguous), KHÔNG giữ thứ tự dòng Excel gốc.
+    const chungTuList = vgroups.flatMap((g) => {
+      const rep = items[g.repIdx];
+      const repLoai = infoByIndex[g.repIdx].loai;
+      const soPhieu = soPhieuByGroup.get(g) as string;
+      const ngay = new Date(rep.ngay);
+      const ngayGhiSo = new Date(rep.ngayGhiSo || rep.ngay);
+      return g.indices.map((idx) => {
+        const item = items[idx];
+        return this.chungTuRepository.create({
+          loai: repLoai,
+          soTien: item.soTien,
+          noiDung: item.noiDung,
+          danhMuc: item.danhMuc,
+          ghiChu: rep.ghiChu,
+          nguoiGiaoDich: rep.nguoiGiaoDich,
+          diaChi: rep.diaChi,
+          ngay,
+          ngayGhiSo,
+          soPhieu,
+          nguoiTaoId,
+        });
+      });
+    });
 
     const saved = await this.chungTuRepository.save(chungTuList);
     return { success: true, data: saved };
