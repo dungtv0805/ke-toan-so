@@ -1,6 +1,8 @@
 // SaoChepDanhMucPage.tsx
 import { useEffect, useMemo, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Card, Select, Checkbox, Button, Table, Alert, Space, Typography, message } from 'antd';
+import { useAuth } from '@/contexts/AuthContext';
 import { tenantService, type Tenant } from '@/services/tenantService';
 import {
   cloneMasterDataService, type CloneCategoryOption, type PreviewRow, type ResultRow,
@@ -9,6 +11,7 @@ import {
 const { Title, Text } = Typography;
 
 export default function SaoChepDanhMucPage() {
+  const { user } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [cats, setCats] = useState<CloneCategoryOption[]>([]);
   const [source, setSource] = useState<string>();
@@ -30,6 +33,8 @@ export default function SaoChepDanhMucPage() {
 
   const body = useMemo(() => ({ sourceTenantId: source!, targetTenantId: target!, categories: checked }),
     [source, target, checked]);
+
+  if (!user?.isSuperAdmin) return <Navigate to="/" replace />;
 
   const doPreview = async () => {
     setLoading(true); setResult(null);
