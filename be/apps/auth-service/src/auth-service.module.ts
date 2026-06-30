@@ -5,6 +5,8 @@ import { AuthModule } from '@app/auth';
 import { TenantModule } from '@app/core';
 import { DatabaseModule } from '@app/database';
 import { User, UserCredential, Tenant, UserTenant, PhanQuyen, VaiTro, AppUserRole, TenantAppConfig, TenantApp } from '@app/entities';
+import { ProvisioningService } from './provisioning/provisioning.service';
+import { ProvisioningController } from './provisioning/provisioning.controller';
 
 @Module({
   imports: [
@@ -16,7 +18,7 @@ import { User, UserCredential, Tenant, UserTenant, PhanQuyen, VaiTro, AppUserRol
     DatabaseModule.forFeature([AppUserRole, TenantAppConfig]),
     DatabaseModule.forFeatureRaw([PhanQuyen, VaiTro]),
   ],
-  controllers: [AuthServiceController],
-  providers: [AuthServiceService],
+  controllers: [AuthServiceController, ProvisioningController],
+  providers: [AuthServiceService, ProvisioningService],
 })
 export class AuthServiceModule {}

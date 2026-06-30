@@ -10,9 +10,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User, UserCredential, Tenant, UserStatus, UserTenant, PhanQuyen, VaiTro, SUPER_ADMIN_EMAIL, AppUserRole, TenantAppConfig, TenantApp } from '@app/entities';
+import { User, UserCredential, Tenant, UserStatus, UserTenant, PhanQuyen, SUPER_ADMIN_EMAIL, AppUserRole, TenantAppConfig, TenantApp } from '@app/entities';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
-import { generateAllPermissions } from '@app/core';
 import {
   LoginDto,
   RegisterDto,
@@ -26,9 +25,9 @@ import {
   SelectTenantResponse,
   AuthUserResponse,
 } from '@app/dto';
+import { ProvisioningService } from './provisioning/provisioning.service';
 
 const SALT_ROUNDS = 10;
-const ADMIN_ROLE_NAME = 'Admin';
 const KE_TOAN_APP_ID = 'ke-toan';
 
 @Injectable()
@@ -46,8 +45,6 @@ export class AuthServiceService {
     private readonly userTenantRepository: Repository<UserTenant>,
     @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`)
     private readonly phanQuyenRepo: Repository<PhanQuyen>,
-    @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`)
-    private readonly vaiTroRepo: Repository<VaiTro>,
     @InjectRepository(AppUserRole)
     private readonly appUserRoleRepo: Repository<AppUserRole>,
     @InjectRepository(TenantAppConfig)
@@ -55,6 +52,7 @@ export class AuthServiceService {
     @InjectRepository(TenantApp, 'identity')
     private readonly tenantAppRepo: Repository<TenantApp>,
     private readonly jwtService: JwtService,
+    private readonly provisioningService: ProvisioningService,
   ) {}
 
   /**
@@ -108,64 +106,7 @@ export class AuthServiceService {
     userId: string,
     isCompanyAdmin: boolean,
   ): Promise<void> {
-    // Step 1: Ensure TenantAppConfig exists
-    const existingConfig = await this.tenantAppConfigRepo.findOne({ where: { tenantId } as any });
-    if (!existingConfig) {
-      const newConfig = this.tenantAppConfigRepo.create({
-        tenantId,
-        modules: ['KE_TOAN'],
-        glossary: {},
-        nganh: null,
-        dashboardBlocks: null,
-      });
-      await this.tenantAppConfigRepo.save(newConfig);
-    }
-
-    // Steps 2-3 only for company admins (identity membership.role === 'admin')
-    if (!isCompanyAdmin) return;
-
-    // Step 2: Ensure VaiTro 'Admin' exists + PhanQuyen for this tenant
-    const existingVaiTro = await this.vaiTroRepo.findOne({ where: { ten: ADMIN_ROLE_NAME } } as any);
-    if (!existingVaiTro) {
-      const adminVaiTro = this.vaiTroRepo.create({
-        ten: ADMIN_ROLE_NAME,
-        moTa: 'Quản trị viên - toàn quyền',
-        isActive: true,
-      });
-      await this.vaiTroRepo.save(adminVaiTro);
-    }
-
-    const existingPhanQuyen = await this.phanQuyenRepo.findOne({
-      where: { vaiTro: ADMIN_ROLE_NAME, tenantId },
-    } as any);
-    if (!existingPhanQuyen) {
-      const phanQuyen = this.phanQuyenRepo.create({
-        vaiTro: ADMIN_ROLE_NAME,
-        ten: ADMIN_ROLE_NAME,
-        moTa: 'Toàn quyền hệ thống',
-        tenantId,
-        permissions: generateAllPermissions(),
-        isActive: true,
-      });
-      await this.phanQuyenRepo.save(phanQuyen);
-    } else if (!existingPhanQuyen.permissions || existingPhanQuyen.permissions.length === 0) {
-      existingPhanQuyen.permissions = generateAllPermissions();
-      await this.phanQuyenRepo.save(existingPhanQuyen);
-    }
-
-    // Step 3: Ensure AppUserRole 'Admin' exists for this user
-    const existingAppRole = await this.appUserRoleRepo.findOne({
-      where: { userId, tenantId, isActive: true },
-    } as any);
-    if (!existingAppRole) {
-      const appRole = this.appUserRoleRepo.create({
-        userId,
-        tenantId,
-        role: ADMIN_ROLE_NAME,
-        isActive: true,
-      });
-      await this.appUserRoleRepo.save(appRole);
-    }
+    return this.provisioningService.ensure(tenantId, userId, isCompanyAdmin);
   }
 
   /**

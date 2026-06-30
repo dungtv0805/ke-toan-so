@@ -28,6 +28,7 @@ import {
 } from '@app/entities';
 import { AuthServiceService } from './auth-service.service';
 import { JwtService } from '@app/auth';
+import { ProvisioningService } from './provisioning/provisioning.service';
 
 const TENANT_ID = 'aaaaaaaaaaaaaaaaaaaaaaaa';
 const USER_ID = 'bbbbbbbbbbbbbbbbbbbbbbbb';
@@ -79,6 +80,7 @@ async function buildService(overrides: Record<string, any> = {}) {
   const module: TestingModule = await Test.createTestingModule({
     providers: [
       AuthServiceService,
+      ProvisioningService,
       ...providers,
       { provide: JwtService, useValue: jwtStub },
     ],
@@ -199,6 +201,7 @@ describe('Entitlement: selectTenant enforcement', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthServiceService,
+        ProvisioningService,
         { provide: getRepositoryToken(User, 'identity'), useValue: userRepo },
         { provide: getRepositoryToken(UserCredential, 'identity'), useValue: stubRepo() },
         { provide: getRepositoryToken(Tenant, 'identity'), useValue: tenantRepo },

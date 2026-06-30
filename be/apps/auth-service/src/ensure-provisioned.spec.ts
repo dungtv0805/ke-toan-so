@@ -26,6 +26,7 @@ import {
 import { AuthServiceService } from './auth-service.service';
 import { JwtService } from '@app/auth';
 import { generateAllPermissions } from '@app/core';
+import { ProvisioningService } from './provisioning/provisioning.service';
 
 const TENANT_ID = 'tenant-abc';
 const USER_ID = 'user-xyz';
@@ -63,6 +64,7 @@ async function buildService(overrides: Record<string, any> = {}) {
   const module: TestingModule = await Test.createTestingModule({
     providers: [
       AuthServiceService,
+      ProvisioningService,
       ...stringProviders,
       { provide: JwtService, useValue: jwtStub },
     ],
