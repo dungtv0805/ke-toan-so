@@ -84,7 +84,7 @@ describe('NhatKyChungService.importEntries', () => {
   });
 
   it('gộp các dòng cùng nhomGop vào 1 số phiếu, header lấy dòng đầu', async () => {
-    const { service, chungTuRepo } = setup();
+    const { service, chungTuRepo, voucherNumberService } = setup();
     const items = [
       { loai: 'PHIEU_THU', ngay: '2026-01-01', soTien: 100, noiDung: 'd1', nguoiGiaoDich: 'A', nhomGop: 'HD1' },
       { loai: 'PHIEU_THU', ngay: '2026-01-09', soTien: 200, noiDung: 'd2', nguoiGiaoDich: 'B', nhomGop: 'HD1' },
@@ -105,6 +105,12 @@ describe('NhatKyChungService.importEntries', () => {
     expect(byNoiDung.d2.ngay.getTime()).toBe(byNoiDung.d1.ngay.getTime());
     // hạch toán riêng từng dòng
     expect(byNoiDung.d2.soTien).toBe(200);
+    // count = số NHÓM (2), không phải số dòng (3) — chặn bug cấp dư số phiếu
+    expect(voucherNumberService.generateVoucherNumbers).toHaveBeenCalledWith(
+      'PHIEU_THU',
+      2,
+      { maLoaiChungTu: undefined, date: expect.any(Date) },
+    );
   });
 
   it('ngayGhiSo trống thì = ngày phát sinh của dòng đầu nhóm', async () => {
@@ -117,5 +123,22 @@ describe('NhatKyChungService.importEntries', () => {
     const saved = chungTuRepo.save.mock.calls[0][0];
     // cả nhóm dùng ngayGhiSo của dòng đầu (2026-02-20)
     saved.forEach((s: any) => expect(s.ngayGhiSo.getTime()).toBe(new Date('2026-02-20').getTime()));
+  });
+
+  it('hai nhóm khác nhau cùng loai → 2 số phiếu khác nhau', async () => {
+    const { service, chungTuRepo } = setup();
+    const items = [
+      { loai: 'PHIEU_THU', ngay: '2026-03-01', soTien: 1, noiDung: 'a1', nhomGop: 'A' },
+      { loai: 'PHIEU_THU', ngay: '2026-03-01', soTien: 2, noiDung: 'a2', nhomGop: 'A' },
+      { loai: 'PHIEU_THU', ngay: '2026-03-02', soTien: 3, noiDung: 'b1', nhomGop: 'B' },
+      { loai: 'PHIEU_THU', ngay: '2026-03-02', soTien: 4, noiDung: 'b2', nhomGop: 'B' },
+    ] as any;
+    await service.importEntries(items, 'u');
+    const saved = chungTuRepo.save.mock.calls[0][0];
+    const byNd = Object.fromEntries(saved.map((x: any) => [x.noiDung, x]));
+    expect(byNd.a1.soPhieu).toBe(byNd.a2.soPhieu);
+    expect(byNd.b1.soPhieu).toBe(byNd.b2.soPhieu);
+    expect(byNd.a1.soPhieu).not.toBe(byNd.b1.soPhieu);
+    expect(new Set(saved.map((x: any) => x.soPhieu)).size).toBe(2);
   });
 });

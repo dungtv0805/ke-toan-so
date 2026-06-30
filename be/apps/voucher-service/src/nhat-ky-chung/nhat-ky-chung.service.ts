@@ -595,6 +595,7 @@ export class NhatKyChungService {
     }
 
     // 3) Dựng ChungTu: header theo dòng đầu nhóm; hạch toán riêng từng dòng.
+    // Lưu ý: kết quả gom theo nhóm (group-contiguous), KHÔNG giữ thứ tự dòng Excel gốc.
     const chungTuList = vgroups.flatMap((g) => {
       const rep = items[g.repIdx];
       const repLoai = infoByIndex[g.repIdx].loai;
