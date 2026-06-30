@@ -35,8 +35,7 @@ export class ProvisioningController {
     }
 
     const userId = user.id;
-    // membershipRole is set by JwtGuard from the decoded token but not in UserPayload type
-    const isCompanyAdmin = (user as any).membershipRole === 'admin';
+    const isCompanyAdmin = user.membershipRole === 'admin';
 
     await this.provisioningService.ensure(tenantId, userId, isCompanyAdmin);
 

@@ -7,6 +7,7 @@
  *  (1) Idempotent TenantAppConfig: config already exists → NOT call create/save for TenantAppConfig
  *  (2) isCompanyAdmin=false → only TenantAppConfig provisioned, no VaiTro/PhanQuyen/AppUserRole
  *  (3) isCompanyAdmin=true, all missing → creates VaiTro, PhanQuyen (full perms), AppUserRole
+ *  (4) isCompanyAdmin=true, PhanQuyen exists but permissions empty → update permissions
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -104,7 +105,7 @@ describe('ProvisioningService.ensure', () => {
   describe('(3) isCompanyAdmin=true, all missing → creates everything', () => {
     it('creates VaiTro, PhanQuyen with full permissions, AppUserRole', async () => {
       const appConfigRepo = stubRepo();
-      appConfigRepo.findOne.mockResolvedValue({ tenantId: TENANT_ID, modules: ['KE_TOAN'] });
+      appConfigRepo.findOne.mockResolvedValue(null); // config missing → will be created
 
       const vaiTroRepo = stubRepo();
       vaiTroRepo.findOne.mockResolvedValue(null);
@@ -123,6 +124,12 @@ describe('ProvisioningService.ensure', () => {
       });
 
       await service.ensure(TENANT_ID, USER_ID, true);
+
+      // TenantAppConfig should be created (was missing)
+      expect(appConfigRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ tenantId: TENANT_ID, modules: ['KE_TOAN'] }),
+      );
+      expect(appConfigRepo.save).toHaveBeenCalled();
 
       // VaiTro should be created
       expect(vaiTroRepo.create).toHaveBeenCalledWith(
@@ -153,6 +160,42 @@ describe('ProvisioningService.ensure', () => {
         }),
       );
       expect(appUserRoleRepo.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('(4) isCompanyAdmin=true, PhanQuyen exists with empty permissions → update', () => {
+    it('calls phanQuyenRepo.save with generateAllPermissions when permissions is empty', async () => {
+      const appConfigRepo = stubRepo();
+      appConfigRepo.findOne.mockResolvedValue({ tenantId: TENANT_ID, modules: ['KE_TOAN'] });
+
+      const vaiTroRepo = stubRepo();
+      vaiTroRepo.findOne.mockResolvedValue({ ten: 'Admin', isActive: true });
+
+      const phanQuyenRepo = stubRepo();
+      const existingPhanQuyen = { vaiTro: 'Admin', tenantId: TENANT_ID, permissions: [] };
+      phanQuyenRepo.findOne.mockResolvedValue(existingPhanQuyen);
+
+      const appUserRoleRepo = stubRepo();
+      appUserRoleRepo.findOne.mockResolvedValue({ userId: USER_ID, tenantId: TENANT_ID, role: 'Admin', isActive: true });
+
+      const { service } = await buildService({
+        [getRepositoryToken(TenantAppConfig) as string]: appConfigRepo,
+        [`${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`]: vaiTroRepo,
+        [`${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`]: phanQuyenRepo,
+        [getRepositoryToken(AppUserRole) as string]: appUserRoleRepo,
+      });
+
+      await service.ensure(TENANT_ID, USER_ID, true);
+
+      // PhanQuyen.create should NOT be called (record already exists)
+      expect(phanQuyenRepo.create).not.toHaveBeenCalled();
+
+      // phanQuyenRepo.save should be called with full permissions (update path)
+      const allPerms = generateAllPermissions();
+      expect(allPerms.length).toBeGreaterThan(0);
+      expect(phanQuyenRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ permissions: allPerms }),
+      );
     });
   });
 });

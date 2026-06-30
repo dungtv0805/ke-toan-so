@@ -17,6 +17,9 @@ export interface UserPayload {
   tenantId: string;
   vaiTro?: string;
   permissions?: string[];
+  // SSO claims forwarded from identity-service
+  apps?: string[];
+  membershipRole?: 'admin' | 'member';
 }
 
 // Temp token payload for 2-step login (no tenantId)
