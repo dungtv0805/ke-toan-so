@@ -1,112 +1,34 @@
-import { useState } from 'react';
-import { 
-  Card, 
-  Form, 
-  Input, 
-  Button, 
-  Avatar, 
-  Typography, 
-  Divider, 
-  Tag, 
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  ExportOutlined,
+  MailOutlined,
+  SafetyOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
+import {
+  Alert,
+  Avatar,
+  Button,
+  Card,
   Descriptions,
-  message,
   Tabs,
-  Alert
-} from 'antd';
-import { 
-  UserOutlined, 
-  MailOutlined, 
-  LockOutlined, 
-  SaveOutlined,
-  KeyOutlined,
-  SafetyOutlined
-} from '@ant-design/icons';
-import { z } from 'zod';
-import { useAuth } from '@/contexts/AuthContext';
-import { authService } from '@/services/authService';
+  Tag,
+  Typography,
+} from "antd";
 
 const { Title, Text } = Typography;
 
-// Validation schemas
-const profileSchema = z.object({
-  hoTen: z.string().trim().min(2, 'Họ tên phải có ít nhất 2 ký tự').max(100, 'Họ tên tối đa 100 ký tự'),
-});
-
-const passwordSchema = z.object({
-  currentPassword: z.string().min(1, 'Vui lòng nhập mật khẩu hiện tại'),
-  newPassword: z.string().min(6, 'Mật khẩu mới phải có ít nhất 6 ký tự').max(50, 'Mật khẩu tối đa 50 ký tự'),
-  confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: 'Mật khẩu xác nhận không khớp',
-  path: ['confirmPassword'],
-});
+// Trang quản lý tài khoản trên Portal MasterCeo (SSO). Mặc định trỏ identity URL.
+const IDENTITY_URL = import.meta.env.VITE_IDENTITY_URL as string | undefined;
+const accountSettingsUrl = IDENTITY_URL
+  ? `${IDENTITY_URL.replace(/\/$/, "")}/admin/profile`
+  : undefined;
 
 const ProfilePage = () => {
-  const { user, refreshUser, currentTenant } = useAuth();
-  const [profileForm] = Form.useForm();
-  const [passwordForm] = Form.useForm();
-  const [profileLoading, setProfileLoading] = useState(false);
-  const [passwordLoading, setPasswordLoading] = useState(false);
+  const { user, currentTenant } = useAuth();
 
   const currentRole = currentTenant?.role;
-  const roleLabel = currentRole || 'Chưa gán vai trò';
-
-  const handleProfileSubmit = async (values: { hoTen: string }) => {
-    try {
-      const validated = profileSchema.parse(values);
-      setProfileLoading(true);
-      
-      await authService.updateProfile({ hoTen: validated.hoTen });
-      
-      // Refresh user data in context
-      if (refreshUser) {
-        await refreshUser();
-      }
-      
-      message.success('Cập nhật thông tin thành công');
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        error.errors.forEach(err => {
-          message.error(err.message);
-        });
-      } else {
-        message.error('Có lỗi xảy ra khi cập nhật thông tin');
-      }
-    } finally {
-      setProfileLoading(false);
-    }
-  };
-
-  const handlePasswordSubmit = async (values: { 
-    currentPassword: string; 
-    newPassword: string; 
-    confirmPassword: string 
-  }) => {
-    try {
-      passwordSchema.parse(values);
-      setPasswordLoading(true);
-      
-      await authService.changePassword({
-        currentPassword: values.currentPassword,
-        newPassword: values.newPassword,
-      });
-      
-      message.success('Đổi mật khẩu thành công');
-      passwordForm.resetFields();
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        error.errors.forEach(err => {
-          message.error(err.message);
-        });
-      } else if (error instanceof Error) {
-        message.error(error.message || 'Có lỗi xảy ra khi đổi mật khẩu');
-      } else {
-        message.error('Có lỗi xảy ra khi đổi mật khẩu');
-      }
-    } finally {
-      setPasswordLoading(false);
-    }
-  };
+  const roleLabel = currentRole || "Chưa gán vai trò";
 
   if (!user) {
     return (
@@ -118,7 +40,7 @@ const ProfilePage = () => {
 
   const tabItems = [
     {
-      key: 'info',
+      key: "info",
       label: (
         <span>
           <UserOutlined className="mr-2" />
@@ -132,179 +54,68 @@ const ProfilePage = () => {
             <div className="text-center">
               <Avatar
                 size={100}
-                style={{ backgroundColor: '#1890ff' }}
+                style={{ backgroundColor: "#1890ff" }}
                 icon={<UserOutlined />}
                 className="mb-4"
               />
-              <Title level={4} className="!mb-1">{user.hoTen}</Title>
-              <Text type="secondary" className="block mb-3">{user.email}</Text>
+              <Title level={4} className="!mb-1">
+                {user.hoTen}
+              </Title>
+              <Text type="secondary" className="block mb-3">
+                {user.email}
+              </Text>
               <Tag color="blue" className="text-sm">
                 {roleLabel}
               </Tag>
             </div>
           </Card>
 
-          {/* Edit Form */}
-          <Card title="Chỉnh sửa thông tin" className="lg:col-span-2">
-            <Form
-              form={profileForm}
-              layout="vertical"
-              initialValues={{
-                hoTen: user.hoTen,
-              }}
-              onFinish={handleProfileSubmit}
-            >
-              <Form.Item
-                name="hoTen"
-                label="Họ và tên"
-                rules={[
-                  { required: true, message: 'Vui lòng nhập họ tên' },
-                  { min: 2, message: 'Họ tên phải có ít nhất 2 ký tự' },
-                  { max: 100, message: 'Họ tên tối đa 100 ký tự' },
-                ]}
-              >
-                <Input 
-                  prefix={<UserOutlined className="text-muted-foreground" />}
-                  placeholder="Nhập họ và tên"
-                  size="large"
-                />
-              </Form.Item>
+          {/* Read-only info + link sang Portal */}
+          <Card title="Thông tin tài khoản" className="lg:col-span-2">
+            <Descriptions column={1} bordered size="small" className="mb-4">
+              <Descriptions.Item label="Họ và tên">
+                {user.hoTen}
+              </Descriptions.Item>
+              <Descriptions.Item label="Email">
+                <span className="inline-flex items-center gap-2">
+                  <MailOutlined className="text-muted-foreground" />
+                  {user.email}
+                </span>
+              </Descriptions.Item>
+              <Descriptions.Item label="Vai trò">
+                <Tag color="blue">{roleLabel}</Tag>
+              </Descriptions.Item>
+            </Descriptions>
 
-              <Form.Item
-                label="Email"
-              >
-                <Input 
-                  prefix={<MailOutlined className="text-muted-foreground" />}
-                  value={user.email}
-                  disabled
-                  size="large"
-                />
-                <Text type="secondary" className="text-xs mt-1 block">
-                  Email không thể thay đổi
-                </Text>
-              </Form.Item>
-
-              <Form.Item
-                label="Vai trò"
-              >
-                <Input 
-                  value={roleLabel}
-                  disabled
-                  size="large"
-                />
-                <Text type="secondary" className="text-xs mt-1 block">
-                  Vai trò được quản lý bởi Admin
-                </Text>
-              </Form.Item>
-
-              <Form.Item className="mb-0">
-                <Button 
-                  type="primary" 
-                  htmlType="submit" 
-                  loading={profileLoading}
-                  icon={<SaveOutlined />}
-                  size="large"
-                >
-                  Lưu thay đổi
-                </Button>
-              </Form.Item>
-            </Form>
-          </Card>
-        </div>
-      ),
-    },
-    {
-      key: 'password',
-      label: (
-        <span>
-          <LockOutlined className="mr-2" />
-          Đổi mật khẩu
-        </span>
-      ),
-      children: (
-        <div className="max-w-xl">
-          <Card title="Đổi mật khẩu">
             <Alert
-              message="Lưu ý bảo mật"
-              description="Mật khẩu nên có ít nhất 6 ký tự, bao gồm chữ hoa, chữ thường và số."
               type="info"
               showIcon
-              className="mb-6"
+              message="Quản lý tài khoản tập trung tại MasterCeo"
+              description="Họ tên và mật khẩu được quản lý tại cổng tài khoản chung MasterCeo. Mọi thay đổi sẽ áp dụng cho tất cả ứng dụng."
+              className="mb-4"
             />
-            
-            <Form
-              form={passwordForm}
-              layout="vertical"
-              onFinish={handlePasswordSubmit}
-            >
-              <Form.Item
-                name="currentPassword"
-                label="Mật khẩu hiện tại"
-                rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại' }]}
-              >
-                <Input.Password 
-                  prefix={<KeyOutlined className="text-muted-foreground" />}
-                  placeholder="Nhập mật khẩu hiện tại"
-                  size="large"
-                />
-              </Form.Item>
 
-              <Form.Item
-                name="newPassword"
-                label="Mật khẩu mới"
-                rules={[
-                  { required: true, message: 'Vui lòng nhập mật khẩu mới' },
-                  { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' },
-                ]}
+            {accountSettingsUrl ? (
+              <Button
+                type="primary"
+                icon={<ExportOutlined />}
+                href={accountSettingsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <Input.Password 
-                  prefix={<LockOutlined className="text-muted-foreground" />}
-                  placeholder="Nhập mật khẩu mới"
-                  size="large"
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="confirmPassword"
-                label="Xác nhận mật khẩu mới"
-                dependencies={['newPassword']}
-                rules={[
-                  { required: true, message: 'Vui lòng xác nhận mật khẩu' },
-                  ({ getFieldValue }) => ({
-                    validator(_, value) {
-                      if (!value || getFieldValue('newPassword') === value) {
-                        return Promise.resolve();
-                      }
-                      return Promise.reject(new Error('Mật khẩu xác nhận không khớp'));
-                    },
-                  }),
-                ]}
-              >
-                <Input.Password 
-                  prefix={<SafetyOutlined className="text-muted-foreground" />}
-                  placeholder="Nhập lại mật khẩu mới"
-                  size="large"
-                />
-              </Form.Item>
-
-              <Form.Item className="mb-0">
-                <Button 
-                  type="primary" 
-                  htmlType="submit" 
-                  loading={passwordLoading}
-                  icon={<LockOutlined />}
-                  size="large"
-                >
-                  Đổi mật khẩu
-                </Button>
-              </Form.Item>
-            </Form>
+                Quản lý tài khoản tại MasterCeo
+              </Button>
+            ) : (
+              <Text type="secondary">
+                Liên hệ quản trị viên để thay đổi thông tin tài khoản.
+              </Text>
+            )}
           </Card>
         </div>
       ),
     },
     {
-      key: 'permissions',
+      key: "permissions",
       label: (
         <span>
           <SafetyOutlined className="mr-2" />
@@ -313,18 +124,13 @@ const ProfilePage = () => {
       ),
       children: (
         <Card title="Quyền hạn của bạn">
-          <Descriptions
-            column={1}
-            bordered
-            size="small"
-            className="mb-6"
-          >
+          <Descriptions column={1} bordered size="small" className="mb-6">
             <Descriptions.Item label="Vai trò">
               <Tag color="blue">{roleLabel}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
-              <Tag color={user.trangThai === 'HOAT_DONG' ? 'success' : 'error'}>
-                {user.trangThai === 'HOAT_DONG' ? 'Đang hoạt động' : 'Đã khóa'}
+              <Tag color={user.trangThai === "HOAT_DONG" ? "success" : "error"}>
+                {user.trangThai === "HOAT_DONG" ? "Đang hoạt động" : "Đã khóa"}
               </Tag>
             </Descriptions.Item>
           </Descriptions>
@@ -337,16 +143,14 @@ const ProfilePage = () => {
     <div className="space-y-3">
       {/* Header */}
       <div>
-        <Title level={3} className="!mb-1">Thông tin cá nhân</Title>
-        <Text type="secondary">Quản lý thông tin tài khoản và bảo mật</Text>
+        <Title level={3} className="!mb-1">
+          Thông tin cá nhân
+        </Title>
+        <Text type="secondary">Xem thông tin tài khoản và quyền hạn</Text>
       </div>
 
       {/* Tabs */}
-      <Tabs 
-        items={tabItems} 
-        defaultActiveKey="info"
-        size="large"
-      />
+      <Tabs items={tabItems} defaultActiveKey="info" size="large" />
     </div>
   );
 };

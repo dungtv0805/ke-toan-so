@@ -5,7 +5,6 @@ import {
   UnauthorizedException,
   ConflictException,
   InternalServerErrorException,
-  BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,8 +17,6 @@ import {
   LoginDto,
   RegisterDto,
   VerifyTokenDto,
-  UpdateProfileDto,
-  ChangePasswordDto,
   SelectTenantDto,
 } from './dto';
 import { JwtService, UserPayload } from '@app/auth';
@@ -790,83 +787,6 @@ export class AuthServiceService {
     // In a production system, you would add the token to a blacklist
     // For now, we just return success
     return { message: 'Đăng xuất thành công' };
-  }
-
-  /**
-   * Update user profile
-   */
-  async updateProfile(
-    userId: string,
-    updateDto: UpdateProfileDto,
-  ): Promise<Partial<User>> {
-    const { ObjectId } = await import('mongodb');
-    const user = await this.userRepository.findOne({
-      where: { _id: new ObjectId(userId) as any },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('Không tìm thấy người dùng');
-    }
-
-    // Update fields
-    if (updateDto.hoTen) {
-      user.hoTen = updateDto.hoTen;
-    }
-
-    const savedUser = await this.userRepository.save(user);
-
-    return {
-      _id: savedUser._id,
-      email: savedUser.email,
-      hoTen: savedUser.hoTen,
-      trangThai: savedUser.trangThai,
-    };
-  }
-
-  /**
-   * Change user password
-   */
-  async changePassword(
-    userId: string,
-    changePasswordDto: ChangePasswordDto,
-  ): Promise<{ message: string }> {
-    const { ObjectId } = await import('mongodb');
-    const user = await this.userRepository.findOne({
-      where: { _id: new ObjectId(userId) as any },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('Không tìm thấy người dùng');
-    }
-
-    // Get user credential
-    const credential = await this.userCredentialRepository.findOne({
-      where: { userId: user._id.toString(), isActive: true },
-    });
-
-    if (!credential) {
-      throw new InternalServerErrorException('Không tìm thấy thông tin xác thực');
-    }
-
-    // Verify current password
-    const isCurrentPasswordValid = await bcrypt.compare(
-      changePasswordDto.currentPassword,
-      credential.password,
-    );
-
-    if (!isCurrentPasswordValid) {
-      throw new BadRequestException('Mật khẩu hiện tại không chính xác');
-    }
-
-    // Hash new password and save
-    credential.password = await bcrypt.hash(
-      changePasswordDto.newPassword,
-      SALT_ROUNDS,
-    );
-    credential.updatedAt = new Date();
-    await this.userCredentialRepository.save(credential);
-
-    return { message: 'Đổi mật khẩu thành công' };
   }
 
   /**

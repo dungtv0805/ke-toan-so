@@ -47,15 +47,6 @@ interface RegisterRequest {
   hoTen: string;
 }
 
-interface UpdateProfileRequest {
-  hoTen?: string;
-}
-
-interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
-}
-
 interface GetMeResponse {
   user: NguoiDung;
   tenant: TenantInfo;
@@ -107,14 +98,6 @@ class AuthService extends ServiceBase {
 
   async getMe(): Promise<GetMeResponse> {
     return this.get<GetMeResponse>({ endpoint: '/me' });
-  }
-
-  async updateProfile(data: UpdateProfileRequest): Promise<NguoiDung> {
-    return this.put<NguoiDung>(data, { endpoint: '/me' });
-  }
-
-  async changePassword(data: ChangePasswordRequest): Promise<{ message: string }> {
-    return this.post<{ message: string }>(data, { endpoint: '/change-password' });
   }
 
   async logout(): Promise<void> {

@@ -2,7 +2,6 @@ import {
   Controller,
   Post,
   Get,
-  Put,
   Body,
   UseGuards,
   HttpCode,
@@ -13,8 +12,6 @@ import {
   LoginDto,
   RegisterDto,
   VerifyTokenDto,
-  UpdateProfileDto,
-  ChangePasswordDto,
   SelectTenantDto,
   SwitchTenantDto,
 } from './dto';
@@ -116,44 +113,6 @@ export class AuthServiceController {
     return {
       success: true,
       data: profile,
-    };
-  }
-
-  /**
-   * PUT /me
-   * Update current user profile (requires authentication)
-   */
-  @Put('me')
-  @UseGuards(JwtGuard)
-  async updateProfile(
-    @CurrentUser() user: UserPayload,
-    @Body() updateDto: UpdateProfileDto,
-  ) {
-    const profile = await this.authService.updateProfile(user.id, updateDto);
-    return {
-      success: true,
-      data: profile,
-    };
-  }
-
-  /**
-   * POST /change-password
-   * Change current user password (requires authentication)
-   */
-  @Post('change-password')
-  @UseGuards(JwtGuard)
-  @HttpCode(HttpStatus.OK)
-  async changePassword(
-    @CurrentUser() user: UserPayload,
-    @Body() changePasswordDto: ChangePasswordDto,
-  ) {
-    const result = await this.authService.changePassword(
-      user.id,
-      changePasswordDto,
-    );
-    return {
-      success: true,
-      data: result,
     };
   }
 
