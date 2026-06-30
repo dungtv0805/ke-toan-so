@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { buildTemplateWorkbook } from "../template";
 import { ImportMasterData } from "../validate";
+import { IMPORT_COLUMNS } from "../columns";
 
 const md: ImportMasterData = {
   taiKhoanList: [{ ma: "111", ten: "Tiền mặt", loai: "TS", nhom: "A" }],
@@ -41,6 +42,20 @@ describe("buildTemplateWorkbook", () => {
     const wb = buildTemplateWorkbook(md);
     expect(wb.getWorksheet("DM_TaiKhoan")!.getCell("A1").value).toBe("111 - Tiền mặt");
     expect(wb.getWorksheet("DM_NghiepVu")!.getCell("A1").value).toBe("NV01 - Bán hàng (PHIEU_THU)");
+  });
+
+  it("header có cột Ngày ghi sổ và Nhóm chứng từ", () => {
+    const wb = buildTemplateWorkbook(md);
+    const header = wb.getWorksheet("NhatKyChung")!.getRow(1).values as string[];
+    expect(header).toContain("Ngày ghi sổ");
+    expect(header).toContain("Nhóm chứng từ");
+  });
+
+  it("có 2 dòng ví dụ cùng nhóm HD001", () => {
+    const wb = buildTemplateWorkbook(md);
+    const ws = wb.getWorksheet("NhatKyChung")!;
+    expect(ws.getRow(2).getCell(IMPORT_COLUMNS.findIndex((c) => c.key === "nhomGop") + 1).value).toBe("HD001");
+    expect(ws.getRow(3).getCell(IMPORT_COLUMNS.findIndex((c) => c.key === "nhomGop") + 1).value).toBe("HD001");
   });
 
   it("cột danh mục ở sheet chính có data validation list; cột Ngày thì không", () => {

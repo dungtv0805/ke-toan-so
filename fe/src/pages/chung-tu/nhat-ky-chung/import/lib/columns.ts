@@ -23,7 +23,9 @@ export type ImportColumnKey =
   | "khoanMuc"
   | "hopDong"
   | "nhomKhuyenMai"
-  | "nhomQuanLy";
+  | "nhomQuanLy"
+  | "ngayGhiSo"
+  | "nhomGop";
 
 export interface ImportColumn {
   key: ImportColumnKey;
@@ -55,6 +57,8 @@ export const IMPORT_COLUMNS: ImportColumn[] = [
   { key: "hopDong", header: "Số hợp đồng", required: false },
   { key: "nhomKhuyenMai", header: "Mã nhóm khuyến mãi", required: false },
   { key: "nhomQuanLy", header: "Mã nhóm quản lý", required: false },
+  { key: "ngayGhiSo", header: "Ngày ghi sổ", required: false },
+  { key: "nhomGop", header: "Nhóm chứng từ", required: false },
 ];
 
 /**

@@ -94,6 +94,12 @@ function validateRow(
     errors.push({ field: "ngay", message: "Ngày sai định dạng (DD/MM/YYYY)" });
   }
 
+  // 2b. Ngày ghi sổ (optional)
+  const ngayGhiSo = normalizeDate(row.ngayGhiSo);
+  if (row.ngayGhiSo && !ngayGhiSo) {
+    errors.push({ field: "ngayGhiSo", message: "Ngày ghi sổ sai định dạng (DD/MM/YYYY)" });
+  }
+
   // 3. Số tiền
   const soTien = normalizeAmount(row.soTien);
   if (row.soTien && (soTien === null || soTien <= 0)) {
@@ -263,6 +269,8 @@ function validateRow(
     nguoiGiaoDich: row.nguoiGiaoDich,
     diaChi: row.diaChi,
     ghiChu: row.ghiChu,
+    ngayGhiSo: ngayGhiSo ?? undefined,
+    nhomGop: row.nhomGop?.trim() || undefined,
     danhMuc: buildDanhMucFromResolved(resolved),
   };
 

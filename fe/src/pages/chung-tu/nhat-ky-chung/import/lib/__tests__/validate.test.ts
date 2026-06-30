@@ -98,6 +98,32 @@ describe("validateAndBuild", () => {
     expect(res.validItems[0].danhMuc?.doiTuong?.ma).toBe("KH001");
   });
 
+  it("gắn ngayGhiSo và nhomGop vào item", () => {
+    const rows: RawImportRow[] = [
+      {
+        rowNumber: 2, ngay: "01/06/2026", ngayGhiSo: "05/06/2026", nhomGop: "HD1",
+        loaiGiaoDich: "PHIEU_THU", nghiepVu: "NV01", taiKhoanNo: "111", taiKhoanCo: "511",
+        soTien: "1000000", dienGiai: "dong 1",
+      },
+    ];
+    const { validItems, hasErrors } = validateAndBuild(rows, masterData);
+    expect(hasErrors).toBe(false);
+    expect(validItems[0].ngayGhiSo).toBe("2026-06-05");
+    expect(validItems[0].nhomGop).toBe("HD1");
+  });
+
+  it("ngayGhiSo sai định dạng → lỗi", () => {
+    const rows: RawImportRow[] = [
+      {
+        rowNumber: 2, ngay: "01/06/2026", ngayGhiSo: "linh tinh",
+        loaiGiaoDich: "PHIEU_THU", nghiepVu: "NV01", taiKhoanNo: "111", taiKhoanCo: "511",
+        soTien: "1000000",
+      },
+    ];
+    const { results } = validateAndBuild(rows, masterData);
+    expect(results[0].errors.some((e) => e.field === "ngayGhiSo")).toBe(true);
+  });
+
   it("batch hỗn hợp: 1 hợp lệ + 1 lỗi → hasErrors true, validItems 1 phần tử, results 2 phần tử", () => {
     const validRow = row({ rowNumber: 2 });
     const errorRow = row({ rowNumber: 3, taiKhoanNo: "999" }); // TK Nợ không tồn tại
