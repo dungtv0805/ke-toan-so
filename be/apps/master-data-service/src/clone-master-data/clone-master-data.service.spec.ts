@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CloneMasterDataService } from './clone-master-data.service';
 
 // Repo giả lưu mảng docs theo tenantId, hỗ trợ find/save như MongoRepository.
@@ -19,6 +20,8 @@ function svcWith(repos: Record<string, any>) {
 }
 
 describe('CloneMasterDataService', () => {
+  beforeEach(() => jest.clearAllMocks());
+
   it('execute: insert bản mới, skip bản trùng ma, set tenantId đích', async () => {
     const repos = {
       KhoanMuc: fakeRepo([
@@ -77,5 +80,20 @@ describe('CloneMasterDataService', () => {
     const rows = await svcWith(repos).preview(SRC, DST, ['khoan-muc']);
     expect(rows[0]).toMatchObject({ total: 2, willInsert: 1, willSkip: 1 });
     expect(repos.KhoanMuc.store.length).toBe(before); // không ghi
+  });
+
+  describe('validate: lỗi đầu vào → BadRequestException', () => {
+    it('nguồn === đích → BadRequestException', async () => {
+      await expect(svcWith({}).execute(SRC, SRC, [])).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('tenant không tồn tại → BadRequestException', async () => {
+      const svcNoTenant = new CloneMasterDataService({} as any, { findOneBy: jest.fn(async () => null) } as any);
+      await expect(svcNoTenant.preview(SRC, DST, [])).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('id sai định dạng → BadRequestException', async () => {
+      await expect(svcWith({}).preview('bad-id', DST, [])).rejects.toBeInstanceOf(BadRequestException);
+    });
   });
 });

@@ -5,6 +5,7 @@ import { CLONE_CATEGORIES, CloneCategory } from './clone-master-data.registry';
 
 export interface PreviewRow { key: string; label: string; total: number; willInsert: number; willSkip: number; }
 export interface ResultRow { key: string; label: string; inserted: number; skipped: number; error?: string; }
+export type CategoryRepoMap = Record<string, Repository<any>>;
 
 @Injectable()
 export class CloneMasterDataService {
@@ -12,7 +13,7 @@ export class CloneMasterDataService {
 
   constructor(
     // Map entityName -> raw repo. Inject 7 token rồi gom lại.
-    private readonly repos: Record<string, Repository<any>>,
+    private readonly repos: CategoryRepoMap,
     private readonly tenantRepo: { findOneBy: (w: any) => Promise<any> },
   ) {}
 
@@ -31,9 +32,13 @@ export class CloneMasterDataService {
   private async validate(src: string, dst: string) {
     if (!src || !dst) throw new BadRequestException('Thiếu công ty nguồn/đích');
     if (src === dst) throw new BadRequestException('Công ty nguồn và đích phải khác nhau');
+    const toObjectId = (id: string, label: string) => {
+      try { return new ObjectId(id); }
+      catch { throw new BadRequestException(`ID ${label} không hợp lệ`); }
+    };
     const [s, d] = await Promise.all([
-      this.tenantRepo.findOneBy({ _id: new ObjectId(src) }),
-      this.tenantRepo.findOneBy({ _id: new ObjectId(dst) }),
+      this.tenantRepo.findOneBy({ _id: toObjectId(src, 'nguồn') }),
+      this.tenantRepo.findOneBy({ _id: toObjectId(dst, 'đích') }),
     ]);
     if (!s) throw new BadRequestException('Không tìm thấy công ty nguồn');
     if (!d) throw new BadRequestException('Không tìm thấy công ty đích');
