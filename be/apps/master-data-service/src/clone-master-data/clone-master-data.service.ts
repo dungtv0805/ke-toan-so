@@ -22,6 +22,7 @@ export class CloneMasterDataService {
   }
 
   private selected(keys: string[]): CloneCategory[] {
+    if (!Array.isArray(keys)) throw new BadRequestException('categories phải là một mảng');
     const set = new Set(keys);
     const cats = CLONE_CATEGORIES.filter((c) => set.has(c.key));
     const unknown = keys.filter((k) => !CLONE_CATEGORIES.some((c) => c.key === k));
@@ -65,6 +66,7 @@ export class CloneMasterDataService {
     const idMaps: Record<string, Map<string, string>> = {};
     const results: ResultRow[] = [];
     for (const cat of this.selected(keys)) {
+      let inserted = 0, skipped = 0;
       try {
         const repo = this.repos[cat.entityName];
         const [srcDocs, dstDocs] = await Promise.all([
@@ -80,7 +82,6 @@ export class CloneMasterDataService {
         }
         idMaps[cat.key] = idMap;
         // Pass 2: insert bản chưa trùng
-        let inserted = 0, skipped = 0;
         for (const doc of srcDocs) {
           if (dstByKey.has(cat.dedupKey(doc))) { skipped++; continue; }
           const clone: any = { ...doc, _id: new ObjectId(idMap.get(String(doc._id))), tenantId: dst };
@@ -91,7 +92,7 @@ export class CloneMasterDataService {
         results.push({ key: cat.key, label: cat.label, inserted, skipped });
       } catch (e: any) {
         this.logger.error(`Clone ${cat.key} lỗi: ${e.message}`);
-        results.push({ key: cat.key, label: cat.label, inserted: 0, skipped: 0, error: e.message });
+        results.push({ key: cat.key, label: cat.label, inserted, skipped, error: e.message });
       }
     }
     return results;

@@ -22,10 +22,11 @@ export default function SaoChepDanhMucPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!user?.isSuperAdmin) return;
     tenantService.getAll().then(setTenants).catch(() => message.error('Không tải được danh sách công ty'));
     cloneMasterDataService.getCategories().then((c) => { setCats(c); setChecked(c.map((x) => x.key)); })
       .catch(() => message.error('Không tải được danh mục'));
-  }, []);
+  }, [user?.isSuperAdmin]);
 
   const sameTenant = !!source && source === target;
   const quyChuanWithoutHoSo = checked.includes('quy-chuan') && !checked.includes('ho-so-chung-tu');

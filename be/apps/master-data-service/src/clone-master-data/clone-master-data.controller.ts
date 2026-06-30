@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { JwtGuard, SuperAdminGuard } from '@app/auth';
 import { CloneMasterDataService } from './clone-master-data.service';
 
@@ -15,6 +15,7 @@ export class CloneMasterDataController {
   }
 
   @Post('preview')
+  @HttpCode(200)
   async preview(@Body() body: CloneBody) {
     const data = await this.service.preview(body.sourceTenantId, body.targetTenantId, body.categories ?? []);
     return { success: true, data };

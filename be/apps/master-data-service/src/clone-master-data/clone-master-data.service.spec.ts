@@ -82,6 +82,23 @@ describe('CloneMasterDataService', () => {
     expect(repos.KhoanMuc.store.length).toBe(before); // không ghi
   });
 
+  it('selected: categories không phải mảng → BadRequestException', async () => {
+    await expect(svcWith({}).execute(SRC, DST, 'quy-chuan' as any)).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('execute: lỗi giữa chừng vẫn báo số đã insert thực tế', async () => {
+    let n = 0;
+    const repo = {
+      find: jest.fn(async ({ where }: any) => where.tenantId === SRC
+        ? [{ _id: 's1', ma: 'A', tenantId: SRC }, { _id: 's2', ma: 'B', tenantId: SRC }]
+        : []),
+      save: jest.fn(async (doc: any) => { n++; if (n === 2) throw new Error('boom'); return doc; }),
+    };
+    const res = await svcWith({ KhoanMuc: repo }).execute(SRC, DST, ['khoan-muc']);
+    expect(res[0].inserted).toBe(1);
+    expect(res[0].error).toContain('boom');
+  });
+
   describe('validate: lỗi đầu vào → BadRequestException', () => {
     it('nguồn === đích → BadRequestException', async () => {
       await expect(svcWith({}).execute(SRC, SRC, [])).rejects.toBeInstanceOf(BadRequestException);
