@@ -11,46 +11,55 @@ function ctx(user: any, params: any = { id: TENANT_ID }): ExecutionContext {
 }
 
 describe('TenantAdminGuard', () => {
-  let repo: any;
   let guard: TenantAdminGuard;
 
   beforeEach(() => {
-    repo = { findOne: jest.fn() };
-    guard = new TenantAdminGuard(repo);
+    // Guard không còn inject DB — khởi tạo không cần arg
+    guard = new TenantAdminGuard();
   });
 
-  it('cho phép Super Admin bỏ qua kiểm tra', async () => {
-    await expect(guard.canActivate(ctx({ email: SUPER_ADMIN_EMAIL, id: 'u1' }))).resolves.toBe(true);
-    expect(repo.findOne).not.toHaveBeenCalled();
+  it('super admin → true (bypass mọi tenant)', () => {
+    expect(
+      guard.canActivate(ctx({ email: SUPER_ADMIN_EMAIL, id: 'u1', tenantId: undefined })),
+    ).toBe(true);
   });
 
-  it('cho phép user là Admin (role "admin") của tenant', async () => {
-    repo.findOne.mockResolvedValue({ userId: 'u1', tenantId: TENANT_ID, role: 'admin', isActive: true });
-    await expect(guard.canActivate(ctx({ email: 'a@b.com', id: 'u1' }))).resolves.toBe(true);
-    // xác nhận query dùng role 'admin' (identity memberships dùng lowercase)
-    expect(repo.findOne).toHaveBeenCalledWith(
-      expect.objectContaining({ where: expect.objectContaining({ role: 'admin', tenantId: TENANT_ID, userId: 'u1', isActive: true }) }),
-    );
+  it('membershipRole="admin" và params.id === user.tenantId → true', () => {
+    expect(
+      guard.canActivate(
+        ctx({ email: 'a@b.com', id: 'u1', tenantId: TENANT_ID, membershipRole: 'admin' }),
+      ),
+    ).toBe(true);
   });
 
-  it('chặn user không phải admin trong tenant', async () => {
-    repo.findOne.mockResolvedValue(null);
-    await expect(guard.canActivate(ctx({ email: 'a@b.com', id: 'u1' }))).rejects.toBeInstanceOf(ForbiddenException);
+  it('membershipRole="admin" nhưng params.id !== user.tenantId → ForbiddenException (chống leo quyền chéo tenant)', () => {
+    expect(() =>
+      guard.canActivate(
+        ctx({ email: 'a@b.com', id: 'u1', tenantId: 'other-tenant', membershipRole: 'admin' }),
+      ),
+    ).toThrow(ForbiddenException);
   });
 
-  it('chặn Admin của tenant khác (IDOR)', async () => {
-    // caller is Admin of tenant-B, but acts on tenant-A (params.id = TENANT_ID)
-    // guard queries { tenantId: TENANT_ID, ... } → no membership → null
-    repo.findOne.mockResolvedValue(null);
-    await expect(
-      guard.canActivate(ctx({ email: 'a@b.com', id: 'u1' }, { id: TENANT_ID })),
-    ).rejects.toBeInstanceOf(ForbiddenException);
-    expect(repo.findOne).toHaveBeenCalledWith(
-      expect.objectContaining({ where: expect.objectContaining({ tenantId: TENANT_ID }) }),
-    );
+  it('membershipRole="member" → ForbiddenException', () => {
+    expect(() =>
+      guard.canActivate(
+        ctx({ email: 'a@b.com', id: 'u1', tenantId: TENANT_ID, membershipRole: 'member' }),
+      ),
+    ).toThrow(ForbiddenException);
   });
 
-  it('chặn khi không có thông tin user', async () => {
-    await expect(guard.canActivate(ctx(undefined))).rejects.toBeInstanceOf(ForbiddenException);
+  it('không có params.id → ForbiddenException', () => {
+    expect(() =>
+      guard.canActivate(
+        ctx(
+          { email: 'a@b.com', id: 'u1', tenantId: TENANT_ID, membershipRole: 'admin' },
+          {},
+        ),
+      ),
+    ).toThrow(ForbiddenException);
+  });
+
+  it('không có user → ForbiddenException', () => {
+    expect(() => guard.canActivate(ctx(undefined))).toThrow(ForbiddenException);
   });
 });

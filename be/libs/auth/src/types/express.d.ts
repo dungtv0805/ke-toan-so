@@ -9,6 +9,8 @@ declare global {
         tenantId?: string;
         vaiTro?: string;
         permissions?: string[];
+        membershipRole?: 'admin' | 'member';
+        apps?: string[];
       };
     }
   }

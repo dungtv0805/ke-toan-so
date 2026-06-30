@@ -51,6 +51,8 @@ export class JwtGuard implements CanActivate {
         tenantId: decoded.tenantId,
         vaiTro,
         permissions: permissions ?? [],
+        membershipRole: decoded.membershipRole,
+        apps: decoded.apps ?? [],
       };
       return true;
     } catch (error) {

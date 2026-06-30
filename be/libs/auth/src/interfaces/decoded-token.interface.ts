@@ -4,6 +4,9 @@ export interface DecodedToken {
   tenantId: string; // Current tenant
   vaiTro?: string;        // optional: token Identity không có
   permissions?: string[]; // optional: token Identity không có
+  // SSO claims từ identity-service (phase 3+)
+  apps?: string[];                     // appId các tenant đã bật
+  membershipRole?: 'admin' | 'member'; // vai trò trong identity
   iat: number;
   exp: number;
 }
