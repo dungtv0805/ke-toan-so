@@ -22,6 +22,7 @@ import { ThuTienHopDongModule } from './thu-tien-hop-dong/thu-tien-hop-dong.modu
 import { HoaDonBanRaModule } from './hoa-don-ban-ra/hoa-don-ban-ra.module';
 import { SoDuDauKyModule } from './so-du-dau-ky/so-du-dau-ky.module';
 import { TenantModule } from './tenant/tenant.module';
+import { CloneMasterDataModule } from './clone-master-data/clone-master-data.module';
 import { LinhVucModule } from './linh-vuc/linh-vuc.module';
 import { NganhModule } from './nganh/nganh.module';
 import { KhoModule } from './kho/kho.module';
@@ -111,6 +112,7 @@ import {
     HoaDonBanRaModule,
     SoDuDauKyModule,
     TenantModule,
+    CloneMasterDataModule,
     LinhVucModule,
     NganhModule,
     KhoModule,

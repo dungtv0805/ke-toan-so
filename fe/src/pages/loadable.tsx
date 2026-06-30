@@ -218,6 +218,10 @@ export const LinhVucPage = loadable(() => import('./cau-hinh/linh-vuc/LinhVucPag
   fallback: <PageLoader />
 });
 
+export const SaoChepDanhMucPage = loadable(() => import('./cau-hinh/sao-chep-danh-muc/SaoChepDanhMucPage'), {
+  fallback: <PageLoader />
+});
+
 export const ThanhVienPage = loadable(() => import('./cau-hinh/thanh-vien/ThanhVienPage'), {
   fallback: <PageLoader />
 });

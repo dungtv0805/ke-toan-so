@@ -65,6 +65,7 @@ import {
   NodeIndexOutlined,
   FileAddOutlined,
   StopOutlined,
+  CopyOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import type { MenuProps } from "antd";
@@ -604,6 +605,12 @@ const MainLayout: React.FC = () => {
       icon: <AppstoreOutlined />,
       label: "Quản lý Lĩnh vực",
       onClick: () => navigate("/cau-hinh/linh-vuc"),
+    }] : []),
+    ...(user?.isSuperAdmin ? [{
+      key: "sao-chep-danh-muc",
+      icon: <CopyOutlined />,
+      label: "Sao chép danh mục",
+      onClick: () => navigate("/cau-hinh/sao-chep-danh-muc"),
     }] : []),
   ];
 
