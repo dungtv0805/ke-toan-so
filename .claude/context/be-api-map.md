@@ -149,6 +149,13 @@ KE_TOAN/KHO khi collection rỗng (OnModuleInit). FE lọc menu theo `menuKeys`;
 - /loai-chung-tu, /loai-giao-dich, /ngan-hang
 - /nhom-khoan-muc, /nhom-khuyen-mai, /nhom-quan-ly, /san-pham
 
+### /clone (Sao chép danh mục cross-tenant — SuperAdmin)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /clone/categories | Danh sách danh mục copy được |
+| POST | /clone/preview | Xem trước {sourceTenantId,targetTenantId,categories[]} → willInsert/willSkip |
+| POST | /clone/execute | Thực thi copy (idempotent, skip trùng) |
+
 ## Voucher Service (3003)
 
 ### /nhat-ky-chung (Journal Entries)
