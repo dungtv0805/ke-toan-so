@@ -34,7 +34,7 @@ export class TenantController {
   }
 
   @Get('users')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, SuperAdminGuard)
   async getAllUsers() {
     const data = await this.tenantService.getAllUsers();
     return { success: true, data };
@@ -101,7 +101,7 @@ export class TenantController {
   // ===== Tenant Members (Super Admin + Tenant Admin) =====
 
   @Get(':id/members')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, TenantAdminGuard)
   async getMembers(@Param('id') id: string) {
     const data = await this.tenantService.getTenantMembers(id);
     return { success: true, data };
