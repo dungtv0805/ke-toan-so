@@ -75,9 +75,26 @@ const fmt = (v?: number) =>
 
 const amount = (value: unknown) => fmt(value as number | undefined);
 
+// Số hiệu phiếu: với dòng phát sinh, hiển thị link mở trang sửa phiếu ở tab mới.
+const soPhieuLink = (value: unknown, row: DisplayRow): React.ReactNode => {
+  const soPhieu = value as string | undefined;
+  if (row.kind !== 'entry' || !soPhieu) return soPhieu ?? '';
+  const href = `/chung-tu/nhat-ky-chung/${encodeURIComponent(soPhieu)}/sua`;
+  return React.createElement(
+    'a',
+    {
+      href,
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      title: 'Mở phiếu để sửa (tab mới)',
+    },
+    soPhieu,
+  );
+};
+
 export const REGISTRY: ColumnDef[] = [
   { key: 'ngay', title: 'Ngày ghi sổ', dataIndex: 'ngay', group: 'Cơ bản', width: 110, defaultVisible: true },
-  { key: 'soPhieu', title: 'Số hiệu', dataIndex: 'soPhieu', group: 'Chứng từ', parentHeader: 'Chứng từ', width: 110, defaultVisible: true },
+  { key: 'soPhieu', title: 'Số hiệu', dataIndex: 'soPhieu', group: 'Chứng từ', parentHeader: 'Chứng từ', width: 110, render: soPhieuLink, defaultVisible: true },
   { key: 'ngayChungTu', title: 'Ngày tháng', dataIndex: 'ngayChungTu', group: 'Chứng từ', parentHeader: 'Chứng từ', width: 110, defaultVisible: true },
   { key: 'noiDung', title: 'Diễn giải', dataIndex: 'noiDung', group: 'Cơ bản', ellipsis: true, defaultVisible: true },
   { key: 'tkDoiUng', title: 'TK đối ứng', dataIndex: 'tkDoiUng', group: 'Cơ bản', width: 110, align: 'center', defaultVisible: true },

@@ -180,4 +180,5 @@ export const buildNganHangSnapshot = (nganHang: TaiKhoanNganHang): DoiTuongSnaps
   ma: nganHang.ma,
   ten: nganHang.ten,
   loai: 'NGAN_HANG_QUY',
+  soTaiKhoan: nganHang.soTaiKhoan,
 });

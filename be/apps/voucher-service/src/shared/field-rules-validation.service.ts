@@ -20,6 +20,7 @@ const FIELD_LABELS: Record<string, string> = {
   sanPham: 'Sản phẩm',
   dongTien: 'Dòng tiền',
   khoanMuc: 'Khoản mục',
+  soTaiKhoanNganHang: 'Số tài khoản ngân hàng',
 };
 
 /**
@@ -53,16 +54,25 @@ export class FieldRulesValidationService {
     items.forEach((item, idx) => {
       const dm = item.danhMuc;
       if (!dm) return;
-      const checkSide = (tkMa: string | undefined, doiTuongFilled: boolean) => {
+      const checkSide = (
+        tkMa: string | undefined,
+        doiTuong: { ma?: string; soTaiKhoan?: string } | undefined,
+      ) => {
         if (!tkMa) return;
         const rules = rulesByMa.get(tkMa);
         if (!rules) return;
         for (const [field, level] of Object.entries(rules)) {
           if (level !== 'BAT_BUOC') continue;
-          const filled =
-            field === 'doiTuong'
-              ? doiTuongFilled
-              : Boolean((dm as Record<string, { ma?: string } | undefined>)[field]?.ma);
+          let filled: boolean;
+          if (field === 'doiTuong') {
+            filled = Boolean(doiTuong?.ma);
+          } else if (field === 'soTaiKhoanNganHang') {
+            filled = Boolean(doiTuong?.soTaiKhoan && String(doiTuong.soTaiKhoan).trim());
+          } else {
+            filled = Boolean(
+              (dm as Record<string, { ma?: string } | undefined>)[field]?.ma,
+            );
+          }
           if (!filled) {
             errors.push(
               `Dòng ${idx + 1}: TK ${tkMa} bắt buộc nhập ${FIELD_LABELS[field] ?? field}`,
@@ -70,8 +80,8 @@ export class FieldRulesValidationService {
           }
         }
       };
-      checkSide(dm.taiKhoanNo?.ma, Boolean(dm.doiTuong?.ma));
-      checkSide(dm.taiKhoanCo?.ma, Boolean(dm.doiTuong2?.ma));
+      checkSide(dm.taiKhoanNo?.ma, dm.doiTuong);
+      checkSide(dm.taiKhoanCo?.ma, dm.doiTuong2);
     });
 
     if (errors.length > 0) {

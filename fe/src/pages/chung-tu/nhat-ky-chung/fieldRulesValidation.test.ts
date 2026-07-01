@@ -10,6 +10,11 @@ const taiKhoanList: TaiKhoanItem[] = [
   },
   { ma: "131", ten: "Phải thu KH", loai: "TAI_SAN", nhom: "LUONG_TINH", fieldRules: { duAn: "CANH_BAO" } },
   { ma: "511", ten: "Doanh thu", loai: "DOANH_THU", nhom: "CO" },
+  {
+    ma: "1121", ten: "Tiền gửi NH VND", loai: "TAI_SAN", nhom: "NO",
+    chiTietTheo: "NGAN_HANG_QUY",
+    fieldRules: { soTaiKhoanNganHang: "BAT_BUOC" },
+  },
 ];
 
 const line = (over: Partial<ChungTuChiTiet>): ChungTuChiTiet => ({
@@ -58,6 +63,55 @@ describe("validateFieldRules", () => {
     );
     const dt = violations.find((v) => v.field === "doiTuong");
     expect(dt).toMatchObject({ level: "BAT_BUOC", taiKhoanMa: "112" });
+  });
+
+  it("rule soTaiKhoanNganHang: TK Nợ 1121 thiếu số TK ngân hàng → violation BAT_BUOC", () => {
+    const violations = validateFieldRules(
+      [line({ taiKhoanNo: "1121", taiKhoanCo: "511" })],
+      taiKhoanList,
+    );
+    const v = violations.find((x) => x.field === "soTaiKhoanNganHang");
+    expect(v).toMatchObject({ level: "BAT_BUOC", taiKhoanMa: "1121", lineIndex: 0 });
+  });
+
+  it("rule soTaiKhoanNganHang: đối tượng có số TK → không violation", () => {
+    const violations = validateFieldRules(
+      [
+        line({
+          taiKhoanNo: "1121", taiKhoanCo: "511",
+          doiTuongId: "nh1",
+          doiTuongSnapshot: { ma: "NH1", ten: "VCB", loai: "NGAN_HANG_QUY", soTaiKhoan: "0123456789" },
+        }),
+      ],
+      taiKhoanList,
+    );
+    expect(violations.filter((v) => v.field === "soTaiKhoanNganHang")).toEqual([]);
+  });
+
+  it("rule soTaiKhoanNganHang: số TK chỉ có khoảng trắng → vẫn violation", () => {
+    const violations = validateFieldRules(
+      [
+        line({
+          taiKhoanNo: "1121", taiKhoanCo: "511",
+          doiTuongSnapshot: { ma: "NH1", ten: "VCB", loai: "NGAN_HANG_QUY", soTaiKhoan: "   " },
+        }),
+      ],
+      taiKhoanList,
+    );
+    expect(violations.some((v) => v.field === "soTaiKhoanNganHang")).toBe(true);
+  });
+
+  it("rule soTaiKhoanNganHang: 1121 bên Có kiểm doiTuong2Snapshot", () => {
+    const violations = validateFieldRules(
+      [
+        line({
+          taiKhoanNo: "511", taiKhoanCo: "1121",
+          doiTuong2Snapshot: { ma: "NH1", ten: "VCB", loai: "NGAN_HANG_QUY", soTaiKhoan: "999" },
+        }),
+      ],
+      taiKhoanList,
+    );
+    expect(violations.filter((v) => v.field === "soTaiKhoanNganHang")).toEqual([]);
   });
 
   it("TK không có fieldRules → không violation", () => {

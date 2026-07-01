@@ -14,6 +14,8 @@ export interface DanhMucDoiTuong {
   soDienThoai?: string;
   email?: string;
   maSoThue?: string;
+  // Số tài khoản ngân hàng (khi đối tượng là tài khoản ngân hàng/quỹ)
+  soTaiKhoan?: string;
 }
 
 export interface DanhMucDuAn {
@@ -119,11 +121,16 @@ export interface DanhMuc {
 
 // Types cho kiểm soát hồ sơ & hạch toán
 export interface HoSoChungTuChungTu { id: string; ma: string; ten: string; daCo: boolean; }
-export type KiemSoatTrangThai = 'HOP_LE' | 'KHONG_DUOC_TRU';
+// HOP_LE: hợp lệ. CHUA_HOP_LE: chưa hợp lệ (hồ sơ còn thiếu, có thể hoàn thiện;
+// KHÔNG tính vào chi phí không được trừ). KHONG_DUOC_TRU: không hợp lệ (chi phí không được trừ).
+export type KiemSoatTrangThai = 'HOP_LE' | 'CHUA_HOP_LE' | 'KHONG_DUOC_TRU';
 export interface KiemSoatChungTu {
   trangThai: KiemSoatTrangThai;
   nhomChiPhi?: 1 | 2 | 3 | 4;
   soTienKhongTru?: number;
+  // Danh sách lý do (chọn nhiều) — dùng cho CHUA_HOP_LE và KHONG_DUOC_TRU.
+  // Dữ liệu cũ có thể là string đơn; chuẩn hoá về mảng khi đọc ở FE.
+  lyDo?: string[];
   yKien?: string;
   nguoiKiemSoat?: string;
   ngayKiemSoat?: string;

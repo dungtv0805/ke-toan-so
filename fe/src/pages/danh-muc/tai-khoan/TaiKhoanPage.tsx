@@ -77,6 +77,7 @@ const FIELD_RULE_FIELDS: Array<{ key: string; label: string }> = [
   { key: "sanPham", label: "Sản phẩm" },
   { key: "dongTien", label: "Dòng tiền" },
   { key: "khoanMuc", label: "Khoản mục" },
+  { key: "soTaiKhoanNganHang", label: "Số tài khoản ngân hàng" },
 ];
 
 const fieldRuleLevelOptions = [
