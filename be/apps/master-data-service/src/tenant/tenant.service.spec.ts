@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ConflictException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 import { AppUserRole, TenantAppConfig, Nganh } from '@app/entities';
 import { IdentityClient } from '@app/service-client';
@@ -215,7 +215,7 @@ describe('TenantService.create — TenantAppConfig được tạo với config �
       [getRepositoryToken(TenantAppConfig) as string]: appConfigRepo,
     });
 
-    await service.create(TOKEN, { name: 'Công ty XD', slug: 'cong-ty-xd', nganh: 'XAY_DUNG' } as any);
+    await service.create(TOKEN, { name: 'Công ty XD', slug: 'cong-ty-xd', nganh: 'XAY_DUNG', adminUserId: 'existing-admin-id' } as any);
 
     // identity createTenant should NOT include glossary/modules/nganh
     expect(identityClient.createTenant).toHaveBeenCalledWith(
@@ -248,8 +248,21 @@ describe('TenantService.create — TenantAppConfig được tạo với config �
     const { service } = await buildModule({ identityClient });
 
     await expect(
-      service.create(TOKEN, { name: 'X', slug: 'duplicate-slug' } as any),
+      service.create(TOKEN, { name: 'X', slug: 'duplicate-slug', adminUserId: 'some-admin-id' } as any),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('ném BadRequestException khi thiếu cả adminUserId lẫn admin.email', async () => {
+    const identityClient = stubIdentityClient();
+
+    const { service } = await buildModule({ identityClient });
+
+    await expect(
+      service.create(TOKEN, { name: 'Công ty C', slug: 'cong-ty-c' } as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    // identity should NOT be called when validation fails early
+    expect(identityClient.createTenant).not.toHaveBeenCalled();
   });
 
   it('tạo AppUserRole cho admin khi identity trả admins[]', async () => {
@@ -273,7 +286,7 @@ describe('TenantService.create — TenantAppConfig được tạo với config �
       [getRepositoryToken(AppUserRole) as string]: appUserRoleRepo,
     });
 
-    await service.create(TOKEN, { name: 'Công ty B', slug: 'cong-ty-b' } as any);
+    await service.create(TOKEN, { name: 'Công ty B', slug: 'cong-ty-b', adminUserId: 'existing-admin-id' } as any);
 
     expect(appUserRoleRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({ userId: adminId, tenantId: TENANT_ID, role: 'Admin', isActive: true }),
@@ -380,6 +393,38 @@ describe('TenantService.updateGlossary', () => {
     expect(res.glossary).toEqual(g);
     // identity should NOT be written for glossary update
     expect(identityClient.updateTenant).not.toHaveBeenCalled();
+  });
+
+  it('response chứa đủ dienThoai, email, nguoiDaiDien, admins', async () => {
+    const fakeTenant: any = {
+      id: TENANT_ID,
+      name: 'Công ty A',
+      slug: 'cong-ty-a',
+      isActive: true,
+      dienThoai: '0901234567',
+      email: 'cty@example.com',
+      nguoiDaiDien: 'Nguyễn Văn A',
+      admins: [{ id: 'admin-1', email: 'admin@example.com', hoTen: 'Admin' }],
+    };
+
+    const identityClient = stubIdentityClient();
+    identityClient.listTenants.mockResolvedValue({ success: true, data: [fakeTenant] });
+
+    const appConfigRepo = stubRepo();
+    appConfigRepo.findOne.mockResolvedValue(null);
+    appConfigRepo.save.mockImplementation(async (x: any) => x);
+
+    const { service } = await buildModule({
+      identityClient,
+      [getRepositoryToken(TenantAppConfig) as string]: appConfigRepo,
+    });
+
+    const res = await service.updateGlossary(TOKEN, TENANT_ID, {} as any);
+
+    expect(res.dienThoai).toBe('0901234567');
+    expect(res.email).toBe('cty@example.com');
+    expect(res.nguoiDaiDien).toBe('Nguyễn Văn A');
+    expect(res.admins).toEqual([{ id: 'admin-1', email: 'admin@example.com', hoTen: 'Admin' }]);
   });
 });
 

@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
   Inject,
   Logger,
   InternalServerErrorException,
@@ -235,6 +236,11 @@ export class TenantService {
     token: string,
     createDto: CreateTenantDto,
   ): Promise<{ tenant: any; admin?: { id?: string; email?: string; hoTen?: string } }> {
+    // Pre-validate: identity requires adminUserId OR admin.email
+    if (!createDto.adminUserId && !createDto.admin?.email) {
+      throw new BadRequestException('Cần cung cấp adminUserId hoặc admin (email + hoTen)');
+    }
+
     // Build identity request body
     const tenantBody: Record<string, unknown> = {
       name: createDto.name,
@@ -468,6 +474,9 @@ export class TenantService {
       slug: tenant.slug,
       maSoThue: tenant.maSoThue ?? null,
       diaChi: tenant.diaChi ?? null,
+      dienThoai: tenant.dienThoai ?? null,
+      email: tenant.email ?? null,
+      nguoiDaiDien: tenant.nguoiDaiDien ?? null,
       isActive: tenant.isActive,
       modules: config.modules,
       nganh: config.nganh ?? null,
@@ -476,6 +485,7 @@ export class TenantService {
       createdAt: new Date(0),
       updatedAt: new Date(0),
       tenantId: null,
+      admins: tenant.admins ?? [],
     };
   }
 
