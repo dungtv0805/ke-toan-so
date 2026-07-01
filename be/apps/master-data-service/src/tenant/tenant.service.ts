@@ -5,15 +5,11 @@ import {
   ConflictException,
   Inject,
   Logger,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
-  Tenant,
-  User,
-  UserCredential,
-  UserTenant,
-  UserStatus,
   VaiTro,
   PhanQuyen,
   Nganh,
@@ -29,10 +25,8 @@ import {
   UpdateMemberProfileDto,
 } from '@app/dto';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
-import * as bcrypt from 'bcrypt';
+import { IdentityClient } from '@app/service-client';
 
-const SALT_ROUNDS = 10;
-const DEFAULT_PASSWORD = '123456';
 const ADMIN_ROLE_NAME = 'Admin';
 
 export interface TenantAdminInfo {
@@ -59,20 +53,35 @@ export interface TenantWithAdmin {
   admins: TenantAdminInfo[];
 }
 
+// Shape returned by identity /api/admin/tenants
+interface IdentityTenant {
+  id: string;
+  name: string;
+  slug: string;
+  maSoThue?: string | null;
+  diaChi?: string | null;
+  dienThoai?: string | null;
+  email?: string | null;
+  nguoiDaiDien?: string | null;
+  isActive: boolean;
+  admins: TenantAdminInfo[];
+  appIds?: string[];
+}
+
+// Shape returned by identity /api/admin/tenants/:id/members
+interface IdentityMember {
+  userId: string;
+  hoTen: string | null;
+  email: string | null;
+  role: string;
+  isActive: boolean;
+}
+
 @Injectable()
 export class TenantService {
   private readonly logger = new Logger(TenantService.name);
 
   constructor(
-    // ── Identity repos (masterceo_identity DB) ──────────────────────────────
-    @InjectRepository(Tenant, 'identity')
-    private readonly tenantRepository: Repository<Tenant>,
-    @InjectRepository(User, 'identity')
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(UserCredential, 'identity')
-    private readonly credentialRepository: Repository<UserCredential>,
-    @InjectRepository(UserTenant, 'identity')
-    private readonly userTenantRepository: Repository<UserTenant>,
     // ── RAW repos (digital_book DB, bypass tenant filtering) ────────────────
     @Inject(`${RAW_REPOSITORY_TOKEN_PREFIX}VaiTro`)
     private readonly vaiTroRepository: Repository<VaiTro>,
@@ -85,29 +94,49 @@ export class TenantService {
     private readonly appUserRoleRepository: Repository<AppUserRole>,
     @InjectRepository(TenantAppConfig)
     private readonly tenantAppConfigRepository: Repository<TenantAppConfig>,
+    // ── IdentityClient: all identity DB operations go via HTTP ───────────────
+    private readonly identityClient: IdentityClient,
   ) {}
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Error handling
+  // ──────────────────────────────────────────────────────────────────────────
+
+  private throwFromServiceError(
+    res: { success: boolean; error?: { code?: string; message?: string } },
+    notFoundMessage?: string,
+  ): never {
+    const { code, message } = res.error ?? {};
+    if (code === 'NOT_FOUND') {
+      throw new NotFoundException(notFoundMessage ?? message ?? 'Không tìm thấy');
+    }
+    if (code === 'CONFLICT') {
+      throw new ConflictException(message ?? 'Xung đột dữ liệu');
+    }
+    throw new InternalServerErrorException(message ?? 'Lỗi từ identity service');
+  }
 
   // ──────────────────────────────────────────────────────────────────────────
   // Private helpers
   // ──────────────────────────────────────────────────────────────────────────
 
   /**
-   * Internal fetch: raw Tenant from identity DB, no TenantAppConfig merging.
-   * Use this when you will write back to tenantRepository (to avoid saving
-   * config fields that belong in TenantAppConfig).
+   * Fetch a single tenant by id from identity service.
+   * CONCERN: no dedicated getTenant(id) API → calls listTenants and filters client-side.
    */
-  private async findTenantEntity(id: string): Promise<Tenant> {
-    const { ObjectId } = await import('mongodb');
-    const tenant = await this.tenantRepository.findOne({
-      where: { _id: new ObjectId(id) as any },
-    });
+  private async findTenantById(token: string, id: string): Promise<IdentityTenant> {
+    const res = await this.identityClient.listTenants(token);
+    if (!res.success) this.throwFromServiceError(res);
+    const tenant: IdentityTenant | undefined = (res.data ?? []).find(
+      (t: IdentityTenant) => t.id === id,
+    );
     if (!tenant) {
       throw new NotFoundException(`Không tìm thấy công ty với ID ${id}`);
     }
     return tenant;
   }
 
-  /** Clone (deep) glossary của ngành theo code; {} nếu không có code / không tìm thấy. */
+  /** Deep-copy glossary of nganh by code; {} if no code / not found. */
   async cloneGlossaryFromNganh(nganhCode?: string | null): Promise<Glossary> {
     if (!nganhCode) return {};
     const nganh = await this.nganhRepository.findOne({ where: { code: nganhCode } });
@@ -115,124 +144,137 @@ export class TenantService {
     return JSON.parse(JSON.stringify(nganh.glossary)) as Glossary;
   }
 
+  /** Map identity tenant + TenantAppConfig to TenantWithAdmin shape. */
+  private mapToTenantWithAdmin(
+    tenant: IdentityTenant,
+    config: TenantAppConfig | null,
+  ): TenantWithAdmin {
+    // CONCERN: identity API does not return createdAt/updatedAt for tenants.
+    // Defaulting to new Date(0) to maintain TenantWithAdmin shape for FE compatibility.
+    return {
+      _id: tenant.id,
+      id: tenant.id,
+      name: tenant.name,
+      slug: tenant.slug,
+      maSoThue: tenant.maSoThue ?? undefined,
+      diaChi: tenant.diaChi ?? undefined,
+      dienThoai: tenant.dienThoai ?? undefined,
+      email: tenant.email ?? undefined,
+      nguoiDaiDien: tenant.nguoiDaiDien ?? undefined,
+      isActive: tenant.isActive,
+      modules: config?.modules ?? ['KE_TOAN'],
+      tenantId: undefined,
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+      admins: tenant.admins ?? [],
+    };
+  }
+
   // ──────────────────────────────────────────────────────────────────────────
-  // 7a: Company CRUD + config + admin-provisioning
+  // Tenant CRUD
   // ──────────────────────────────────────────────────────────────────────────
 
-  async findAll(): Promise<TenantWithAdmin[]> {
-    const tenants = await this.tenantRepository.find({
-      order: { createdAt: 'DESC' },
-    });
+  async findAll(token: string): Promise<TenantWithAdmin[]> {
+    const res = await this.identityClient.listTenants(token);
+    if (!res.success) this.throwFromServiceError(res);
 
-    const tenantsWithAdmins: TenantWithAdmin[] = await Promise.all(
+    const tenants: IdentityTenant[] = res.data ?? [];
+
+    return Promise.all(
       tenants.map(async (tenant) => {
-        const tenantId = tenant._id.toString();
-
-        // Load config from TenantAppConfig (modules, nganh live here after P2)
         const config = await this.tenantAppConfigRepository.findOne({
-          where: { tenantId },
+          where: { tenantId: tenant.id },
         });
-
-        // Admin lookup: identity membership role is 'admin' (lowercase) after P2
-        const adminMemberships = await this.userTenantRepository.find({
-          where: {
-            tenantId,
-            role: 'admin',
-            isActive: true,
-          },
-        });
-
-        let admins: TenantAdminInfo[] = [];
-
-        if (adminMemberships.length > 0) {
-          const { ObjectId } = await import('mongodb');
-          const adminUserIds = adminMemberships.map((m) => new ObjectId(m.userId));
-          const adminUsers = await this.userRepository.find({
-            where: {
-              _id: { $in: adminUserIds } as any,
-              isActive: true,
-            },
-          });
-
-          admins = adminUsers.map((u) => ({
-            id: u._id.toString(),
-            email: u.email,
-            hoTen: u.hoTen,
-          }));
-        }
-
-        return {
-          _id: tenantId,
-          id: tenantId,
-          name: tenant.name,
-          slug: tenant.slug,
-          maSoThue: tenant.maSoThue,
-          diaChi: tenant.diaChi,
-          dienThoai: tenant.dienThoai,
-          email: tenant.email,
-          nguoiDaiDien: tenant.nguoiDaiDien,
-          isActive: tenant.isActive,
-          modules: config?.modules ?? ['KE_TOAN'],
-          tenantId: tenant.tenantId,
-          createdAt: tenant.createdAt,
-          updatedAt: tenant.updatedAt,
-          admins,
-        };
+        return this.mapToTenantWithAdmin(tenant, config);
       }),
     );
-
-    return tenantsWithAdmins;
   }
 
   /**
-   * Public findOne: fetches Tenant from identity DB and merges config fields
-   * (modules, nganh, glossary, dashboardBlocks) from TenantAppConfig.
-   * Used externally by controller and internally by 7b methods for verification.
+   * Public findOne: fetch tenant from identity and merge config from TenantAppConfig.
+   * Returns a Tenant-shaped POJO (not a TypeORM entity) for FE JSON compatibility.
+   * CONCERN: no dedicated getTenant(id) API → uses listTenants + client-side filter.
    */
-  async findOne(id: string): Promise<Tenant> {
-    const tenant = await this.findTenantEntity(id);
+  async findOne(token: string, id: string): Promise<any> {
+    const tenant = await this.findTenantById(token, id);
 
-    // Merge config fields from TenantAppConfig
     const config = await this.tenantAppConfigRepository.findOne({
       where: { tenantId: id },
     });
-    tenant.modules = config?.modules ?? ['KE_TOAN'];
-    tenant.nganh = config?.nganh ?? null;
-    tenant.glossary = config?.glossary ?? {};
-    tenant.dashboardBlocks = config?.dashboardBlocks ?? null;
 
-    return tenant;
+    return {
+      _id: tenant.id,
+      id: tenant.id,
+      name: tenant.name,
+      slug: tenant.slug,
+      maSoThue: tenant.maSoThue ?? null,
+      diaChi: tenant.diaChi ?? null,
+      dienThoai: tenant.dienThoai ?? null,
+      email: tenant.email ?? null,
+      nguoiDaiDien: tenant.nguoiDaiDien ?? null,
+      isActive: tenant.isActive,
+      modules: config?.modules ?? ['KE_TOAN'],
+      nganh: config?.nganh ?? null,
+      glossary: config?.glossary ?? {},
+      dashboardBlocks: config?.dashboardBlocks ?? null,
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+      tenantId: null,
+      admins: tenant.admins ?? [],
+    };
   }
 
-  async findBySlug(slug: string): Promise<Tenant | null> {
-    return this.tenantRepository.findOne({ where: { slug } });
+  async findBySlug(token: string, slug: string): Promise<IdentityTenant | null> {
+    const res = await this.identityClient.listTenants(token, { search: slug });
+    if (!res.success) this.throwFromServiceError(res);
+    const tenants: IdentityTenant[] = res.data ?? [];
+    return tenants.find((t) => t.slug === slug) ?? null;
   }
 
-  async create(createDto: CreateTenantDto): Promise<{ tenant: Tenant; admin?: Partial<User> }> {
-    const existing = await this.findBySlug(createDto.slug);
-    if (existing) {
-      throw new ConflictException(`Công ty với slug ${createDto.slug} đã tồn tại`);
-    }
-
-    // Create Tenant in identity DB with identity fields only (no modules/nganh/glossary)
-    const tenant = this.tenantRepository.create({
+  async create(
+    token: string,
+    createDto: CreateTenantDto,
+  ): Promise<{ tenant: any; admin?: { id?: string; email?: string; hoTen?: string } }> {
+    // Build identity request body
+    const tenantBody: Record<string, unknown> = {
       name: createDto.name,
       slug: createDto.slug,
-      maSoThue: createDto.maSoThue,
-      diaChi: createDto.diaChi,
-      dienThoai: createDto.dienThoai,
-      email: createDto.email,
-      nguoiDaiDien: createDto.nguoiDaiDien,
       isActive: createDto.isActive ?? true,
-    });
-    const savedTenant = await this.tenantRepository.save(tenant);
+    };
+    if (createDto.maSoThue) tenantBody.maSoThue = createDto.maSoThue;
+    if (createDto.diaChi) tenantBody.diaChi = createDto.diaChi;
+    if (createDto.dienThoai) tenantBody.dienThoai = createDto.dienThoai;
+    if (createDto.email) tenantBody.email = createDto.email;
+    if (createDto.nguoiDaiDien) tenantBody.nguoiDaiDien = createDto.nguoiDaiDien;
 
-    // Clone glossary from nganh (if provided)
+    // Pass admin info to identity for provisioning
+    if (createDto.adminUserId) {
+      tenantBody.adminUserId = createDto.adminUserId;
+    } else if (createDto.admin) {
+      tenantBody.adminEmail = createDto.admin.email.toLowerCase();
+      tenantBody.adminHoTen = createDto.admin.hoTen;
+      if (createDto.admin.password) tenantBody.adminPassword = createDto.admin.password;
+    }
+    // CONCERN: identity requires adminUserId or adminEmail+adminHoTen.
+    // If neither supplied, identity service will throw BadRequestException at runtime.
+
+    const res = await this.identityClient.createTenant(token, tenantBody);
+    if (!res.success) {
+      if (res.error?.code === 'CONFLICT') {
+        throw new ConflictException(`Công ty với slug ${createDto.slug} đã tồn tại`);
+      }
+      this.throwFromServiceError(res);
+    }
+
+    const createdTenant: IdentityTenant = res.data;
+    const tenantId = createdTenant.id;
+
+    // Clone glossary from nganh (digital_book)
     const glossary = await this.cloneGlossaryFromNganh(createDto.nganh);
 
-    // Create TenantAppConfig in digital_book DB
+    // Create TenantAppConfig (digital_book)
     const tenantConfig = this.tenantAppConfigRepository.create({
-      tenantId: savedTenant._id.toString(),
+      tenantId,
       modules: createDto.modules?.length ? createDto.modules : ['KE_TOAN'],
       nganh: createDto.nganh ?? null,
       glossary,
@@ -240,162 +282,53 @@ export class TenantService {
     });
     await this.tenantAppConfigRepository.save(tenantConfig);
 
-    // Create admin user if provided
-    let adminUser: Partial<User> | undefined;
-
-    // Option 1: Use existing user by ID
-    if (createDto.adminUserId) {
-      const { ObjectId } = await import('mongodb');
-      const existingUser = await this.userRepository.findOne({
-        where: { _id: new ObjectId(createDto.adminUserId) as any },
+    // Create AppUserRole for admin in digital_book (functional accounting role)
+    if (createdTenant.admins?.length > 0) {
+      const adminId = createdTenant.admins[0].id;
+      const existingAppRole = await this.appUserRoleRepository.findOne({
+        where: { userId: adminId, tenantId } as any,
       });
-
-      if (existingUser) {
-        // Check if user already has membership in this tenant
-        const existingMembership = await this.userTenantRepository.findOne({
-          where: {
-            userId: existingUser._id.toString(),
-            tenantId: savedTenant._id.toString(),
-          },
-        });
-
-        if (!existingMembership) {
-          // Create identity membership with lowercase 'admin' role
-          const userTenant = this.userTenantRepository.create({
-            userId: existingUser._id.toString(),
-            tenantId: savedTenant._id.toString(),
-            role: 'admin',
-            isActive: true,
-          });
-          await this.userTenantRepository.save(userTenant);
-        }
-
-        // Create AppUserRole for the digital_book 'Admin' functional role
-        const existingAppRole = await this.appUserRoleRepository.findOne({
-          where: {
-            userId: existingUser._id.toString(),
-            tenantId: savedTenant._id.toString(),
-          },
-        });
-        if (!existingAppRole) {
-          await this.appUserRoleRepository.save(
-            this.appUserRoleRepository.create({
-              userId: existingUser._id.toString(),
-              tenantId: savedTenant._id.toString(),
-              role: ADMIN_ROLE_NAME,
-              isActive: true,
-            }),
-          );
-        }
-
-        adminUser = { _id: existingUser._id, email: existingUser.email, hoTen: existingUser.hoTen };
-      }
-    }
-    // Option 2: Create/link user with admin info
-    else if (createDto.admin) {
-      // Check if user with email already exists
-      const existingUser = await this.userRepository.findOne({
-        where: { email: createDto.admin.email.toLowerCase() },
-      });
-
-      if (existingUser) {
-        // Link existing user to this tenant
-        const existingMembership = await this.userTenantRepository.findOne({
-          where: {
-            userId: existingUser._id.toString(),
-            tenantId: savedTenant._id.toString(),
-          },
-        });
-
-        if (!existingMembership) {
-          const userTenant = this.userTenantRepository.create({
-            userId: existingUser._id.toString(),
-            tenantId: savedTenant._id.toString(),
-            role: 'admin',
-            isActive: true,
-          });
-          await this.userTenantRepository.save(userTenant);
-        }
-
-        // Create AppUserRole for digital_book 'Admin' functional role
-        const existingAppRole = await this.appUserRoleRepository.findOne({
-          where: {
-            userId: existingUser._id.toString(),
-            tenantId: savedTenant._id.toString(),
-          },
-        });
-        if (!existingAppRole) {
-          await this.appUserRoleRepository.save(
-            this.appUserRoleRepository.create({
-              userId: existingUser._id.toString(),
-              tenantId: savedTenant._id.toString(),
-              role: ADMIN_ROLE_NAME,
-              isActive: true,
-            }),
-          );
-        }
-
-        adminUser = { _id: existingUser._id, email: existingUser.email, hoTen: existingUser.hoTen };
-      } else {
-        // Create brand-new user in identity DB
-        const password = createDto.admin.password || DEFAULT_PASSWORD;
-        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
-        const newUser = this.userRepository.create({
-          email: createDto.admin.email.toLowerCase(),
-          hoTen: createDto.admin.hoTen,
-          trangThai: UserStatus.HOAT_DONG,
-          isActive: true,
-        });
-        const savedUser = await this.userRepository.save(newUser);
-
-        // Create credential in identity DB
-        const credential = this.credentialRepository.create({
-          userId: savedUser._id.toString(),
-          password: hashedPassword,
-          isActive: true,
-        });
-        await this.credentialRepository.save(credential);
-
-        // Create identity membership with lowercase 'admin' role
-        const userTenant = this.userTenantRepository.create({
-          userId: savedUser._id.toString(),
-          tenantId: savedTenant._id.toString(),
-          role: 'admin',
-          isActive: true,
-        });
-        await this.userTenantRepository.save(userTenant);
-
-        // Create AppUserRole for the digital_book 'Admin' functional role
+      if (!existingAppRole) {
         await this.appUserRoleRepository.save(
           this.appUserRoleRepository.create({
-            userId: savedUser._id.toString(),
-            tenantId: savedTenant._id.toString(),
+            userId: adminId,
+            tenantId,
             role: ADMIN_ROLE_NAME,
             isActive: true,
           }),
         );
-
-        adminUser = { _id: savedUser._id, email: savedUser.email, hoTen: savedUser.hoTen };
       }
     }
 
-    // Auto-create 'Admin' VaiTro + PhanQuyen (full perms) in digital_book for this tenant
-    await this.ensureAdminRole(savedTenant._id.toString());
+    // Auto-create 'Admin' VaiTro + PhanQuyen (full perms) in digital_book
+    await this.ensureAdminRole(tenantId);
 
-    // Return tenant enriched with config data
-    savedTenant.modules = tenantConfig.modules;
-    savedTenant.nganh = tenantConfig.nganh;
-    savedTenant.glossary = tenantConfig.glossary;
-    savedTenant.dashboardBlocks = tenantConfig.dashboardBlocks ?? null;
+    const savedTenant = {
+      ...createdTenant,
+      _id: tenantId,
+      modules: tenantConfig.modules,
+      nganh: tenantConfig.nganh,
+      glossary: tenantConfig.glossary,
+      dashboardBlocks: tenantConfig.dashboardBlocks ?? null,
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+      tenantId: null,
+    };
 
-    return { tenant: savedTenant, admin: adminUser };
+    const adminInfo = createdTenant.admins?.[0]
+      ? {
+          id: createdTenant.admins[0].id,
+          email: createdTenant.admins[0].email,
+          hoTen: createdTenant.admins[0].hoTen,
+        }
+      : undefined;
+
+    return { tenant: savedTenant, admin: adminInfo };
   }
 
   /**
    * Ensure "Admin" role exists in vai_tro and has full permissions in phan_quyen
    * for the given tenant in digital_book DB.
-   * ADMIN_ROLE_NAME = 'Admin' (capitalized) — the functional accounting role.
    */
   private async ensureAdminRole(tenantId: string): Promise<void> {
     try {
@@ -435,26 +368,37 @@ export class TenantService {
     }
   }
 
-  async update(id: string, updateDto: UpdateTenantDto): Promise<Tenant> {
-    // Use raw entity fetch (no config merging) so we don't accidentally write config
-    // fields back to the identity DB when saving the tenant.
-    const tenant = await this.findTenantEntity(id);
-
-    if (updateDto.slug && updateDto.slug !== tenant.slug) {
-      const existing = await this.findBySlug(updateDto.slug);
-      if (existing) {
-        throw new ConflictException(`Công ty với slug ${updateDto.slug} đã tồn tại`);
-      }
-    }
+  async update(token: string, id: string, updateDto: UpdateTenantDto): Promise<any> {
+    // Verify tenant exists first
+    await this.findTenantById(token, id);
 
     // Split identity fields vs config fields
-    const { modules, nganh, ...identityDto } = sanitizeUpdateDto(updateDto);
+    const { modules, nganh, ...identityFields } = sanitizeUpdateDto(updateDto) as any;
 
-    // Apply only identity fields to tenant (modules/nganh stay in TenantAppConfig)
-    Object.assign(tenant, identityDto);
-    const savedTenant = await this.tenantRepository.save(tenant);
+    // Build identity update body (only defined fields)
+    const identityBody: Record<string, unknown> = {};
+    for (const key of ['name', 'slug', 'maSoThue', 'diaChi', 'dienThoai', 'email', 'nguoiDaiDien', 'isActive']) {
+      if (identityFields[key] !== undefined) identityBody[key] = identityFields[key];
+    }
 
-    // Upsert TenantAppConfig when config fields are present in the dto
+    let updatedTenant: IdentityTenant;
+    if (Object.keys(identityBody).length > 0) {
+      const res = await this.identityClient.updateTenant(token, id, identityBody);
+      if (!res.success) {
+        if (res.error?.code === 'NOT_FOUND') {
+          throw new NotFoundException(`Không tìm thấy công ty với ID ${id}`);
+        }
+        if (res.error?.code === 'CONFLICT') {
+          throw new ConflictException('Slug đã tồn tại');
+        }
+        this.throwFromServiceError(res);
+      }
+      updatedTenant = res.data;
+    } else {
+      updatedTenant = await this.findTenantById(token, id);
+    }
+
+    // Upsert TenantAppConfig when config fields are present
     let config: TenantAppConfig | null = null;
     if (modules !== undefined || nganh !== undefined) {
       config = await this.tenantAppConfigRepository.findOne({ where: { tenantId: id } });
@@ -472,25 +416,37 @@ export class TenantService {
       }
       await this.tenantAppConfigRepository.save(config);
     } else {
-      // Load existing config to merge into return value
       config = await this.tenantAppConfigRepository.findOne({ where: { tenantId: id } });
     }
 
-    // Merge config into returned tenant so caller sees up-to-date shape
-    savedTenant.modules = config?.modules ?? ['KE_TOAN'];
-    savedTenant.nganh = config?.nganh ?? null;
-    savedTenant.glossary = config?.glossary ?? {};
-    savedTenant.dashboardBlocks = config?.dashboardBlocks ?? null;
-
-    return savedTenant;
+    return {
+      _id: updatedTenant.id,
+      id: updatedTenant.id,
+      name: updatedTenant.name,
+      slug: updatedTenant.slug,
+      maSoThue: updatedTenant.maSoThue ?? null,
+      diaChi: updatedTenant.diaChi ?? null,
+      dienThoai: updatedTenant.dienThoai ?? null,
+      email: updatedTenant.email ?? null,
+      nguoiDaiDien: updatedTenant.nguoiDaiDien ?? null,
+      isActive: updatedTenant.isActive,
+      modules: config?.modules ?? ['KE_TOAN'],
+      nganh: config?.nganh ?? null,
+      glossary: config?.glossary ?? {},
+      dashboardBlocks: config?.dashboardBlocks ?? null,
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+      tenantId: null,
+      admins: updatedTenant.admins ?? [],
+    };
   }
 
-  /** Ghi đè glossary của 1 tenant (self-service: admin công ty sửa nhãn công ty mình). */
-  async updateGlossary(tenantId: string, glossary: Glossary): Promise<Tenant> {
-    // Verify tenant exists (raw, no config merge — we load config separately below)
-    const tenant = await this.findTenantEntity(tenantId);
+  /** Write glossary for a tenant (self-service: company admin edits their labels). */
+  async updateGlossary(token: string, tenantId: string, glossary: Glossary): Promise<any> {
+    // Verify tenant exists via identity
+    const tenant = await this.findTenantById(token, tenantId);
 
-    // Upsert TenantAppConfig glossary
+    // Upsert TenantAppConfig glossary (digital_book)
     let config = await this.tenantAppConfigRepository.findOne({ where: { tenantId } });
     if (!config) {
       config = this.tenantAppConfigRepository.create({
@@ -505,29 +461,38 @@ export class TenantService {
     }
     await this.tenantAppConfigRepository.save(config);
 
-    // Return enriched tenant (no need to save to identity DB)
-    tenant.modules = config.modules;
-    tenant.nganh = config.nganh ?? null;
-    tenant.glossary = config.glossary;
-    tenant.dashboardBlocks = config.dashboardBlocks ?? null;
-    return tenant;
+    return {
+      _id: tenant.id,
+      id: tenant.id,
+      name: tenant.name,
+      slug: tenant.slug,
+      maSoThue: tenant.maSoThue ?? null,
+      diaChi: tenant.diaChi ?? null,
+      isActive: tenant.isActive,
+      modules: config.modules,
+      nganh: config.nganh ?? null,
+      glossary: config.glossary,
+      dashboardBlocks: config.dashboardBlocks ?? null,
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+      tenantId: null,
+    };
   }
 
-  /** Đọc cấu hình khối dashboard của tenant; null = chưa cấu hình (hiển thị tất cả). */
-  async getDashboardBlocks(tenantId: string): Promise<string[] | null> {
-    // Verify tenant exists
-    await this.findTenantEntity(tenantId);
+  /** Read dashboard block config for tenant; null = not configured (show all). */
+  async getDashboardBlocks(token: string, tenantId: string): Promise<string[] | null> {
+    await this.findTenantById(token, tenantId);
     const config = await this.tenantAppConfigRepository.findOne({ where: { tenantId } });
     return config?.dashboardBlocks ?? null;
   }
 
-  /** Ghi đè danh sách khối dashboard hiển thị của 1 tenant. */
+  /** Overwrite dashboard blocks for a tenant. */
   async updateDashboardBlocks(
+    token: string,
     tenantId: string,
     blocks: string[],
   ): Promise<{ dashboardBlocks: string[] }> {
-    // Verify tenant exists
-    await this.findTenantEntity(tenantId);
+    await this.findTenantById(token, tenantId);
 
     const dashboardBlocks = Array.isArray(blocks) ? blocks : [];
     let config = await this.tenantAppConfigRepository.findOne({ where: { tenantId } });
@@ -546,25 +511,14 @@ export class TenantService {
     return { dashboardBlocks };
   }
 
-  async delete(id: string): Promise<void> {
-    const tenant = await this.findTenantEntity(id);
-    tenant.isActive = false;
-    await this.tenantRepository.save(tenant);
+  async delete(token: string, id: string): Promise<void> {
+    // identity handles cascade deactivation of memberships
+    const delRes = await this.identityClient.deleteTenant(token, id);
+    if (!delRes.success) this.throwFromServiceError(delRes, `Không tìm thấy công ty với ID ${id}`);
 
-    // Deactivate all UserTenant memberships (identity DB)
-    const memberships = await this.userTenantRepository.find({
-      where: { tenantId: id, isActive: true },
-    });
-    if (memberships.length > 0) {
-      for (const membership of memberships) {
-        membership.isActive = false;
-      }
-      await this.userTenantRepository.save(memberships);
-    }
-
-    // Deactivate all AppUserRole rows for this tenant (digital_book DB)
+    // Deactivate all AppUserRole rows for this tenant (digital_book)
     const appRoles = await this.appUserRoleRepository.find({
-      where: { tenantId: id, isActive: true },
+      where: { tenantId: id, isActive: true } as any,
     });
     if (appRoles.length > 0) {
       for (const role of appRoles) {
@@ -574,9 +528,9 @@ export class TenantService {
     }
   }
 
-  async hardDelete(id: string): Promise<void> {
-    const tenant = await this.findTenantEntity(id);
-    await this.tenantRepository.remove(tenant);
+  async hardDelete(token: string, id: string): Promise<void> {
+    const delRes = await this.identityClient.deleteTenant(token, id);
+    if (!delRes.success) this.throwFromServiceError(delRes, `Không tìm thấy công ty với ID ${id}`);
 
     // Remove TenantAppConfig for this tenant
     const config = await this.tenantAppConfigRepository.findOne({ where: { tenantId: id } });
@@ -585,157 +539,127 @@ export class TenantService {
     }
 
     // Remove all AppUserRole rows for this tenant
-    const appRoles = await this.appUserRoleRepository.find({ where: { tenantId: id } });
+    const appRoles = await this.appUserRoleRepository.find({ where: { tenantId: id } as any });
     if (appRoles.length > 0) {
       await this.appUserRoleRepository.remove(appRoles);
     }
   }
 
-  async getAllUsers(): Promise<Array<{ id: string; email: string; hoTen: string }>> {
-    const users = await this.userRepository.find({
-      where: { isActive: true },
-    });
+  async getAllUsers(token: string): Promise<Array<{ id: string; email: string; hoTen: string }>> {
+    const res = await this.identityClient.listUsers(token, {});
+    if (!res.success) this.throwFromServiceError(res);
 
-    return users.map((u) => ({
-      id: u._id.toString(),
+    const users: any[] = res.data ?? [];
+    return users.map((u: any) => ({
+      id: u.id,
       email: u.email,
       hoTen: u.hoTen,
     }));
   }
 
   // ──────────────────────────────────────────────────────────────────────────
-  // 7b: Member management — DO NOT MODIFY in 7a
+  // Member management
   // ──────────────────────────────────────────────────────────────────────────
 
-  async getTenantMembers(tenantId: string): Promise<Array<{
-    id: string;
-    email: string;
-    hoTen: string;
-    role: string;
-    isActive: boolean;
-    membershipId: string;
-  }>> {
+  async getTenantMembers(
+    token: string,
+    tenantId: string,
+  ): Promise<
+    Array<{
+      id: string;
+      email: string;
+      hoTen: string;
+      role: string;
+      isActive: boolean;
+      membershipId: string;
+    }>
+  > {
     // Verify tenant exists
-    await this.findOne(tenantId);
+    await this.findTenantById(token, tenantId);
 
-    const memberships = await this.userTenantRepository.find({
-      where: { tenantId, isActive: true },
-    });
+    const membRes = await this.identityClient.listMembers(token, tenantId);
+    if (!membRes.success) this.throwFromServiceError(membRes);
 
+    const memberships: IdentityMember[] = membRes.data ?? [];
     if (memberships.length === 0) return [];
-
-    const { ObjectId } = await import('mongodb');
-    const userIds = memberships.map((m) => new ObjectId(m.userId));
-    const users = await this.userRepository.find({
-      where: { _id: { $in: userIds } as any },
-    });
-
-    const userMap = new Map(users.map((u) => [u._id.toString(), u]));
 
     // Load functional roles from AppUserRole (digital_book) — keyed by userId
     const appRoles = await this.appUserRoleRepository.find({
-      where: { tenantId },
+      where: { tenantId } as any,
     });
     const appRoleMap = new Map(appRoles.map((r) => [r.userId, r.role]));
 
-    return memberships
-      .map((m) => {
-        const user = userMap.get(m.userId);
-        if (!user) return null;
-        return {
-          id: user._id.toString(),
-          email: user.email,
-          hoTen: user.hoTen,
-          // Functional role comes from AppUserRole, NOT from membership.role
-          role: appRoleMap.get(m.userId) ?? '',
-          isActive: m.isActive,
-          membershipId: m._id.toString(),
-        };
-      })
-      .filter((m): m is NonNullable<typeof m> => m !== null);
+    return memberships.map((m) => ({
+      id: m.userId,
+      email: m.email ?? '',
+      hoTen: m.hoTen ?? '',
+      // Functional role from AppUserRole; fall back to identity membership role
+      role: appRoleMap.get(m.userId) ?? m.role ?? '',
+      isActive: m.isActive,
+      // CONCERN: identity doesn't return membership _id; using userId as membershipId
+      membershipId: m.userId,
+    }));
   }
 
-  async addUserToTenant(tenantId: string, dto: AddUserToTenantDto): Promise<{
+  async addUserToTenant(
+    token: string,
+    tenantId: string,
+    dto: AddUserToTenantDto,
+  ): Promise<{
     user: { id: string; email: string; hoTen: string };
     role: string;
     isNew: boolean;
   }> {
     // Verify tenant exists
-    await this.findOne(tenantId);
+    await this.findTenantById(token, tenantId);
 
-    let user: User;
+    let memberBody: Record<string, unknown>;
     let isNew = false;
 
     if (dto.userId) {
-      // Use existing user by ID
-      const { ObjectId } = await import('mongodb');
-      const found = await this.userRepository.findOne({
-        where: { _id: new ObjectId(dto.userId) as any },
-      });
-      if (!found) {
-        throw new NotFoundException(`Không tìm thấy người dùng với ID ${dto.userId}`);
-      }
-      user = found;
+      memberBody = { userId: dto.userId, role: 'member' };
     } else if (dto.email) {
-      // Find by email or create new
-      const existing = await this.userRepository.findOne({
-        where: { email: dto.email.toLowerCase() },
-      });
+      // Check if user already exists via identity
+      const searchRes = await this.identityClient.listUsers(token, { search: dto.email });
+      const existing = searchRes.success
+        ? (searchRes.data ?? []).find(
+            (u: any) => u.email?.toLowerCase() === dto.email!.toLowerCase(),
+          )
+        : null;
 
       if (existing) {
-        user = existing;
+        memberBody = { userId: existing.id, role: 'member' };
       } else {
-        // Create new user
-        const password = dto.password || DEFAULT_PASSWORD;
-        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
-        const newUser = this.userRepository.create({
+        // New user — identity addMember creates user via email+hoTen
+        memberBody = {
           email: dto.email.toLowerCase(),
-          hoTen: dto.hoTen!,
-          trangThai: UserStatus.HOAT_DONG,
-          isActive: true,
-        });
-        user = await this.userRepository.save(newUser);
-
-        const credential = this.credentialRepository.create({
-          userId: user._id.toString(),
-          password: hashedPassword,
-          isActive: true,
-        });
-        await this.credentialRepository.save(credential);
+          hoTen: dto.hoTen ?? '',
+          role: 'member',
+          ...(dto.password ? { password: dto.password } : {}),
+        };
         isNew = true;
       }
     } else {
       throw new ConflictException('Phải cung cấp userId hoặc email');
     }
 
-    // Check existing membership
-    const existingMembership = await this.userTenantRepository.findOne({
-      where: { userId: user._id.toString(), tenantId },
-    });
-
-    if (existingMembership) {
-      if (existingMembership.isActive) {
+    const res = await this.identityClient.addMember(token, tenantId, memberBody);
+    if (!res.success) {
+      if (res.error?.code === 'NOT_FOUND') {
+        throw new NotFoundException('Không tìm thấy người dùng');
+      }
+      if (res.error?.code === 'CONFLICT') {
         throw new ConflictException('User đã là thành viên của công ty này');
       }
-      // Reactivate inactive membership — tier is always 'member' for added users
-      existingMembership.isActive = true;
-      existingMembership.role = 'member';
-      await this.userTenantRepository.save(existingMembership);
-    } else {
-      // Identity membership tier: 'member' (NOT the functional accounting role)
-      const userTenant = this.userTenantRepository.create({
-        userId: user._id.toString(),
-        tenantId,
-        role: 'member',
-        isActive: true,
-      });
-      await this.userTenantRepository.save(userTenant);
+      this.throwFromServiceError(res);
     }
+
+    const memberData = res.data; // { userId, hoTen, email, role, isActive }
+    const userId = memberData.userId;
 
     // Upsert functional role in AppUserRole (digital_book)
     const existingAppRole = await this.appUserRoleRepository.findOne({
-      where: { userId: user._id.toString(), tenantId },
+      where: { userId, tenantId } as any,
     });
     if (existingAppRole) {
       existingAppRole.role = dto.role;
@@ -744,7 +668,7 @@ export class TenantService {
     } else {
       await this.appUserRoleRepository.save(
         this.appUserRoleRepository.create({
-          userId: user._id.toString(),
+          userId,
           tenantId,
           role: dto.role,
           isActive: true,
@@ -753,35 +677,45 @@ export class TenantService {
     }
 
     return {
-      user: { id: user._id.toString(), email: user.email, hoTen: user.hoTen },
+      user: {
+        id: userId,
+        email: memberData.email ?? '',
+        hoTen: memberData.hoTen ?? '',
+      },
       role: dto.role,
       isNew,
     };
   }
 
   async updateTenantMember(
+    token: string,
     tenantId: string,
     userId: string,
     dto: UpdateTenantMemberDto,
   ): Promise<void> {
-    const membership = await this.userTenantRepository.findOne({
-      where: { tenantId, userId },
-    });
-
-    if (!membership) {
-      throw new NotFoundException('Không tìm thấy thành viên trong công ty này');
-    }
-
-    // dto.isActive → update membership active state in identity DB
+    // Update identity membership (isActive) if provided
     if (dto.isActive !== undefined) {
-      membership.isActive = dto.isActive;
-      await this.userTenantRepository.save(membership);
+      const res = await this.identityClient.updateMember(token, tenantId, userId, {
+        isActive: dto.isActive,
+      });
+      if (!res.success) {
+        if (res.error?.code === 'NOT_FOUND') {
+          throw new NotFoundException('Không tìm thấy thành viên trong công ty này');
+        }
+        this.throwFromServiceError(res);
+      }
+    } else {
+      // Verify membership exists when only updating functional role
+      const membRes = await this.identityClient.listMembers(token, tenantId);
+      if (!membRes.success) this.throwFromServiceError(membRes);
+      const exists = (membRes.data ?? []).some((m: IdentityMember) => m.userId === userId);
+      if (!exists) throw new NotFoundException('Không tìm thấy thành viên trong công ty này');
     }
 
-    // dto.role → upsert FUNCTIONAL role in AppUserRole (digital_book), NOT membership.role
+    // Update functional role in AppUserRole (digital_book) — NOT identity membership.role
     if (dto.role !== undefined) {
       const existingAppRole = await this.appUserRoleRepository.findOne({
-        where: { userId, tenantId },
+        where: { userId, tenantId } as any,
       });
       if (existingAppRole) {
         existingAppRole.role = dto.role;
@@ -801,88 +735,74 @@ export class TenantService {
   }
 
   async updateMemberProfile(
+    token: string,
     tenantId: string,
     userId: string,
     dto: UpdateMemberProfileDto,
   ): Promise<{ id: string; email: string; hoTen: string }> {
-    const membership = await this.userTenantRepository.findOne({
-      where: { tenantId, userId, isActive: true },
-    });
-    if (!membership) {
-      throw new NotFoundException('Không tìm thấy thành viên trong công ty này');
-    }
+    // Verify membership via listMembers
+    const membRes = await this.identityClient.listMembers(token, tenantId);
+    if (!membRes.success) this.throwFromServiceError(membRes);
+    const member: IdentityMember | undefined = (membRes.data ?? []).find(
+      (m: IdentityMember) => m.userId === userId && m.isActive,
+    );
+    if (!member) throw new NotFoundException('Không tìm thấy thành viên trong công ty này');
 
-    const { ObjectId } = await import('mongodb');
-    const user = await this.userRepository.findOne({
-      where: { _id: new ObjectId(userId) as any },
-    });
-    if (!user) {
-      throw new NotFoundException('Không tìm thấy người dùng');
-    }
+    // Update user profile via identity
+    const updateBody: Record<string, unknown> = {};
+    if (dto.email) updateBody.email = dto.email.toLowerCase();
+    if (dto.hoTen !== undefined) updateBody.hoTen = dto.hoTen;
 
-    if (dto.email) {
-      const email = dto.email.toLowerCase();
-      if (email !== user.email) {
-        const existing = await this.userRepository.findOne({ where: { email } });
-        if (existing && existing._id.toString() !== userId) {
+    if (Object.keys(updateBody).length > 0) {
+      const res = await this.identityClient.updateUser(token, userId, updateBody);
+      if (!res.success) {
+        if (res.error?.code === 'NOT_FOUND') {
+          throw new NotFoundException('Không tìm thấy người dùng');
+        }
+        if (res.error?.code === 'CONFLICT') {
           throw new ConflictException('Email đã được sử dụng');
         }
-        user.email = email;
+        this.throwFromServiceError(res);
       }
-    }
-    if (dto.hoTen !== undefined) {
-      user.hoTen = dto.hoTen;
+      const updated = res.data;
+      return { id: userId, email: updated.email, hoTen: updated.hoTen };
     }
 
-    const saved = await this.userRepository.save(user);
-    return { id: saved._id.toString(), email: saved.email, hoTen: saved.hoTen };
+    return { id: userId, email: member.email ?? '', hoTen: member.hoTen ?? '' };
   }
 
   async resetMemberPassword(
+    token: string,
     tenantId: string,
     userId: string,
   ): Promise<{ defaultPassword: string }> {
-    const membership = await this.userTenantRepository.findOne({
-      where: { tenantId, userId, isActive: true },
-    });
-    if (!membership) {
-      throw new NotFoundException('Không tìm thấy thành viên trong công ty này');
-    }
+    // Verify membership
+    const membRes = await this.identityClient.listMembers(token, tenantId);
+    if (!membRes.success) this.throwFromServiceError(membRes);
+    const member: IdentityMember | undefined = (membRes.data ?? []).find(
+      (m: IdentityMember) => m.userId === userId && m.isActive,
+    );
+    if (!member) throw new NotFoundException('Không tìm thấy thành viên trong công ty này');
 
-    const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, SALT_ROUNDS);
+    // Reset password via identity
+    const res = await this.identityClient.resetPassword(token, userId, {});
+    if (!res.success) this.throwFromServiceError(res);
 
-    let credential = await this.credentialRepository.findOne({
-      where: { userId },
-    });
-    if (credential) {
-      credential.password = hashedPassword;
-    } else {
-      credential = this.credentialRepository.create({
-        userId,
-        password: hashedPassword,
-        isActive: true,
-      });
-    }
-    await this.credentialRepository.save(credential);
-
-    return { defaultPassword: DEFAULT_PASSWORD };
+    return { defaultPassword: res.data?.defaultPassword ?? '123456' };
   }
 
-  async removeTenantMember(tenantId: string, userId: string): Promise<void> {
-    const membership = await this.userTenantRepository.findOne({
-      where: { tenantId, userId },
-    });
-
-    if (!membership) {
-      throw new NotFoundException('Không tìm thấy thành viên trong công ty này');
+  async removeTenantMember(token: string, tenantId: string, userId: string): Promise<void> {
+    const res = await this.identityClient.removeMember(token, tenantId, userId);
+    if (!res.success) {
+      if (res.error?.code === 'NOT_FOUND') {
+        throw new NotFoundException('Không tìm thấy thành viên trong công ty này');
+      }
+      this.throwFromServiceError(res);
     }
 
-    membership.isActive = false;
-    await this.userTenantRepository.save(membership);
-
-    // Also deactivate the member's functional role in AppUserRole (digital_book)
+    // Deactivate functional role in AppUserRole (digital_book)
     const appRole = await this.appUserRoleRepository.findOne({
-      where: { userId, tenantId },
+      where: { userId, tenantId } as any,
     });
     if (appRole) {
       appRole.isActive = false;

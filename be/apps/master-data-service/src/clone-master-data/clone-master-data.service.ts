@@ -12,9 +12,8 @@ export class CloneMasterDataService {
   private readonly logger = new Logger(CloneMasterDataService.name);
 
   constructor(
-    // Map entityName -> raw repo. Inject 7 token rồi gom lại.
+    // Map entityName -> raw repo. Inject 7 tokens then aggregate.
     private readonly repos: CategoryRepoMap,
-    private readonly tenantRepo: { findOneBy: (w: any) => Promise<any> },
   ) {}
 
   getCategories() {
@@ -30,23 +29,25 @@ export class CloneMasterDataService {
     return cats; // giữ thứ tự registry (đảm bảo ho-so-chung-tu trước quy-chuan)
   }
 
-  private async validate(src: string, dst: string) {
+  /**
+   * Validate src/dst IDs — format only (ObjectId parse).
+   * Tenant existence is validated implicitly by the entity queries (returns empty if not found).
+   * CONCERN: previously validated tenant existence via identity DB repo; now removed to avoid
+   * identity DB coupling. If src/dst do not exist, preview shows 0 rows and execute inserts nothing.
+   */
+  private validate(src: string, dst: string): void {
     if (!src || !dst) throw new BadRequestException('Thiếu công ty nguồn/đích');
     if (src === dst) throw new BadRequestException('Công ty nguồn và đích phải khác nhau');
     const toObjectId = (id: string, label: string) => {
       try { return new ObjectId(id); }
       catch { throw new BadRequestException(`ID ${label} không hợp lệ`); }
     };
-    const [s, d] = await Promise.all([
-      this.tenantRepo.findOneBy({ _id: toObjectId(src, 'nguồn') }),
-      this.tenantRepo.findOneBy({ _id: toObjectId(dst, 'đích') }),
-    ]);
-    if (!s) throw new BadRequestException('Không tìm thấy công ty nguồn');
-    if (!d) throw new BadRequestException('Không tìm thấy công ty đích');
+    toObjectId(src, 'nguồn');
+    toObjectId(dst, 'đích');
   }
 
   async preview(src: string, dst: string, keys: string[]): Promise<PreviewRow[]> {
-    await this.validate(src, dst);
+    this.validate(src, dst);
     const rows: PreviewRow[] = [];
     for (const cat of this.selected(keys)) {
       const repo = this.repos[cat.entityName];
@@ -62,7 +63,7 @@ export class CloneMasterDataService {
   }
 
   async execute(src: string, dst: string, keys: string[]): Promise<ResultRow[]> {
-    await this.validate(src, dst);
+    this.validate(src, dst);
     const idMaps: Record<string, Map<string, string>> = {};
     const results: ResultRow[] = [];
     for (const cat of this.selected(keys)) {

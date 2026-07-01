@@ -18,7 +18,7 @@ import {
   UpdateTenantGlossaryDto,
   UpdateTenantDashboardDto,
 } from '@app/dto';
-import { JwtGuard, SuperAdminGuard, TenantAdminGuard, AdminGuard, CurrentUser } from '@app/auth';
+import { JwtGuard, SuperAdminGuard, TenantAdminGuard, AdminGuard, CurrentUser, AuthToken } from '@app/auth';
 
 @Controller('tenants')
 export class TenantController {
@@ -28,56 +28,62 @@ export class TenantController {
 
   @Get()
   @UseGuards(JwtGuard, SuperAdminGuard)
-  async findAll() {
-    const data = await this.tenantService.findAll();
+  async findAll(@AuthToken() token: string) {
+    const data = await this.tenantService.findAll(token);
     return { success: true, data };
   }
 
   @Get('users')
   @UseGuards(JwtGuard, SuperAdminGuard)
-  async getAllUsers() {
-    const data = await this.tenantService.getAllUsers();
+  async getAllUsers(@AuthToken() token: string) {
+    const data = await this.tenantService.getAllUsers(token);
     return { success: true, data };
   }
 
   @Get(':id')
   @UseGuards(JwtGuard, SuperAdminGuard)
-  async findOne(@Param('id') id: string) {
-    const data = await this.tenantService.findOne(id);
+  async findOne(@AuthToken() token: string, @Param('id') id: string) {
+    const data = await this.tenantService.findOne(token, id);
     return { success: true, data };
   }
 
   @Post()
   @UseGuards(JwtGuard, SuperAdminGuard)
-  async create(@Body() createDto: CreateTenantDto) {
-    const data = await this.tenantService.create(createDto);
+  async create(@AuthToken() token: string, @Body() createDto: CreateTenantDto) {
+    const data = await this.tenantService.create(token, createDto);
     return { success: true, data };
   }
 
   @Put('current/glossary')
   @UseGuards(JwtGuard)
   async updateCurrentGlossary(
+    @AuthToken() token: string,
     @CurrentUser('tenantId') tenantId: string,
     @Body() dto: UpdateTenantGlossaryDto,
   ) {
-    const data = await this.tenantService.updateGlossary(tenantId, dto.glossary ?? {});
+    const data = await this.tenantService.updateGlossary(token, tenantId, dto.glossary ?? {});
     return { success: true, data };
   }
 
   @Get('current/dashboard')
   @UseGuards(JwtGuard)
-  async getCurrentDashboard(@CurrentUser('tenantId') tenantId: string) {
-    const dashboardBlocks = await this.tenantService.getDashboardBlocks(tenantId);
+  async getCurrentDashboard(
+    @AuthToken() token: string,
+    @CurrentUser('tenantId') tenantId: string,
+  ) {
+    const dashboardBlocks = await this.tenantService.getDashboardBlocks(token, tenantId);
     return { success: true, data: { dashboardBlocks } };
   }
 
   @Put('current/dashboard')
   @UseGuards(JwtGuard, AdminGuard)
   async updateCurrentDashboard(
+    @AuthToken() token: string,
     @CurrentUser('tenantId') tenantId: string,
     @Body() dto: UpdateTenantDashboardDto,
   ) {
     const data = await this.tenantService.updateDashboardBlocks(
+      token,
       tenantId,
       dto.dashboardBlocks ?? [],
     );
@@ -86,15 +92,15 @@ export class TenantController {
 
   @Put(':id')
   @UseGuards(JwtGuard, SuperAdminGuard)
-  async update(@Param('id') id: string, @Body() updateDto: UpdateTenantDto) {
-    const data = await this.tenantService.update(id, updateDto);
+  async update(@AuthToken() token: string, @Param('id') id: string, @Body() updateDto: UpdateTenantDto) {
+    const data = await this.tenantService.update(token, id, updateDto);
     return { success: true, data };
   }
 
   @Delete(':id')
   @UseGuards(JwtGuard, SuperAdminGuard)
-  async delete(@Param('id') id: string) {
-    await this.tenantService.delete(id);
+  async delete(@AuthToken() token: string, @Param('id') id: string) {
+    await this.tenantService.delete(token, id);
     return { success: true, message: 'Xóa công ty thành công' };
   }
 
@@ -102,60 +108,65 @@ export class TenantController {
 
   @Get(':id/members')
   @UseGuards(JwtGuard, TenantAdminGuard)
-  async getMembers(@Param('id') id: string) {
-    const data = await this.tenantService.getTenantMembers(id);
+  async getMembers(@AuthToken() token: string, @Param('id') id: string) {
+    const data = await this.tenantService.getTenantMembers(token, id);
     return { success: true, data };
   }
 
   @Post(':id/members')
   @UseGuards(JwtGuard, TenantAdminGuard)
   async addMember(
+    @AuthToken() token: string,
     @Param('id') id: string,
     @Body() dto: AddUserToTenantDto,
   ) {
-    const data = await this.tenantService.addUserToTenant(id, dto);
+    const data = await this.tenantService.addUserToTenant(token, id, dto);
     return { success: true, data };
   }
 
   @Put(':id/members/:userId')
   @UseGuards(JwtGuard, TenantAdminGuard)
   async updateMember(
+    @AuthToken() token: string,
     @Param('id') id: string,
     @Param('userId') userId: string,
     @Body() dto: UpdateTenantMemberDto,
   ) {
-    await this.tenantService.updateTenantMember(id, userId, dto);
+    await this.tenantService.updateTenantMember(token, id, userId, dto);
     return { success: true, message: 'Cập nhật thành viên thành công' };
   }
 
   @Put(':id/members/:userId/profile')
   @UseGuards(JwtGuard, TenantAdminGuard)
   async updateMemberProfile(
+    @AuthToken() token: string,
     @Param('id') id: string,
     @Param('userId') userId: string,
     @Body() dto: UpdateMemberProfileDto,
   ) {
-    const data = await this.tenantService.updateMemberProfile(id, userId, dto);
+    const data = await this.tenantService.updateMemberProfile(token, id, userId, dto);
     return { success: true, data };
   }
 
   @Post(':id/members/:userId/reset-password')
   @UseGuards(JwtGuard, TenantAdminGuard)
   async resetMemberPassword(
+    @AuthToken() token: string,
     @Param('id') id: string,
     @Param('userId') userId: string,
   ) {
-    const data = await this.tenantService.resetMemberPassword(id, userId);
+    const data = await this.tenantService.resetMemberPassword(token, id, userId);
     return { success: true, message: 'Đã reset mật khẩu về mặc định', data };
   }
 
   @Delete(':id/members/:userId')
   @UseGuards(JwtGuard, TenantAdminGuard)
   async removeMember(
+    @AuthToken() token: string,
     @Param('id') id: string,
     @Param('userId') userId: string,
   ) {
-    await this.tenantService.removeTenantMember(id, userId);
+    await this.tenantService.removeTenantMember(token, id, userId);
     return { success: true, message: 'Đã xóa thành viên khỏi công ty' };
   }
 }

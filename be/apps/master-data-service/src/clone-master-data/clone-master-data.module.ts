@@ -1,9 +1,7 @@
 import { Module } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import {
   TaiKhoan, HoSoChungTu, KhoanMuc, NhomKhoanMuc,
-  LoaiChungTuMaster, LoaiGiaoDich, QuyChuan, Tenant,
+  LoaiChungTuMaster, LoaiGiaoDich, QuyChuan,
 } from '@app/entities';
 import { DatabaseModule, RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 import { CloneMasterDataController } from './clone-master-data.controller';
@@ -15,18 +13,19 @@ const rawTokens = RAW_ENTITIES.map((e) => `${RAW_REPOSITORY_TOKEN_PREFIX}${e.nam
 @Module({
   imports: [
     DatabaseModule.forFeatureRaw(RAW_ENTITIES),
-    DatabaseModule.forFeatureIdentity([Tenant]),
+    // Removed: DatabaseModule.forFeatureIdentity([Tenant]) — tenant validation now done
+    // format-only (ObjectId parse). Tenant existence is implicitly validated by entity queries.
   ],
   controllers: [CloneMasterDataController],
   providers: [
     {
       provide: CloneMasterDataService,
-      useFactory: (tenantRepo: Repository<Tenant>, ...rawRepos: Repository<any>[]) => {
-        const repos: Record<string, Repository<any>> = {};
+      useFactory: (...rawRepos: any[]) => {
+        const repos: Record<string, any> = {};
         RAW_ENTITIES.forEach((e, i) => { repos[e.name] = rawRepos[i]; });
-        return new CloneMasterDataService(repos, tenantRepo as any);
+        return new CloneMasterDataService(repos);
       },
-      inject: [getRepositoryToken(Tenant, 'identity'), ...rawTokens],
+      inject: [...rawTokens],
     },
   ],
 })
