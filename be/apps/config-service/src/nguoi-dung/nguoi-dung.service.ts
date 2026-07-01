@@ -53,6 +53,8 @@ interface IdentityUser {
   trangThai: UserStatus;
   isActive: boolean;
   tenants?: { id: string; name: string; role: string }[];
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
 }
 
 @Injectable()
@@ -96,10 +98,8 @@ export class NguoiDung_Service {
       trangThai: user.trangThai,
       isActive: user.isActive,
       isSuperAdmin: user.email === SUPER_ADMIN_EMAIL,
-      // createdAt/updatedAt not returned by identity listUsers — use placeholder
-      // CONCERN: identity /api/admin/users does not expose createdAt/updatedAt in its response.
-      createdAt: now,
-      updatedAt: now,
+      createdAt: user.createdAt ? new Date(user.createdAt) : now,
+      updatedAt: user.updatedAt ? new Date(user.updatedAt) : now,
       tenantRole: tenantRole ?? 'KIEM_SOAT',
     };
   }
@@ -195,6 +195,7 @@ export class NguoiDung_Service {
     const appUserRole = await this.appUserRoleRepo.findOne({
       where: {
         userId: id,
+        isActive: true,
         ...(currentTenantId ? { tenantId: currentTenantId } : {}),
       } as any,
     });
@@ -275,6 +276,7 @@ export class NguoiDung_Service {
     const updated: IdentityUser = res.data;
 
     // Update functional role in AppUserRole (digital_book) — NOT membership tier
+    let tenantRole: string = 'KIEM_SOAT';
     if (dto.vaiTro) {
       const currentTenantId = this.tenantContext.getCurrentTenantId();
       if (currentTenantId) {
@@ -295,20 +297,19 @@ export class NguoiDung_Service {
           });
           await this.appUserRoleRepo.save(newRole);
         }
+        tenantRole = dto.vaiTro;
       }
     }
 
-    return this.mapToUserWithTenant(updated);
+    return this.mapToUserWithTenant(updated, tenantRole);
   }
 
   // ─── delete ────────────────────────────────────────────────────────────────
 
   async delete(token: string, id: string): Promise<void> {
-    // CONCERN: IdentityClient has NO delete-user endpoint (/api/admin/users/:id DELETE).
-    // A dedicated endpoint is needed in identity-service to fully soft-delete a user
-    // (set isActive=false on User, UserCredential, and all UserTenant memberships).
-    // Current workaround: only deactivate digital_book side; identity user remains active.
-    // Do NOT bypass by re-opening identity DB connection.
+    // Soft-delete user + credential + all memberships on identity side
+    const delRes = await this.identityClient.deleteUser(token, id);
+    if (!delRes.success) this.throwFromServiceError(delRes, `Người dùng với ID ${id} không tồn tại`);
 
     // Deactivate AppUserRole rows in digital_book
     const appUserRoles = await this.appUserRoleRepo.find({

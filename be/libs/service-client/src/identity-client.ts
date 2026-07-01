@@ -79,6 +79,12 @@ export class IdentityClient extends BaseServiceClient {
     );
   }
 
+  deleteUser(token: string, id: string): Promise<ServiceResponse<any>> {
+    return this.request('identity', 'DELETE', `/api/admin/users/${id}`, {
+      headers: this.authed(token),
+    });
+  }
+
   // -------- Members --------
 
   listMembers(

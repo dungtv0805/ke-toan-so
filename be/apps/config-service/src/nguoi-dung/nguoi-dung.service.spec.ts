@@ -59,6 +59,7 @@ describe('NguoiDung_Service (IdentityClient refactor)', () => {
       | 'toggleUserStatus'
       | 'addMember'
       | 'resetPassword'
+      | 'deleteUser'
     >
   >;
   let mockAppUserRoleRepo: {
@@ -80,6 +81,7 @@ describe('NguoiDung_Service (IdentityClient refactor)', () => {
       toggleUserStatus: jest.fn(),
       addMember: jest.fn(),
       resetPassword: jest.fn(),
+      deleteUser: jest.fn(),
     };
 
     mockAppUserRoleRepo = {
@@ -328,10 +330,11 @@ describe('NguoiDung_Service (IdentityClient refactor)', () => {
       const existingRole = makeAppUserRole('u1', 'KIEM_SOAT');
       mockAppUserRoleRepo.findOne.mockResolvedValue(existingRole);
 
-      await service.update(TOKEN, 'u1', { hoTen: 'Updated', vaiTro: 'GIAM_DOC' } as any);
+      const result = await service.update(TOKEN, 'u1', { hoTen: 'Updated', vaiTro: 'GIAM_DOC' } as any);
 
       expect(mockIdentityClient.updateUser).toHaveBeenCalledWith(TOKEN, 'u1', expect.objectContaining({ hoTen: 'Updated' }));
       expect(mockAppUserRoleRepo.save).toHaveBeenCalledWith(expect.objectContaining({ role: 'GIAM_DOC' }));
+      expect(result.tenantRole).toBe('GIAM_DOC');
     });
 
     it('creates new AppUserRole when none exists yet', async () => {
@@ -360,7 +363,8 @@ describe('NguoiDung_Service (IdentityClient refactor)', () => {
   // delete
   // ──────────────────────────────────────────────────────────────────────────
   describe('delete', () => {
-    it('soft-deletes AppUserRole rows in digital_book', async () => {
+    it('calls identityClient.deleteUser and soft-deletes AppUserRole rows in digital_book', async () => {
+      mockIdentityClient.deleteUser.mockResolvedValue({ success: true, data: {} });
       const roles = [
         { ...makeAppUserRole('u1', 'KIEM_SOAT'), isActive: true },
       ] as AppUserRole[];
@@ -368,13 +372,33 @@ describe('NguoiDung_Service (IdentityClient refactor)', () => {
 
       await service.delete(TOKEN, 'u1');
 
+      expect(mockIdentityClient.deleteUser).toHaveBeenCalledWith(TOKEN, 'u1');
       expect(mockAppUserRoleRepo.save).toHaveBeenCalledWith(expect.objectContaining({ isActive: false }));
     });
 
     it('does not throw even when no AppUserRole rows exist', async () => {
+      mockIdentityClient.deleteUser.mockResolvedValue({ success: true, data: {} });
       mockAppUserRoleRepo.find.mockResolvedValue([]);
 
       await expect(service.delete(TOKEN, 'u1')).resolves.toBeUndefined();
+    });
+
+    it('throws NotFoundException when identity returns NOT_FOUND', async () => {
+      mockIdentityClient.deleteUser.mockResolvedValue({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Người dùng không tồn tại' },
+      });
+
+      await expect(service.delete(TOKEN, 'bad-id')).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws InternalServerErrorException when identity returns generic error', async () => {
+      mockIdentityClient.deleteUser.mockResolvedValue({
+        success: false,
+        error: { code: 'INTERNAL', message: 'identity down' },
+      });
+
+      await expect(service.delete(TOKEN, 'u1')).rejects.toThrow(InternalServerErrorException);
     });
   });
 

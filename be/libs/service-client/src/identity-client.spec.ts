@@ -96,6 +96,20 @@ describe('IdentityClient', () => {
     });
   });
 
+  describe('deleteUser', () => {
+    it('calls DELETE /api/admin/users/:id with Authorization header', async () => {
+      await client.deleteUser(token, 'u-del');
+      expect(requestSpy).toHaveBeenCalledWith(
+        'identity',
+        'DELETE',
+        '/api/admin/users/u-del',
+        {
+          headers: { Authorization: token },
+        },
+      );
+    });
+  });
+
   // -------- Members --------
 
   describe('listMembers', () => {
