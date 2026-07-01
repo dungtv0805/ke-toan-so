@@ -283,4 +283,14 @@ describe('IdentityClient', () => {
       });
     });
   });
+
+  describe('switchTenant', () => {
+    it('calls POST /api/switch-tenant with tenantId in body and Authorization header', async () => {
+      await client.switchTenant(token, 'tenant-123');
+      expect(requestSpy).toHaveBeenCalledWith('identity', 'POST', '/api/switch-tenant', {
+        headers: { Authorization: token },
+        body: { tenantId: 'tenant-123' },
+      });
+    });
+  });
 });

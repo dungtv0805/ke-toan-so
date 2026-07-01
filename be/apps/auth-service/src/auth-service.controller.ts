@@ -9,13 +9,10 @@ import {
 } from '@nestjs/common';
 import { AuthServiceService } from './auth-service.service';
 import {
-  LoginDto,
-  RegisterDto,
   VerifyTokenDto,
-  SelectTenantDto,
   SwitchTenantDto,
 } from './dto';
-import { JwtGuard, CurrentUser } from '@app/auth';
+import { JwtGuard, CurrentUser, AuthToken } from '@app/auth';
 import type { UserPayload } from '@app/auth';
 
 @Controller()
@@ -23,68 +20,26 @@ export class AuthServiceController {
   constructor(private readonly authService: AuthServiceService) {}
 
   /**
-   * POST /login
-   * Authenticate user and return JWT token or tempToken + tenants list
-   * - Case 1: User có 1 tenant → accessToken + tenant
-   * - Case 2: User có nhiều tenants → tempToken + tenants[]
-   */
-  @Post('login')
-  @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: LoginDto) {
-    const result = await this.authService.login(loginDto);
-    return {
-      success: true,
-      data: result,
-    };
-  }
-
-  /**
-   * POST /select-tenant
-   * Select tenant after login (step 2 of 2-step flow)
-   * Returns accessToken with selected tenantId
-   */
-  @Post('select-tenant')
-  @HttpCode(HttpStatus.OK)
-  async selectTenant(@Body() selectTenantDto: SelectTenantDto) {
-    const result = await this.authService.selectTenant(selectTenantDto);
-    return {
-      success: true,
-      data: result,
-    };
-  }
-
-  /**
    * POST /switch-tenant
-   * Switch to a different tenant without re-login (requires authentication)
+   * Switch to a different tenant without re-login (requires authentication).
+   * Proxies to identity-service, enriches response with digital_book data.
    */
   @Post('switch-tenant')
   @UseGuards(JwtGuard)
   @HttpCode(HttpStatus.OK)
   async switchTenant(
+    @AuthToken() token: string,
     @CurrentUser() user: UserPayload,
     @Body() switchTenantDto: SwitchTenantDto,
   ) {
     const result = await this.authService.switchTenant(
+      token,
       user.id,
       switchTenantDto.tenantId,
     );
     return {
       success: true,
       data: result,
-    };
-  }
-
-  /**
-   * POST /register
-   * Register a new user
-   */
-  @Post('register')
-  @HttpCode(HttpStatus.CREATED)
-  async register(@Body() registerDto: RegisterDto) {
-    const user = await this.authService.register(registerDto);
-    return {
-      success: true,
-      data: user,
     };
   }
 
@@ -104,12 +59,16 @@ export class AuthServiceController {
 
   /**
    * GET /me
-   * Get current user profile with tenant info (requires authentication)
+   * Get current user profile with tenant info (requires authentication).
+   * Forwards token to identity-service, enriches response with digital_book data.
    */
   @Get('me')
   @UseGuards(JwtGuard)
-  async getMe(@CurrentUser() user: UserPayload) {
-    const profile = await this.authService.getMe(user.id, user.tenantId);
+  async getMe(
+    @AuthToken() token: string,
+    @CurrentUser() user: UserPayload,
+  ) {
+    const profile = await this.authService.getMe(token, user.id, user.tenantId);
     return {
       success: true,
       data: profile,

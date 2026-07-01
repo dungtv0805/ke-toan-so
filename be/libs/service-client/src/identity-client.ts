@@ -225,4 +225,11 @@ export class IdentityClient extends BaseServiceClient {
       query: { app },
     });
   }
+
+  switchTenant(token: string, tenantId: string): Promise<ServiceResponse<any>> {
+    return this.request('identity', 'POST', '/api/switch-tenant', {
+      headers: this.authed(token),
+      body: { tenantId },
+    });
+  }
 }

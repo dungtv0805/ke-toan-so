@@ -4,7 +4,8 @@ import { AuthServiceService } from './auth-service.service';
 import { AuthModule } from '@app/auth';
 import { TenantModule } from '@app/core';
 import { DatabaseModule } from '@app/database';
-import { User, UserCredential, Tenant, UserTenant, PhanQuyen, VaiTro, AppUserRole, TenantAppConfig, TenantApp } from '@app/entities';
+import { AppUserRole, TenantAppConfig, PhanQuyen, VaiTro } from '@app/entities';
+import { ServiceClientModule } from '@app/service-client';
 import { ProvisioningService } from './provisioning/provisioning.service';
 import { ProvisioningController } from './provisioning/provisioning.controller';
 
@@ -13,10 +14,10 @@ import { ProvisioningController } from './provisioning/provisioning.controller';
     TenantModule,
     AuthModule,
     DatabaseModule.forRoot(),
-    DatabaseModule.forRootIdentity(),
-    DatabaseModule.forFeatureIdentity([User, UserCredential, Tenant, UserTenant, TenantApp]),
+    // No forRootIdentity / forFeatureIdentity — auth-service no longer reads identity DB directly.
     DatabaseModule.forFeature([AppUserRole, TenantAppConfig]),
     DatabaseModule.forFeatureRaw([PhanQuyen, VaiTro]),
+    ServiceClientModule.forRoot(),
   ],
   controllers: [AuthServiceController, ProvisioningController],
   providers: [AuthServiceService, ProvisioningService],
