@@ -13,6 +13,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
   UnauthorizedException,
   InternalServerErrorException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
@@ -366,7 +367,7 @@ describe('AuthServiceService (migrated): switchTenant', () => {
     });
 
     await expect(service.switchTenant(TOKEN, USER_ID, TENANT_ID)).rejects.toThrow(
-      InternalServerErrorException,
+      ForbiddenException,
     );
   });
 
