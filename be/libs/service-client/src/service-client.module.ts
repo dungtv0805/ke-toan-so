@@ -1,6 +1,7 @@
 import { Module, Global, DynamicModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ServiceClient } from './service-client';
+import { IdentityClient } from './identity-client';
 
 export interface ServiceClientModuleOptions {
   isGlobal?: boolean;
@@ -21,8 +22,15 @@ export class ServiceClientModule {
           },
           inject: [ConfigService],
         },
+        {
+          provide: IdentityClient,
+          useFactory: (configService: ConfigService) => {
+            return new IdentityClient(configService);
+          },
+          inject: [ConfigService],
+        },
       ],
-      exports: [ServiceClient],
+      exports: [ServiceClient, IdentityClient],
       global: options?.isGlobal ?? true,
     };
   }

@@ -1,6 +1,116 @@
 import * as fc from 'fast-check';
 import * as bcrypt from 'bcrypt';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import {
+  ForbiddenException,
+  UnauthorizedException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { AuthServiceService } from './auth-service.service';
+import { AppUserRole, TenantAppConfig, PhanQuyen } from '@app/entities';
+import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
+import { JwtService } from '@app/auth';
+import { ProvisioningService } from './provisioning/provisioning.service';
+import { IdentityClient } from '@app/service-client';
+
+// ─── throwFromServiceError tests (via getMe) ────────────────────────────────
+
+describe('AuthServiceService — throwFromServiceError', () => {
+  let service: AuthServiceService;
+  let mockIdentityClient: any;
+
+  beforeEach(async () => {
+    mockIdentityClient = {
+      getMe: jest.fn(),
+      getMyTenantsForApp: jest.fn(),
+      switchTenant: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AuthServiceService,
+        { provide: IdentityClient, useValue: mockIdentityClient },
+        {
+          provide: `${RAW_REPOSITORY_TOKEN_PREFIX}PhanQuyen`,
+          useValue: { findOne: jest.fn().mockResolvedValue(null) },
+        },
+        {
+          provide: getRepositoryToken(AppUserRole),
+          useValue: { findOne: jest.fn().mockResolvedValue(null) },
+        },
+        {
+          provide: getRepositoryToken(TenantAppConfig),
+          useValue: { findOne: jest.fn().mockResolvedValue(null) },
+        },
+        {
+          provide: JwtService,
+          useValue: { verify: jest.fn() },
+        },
+        {
+          provide: ProvisioningService,
+          useValue: { ensure: jest.fn().mockResolvedValue(undefined) },
+        },
+      ],
+    }).compile();
+
+    service = module.get<AuthServiceService>(AuthServiceService);
+  });
+
+  it('throws ForbiddenException when identity returns FORBIDDEN', async () => {
+    mockIdentityClient.getMe.mockResolvedValue({
+      success: false,
+      error: { code: 'FORBIDDEN', message: 'Không có quyền truy cập' },
+    });
+
+    await expect(service.getMe('token', 'uid', 'tid')).rejects.toThrow(ForbiddenException);
+  });
+
+  it('throws UnauthorizedException when identity returns UNAUTHORIZED', async () => {
+    mockIdentityClient.getMe.mockResolvedValue({
+      success: false,
+      error: { code: 'UNAUTHORIZED', message: 'Chưa xác thực' },
+    });
+
+    await expect(service.getMe('token', 'uid', 'tid')).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('throws InternalServerErrorException when identity returns unknown error code', async () => {
+    mockIdentityClient.getMe.mockResolvedValue({
+      success: false,
+      error: { code: 'INTERNAL', message: 'identity down' },
+    });
+
+    await expect(service.getMe('token', 'uid', 'tid')).rejects.toThrow(
+      InternalServerErrorException,
+    );
+  });
+
+  it('super admin availableTenants role is SUPER_ADMIN (not KIEM_SOAT)', async () => {
+    const tenantData = { tenantId: 'tenant-1', tenantName: 'Công ty A', tenantSlug: 'cong-ty-a' };
+
+    mockIdentityClient.getMe.mockResolvedValue({
+      success: true,
+      data: {
+        user: { id: 'super-id', email: 'super@admin.com', isSuperAdmin: true },
+        tenant: tenantData,
+      },
+    });
+    mockIdentityClient.getMyTenantsForApp.mockResolvedValue({
+      success: true,
+      data: [tenantData],
+    });
+
+    const result = await service.getMe('token', 'super-id', 'tenant-1');
+
+    expect(result.availableTenants).toHaveLength(1);
+    expect(result.availableTenants[0].role).toBe('SUPER_ADMIN');
+    expect(result.tenant?.role).toBe('SUPER_ADMIN');
+    expect(result.permissions).toEqual(['*']);
+  });
+});
+
+// ─── Password hashing tests ──────────────────────────────────────────────────
 
 describe('AuthServiceService', () => {
   /**

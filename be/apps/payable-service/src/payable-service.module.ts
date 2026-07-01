@@ -12,7 +12,6 @@ import { CongNoModule } from './cong-no/cong-no.module';
     }),
     TenantModule,
     DatabaseModule.forRoot(),
-    DatabaseModule.forRootIdentity(),
     AuthModule,
     CongNoModule,
   ],

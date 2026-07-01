@@ -17,7 +17,6 @@ import { TaiLieu_Module } from './tai-lieu/tai-lieu.module';
     }),
     TenantModule,
     DatabaseModule.forRoot(),
-    DatabaseModule.forRootIdentity(),
     AuthModule,
     QuyChuan_Module,
     PhanQuyen_Module,

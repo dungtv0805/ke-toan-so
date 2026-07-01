@@ -164,7 +164,8 @@ describe('JwtGuard (enrich)', () => {
     expect(await guard.canActivate(c)).toBe(true);
     const user = c.switchToHttp().getRequest().user;
     expect(authz.load).toHaveBeenCalledWith('u1', 't1', 'a@b.com');
-    expect(user).toEqual({ id: 'u1', email: 'a@b.com', tenantId: 't1', vaiTro: 'Admin', permissions: ['/x:xem'] });
+    // apps và membershipRole thiếu trong token → apps=[], membershipRole=undefined
+    expect(user).toEqual({ id: 'u1', email: 'a@b.com', tenantId: 't1', vaiTro: 'Admin', permissions: ['/x:xem'], apps: [] });
   });
 
   it('token cũ (có vaiTro) → KHÔNG enrich, giữ giá trị token', async () => {
@@ -180,5 +181,26 @@ describe('JwtGuard (enrich)', () => {
   it('không token → 401', async () => {
     const guard = new JwtGuard(jwtService, { load: jest.fn() } as any);
     await expect(guard.canActivate(ctx())).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('token Identity có apps + membershipRole → expose đúng trên request.user', async () => {
+    const authz: any = { load: jest.fn(async () => ({ vaiTro: 'Admin', permissions: [] })) };
+    const guard = new JwtGuard(jwtService, authz);
+    const payload = { sub: 'u1', email: 'a@b.com', tenantId: 't1', apps: ['app-abc', 'app-xyz'], membershipRole: 'admin' };
+    const token = Buffer.from(JSON.stringify(payload)).toString('base64');
+    const c = ctx(`Bearer ${token}`);
+    await guard.canActivate(c);
+    const user = c.switchToHttp().getRequest().user;
+    expect(user.apps).toEqual(['app-abc', 'app-xyz']);
+    expect(user.membershipRole).toBe('admin');
+  });
+
+  it('token không có apps → request.user.apps mặc định là []', async () => {
+    const authz: any = { load: jest.fn(async () => ({ vaiTro: 'KIEM_SOAT', permissions: [] })) };
+    const guard = new JwtGuard(jwtService, authz);
+    const token = Buffer.from(JSON.stringify({ sub: 'u1', email: 'a@b.com', tenantId: 't1' })).toString('base64');
+    const c = ctx(`Bearer ${token}`);
+    await guard.canActivate(c);
+    expect(c.switchToHttp().getRequest().user.apps).toEqual([]);
   });
 });

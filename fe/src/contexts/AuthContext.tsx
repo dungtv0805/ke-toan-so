@@ -3,6 +3,8 @@ import { NguoiDung, TenantInfo } from '@/types';
 import { authService } from '@/services/authService';
 import { setAuthToken, getAuthToken, clearAuthToken, setCurrentTenant, getCurrentTenant, clearCurrentTenant } from '@/services/base/service-base';
 import { ssoHandoff } from '@/services/ssoHandoff';
+import { redirectToIdentityLogin } from '@/services/identityRedirect';
+import { refreshFromIdentity, decodeTenantId, isIdentityConfigured } from '@/services/identitySession';
 import { ApiError, ApiErrorType } from '@/config/api';
 import { getAvailableModuleCodes } from '@/config/modules';
 import { linhVucService, type LinhVuc } from '@/services/linhVucService';
@@ -95,11 +97,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const initAuth = async () => {
       await ssoHandoff(); // SSO từ Portal: nếu có ?tenant, nạp token trước
+
+      // SLO / nguồn chân lý là phiên identity (cookie mc_session), KHÔNG phải token
+      // cache trong localStorage. Khi identity được cấu hình và ta có tenant hiện
+      // tại → xin access token tươi từ identity. Nếu trả null nghĩa là đã logout ở
+      // portal (cookie/refresh chết) → token cache vô hiệu, xoá đi để rơi về portal.
+      if (isIdentityConfigured()) {
+        const tenantId = getCurrentTenant()?.tenantId ?? decodeTenantId(getAuthToken());
+        if (tenantId) {
+          const fresh = await refreshFromIdentity(tenantId);
+          if (fresh) {
+            setAuthToken(fresh);
+          } else {
+            clearAuthToken();
+            clearCurrentTenant();
+          }
+        }
+      }
+
       const token = getAuthToken();
+      let hasValidSession = false;
       if (token) {
         try {
           const response = await authService.getMe();
           setUser(response.user);
+          hasValidSession = true;
 
           // Set current tenant from response
           if (response.tenant) {
@@ -129,21 +151,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('Failed to restore session:', error);
         }
       }
+      // Nếu không có phiên hợp lệ → redirect sang portal identity (nếu được cấu hình).
+      // Khi redirect: giữ màn loading (trang sắp điều hướng đi, không render LoginPage).
+      // Khi không redirect (VITE_IDENTITY_URL rỗng): hiển thị LoginPage cục bộ (fallback dev).
+      if (!hasValidSession && redirectToIdentityLogin()) return;
       setIsLoading(false);
     };
 
     initAuth();
 
-    // Listen for unauthorized events from ServiceBase
+    // Listen for unauthorized events from ServiceBase.
+    // 401 giữa phiên (token hết hạn / bị thu hồi) → dọn phiên + đá về portal identity.
     const handleUnauthorized = () => {
       setUser(null);
       clearAuthToken();
+      clearCurrentTenant();
+      redirectToIdentityLogin(); // dev (VITE_IDENTITY_URL rỗng): no-op, giữ hành vi cũ
     };
 
     window.addEventListener('auth:unauthorized', handleUnauthorized);
     return () => {
       window.removeEventListener('auth:unauthorized', handleUnauthorized);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Đồng bộ đăng xuất đa app (Single Logout) cho tab đang mở: định kỳ kiểm phiên
+  // identity. Nếu đã logout ở portal (refreshFromIdentity trả null) → dọn + đá về
+  // portal. Cũng giữ access token luôn tươi (cho phép hạ TTL token về sau).
+  useEffect(() => {
+    if (!isIdentityConfigured()) return;
+    const REVALIDATE_MS = 5 * 60 * 1000; // 5 phút
+    const id = window.setInterval(async () => {
+      const tenantId = getCurrentTenant()?.tenantId ?? decodeTenantId(getAuthToken());
+      if (!tenantId) return;
+      const fresh = await refreshFromIdentity(tenantId);
+      if (fresh) {
+        setAuthToken(fresh);
+      } else {
+        setUser(null);
+        clearAuthToken();
+        clearCurrentTenant();
+        redirectToIdentityLogin();
+      }
+    }, REVALIDATE_MS);
+    return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -13,7 +13,6 @@ import { TenantHeaderInterceptor } from './interceptors';
     TenantModule,
     AuthModule,
     DatabaseModule.forRoot(),
-    DatabaseModule.forRootIdentity(),
     DatabaseModule.forFeatureRaw([LinhVuc, MenuCatalog]),
   ],
   controllers,

@@ -12,7 +12,6 @@ import { SoQuyModule } from './so-quy/so-quy.module';
     }),
     TenantModule,
     DatabaseModule.forRoot(),
-    DatabaseModule.forRootIdentity(),
     AuthModule,
     SoQuyModule,
   ],

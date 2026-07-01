@@ -10,13 +10,13 @@ function fakeRepo(initial: any[] = []) {
     save: jest.fn(async (doc: any) => { store.push(doc); return doc; }),
   };
 }
-const tenantRepo = { findOneBy: jest.fn(async () => ({})) }; // luôn tồn tại
+
 // validate() dựng new ObjectId(src/dst) → BẮT BUỘC dùng chuỗi 24-hex hợp lệ.
 const SRC = '698d593acb5ad81be4c27711';
 const DST = '69a2bfcfb324c4058b45ed62';
 
 function svcWith(repos: Record<string, any>) {
-  return new CloneMasterDataService(repos as any, tenantRepo as any);
+  return new CloneMasterDataService(repos as any);
 }
 
 describe('CloneMasterDataService', () => {
@@ -102,11 +102,6 @@ describe('CloneMasterDataService', () => {
   describe('validate: lỗi đầu vào → BadRequestException', () => {
     it('nguồn === đích → BadRequestException', async () => {
       await expect(svcWith({}).execute(SRC, SRC, [])).rejects.toBeInstanceOf(BadRequestException);
-    });
-
-    it('tenant không tồn tại → BadRequestException', async () => {
-      const svcNoTenant = new CloneMasterDataService({} as any, { findOneBy: jest.fn(async () => null) } as any);
-      await expect(svcNoTenant.preview(SRC, DST, [])).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('id sai định dạng → BadRequestException', async () => {

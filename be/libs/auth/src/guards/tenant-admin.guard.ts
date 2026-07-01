@@ -4,57 +4,34 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Request } from 'express';
-import { Repository } from 'typeorm';
-import { SUPER_ADMIN_EMAIL, UserTenant } from '@app/entities';
+import { SUPER_ADMIN_EMAIL } from '@app/entities';
 
 /**
- * Guard cho phép Super Admin hoặc user có role ADMIN trong tenant đó.
+ * Guard cho phép Super Admin hoặc user có membershipRole 'admin' trong ĐÚNG tenant của mình.
  * Yêu cầu route có param :id (tenantId).
  * Phải đặt sau JwtGuard.
+ *
+ * Ghi chú bảo mật: ràng buộc user.tenantId === params.id được GIỮ nguyên để
+ * chống leo quyền chéo tenant (IDOR). Admin của tenant-A không được quản trị tenant-B.
+ * Claim membershipRole được đọc từ token (identity-service phase 3+).
  */
 @Injectable()
 export class TenantAdminGuard implements CanActivate {
-  constructor(
-    @InjectRepository(UserTenant, 'identity')
-    private readonly userTenantRepository: Repository<UserTenant>,
-  ) {}
+  canActivate(context: ExecutionContext): boolean {
+    const req = context.switchToHttp().getRequest();
+    const user = (req as any).user;
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
-    const user = (request as any).user;
+    if (!user) throw new ForbiddenException('Không tìm thấy thông tin người dùng');
 
-    if (!user) {
-      throw new ForbiddenException('Không tìm thấy thông tin người dùng');
-    }
+    // Super admin: mọi tenant
+    if (user.email === SUPER_ADMIN_EMAIL) return true;
 
-    // Super Admin bypass
-    if (user.email === SUPER_ADMIN_EMAIL) {
-      return true;
-    }
+    const tenantId = req.params?.id;
+    if (!tenantId) throw new ForbiddenException('Không tìm thấy mã công ty');
 
-    const tenantId = request.params.id;
-    if (!tenantId) {
-      throw new ForbiddenException('Không tìm thấy mã công ty');
-    }
+    // Company admin chỉ quản trị tenant của chính mình (tenant trong token)
+    if (user.membershipRole === 'admin' && user.tenantId === tenantId) return true;
 
-    // Check if user has role 'admin' in this tenant (identity memberships use lowercase)
-    const membership = await this.userTenantRepository.findOne({
-      where: {
-        userId: user.id,
-        tenantId,
-        role: 'admin',
-        isActive: true,
-      },
-    });
-
-    if (!membership) {
-      throw new ForbiddenException(
-        'Bạn không có quyền quản lý thành viên của công ty này. Yêu cầu quyền Admin.',
-      );
-    }
-
-    return true;
+    throw new ForbiddenException('Bạn không có quyền quản lý công ty này. Yêu cầu quyền Admin.');
   }
 }
