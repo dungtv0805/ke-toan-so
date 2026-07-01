@@ -38,7 +38,7 @@ const formatDate = (iso?: string) => {
 const TRANG_THAI_LABEL: Record<KiemSoatTrangThai, string> = {
   HOP_LE: "Hợp lệ",
   CHUA_HOP_LE: "Chưa hợp lệ",
-  KHONG_DUOC_TRU: "Không hợp lệ",
+  KHONG_DUOC_TRU: "Không được trừ",
 };
 
 // Dữ liệu cũ lyDo có thể là string đơn; chuẩn hoá về mảng.
@@ -144,7 +144,7 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
           options={[
             { value: "HOP_LE", label: "Hợp lệ" },
             { value: "CHUA_HOP_LE", label: "Chưa hợp lệ" },
-            { value: "KHONG_DUOC_TRU", label: "Không hợp lệ" },
+            { value: "KHONG_DUOC_TRU", label: "Không được trừ" },
           ]}
         />
       </div>
@@ -255,7 +255,7 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
       </Tag>
     ) : entry.kiemSoat?.trangThai === "KHONG_DUOC_TRU" ? (
       <Tag color="red" style={{ cursor: "pointer", margin: 0 }}>
-        Không hợp lệ
+        Không được trừ
       </Tag>
     ) : (
       <span style={{ cursor: "pointer", color: "#999" }}>—</span>
