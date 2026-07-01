@@ -253,4 +253,34 @@ describe('IdentityClient', () => {
       );
     });
   });
+
+  // -------- Me (platform) --------
+
+  describe('getMe', () => {
+    it('calls GET /api/me with Authorization header', async () => {
+      await client.getMe(token);
+      expect(requestSpy).toHaveBeenCalledWith('identity', 'GET', '/api/me', {
+        headers: { Authorization: token },
+      });
+    });
+  });
+
+  describe('getMyApps', () => {
+    it('calls GET /api/me/apps with Authorization header', async () => {
+      await client.getMyApps(token);
+      expect(requestSpy).toHaveBeenCalledWith('identity', 'GET', '/api/me/apps', {
+        headers: { Authorization: token },
+      });
+    });
+  });
+
+  describe('getMyTenantsForApp', () => {
+    it('calls GET /api/me/tenants with Authorization header and query app', async () => {
+      await client.getMyTenantsForApp(token, 'master-seo');
+      expect(requestSpy).toHaveBeenCalledWith('identity', 'GET', '/api/me/tenants', {
+        headers: { Authorization: token },
+        query: { app: 'master-seo' },
+      });
+    });
+  });
 });

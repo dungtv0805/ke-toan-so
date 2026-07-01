@@ -204,4 +204,25 @@ export class IdentityClient extends BaseServiceClient {
       body,
     });
   }
+
+  // -------- Me (platform) --------
+
+  getMe(token: string): Promise<ServiceResponse<any>> {
+    return this.request('identity', 'GET', '/api/me', {
+      headers: this.authed(token),
+    });
+  }
+
+  getMyApps(token: string): Promise<ServiceResponse<any>> {
+    return this.request('identity', 'GET', '/api/me/apps', {
+      headers: this.authed(token),
+    });
+  }
+
+  getMyTenantsForApp(token: string, app: string): Promise<ServiceResponse<any>> {
+    return this.request('identity', 'GET', '/api/me/tenants', {
+      headers: this.authed(token),
+      query: { app },
+    });
+  }
 }
