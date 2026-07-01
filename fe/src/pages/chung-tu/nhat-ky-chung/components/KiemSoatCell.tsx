@@ -35,6 +35,16 @@ const formatDate = (iso?: string) => {
   return d.toLocaleDateString("vi-VN");
 };
 
+const TRANG_THAI_LABEL: Record<KiemSoatTrangThai, string> = {
+  HOP_LE: "Hợp lệ",
+  CHUA_HOP_LE: "Chưa hợp lệ",
+  KHONG_DUOC_TRU: "Không hợp lệ",
+};
+
+// Dữ liệu cũ lyDo có thể là string đơn; chuẩn hoá về mảng.
+const normalizeLyDo = (v?: string[] | string): string[] =>
+  Array.isArray(v) ? v : v ? [v] : [];
+
 export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
   const { user } = useAuth();
   // Lưu cả tên + username (email) để biết rõ ai kiểm soát, không chỉ vai trò.
@@ -55,7 +65,7 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
     entry.kiemSoat?.soTienKhongTru ?? entry.soTien ?? 0
   );
   const [yKien, setYKien] = useState<string>(entry.kiemSoat?.yKien ?? "");
-  const [lyDo, setLyDo] = useState<string>(entry.kiemSoat?.lyDo ?? "");
+  const [lyDo, setLyDo] = useState<string[]>(normalizeLyDo(entry.kiemSoat?.lyDo));
 
   // Options "Lý do không hợp lệ" (load 1 lần khi mở popover)
   const [lyDoOptions, setLyDoOptions] = useState<
@@ -80,7 +90,7 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
     setNhom(entry.kiemSoat?.nhomChiPhi ?? suggestNhomChiPhi(tkNo));
     setSoTien(entry.kiemSoat?.soTienKhongTru ?? entry.soTien ?? 0);
     setYKien(entry.kiemSoat?.yKien ?? "");
-    setLyDo(entry.kiemSoat?.lyDo ?? "");
+    setLyDo(normalizeLyDo(entry.kiemSoat?.lyDo));
   };
 
   useEffect(() => {
@@ -107,7 +117,9 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
       if (trangThai === "KHONG_DUOC_TRU") {
         kiemSoat.nhomChiPhi = nhom;
         kiemSoat.soTienKhongTru = soTien;
-        kiemSoat.lyDo = lyDo || undefined;
+        kiemSoat.lyDo = lyDo.length ? lyDo : undefined;
+      } else if (trangThai === "CHUA_HOP_LE") {
+        kiemSoat.lyDo = lyDo.length ? lyDo : undefined;
       }
       await nhatKyChungService.update(entry.id, { kiemSoat });
       message.success("Đã lưu kiểm soát");
@@ -131,7 +143,8 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
           onChange={(v) => setTrangThai(v)}
           options={[
             { value: "HOP_LE", label: "Hợp lệ" },
-            { value: "KHONG_DUOC_TRU", label: "Không được trừ" },
+            { value: "CHUA_HOP_LE", label: "Chưa hợp lệ" },
+            { value: "KHONG_DUOC_TRU", label: "Không hợp lệ" },
           ]}
         />
       </div>
@@ -166,23 +179,29 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
               parser={(v) => Number((v || "").replace(/,/g, ""))}
             />
           </div>
-          <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 12, color: "#666", marginBottom: 2 }}>
-              Lý do không hợp lệ
-            </div>
-            <Select
-              size="small"
-              style={{ width: "100%" }}
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              value={lyDo || undefined}
-              onChange={(v) => setLyDo(v ?? "")}
-              options={lyDoOptions}
-              placeholder="Chọn lý do..."
-            />
-          </div>
         </>
+      )}
+
+      {(trangThai === "KHONG_DUOC_TRU" || trangThai === "CHUA_HOP_LE") && (
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ fontSize: 12, color: "#666", marginBottom: 2 }}>
+            {trangThai === "CHUA_HOP_LE"
+              ? "Lý do chưa hợp lệ (chọn nhiều)"
+              : "Lý do không hợp lệ (chọn nhiều)"}
+          </div>
+          <Select
+            mode="multiple"
+            size="small"
+            style={{ width: "100%" }}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            value={lyDo}
+            onChange={(v) => setLyDo(v ?? [])}
+            options={lyDoOptions}
+            placeholder="Chọn lý do..."
+          />
+        </div>
       )}
 
       <div style={{ marginBottom: 8 }}>
@@ -230,9 +249,13 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
       <Tag color="green" style={{ cursor: "pointer", margin: 0 }}>
         Hợp lệ
       </Tag>
+    ) : entry.kiemSoat?.trangThai === "CHUA_HOP_LE" ? (
+      <Tag color="orange" style={{ cursor: "pointer", margin: 0 }}>
+        Chưa hợp lệ
+      </Tag>
     ) : entry.kiemSoat?.trangThai === "KHONG_DUOC_TRU" ? (
       <Tag color="red" style={{ cursor: "pointer", margin: 0 }}>
-        Không được trừ
+        Không hợp lệ
       </Tag>
     ) : (
       <span style={{ cursor: "pointer", color: "#999" }}>—</span>
@@ -240,10 +263,11 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
 
   // Nội dung xem nhanh khi hover (chỉ đọc).
   const ks = entry.kiemSoat;
+  const hoverLyDo = normalizeLyDo(ks?.lyDo);
   const hoverContent = ks ? (
     <div style={{ maxWidth: 300 }}>
       <div style={{ fontWeight: 600, marginBottom: 2 }}>
-        {ks.trangThai === "HOP_LE" ? "Hợp lệ" : "Không được trừ"}
+        {TRANG_THAI_LABEL[ks.trangThai] ?? ks.trangThai}
       </div>
       {ks.trangThai === "KHONG_DUOC_TRU" && (
         <>
@@ -256,9 +280,10 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
           {ks.soTienKhongTru != null && (
             <div>Số tiền: {ks.soTienKhongTru.toLocaleString("vi-VN")}</div>
           )}
-          {ks.lyDo && <div>Lý do: {ks.lyDo}</div>}
         </>
       )}
+      {(ks.trangThai === "KHONG_DUOC_TRU" || ks.trangThai === "CHUA_HOP_LE") &&
+        hoverLyDo.length > 0 && <div>Lý do: {hoverLyDo.join(", ")}</div>}
       {ks.yKien && <div>Ý kiến: {ks.yKien}</div>}
       {(ks.nguoiKiemSoat || ks.ngayKiemSoat) && (
         <div style={{ fontSize: 11, color: "#bbb", marginTop: 2 }}>

@@ -27,7 +27,9 @@ export enum ChiTietTheo {
   NGAN_HANG_QUY = 'NGAN_HANG_QUY',
 }
 
-// 8 trường phân bổ trên dòng hạch toán có thể cấu hình mức nhập liệu
+// Các trường trên dòng hạch toán có thể cấu hình mức nhập liệu.
+// soTaiKhoanNganHang: bắt buộc đối tượng của dòng là tài khoản ngân hàng có số TK
+// (dùng cho TK tiền gửi ngân hàng như 1121).
 export const FIELD_RULE_KEYS = [
   'doiTuong',
   'duAn',
@@ -37,6 +39,7 @@ export const FIELD_RULE_KEYS = [
   'sanPham',
   'dongTien',
   'khoanMuc',
+  'soTaiKhoanNganHang',
 ] as const;
 export type FieldRuleKey = (typeof FIELD_RULE_KEYS)[number];
 // Không khai báo = không bắt buộc

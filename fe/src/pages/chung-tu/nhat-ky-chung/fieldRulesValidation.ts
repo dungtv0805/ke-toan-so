@@ -19,6 +19,13 @@ export const FIELD_RULE_LABELS: Record<string, string> = {
   sanPham: "Sản phẩm",
   dongTien: "Dòng tiền",
   khoanMuc: "Khoản mục",
+  soTaiKhoanNganHang: "Số tài khoản ngân hàng",
+};
+
+// Đọc số tài khoản ngân hàng từ snapshot đối tượng (nếu đối tượng là TK ngân hàng/quỹ).
+const snapshotSoTaiKhoan = (snapshot?: Record<string, unknown>): string => {
+  const v = snapshot?.soTaiKhoan;
+  return typeof v === "string" ? v.trim() : "";
 };
 
 // Trường cấp dòng (không phải doiTuong) → field id tương ứng trên ChungTuChiTiet
@@ -66,6 +73,25 @@ export function validateFieldRules(
     };
     checkDoiTuong(tkNo, Boolean(line.doiTuongId));
     checkDoiTuong(tkCo, Boolean(line.doiTuong2Id));
+
+    // Số tài khoản ngân hàng theo từng bên: đối tượng của dòng phải là TK ngân hàng có số TK
+    const checkSoTaiKhoanNganHang = (
+      tk: TaiKhoanItem | undefined,
+      snapshot?: Record<string, unknown>,
+    ) => {
+      const level = tk?.fieldRules?.soTaiKhoanNganHang;
+      if (tk && level && !snapshotSoTaiKhoan(snapshot)) {
+        violations.push({
+          lineIndex,
+          field: "soTaiKhoanNganHang",
+          fieldLabel: FIELD_RULE_LABELS.soTaiKhoanNganHang,
+          level: level as FieldRuleLevel,
+          taiKhoanMa: tk.ma,
+        });
+      }
+    };
+    checkSoTaiKhoanNganHang(tkNo, line.doiTuongSnapshot);
+    checkSoTaiKhoanNganHang(tkCo, line.doiTuong2Snapshot);
 
     // Trường cấp dòng: gộp mức 2 TK
     for (const [field, lineKey] of Object.entries(FIELD_TO_LINE_KEY)) {
