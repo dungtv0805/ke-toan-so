@@ -64,7 +64,6 @@ import {
     CoreTenantModule,
     AuthModule,
     DatabaseModule.forRoot(),
-    DatabaseModule.forRootIdentity(),
     DatabaseModule.forFeature([
       TaiKhoan,
       DoiTuong,

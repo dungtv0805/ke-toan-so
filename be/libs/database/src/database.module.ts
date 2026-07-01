@@ -5,7 +5,6 @@ import { TenantModule, TenantContextService, TENANT_EXEMPT_ENTITIES } from '@app
 import { TenantActiveGuard } from '@app/auth';
 import { TenantSubscriber } from './tenant.subscriber';
 import { DataSource, ObjectLiteral, Repository } from 'typeorm';
-import { User, UserCredential, Tenant, UserTenant, TenantApp } from '@app/entities';
 
 export interface DatabaseModuleOptions {
   uri?: string;
@@ -221,49 +220,6 @@ export class DatabaseModule {
       ],
       providers: tenantAwareProviders,
       exports: [TypeOrmModule, ...tenantAwareProviders.map((p) => p.provide)],
-    };
-  }
-
-  /**
-   * Configure named 'identity' connection pointing at masterceo_identity DB.
-   * This connection is tenant-exempt — no TenantSubscriber, no APP_GUARD.
-   * Use forFeatureIdentity() to register entities on this connection.
-   */
-  static forRootIdentity(): DynamicModule {
-    const uri = process.env.MONGODB_URI;
-    const database = process.env.IDENTITY_MONGODB_DATABASE || 'masterceo_identity';
-    const user = process.env.MONGODB_USER;
-    const pwd = process.env.MONGODB_PWD;
-    const options: TypeOrmModuleOptions = {
-      name: 'identity',
-      type: 'mongodb',
-      url: `${uri}`,
-      database,
-      username: user,
-      password: pwd,
-      synchronize: false,
-      logging: process.env.NODE_ENV === 'development',
-      entities: [User, UserCredential, Tenant, UserTenant, TenantApp],
-    };
-    return {
-      module: DatabaseModule,
-      global: true,
-      imports: [TypeOrmModule.forRoot(options)],
-      exports: [TypeOrmModule],
-    };
-  }
-
-  /**
-   * Register identity entities on the named 'identity' connection.
-   * Inject via @InjectRepository(Entity, 'identity').
-   * No tenant filtering — repositories are raw.
-   * @param entities - Array of entity classes
-   */
-  static forFeatureIdentity(entities: any[]): DynamicModule {
-    return {
-      module: TenantRepositoryModule,
-      imports: [TypeOrmModule.forFeature(entities, 'identity')],
-      exports: [TypeOrmModule],
     };
   }
 

@@ -14,7 +14,6 @@ import { BaoCaoModule } from './bao-cao/bao-cao.module';
     ConfigModule.forRoot({ isGlobal: true }),
     TenantModule,
     DatabaseModule.forRoot(),
-    DatabaseModule.forRootIdentity(),
     AuthModule,
     ServiceClientModule.forRoot(),
     BangKeMuaVaoModule,

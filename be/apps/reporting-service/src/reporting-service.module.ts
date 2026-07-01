@@ -16,7 +16,6 @@ import { CongNoTongHopModule } from './cong-no-tong-hop/cong-no-tong-hop.module'
     }),
     TenantModule,
     DatabaseModule.forRoot(),
-    DatabaseModule.forRootIdentity(),
     AuthModule,
     ServiceClientModule.forRoot(),
     SoCaiModule,
