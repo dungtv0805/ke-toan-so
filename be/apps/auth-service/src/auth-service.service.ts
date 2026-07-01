@@ -3,6 +3,7 @@ import {
   Inject,
   Logger,
   UnauthorizedException,
+  ForbiddenException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -54,6 +55,8 @@ export class AuthServiceService {
     if (code === 'NOT_FOUND') {
       throw new UnauthorizedException(message ?? 'Không tìm thấy người dùng');
     }
+    if (code === 'FORBIDDEN') throw new ForbiddenException(message ?? 'Không có quyền');
+    if (code === 'UNAUTHORIZED') throw new UnauthorizedException(message ?? 'Chưa xác thực');
     throw new InternalServerErrorException(message ?? 'Lỗi từ identity service');
   }
 
@@ -158,20 +161,34 @@ export class AuthServiceService {
     if (!tenantsRes.success) this.throwFromServiceError(tenantsRes);
     const keToanTenants: IdentityTenantData[] = tenantsRes.data ?? [];
 
+    const isSuperAdmin = meData.user.isSuperAdmin;
+
     // 3. Enrich availableTenants with digital_book role + config
+    // Super admin: force role to 'SUPER_ADMIN' (skip AppUserRole lookup to avoid KIEM_SOAT default)
     const availableTenants: TenantInfo[] = await Promise.all(
-      keToanTenants.map((t) => this.enrichTenant(userId, t)),
+      keToanTenants.map(async (t) => {
+        if (isSuperAdmin) {
+          const cfg = await this.tenantAppConfigRepo.findOne({
+            where: { tenantId: t.tenantId } as any,
+          });
+          return this.buildTenantInfo('SUPER_ADMIN', t, cfg);
+        }
+        return this.enrichTenant(userId, t);
+      }),
     );
 
     // 4. Build current tenant + permissions
     let tenant: TenantInfo | undefined;
     let permissions: string[];
 
-    if (meData.user.isSuperAdmin) {
-      // Super admin: full permissions, current tenant enriched from identity
+    if (isSuperAdmin) {
+      // Super admin: full permissions, current tenant with SUPER_ADMIN role
       permissions = ['*'];
       if (tenantId && meData.tenant) {
-        tenant = await this.enrichTenant(userId, meData.tenant);
+        const cfg = await this.tenantAppConfigRepo.findOne({
+          where: { tenantId } as any,
+        });
+        tenant = this.buildTenantInfo('SUPER_ADMIN', meData.tenant, cfg);
       }
     } else if (tenantId && meData.tenant) {
       tenant = await this.enrichTenant(userId, meData.tenant);

@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import {
   NotFoundException,
   ConflictException,
+  ForbiddenException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { NguoiDung_Service, PaginatedResult, UserWithTenant } from './nguoi-dung.service';
@@ -541,6 +542,22 @@ describe('NguoiDung_Service (IdentityClient refactor)', () => {
 
       await expect(service.searchUsersNotInTenant(TOKEN, undefined)).rejects.toThrow(
         InternalServerErrorException,
+      );
+    });
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // throwFromServiceError — FORBIDDEN propagation
+  // ──────────────────────────────────────────────────────────────────────────
+  describe('throwFromServiceError — FORBIDDEN', () => {
+    it('throws ForbiddenException when identity returns FORBIDDEN', async () => {
+      mockIdentityClient.listUsers.mockResolvedValue({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Không có quyền' },
+      });
+
+      await expect(service.findAll(TOKEN, { page: 1, limit: 10 })).rejects.toThrow(
+        ForbiddenException,
       );
     });
   });

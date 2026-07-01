@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  ForbiddenException,
+  UnauthorizedException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -80,6 +82,8 @@ export class NguoiDung_Service {
     if (code === 'CONFLICT') {
       throw new ConflictException(message ?? 'Xung đột dữ liệu');
     }
+    if (code === 'FORBIDDEN') throw new ForbiddenException(message ?? 'Không có quyền');
+    if (code === 'UNAUTHORIZED') throw new UnauthorizedException(message ?? 'Chưa xác thực');
     throw new InternalServerErrorException(message ?? 'Lỗi từ identity service');
   }
 

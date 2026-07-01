@@ -4,6 +4,8 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
+  UnauthorizedException,
   Inject,
   Logger,
   InternalServerErrorException,
@@ -114,6 +116,8 @@ export class TenantService {
     if (code === 'CONFLICT') {
       throw new ConflictException(message ?? 'Xung đột dữ liệu');
     }
+    if (code === 'FORBIDDEN') throw new ForbiddenException(message ?? 'Không có quyền');
+    if (code === 'UNAUTHORIZED') throw new UnauthorizedException(message ?? 'Chưa xác thực');
     throw new InternalServerErrorException(message ?? 'Lỗi từ identity service');
   }
 

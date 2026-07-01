@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException, ConflictException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { RAW_REPOSITORY_TOKEN_PREFIX } from '@app/database';
 import { AppUserRole, TenantAppConfig, Nganh } from '@app/entities';
 import { IdentityClient } from '@app/service-client';
@@ -668,6 +668,22 @@ describe('TenantService.resetMemberPassword', () => {
     await expect(service.resetMemberPassword(TOKEN, TENANT_ID, USER_ID)).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+});
+
+// ─── throwFromServiceError FORBIDDEN propagation ──────────────────────────────
+
+describe('TenantService — throwFromServiceError FORBIDDEN', () => {
+  it('throws ForbiddenException when identity returns FORBIDDEN', async () => {
+    const identityClient = stubIdentityClient();
+    identityClient.listTenants.mockResolvedValue({
+      success: false,
+      error: { code: 'FORBIDDEN', message: 'Không có quyền' },
+    });
+
+    const { service } = await buildModule({ identityClient });
+
+    await expect(service.findAll(TOKEN)).rejects.toBeInstanceOf(ForbiddenException);
   });
 });
 
