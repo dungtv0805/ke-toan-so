@@ -1,11 +1,15 @@
 import * as fc from 'fast-check';
 import { JwtService } from '@app/auth';
+import { JwksService } from '@app/auth';
+
+// Minimal JwksService mock — no RS256 keys, falling back to HS256
+const mockJwks: Pick<JwksService, 'getKey'> = { getKey: () => undefined };
 
 describe('AuthController - Token Properties', () => {
   let jwtService: JwtService;
 
   beforeEach(() => {
-    jwtService = new JwtService();
+    jwtService = new JwtService(mockJwks as JwksService);
   });
 
   /**

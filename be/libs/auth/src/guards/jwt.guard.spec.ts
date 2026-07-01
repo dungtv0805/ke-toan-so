@@ -2,17 +2,21 @@ import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import * as fc from 'fast-check';
 import { JwtGuard } from './jwt.guard';
 import { JwtService } from '../services/jwt.service';
+import { JwksService } from '../services/jwks.service';
 
 const mockAuthzLoader: any = {
   load: jest.fn(async () => ({ vaiTro: 'KIEM_SOAT', permissions: [] })),
 };
+
+// Minimal JwksService mock — no RS256 keys, so verify() falls back to HS256
+const mockJwks: Pick<JwksService, 'getKey'> = { getKey: () => undefined };
 
 describe('JwtGuard', () => {
   let jwtGuard: JwtGuard;
   let jwtService: JwtService;
 
   beforeEach(() => {
-    jwtService = new JwtService();
+    jwtService = new JwtService(mockJwks as JwksService);
     jwtGuard = new JwtGuard(jwtService, mockAuthzLoader);
     mockAuthzLoader.load.mockClear();
   });
