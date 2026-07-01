@@ -2,6 +2,8 @@ import { urlJoin } from "@/ultils/url-join";
 import { Parser } from "./parser";
 import Axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from "axios";
 import { API_CONFIG, ApiError, ApiErrorType } from "@/config/api";
+import { retryRequestOnce, type RetryableConfig } from "./reauth";
+import { refreshFromIdentity, decodeTenantId } from "../identitySession";
 
 export interface RequestOptions<T = unknown> extends AxiosRequestConfig {
   endpoint?: string;
@@ -140,16 +142,34 @@ export class ServiceBase {
     // Response interceptor - handle errors
     this.client.interceptors.response.use(
       (response) => response,
-      (error: AxiosError) => {
+      async (error: AxiosError) => {
         const apiError = this.handleError(error);
-        
-        // Handle 401 Unauthorized - clear token and redirect to login
+
+        // 401: thử silent refresh + replay đúng 1 lần trước khi logout
         if (apiError.type === ApiErrorType.UNAUTHORIZED) {
+          const config = error.config as (AxiosRequestConfig & RetryableConfig) | undefined;
+          if (config && !config._retry) {
+            try {
+              return await retryRequestOnce(config, {
+                resolveTenantId: () =>
+                  getCurrentTenant()?.tenantId ?? decodeTenantId(getAuthToken()),
+                refresh: refreshFromIdentity,
+                setToken: setAuthToken,
+                replay: (c) => this.client(c as AxiosRequestConfig),
+                onGiveUp: () => {
+                  clearAuthToken();
+                  window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+                },
+              });
+            } catch {
+              return Promise.reject(apiError);
+            }
+          }
+          // đã retry mà vẫn 401 (hoặc không có config): logout
           clearAuthToken();
-          // Dispatch event for auth context to handle
           window.dispatchEvent(new CustomEvent('auth:unauthorized'));
         }
-        
+
         return Promise.reject(apiError);
       }
     );
