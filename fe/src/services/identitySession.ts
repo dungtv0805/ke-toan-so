@@ -38,6 +38,17 @@ export function decodeTenantId(token: string | null): string | null {
   }
 }
 
+/** Danh sách appId ĐƯỢC BẬT cho công ty hiện tại (claim `apps` trong token). */
+export function decodeApps(token: string | null): string[] {
+  if (!token) return [];
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return Array.isArray(payload?.apps) ? (payload.apps as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 /** identity SSO có được cấu hình không (dev để trống → fallback login cục bộ). */
 export function isIdentityConfigured(): boolean {
   return !!IDENTITY_URL;

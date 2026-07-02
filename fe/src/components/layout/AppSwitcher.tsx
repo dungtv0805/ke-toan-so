@@ -6,7 +6,8 @@ import {
   CheckSquareOutlined,
   CheckCircleFilled,
 } from '@ant-design/icons';
-import { identityApps, CURRENT_APP_ID, type IdentityApp } from '@/services/identitySession';
+import { identityApps, decodeApps, CURRENT_APP_ID, type IdentityApp } from '@/services/identitySession';
+import { getAuthToken } from '@/services/base/service-base';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Tên app hiện tại (Kế toán).
@@ -21,6 +22,7 @@ const PALETTE = ['#e8453c', '#2f6fed', '#1f7769', '#f59e0b', '#7c3aed', '#0ea5e9
 
 export function AppSwitcher() {
   const [apps, setApps] = useState<IdentityApp[]>([]);
+  const [allowed, setAllowed] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const { currentTenant } = useAuth();
 
@@ -28,9 +30,12 @@ export function AppSwitcher() {
     identityApps()
       .then(setApps)
       .catch(() => setApps([]));
-  }, []);
+    // App BẬT cho công ty hiện tại = claim `apps` trong token hiện tại.
+    setAllowed(decodeApps(getAuthToken()));
+  }, [currentTenant?.tenantId]);
 
   const tenantId = currentTenant?.tenantId ?? '';
+  const isEnabled = (appId: string) => appId === CURRENT_APP_ID || allowed.includes(appId);
 
   const current = apps.find((a) => a.appId === CURRENT_APP_ID);
   const currentName = current?.name ?? APP_NAME;
@@ -41,7 +46,7 @@ export function AppSwitcher() {
     : [{ appId: CURRENT_APP_ID, name: APP_NAME, feUrl: '' }];
 
   const switchTo = (app: IdentityApp) => {
-    if (app.appId === CURRENT_APP_ID || !app.feUrl) return;
+    if (app.appId === CURRENT_APP_ID || !app.feUrl || !isEnabled(app.appId)) return;
     // Giữ nguyên công ty đang chọn khi chuyển app.
     window.location.href = tenantId
       ? `${app.feUrl}/?tenant=${encodeURIComponent(tenantId)}`
@@ -86,20 +91,22 @@ export function AppSwitcher() {
               icon: <AppstoreOutlined />,
             };
             const isCurrent = a.appId === CURRENT_APP_ID;
+            const enabled = isEnabled(a.appId);
             return (
               <div
                 key={a.appId}
                 onClick={() => switchTo(a)}
-                className="app-tile"
+                title={!enabled ? 'Ứng dụng chưa được bật cho công ty này' : undefined}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   width: 84,
-                  cursor: isCurrent ? 'default' : 'pointer',
+                  cursor: isCurrent ? 'default' : enabled ? 'pointer' : 'not-allowed',
+                  opacity: enabled ? 1 : 0.4,
                 }}
                 onMouseEnter={(e) => {
-                  if (isCurrent) return;
+                  if (isCurrent || !enabled) return;
                   const t = e.currentTarget.firstElementChild as HTMLElement;
                   if (t) {
                     t.style.transform = 'translateY(-4px)';
@@ -120,7 +127,7 @@ export function AppSwitcher() {
                     width: 72,
                     height: 72,
                     borderRadius: 22,
-                    background: st.bg,
+                    background: enabled ? st.bg : '#94a3b8',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -130,6 +137,7 @@ export function AppSwitcher() {
                     transition: 'transform 0.18s, box-shadow 0.18s',
                     outline: isCurrent ? '3px solid hsl(var(--primary))' : 'none',
                     outlineOffset: 2,
+                    filter: enabled ? 'none' : 'grayscale(1)',
                   }}
                 >
                   {a.iconUrl ? (
@@ -161,9 +169,11 @@ export function AppSwitcher() {
                 >
                   {a.name}
                 </span>
-                {isCurrent && (
+                {isCurrent ? (
                   <span className="text-[11px] text-primary font-medium">Đang dùng</span>
-                )}
+                ) : !enabled ? (
+                  <span className="text-[11px] text-muted-foreground">Chưa bật</span>
+                ) : null}
               </div>
             );
           })}
