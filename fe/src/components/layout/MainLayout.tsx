@@ -72,6 +72,7 @@ import type { MenuProps } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTerm } from "@/contexts/TermContext";
 import { TenantSwitcher } from "./TenantSwitcher";
+import { AppSwitcher } from "./AppSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { isCommonKey, unionMenuKeys } from "@/config/modules";
 import { MENU_CATALOG } from "@/config/menuCatalog";
@@ -867,6 +868,8 @@ const MainLayout: React.FC = () => {
                 </div>
               </div>
             )}
+            {/* App Switcher — chuyển sang Giao việc / app khác (giữ nguyên công ty) */}
+            <AppSwitcher />
           </div>
 
           {/* Center: Search Bar - Hide on small mobile */}

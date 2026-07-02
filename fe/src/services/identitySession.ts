@@ -42,3 +42,46 @@ export function decodeTenantId(token: string | null): string | null {
 export function isIdentityConfigured(): boolean {
   return !!IDENTITY_URL;
 }
+
+// Phải khớp appId đã đăng ký ở Identity portal (app "Kế toán").
+const APP_ID = 'ke-toan';
+
+/** appId của app hiện tại (Kế toán). */
+export const CURRENT_APP_ID = APP_ID;
+
+export interface IdentityApp {
+  appId: string;
+  name: string;
+  feUrl: string;
+  iconUrl?: string;
+}
+
+/**
+ * Danh sách app user được phép dùng (từ Identity), để "Chuyển ứng dụng".
+ * [] nếu chưa cấu hình identity, chưa có token, hoặc lỗi.
+ */
+export async function identityApps(): Promise<IdentityApp[]> {
+  if (!IDENTITY_URL) return [];
+  const { getAuthToken } = await import('@/services/base/service-base');
+  const token = getAuthToken();
+  if (!token) return [];
+  try {
+    const res = await fetch(`${IDENTITY_URL}/api/me/apps`, {
+      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
+    });
+    if (!res.ok) return [];
+    const body = await res.json().catch(() => null);
+    const list = (body?.data ?? []) as Array<{
+      appId: string;
+      name: string;
+      feUrl: string;
+      iconUrl?: string;
+    }>;
+    return list
+      .filter((a) => a.feUrl)
+      .map((a) => ({ appId: a.appId, name: a.name, feUrl: a.feUrl, iconUrl: a.iconUrl }));
+  } catch {
+    return [];
+  }
+}
