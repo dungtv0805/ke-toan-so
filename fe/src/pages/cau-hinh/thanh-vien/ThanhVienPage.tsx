@@ -180,6 +180,13 @@ const ThanhVienPage = () => {
       key: 'email',
     },
     {
+      title: 'Vai trò',
+      dataIndex: 'role',
+      key: 'role',
+      render: (role: string) =>
+        role ? <Tag color="blue">{role}</Tag> : <span className="text-gray-400">—</span>,
+    },
+    {
       title: 'Trạng thái',
       dataIndex: 'isActive',
       key: 'isActive',
