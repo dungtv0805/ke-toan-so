@@ -13,6 +13,7 @@ export class CreateHangHoaVatTuDto {
   @IsString() @IsOptional() tkKho?: string;
   @Transform(({ value }) => (value === '' ? undefined : value)) @IsNumber() @IsOptional() donGia?: number;
   @IsString() @IsOptional() moTa?: string;
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsString()
   @IsOptional()
   @IsIn(['DINH_LUONG', 'THEO_SUAT', 'DON_VI'])
