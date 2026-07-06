@@ -6,6 +6,7 @@ import { DatabaseModule } from '@app/database';
 import { DinhMucTienAnModule } from './dinh-muc-tien-an/dinh-muc-tien-an.module';
 import { CongThucDinhLuongModule } from './cong-thuc-dinh-luong/cong-thuc-dinh-luong.module';
 import { DiemDanhAnModule } from './diem-danh-an/diem-danh-an.module';
+import { DeXuatMuaModule } from './de-xuat-mua/de-xuat-mua.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { DiemDanhAnModule } from './diem-danh-an/diem-danh-an.module';
     DinhMucTienAnModule,
     CongThucDinhLuongModule,
     DiemDanhAnModule,
+    DeXuatMuaModule,
   ],
 })
 export class MamNonServiceModule {}
