@@ -24,6 +24,16 @@ describe('buildButToanNhanHang', () => {
     expect(typeof b.ngay).toBe('string');
     expect(b.danhMuc.doiTuong).toBeUndefined(); // NCC KHÔNG ở doiTuong (bên Nợ là 152 kho)
   });
+
+  it('tongTien kiểu STRING (Mongo/TypeORM decimal) → soTien là number thực sự', () => {
+    const dxDecimalString: any = { ...deXuat, tongTien: '15.00' };
+    const b = buildButToanNhanHang(dxDecimalString);
+    const p = buildPhieuNhapKho(dxDecimalString);
+    expect(b.soTien).toBe(15);
+    expect(typeof b.soTien).toBe('number');
+    expect(p.tongTien).toBe(15);
+    expect(typeof p.tongTien).toBe('number');
+  });
 });
 
 describe('buildPhieuNhapKho', () => {

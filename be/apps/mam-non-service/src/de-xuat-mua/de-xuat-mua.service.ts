@@ -49,7 +49,7 @@ export class DeXuatMuaService {
 
   async create(dto: CreateDeXuatMuaDto): Promise<DeXuatMuaThucPham> {
     const soPhieu = await this.sequence.next('DE_XUAT');
-    const tongTien = dto.tongTien ?? tinhTongTien(dto.chiTiet);
+    const tongTien = tinhTongTien(dto.chiTiet);
     const item = this.repo.create({
       ...dto, soPhieu, tongTien, ngayDeXuat: new Date(dto.ngayDeXuat),
       trangThai: 'NHAP', isActive: true, ...this.getTenantFilter(),
@@ -62,7 +62,7 @@ export class DeXuatMuaService {
     if (item.trangThai !== 'NHAP') throw new BadRequestException('Chỉ sửa được đề xuất ở trạng thái NHAP');
     const patch: any = sanitizeUpdateDto(dto);
     if (patch.ngayDeXuat) patch.ngayDeXuat = new Date(patch.ngayDeXuat);
-    if (patch.chiTiet) patch.tongTien = patch.tongTien ?? tinhTongTien(patch.chiTiet);
+    if (patch.chiTiet) patch.tongTien = tinhTongTien(patch.chiTiet);
     Object.assign(item, patch);
     return this.repo.save(item);
   }
@@ -93,6 +93,9 @@ export class DeXuatMuaService {
 
   async delete(id: string): Promise<void> {
     const item = await this.findOne(id);
+    if (item.trangThai === 'DA_DUYET' || item.trangThai === 'DA_NHAN') {
+      throw new BadRequestException('Không thể xóa đề xuất đã duyệt/đã nhận hàng');
+    }
     item.isActive = false;
     await this.repo.save(item);
   }
@@ -101,6 +104,12 @@ export class DeXuatMuaService {
     const item = await this.findOne(id);
     if (item.trangThai !== 'DA_DUYET' && item.trangThai !== 'DA_NHAN') {
       throw new BadRequestException('Chỉ nhận hàng đề xuất đã DUYỆT');
+    }
+    if (!item.doiTuongMa) {
+      throw new BadRequestException('Đề xuất chưa có nhà cung cấp (NCC) — không thể nhận hàng');
+    }
+    if (!(Number(item.tongTien) > 0)) {
+      throw new BadRequestException('Tổng tiền đề xuất phải lớn hơn 0 để nhận hàng');
     }
     const headers = authToken ? { Authorization: authToken } : undefined;
 

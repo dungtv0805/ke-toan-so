@@ -14,7 +14,7 @@ export function buildButToanNhanHang(dx: DeXuatMuaThucPham) {
   return {
     loai: 'PHIEU_CHI',
     ngay: toISODate(dx.ngayDeXuat),
-    soTien: dx.tongTien,
+    soTien: Number(dx.tongTien) || 0,
     noiDung: `Nhận thực phẩm từ ${dx.doiTuongTen ?? dx.doiTuongMa ?? 'NCC'} (đề xuất ${dx.soPhieu})`,
     danhMuc: {
       taiKhoanNo: { ...TK_KHO },
@@ -32,7 +32,7 @@ export function buildPhieuNhapKho(dx: DeXuatMuaThucPham) {
     doiTuongMa: dx.doiTuongMa,
     doiTuongTen: dx.doiTuongTen,
     dienGiai: `Nhập thực phẩm theo đề xuất ${dx.soPhieu}`,
-    tongTien: dx.tongTien,
+    tongTien: Number(dx.tongTien) || 0,
     chiTiet: (dx.chiTiet ?? []).map((ct) => ({
       stt: ct.stt,
       hangHoaMa: ct.hangHoaMa,
