@@ -120,6 +120,10 @@ export const DiemDanhAnPage = loadable(() => import('./bep-an/diem-danh-an/DiemD
   fallback: <PageLoader />
 });
 
+export const DeXuatMuaPage = loadable(() => import('./bep-an/de-xuat-mua/DeXuatMuaPage'), {
+  fallback: <PageLoader />
+});
+
 // Kho
 export const NhapKhoPage = loadable(() => import('./kho/nhap-kho/NhapKhoPage'), {
   fallback: <PageLoader />
