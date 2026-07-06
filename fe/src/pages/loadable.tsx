@@ -112,6 +112,10 @@ export const DinhMucTienAnPage = loadable(() => import('./bep-an/dinh-muc-tien-a
   fallback: <PageLoader />
 });
 
+export const CongThucDinhLuongPage = loadable(() => import('./bep-an/cong-thuc-dinh-luong/CongThucDinhLuongPage'), {
+  fallback: <PageLoader />
+});
+
 // Kho
 export const NhapKhoPage = loadable(() => import('./kho/nhap-kho/NhapKhoPage'), {
   fallback: <PageLoader />

@@ -21,6 +21,7 @@ import {
   DoiTuongPage,
   SanPhamPage,
   DinhMucTienAnPage,
+  CongThucDinhLuongPage,
   NhapKhoPage,
   XuatKhoPage,
   ChuyenKhoPage,
@@ -319,6 +320,14 @@ const App = () => (
                     element={
                       <ProtectedRoute requiredPermission="/bep-an/dinh-muc-tien-an:xem">
                         <DinhMucTienAnPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="cong-thuc-dinh-luong"
+                    element={
+                      <ProtectedRoute requiredPermission="/bep-an/cong-thuc-dinh-luong:xem">
+                        <CongThucDinhLuongPage />
                       </ProtectedRoute>
                     }
                   />
