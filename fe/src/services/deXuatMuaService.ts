@@ -13,7 +13,6 @@ class DeXuatMuaService extends ServiceBase {
     });
     return { data: r.data.map((x) => this.map(x)), meta: r.meta };
   }
-  async getAll(): Promise<DeXuatMua[]> { return (await this.get<Resp[]>({ endpoint: '/all' })).map((x) => this.map(x)); }
   async getById(id: string): Promise<DeXuatMua> { return this.map(await this.get<Resp>({ endpoint: `/${id}` })); }
   async create(data: Omit<DeXuatMua, 'id'>): Promise<DeXuatMua> { return this.map(await this.post<Resp>(data)); }
   async update(id: string, data: Partial<DeXuatMua>): Promise<DeXuatMua> { return this.map(await this.put<Resp>(data, { endpoint: `/${id}` })); }
