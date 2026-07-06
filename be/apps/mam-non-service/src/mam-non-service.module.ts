@@ -4,6 +4,7 @@ import { AuthModule } from '@app/auth';
 import { TenantModule } from '@app/core';
 import { DatabaseModule } from '@app/database';
 import { DinhMucTienAnModule } from './dinh-muc-tien-an/dinh-muc-tien-an.module';
+import { CongThucDinhLuongModule } from './cong-thuc-dinh-luong/cong-thuc-dinh-luong.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { DinhMucTienAnModule } from './dinh-muc-tien-an/dinh-muc-tien-an.module'
     DatabaseModule.forRoot(),
     AuthModule,
     DinhMucTienAnModule,
+    CongThucDinhLuongModule,
   ],
 })
 export class MamNonServiceModule {}
