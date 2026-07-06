@@ -107,6 +107,11 @@ export const HangHoaVatTuPage = loadable(() => import('./danh-muc/hang-hoa-vat-t
   fallback: <PageLoader />
 });
 
+// Bếp ăn
+export const DinhMucTienAnPage = loadable(() => import('./bep-an/dinh-muc-tien-an/DinhMucTienAnPage'), {
+  fallback: <PageLoader />
+});
+
 // Kho
 export const NhapKhoPage = loadable(() => import('./kho/nhap-kho/NhapKhoPage'), {
   fallback: <PageLoader />

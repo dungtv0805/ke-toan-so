@@ -20,6 +20,7 @@ import {
   TaiKhoanPage,
   DoiTuongPage,
   SanPhamPage,
+  DinhMucTienAnPage,
   NhapKhoPage,
   XuatKhoPage,
   ChuyenKhoPage,
@@ -309,6 +310,18 @@ const App = () => (
                   <Route path="phan-bo-khau-hao" element={<ComingSoonPage />} />
                   <Route path="phieu-ke-toan" element={<ComingSoonPage />} />
                   <Route path="de-nghi-thanh-toan" element={<ComingSoonPage />} />
+                </Route>
+
+                {/* Bếp ăn */}
+                <Route path="bep-an">
+                  <Route
+                    path="dinh-muc-tien-an"
+                    element={
+                      <ProtectedRoute requiredPermission="/bep-an/dinh-muc-tien-an:xem">
+                        <DinhMucTienAnPage />
+                      </ProtectedRoute>
+                    }
+                  />
                 </Route>
 
                 {/* Kho */}
