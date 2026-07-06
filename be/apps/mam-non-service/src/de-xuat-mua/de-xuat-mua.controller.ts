@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, Headers, UseGuards } from '@nestjs/common';
 import { DeXuatMuaService } from './de-xuat-mua.service';
 import { CreateDeXuatMuaDto, UpdateDeXuatMuaDto, RejectDeXuatDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
@@ -43,4 +43,9 @@ export class DeXuatMuaController {
 
   @Delete(':id') @Roles('ADMIN', 'KE_TOAN_TRUONG')
   async delete(@Param('id') id: string) { await this.service.delete(id); return { success: true, message: 'Xóa thành công' }; }
+
+  @Post(':id/nhan-hang') @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY')
+  async nhanHang(@Param('id') id: string, @Headers('authorization') authToken?: string) {
+    return { success: true, data: await this.service.nhanHang(id, authToken) };
+  }
 }

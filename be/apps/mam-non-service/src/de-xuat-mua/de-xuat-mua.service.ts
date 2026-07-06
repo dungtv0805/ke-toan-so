@@ -3,9 +3,11 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DeXuatMuaThucPham } from '@app/entities';
+import { ServiceClient } from '@app/service-client';
 import { CreateDeXuatMuaDto, UpdateDeXuatMuaDto } from './dto';
 import { MamNonSequenceService } from './mam-non-sequence.service';
 import { PaginationQueryDto, PaginatedResult } from '@app/dto';
+import { buildButToanNhanHang, buildPhieuNhapKho } from './nhan-hang.builder';
 
 export function tinhTongTien(chiTiet: { thanhTien?: number }[]): number {
   return (chiTiet ?? []).reduce((s, c) => s + (c.thanhTien ?? 0), 0);
@@ -17,6 +19,7 @@ export class DeXuatMuaService {
     @InjectRepository(DeXuatMuaThucPham) private readonly repo: Repository<DeXuatMuaThucPham>,
     private readonly sequence: MamNonSequenceService,
     private readonly tenantContext: TenantContextService,
+    private readonly serviceClient: ServiceClient,
   ) {}
 
   private getTenantFilter() {
@@ -92,5 +95,40 @@ export class DeXuatMuaService {
     const item = await this.findOne(id);
     item.isActive = false;
     await this.repo.save(item);
+  }
+
+  async nhanHang(id: string, authToken?: string): Promise<DeXuatMuaThucPham> {
+    const item = await this.findOne(id);
+    if (item.trangThai !== 'DA_DUYET' && item.trangThai !== 'DA_NHAN') {
+      throw new BadRequestException('Chỉ nhận hàng đề xuất đã DUYỆT');
+    }
+    const headers = authToken ? { Authorization: authToken } : undefined;
+
+    // 1) Bút toán NKC (nếu chưa tạo)
+    if (!item.chungTuId) {
+      const res = await this.serviceClient.post<any>('voucher', '/nhat-ky-chung', {
+        headers, body: buildButToanNhanHang(item),
+      });
+      if (!res.success) {
+        throw new BadRequestException(`Tạo bút toán thất bại: ${res.error?.message ?? res.error?.code ?? 'unknown'}`);
+      }
+      item.chungTuId = res.data?._id ?? res.data?.id ?? res.data?.soPhieu ?? 'created';
+      await this.repo.save(item);
+    }
+
+    // 2) Phiếu nhập kho (nếu chưa tạo)
+    if (!item.soPhieuNhapKho) {
+      const res = await this.serviceClient.post<any>('kho', '/phieu', {
+        headers, body: buildPhieuNhapKho(item),
+      });
+      if (!res.success) {
+        throw new BadRequestException(`Tạo phiếu nhập kho thất bại: ${res.error?.message ?? res.error?.code ?? 'unknown'}`);
+      }
+      item.soPhieuNhapKho = res.data?.soPhieu ?? res.data?._id ?? 'created';
+      await this.repo.save(item);
+    }
+
+    item.trangThai = 'DA_NHAN';
+    return this.repo.save(item);
   }
 }
