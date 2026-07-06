@@ -38,9 +38,11 @@ Chèn **kiểm soát chéo của kế toán** vào vòng lặp bếp ăn, và đ
 ### Tổng thể
 - **Lĩnh vực `MAM_NON`**: thêm 1 bản ghi `linh_vuc` (code `MAM_NON`, icon, màu, `menuKeys` trỏ tới các route Bếp ăn). Gán vào tenant Emillia qua `tenantModules`. Cơ chế lĩnh vực-động đã có sẵn (`fe/src/config/modules.ts`, collection `linh_vuc`, API `/master-data/linh-vuc`).
 - **Service mới `mam-non-service`** (NestJS, port **3010** — *lưu ý 3009 đã bị `tax-service` chiếm*, DB `digital_book` mặc định, tenant-scoped): sở hữu 4 entity nghiệp vụ mới + engine tính chi phí. Orchestrate qua **ServiceClient**:
-  - gọi **kho-service** (3008) tạo phiếu **nhập** (nhận hàng) và **xuất** (tiêu hao),
-  - gọi **payable-service** (3005) tạo **công nợ NCC**,
+  - gọi **voucher-service** (3003) tạo **bút toán Nhật ký chung** (`POST /nhat-ky-chung`): nhận hàng ⇒ Nợ 152/Có 331 (NCC ở `doiTuong2`); tiêu hao ⇒ Nợ 632/Có 152,
+  - gọi **kho-service** (3008) tạo phiếu **nhập** (nhận hàng) và **xuất** (tiêu hao) — theo dõi tồn kho vật lý,
   - đọc **master-data** (3002): đối tượng (NCC), hàng hóa vật tư (+ `cachXuat`), đơn vị tính, đơn giá/tồn kho.
+
+> **Cập nhật 2026-07-06 (sau khảo sát BE):** "Công nợ" KHÔNG phải bảng để ghi — bảng `cong_no` gần như legacy, không luồng nào ghi. Công nợ NCC được **suy ra on-the-fly từ Nhật ký chung** (TK 331 có `chiTietTheo=NHA_CUNG_CAP`). Tạo phiếu nhập kho **không** tự ghi sổ. ⇒ Nguồn "một sổ" duy nhất = **Nhật ký chung (voucher-service)**. Vì vậy "nhận hàng" tạo **bút toán 152/331 + phiếu nhập kho** (KHÔNG dùng payable-service).
 - **Gateway** (3000): thêm route proxy `/mam-non/*` → mam-non-service (cấu hình ở `apps/gateway/src/environments/environment.ts`: `services.mamNon` + `routes`).
 - **FE (ke-toan-so)**: các trang Bếp ăn theo **CHanlder pattern**, gate qua lĩnh vực `MAM_NON`.
 
@@ -51,7 +53,8 @@ Chèn **kiểm soát chéo của kế toán** vào vòng lặp bếp ăn, và đ
 | Mặt hàng thực phẩm | `hang_hoa_vat_tu` (master-data) + trường mới `cachXuat` |
 | Đơn vị tính | `don_vi_tinh` (master-data) |
 | Kho thực phẩm | `kho` + `phieu_kho` (NHAP/XUAT) — kho-service |
-| Công nợ NCC | `cong_no` — payable-service |
+| Bút toán một-sổ (152/331, 632/152) | `nhat_ky_chung` — voucher-service (`POST /nhat-ky-chung`) |
+| Công nợ NCC | **suy ra từ 331 trong Nhật ký chung** (reporting-service), KHÔNG ghi bảng riêng |
 | Sổ cái / báo cáo | reporting-service (thừa hưởng vì mọi thứ đã ghi sổ) |
 
 ---
