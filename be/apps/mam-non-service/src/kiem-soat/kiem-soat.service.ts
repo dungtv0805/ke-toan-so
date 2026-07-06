@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DiemDanhAn, DinhMucTienAn, CongThucDinhLuong } from '@app/entities';
 import { TenantContextService } from '@app/core';
 import { ServiceClient } from '@app/service-client';
 import { tinhTieuHao, tinhNganSach, tinhDonGiaBinhQuan, tinhChiPhiThuc, tinhHaoPhi } from '../engine/bep-an-engine';
+import { buildButToanGiaVon, buildPhieuXuatKho } from './ghi-so-tieu-hao.builder';
 
 @Injectable()
 export class KiemSoatService {
@@ -52,5 +53,41 @@ export class KiemSoatService {
     const haoPhi = tinhHaoPhi(nganSach, chiPhiThuc, nguongPct ?? 0);
 
     return { nganSach, chiPhiThuc, ...haoPhi, tieuHao, canhBaoDinhGiaThieu: !nhapRes.success };
+  }
+
+  /** Chốt tiêu hao kỳ: tạo phiếu xuất kho + bút toán giá vốn 632/152. Chưa idempotent (MVP). */
+  async chotTieuHao(tuNgay?: string, denNgay?: string, authToken?: string) {
+    const r = await this.chiPhi(tuNgay, denNgay, 0, authToken);
+    if (!r.tieuHao.length) throw new BadRequestException('Không có tiêu hao trong kỳ để chốt');
+    if (!(r.chiPhiThuc > 0)) throw new BadRequestException('Chi phí thực = 0, không thể ghi sổ giá vốn');
+    const ngay = denNgay ?? tuNgay ?? new Date().toISOString().slice(0, 10);
+    const headers = authToken ? { Authorization: authToken } : undefined;
+
+    // Đơn giá bình quân (chiPhi() không trả ra) — đọc lại phiếu nhập kho để tính.
+    const nhapRes = await this.serviceClient.get<any>('kho', '/phieu', {
+      headers,
+      query: { loaiPhieu: 'NHAP', limit: 1000 },
+    });
+    const nhapPhieu: any[] = nhapRes.success ? (nhapRes.data?.data ?? nhapRes.data ?? []) : [];
+    const nhapChiTiet = nhapPhieu.flatMap((p) => (p.chiTiet ?? []).map((ct: any) => ({
+      hangHoaMa: ct.hangHoaMa, soLuong: ct.soLuong, thanhTien: ct.thanhTien,
+    })));
+    const donGiaBq = tinhDonGiaBinhQuan(nhapChiTiet);
+
+    const xuatRes = await this.serviceClient.post<any>('kho', '/phieu', {
+      headers, body: buildPhieuXuatKho(r.tieuHao, donGiaBq, ngay),
+    });
+    if (!xuatRes.success) throw new BadRequestException(`Tạo phiếu xuất kho thất bại: ${xuatRes.error?.message ?? xuatRes.error?.code ?? 'unknown'}`);
+
+    const butRes = await this.serviceClient.post<any>('voucher', '/nhat-ky-chung', {
+      headers, body: buildButToanGiaVon(r.chiPhiThuc, ngay, `Giá vốn ăn kỳ ${tuNgay ?? ''}..${denNgay ?? ''}`),
+    });
+    if (!butRes.success) throw new BadRequestException(`Ghi sổ giá vốn thất bại: ${butRes.error?.message ?? butRes.error?.code ?? 'unknown'}`);
+
+    return {
+      chiPhiThuc: r.chiPhiThuc,
+      soPhieuXuat: xuatRes.data?.soPhieu ?? xuatRes.data?._id,
+      chungTuId: butRes.data?._id ?? butRes.data?.id,
+    };
   }
 }
