@@ -186,6 +186,11 @@ const DeXuatMuaPage: React.FC = () => {
         return;
       }
 
+      if (chiTiet.some((row) => !row.hangHoaMa)) {
+        message.error("Mỗi dòng phải chọn hàng hóa");
+        return;
+      }
+
       const submitData = {
         ...values,
         ngayDeXuat: values.ngayDeXuat ? values.ngayDeXuat.format("YYYY-MM-DD") : undefined,

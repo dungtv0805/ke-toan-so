@@ -24,9 +24,10 @@ import { usePagePermission } from "@/hooks/usePagePermission";
 const { RangePicker } = DatePicker;
 
 const KiemSoatChiPhiPage: React.FC = () => {
-  usePagePermission("/bep-an/kiem-soat-chi-phi");
+  const { canEdit } = usePagePermission("/bep-an/kiem-soat-chi-phi");
 
   const [range, setRange] = useState<[Dayjs, Dayjs] | null>(null);
+  const [queriedRange, setQueriedRange] = useState<[Dayjs, Dayjs] | null>(null);
   const [nguongPct, setNguongPct] = useState<number>(0);
   const [data, setData] = useState<KiemSoatChiPhi | null>(null);
   const [loading, setLoading] = useState(false);
@@ -42,6 +43,7 @@ const KiemSoatChiPhiPage: React.FC = () => {
         nguongPct,
       });
       setData(res);
+      setQueriedRange(range);
       setDaChot(false);
     } catch (e: unknown) {
       message.error(e instanceof Error ? e.message : "Không tải được dữ liệu kiểm soát chi phí");
@@ -51,11 +53,12 @@ const KiemSoatChiPhiPage: React.FC = () => {
   };
 
   const chot = async () => {
+    if (!queriedRange) return;
     setChotting(true);
     try {
       const r = await kiemSoatService.chotTieuHao({
-        tuNgay: range?.[0]?.format("YYYY-MM-DD"),
-        denNgay: range?.[1]?.format("YYYY-MM-DD"),
+        tuNgay: queriedRange[0]?.format("YYYY-MM-DD"),
+        denNgay: queriedRange[1]?.format("YYYY-MM-DD"),
       });
       message.success(
         `Đã chốt tiêu hao: giá vốn ${formatCurrency(r.chiPhiThuc)}${
@@ -110,7 +113,13 @@ const KiemSoatChiPhiPage: React.FC = () => {
             placeholder="Ngưỡng cảnh báo"
             style={{ width: 200 }}
           />
-          <Button type="primary" icon={<SearchOutlined />} onClick={load} loading={loading}>
+          <Button
+            type="primary"
+            icon={<SearchOutlined />}
+            onClick={load}
+            loading={loading}
+            disabled={!range}
+          >
             Xem
           </Button>
         </Space>
@@ -170,22 +179,24 @@ const KiemSoatChiPhiPage: React.FC = () => {
           <Card
             title="Chi tiết tiêu hao"
             extra={
-              <Popconfirm
-                title="Chốt tiêu hao?"
-                description="Sẽ ghi phiếu xuất kho + bút toán giá vốn 632/152. KHÔNG hoàn tác — tránh chốt trùng kỳ."
-                onConfirm={chot}
-                okText="Chốt"
-                cancelText="Hủy"
-              >
-                <Button
-                  type="primary"
-                  icon={<CheckCircleOutlined />}
-                  loading={chotting}
-                  disabled={!data || chotting || daChot}
+              canEdit && (
+                <Popconfirm
+                  title="Chốt tiêu hao?"
+                  description="Sẽ ghi phiếu xuất kho + bút toán giá vốn 632/152. KHÔNG hoàn tác — tránh chốt trùng kỳ."
+                  onConfirm={chot}
+                  okText="Chốt"
+                  cancelText="Hủy"
                 >
-                  Chốt tiêu hao
-                </Button>
-              </Popconfirm>
+                  <Button
+                    type="primary"
+                    icon={<CheckCircleOutlined />}
+                    loading={chotting}
+                    disabled={!data || !queriedRange || chotting || daChot}
+                  >
+                    Chốt tiêu hao
+                  </Button>
+                </Popconfirm>
+              )
             }
           >
             <Table
