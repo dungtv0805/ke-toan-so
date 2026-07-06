@@ -37,11 +37,11 @@ Chèn **kiểm soát chéo của kế toán** vào vòng lặp bếp ăn, và đ
 
 ### Tổng thể
 - **Lĩnh vực `MAM_NON`**: thêm 1 bản ghi `linh_vuc` (code `MAM_NON`, icon, màu, `menuKeys` trỏ tới các route Bếp ăn). Gán vào tenant Emillia qua `tenantModules`. Cơ chế lĩnh vực-động đã có sẵn (`fe/src/config/modules.ts`, collection `linh_vuc`, API `/master-data/linh-vuc`).
-- **Service mới `mam-non-service`** (NestJS, port **3009**, DB `digital_book` mặc định, tenant-scoped): sở hữu 4 entity nghiệp vụ mới + engine tính chi phí. Orchestrate qua **ServiceClient**:
+- **Service mới `mam-non-service`** (NestJS, port **3010** — *lưu ý 3009 đã bị `tax-service` chiếm*, DB `digital_book` mặc định, tenant-scoped): sở hữu 4 entity nghiệp vụ mới + engine tính chi phí. Orchestrate qua **ServiceClient**:
   - gọi **kho-service** (3008) tạo phiếu **nhập** (nhận hàng) và **xuất** (tiêu hao),
   - gọi **payable-service** (3005) tạo **công nợ NCC**,
   - đọc **master-data** (3002): đối tượng (NCC), hàng hóa vật tư (+ `cachXuat`), đơn vị tính, đơn giá/tồn kho.
-- **Gateway** (3000): thêm route proxy `/mam-non/*` → mam-non-service.
+- **Gateway** (3000): thêm route proxy `/mam-non/*` → mam-non-service (cấu hình ở `apps/gateway/src/environments/environment.ts`: `services.mamNon` + `routes`).
 - **FE (ke-toan-so)**: các trang Bếp ăn theo **CHanlder pattern**, gate qua lĩnh vực `MAM_NON`.
 
 ### Tái dùng (KHÔNG dựng lại)
