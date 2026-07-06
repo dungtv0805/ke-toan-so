@@ -65,6 +65,13 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/kho/xuat-kho', label: 'Xuất kho', parentLabel: 'Kho' },
   { key: '/kho/chuyen-kho', label: 'Chuyển kho', parentLabel: 'Kho' },
 
+  // ===== KẾ TOÁN — Bếp ăn =====
+  { key: '/bep-an/dinh-muc-tien-an', label: 'Định mức tiền ăn', parentLabel: 'Bếp ăn' },
+  { key: '/bep-an/cong-thuc-dinh-luong', label: 'Công thức định lượng', parentLabel: 'Bếp ăn' },
+  { key: '/bep-an/diem-danh-an', label: 'Điểm danh ăn', parentLabel: 'Bếp ăn' },
+  { key: '/bep-an/de-xuat-mua', label: 'Đề xuất mua thực phẩm', parentLabel: 'Bếp ăn' },
+  { key: '/bep-an/kiem-soat-chi-phi', label: 'Bảng kiểm soát chi phí', parentLabel: 'Bếp ăn' },
+
   // ===== THƯ VIỆN — Danh mục =====
   { key: '/danh-muc/tai-khoan', label: 'Tài khoản', parentLabel: 'Danh mục' },
   { key: '/danh-muc/doi-tuong', label: 'Đối tượng', parentLabel: 'Danh mục' },

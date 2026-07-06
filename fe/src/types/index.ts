@@ -789,3 +789,36 @@ export interface BieuDoThuChi {
   thu: number;
   chi: number;
 }
+
+// ===== MẦM NON / BẾP ĂN =====
+export type PhamViDinhMuc = 'LOP' | 'DO_TUOI' | 'GOI_AN' | 'CHUNG';
+export interface DinhMucTienAn {
+  id: string; code: string; ten: string; phamVi?: PhamViDinhMuc; doiTuongMa?: string;
+  mucTien: number; hieuLucTu?: string; hieuLucDen?: string; isActive?: boolean;
+}
+export type CachXuatCongThuc = 'DINH_LUONG' | 'THEO_SUAT';
+export interface ChiTietCongThuc {
+  hangHoaMa: string; hangHoaTen: string; dinhLuong: number; donViTinh?: string; cachXuat: CachXuatCongThuc;
+}
+export interface CongThucDinhLuong {
+  id: string; code: string; ten: string; ganTheo?: string; doiTuongMa?: string;
+  chiTiet: ChiTietCongThuc[]; isActive?: boolean;
+}
+export interface DiemDanhAn {
+  id: string; ngay: string; lopMa: string; lopTen: string; goiAnMa?: string;
+  soTreDangKy: number; soTreAnThucTe: number; congThucCode?: string; ghiChu?: string; isActive?: boolean;
+}
+export type TrangThaiDeXuat = 'NHAP' | 'CHO_DUYET' | 'DA_DUYET' | 'TU_CHOI' | 'DA_NHAN';
+export interface ChiTietDeXuat {
+  stt: number; hangHoaMa: string; hangHoaTen: string; donViTinh?: string; soLuong: number; donGia: number; thanhTien: number;
+}
+export interface DeXuatMua {
+  id: string; soPhieu: string; ngayDeXuat: string; nguoiDeXuat?: string; doiTuongMa?: string; doiTuongTen?: string;
+  chiTiet: ChiTietDeXuat[]; tongTien: number; trangThai: TrangThaiDeXuat;
+  nguoiDuyet?: string; ngayDuyet?: string; lyDoTuChoi?: string; chungTuId?: string; soPhieuNhapKho?: string; isActive?: boolean;
+}
+export interface TieuHaoDong { hangHoaMa: string; hangHoaTen: string; donViTinh?: string; soLuong: number; }
+export interface KiemSoatChiPhi {
+  nganSach: number; chiPhiThuc: number; chenhLech: number; haoPhiPct: number; vuot: boolean;
+  tieuHao: TieuHaoDong[]; canhBaoDinhGiaThieu?: boolean; canhBaoTruncateNhap?: boolean;
+}

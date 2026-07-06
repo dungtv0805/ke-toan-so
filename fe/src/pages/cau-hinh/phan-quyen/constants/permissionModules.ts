@@ -111,6 +111,16 @@ export const permissionModules: PermissionModule[] = [
     ],
   },
   {
+    key: 'bep-an', label: 'BẾP ĂN', isSection: true,
+    children: [
+      { key: '/bep-an/dinh-muc-tien-an', label: 'Định mức tiền ăn' },
+      { key: '/bep-an/cong-thuc-dinh-luong', label: 'Công thức định lượng' },
+      { key: '/bep-an/diem-danh-an', label: 'Điểm danh ăn' },
+      { key: '/bep-an/de-xuat-mua', label: 'Đề xuất mua thực phẩm' },
+      { key: '/bep-an/kiem-soat-chi-phi', label: 'Bảng kiểm soát chi phí' },
+    ],
+  },
+  {
     key: 'thu-vien',
     label: 'THƯ VIỆN',
     isSection: true,
