@@ -124,6 +124,10 @@ export const DeXuatMuaPage = loadable(() => import('./bep-an/de-xuat-mua/DeXuatM
   fallback: <PageLoader />
 });
 
+export const KiemSoatChiPhiPage = loadable(() => import('./bep-an/kiem-soat-chi-phi/KiemSoatChiPhiPage'), {
+  fallback: <PageLoader />
+});
+
 // Kho
 export const NhapKhoPage = loadable(() => import('./kho/nhap-kho/NhapKhoPage'), {
   fallback: <PageLoader />
