@@ -40,6 +40,9 @@ export class HangHoaVatTu extends BaseEntity {
 
   @Column({ default: true })
   isActive: boolean;
+
+  @Column({ default: 'DON_VI' })
+  cachXuat: 'DINH_LUONG' | 'THEO_SUAT' | 'DON_VI';
 }
 
 export interface HangHoaVatTuEntities {
