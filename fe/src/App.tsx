@@ -20,6 +20,11 @@ import {
   TaiKhoanPage,
   DoiTuongPage,
   SanPhamPage,
+  DinhMucTienAnPage,
+  CongThucDinhLuongPage,
+  DiemDanhAnPage,
+  DeXuatMuaPage,
+  KiemSoatChiPhiPage,
   NhapKhoPage,
   XuatKhoPage,
   ChuyenKhoPage,
@@ -309,6 +314,50 @@ const App = () => (
                   <Route path="phan-bo-khau-hao" element={<ComingSoonPage />} />
                   <Route path="phieu-ke-toan" element={<ComingSoonPage />} />
                   <Route path="de-nghi-thanh-toan" element={<ComingSoonPage />} />
+                </Route>
+
+                {/* Bếp ăn */}
+                <Route path="bep-an">
+                  <Route
+                    path="dinh-muc-tien-an"
+                    element={
+                      <ProtectedRoute requiredPermission="/bep-an/dinh-muc-tien-an:xem">
+                        <DinhMucTienAnPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="cong-thuc-dinh-luong"
+                    element={
+                      <ProtectedRoute requiredPermission="/bep-an/cong-thuc-dinh-luong:xem">
+                        <CongThucDinhLuongPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="diem-danh-an"
+                    element={
+                      <ProtectedRoute requiredPermission="/bep-an/diem-danh-an:xem">
+                        <DiemDanhAnPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="de-xuat-mua"
+                    element={
+                      <ProtectedRoute requiredPermission="/bep-an/de-xuat-mua:xem">
+                        <DeXuatMuaPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="kiem-soat-chi-phi"
+                    element={
+                      <ProtectedRoute requiredPermission="/bep-an/kiem-soat-chi-phi:xem">
+                        <KiemSoatChiPhiPage />
+                      </ProtectedRoute>
+                    }
+                  />
                 </Route>
 
                 {/* Kho */}

@@ -145,6 +145,15 @@
         "tsConfigPath": "apps/kho-service/tsconfig.app.json"
       }
     },
+    "mam-non-service": {
+      "type": "application",
+      "root": "apps/mam-non-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/mam-non-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/mam-non-service/tsconfig.app.json"
+      }
+    },
     "tax-service": {
       "type": "application",
       "root": "apps/tax-service",

@@ -107,6 +107,27 @@ export const HangHoaVatTuPage = loadable(() => import('./danh-muc/hang-hoa-vat-t
   fallback: <PageLoader />
 });
 
+// Bếp ăn
+export const DinhMucTienAnPage = loadable(() => import('./bep-an/dinh-muc-tien-an/DinhMucTienAnPage'), {
+  fallback: <PageLoader />
+});
+
+export const CongThucDinhLuongPage = loadable(() => import('./bep-an/cong-thuc-dinh-luong/CongThucDinhLuongPage'), {
+  fallback: <PageLoader />
+});
+
+export const DiemDanhAnPage = loadable(() => import('./bep-an/diem-danh-an/DiemDanhAnPage'), {
+  fallback: <PageLoader />
+});
+
+export const DeXuatMuaPage = loadable(() => import('./bep-an/de-xuat-mua/DeXuatMuaPage'), {
+  fallback: <PageLoader />
+});
+
+export const KiemSoatChiPhiPage = loadable(() => import('./bep-an/kiem-soat-chi-phi/KiemSoatChiPhiPage'), {
+  fallback: <PageLoader />
+});
+
 // Kho
 export const NhapKhoPage = loadable(() => import('./kho/nhap-kho/NhapKhoPage'), {
   fallback: <PageLoader />

@@ -66,6 +66,8 @@ import {
   FileAddOutlined,
   StopOutlined,
   CopyOutlined,
+  CoffeeOutlined,
+  ExperimentOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import type { MenuProps } from "antd";
@@ -140,6 +142,11 @@ const existingRoutes = new Set([
   "/kho/nhap-kho",
   "/kho/xuat-kho",
   "/kho/chuyen-kho",
+  "/bep-an/dinh-muc-tien-an",
+  "/bep-an/cong-thuc-dinh-luong",
+  "/bep-an/diem-danh-an",
+  "/bep-an/de-xuat-mua",
+  "/bep-an/kiem-soat-chi-phi",
   "/trung-tam-du-lieu/hop-dong",
   "/trung-tam-du-lieu/thu-tien-hop-dong",
   "/trung-tam-du-lieu/hd-ban-ra",
@@ -308,6 +315,14 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Nhập kho", "/kho/nhap-kho", <FileAddOutlined />),
     getMenuItem("Xuất kho", "/kho/xuat-kho", <FileDoneOutlined />),
     getMenuItem("Chuyển kho", "/kho/chuyen-kho", <SwapOutlined />),
+  ]),
+
+  getItem("Bếp ăn", "/bep-an", <CoffeeOutlined />, [
+    getMenuItem("Định mức tiền ăn", "/bep-an/dinh-muc-tien-an", <ProfileOutlined />),
+    getMenuItem("Công thức định lượng", "/bep-an/cong-thuc-dinh-luong", <ExperimentOutlined />),
+    getMenuItem("Điểm danh ăn", "/bep-an/diem-danh-an", <TeamOutlined />),
+    getMenuItem("Đề xuất mua thực phẩm", "/bep-an/de-xuat-mua", <ShoppingCartOutlined />),
+    getMenuItem("Bảng kiểm soát chi phí", "/bep-an/kiem-soat-chi-phi", <BarChartOutlined />),
   ]),
 ];
 
