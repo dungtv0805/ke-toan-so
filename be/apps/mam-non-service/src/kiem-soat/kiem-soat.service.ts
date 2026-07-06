@@ -23,10 +23,14 @@ export class KiemSoatService {
     // 1) Điểm danh trong kỳ (lọc theo ngày ở JS cho đơn giản)
     const allDiemDanh = await this.diemDanhRepo.find({ where: { isActive: true, ...this.tf() } as any });
     const from = tuNgay ? new Date(tuNgay) : null;
-    const to = denNgay ? new Date(denNgay) : null;
+    let toExclusive: Date | null = null;
+    if (denNgay) {
+      toExclusive = new Date(denNgay);
+      toExclusive.setDate(toExclusive.getDate() + 1);
+    }
     const rows = allDiemDanh.filter((d) => {
       const n = new Date(d.ngay).getTime();
-      return (!from || n >= from.getTime()) && (!to || n <= to.getTime());
+      return (!from || n >= from.getTime()) && (!toExclusive || n < toExclusive.getTime());
     });
 
     // 2) Định mức + công thức
@@ -41,6 +45,7 @@ export class KiemSoatService {
       query: { loaiPhieu: 'NHAP', limit: 1000 },
     });
     const nhapPhieu: any[] = nhapRes.success ? (nhapRes.data?.data ?? nhapRes.data ?? []) : [];
+    const truncateNhap = nhapPhieu.length >= 1000;
     const nhapChiTiet = nhapPhieu.flatMap((p) => (p.chiTiet ?? []).map((ct: any) => ({
       hangHoaMa: ct.hangHoaMa, soLuong: ct.soLuong, thanhTien: ct.thanhTien,
     })));
@@ -52,7 +57,11 @@ export class KiemSoatService {
     const nganSach = tinhNganSach(rows as any, dinhMucList as any);
     const haoPhi = tinhHaoPhi(nganSach, chiPhiThuc, nguongPct ?? 0);
 
-    return { nganSach, chiPhiThuc, ...haoPhi, tieuHao, canhBaoDinhGiaThieu: !nhapRes.success };
+    return {
+      nganSach, chiPhiThuc, ...haoPhi, tieuHao, donGiaBq,
+      canhBaoDinhGiaThieu: !nhapRes.success,
+      canhBaoTruncateNhap: truncateNhap,
+    };
   }
 
   /** Chốt tiêu hao kỳ: tạo phiếu xuất kho + bút toán giá vốn 632/152. Chưa idempotent (MVP). */
@@ -60,25 +69,14 @@ export class KiemSoatService {
     const r = await this.chiPhi(tuNgay, denNgay, 0, authToken);
     if (!r.tieuHao.length) throw new BadRequestException('Không có tiêu hao trong kỳ để chốt');
     if (!(r.chiPhiThuc > 0)) throw new BadRequestException('Chi phí thực = 0, không thể ghi sổ giá vốn');
+    if (r.canhBaoDinhGiaThieu) {
+      throw new BadRequestException('Không đọc được phiếu nhập kho để định giá tiêu hao — không thể chốt');
+    }
     const ngay = denNgay ?? tuNgay ?? new Date().toISOString().slice(0, 10);
     const headers = authToken ? { Authorization: authToken } : undefined;
 
-    // Đơn giá bình quân (chiPhi() không trả ra) — đọc lại phiếu nhập kho để tính.
-    const nhapRes = await this.serviceClient.get<any>('kho', '/phieu', {
-      headers,
-      query: { loaiPhieu: 'NHAP', limit: 1000 },
-    });
-    if (!nhapRes.success) {
-      throw new BadRequestException('Không đọc được phiếu nhập kho để định giá tiêu hao — không thể chốt (tránh ghi phiếu xuất giá 0)');
-    }
-    const nhapPhieu: any[] = nhapRes.success ? (nhapRes.data?.data ?? nhapRes.data ?? []) : [];
-    const nhapChiTiet = nhapPhieu.flatMap((p) => (p.chiTiet ?? []).map((ct: any) => ({
-      hangHoaMa: ct.hangHoaMa, soLuong: ct.soLuong, thanhTien: ct.thanhTien,
-    })));
-    const donGiaBq = tinhDonGiaBinhQuan(nhapChiTiet);
-
     const xuatRes = await this.serviceClient.post<any>('kho', '/phieu', {
-      headers, body: buildPhieuXuatKho(r.tieuHao, donGiaBq, ngay),
+      headers, body: buildPhieuXuatKho(r.tieuHao, r.donGiaBq, ngay),
     });
     if (!xuatRes.success) throw new BadRequestException(`Tạo phiếu xuất kho thất bại: ${xuatRes.error?.message ?? xuatRes.error?.code ?? 'unknown'}`);
 
