@@ -8,6 +8,7 @@ import { DinhMucTienAnModule } from './dinh-muc-tien-an/dinh-muc-tien-an.module'
 import { CongThucDinhLuongModule } from './cong-thuc-dinh-luong/cong-thuc-dinh-luong.module';
 import { DiemDanhAnModule } from './diem-danh-an/diem-danh-an.module';
 import { DeXuatMuaModule } from './de-xuat-mua/de-xuat-mua.module';
+import { KiemSoatModule } from './kiem-soat/kiem-soat.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { DeXuatMuaModule } from './de-xuat-mua/de-xuat-mua.module';
     CongThucDinhLuongModule,
     DiemDanhAnModule,
     DeXuatMuaModule,
+    KiemSoatModule,
   ],
 })
 export class MamNonServiceModule {}
