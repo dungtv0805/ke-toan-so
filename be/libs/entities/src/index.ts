@@ -13,3 +13,4 @@ export * from './linh-vuc';
 export * from './nganh';
 export * from './menu-catalog';
 export * from './tax';
+export * from './mam-non';
