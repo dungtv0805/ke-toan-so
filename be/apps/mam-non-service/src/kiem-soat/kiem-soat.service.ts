@@ -68,6 +68,9 @@ export class KiemSoatService {
       headers,
       query: { loaiPhieu: 'NHAP', limit: 1000 },
     });
+    if (!nhapRes.success) {
+      throw new BadRequestException('Không đọc được phiếu nhập kho để định giá tiêu hao — không thể chốt (tránh ghi phiếu xuất giá 0)');
+    }
     const nhapPhieu: any[] = nhapRes.success ? (nhapRes.data?.data ?? nhapRes.data ?? []) : [];
     const nhapChiTiet = nhapPhieu.flatMap((p) => (p.chiTiet ?? []).map((ct: any) => ({
       hangHoaMa: ct.hangHoaMa, soLuong: ct.soLuong, thanhTien: ct.thanhTien,
