@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Breadcrumb, Card, Table, Typography, message } from 'antd';
+import { Breadcrumb, Button, Card, Table, Typography, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { HomeOutlined, FileProtectOutlined } from '@ant-design/icons';
+import { HomeOutlined, FileProtectOutlined, ExportOutlined } from '@ant-design/icons';
 import type { BaoCaoHopDongRow } from '@/types';
 import { theoDoiHopDongService } from '@/services/theoDoiHopDongService';
+import { exportReportExcel } from '@/utils/exportReportExcel';
+import { buildHopDongSheets } from './hopDongExport';
 
 const { Text, Title } = Typography;
 
@@ -15,6 +17,22 @@ export default function BaoCaoHopDongPage() {
   const [rows, setRows] = useState<BaoCaoHopDongRow[]>([]);
   const [tong, setTong] = useState<BaoCaoHopDongRow | null>(null);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    const sheets = buildHopDongSheets(rows, tong);
+    if (sheets.length === 0) { message.warning('Không có dữ liệu để xuất'); return; }
+    setExporting(true);
+    try {
+      await exportReportExcel('Bao cao hop dong', sheets);
+      message.success('Đã xuất Excel');
+    } catch (e) {
+      console.error('export excel error', e);
+      message.error('Xuất Excel thất bại');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -75,9 +93,14 @@ export default function BaoCaoHopDongPage() {
       />
 
       <Card className="shadow-sm">
-        <div className="flex items-center gap-2 mb-3">
-          <FileProtectOutlined className="text-primary" />
-          <Title level={5} className="!mb-0">Báo cáo nhanh hợp đồng (theo năm)</Title>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <FileProtectOutlined className="text-primary" />
+            <Title level={5} className="!mb-0">Báo cáo nhanh hợp đồng (theo năm)</Title>
+          </div>
+          <Button icon={<ExportOutlined />} onClick={handleExport} loading={exporting}>
+            Xuất Excel
+          </Button>
         </div>
 
         <Table<BaoCaoHopDongRow>

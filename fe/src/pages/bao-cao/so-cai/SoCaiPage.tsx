@@ -12,7 +12,8 @@ import {
   Select,
   Tag,
   Descriptions,
-  Empty
+  Empty,
+  message
 } from 'antd';
 import { 
   ReloadOutlined, 
@@ -33,6 +34,8 @@ import {
 import { taiKhoanService } from '@/services/taiKhoanService';
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
+import { exportReportExcel } from "@/utils/exportReportExcel";
+import { buildSoCaiSheets } from "./soCaiExport";
 
 const SoCaiPage: React.FC = () => {
   const { canExport } = usePagePermission("/bao-cao/so-cai");
@@ -44,6 +47,22 @@ const SoCaiPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('1');
   const [filterAccount, setFilterAccount] = useState<string>('');
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    const sheets = buildSoCaiSheets(activeTab, { summaryData, selectedAccount, trialBalance });
+    if (sheets.length === 0) { message.warning("Không có dữ liệu để xuất (tab hiện tại)"); return; }
+    setExporting(true);
+    try {
+      await exportReportExcel("So cai", sheets);
+      message.success("Đã xuất Excel");
+    } catch (e) {
+      console.error("export excel error", e);
+      message.error("Xuất Excel thất bại");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -494,7 +513,7 @@ const SoCaiPage: React.FC = () => {
         }
         actions={
           <>
-            {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+            {canExport && <Button icon={<ExportOutlined />} onClick={handleExport} loading={exporting}>Xuất Excel</Button>}
             <Button icon={<ReloadOutlined />} onClick={fetchData}>
               Làm mới
             </Button>

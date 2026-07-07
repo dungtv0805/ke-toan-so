@@ -6,12 +6,20 @@ import {
 import { doiTuongService } from "@/services/doiTuongService";
 import { taiKhoanService } from "@/services/taiKhoanService";
 import { TaiKhoan } from "@/types";
-import { HomeOutlined, ReloadOutlined, TableOutlined } from "@ant-design/icons";
+import { exportReportExcel } from "@/utils/exportReportExcel";
+import { buildCongNoSheets } from "./congNoExport";
+import {
+  ExportOutlined,
+  HomeOutlined,
+  ReloadOutlined,
+  TableOutlined,
+} from "@ant-design/icons";
 import {
   Breadcrumb,
   Button,
   Card,
   DatePicker,
+  message,
   Select,
   Space,
   Table,
@@ -19,7 +27,6 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import dayjs, { Dayjs } from "dayjs";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 const { RangePicker } = DatePicker;
 
@@ -40,7 +47,6 @@ interface FlatRow {
 }
 
 const BangTongHopCongNoPage: React.FC = () => {
-  const navigate = useNavigate();
   const [data, setData] = useState<BangTongHopCongNo | null>(null);
   const [loading, setLoading] = useState(false);
   const [range, setRange] = useState<[Dayjs, Dayjs]>([
@@ -203,6 +209,30 @@ const BangTongHopCongNoPage: React.FC = () => {
     },
   ];
 
+  const [exporting, setExporting] = useState(false);
+  const handleExport = async () => {
+    const from = range[0].format("DD/MM/YYYY");
+    const to = range[1].format("DD/MM/YYYY");
+    const sheets = buildCongNoSheets(data, from, to);
+    if (sheets.length === 0) {
+      message.warning("Không có dữ liệu để xuất");
+      return;
+    }
+    setExporting(true);
+    try {
+      await exportReportExcel(
+        `Bang tong hop cong no_${range[0].format("DDMMYYYY")}-${range[1].format("DDMMYYYY")}`,
+        sheets,
+      );
+      message.success("Đã xuất Excel");
+    } catch (e) {
+      console.error("export excel error", e);
+      message.error("Xuất Excel thất bại");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleDrill = (r: FlatRow) => {
     if (!r.drillable || !r.accMa) return;
     const q = new URLSearchParams({
@@ -211,7 +241,7 @@ const BangTongHopCongNoPage: React.FC = () => {
       startDate: range[0].toISOString(),
       endDate: range[1].toISOString(),
     });
-    navigate(`/bao-cao/so-chi-tiet-tai-khoan?${q.toString()}`);
+    window.open(`/bao-cao/so-chi-tiet-tai-khoan?${q.toString()}`, "_blank");
   };
 
   return (
@@ -239,14 +269,23 @@ const BangTongHopCongNoPage: React.FC = () => {
           </Space>
         }
         extra={
-          <Button
-            type="primary"
-            icon={<ReloadOutlined />}
-            onClick={fetchData}
-            loading={loading}
-          >
-            Xem báo cáo
-          </Button>
+          <Space>
+            <Button
+              icon={<ExportOutlined />}
+              onClick={handleExport}
+              loading={exporting}
+            >
+              Xuất Excel
+            </Button>
+            <Button
+              type="primary"
+              icon={<ReloadOutlined />}
+              onClick={fetchData}
+              loading={loading}
+            >
+              Xem báo cáo
+            </Button>
+          </Space>
         }
       >
         <Space wrap style={{ marginBottom: 16 }}>

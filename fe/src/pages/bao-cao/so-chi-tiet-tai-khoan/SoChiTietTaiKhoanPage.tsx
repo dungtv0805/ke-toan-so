@@ -4,7 +4,7 @@ import {
   soChiTietTaiKhoanService,
 } from '@/services/soChiTietTaiKhoanService';
 import { taiKhoanService } from '@/services/taiKhoanService';
-import { AccountBookOutlined, HomeOutlined, ReloadOutlined } from '@ant-design/icons';
+import { AccountBookOutlined, ExportOutlined, HomeOutlined, ReloadOutlined } from '@ant-design/icons';
 import {
   Breadcrumb,
   Button,
@@ -24,6 +24,8 @@ import {
 } from './columnRegistry';
 import { parseReportParams } from './reportParams';
 import { FilterBar } from '@/components/common/FilterBar';
+import { exportReportExcel } from '@/utils/exportReportExcel';
+import { buildSoChiTietSheets } from './soChiTietExport';
 
 const { RangePicker } = DatePicker;
 
@@ -95,6 +97,27 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
     // Chỉ chạy một lần lúc mount theo param ban đầu.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const [exporting, setExporting] = useState(false);
+  const handleExport = async () => {
+    const from = range[0].format('DD/MM/YYYY');
+    const to = range[1].format('DD/MM/YYYY');
+    const sheets = buildSoChiTietSheets(reports ?? [], visibleKeys, from, to);
+    if (sheets.length === 0) { message.warning('Không có dữ liệu để xuất'); return; }
+    setExporting(true);
+    try {
+      await exportReportExcel(
+        `So chi tiet tai khoan_${range[0].format('DDMMYYYY')}-${range[1].format('DDMMYYYY')}`,
+        sheets,
+      );
+      message.success('Đã xuất Excel');
+    } catch (e) {
+      console.error('export excel error', e);
+      message.error('Xuất Excel thất bại');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const onChangeVisible = (keys: string[]) => {
     setVisibleKeys(keys);
@@ -174,6 +197,9 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
         }
         actions={
           <>
+            <Button icon={<ExportOutlined />} onClick={handleExport} loading={exporting}>
+              Xuất Excel
+            </Button>
             <Button type="primary" onClick={loadReport}>
               Xem
             </Button>

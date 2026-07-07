@@ -12,6 +12,7 @@ import {
   Tag,
   Alert,
   Typography,
+  message,
 } from 'antd';
 import {
   ReloadOutlined,
@@ -47,6 +48,8 @@ import { usePagePermission } from "@/hooks/usePagePermission";
 import { taiKhoanService } from '@/services/taiKhoanService';
 import { buildAccountTree, collectParentKeys, attachDoiTuongChildren, type TreeNode } from './utils/buildAccountTree';
 import { buildSoChiTietUrl } from './utils/soChiTietLink';
+import { exportReportExcel } from '@/utils/exportReportExcel';
+import { buildTaiChinhSheets } from './taiChinhExport';
 
 // ============ TYPES ============
 
@@ -107,6 +110,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
   const { canExport } = usePagePermission("/bao-cao/tai-chinh");
   const [activeTab, setActiveTab] = useState('1');
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const [filterParams, setFilterParams] = useState<PeriodFilterParams>(() => defaultYearParams());
 
@@ -524,6 +528,37 @@ const BaoCaoTaiChinhPage: React.FC = () => {
     },
   ];
 
+  // ============ EXPORT EXCEL ============
+
+  const handleExport = async () => {
+    const sheets = buildTaiChinhSheets(
+      activeTab,
+      {
+        trialBalanceTree,
+        trialBalance: tbState.trialBalance,
+        taiSanTree,
+        nguonVonTree,
+        kqkdData,
+        pnlComparison,
+      },
+      getPeriodLabel(filterParams),
+    );
+    if (sheets.length === 0) {
+      message.warning('Tab này không có bảng để xuất');
+      return;
+    }
+    setExporting(true);
+    try {
+      await exportReportExcel('Bao cao tai chinh', sheets);
+      message.success('Đã xuất Excel');
+    } catch (e) {
+      console.error('export excel error', e);
+      message.error('Xuất Excel thất bại');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // ============ RENDER ============
 
   return (
@@ -539,7 +574,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
           />
           <Space>
             <Tag color="blue">{getPeriodLabel(filterParams)}</Tag>
-            <Button icon={<ExportOutlined />}>Xuất Excel</Button>
+            <Button icon={<ExportOutlined />} onClick={handleExport} loading={exporting}>Xuất Excel</Button>
             <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
               Làm mới
             </Button>

@@ -11,6 +11,7 @@ import {
   Breadcrumb,
   Select,
   Tag,
+  message,
 } from 'antd';
 import {
   ReloadOutlined,
@@ -30,6 +31,14 @@ import {
 } from '@/services/pnlService';
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
+import { exportReportExcel } from "@/utils/exportReportExcel";
+import { buildPnLSheets } from "./pnlExport";
+
+const PERIOD_LABEL: Record<string, string> = {
+  thangNay: "Tháng này",
+  thangTruoc: "Tháng trước",
+  luyKe: "Lũy kế năm",
+};
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('vi-VN', {
@@ -58,6 +67,22 @@ const PnLPage: React.FC = () => {
   const [summary, setSummary] = useState<PnLSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<'thangNay' | 'thangTruoc' | 'luyKe'>('thangNay');
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    const sheets = buildPnLSheets(groupedData, summary, PERIOD_LABEL[selectedPeriod]);
+    if (sheets.length === 0) { message.warning("Không có dữ liệu để xuất"); return; }
+    setExporting(true);
+    try {
+      await exportReportExcel("Bao cao lai lo PnL", sheets);
+      message.success("Đã xuất Excel");
+    } catch (e) {
+      console.error("export excel error", e);
+      message.error("Xuất Excel thất bại");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -189,7 +214,11 @@ const PnLPage: React.FC = () => {
         }
         actions={
           <>
-            {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+            {canExport && (
+              <Button icon={<ExportOutlined />} onClick={handleExport} loading={exporting}>
+                Xuất Excel
+              </Button>
+            )}
             <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
               Làm mới
             </Button>

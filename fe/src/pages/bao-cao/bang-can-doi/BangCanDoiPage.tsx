@@ -10,6 +10,7 @@ import {
   Tabs,
   Breadcrumb,
   Tag,
+  message,
 } from 'antd';
 import {
   ReloadOutlined,
@@ -38,6 +39,8 @@ import {
 } from '@/services/balanceSheetService';
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { exportReportExcel } from '@/utils/exportReportExcel';
+import { buildBangCanDoiSheets } from './bangCanDoiExport';
 
 const COLORS = ['#1890ff', '#52c41a', '#faad14', '#ff4d4f', '#722ed1', '#13c2c2'];
 
@@ -60,6 +63,22 @@ const BangCanDoiPage: React.FC = () => {
   const [stats, setStats] = useState<BalanceSheetStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('1');
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    const sheets = buildBangCanDoiSheets(activeTab, data);
+    if (sheets.length === 0) { message.warning("Tab này không có bảng để xuất"); return; }
+    setExporting(true);
+    try {
+      await exportReportExcel("Bang can doi ke toan", sheets);
+      message.success("Đã xuất Excel");
+    } catch (e) {
+      console.error("export excel error", e);
+      message.error("Xuất Excel thất bại");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -196,7 +215,7 @@ const BangCanDoiPage: React.FC = () => {
         extra={
           <Space>
             {settingsButton}
-            {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+            {canExport && <Button icon={<ExportOutlined />} onClick={handleExport} loading={exporting}>Xuất Excel</Button>}
             <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
               Làm mới
             </Button>
