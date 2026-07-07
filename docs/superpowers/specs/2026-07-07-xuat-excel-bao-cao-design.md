@@ -11,6 +11,11 @@ giữ header gộp nhiều tầng, giữ phân cấp/thụt lề, in đậm dòn
 Mức độ đã chốt: **giống cấu trúc** (không tái hiện màu nền/viền/màu chữ y hệt web).
 Phạm vi dữ liệu: **xuất đúng bộ dữ liệu bảng đang giữ ở client**, không gọi lại API.
 
+**Báo cáo nhiều tab** (Sổ cái 3 tab, Bảng cân đối 2 tab, Báo cáo tài chính 4 tab): 1 nút
+"Xuất Excel" xuất **đúng bảng của tab đang mở** (`activeTab`) → 1 file, 1 sheet. Nếu tab đang mở
+chỉ có biểu đồ (không có bảng) ⇒ `message.warning("Tab này không có bảng để xuất")`, không tạo file.
+Một tab có nhiều bảng (vd Cân đối kế toán = Tài sản + Nguồn vốn) ⇒ nhiều khối nối tiếp trong 1 sheet.
+
 ## Kiến trúc
 
 ### Helper dùng chung: `fe/src/utils/exportReportExcel.ts`
@@ -87,22 +92,35 @@ Adapter **không gọi lại API** — dùng đúng dữ liệu client đang ren
 
 | # | Trang | File | Nút | Cấu trúc | Xuất |
 |---|-------|------|-----|----------|------|
-| 1 | Sổ cái | `so-cai/SoCaiPage.tsx` | có (no-op) | phẳng + dòng tổng | 1 sheet |
-| 2 | Bảng cân đối | `bang-can-doi/BangCanDoiPage.tsx` | có (no-op) | phẳng + header gộp | 1 sheet |
+| 1 | Sổ cái | `so-cai/SoCaiPage.tsx` | có (no-op) | 3 tab (bảng) | 1 sheet theo tab |
+| 2 | Bảng cân đối | `bang-can-doi/BangCanDoiPage.tsx` | có (no-op) | 2 tab (1 bảng + 1 chart) | 1 sheet theo tab |
 | 3 | PnL (Lãi/lỗ) | `pnl/PnLPage.tsx` | có (no-op) | phân cấp danh mục | 1 sheet |
-| 4 | Báo cáo tài chính | `tai-chinh/BaoCaoTaiChinhPage.tsx` | có (no-op) | 4 tab | 4 sheet |
+| 4 | Báo cáo tài chính | `tai-chinh/BaoCaoTaiChinhPage.tsx` | có (no-op) | 4 tab | 1 sheet theo tab |
 | 5 | Bảng tổng hợp công nợ | `bang-tong-hop/BangTongHopCongNoPage.tsx` | thêm mới | header gộp + dòng TK/tổng | 1 sheet |
 | 6 | Báo cáo hợp đồng | `hop-dong/BaoCaoHopDongPage.tsx` | thêm mới | phẳng | 1 sheet |
 | 7 | Sổ chi tiết tài khoản | `so-chi-tiet-tai-khoan/SoChiTietTaiKhoanPage.tsx` | thêm mới | nhiều khối theo TK | **1 sheet nhiều khối** |
 | 8 | KQKD | `kqkd/KqkdPage.tsx` | thêm mới | phân cấp | 1 sheet |
 
-### Chi tiết #4 Báo cáo tài chính (4 sheet)
+### Chi tiết #1 Sổ cái (theo `activeTab`)
 
-Trang là Tabs 4 tab, xuất thành workbook 4 sheet, dùng đúng dữ liệu client đang giữ:
-1. **Cân đối tài khoản** — cây `trialBalanceTree` (full tree) + dòng Tổng cộng in đậm cuối.
-2. **Cân đối kế toán** — 1 sheet chứa 2 khối nối tiếp: khối "TÀI SẢN" (`taiSanTree`) và khối "NGUỒN VỐN" (`nguonVonTree`), cách nhau 1 dòng trống + tiêu đề khối.
-3. **Kết quả kinh doanh** — `kqkdData.chiTieu` (giống #8, dùng chung adapter KQKD).
-4. **So sánh lãi lỗ** — `buildPnLComparisonData()`.
+- Tab `1` "Tổng hợp theo TK" — `summaryData` (`SoCaiByAccount[]`) + dòng Tổng cộng in đậm cuối.
+- Tab `2` "Chi tiết tài khoản" — `selectedAccount.chiTiet` (`SoCaiEntry[]`); tiêu đề khối = mã+tên TK,
+  các số dư đầu/phát sinh/cuối đưa vào `meta`. Nếu chưa chọn TK ⇒ warning.
+- Tab `3` "Bảng cân đối phát sinh" — `trialBalance` (`TrialBalance[]`, header gộp) + dòng Tổng cộng.
+
+### Chi tiết #2 Bảng cân đối (theo `activeTab`)
+
+- Tab `1` "Bảng cân đối kế toán" — 1 sheet 2 khối: "TÀI SẢN" (`data.taiSan`) + dòng "TỔNG CỘNG TÀI SẢN",
+  "NGUỒN VỐN" (`data.nguonVon`) + dòng "TỔNG CỘNG NGUỒN VỐN". Cột: Chỉ tiêu / Mã số / Số đầu năm / Số cuối kỳ / Chênh lệch.
+- Tab `2` "Cơ cấu tài sản & vốn" (chart) ⇒ warning không có bảng để xuất.
+
+### Chi tiết #4 Báo cáo tài chính (theo `activeTab`)
+
+Trang là Tabs 4 tab, xuất **tab đang mở** thành 1 sheet, dùng đúng dữ liệu client đang giữ:
+1. Tab `1` **Cân đối tài khoản** — cây `trialBalanceTree` (full tree) + dòng Tổng cộng in đậm cuối.
+2. Tab `2` **Cân đối kế toán** — 1 sheet 2 khối nối tiếp: "TÀI SẢN" (`taiSanTree`) và "NGUỒN VỐN" (`nguonVonTree`).
+3. Tab `3` **Kết quả kinh doanh** — `kqkdData.chiTieu` (dùng chung adapter KQKD ở #8).
+4. Tab `4` **So sánh lãi lỗ** — `buildPnLComparisonData()`.
 
 ### Chi tiết #7 Sổ chi tiết tài khoản (1 sheet nhiều khối)
 
