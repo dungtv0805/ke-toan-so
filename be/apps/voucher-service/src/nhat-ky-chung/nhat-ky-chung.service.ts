@@ -677,6 +677,9 @@ export class NhatKyChungService {
         item.loai,
       );
       existingItem.ngay = new Date(item.ngay);
+      if (item.ngayGhiSo !== undefined) {
+        existingItem.ngayGhiSo = new Date(item.ngayGhiSo);
+      }
       existingItem.soTien = item.soTien;
       existingItem.noiDung = item.noiDung;
       if (item.danhMuc !== undefined) {
