@@ -30,20 +30,37 @@ export function buildMongoQuery(
     }
   }
 
-  // Search by regex on nghiepVu field
+  // search và doiTuong đều là điều kiện $or, nên gom qua $and để không ghi đè nhau
+  const orConditions: Record<string, unknown>[][] = [];
+
+  // Search by regex on nghiepVu, nội dung, số phiếu và đối tượng
+  // doiTuong2 giữ "đối tượng có"; dữ liệu cũ chỉ có doiTuong
   if (search) {
     const escaped = escapeRegex(search);
-    mongoQuery.$or = [
+    orConditions.push([
       { 'danhMuc.nghiepVu.ten': { $regex: escaped, $options: 'i' } },
       { 'danhMuc.nghiepVu.ma': { $regex: escaped, $options: 'i' } },
       { noiDung: { $regex: escaped, $options: 'i' } },
       { soPhieu: { $regex: escaped, $options: 'i' } },
-    ];
+      { 'danhMuc.doiTuong.ma': { $regex: escaped, $options: 'i' } },
+      { 'danhMuc.doiTuong.ten': { $regex: escaped, $options: 'i' } },
+      { 'danhMuc.doiTuong2.ma': { $regex: escaped, $options: 'i' } },
+      { 'danhMuc.doiTuong2.ten': { $regex: escaped, $options: 'i' } },
+    ]);
   }
 
-  // Filter by đối tượng
+  // Filter by đối tượng — khớp đối tượng bên Nợ hoặc bên Có
   if (doiTuong) {
-    mongoQuery['danhMuc.doiTuong.ma'] = doiTuong;
+    orConditions.push([
+      { 'danhMuc.doiTuong.ma': doiTuong },
+      { 'danhMuc.doiTuong2.ma': doiTuong },
+    ]);
+  }
+
+  if (orConditions.length === 1) {
+    mongoQuery.$or = orConditions[0];
+  } else if (orConditions.length > 1) {
+    mongoQuery.$and = orConditions.map((conditions) => ({ $or: conditions }));
   }
 
   // Filter by dự án
