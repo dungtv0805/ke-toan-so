@@ -140,6 +140,27 @@ export class ServiceClient extends BaseServiceClient {
     });
   }
 
+  /**
+   * Danh mục ngân hàng/quỹ (đối tượng loại NGAN_HANG_QUY). Dùng để hiện tên
+   * ngân hàng + số tài khoản ở chi tiết đối tượng của báo cáo tài chính.
+   */
+  async getNganHang(
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<
+    ServiceResponse<
+      Array<{ ma: string; ten: string; nganHang?: string; soTaiKhoan?: string }>
+    >
+  > {
+    const headers: Record<string, string> = {};
+    if (authToken) headers['Authorization'] = authToken;
+    if (tenantId) headers['x-tenant-id'] = tenantId;
+    return this.get('master-data', '/ngan-hang', {
+      headers: Object.keys(headers).length ? headers : undefined,
+      query: { limit: '500', page: '1' },
+    });
+  }
+
   async getKhoanMuc(
     authToken?: string,
   ): Promise<ServiceResponse<KhoanMucResponse[]>> {

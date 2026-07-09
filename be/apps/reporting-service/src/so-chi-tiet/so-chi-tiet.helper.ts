@@ -1,6 +1,12 @@
 import type { NhatKyChungEntry } from '@app/dto';
 
 /**
+ * Tín hiệu lọc "đối tượng rỗng": chỉ lấy bút toán CHƯA gắn đối tượng. FE truyền
+ * giá trị này khi bấm dòng "Chưa xác định đối tượng" ở báo cáo tài chính.
+ */
+export const DOI_TUONG_TRONG = '__none__';
+
+/**
  * Tập mã TK liên quan: chính nó + mọi TK con cháu (theo tiền tố mã).
  * Đồng nhất quy tắc với buildSoDuTree của FE.
  */
@@ -70,6 +76,7 @@ export interface OpeningRow {
   duNo: number;
   duCo: number;
   chiTietMa?: string;
+  chiTietType?: string;
 }
 
 function getTkNo(v: NhatKyChungEntry): string {
@@ -98,7 +105,7 @@ function splitBalance(
  * - maDoiTuong: lọc theo đối tượng (tùy chọn).
  */
 export function buildSoChiTiet(
-  account: { ma: string; ten: string; loai: string },
+  account: { ma: string; ten: string; loai: string; chiTietTheo?: string },
   relevantCodes: Set<string>,
   vouchers: NhatKyChungEntry[],
   opening: OpeningRow[],
@@ -107,6 +114,23 @@ export function buildSoChiTiet(
   endDate: Date,
 ): SoChiTietReport {
   const loai = account.loai;
+  const chiTietTheo = account.chiTietTheo;
+
+  // "Chưa xác định đối tượng" — ĐỒNG NHẤT với báo cáo tài chính
+  // (buildDoiTuongSoTien): đối tượng rỗng HOẶC loai ≠ chiTietTheo của TK. Nhờ
+  // vậy bấm dòng "chưa xác định" ở báo cáo ra đúng các phiếu đó (kể cả phiếu gắn
+  // đối tượng SAI loại).
+  const isChuaXacDinh = (ma?: string, dtLoai?: string): boolean =>
+    !(ma && (!chiTietTheo || dtLoai === chiTietTheo));
+
+  // Khớp đối tượng: không lọc → nhận tất cả; '__none__' → thuộc "chưa xác định";
+  // ngược lại → khớp đúng mã.
+  const matchDt = (ma: string | undefined, dtLoai?: string): boolean =>
+    !maDoiTuong
+      ? true
+      : maDoiTuong === DOI_TUONG_TRONG
+        ? isChuaXacDinh(ma, dtLoai)
+        : ma === maDoiTuong;
 
   const legsOf = (
     v: NhatKyChungEntry,
@@ -114,14 +138,14 @@ export function buildSoChiTiet(
     const tkNo = getTkNo(v);
     const tkCo = getTkCo(v);
     // Đối tượng bên Nợ ghi ở doiTuong; bên Có ghi ở doiTuong2
-    // (fallback doiTuong cho dữ liệu cũ — đồng nhất aggregateBalanceByDoiTuong).
-    const objNo = v.danhMuc?.doiTuong?.ma;
-    const objCo = v.danhMuc?.doiTuong2?.ma ?? v.danhMuc?.doiTuong?.ma;
+    // (fallback doiTuong cho dữ liệu cũ — đồng nhất buildDoiTuongSoTien).
+    const dtNo = v.danhMuc?.doiTuong;
+    const dtCo = v.danhMuc?.doiTuong2 ?? v.danhMuc?.doiTuong;
     const out: Array<{ no: number; co: number; tkDoiUng: string }> = [];
-    if (relevantCodes.has(tkNo) && (!maDoiTuong || objNo === maDoiTuong)) {
+    if (relevantCodes.has(tkNo) && matchDt(dtNo?.ma, dtNo?.loai)) {
       out.push({ no: v.soTien, co: 0, tkDoiUng: tkCo });
     }
-    if (relevantCodes.has(tkCo) && (!maDoiTuong || objCo === maDoiTuong)) {
+    if (relevantCodes.has(tkCo) && matchDt(dtCo?.ma, dtCo?.loai)) {
       out.push({ no: 0, co: v.soTien, tkDoiUng: tkNo });
     }
     return out;
@@ -134,7 +158,7 @@ export function buildSoChiTiet(
   let manualSigned = 0;
   for (const o of opening) {
     if (!relevantCodes.has(o.maTaiKhoan)) continue;
-    if (maDoiTuong && o.chiTietMa !== maDoiTuong) continue;
+    if (!matchDt(o.chiTietMa, o.chiTietType)) continue;
     manualSigned += delta(Number(o.duNo) || 0, Number(o.duCo) || 0);
   }
 
@@ -225,7 +249,7 @@ export function buildSoChiTiet(
  */
 export function buildSoChiTietMulti(
   codes: string[],
-  accounts: Array<{ ma: string; ten: string; loai: string }>,
+  accounts: Array<{ ma: string; ten: string; loai: string; chiTietTheo?: string }>,
   vouchers: NhatKyChungEntry[],
   opening: OpeningRow[],
   maDoiTuong: string | undefined,
@@ -238,7 +262,12 @@ export function buildSoChiTietMulti(
     if (!account) continue;
     const relevantCodes = computeRelevantCodes(accounts, code);
     const report = buildSoChiTiet(
-      { ma: account.ma, ten: account.ten, loai: account.loai },
+      {
+        ma: account.ma,
+        ten: account.ten,
+        loai: account.loai,
+        chiTietTheo: account.chiTietTheo,
+      },
       relevantCodes,
       vouchers,
       opening,

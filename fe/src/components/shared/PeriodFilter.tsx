@@ -14,6 +14,8 @@ export interface PeriodFilterParams {
 interface PeriodFilterProps {
   onFilter: (params: PeriodFilterParams) => void;
   loading?: boolean;
+  /** Bật: đổi kiểu xem / ngày là query ngay và ẩn nút "Xem báo cáo". */
+  autoApply?: boolean;
 }
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -70,23 +72,40 @@ function buildPreset(period: string): PeriodFilterParams {
   }
 }
 
-export function PeriodFilter({ onFilter, loading }: PeriodFilterProps) {
+export function PeriodFilter({ onFilter, loading, autoApply }: PeriodFilterProps) {
   const [period, setPeriod] = useState('namNay');
   const [customFrom, setCustomFrom] = useState<Dayjs | null>(dayjs().startOf('month'));
   const [customTo, setCustomTo] = useState<Dayjs | null>(dayjs());
   const isCustom = period === 'tuyChon';
 
+  const emitCustom = (from: Dayjs | null, to: Dayjs | null) => {
+    if (!from || !to) return;
+    onFilter({
+      periodType: 'tuyChon',
+      startDate: from.startOf('day').toISOString(),
+      endDate: to.endOf('day').toISOString(),
+    });
+  };
+
   const handleSubmit = () => {
-    if (isCustom) {
-      if (!customFrom || !customTo) return;
-      onFilter({
-        periodType: 'tuyChon',
-        startDate: customFrom.startOf('day').toISOString(),
-        endDate: customTo.endOf('day').toISOString(),
-      });
-    } else {
-      onFilter(buildPreset(period));
-    }
+    if (isCustom) emitCustom(customFrom, customTo);
+    else onFilter(buildPreset(period));
+  };
+
+  const handlePeriodChange = (val: string) => {
+    setPeriod(val);
+    if (!autoApply) return;
+    if (val === 'tuyChon') emitCustom(customFrom, customTo);
+    else onFilter(buildPreset(val));
+  };
+
+  const handleFromChange = (d: Dayjs | null) => {
+    setCustomFrom(d);
+    if (autoApply) emitCustom(d, customTo);
+  };
+  const handleToChange = (d: Dayjs | null) => {
+    setCustomTo(d);
+    if (autoApply) emitCustom(customFrom, d);
   };
 
   return (
@@ -94,7 +113,7 @@ export function PeriodFilter({ onFilter, loading }: PeriodFilterProps) {
       <CalendarOutlined style={{ color: '#1890ff' }} />
       <Select
         value={period}
-        onChange={setPeriod}
+        onChange={handlePeriodChange}
         options={PERIOD_OPTIONS}
         style={{ width: 160 }}
         showSearch
@@ -102,13 +121,15 @@ export function PeriodFilter({ onFilter, loading }: PeriodFilterProps) {
       />
       {isCustom && (
         <>
-          <DatePicker value={customFrom} onChange={setCustomFrom} placeholder="Từ ngày" style={{ width: 140 }} />
-          <DatePicker value={customTo} onChange={setCustomTo} placeholder="Đến ngày" style={{ width: 140 }} />
+          <DatePicker value={customFrom} onChange={handleFromChange} placeholder="Từ ngày" style={{ width: 140 }} />
+          <DatePicker value={customTo} onChange={handleToChange} placeholder="Đến ngày" style={{ width: 140 }} />
         </>
       )}
-      <Button type="primary" icon={<SearchOutlined />} onClick={handleSubmit} loading={loading}>
-        Xem báo cáo
-      </Button>
+      {!autoApply && (
+        <Button type="primary" icon={<SearchOutlined />} onClick={handleSubmit} loading={loading}>
+          Xem báo cáo
+        </Button>
+      )}
     </Space>
   );
 }

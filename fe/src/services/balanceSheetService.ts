@@ -6,6 +6,8 @@ export interface DoiTuongSoTienResponse {
   ma: string;
   ten: string;
   soTien: number;
+  soTaiKhoan?: string;
+  tenNganHang?: string;
 }
 
 interface BalanceSheetEntryResponse {

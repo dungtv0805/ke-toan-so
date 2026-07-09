@@ -30,6 +30,9 @@ export interface TrialBalanceEntry {
   noCuoiKy: number;
   coCuoiKy: number;
   doiTuongChiTiet?: TrialBalanceEntry[];
+  // Chỉ có với đối tượng ngân hàng/quỹ: số TK + tên ngân hàng ("Tên NH – Số TK").
+  soTaiKhoan?: string;
+  tenNganHang?: string;
 }
 
 export interface AggBucket {
@@ -439,21 +442,31 @@ export class SoCaiService {
     endDate: Date,
     authToken?: string,
   ): Promise<{ entries: TrialBalanceEntry[]; totals: TrialBalanceEntry }> {
-    const [aggRes, accountsRes, openingRes, dtAggRes, openingRawRes] = await Promise.all([
-      this.serviceClient.aggregateBalance(
-        startDate.toISOString(),
-        endDate.toISOString(),
-        authToken,
-      ),
-      this.serviceClient.getTaiKhoan(authToken),
-      this.serviceClient.getSoDuDauKy(authToken),
-      this.serviceClient.aggregateBalanceByDoiTuong(
-        startDate.toISOString(),
-        endDate.toISOString(),
-        authToken,
-      ),
-      this.serviceClient.getSoDuDauKyRaw(authToken),
-    ]);
+    const [aggRes, accountsRes, openingRes, dtAggRes, openingRawRes, nganHangRes] =
+      await Promise.all([
+        this.serviceClient.aggregateBalance(
+          startDate.toISOString(),
+          endDate.toISOString(),
+          authToken,
+        ),
+        this.serviceClient.getTaiKhoan(authToken),
+        this.serviceClient.getSoDuDauKy(authToken),
+        this.serviceClient.aggregateBalanceByDoiTuong(
+          startDate.toISOString(),
+          endDate.toISOString(),
+          authToken,
+        ),
+        this.serviceClient.getSoDuDauKyRaw(authToken),
+        this.serviceClient.getNganHang(authToken),
+      ]);
+
+    // Map mã ngân hàng/quỹ → tên NH + số TK (hiện "Tên NH – Số TK" cho tiền gửi).
+    const nganHangByMa = new Map<string, { tenNganHang?: string; soTaiKhoan?: string }>(
+      (nganHangRes.success ? nganHangRes.data || [] : []).map((n) => [
+        n.ma,
+        { tenNganHang: n.nganHang || n.ten, soTaiKhoan: n.soTaiKhoan },
+      ]),
+    );
 
     const aggData = aggRes.success ? aggRes.data || [] : [];
     const accounts = accountsRes.success ? accountsRes.data || [] : [];
@@ -544,7 +557,12 @@ export class SoCaiService {
           account.chiTietTheo,
         );
         if (dtRows.length > 0) {
-          entries[entries.length - 1].doiTuongChiTiet = dtRows;
+          entries[entries.length - 1].doiTuongChiTiet = dtRows.map((r) => {
+            const nh = r.ma ? nganHangByMa.get(r.ma) : undefined;
+            return nh
+              ? { ...r, soTaiKhoan: nh.soTaiKhoan, tenNganHang: nh.tenNganHang }
+              : r;
+          });
         }
       }
 

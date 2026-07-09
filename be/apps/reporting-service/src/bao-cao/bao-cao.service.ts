@@ -26,6 +26,27 @@ export interface DoiTuongSoTien {
   ma: string;
   ten: string;
   soTien: number;
+  // Chỉ có với đối tượng ngân hàng/quỹ (NGAN_HANG_QUY): số TK + tên ngân hàng
+  // để báo cáo hiện "Tên NH – Số TK".
+  soTaiKhoan?: string;
+  tenNganHang?: string;
+}
+
+/** Map mã ngân hàng/quỹ → tên ngân hàng + số TK (từ danh mục ngân hàng). */
+export type NganHangByMa = Map<string, { tenNganHang?: string; soTaiKhoan?: string }>;
+
+/**
+ * Gắn số TK + tên ngân hàng cho các dòng đối tượng là ngân hàng/quỹ (khớp theo
+ * mã). Đối tượng thường (KH/NCC) không đổi.
+ */
+export function enrichBankInfo(
+  rows: DoiTuongSoTien[],
+  nganHangByMa: NganHangByMa,
+): DoiTuongSoTien[] {
+  return rows.map((r) => {
+    const nh = r.ma ? nganHangByMa.get(r.ma) : undefined;
+    return nh ? { ...r, soTaiKhoan: nh.soTaiKhoan, tenNganHang: nh.tenNganHang } : r;
+  });
 }
 
 export interface BalanceSheetEntry {
@@ -405,17 +426,26 @@ export class BaoCaoService {
     authToken?: string,
     tenantId?: string,
   ): Promise<BalanceSheetReport> {
-    const [vouchersRes, accountsRes, openingRes, openingRawRes] = await Promise.all([
-      this.serviceClient.getNhatKyChung(
-        '2000-01-01',
-        asOfDate.toISOString(),
-        authToken,
-        tenantId,
-      ),
-      this.serviceClient.getTaiKhoan(authToken, tenantId),
-      this.serviceClient.getSoDuDauKy(authToken, tenantId),
-      this.serviceClient.getSoDuDauKyRaw(authToken, tenantId),
-    ]);
+    const [vouchersRes, accountsRes, openingRes, openingRawRes, nganHangRes] =
+      await Promise.all([
+        this.serviceClient.getNhatKyChung(
+          '2000-01-01',
+          asOfDate.toISOString(),
+          authToken,
+          tenantId,
+        ),
+        this.serviceClient.getTaiKhoan(authToken, tenantId),
+        this.serviceClient.getSoDuDauKy(authToken, tenantId),
+        this.serviceClient.getSoDuDauKyRaw(authToken, tenantId),
+        this.serviceClient.getNganHang(authToken, tenantId),
+      ]);
+
+    const nganHangByMa: NganHangByMa = new Map(
+      (nganHangRes.success ? nganHangRes.data || [] : []).map((n) => [
+        n.ma,
+        { tenNganHang: n.nganHang || n.ten, soTaiKhoan: n.soTaiKhoan },
+      ]),
+    );
 
     const vouchers = vouchersRes.success ? vouchersRes.data || [] : [];
     const accounts = accountsRes.success ? accountsRes.data || [] : [];
@@ -479,7 +509,8 @@ export class BaoCaoService {
             })),
             account.chiTietTheo,
           );
-          if (dt.length > 0) taiSan[taiSan.length - 1].doiTuongChiTiet = dt;
+          if (dt.length > 0)
+            taiSan[taiSan.length - 1].doiTuongChiTiet = enrichBankInfo(dt, nganHangByMa);
         }
       }
     }
@@ -507,7 +538,8 @@ export class BaoCaoService {
             })),
             account.chiTietTheo,
           );
-          if (dt.length > 0) nguonVon[nguonVon.length - 1].doiTuongChiTiet = dt;
+          if (dt.length > 0)
+            nguonVon[nguonVon.length - 1].doiTuongChiTiet = enrichBankInfo(dt, nganHangByMa);
         }
       }
     }

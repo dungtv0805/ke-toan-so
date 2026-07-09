@@ -56,6 +56,8 @@ export interface TrialBalanceEntry {
   noCuoiKy: number;
   coCuoiKy: number;
   doiTuongChiTiet?: TrialBalanceEntry[];
+  soTaiKhoan?: string;
+  tenNganHang?: string;
 }
 
 // Mapped type for FE display
@@ -69,6 +71,8 @@ export interface TrialBalance {
   soDuCuoiKyNo: number;
   soDuCuoiKyCo: number;
   doiTuongChiTiet?: TrialBalance[];
+  soTaiKhoan?: string;
+  tenNganHang?: string;
 }
 
 class SoCaiService extends ServiceBase {
@@ -188,6 +192,8 @@ class SoCaiService extends ServiceBase {
       phatSinhCo: item.coPhatSinh,
       soDuCuoiKyNo: item.noCuoiKy,
       soDuCuoiKyCo: item.coCuoiKy,
+      soTaiKhoan: item.soTaiKhoan,
+      tenNganHang: item.tenNganHang,
     });
 
     return data.entries.map((item) => ({

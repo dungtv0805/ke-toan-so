@@ -4,7 +4,7 @@ import {
   soChiTietTaiKhoanService,
 } from '@/services/soChiTietTaiKhoanService';
 import { taiKhoanService } from '@/services/taiKhoanService';
-import { AccountBookOutlined, ExportOutlined, HomeOutlined, ReloadOutlined } from '@ant-design/icons';
+import { AccountBookOutlined, ExportOutlined, HomeOutlined } from '@ant-design/icons';
 import {
   Breadcrumb,
   Button,
@@ -15,7 +15,7 @@ import {
   Space,
 } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AccountReportBlock from './AccountReportBlock';
 import ColumnChooser from './ColumnChooser';
@@ -42,6 +42,8 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
   const [reports, setReports] = useState<SoChiTietReport[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [visibleKeys, setVisibleKeys] = useState<string[]>(() => loadVisibleKeys());
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [tableY, setTableY] = useState<number>(400);
 
   useEffect(() => {
     (async () => {
@@ -130,6 +132,26 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
     [visibleKeys],
   );
 
+  // Đo chiều cao khả dụng để mỗi bảng ghim header/footer, chỉ cuộn nội dung.
+  // 1 tài khoản: bảng lấp đầy phần còn lại; nhiều tài khoản: mỗi bảng cao vừa phải.
+  useEffect(() => {
+    const update = () => {
+      const el = contentRef.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top;
+      const avail = Math.max(window.innerHeight - top - 12, 200);
+      const single = (reports?.length ?? 0) === 1;
+      const CHROME = 40 /* dòng "Tài khoản:" */ + 64 /* 2 dòng footer */ + 20;
+      setTableY(single ? Math.max(avail - CHROME, 160) : 340);
+    };
+    const raf = requestAnimationFrame(update);
+    window.addEventListener('resize', update);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', update);
+    };
+  }, [reports, loading, visibleKeys]);
+
   const allSelected =
     accountOptions.length > 0 && maTaiKhoans.length === accountOptions.length;
 
@@ -153,9 +175,12 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
   };
 
   return (
-    <div>
+    <div
+      className="sct-compact"
+      style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+    >
       <Breadcrumb
-        style={{ marginBottom: 16 }}
+        style={{ marginBottom: 8 }}
         items={[
           { href: '/', title: <HomeOutlined /> },
           { title: 'Báo cáo' },
@@ -163,7 +188,7 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
         ]}
       />
       <FilterBar
-        className="mb-3"
+        className="mb-2"
         filters={
           <>
             <RangePicker
@@ -200,40 +225,39 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
             <Button icon={<ExportOutlined />} onClick={handleExport} loading={exporting}>
               Xuất Excel
             </Button>
-            <Button type="primary" onClick={loadReport}>
+            <Button type="primary" onClick={loadReport} loading={loading}>
               Xem
-            </Button>
-            <Button icon={<ReloadOutlined />} onClick={loadReport}>
-              Làm mới
             </Button>
           </>
         }
       />
 
       <Card
-        title={<Space><AccountBookOutlined /><span>Sổ chi tiết tài khoản</span></Space>}
+        size="small"
+        title={<Space size={6}><AccountBookOutlined /><span>Sổ chi tiết tài khoản</span></Space>}
+        style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+        bodyStyle={{ flex: 1, minHeight: 0, overflow: 'auto', padding: 8 }}
       >
-        {reports ? (
-          reports.length === 0 ? (
-            <Empty description="Không có dữ liệu cho tài khoản và kỳ đã chọn" />
-          ) : (
-            <>
-              <div style={{ textAlign: 'center', fontWeight: 600, fontSize: 16, marginBottom: 12 }}>
-                SỔ CHI TIẾT TÀI KHOẢN
-              </div>
-              {reports.map((rep) => (
+        <div ref={contentRef}>
+          {reports ? (
+            reports.length === 0 ? (
+              <Empty description="Không có dữ liệu cho tài khoản và kỳ đã chọn" />
+            ) : (
+              reports.map((rep) => (
                 <AccountReportBlock
                   key={rep.taiKhoan.ma}
                   report={rep}
                   columns={loading ? [] : columns}
+                  visibleKeys={visibleKeys}
                   scrollX={scrollX}
+                  scrollY={tableY}
                 />
-              ))}
-            </>
-          )
-        ) : (
-          <Empty description="Chọn tài khoản và kỳ rồi bấm Xem" />
-        )}
+              ))
+            )
+          ) : (
+            <Empty description="Chọn tài khoản và kỳ rồi bấm Xem" />
+          )}
+        </div>
       </Card>
       <style>{`.sct-summary-row { background:#fafafa; font-weight:600; }`}</style>
     </div>

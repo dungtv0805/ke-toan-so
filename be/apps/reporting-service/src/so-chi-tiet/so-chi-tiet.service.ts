@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ServiceClient } from '@app/service-client';
 import {
   buildSoChiTietMulti,
+  DOI_TUONG_TRONG,
   type SoChiTietReport,
   type OpeningRow,
 } from './so-chi-tiet.helper';
@@ -57,7 +58,11 @@ export class SoChiTietService {
     );
 
     // Gắn thông tin đối tượng khi có lọc theo đối tượng.
-    if (maDoiTuong) {
+    if (maDoiTuong === DOI_TUONG_TRONG) {
+      for (const report of reports) {
+        report.doiTuong = { ma: '', ten: 'Chưa xác định đối tượng' };
+      }
+    } else if (maDoiTuong) {
       const dt = doiTuongs.find((d) => d.ma === maDoiTuong);
       if (dt) {
         for (const report of reports) {

@@ -1131,6 +1131,52 @@
   min-height: 0;
 }
 
+/* Trang Báo cáo tài chính: thu gọn header + thân bảng để hiển thị nhiều dòng
+   hơn. Chỉ áp cho .bctc-compact nên KHÔNG ảnh hưởng các trang khác dùng chung
+   .excel-table. */
+.bctc-compact .excel-table .ant-table-thead > tr > th {
+  padding: 2px 6px !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+}
+.bctc-compact .excel-table .ant-table-tbody > tr > td {
+  padding: 1px 6px !important;
+  font-size: 11px !important;
+  line-height: 1.3 !important;
+}
+.bctc-compact .excel-table .ant-table-summary > tr > td {
+  padding: 2px 6px !important;
+  font-size: 11px !important;
+}
+/* Header các Card TÀI SẢN / NGUỒN VỐN gọn lại */
+.bctc-compact .ant-card-small > .ant-card-head {
+  min-height: 28px !important;
+  padding: 0 8px !important;
+  font-size: 12px !important;
+}
+
+/* Trang "Sổ chi tiết tài khoản": thu gọn chữ + padding giống Báo cáo tài chính
+   để hiển thị nhiều dòng hơn. */
+.sct-compact .ant-table-thead > tr > th {
+  padding: 2px 6px !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+}
+.sct-compact .ant-table-tbody > tr > td {
+  padding: 1px 6px !important;
+  font-size: 11px !important;
+  line-height: 1.3 !important;
+}
+.sct-compact .ant-table-summary > tr > td {
+  padding: 2px 6px !important;
+  font-size: 11px !important;
+}
+.sct-compact .ant-card-small > .ant-card-head {
+  min-height: 30px !important;
+  padding: 0 8px !important;
+  font-size: 13px !important;
+}
+
 /* Dòng "Tổng cộng" cố định (ghim đáy) + nổi bật cho bảng cân đối phát sinh */
 .tb-summary .ant-table-summary > tr > td {
   background: #e6f4ff !important;

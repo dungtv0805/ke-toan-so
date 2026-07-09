@@ -147,6 +147,68 @@ describe('buildSoChiTiet', () => {
     expect(r.soDuCuoiKyCo).toBe(0);
   });
 
+  it("lọc '__none__': chỉ bút toán CHƯA gắn đối tượng của TK", () => {
+    const account331 = {
+      ma: '331',
+      ten: 'Phải trả NCC',
+      loai: 'CO',
+      chiTietTheo: 'NHA_CUNG_CAP',
+    };
+    const rel = new Set(['331']);
+    const vouchers = [
+      // Có gắn đối tượng ĐÚNG loại (doiTuong2) → PHẢI bị loại khi lọc rỗng
+      {
+        soPhieu: 'MH01',
+        ngay: new Date('2026-01-05') as any,
+        soTien: 500,
+        noiDung: 'Mua hàng có NCC',
+        danhMuc: {
+          taiKhoanNo: { ma: '642', ten: '642', loai: 'NO', nhom: '' },
+          taiKhoanCo: { ma: '331', ten: '331', loai: 'CO', nhom: '' },
+          doiTuong2: { ma: 'NCC1', ten: 'NCC 1', loai: 'NHA_CUNG_CAP' },
+        },
+      } as any,
+      // KHÔNG gắn đối tượng → phải được giữ
+      v('2026-01-06', 'QC01', '642', '331', 800),
+    ];
+    const r = buildSoChiTiet(account331, rel, vouchers, [], '__none__', start, end);
+    expect(r.rows).toHaveLength(1);
+    expect(r.rows[0].soPhieu).toBe('QC01');
+    expect(r.tongPhatSinhCo).toBe(800);
+  });
+
+  it("lọc '__none__': đối tượng gắn SAI loại (loai ≠ chiTietTheo) cũng thuộc 'chưa xác định'", () => {
+    // TK 131 chiTietTheo=KHACH_HANG. Phiếu gắn NCC001 (NHA_CUNG_CAP) → báo cáo
+    // dồn vào "chưa xác định" → Sổ chi tiết '__none__' PHẢI hiện phiếu này.
+    const account131 = {
+      ma: '131',
+      ten: 'Phải thu KH',
+      loai: 'NO',
+      chiTietTheo: 'KHACH_HANG',
+    };
+    const rel = new Set(['131']);
+    const vouchers = [
+      // Đúng loại KH → bị loại khỏi '__none__'
+      v('2026-01-05', 'BH01', '131', '511', 300, 'KH01'),
+      // Sai loại (NCC) ở vế Nợ 131 → PHẢI được giữ
+      {
+        soPhieu: 'SAI01',
+        ngay: new Date('2026-01-06') as any,
+        soTien: 200,
+        noiDung: 'Đối tượng sai loại',
+        danhMuc: {
+          taiKhoanNo: { ma: '131', ten: '131', loai: 'NO', nhom: '' },
+          taiKhoanCo: { ma: '511', ten: '511', loai: 'CO', nhom: '' },
+          doiTuong: { ma: 'NCC001', ten: 'NCC', loai: 'NHA_CUNG_CAP' },
+        },
+      } as any,
+    ];
+    const r = buildSoChiTiet(account131, rel, vouchers, [], '__none__', start, end);
+    expect(r.rows).toHaveLength(1);
+    expect(r.rows[0].soPhieu).toBe('SAI01');
+    expect(r.tongPhatSinhNo).toBe(200);
+  });
+
   it('gộp TK cha: chứng từ nội bộ 2 con sinh 2 dòng, số dư triệt tiêu', () => {
     const accountCha = { ma: '131', ten: 'Phải thu', loai: 'NO' };
     const rel = new Set(['131', '1311', '1312']);

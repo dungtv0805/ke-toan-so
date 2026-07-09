@@ -15,7 +15,6 @@ import {
   message,
 } from 'antd';
 import {
-  ReloadOutlined,
   ExportOutlined,
   HomeOutlined,
   FileTextOutlined,
@@ -40,7 +39,6 @@ import {
 } from '@/services/balanceSheetService';
 import { pnlService, PnLComparisonData } from '@/services/pnlService';
 import { PeriodFilter, PeriodFilterParams, defaultYearParams } from '@/components/shared/PeriodFilter';
-import { FilterBar } from "@/components/common/FilterBar";
 import { ExpandCollapseButtons } from "@/components/common/ExpandCollapseButtons";
 import { kqkdService, KqkdReport } from '@/services/kqkdService';
 import { KqkdTable } from '@/pages/bao-cao/kqkd/components/KqkdTable';
@@ -74,6 +72,18 @@ const formatCurrencyShort = (value: number) => {
   if (Math.abs(value) >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)} tỷ`;
   if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(0)} tr`;
   return formatCurrency(value);
+};
+
+// Nhãn dòng đối tượng. Ngân hàng/quỹ (có soTaiKhoan) hiện "Tên NH – Số TK: xxxx";
+// đối tượng thường hiện "mã - tên".
+const doiTuongLabel = (dt: {
+  ma?: string;
+  ten: string;
+  soTaiKhoan?: string;
+  tenNganHang?: string;
+}): string => {
+  if (dt.soTaiKhoan) return `${dt.tenNganHang || dt.ten} – Số TK: ${dt.soTaiKhoan}`;
+  return dt.ma ? `${dt.ma} - ${dt.ten}` : dt.ten;
 };
 
 const CurrencyCell: React.FC<{ value: number; bold?: boolean }> = ({ value, bold }) => (
@@ -238,7 +248,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
       const kids = row.doiTuongChiTiet.map((dt): TreeNode<TrialBalance> => ({
         ...dt,
         taiKhoan: '',
-        tenTaiKhoan: dt.taiKhoan ? `${dt.taiKhoan} - ${dt.tenTaiKhoan}` : dt.tenTaiKhoan,
+        tenTaiKhoan: doiTuongLabel({ ma: dt.taiKhoan, ten: dt.tenTaiKhoan, soTaiKhoan: dt.soTaiKhoan, tenNganHang: dt.tenNganHang }),
         __ma: `${row.taiKhoan}::${dt.taiKhoan || '__none__'}`,
         __isParent: false,
         __isDoiTuong: true,
@@ -288,7 +298,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
             if (!leaf.doiTuongChiTiet?.length) continue;
             const kids = leaf.doiTuongChiTiet.map((dt): TreeNode<BalanceSheetItem> => ({
               ma: '',
-              tenChiTieu: dt.ma ? `${dt.ma} - ${dt.ten}` : dt.ten,
+              tenChiTieu: doiTuongLabel(dt),
               dauNam: 0,
               cuoiKy: dt.soTien,
               level: 2,
@@ -347,15 +357,21 @@ const BaoCaoTaiChinhPage: React.FC = () => {
     return <CurrencyCell value={ownVal} />;
   };
 
-  // Mở Sổ chi tiết (tab mới) cho dòng được click: TK cho dòng tài khoản,
-  // TK cha + đối tượng cho dòng đối tượng (__ma = "TKcha::đốitượng").
-  const openSoChiTiet = (record: TreeNode<TrialBalance>) => {
-    let maTaiKhoan = record.taiKhoan;
+  // Mở Sổ chi tiết (tab mới): TK cho dòng tài khoản, TK cha + đối tượng cho dòng
+  // đối tượng (__ma = "TKcha::đốitượng"). Dòng "Chưa xác định đối tượng" (đối
+  // tượng rỗng, __ma = "TKcha::__none__") truyền tín hiệu '__none__' để Sổ chi
+  // tiết chỉ hiện các bút toán CHƯA gắn đối tượng của TK đó.
+  const openSoChiTietFor = (
+    taiKhoan: string,
+    maRow: string | undefined,
+    isDoiTuong: boolean | undefined,
+  ) => {
+    let maTaiKhoan = taiKhoan;
     let maDoiTuong: string | undefined;
-    if (record.__isDoiTuong) {
-      const [parentTK, dt] = (record.__ma ?? '').split('::');
+    if (isDoiTuong) {
+      const [parentTK, dt] = (maRow ?? '').split('::');
       maTaiKhoan = parentTK;
-      maDoiTuong = dt && dt !== '__none__' ? dt : undefined;
+      maDoiTuong = dt && dt !== '__none__' ? dt : '__none__';
     }
     if (!maTaiKhoan) return;
     const url = buildSoChiTietUrl({
@@ -365,6 +381,25 @@ const BaoCaoTaiChinhPage: React.FC = () => {
       endDate: filterParams.endDate,
     });
     window.open(url, '_blank', 'noopener');
+  };
+
+  const openSoChiTiet = (record: TreeNode<TrialBalance>) =>
+    openSoChiTietFor(record.taiKhoan, record.__ma, record.__isDoiTuong);
+
+  // Mở/thu toàn bộ cây theo tab đang xem (dùng cho nút trên hàng tab).
+  const handleExpandAll = () => {
+    if (activeTab === '1') setTbExpanded(collectParentKeys(trialBalanceTree));
+    else if (activeTab === '2') {
+      setBsTaiSanExpanded(collectParentKeys(taiSanTree));
+      setBsNguonVonExpanded(collectParentKeys(nguonVonTree));
+    }
+  };
+  const handleCollapseAll = () => {
+    if (activeTab === '1') setTbExpanded([]);
+    else if (activeTab === '2') {
+      setBsTaiSanExpanded([]);
+      setBsNguonVonExpanded([]);
+    }
   };
 
   const trialBalanceColumns: ColumnsType<TreeNode<TrialBalance>> = [
@@ -409,9 +444,12 @@ const BaoCaoTaiChinhPage: React.FC = () => {
   const balanceSheetColumns: ColumnsType<TreeNode<BalanceSheetItem>> = [
     {
       title: 'Chỉ tiêu', dataIndex: 'tenChiTieu', key: 'tenChiTieu', width: 350,
-      render: (text: string, record: TreeNode<BalanceSheetItem>) => (
-        <span style={{ fontWeight: record.isSection ? 700 : record.isTotal || record.__isParent ? 600 : 400, color: record.isSection ? '#1890ff' : 'inherit' }}>{text}</span>
-      ),
+      render: (text: string, record: TreeNode<BalanceSheetItem>) =>
+        record.__isDoiTuong ? (
+          <Typography.Link onClick={() => openSoChiTietFor('', record.__ma, true)}>{text}</Typography.Link>
+        ) : (
+          <span style={{ fontWeight: record.isSection ? 700 : record.isTotal || record.__isParent ? 600 : 400, color: record.isSection ? '#1890ff' : 'inherit' }}>{text}</span>
+        ),
     },
     { title: 'Mã số', dataIndex: 'ma', key: 'ma', width: 80, align: 'center' },
     {
@@ -561,8 +599,18 @@ const BaoCaoTaiChinhPage: React.FC = () => {
 
   // ============ RENDER ============
 
+  const tabBarExtra = (
+    <Space size={4} wrap style={{ justifyContent: 'flex-end' }}>
+      <PeriodFilter onFilter={handleFilter} loading={loading} autoApply />
+      {(activeTab === '1' || activeTab === '2') && (
+        <ExpandCollapseButtons onExpandAll={handleExpandAll} onCollapseAll={handleCollapseAll} />
+      )}
+      <Button size="small" icon={<ExportOutlined />} onClick={handleExport} loading={exporting}>Xuất Excel</Button>
+    </Space>
+  );
+
   return (
-    <div style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div className="bctc-compact" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div style={{ flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
           <Breadcrumb
@@ -572,16 +620,8 @@ const BaoCaoTaiChinhPage: React.FC = () => {
               { title: 'Báo cáo tài chính' },
             ]}
           />
-          <Space>
-            <Tag color="blue">{getPeriodLabel(filterParams)}</Tag>
-            <Button icon={<ExportOutlined />} onClick={handleExport} loading={exporting}>Xuất Excel</Button>
-            <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
-              Làm mới
-            </Button>
-          </Space>
+          <Tag color="blue">{getPeriodLabel(filterParams)}</Tag>
         </div>
-
-        <FilterBar className="mb-1" filters={<PeriodFilter onFilter={handleFilter} loading={loading} />} />
 
         <Row gutter={8} style={{ marginBottom: 4 }}>
         <Col span={6}>
@@ -620,18 +660,15 @@ const BaoCaoTaiChinhPage: React.FC = () => {
 
       <Card size="small" bodyStyle={{ padding: '0 8px 8px' }} style={{ flex: 1, overflow: 'hidden' }}>
 
-        <Tabs activeKey={activeTab} onChange={setActiveTab} type="card" items={[
+        <Tabs activeKey={activeTab} onChange={setActiveTab} type="card" tabBarExtraContent={{ right: tabBarExtra }} items={[
           {
             key: '1',
             label: 'Cân đối tài khoản',
             children: (
               <>
                 {tbState.soCaiStats && !tbState.soCaiStats.canDoi && (
-                  <Alert message="Cảnh báo: Tổng phát sinh Nợ và Có không cân đối!" type="warning" showIcon style={{ marginBottom: 16 }} />
+                  <Alert message="Cảnh báo: Tổng phát sinh Nợ và Có không cân đối!" type="warning" showIcon style={{ marginBottom: 8 }} />
                 )}
-                <div style={{ marginBottom: 8, textAlign: 'right' }}>
-                  <ExpandCollapseButtons onExpandAll={() => setTbExpanded(collectParentKeys(trialBalanceTree))} onCollapseAll={() => setTbExpanded([])} />
-                </div>
                 <Table<TreeNode<TrialBalance>>
                   className="excel-table tb-summary"
                   columns={trialBalanceColumns}
@@ -684,10 +721,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
                 {!bsState.data.canDoi && (
                   <Alert message="Cảnh báo: Tổng tài sản và Tổng nguồn vốn không cân đối!" type="warning" showIcon style={{ marginBottom: 16 }} />
                 )}
-                <Card title="TÀI SẢN" size="small" style={{ marginBottom: 16 }}>
-                  <div style={{ marginBottom: 8, textAlign: 'right' }}>
-                    <ExpandCollapseButtons onExpandAll={() => setBsTaiSanExpanded(collectParentKeys(taiSanTree))} onCollapseAll={() => setBsTaiSanExpanded([])} />
-                  </div>
+                <Card title="TÀI SẢN" size="small" style={{ marginBottom: 12 }}>
                   <Table<TreeNode<BalanceSheetItem>>
                     className="excel-table"
                     columns={balanceSheetColumns}
@@ -701,9 +735,6 @@ const BaoCaoTaiChinhPage: React.FC = () => {
                   />
                 </Card>
                 <Card title="NGUỒN VỐN" size="small">
-                  <div style={{ marginBottom: 8, textAlign: 'right' }}>
-                    <ExpandCollapseButtons onExpandAll={() => setBsNguonVonExpanded(collectParentKeys(nguonVonTree))} onCollapseAll={() => setBsNguonVonExpanded([])} />
-                  </div>
                   <Table<TreeNode<BalanceSheetItem>>
                     className="excel-table"
                     columns={balanceSheetColumns}
