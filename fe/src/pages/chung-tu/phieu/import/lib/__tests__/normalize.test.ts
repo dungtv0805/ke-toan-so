@@ -30,8 +30,9 @@ describe("normalizeDate", () => {
     expect(normalizeDate("01/06/2026")).toBe("2026-06-01");
     expect(normalizeDate("1/6/2026")).toBe("2026-06-01");
   });
-  it("nhận Date object (cellDates)", () => {
-    expect(normalizeDate(new Date(2026, 5, 1))).toBe("2026-06-01");
+  it("nhận serial ngày của Excel", () => {
+    expect(normalizeDate(46174)).toBe("2026-06-01");
+    expect(normalizeDate(46053)).toBe("2026-01-31");
   });
   it("sai định dạng → null", () => {
     expect(normalizeDate("2026/06/01")).toBeNull();

@@ -66,14 +66,16 @@ describe("validateRows — dòng hợp lệ", () => {
     ]);
   });
 
-  it("chấp nhận ô ngày là Date (cell định dạng ngày của Excel)", () => {
-    const { validItems, hasErrors } = validateRows(
-      [row({ ngayHoaDon: new Date(Date.UTC(2026, 5, 1)) })],
-      "mua",
-    );
+  it("chấp nhận ô ngày là serial (cell định dạng ngày của Excel)", () => {
+    const { validItems, hasErrors } = validateRows([row({ ngayHoaDon: 46174 })], "mua");
 
     expect(hasErrors).toBe(false);
     expect(validItems[0].ngayHoaDon).toBe("2026-06-01");
+  });
+
+  it("ô ngày cuối tháng không bị lùi 1 ngày", () => {
+    const { validItems } = validateRows([row({ ngayHoaDon: 46053 })], "mua");
+    expect(validItems[0].ngayHoaDon).toBe("2026-01-31");
   });
 
   it("chấp nhận thuế suất gõ mã thuần thay vì chọn dropdown", () => {

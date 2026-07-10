@@ -20,8 +20,8 @@ function isValidMst(raw: string): boolean {
   return /^\d{10}$/.test(digits) || /^\d{13}$/.test(digits);
 }
 
-const asText = (v: string | Date | undefined): string =>
-  v instanceof Date ? "" : (v ?? "").trim();
+const asText = (v: string | number | undefined): string =>
+  typeof v === "number" ? String(v) : (v ?? "").trim();
 
 export function validateRows(
   rows: RawImportRow[],
@@ -39,19 +39,19 @@ export function validateRows(
 
     // Bắt buộc
     for (const col of columns) {
-      if (col.required && asText(row[col.key]) === "" && !(row[col.key] instanceof Date)) {
+      if (col.required && asText(row[col.key]) === "") {
         err(col.key, "bắt buộc, không được để trống");
       }
     }
 
     // Ngày hóa đơn
-    const ngayHoaDon = normalizeDate(row.ngayHoaDon as string | Date);
-    if (asText(row.ngayHoaDon) !== "" || row.ngayHoaDon instanceof Date) {
-      if (!ngayHoaDon) err("ngayHoaDon", "sai định dạng, dùng DD/MM/YYYY");
+    const ngayHoaDon = normalizeDate(row.ngayHoaDon);
+    if (asText(row.ngayHoaDon) !== "" && !ngayHoaDon) {
+      err("ngayHoaDon", "sai định dạng, dùng DD/MM/YYYY");
     }
 
-    // Giá trị chưa thuế
-    const giaTri = normalizeAmount(asText(row.giaTriChuaThue));
+    // Giá trị chưa thuế — truyền thẳng number, đừng qua chuỗi (mất phần thập phân)
+    const giaTri = normalizeAmount(row.giaTriChuaThue);
     if (asText(row.giaTriChuaThue) !== "") {
       if (giaTri === null) err("giaTriChuaThue", "không phải là số");
       else if (giaTri < 0) err("giaTriChuaThue", "không được là số âm");

@@ -54,10 +54,10 @@ export interface BangKeImportItem {
   ghiChu?: string;
 }
 
-/** Một dòng Excel sau khi đọc thô. Ô ngày có thể là Date (cell định dạng ngày). */
+/** Một dòng Excel sau khi đọc thô. Ô số giữ kiểu number (ngày = serial, tiền = số). */
 export type RawImportRow = {
   rowNumber: number; // số dòng trong Excel (tính cả header)
-} & Partial<Record<ImportColumnKey, string | Date>>;
+} & Partial<Record<ImportColumnKey, string | number>>;
 
 export interface RowError {
   field: string;

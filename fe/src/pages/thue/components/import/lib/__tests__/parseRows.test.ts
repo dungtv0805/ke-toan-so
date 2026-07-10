@@ -43,13 +43,13 @@ describe("aoaToRawRows", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].rowNumber).toBe(2);
     expect(rows[0].soHoaDon).toBe("0000123");
-    expect(rows[0].giaTriChuaThue).toBe("10000000");
+    expect(rows[0].giaTriChuaThue).toBe(10000000);
   });
 
-  it("giữ nguyên ô kiểu Date", () => {
-    const d = new Date(Date.UTC(2026, 5, 1));
-    const rows = aoaToRawRows([header, [d, "1", "", "A", "", "", 1, "10", ""]], columns);
-    expect(rows[0].ngayHoaDon).toBeInstanceOf(Date);
+  it("giữ nguyên ô số (serial ngày, số tiền) — không ép về chuỗi", () => {
+    const rows = aoaToRawRows([header, [46053, "1", "", "A", "", "", 1500.75, "10", ""]], columns);
+    expect(rows[0].ngayHoaDon).toBe(46053);
+    expect(rows[0].giaTriChuaThue).toBe(1500.75);
   });
 
   it("bỏ qua dòng trống hoàn toàn nhưng giữ đúng rowNumber các dòng sau", () => {

@@ -13,7 +13,12 @@ async function readTemplateBack(variant: BangKeVariant) {
   const wb = buildTemplateWorkbook(variant);
   const buffer = await wb.xlsx.writeBuffer();
 
-  const read = XLSX.read(buffer, { type: "array", cellDates: true });
+  return readSheetAoa(buffer);
+}
+
+/** Đọc y hệt ImportBangKeModal: không cellDates, raw. */
+function readSheetAoa(buffer: ArrayBuffer | Uint8Array): unknown[][] {
+  const read = XLSX.read(buffer, { type: "array" });
   const ws = read.Sheets[read.SheetNames[0]];
   return XLSX.utils.sheet_to_json<unknown[]>(ws, {
     header: 1,
@@ -21,6 +26,31 @@ async function readTemplateBack(variant: BangKeVariant) {
     defval: "",
   }) as unknown[][];
 }
+
+/**
+ * File do Excel/hóa đơn điện tử xuất ra lưu ngày là serial nguyên (46053 = 31/01/2026).
+ * Template tự ghi qua exceljs đã bù sẵn 30 giây nên KHÔNG lộ được lỗi lệch ngày.
+ */
+describe("ô ngày là serial nguyên như Excel thật", () => {
+  it("serial 46053 → 31/01/2026, không lùi về 30/01", () => {
+    const headers = buildColumns("mua").map((c) => c.header);
+    const ws = XLSX.utils.aoa_to_sheet([
+      headers,
+      [null, "0000123", "1C25TAA", "Công ty A", "0100686223", "Dịch vụ", 10_000_000, "10", ""],
+    ]);
+    ws["A2"] = { t: "n", v: 46053, z: "dd/mm/yyyy" };
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "S");
+    const buffer = XLSX.write(wb, { type: "array", bookType: "xlsx" });
+
+    const rows = aoaToRawRows(readSheetAoa(buffer), buildColumns("mua"));
+    const { validItems, results } = validateRows(rows, "mua");
+
+    expect(results[0].errors).toEqual([]);
+    expect(validItems[0].ngayHoaDon).toBe("2026-01-31");
+  });
+});
 
 describe.each(["mua", "ban"] as const)("round-trip template %s", (variant) => {
   it("sheet đầu tiên là sheet dữ liệu, header khớp template", async () => {

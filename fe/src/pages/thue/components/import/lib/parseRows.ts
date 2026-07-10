@@ -3,7 +3,7 @@ import { ImportColumn, RawImportRow } from "./columns";
 /**
  * Chuyển array-of-arrays (đọc từ sheet) → RawImportRow[].
  * Dòng 0 là header (bỏ). Map theo VỊ TRÍ cột (index), không theo tên.
- * Ô kiểu Date giữ nguyên để normalizeDate xử lý; còn lại ép về chuỗi đã trim.
+ * Ô số giữ nguyên kiểu number (serial ngày, số tiền); còn lại ép về chuỗi đã trim.
  * Bỏ qua dòng trống hoàn toàn. rowNumber tính theo Excel (1-based, gồm header).
  */
 export function aoaToRawRows(
@@ -16,7 +16,7 @@ export function aoaToRawRows(
   for (let r = 1; r < aoa.length; r++) {
     const cells = aoa[r] ?? [];
     const values = cells.map((c) => {
-      if (c instanceof Date) return c;
+      if (typeof c === "number") return c;
       return c === undefined || c === null ? "" : String(c).trim();
     });
 

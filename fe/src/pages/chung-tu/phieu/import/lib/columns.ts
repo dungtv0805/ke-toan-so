@@ -53,7 +53,7 @@ export const IMPORT_COLUMNS: ImportColumn[] = [
  * Các cột gắn danh mục — giá trị có thể ở dạng "Mã - Tên" (chọn từ dropdown).
  * Cần tách mã (extractCode) trước khi khớp với master data.
  */
-export const CODE_COLUMN_KEYS: ImportColumnKey[] = [
+export const CODE_COLUMN_KEYS: Exclude<ImportColumnKey, DateColumnKey>[] = [
   "doiTuong",
   "doiTuong2",
   "duAn",
@@ -68,10 +68,15 @@ export const CODE_COLUMN_KEYS: ImportColumnKey[] = [
   "nhomQuanLy",
 ];
 
-/** Một dòng Excel sau khi parse thành string thô theo key. */
+/** Cột ngày: ô định dạng ngày của Excel về đây dạng serial (number). */
+export const DATE_COLUMN_KEYS = ["ngay"] as const;
+export type DateColumnKey = (typeof DATE_COLUMN_KEYS)[number];
+
+/** Một dòng Excel sau khi parse thô theo key — chỉ cột ngày mới có thể là number. */
 export type RawImportRow = {
   rowNumber: number; // số dòng trong Excel (tính cả header)
-} & Partial<Record<ImportColumnKey, string>>;
+} & Partial<Record<Exclude<ImportColumnKey, DateColumnKey>, string>> &
+  Partial<Record<DateColumnKey, string | number>>;
 
 export interface RowError {
   field: string;

@@ -30,8 +30,19 @@ describe("normalizeDate", () => {
     expect(normalizeDate("01/06/2026")).toBe("2026-06-01");
     expect(normalizeDate("1/6/2026")).toBe("2026-06-01");
   });
-  it("nhận Date object (cellDates)", () => {
-    expect(normalizeDate(new Date(2026, 5, 1))).toBe("2026-06-01");
+  it("serial ngày của Excel → ISO, không lệch múi giờ", () => {
+    expect(normalizeDate(46053)).toBe("2026-01-31"); // ranh giới cuối tháng
+    expect(normalizeDate(45658)).toBe("2025-01-01"); // ranh giới cuối năm
+    expect(normalizeDate(45809)).toBe("2025-06-01");
+  });
+  it("serial có phần giờ vẫn giữ đúng ngày", () => {
+    expect(normalizeDate(46053.5)).toBe("2026-01-31"); // 12h trưa
+    expect(normalizeDate(46053.99)).toBe("2026-01-31"); // sát nửa đêm
+  });
+  it("serial không hợp lệ → null", () => {
+    expect(normalizeDate(0)).toBeNull();
+    expect(normalizeDate(-5)).toBeNull();
+    expect(normalizeDate(NaN)).toBeNull();
   });
   it("sai định dạng → null", () => {
     expect(normalizeDate("2026/06/01")).toBeNull();

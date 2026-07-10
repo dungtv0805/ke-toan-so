@@ -63,7 +63,8 @@ export function ImportBangKeModal({
     setParsing(true);
     try {
       const buffer = await file.arrayBuffer();
-      const wb = XLSX.read(buffer, { type: "array", cellDates: true });
+      // Không dùng cellDates: ô ngày về dạng serial để normalizeDate đọc thẳng (xem normalize.ts)
+      const wb = XLSX.read(buffer, { type: "array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const aoa = XLSX.utils.sheet_to_json<unknown[]>(ws, {
         header: 1,
