@@ -14,6 +14,8 @@ import {
   CreateBangKeMuaVaoDto,
   UpdateBangKeMuaVaoDto,
   BangKeMuaVaoQueryDto,
+  ImportBangKeMuaVaoDto,
+  CheckDuplicatesDto,
 } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
 
@@ -50,6 +52,20 @@ export class BangKeMuaVaoController {
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KE_TOAN_QUY')
   async create(@Body() createDto: CreateBangKeMuaVaoDto) {
     const data = await this.service.create(createDto);
+    return { success: true, data };
+  }
+
+  @Post('import')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KE_TOAN_QUY')
+  async import(@Body() dto: ImportBangKeMuaVaoDto) {
+    const data = await this.service.importMany(dto.items);
+    return { success: true, data };
+  }
+
+  @Post('check-duplicates')
+  @Roles(...KE_TOAN_ROLES)
+  async checkDuplicates(@Body() dto: CheckDuplicatesDto) {
+    const data = await this.service.checkDuplicates(dto.keys);
     return { success: true, data };
   }
 

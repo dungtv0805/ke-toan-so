@@ -8,8 +8,14 @@ import {
   CreateBangKeMuaVaoDto,
   UpdateBangKeMuaVaoDto,
   BangKeMuaVaoQueryDto,
+  DuplicateKeyDto,
 } from './dto';
-import { tinhTienThue, resolveDateRange, inDateRange } from '../shared/tax-helpers';
+import {
+  tinhTienThue,
+  resolveDateRange,
+  inDateRange,
+  buildHoaDonKey,
+} from '../shared/tax-helpers';
 
 @Injectable()
 export class BangKeMuaVaoService {
@@ -95,6 +101,42 @@ export class BangKeMuaVaoService {
     });
     this.applyTotals(entity, createDto);
     return this.repo.save(entity);
+  }
+
+  /** Tạo hàng loạt hóa đơn từ file Excel. tenantId do TenantSubscriber gắn khi insert. */
+  async importMany(
+    items: CreateBangKeMuaVaoDto[],
+  ): Promise<{ created: number }> {
+    const entities = items.map((dto) => {
+      const entity = this.repo.create({
+        ...dto,
+        ngayHoaDon: new Date(dto.ngayHoaDon),
+        isActive: true,
+      });
+      this.applyTotals(entity, dto);
+      return entity;
+    });
+    const saved = await this.repo.save(entities);
+    return { created: saved.length };
+  }
+
+  /** Trả về những khóa hóa đơn đã tồn tại trong tenant (xem `buildHoaDonKey`). */
+  async checkDuplicates(keys: DuplicateKeyDto[]): Promise<string[]> {
+    if (!keys?.length) return [];
+
+    const all = await this.repo.find({ where: this.getTenantFilter() as any });
+    const existing = new Set(
+      all
+        .filter((i) => i.isActive !== false)
+        .map((i) => buildHoaDonKey(i.soHoaDon, i.kyHieuHoaDon, i.mstNguoiBan)),
+    );
+
+    const found = new Set<string>();
+    for (const k of keys) {
+      const key = buildHoaDonKey(k.soHoaDon, k.kyHieuHoaDon, k.mst);
+      if (existing.has(key)) found.add(key);
+    }
+    return [...found];
   }
 
   async update(

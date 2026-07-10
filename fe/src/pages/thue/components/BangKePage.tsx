@@ -24,6 +24,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   HomeOutlined,
+  ImportOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { FilterBar } from "@/components/common/FilterBar";
@@ -35,6 +36,7 @@ import {
   ThueSuat,
 } from "@/services/taxService";
 import type { ServiceBase } from "@/services/base/service-base";
+import { ImportBangKeModal, type ImportService } from "./import/ImportBangKeModal";
 
 const { Text } = Typography;
 
@@ -50,7 +52,7 @@ const RATE: Record<ThueSuat, number> = {
 
 const fmt = (n?: number) => (n ?? 0).toLocaleString("vi-VN");
 
-export interface BangKeService extends ServiceBase {
+export interface BangKeService extends ServiceBase, ImportService {
   getPaginated: (params: {
     page?: number;
     limit?: number;
@@ -90,6 +92,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
   const [nam, setNam] = useState<number>(dayjs().year());
   const [quy, setQuy] = useState<number>(0);
   const [modalVisible, setModalVisible] = useState(false);
+  const [importVisible, setImportVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<BangKeRecord | null>(null);
   const [form] = Form.useForm();
   const [pagination, setPagination] = useState({ current: 1, pageSize: 50, total: 0 });
@@ -306,6 +309,11 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
                 style={{ width: 100 }}
               />
               {canCreate && (
+                <Button icon={<ImportOutlined />} onClick={() => setImportVisible(true)}>
+                  Import Excel
+                </Button>
+              )}
+              {canCreate && (
                 <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
                   Thêm hóa đơn
                 </Button>
@@ -442,6 +450,14 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
           </Form.Item>
         </Form>
       </Modal>
+
+      <ImportBangKeModal
+        open={importVisible}
+        onClose={() => setImportVisible(false)}
+        onImported={() => fetchData(1, pagination.pageSize, searchText, nam, quy)}
+        variant={variant}
+        service={service}
+      />
     </div>
   );
 };

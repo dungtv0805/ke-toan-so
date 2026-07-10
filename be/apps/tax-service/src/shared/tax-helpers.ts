@@ -15,6 +15,21 @@ export function tinhTienThue(giaTriChuaThue: number, thueSuat: string): number {
   return Math.round(gia * (THUE_RATE[thueSuat] ?? 0));
 }
 
+/**
+ * Khóa nhận diện một hóa đơn trùng: số HĐ + ký hiệu + MST đối tác.
+ * Chuẩn hóa trim + viết hoa để so khớp không phân biệt hoa thường.
+ * FE dựng khóa theo đúng công thức này để tô cảnh báo ở bảng xem trước.
+ */
+export function buildHoaDonKey(
+  soHoaDon?: string,
+  kyHieuHoaDon?: string,
+  mst?: string,
+): string {
+  return [soHoaDon, kyHieuHoaDon, mst]
+    .map((s) => (s ?? '').trim().toUpperCase())
+    .join('|');
+}
+
 /** Khoảng ngày [start, end) của một quý trong năm. */
 export function quyToRange(quy: number, nam: number): { start: Date; end: Date } {
   const startMonth = (quy - 1) * 3; // Q1→0, Q2→3, Q3→6, Q4→9

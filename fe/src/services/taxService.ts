@@ -78,6 +78,26 @@ class BangKeService extends ServiceBase {
   async remove(id: string): Promise<void> {
     await this.delete({ endpoint: `/${id}` });
   }
+
+  /** Tạo hàng loạt hóa đơn từ file Excel. Trả về số bản ghi đã tạo. */
+  async importMany(items: unknown[]): Promise<number> {
+    const r = await this.post<{ created: number }>(
+      { items },
+      { endpoint: '/import' },
+    );
+    return r.created;
+  }
+
+  /** Trả về các khóa hóa đơn đã tồn tại trên hệ thống (số HĐ|ký hiệu|MST). */
+  async checkDuplicates(keys: DuplicateKey[]): Promise<string[]> {
+    return this.post<string[]>({ keys }, { endpoint: '/check-duplicates' });
+  }
+}
+
+export interface DuplicateKey {
+  soHoaDon: string;
+  kyHieuHoaDon?: string;
+  mst?: string;
 }
 
 export const bangKeMuaVaoService = new BangKeService(
