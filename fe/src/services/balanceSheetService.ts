@@ -8,6 +8,8 @@ export interface DoiTuongSoTienResponse {
   soTien: number;
   soTaiKhoan?: string;
   tenNganHang?: string;
+  /** Tên tài khoản trong danh mục ngân hàng (chỉ có với đối tượng ngân hàng/quỹ). */
+  tenTaiKhoanNH?: string;
 }
 
 interface BalanceSheetEntryResponse {

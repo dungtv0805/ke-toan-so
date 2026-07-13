@@ -30,9 +30,11 @@ export interface TrialBalanceEntry {
   noCuoiKy: number;
   coCuoiKy: number;
   doiTuongChiTiet?: TrialBalanceEntry[];
-  // Chỉ có với đối tượng ngân hàng/quỹ: số TK + tên ngân hàng ("Tên NH – Số TK").
+  // Chỉ có với đối tượng ngân hàng/quỹ: tên tài khoản + số TK + tên ngân hàng
+  // (báo cáo hiện "Tên tài khoản - Số TK").
   soTaiKhoan?: string;
   tenNganHang?: string;
+  tenTaiKhoanNH?: string;
 }
 
 export interface AggBucket {
@@ -492,11 +494,18 @@ export class SoCaiService {
         this.serviceClient.getNganHang(authToken),
       ]);
 
-    // Map mã ngân hàng/quỹ → tên NH + số TK (hiện "Tên NH – Số TK" cho tiền gửi).
-    const nganHangByMa = new Map<string, { tenNganHang?: string; soTaiKhoan?: string }>(
+    // Map mã ngân hàng/quỹ → tên TK + tên NH + số TK (hiện "Tên tài khoản - Số TK").
+    const nganHangByMa = new Map<
+      string,
+      { tenTaiKhoanNH?: string; tenNganHang?: string; soTaiKhoan?: string }
+    >(
       (nganHangRes.success ? nganHangRes.data || [] : []).map((n) => [
         n.ma,
-        { tenNganHang: n.nganHang || n.ten, soTaiKhoan: n.soTaiKhoan },
+        {
+          tenTaiKhoanNH: n.ten,
+          tenNganHang: n.nganHang || n.ten,
+          soTaiKhoan: n.soTaiKhoan,
+        },
       ]),
     );
 
@@ -607,7 +616,12 @@ export class SoCaiService {
         entries[entries.length - 1].doiTuongChiTiet = dtRows.map((r) => {
           const nh = r.ma ? nganHangByMa.get(r.ma) : undefined;
           return nh
-            ? { ...r, soTaiKhoan: nh.soTaiKhoan, tenNganHang: nh.tenNganHang }
+            ? {
+                ...r,
+                soTaiKhoan: nh.soTaiKhoan,
+                tenNganHang: nh.tenNganHang,
+                tenTaiKhoanNH: nh.tenTaiKhoanNH,
+              }
             : r;
         });
       }

@@ -74,15 +74,19 @@ const formatCurrencyShort = (value: number) => {
   return formatCurrency(value);
 };
 
-// Nhãn dòng đối tượng. Ngân hàng/quỹ (có soTaiKhoan) hiện "Tên NH – Số TK: xxxx";
-// đối tượng thường hiện "mã - tên".
+// Nhãn dòng đối tượng. Ngân hàng/quỹ (có soTaiKhoan) hiện "Tên tài khoản - Số TK"
+// (tên tài khoản lấy từ danh mục ngân hàng); đối tượng thường hiện "mã - tên".
 const doiTuongLabel = (dt: {
   ma?: string;
   ten: string;
   soTaiKhoan?: string;
   tenNganHang?: string;
+  tenTaiKhoanNH?: string;
 }): string => {
-  if (dt.soTaiKhoan) return `${dt.ten || dt.tenNganHang} – ${dt.soTaiKhoan}`;
+  if (dt.soTaiKhoan) {
+    const ten = dt.tenTaiKhoanNH || dt.ten || dt.tenNganHang;
+    return `${ten} - ${dt.soTaiKhoan}`;
+  }
   return dt.ma ? `${dt.ma} - ${dt.ten}` : dt.ten;
 };
 
@@ -248,7 +252,13 @@ const BaoCaoTaiChinhPage: React.FC = () => {
       const kids = row.doiTuongChiTiet.map((dt): TreeNode<TrialBalance> => ({
         ...dt,
         taiKhoan: '',
-        tenTaiKhoan: doiTuongLabel({ ma: dt.taiKhoan, ten: dt.tenTaiKhoan, soTaiKhoan: dt.soTaiKhoan, tenNganHang: dt.tenNganHang }),
+        tenTaiKhoan: doiTuongLabel({
+          ma: dt.taiKhoan,
+          ten: dt.tenTaiKhoan,
+          soTaiKhoan: dt.soTaiKhoan,
+          tenNganHang: dt.tenNganHang,
+          tenTaiKhoanNH: dt.tenTaiKhoanNH,
+        }),
         __ma: `${row.taiKhoan}::${dt.taiKhoan || '__none__'}`,
         __isParent: false,
         __isDoiTuong: true,

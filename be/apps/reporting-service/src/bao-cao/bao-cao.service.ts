@@ -26,14 +26,18 @@ export interface DoiTuongSoTien {
   ma: string;
   ten: string;
   soTien: number;
-  // Chỉ có với đối tượng ngân hàng/quỹ (NGAN_HANG_QUY): số TK + tên ngân hàng
-  // để báo cáo hiện "Tên NH – Số TK".
+  // Chỉ có với đối tượng ngân hàng/quỹ (NGAN_HANG_QUY): tên tài khoản + số TK +
+  // tên ngân hàng để báo cáo hiện "Tên tài khoản - Số TK".
   soTaiKhoan?: string;
   tenNganHang?: string;
+  tenTaiKhoanNH?: string;
 }
 
-/** Map mã ngân hàng/quỹ → tên ngân hàng + số TK (từ danh mục ngân hàng). */
-export type NganHangByMa = Map<string, { tenNganHang?: string; soTaiKhoan?: string }>;
+/** Map mã ngân hàng/quỹ → tên TK + tên ngân hàng + số TK (từ danh mục ngân hàng). */
+export type NganHangByMa = Map<
+  string,
+  { tenTaiKhoanNH?: string; tenNganHang?: string; soTaiKhoan?: string }
+>;
 
 /**
  * Gắn số TK + tên ngân hàng cho các dòng đối tượng là ngân hàng/quỹ (khớp theo
@@ -45,7 +49,14 @@ export function enrichBankInfo(
 ): DoiTuongSoTien[] {
   return rows.map((r) => {
     const nh = r.ma ? nganHangByMa.get(r.ma) : undefined;
-    return nh ? { ...r, soTaiKhoan: nh.soTaiKhoan, tenNganHang: nh.tenNganHang } : r;
+    return nh
+      ? {
+          ...r,
+          soTaiKhoan: nh.soTaiKhoan,
+          tenNganHang: nh.tenNganHang,
+          tenTaiKhoanNH: nh.tenTaiKhoanNH,
+        }
+      : r;
   });
 }
 
@@ -443,7 +454,11 @@ export class BaoCaoService {
     const nganHangByMa: NganHangByMa = new Map(
       (nganHangRes.success ? nganHangRes.data || [] : []).map((n) => [
         n.ma,
-        { tenNganHang: n.nganHang || n.ten, soTaiKhoan: n.soTaiKhoan },
+        {
+          tenTaiKhoanNH: n.ten,
+          tenNganHang: n.nganHang || n.ten,
+          soTaiKhoan: n.soTaiKhoan,
+        },
       ]),
     );
 

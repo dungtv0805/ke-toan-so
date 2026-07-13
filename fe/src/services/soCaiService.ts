@@ -58,6 +58,8 @@ export interface TrialBalanceEntry {
   doiTuongChiTiet?: TrialBalanceEntry[];
   soTaiKhoan?: string;
   tenNganHang?: string;
+  /** Tên tài khoản trong danh mục ngân hàng (chỉ có với đối tượng ngân hàng/quỹ). */
+  tenTaiKhoanNH?: string;
 }
 
 // Mapped type for FE display
@@ -73,6 +75,7 @@ export interface TrialBalance {
   doiTuongChiTiet?: TrialBalance[];
   soTaiKhoan?: string;
   tenNganHang?: string;
+  tenTaiKhoanNH?: string;
 }
 
 class SoCaiService extends ServiceBase {
@@ -194,6 +197,7 @@ class SoCaiService extends ServiceBase {
       soDuCuoiKyCo: item.coCuoiKy,
       soTaiKhoan: item.soTaiKhoan,
       tenNganHang: item.tenNganHang,
+      tenTaiKhoanNH: item.tenTaiKhoanNH,
     });
 
     return data.entries.map((item) => ({
