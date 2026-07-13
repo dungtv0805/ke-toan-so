@@ -338,23 +338,15 @@ const BaoCaoTaiChinhPage: React.FC = () => {
 
   type TrialBalanceAmountField = 'soDuDauKyNo' | 'soDuDauKyCo' | 'phatSinhNo' | 'phatSinhCo' | 'soDuCuoiKyNo' | 'soDuCuoiKyCo';
 
+  // Số hiển thị 1 dòng:
+  // - TK lá không có chi tiết đối tượng: số của chính TK (bù trừ Nợ/Có).
+  // - TK có TK con: Σ TK con + phần hạch toán thẳng vào chính TK cha.
+  // - TK có chi tiết đối tượng: BE đã trả Σ các dòng đối tượng (__rollup = 0 vì
+  //   đối tượng là phân rã của TK, không phải TK con) → chỉ lấy số của TK.
   const renderTrialAmount = (record: TreeNode<TrialBalance>, field: TrialBalanceAmountField) => {
     const ownVal = Number(record[field]) || 0;
-    if (record.__isParent) {
-      const childrenVal = record.__rollup[field] ?? 0;
-      if (childrenVal > 0 && ownVal > 0) {
-        return (
-          <span style={{ whiteSpace: 'nowrap' }}>
-            <span style={{ color: '#52c41a' }}>{formatCurrency(childrenVal)}</span>
-            <span style={{ color: '#fa8c16', marginLeft: 4 }}>+{formatCurrency(ownVal)}</span>
-          </span>
-        );
-      }
-      if (childrenVal > 0) {
-        return <span style={{ color: '#52c41a' }}>{formatCurrency(childrenVal)}</span>;
-      }
-    }
-    return <CurrencyCell value={ownVal} />;
+    const total = record.__isParent ? ownVal + (record.__rollup[field] ?? 0) : ownVal;
+    return <CurrencyCell value={total} bold={record.__isParent} />;
   };
 
   // Mở Sổ chi tiết (tab mới): TK cho dòng tài khoản, TK cha + đối tượng cho dòng

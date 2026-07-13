@@ -220,6 +220,38 @@ export function buildDoiTuongRows(
     });
 }
 
+export type TrialAmounts = Pick<
+  TrialBalanceEntry,
+  'noDauKy' | 'coDauKy' | 'noPhatSinh' | 'coPhatSinh' | 'noCuoiKy' | 'coCuoiKy'
+>;
+
+/**
+ * Cộng dồn các dòng con thành số của dòng cha — cộng RIÊNG từng cột Nợ/Có,
+ * KHÔNG bù trừ Nợ với Có. Dùng cho TK có chi tiết đối tượng: dư Nợ TK = Σ dư Nợ
+ * từng đối tượng, dư Có TK = Σ dư Có từng đối tượng (KH A dư Nợ 100 + KH B dư Có
+ * 30 ⇒ TK dư Nợ 100 / dư Có 30, không phải dư Nợ 70).
+ */
+export function sumTrialRows(rows: TrialAmounts[]): TrialAmounts {
+  return rows.reduce<TrialAmounts>(
+    (acc, r) => ({
+      noDauKy: acc.noDauKy + r.noDauKy,
+      coDauKy: acc.coDauKy + r.coDauKy,
+      noPhatSinh: acc.noPhatSinh + r.noPhatSinh,
+      coPhatSinh: acc.coPhatSinh + r.coPhatSinh,
+      noCuoiKy: acc.noCuoiKy + r.noCuoiKy,
+      coCuoiKy: acc.coCuoiKy + r.coCuoiKy,
+    }),
+    {
+      noDauKy: 0,
+      coDauKy: 0,
+      noPhatSinh: 0,
+      coPhatSinh: 0,
+      noCuoiKy: 0,
+      coCuoiKy: 0,
+    },
+  );
+}
+
 /**
  * Helper to extract taiKhoanNo from voucher entry
  * Supports both legacy field and new danhMuc structure
@@ -536,7 +568,8 @@ export class SoCaiService {
         aggMap.get(ma) ?? { priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 0 };
       const opening = openingMap.get(ma) ?? { duNo: 0, duCo: 0 };
 
-      const row = computeTrialRow(
+      // Số của chính TK: bù trừ Nợ/Có trên tổng phát sinh của TK.
+      let row: TrialAmounts = computeTrialRow(
         {
           priorNo: agg.priorNo,
           priorCo: agg.priorCo,
@@ -547,23 +580,36 @@ export class SoCaiService {
         account.loai,
       );
 
+      const dtRows =
+        account.chiTietTheo && DOI_TUONG_CHI_TIET_TYPES.has(account.chiTietTheo)
+          ? buildDoiTuongRows(
+              account.loai,
+              dtAggByAccount.get(ma) ?? [],
+              Array.from(
+                (dtOpeningByAccount.get(ma) ?? new Map<string, DoiTuongOpening>()).values(),
+              ),
+              account.chiTietTheo,
+            )
+          : [];
+
+      // TK có chi tiết đối tượng: mỗi đối tượng tự bù trừ Nợ/Có (công thức cũ),
+      // còn TK mẹ = Σ các dòng đối tượng — KHÔNG bù trừ giữa các đối tượng với
+      // nhau (KH A dư Nợ, KH B dư Có phải hiện cả 2 chiều). Chỉ thay khi có dòng
+      // chi tiết; nếu không lấy được chi tiết thì giữ nguyên số bù trừ của TK để
+      // không làm dòng TK về 0.
+      if (dtRows.length > 0) {
+        row = sumTrialRows(dtRows);
+      }
+
       entries.push({ ma, ten: account.ten, ...row });
 
-      if (account.chiTietTheo && DOI_TUONG_CHI_TIET_TYPES.has(account.chiTietTheo)) {
-        const dtRows = buildDoiTuongRows(
-          account.loai,
-          dtAggByAccount.get(ma) ?? [],
-          Array.from((dtOpeningByAccount.get(ma) ?? new Map<string, DoiTuongOpening>()).values()),
-          account.chiTietTheo,
-        );
-        if (dtRows.length > 0) {
-          entries[entries.length - 1].doiTuongChiTiet = dtRows.map((r) => {
-            const nh = r.ma ? nganHangByMa.get(r.ma) : undefined;
-            return nh
-              ? { ...r, soTaiKhoan: nh.soTaiKhoan, tenNganHang: nh.tenNganHang }
-              : r;
-          });
-        }
+      if (dtRows.length > 0) {
+        entries[entries.length - 1].doiTuongChiTiet = dtRows.map((r) => {
+          const nh = r.ma ? nganHangByMa.get(r.ma) : undefined;
+          return nh
+            ? { ...r, soTaiKhoan: nh.soTaiKhoan, tenNganHang: nh.tenNganHang }
+            : r;
+        });
       }
 
       totalNoDauKy += row.noDauKy;
