@@ -1,5 +1,8 @@
 import { Table, Tag, Space, Typography } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { UserOutlined } from "@ant-design/icons";
+import { useMemo } from "react";
+import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
 import { useNhatKyChungState } from "../../NhatKyChungHandlerContext";
 
 const { Text } = Typography;
@@ -18,14 +21,32 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+/** Lấy ô theo key cột cho bộ lọc header (chỉ cột chữ mới lọc được). */
+const getCell = (row: EmployeeSummary, key: string): string | undefined => {
+  if (key === "nhanVien") return row.nhanVien;
+  if (key === "doi") return row.doi;
+  return undefined;
+};
+
 export function EmployeeTab() {
   const [summaryByEmployee] = useNhatKyChungState("summaryByEmployee", []);
   const [loading] = useNhatKyChungState("loading", false);
 
-  const totalChi = summaryByEmployee?.reduce((sum, e) => sum + e.tongChi, 0) || 0;
+  const { filterable, matches, hasPinned } = useTableColumnFilters(
+    "nkc-nhan-vien",
+  );
 
-  const columns = [
-    {
+  // Lọc trên dữ liệu gốc; tổng chi (mẫu số của cột Tỷ lệ) và dòng "Tổng cộng"
+  // được cộng lại theo đúng những dòng còn hiển thị → tỷ lệ vẫn cộng đủ 100%.
+  const rows = useMemo(
+    () => (summaryByEmployee || []).filter((r) => matches(r, getCell)),
+    [summaryByEmployee, matches],
+  );
+
+  const totalChi = rows.reduce((sum, e) => sum + e.tongChi, 0);
+
+  const columns: ColumnsType<EmployeeSummary> = [
+    filterable({
       title: "Nhân viên",
       dataIndex: "nhanVien",
       key: "nhanVien",
@@ -36,14 +57,14 @@ export function EmployeeTab() {
           <Text strong>{text}</Text>
         </Space>
       ),
-    },
-    {
+    }),
+    filterable({
       title: "Đội",
       dataIndex: "doi",
       key: "doi",
       width: 160,
       render: (text: string) => <Tag color="purple">{text}</Tag>,
-    },
+    }),
     {
       title: "Số bút toán",
       dataIndex: "soButToan",
@@ -82,14 +103,16 @@ export function EmployeeTab() {
           Tổng hợp chi phí theo từng nhân viên chịu trách nhiệm
         </Text>
       </div>
-      <Table
+      <Table<EmployeeSummary>
         className="excel-table"
         columns={columns}
-        dataSource={summaryByEmployee || []}
+        dataSource={rows}
         rowKey="nhanVien"
         loading={loading}
         pagination={false}
         size="small"
+        // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+        scroll={{ x: hasPinned ? "max-content" : undefined }}
         summary={(pageData) => {
           const totalChiSum = pageData.reduce((sum, r) => sum + r.tongChi, 0);
           const totalButToan = pageData.reduce((sum, r) => sum + r.soButToan, 0);

@@ -7,7 +7,9 @@ import { buildDisplayRows, REGISTRY, type DisplayRow } from './columnRegistry';
 const { Text } = Typography;
 
 interface Props {
+  /** Report ĐÃ lọc theo cột (trang lọc trước, ở đây chỉ dàn phẳng để hiển thị). */
   report: SoChiTietReport;
+  /** Cột đã được trang gắn sẵn popover lọc + cố định (fixed) ở header. */
   columns: ColumnsType<DisplayRow>;
   visibleKeys: string[];
   scrollX: number;
@@ -69,6 +71,8 @@ const AccountReportBlock: React.FC<Props> = ({
         pagination={false}
         size="small"
         bordered
+        // scroll.x là số cố định (>= 1100) nên bảng luôn cuộn ngang được → cột ghim (fixed)
+        // từ popover header có tác dụng, kể cả ở dòng footer (Table.Summary bám theo cột).
         scroll={{ x: scrollX, y: scrollY }}
         rowClassName={(r) => (r.kind === 'entry' ? '' : 'sct-summary-row')}
         summary={

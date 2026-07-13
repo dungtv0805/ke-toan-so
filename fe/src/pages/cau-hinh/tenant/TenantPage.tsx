@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Table, Button, Modal, Form, Input, Switch, message, Space, Tag, Popconfirm, Divider, Tooltip, Radio, Select } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, UserOutlined, UserAddOutlined } from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePagePermission } from '@/hooks/usePagePermission';
@@ -7,6 +8,7 @@ import { tenantService, Tenant, CreateTenantDto, UpdateTenantDto } from '@/servi
 import TenantMembersModal from './TenantMembersModal';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
 
 const DEFAULT_PASSWORD = '123456';
 
@@ -32,6 +34,13 @@ const TenantPage = () => {
   const [adminMode, setAdminMode] = useState<AdminMode>('new');
   const [form] = Form.useForm();
   const { canCreate, canEdit, canDelete } = usePagePermission("/cau-hinh/tenant");
+  const { filterable, matches, hasPinned } = useTableColumnFilters('cau-hinh-tenant');
+
+  // Tên lĩnh vực hiển thị trên tag (fallback về code) — lọc theo đúng chữ user nhìn thấy.
+  const moduleNames = (modules?: string[]) =>
+    (modules?.length ? modules : ['KE_TOAN'])
+      .map((code) => allModules.find((m) => m.code === code)?.name ?? code)
+      .join(' ');
 
   const fetchTenants = async () => {
     setLoading(true);
@@ -172,32 +181,32 @@ const TenantPage = () => {
     }
   };
 
-  const columns = [
-    {
+  const columns: ColumnsType<Tenant> = [
+    filterable<Tenant>({
       title: 'Tên công ty',
       dataIndex: 'name',
       key: 'name',
-    },
-    {
+    }),
+    filterable<Tenant>({
       title: 'Mã số thuế',
       dataIndex: 'maSoThue',
       key: 'maSoThue',
       render: (mst: string) => mst || <span className="text-gray-400">-</span>,
-    },
-    {
+    }),
+    filterable<Tenant>({
       title: 'Địa chỉ',
       dataIndex: 'diaChi',
       key: 'diaChi',
       ellipsis: true,
       render: (dc: string) => dc || <span className="text-gray-400">-</span>,
-    },
-    {
+    }),
+    filterable<Tenant>({
       title: 'Slug',
       dataIndex: 'slug',
       key: 'slug',
       render: (slug: string) => <code className="bg-gray-100 px-2 py-1 rounded">{slug}</code>,
-    },
-    {
+    }),
+    filterable<Tenant>({
       title: 'Admin',
       dataIndex: 'admins',
       key: 'admins',
@@ -217,8 +226,8 @@ const TenantPage = () => {
           </div>
         );
       },
-    },
-    {
+    }),
+    filterable<Tenant>({
       title: 'Lĩnh vực',
       dataIndex: 'modules',
       key: 'modules',
@@ -234,7 +243,7 @@ const TenantPage = () => {
           </div>
         );
       },
-    },
+    }),
     {
       title: 'Trạng thái',
       dataIndex: 'isActive',
@@ -280,8 +289,39 @@ const TenantPage = () => {
     },
   ];
 
-  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('cauHinh.tenant', columns);
+  // Bọc filterable TRƯỚC rồi mới đưa vào useTableTitleConfig (hook ẩn/hiện + đổi tiêu đề chỉ
+  // spread lại cột nên giữ nguyên filterDropdown + fixed).
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig<Tenant>(
+    'cauHinh.tenant',
+    columns,
+  );
   const fl = useFieldLabels('cauHinh.tenant');
+
+  const rows = useMemo(
+    () =>
+      tenants.filter((t) =>
+        matches(t, (row, key) => {
+          switch (key) {
+            case 'name':
+              return row.name;
+            case 'maSoThue':
+              return row.maSoThue;
+            case 'diaChi':
+              return row.diaChi;
+            case 'slug':
+              return row.slug;
+            case 'admins':
+              return (row.admins ?? []).map((a) => `${a.hoTen} ${a.email}`).join(' ');
+            case 'modules':
+              return moduleNames(row.modules);
+            default:
+              return undefined;
+          }
+        }),
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tenants, matches, allModules],
+  );
 
   // Only super admin can access this page
   if (!user?.isSuperAdmin) {
@@ -317,10 +357,12 @@ const TenantPage = () => {
 
       <Table
         columns={cfgColumns}
-        dataSource={tenants}
+        dataSource={rows}
         rowKey="id"
         loading={loading}
         pagination={{ pageSize: 10 }}
+        // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+        scroll={{ x: hasPinned ? 'max-content' : undefined }}
       />
 
       <Modal

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
   Table,
@@ -19,6 +19,8 @@ import {
   TNDNQuyData,
 } from "@/services/taxService";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
+import { filterTndnRows } from "./tndnFilter";
 
 const { Text, Title } = Typography;
 
@@ -212,6 +214,11 @@ const BaoCaoTNDNPage: React.FC = () => {
     );
   };
 
+  // Lọc theo cột ở header + cố định cột. Bảng có dòng tiêu đề nhóm (kind: 'section') nên
+  // việc lọc do `filterTndnRows` lo (ẩn luôn tiêu đề nhóm khi nhóm rỗng).
+  const { filterable, filters, hasPinned } = useTableColumnFilters("thue-bao-cao-tndn");
+  const viewRows = useMemo(() => filterTndnRows(ROWS, filters), [filters]);
+
   const quarterCol = (qi: number) => ({
     title: `Quý ${qi + 1}`,
     key: `q${qi}`,
@@ -232,7 +239,7 @@ const BaoCaoTNDNPage: React.FC = () => {
       onCell: (row: RowDef) =>
         row.kind === "section" ? { colSpan: 0 } : {},
     },
-    {
+    filterable<RowDef>({
       title: "Chỉ tiêu",
       dataIndex: "label",
       key: "label",
@@ -244,7 +251,7 @@ const BaoCaoTNDNPage: React.FC = () => {
           return <Text strong className="text-primary">{v}</Text>;
         return row.strong ? <Text strong>{v}</Text> : v;
       },
-    },
+    }),
     quarterCol(0),
     quarterCol(1),
     quarterCol(2),
@@ -258,7 +265,7 @@ const BaoCaoTNDNPage: React.FC = () => {
         row.kind === "section" ? { colSpan: 0 } : {},
       render: (_: unknown, row: RowDef) => renderLuyKe(row),
     },
-    {
+    filterable<RowDef>({
       title: "Ghi chú",
       dataIndex: "note",
       key: "note",
@@ -266,7 +273,7 @@ const BaoCaoTNDNPage: React.FC = () => {
       onCell: (row: RowDef) =>
         row.kind === "section" ? { colSpan: 0 } : {},
       render: (v?: string) => (v ? <Text type="secondary">{v}</Text> : null),
-    },
+    }),
   ];
 
   return (
@@ -309,12 +316,13 @@ const BaoCaoTNDNPage: React.FC = () => {
 
         <Table
           columns={columns}
-          dataSource={ROWS}
+          dataSource={viewRows}
           rowKey="key"
           loading={loading}
           pagination={false}
           size="small"
-          scroll={{ x: 1240, y: "calc(100vh - 280px)" }}
+          // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được.
+          scroll={{ x: hasPinned ? "max-content" : 1240, y: "calc(100vh - 280px)" }}
         />
       </Card>
     </div>

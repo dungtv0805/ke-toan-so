@@ -1,5 +1,8 @@
 import { Table, Tag, Space, Typography } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { ProjectOutlined } from "@ant-design/icons";
+import { useMemo } from "react";
+import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
 import { useNhatKyChungState } from "../../NhatKyChungHandlerContext";
 import { ProjectSummary } from "../../handler/sub-handler/init/init.state";
 
@@ -12,12 +15,24 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+/** Lấy ô theo key cột cho bộ lọc header (chỉ cột chữ mới lọc được). */
+const getCell = (row: ProjectSummary, key: string): string | undefined =>
+  key === "duAn" ? row.duAn : undefined;
+
 export function ProjectTab() {
   const [summaryByProject] = useNhatKyChungState("summaryByProject", []);
   const [loading] = useNhatKyChungState("loading", false);
 
-  const columns = [
-    {
+  const { filterable, matches, hasPinned } = useTableColumnFilters("nkc-du-an");
+
+  // Lọc trên dữ liệu gốc; dòng "Tổng cộng" dùng `pageData` nên tự cộng lại theo dòng còn hiện.
+  const rows = useMemo(
+    () => (summaryByProject || []).filter((r) => matches(r, getCell)),
+    [summaryByProject, matches],
+  );
+
+  const columns: ColumnsType<ProjectSummary> = [
+    filterable({
       title: "Dự án",
       dataIndex: "duAn",
       key: "duAn",
@@ -28,7 +43,7 @@ export function ProjectTab() {
           <Text strong>{text}</Text>
         </Space>
       ),
-    },
+    }),
     {
       title: "Số bút toán",
       dataIndex: "soButToan",
@@ -85,11 +100,13 @@ export function ProjectTab() {
       <Table<ProjectSummary>
         className="excel-table"
         columns={columns}
-        dataSource={summaryByProject || []}
+        dataSource={rows}
         rowKey="duAn"
         loading={loading}
         pagination={false}
         size="small"
+        // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+        scroll={{ x: hasPinned ? "max-content" : undefined }}
         summary={(pageData) => {
           const totalThu = pageData.reduce((sum, r) => sum + r.tongThu, 0);
           const totalChi = pageData.reduce((sum, r) => sum + r.tongChi, 0);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Card, 
   Table, 
@@ -34,8 +34,10 @@ import {
 import { taiKhoanService } from '@/services/taiKhoanService';
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
 import { exportReportExcel } from "@/utils/exportReportExcel";
 import { buildSoCaiSheets } from "./soCaiExport";
+import { filterSoCaiChiTiet, filterSoCaiSummary, filterTrialBalance } from "./soCaiFilter";
 
 const SoCaiPage: React.FC = () => {
   const { canExport } = usePagePermission("/bao-cao/so-cai");
@@ -49,8 +51,34 @@ const SoCaiPage: React.FC = () => {
   const [filterAccount, setFilterAccount] = useState<string>('');
   const [exporting, setExporting] = useState(false);
 
+  // Mỗi bảng một bộ lọc riêng: 3 tab trùng key cột (taiKhoan/tenTaiKhoan) nên phải tách pageKey,
+  // không thì lọc/ghim ở tab này lại ăn sang tab kia.
+  const summaryFilters = useTableColumnFilters('bao-cao-so-cai-tong-hop');
+  const detailFilters = useTableColumnFilters('bao-cao-so-cai-chi-tiet');
+  const trialFilters = useTableColumnFilters('bao-cao-so-cai-can-doi-ps');
+
+  // Lọc trên dữ liệu gốc rồi mới đưa vào bảng: dòng Tổng cộng / khối tổng của tab chi tiết được
+  // cộng lại theo đúng những dòng còn hiển thị.
+  const summaryView = useMemo(
+    () => filterSoCaiSummary(summaryData, summaryFilters.filters),
+    [summaryData, summaryFilters.filters],
+  );
+  const detailView = useMemo(
+    () => filterSoCaiChiTiet(selectedAccount, detailFilters.filters),
+    [selectedAccount, detailFilters.filters],
+  );
+  const trialView = useMemo(
+    () => filterTrialBalance(trialBalance, trialFilters.filters),
+    [trialBalance, trialFilters.filters],
+  );
+
   const handleExport = async () => {
-    const sheets = buildSoCaiSheets(activeTab, { summaryData, selectedAccount, trialBalance });
+    // Xuất đúng phần đang lọc để file tải về khớp với cái đang xem trên màn hình.
+    const sheets = buildSoCaiSheets(activeTab, {
+      summaryData: summaryView,
+      selectedAccount: detailView,
+      trialBalance: trialView,
+    });
     if (sheets.length === 0) { message.warning("Không có dữ liệu để xuất (tab hiện tại)"); return; }
     setExporting(true);
     try {
@@ -123,27 +151,27 @@ const SoCaiPage: React.FC = () => {
       key: 'ngay',
       width: 100,
     },
-    {
+    detailFilters.filterable<SoCaiEntry>({
       title: 'Số chứng từ',
       dataIndex: 'soPhieu',
       key: 'soPhieu',
       width: 120,
-    },
-    {
+    }),
+    detailFilters.filterable<SoCaiEntry>({
       title: 'Loại CT',
       dataIndex: 'loaiChungTu',
       key: 'loaiChungTu',
       width: 100,
-      render: (loai) => (
+      render: (loai: string) => (
         <Tag color={loai === 'Phiếu thu' ? 'green' : 'red'}>{loai}</Tag>
       ),
-    },
-    {
+    }),
+    detailFilters.filterable<SoCaiEntry>({
       title: 'Diễn giải',
       dataIndex: 'dienGiai',
       key: 'dienGiai',
       ellipsis: true,
-    },
+    }),
     {
       title: 'Phát sinh Nợ',
       dataIndex: 'phatSinhNo',
@@ -179,20 +207,20 @@ const SoCaiPage: React.FC = () => {
   ];
 
   const summaryColumns: ColumnsType<SoCaiByAccount> = [
-    {
+    summaryFilters.filterable<SoCaiByAccount>({
       title: 'Tài khoản',
       dataIndex: 'taiKhoan',
       key: 'taiKhoan',
       width: 100,
-      sorter: (a, b) => a.taiKhoan.localeCompare(b.taiKhoan),
-    },
-    {
+      sorter: (a: SoCaiByAccount, b: SoCaiByAccount) => a.taiKhoan.localeCompare(b.taiKhoan),
+    }),
+    summaryFilters.filterable<SoCaiByAccount>({
       title: 'Tên tài khoản',
       dataIndex: 'tenTaiKhoan',
       key: 'tenTaiKhoan',
       width: 200,
       ellipsis: true,
-    },
+    }),
     {
       title: 'Số dư đầu kỳ Nợ',
       dataIndex: 'soDuDauKyNo',
@@ -263,22 +291,22 @@ const SoCaiPage: React.FC = () => {
     },
   ];
 
-  const trialBalanceColumns: ColumnsType<typeof trialBalance[0]> = [
-    {
+  const trialBalanceColumns: ColumnsType<TrialBalance> = [
+    trialFilters.filterable<TrialBalance>({
       title: 'TK',
       dataIndex: 'taiKhoan',
       key: 'taiKhoan',
       width: 80,
       fixed: 'left',
-    },
-    {
+    }),
+    trialFilters.filterable<TrialBalance>({
       title: 'Tên tài khoản',
       dataIndex: 'tenTaiKhoan',
       key: 'tenTaiKhoan',
       width: 180,
       ellipsis: true,
       fixed: 'left',
-    },
+    }),
     {
       title: 'Số dư đầu kỳ',
       children: [
@@ -351,7 +379,7 @@ const SoCaiPage: React.FC = () => {
       children: (
         <Table
           columns={summaryColumns}
-          dataSource={summaryData}
+          dataSource={summaryView}
           rowKey="taiKhoan"
           loading={loading}
           pagination={{
@@ -360,8 +388,12 @@ const SoCaiPage: React.FC = () => {
             showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} tài khoản`,
           }}
           size="middle"
-          scroll={{ x: 1400 }}
+          // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+          scroll={{ x: summaryFilters.hasPinned ? 'max-content' : 1400 }}
           summary={(pageData) => {
+            // Lọc không còn dòng nào → bỏ luôn dòng Tổng cộng toàn số 0.
+            if (pageData.length === 0) return null;
+
             const totals = pageData.reduce((acc, item) => ({
               soDuDauKyNo: acc.soDuDauKyNo + item.soDuDauKyNo,
               soDuDauKyCo: acc.soDuDauKyCo + item.soDuDauKyCo,
@@ -392,35 +424,35 @@ const SoCaiPage: React.FC = () => {
       label: 'Chi tiết tài khoản',
       children: (
         <>
-          {selectedAccount ? (
+          {detailView ? (
             <>
               <Descriptions bordered size="small" column={4} style={{ marginBottom: 16 }}>
                 <Descriptions.Item label="Tài khoản" span={2}>
-                  <strong>{selectedAccount.taiKhoan} - {selectedAccount.tenTaiKhoan}</strong>
+                  <strong>{detailView.taiKhoan} - {detailView.tenTaiKhoan}</strong>
                 </Descriptions.Item>
                 <Descriptions.Item label="Số dư đầu kỳ Nợ">
-                  {formatCurrency(selectedAccount.soDuDauKyNo)}
+                  {formatCurrency(detailView.soDuDauKyNo)}
                 </Descriptions.Item>
                 <Descriptions.Item label="Số dư đầu kỳ Có">
-                  {formatCurrency(selectedAccount.soDuDauKyCo)}
+                  {formatCurrency(detailView.soDuDauKyCo)}
                 </Descriptions.Item>
                 <Descriptions.Item label="Phát sinh Nợ">
-                  <span style={{ color: '#1890ff', fontWeight: 600 }}>{formatCurrency(selectedAccount.phatSinhNo)}</span>
+                  <span style={{ color: '#1890ff', fontWeight: 600 }}>{formatCurrency(detailView.phatSinhNo)}</span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Phát sinh Có">
-                  <span style={{ color: '#52c41a', fontWeight: 600 }}>{formatCurrency(selectedAccount.phatSinhCo)}</span>
+                  <span style={{ color: '#52c41a', fontWeight: 600 }}>{formatCurrency(detailView.phatSinhCo)}</span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Số dư cuối kỳ Nợ">
-                  <strong>{formatCurrency(selectedAccount.soDuCuoiKyNo)}</strong>
+                  <strong>{formatCurrency(detailView.soDuCuoiKyNo)}</strong>
                 </Descriptions.Item>
                 <Descriptions.Item label="Số dư cuối kỳ Có">
-                  <strong>{formatCurrency(selectedAccount.soDuCuoiKyCo)}</strong>
+                  <strong>{formatCurrency(detailView.soDuCuoiKyCo)}</strong>
                 </Descriptions.Item>
               </Descriptions>
 
               <Table
                 columns={detailColumns}
-                dataSource={selectedAccount.chiTiet}
+                dataSource={detailView.chiTiet}
                 rowKey={(record, index) => `${record.soPhieu}-${index}`}
                 loading={loading}
                 pagination={{
@@ -429,7 +461,7 @@ const SoCaiPage: React.FC = () => {
                   showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} bút toán`,
                 }}
                 size="middle"
-                scroll={{ x: 1200 }}
+                scroll={{ x: detailFilters.hasPinned ? 'max-content' : 1200 }}
               />
             </>
           ) : (
@@ -444,14 +476,17 @@ const SoCaiPage: React.FC = () => {
       children: (
         <Table
           columns={trialBalanceColumns}
-          dataSource={trialBalance}
+          dataSource={trialView}
           rowKey="taiKhoan"
           loading={loading}
           pagination={false}
           size="middle"
-          scroll={{ x: 1100 }}
+          scroll={{ x: trialFilters.hasPinned ? 'max-content' : 1100 }}
           bordered
           summary={(pageData) => {
+            // Lọc không còn dòng nào → bỏ luôn dòng Tổng cộng toàn số 0.
+            if (pageData.length === 0) return null;
+
             const totals = pageData.reduce((acc, item) => ({
               soDuDauKyNo: acc.soDuDauKyNo + item.soDuDauKyNo,
               soDuDauKyCo: acc.soDuDauKyCo + item.soDuDauKyCo,

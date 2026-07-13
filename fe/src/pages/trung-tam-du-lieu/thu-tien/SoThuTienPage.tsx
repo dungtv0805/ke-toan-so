@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Breadcrumb,
   Card,
@@ -31,6 +31,21 @@ import { doiTuongService } from '@/services/doiTuongService';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
+
+/** Ô dùng để so khớp bộ lọc cột — key trùng `key` của cột antd. */
+const cellValue = (r: ThuTienHopDong, key: string): string | undefined => {
+  switch (key) {
+    case 'soHopDong':
+      return r.soHopDong;
+    case 'tenKhachHang':
+      return r.tenKhachHang;
+    case 'noiDung':
+      return r.noiDung;
+    default:
+      return undefined;
+  }
+};
 
 const { Text } = Typography;
 const fmtCur = (v?: number) => (!v ? '-' : new Intl.NumberFormat('vi-VN').format(v));
@@ -145,11 +160,35 @@ export default function SoThuTienPage() {
     }
   };
 
+  // Lọc theo cột ở header + cố định cột. Dữ liệu load hết về client nên lọc client-side;
+  // bảng phẳng, không có dòng tổng → lọc thẳng trên mảng.
+  const { filterable, matches, hasPinned } = useTableColumnFilters('trung-tam-du-lieu-so-thu-tien');
+  const viewRows = useMemo(() => rows.filter((r) => matches(r, cellValue)), [rows, matches]);
+
   const columns: ColumnsType<ThuTienHopDong> = [
     { title: 'Năm', dataIndex: 'nam', width: 70, align: 'center', render: (v) => v || '-' },
-    { title: 'Số HĐ', dataIndex: 'soHopDong', width: 150, render: (v) => <Text strong>{v || '-'}</Text> },
-    { title: 'Tên khách hàng', dataIndex: 'tenKhachHang', width: 200, ellipsis: true, render: (v) => v || '-' },
-    { title: 'Nội dung', dataIndex: 'noiDung', ellipsis: true, render: (v) => v || '-' },
+    filterable<ThuTienHopDong>({
+      title: 'Số HĐ',
+      dataIndex: 'soHopDong',
+      key: 'soHopDong',
+      width: 150,
+      render: (v) => <Text strong>{v || '-'}</Text>,
+    }),
+    filterable<ThuTienHopDong>({
+      title: 'Tên khách hàng',
+      dataIndex: 'tenKhachHang',
+      key: 'tenKhachHang',
+      width: 200,
+      ellipsis: true,
+      render: (v) => v || '-',
+    }),
+    filterable<ThuTienHopDong>({
+      title: 'Nội dung',
+      dataIndex: 'noiDung',
+      key: 'noiDung',
+      ellipsis: true,
+      render: (v) => v || '-',
+    }),
     { title: 'Số tiền', dataIndex: 'soTien', width: 150, align: 'right', render: (v) => <Text type="success">{fmtCur(v)}</Text> },
     { title: 'Ngày', dataIndex: 'ngay', width: 110, render: (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '-') },
     { title: 'Lần', dataIndex: 'lan', width: 60, align: 'center', render: (v) => v || '-' },
@@ -196,11 +235,12 @@ export default function SoThuTienPage() {
         />
         <Table<ThuTienHopDong>
           columns={cfgColumns}
-          dataSource={rows}
+          dataSource={viewRows}
           rowKey="id"
           loading={loading}
           size="small"
-          scroll={{ x: 1000 }}
+          // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được.
+          scroll={{ x: hasPinned ? 'max-content' : 1000 }}
           pagination={{ pageSize: 20, showTotal: (t) => `Tổng ${t} phiếu thu` }}
         />
       </Card>

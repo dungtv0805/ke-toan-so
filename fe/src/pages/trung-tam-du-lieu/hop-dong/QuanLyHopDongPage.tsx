@@ -47,8 +47,28 @@ import { doiTuongService } from '@/services/doiTuongService';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
 
 const { Text, Title } = Typography;
+
+/**
+ * Ô dùng để so khớp bộ lọc cột — key trùng `key` của cột antd.
+ * Cột "Chủ đầu tư" hiển thị TÊN (map từ id) nên lọc cũng phải khớp trên tên.
+ */
+const cellValue =
+  (doiTuongMap: Record<string, string>) =>
+  (r: TheoDoiHopDongRow, key: string): string | undefined => {
+    switch (key) {
+      case 'soHopDong':
+        return r.soHopDong;
+      case 'tenCongTrinh':
+        return r.tenCongTrinh;
+      case 'doiTuongId':
+        return doiTuongMap[r.doiTuongId || ''];
+      default:
+        return undefined;
+    }
+  };
 
 const fmtCur = (v?: number) =>
   v == null
@@ -241,17 +261,40 @@ export default function QuanLyHopDongPage() {
     }
   };
 
+  // Lọc theo cột ở header + cố định cột. Danh sách load hết về client nên lọc client-side;
+  // bảng phẳng, không có dòng tổng (3 thẻ Statistic là số tổng TOÀN BỘ từ backend, không
+  // phải tổng của bảng) → lọc thẳng trên mảng.
+  const { filterable, matches, hasPinned } = useTableColumnFilters('trung-tam-du-lieu-hop-dong');
+  const viewRows = useMemo(() => {
+    const getValue = cellValue(doiTuongMap);
+    return rows.filter((r) => matches(r, getValue));
+  }, [rows, matches, doiTuongMap]);
+
   const columns: ColumnsType<TheoDoiHopDongRow> = [
-    { title: 'Số HĐ', dataIndex: 'soHopDong', width: 130, fixed: 'left', render: (v) => <Text strong>{v}</Text> },
+    filterable<TheoDoiHopDongRow>({
+      title: 'Số HĐ',
+      dataIndex: 'soHopDong',
+      key: 'soHopDong',
+      width: 130,
+      fixed: 'left',
+      render: (v) => <Text strong>{v}</Text>,
+    }),
     { title: 'Năm', dataIndex: 'nam', width: 70, align: 'center', render: (v) => v || '-' },
-    { title: 'Tên công trình', dataIndex: 'tenCongTrinh', width: 220, ellipsis: true },
-    {
+    filterable<TheoDoiHopDongRow>({
+      title: 'Tên công trình',
+      dataIndex: 'tenCongTrinh',
+      key: 'tenCongTrinh',
+      width: 220,
+      ellipsis: true,
+    }),
+    filterable<TheoDoiHopDongRow>({
       title: 'Chủ đầu tư',
       dataIndex: 'doiTuongId',
+      key: 'doiTuongId',
       width: 160,
       ellipsis: true,
       render: (v: string) => doiTuongMap[v] || '-',
-    },
+    }),
     { title: 'Giá trị', dataIndex: 'giaTriSauThue', width: 140, align: 'right', render: (v) => fmtCur(v) },
     {
       title: 'Quyết toán',
@@ -268,6 +311,8 @@ export default function QuanLyHopDongPage() {
       align: 'right',
       render: (v: number) => <Text type={v > 0 ? 'warning' : undefined}>{fmtCur(v)}</Text>,
     },
+    // Không gắn lọc: cột này vốn không có `key`. Thêm key để lọc sẽ đưa nó vào "Chọn cột",
+    // và người dùng từng lưu lựa chọn cột sẽ bị mất cột này cho tới khi tự tick lại.
     { title: 'Phụ trách', width: 130, ellipsis: true, render: (_, r) => r.tracking?.phuTrachHoSo || '-' },
     {
       title: '',
@@ -357,11 +402,12 @@ export default function QuanLyHopDongPage() {
 
         <Table<TheoDoiHopDongRow>
           columns={cfgColumns}
-          dataSource={rows}
+          dataSource={viewRows}
           rowKey="hopDongId"
           loading={loading}
           size="small"
-          scroll={{ x: 1500 }}
+          // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được.
+          scroll={{ x: hasPinned ? 'max-content' : 1500 }}
           pagination={{ pageSize: 20, showTotal: (t) => `Tổng ${t} hợp đồng` }}
         />
       </Card>

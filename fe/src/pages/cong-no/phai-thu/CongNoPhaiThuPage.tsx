@@ -34,6 +34,14 @@ import {
 import { FilterBar } from "@/components/common/FilterBar";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
+
+// Ô chữ theo key cột — dùng cho bộ lọc cột ở header của 2 bảng.
+const getChiTietValue = (r: CongNoWithOverdue, key: string): string | undefined =>
+  key === 'doiTuongId' ? r.doiTuongId : key === 'doiTuongTen' ? r.doiTuongTen : undefined;
+
+const getTongHopValue = (r: CongNoSummaryByCustomer, key: string): string | undefined =>
+  key === 'doiTuongId' ? r.doiTuongId : key === 'doiTuongTen' ? r.doiTuongTen : undefined;
 
 const CongNoPhaiThuPage: React.FC = () => {
   const { canExport } = usePagePermission("/cong-no/phai-thu");
@@ -124,7 +132,18 @@ const CongNoPhaiThuPage: React.FC = () => {
     }
   };
 
+  // Lọc theo cột ở header — mỗi bảng 1 pageKey riêng để bộ lọc/cột ghim không dính vào nhau.
+  const { filterable, matches, hasPinned } = useTableColumnFilters('cong-no-phai-thu-chi-tiet');
+  const {
+    filterable: filterableTH,
+    matches: matchesTH,
+    hasPinned: hasPinnedTH,
+  } = useTableColumnFilters('cong-no-phai-thu-tong-hop');
+
+  // Dữ liệu load hết về client → lọc client-side. Dòng tổng của bảng dùng `summary(pageData)`
+  // nên tự cộng lại theo đúng những dòng còn hiển thị.
   const filteredData = data.filter(item => {
+    if (!matches(item, getChiTietValue)) return false;
     if (filterStatus === 'all') return true;
     if (filterStatus === 'overdue') {
       return item.tinhTrangQuaHan === 'QUA_HAN' || item.tinhTrangQuaHan === 'QUA_HAN_NGHIEM_TRONG';
@@ -133,25 +152,27 @@ const CongNoPhaiThuPage: React.FC = () => {
     return true;
   });
 
+  const filteredSummary = summaryData.filter(item => matchesTH(item, getTongHopValue));
+
   const overdueItems = data.filter(item => 
     item.tinhTrangQuaHan === 'QUA_HAN' || item.tinhTrangQuaHan === 'QUA_HAN_NGHIEM_TRONG'
   );
 
   const columns: ColumnsType<CongNoWithOverdue> = [
-    {
+    filterable<CongNoWithOverdue>({
       title: 'Mã KH',
       dataIndex: 'doiTuongId',
       key: 'doiTuongId',
       width: 100,
       sorter: (a, b) => a.doiTuongId.localeCompare(b.doiTuongId),
-    },
-    {
+    }),
+    filterable<CongNoWithOverdue>({
       title: 'Khách hàng',
       dataIndex: 'doiTuongTen',
       key: 'doiTuongTen',
       width: 200,
       ellipsis: true,
-    },
+    }),
     {
       title: 'Ngày phát sinh',
       dataIndex: 'ngayPhatSinh',
@@ -226,19 +247,19 @@ const CongNoPhaiThuPage: React.FC = () => {
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('congNo.phaiThu', columns);
 
   const summaryColumns: ColumnsType<CongNoSummaryByCustomer> = [
-    {
+    filterableTH<CongNoSummaryByCustomer>({
       title: 'Mã KH',
       dataIndex: 'doiTuongId',
       key: 'doiTuongId',
       width: 100,
-    },
-    {
+    }),
+    filterableTH<CongNoSummaryByCustomer>({
       title: 'Khách hàng',
       dataIndex: 'doiTuongTen',
       key: 'doiTuongTen',
       width: 200,
       ellipsis: true,
-    },
+    }),
     {
       title: 'Số hóa đơn',
       dataIndex: 'soHoaDon',
@@ -361,7 +382,8 @@ const CongNoPhaiThuPage: React.FC = () => {
               showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} bản ghi`,
             }}
             size="middle"
-            scroll={{ x: 1300 }}
+            // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+            scroll={{ x: hasPinned ? 'max-content' : 1300 }}
             summary={(pageData) => {
               const totalGoc = pageData.reduce((sum, item) => sum + item.soTienGoc, 0);
               const totalDaThu = pageData.reduce((sum, item) => sum + item.daThu, 0);
@@ -386,7 +408,7 @@ const CongNoPhaiThuPage: React.FC = () => {
       children: (
         <Table
           columns={summaryColumns}
-          dataSource={summaryData}
+          dataSource={filteredSummary}
           rowKey="doiTuongId"
           loading={loading}
           pagination={{
@@ -395,7 +417,7 @@ const CongNoPhaiThuPage: React.FC = () => {
             showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} khách hàng`,
           }}
           size="middle"
-          scroll={{ x: 1200 }}
+          scroll={{ x: hasPinnedTH ? 'max-content' : 1200 }}
           summary={(pageData) => {
             const totalNo = pageData.reduce((sum, item) => sum + item.tongNo, 0);
             const totalDaThu = pageData.reduce((sum, item) => sum + item.daThu, 0);

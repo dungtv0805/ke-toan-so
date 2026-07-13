@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Breadcrumb, Button, Card, Table, Typography, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { HomeOutlined, FileProtectOutlined, ExportOutlined } from '@ant-design/icons';
@@ -6,6 +6,8 @@ import type { BaoCaoHopDongRow } from '@/types';
 import { theoDoiHopDongService } from '@/services/theoDoiHopDongService';
 import { exportReportExcel } from '@/utils/exportReportExcel';
 import { buildHopDongSheets } from './hopDongExport';
+import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
+import { filterHopDong } from './hopDongFilter';
 
 const { Text, Title } = Typography;
 
@@ -19,8 +21,13 @@ export default function BaoCaoHopDongPage() {
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  // Lọc theo cột "Năm" ở header: chạy trên dữ liệu gốc rồi cộng lại dòng Tổng theo các năm còn hiện.
+  const { filters, filterable } = useTableColumnFilters('bao-cao-hop-dong');
+  const view = useMemo(() => filterHopDong(rows, tong, filters), [rows, tong, filters]);
+
   const handleExport = async () => {
-    const sheets = buildHopDongSheets(rows, tong);
+    // Xuất đúng phần đang lọc để file tải về khớp với cái đang xem trên màn hình.
+    const sheets = buildHopDongSheets(view.rows, view.tong);
     if (sheets.length === 0) { message.warning('Không có dữ liệu để xuất'); return; }
     setExporting(true);
     try {
@@ -47,14 +54,15 @@ export default function BaoCaoHopDongPage() {
   }, []);
 
   const columns: ColumnsType<BaoCaoHopDongRow> = [
-    {
+    filterable({
       title: 'Năm',
       dataIndex: 'nam',
+      key: 'nam',
       width: 90,
       fixed: 'left',
       align: 'center',
       render: (v: number | null) => <Text strong>{v ?? 'Chưa rõ'}</Text>,
-    },
+    }),
     {
       title: 'Giá trị Hợp đồng + phụ lục',
       children: [
@@ -105,31 +113,33 @@ export default function BaoCaoHopDongPage() {
 
         <Table<BaoCaoHopDongRow>
           columns={columns}
-          dataSource={rows}
+          dataSource={view.rows}
           rowKey={(r) => String(r.nam ?? 'null')}
           loading={loading}
           size="small"
           bordered
+          // scroll.x cố định → bảng cuộn ngang được, cột ghim (fixed) có tác dụng.
           scroll={{ x: 1200 }}
           pagination={false}
-          summary={() =>
-            tong ? (
+          summary={() => {
+            const tongView = view.tong;
+            return tongView ? (
               <Table.Summary fixed>
                 <Table.Summary.Row className="font-semibold bg-gray-50">
                   <Table.Summary.Cell index={0} align="center"><Text strong>Tổng</Text></Table.Summary.Cell>
-                  <Table.Summary.Cell index={1} align="center"><Text strong>{fmtNum(tong.soLuong)}</Text></Table.Summary.Cell>
-                  <Table.Summary.Cell index={2} align="right"><Text strong>{fmtCur(tong.giaTri)}</Text></Table.Summary.Cell>
-                  <Table.Summary.Cell index={3} align="right"><Text strong>{fmtCur(tong.quyetToan)}</Text></Table.Summary.Cell>
-                  <Table.Summary.Cell index={4} align="right"><Text strong type="success">{fmtCur(tong.thuTien)}</Text></Table.Summary.Cell>
-                  <Table.Summary.Cell index={5} align="center"><Text strong>{fmtNum(tong.chuaCoHD)}</Text></Table.Summary.Cell>
-                  <Table.Summary.Cell index={6} align="center"><Text strong>{fmtNum(tong.hdChuaKy)}</Text></Table.Summary.Cell>
-                  <Table.Summary.Cell index={7} align="center"><Text strong>{fmtNum(tong.hdPhotoScan)}</Text></Table.Summary.Cell>
-                  <Table.Summary.Cell index={8} align="center"><Text strong>{fmtNum(tong.hdGoc)}</Text></Table.Summary.Cell>
-                  <Table.Summary.Cell index={9} align="right"><Text strong>{fmtCur(tong.giaTriBinhQuan)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={1} align="center"><Text strong>{fmtNum(tongView.soLuong)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={2} align="right"><Text strong>{fmtCur(tongView.giaTri)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={3} align="right"><Text strong>{fmtCur(tongView.quyetToan)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={4} align="right"><Text strong type="success">{fmtCur(tongView.thuTien)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={5} align="center"><Text strong>{fmtNum(tongView.chuaCoHD)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={6} align="center"><Text strong>{fmtNum(tongView.hdChuaKy)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={7} align="center"><Text strong>{fmtNum(tongView.hdPhotoScan)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={8} align="center"><Text strong>{fmtNum(tongView.hdGoc)}</Text></Table.Summary.Cell>
+                  <Table.Summary.Cell index={9} align="right"><Text strong>{fmtCur(tongView.giaTriBinhQuan)}</Text></Table.Summary.Cell>
                 </Table.Summary.Row>
               </Table.Summary>
-            ) : null
-          }
+            ) : null;
+          }}
         />
       </Card>
     </div>

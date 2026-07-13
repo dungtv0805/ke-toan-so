@@ -25,8 +25,10 @@ import {
   YoutubeOutlined,
   FileOutlined,
 } from "@ant-design/icons";
+import type { ColumnsType } from "antd/es/table";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
 import { taiLieuService, TaiLieu } from "@/services/taiLieuService";
 import UploadTaiLieuModal from "./UploadTaiLieuModal";
 import TaiLieuPreviewDrawer from "./TaiLieuPreviewDrawer";
@@ -85,6 +87,10 @@ export const DocumentLibraryPage: React.FC<DocumentLibraryPageProps> = ({
   const [searchText, setSearchText] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [previewItem, setPreviewItem] = useState<TaiLieu | null>(null);
+  // Mỗi loại thư viện là 1 bảng riêng → pageKey theo category (cột ghim lưu riêng).
+  const { filterable, matches, hasPinned } = useTableColumnFilters(
+    `thu-vien-${category}`,
+  );
 
   const fetchData = async () => {
     setLoading(true);
@@ -103,11 +109,16 @@ export const DocumentLibraryPage: React.FC<DocumentLibraryPageProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category]);
 
+  // Ô tìm kiếm chung + bộ lọc theo cột (cùng áp lên dữ liệu gốc).
   const filtered = useMemo(() => {
     const q = searchText.trim().toLowerCase();
-    if (!q) return data;
-    return data.filter((item) => item.title.toLowerCase().includes(q));
-  }, [data, searchText]);
+    return data.filter((item) => {
+      if (q && !item.title.toLowerCase().includes(q)) return false;
+      return matches(item, (row, key) =>
+        key === "title" ? row.title : row.moTa,
+      );
+    });
+  }, [data, searchText, matches]);
 
   const handleDownload = async (item: TaiLieu) => {
     try {
@@ -134,7 +145,7 @@ export const DocumentLibraryPage: React.FC<DocumentLibraryPageProps> = ({
     }
   };
 
-  const columns = [
+  const columns: ColumnsType<TaiLieu> = [
     {
       title: "",
       key: "icon",
@@ -142,14 +153,14 @@ export const DocumentLibraryPage: React.FC<DocumentLibraryPageProps> = ({
       align: "center" as const,
       render: (_: unknown, record: TaiLieu) => renderTypeIcon(record),
     },
-    {
+    filterable<TaiLieu>({
       title: "Tiêu đề",
       dataIndex: "title",
       key: "title",
       ellipsis: true,
       render: (text: string) => <Text strong>{text}</Text>,
-    },
-    {
+    }),
+    filterable<TaiLieu>({
       title: "Mô tả",
       dataIndex: "moTa",
       key: "moTa",
@@ -159,7 +170,7 @@ export const DocumentLibraryPage: React.FC<DocumentLibraryPageProps> = ({
           <Text type="secondary">{text || "-"}</Text>
         </Tooltip>
       ),
-    },
+    }),
     {
       title: "Kích thước",
       dataIndex: "size",
@@ -262,7 +273,8 @@ export const DocumentLibraryPage: React.FC<DocumentLibraryPageProps> = ({
           loading={loading}
           size="small"
           className="excel-table"
-          scroll={{ x: 800, y: "calc(100vh - 285px)" }}
+          // Cột ghim (fixed) cần bảng cuộn ngang được → max-content khi có cột ghim.
+          scroll={{ x: hasPinned ? "max-content" : 800, y: "calc(100vh - 285px)" }}
           pagination={{
             pageSize: 50,
             showSizeChanger: true,

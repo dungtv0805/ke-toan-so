@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Table,
   Button,
@@ -19,6 +19,8 @@ import { tenantService, TenantMember, AddMemberDto } from '@/services/tenantServ
 import { vaiTroService, VaiTroResponse } from '@/services/vaiTroService';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
+import type { ColumnsType } from 'antd/es/table';
 
 
 const DEFAULT_PASSWORD = '123456';
@@ -45,6 +47,7 @@ const ThanhVienPage = () => {
 
   const tenantId = currentTenant?.tenantId;
   const canEdit = hasPermission('/cau-hinh/thanh-vien:sua');
+  const { filterable, matches, hasPinned } = useTableColumnFilters('cau-hinh-thanh-vien');
 
   const fetchMembers = async () => {
     if (!tenantId) return;
@@ -168,24 +171,24 @@ const ThanhVienPage = () => {
     (u) => !members.some((m) => m.id === u.id && m.isActive),
   );
 
-  const columns = [
-    {
+  const columns: ColumnsType<TenantMember> = [
+    filterable<TenantMember>({
       title: 'Họ tên',
       dataIndex: 'hoTen',
       key: 'hoTen',
-    },
-    {
+    }),
+    filterable<TenantMember>({
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
-    },
-    {
+    }),
+    filterable<TenantMember>({
       title: 'Vai trò',
       dataIndex: 'role',
       key: 'role',
       render: (role: string) =>
         role ? <Tag color="blue">{role}</Tag> : <span className="text-gray-400">—</span>,
-    },
+    }),
     {
       title: 'Trạng thái',
       dataIndex: 'isActive',
@@ -239,8 +242,26 @@ const ThanhVienPage = () => {
     },
   ];
 
-  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('cauHinh.thanhVien', columns);
+  // Bọc filterable TRƯỚC rồi mới đưa vào useTableTitleConfig (hook ẩn/hiện + đổi tiêu đề chỉ
+  // spread lại cột nên giữ nguyên filterDropdown + fixed).
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig<TenantMember>(
+    'cauHinh.thanhVien',
+    columns,
+  );
   const fl = useFieldLabels('cauHinh.thanhVien');
+
+  const rows = useMemo(
+    () =>
+      members.filter((m) =>
+        matches(m, (row, key) => {
+          if (key === 'hoTen') return row.hoTen;
+          if (key === 'email') return row.email;
+          if (key === 'role') return row.role;
+          return undefined;
+        }),
+      ),
+    [members, matches],
+  );
 
   if (!tenantId) {
     return (
@@ -275,10 +296,12 @@ const ThanhVienPage = () => {
 
       <Table
         columns={cfgColumns}
-        dataSource={members}
+        dataSource={rows}
         rowKey="id"
         loading={loading}
         pagination={{ pageSize: 10 }}
+        // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+        scroll={{ x: hasPinned ? 'max-content' : undefined }}
       />
 
       {/* Add Member Modal */}

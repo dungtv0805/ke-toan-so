@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Card,
   Table,
@@ -39,8 +39,10 @@ import {
 } from '@/services/balanceSheetService';
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
 import { exportReportExcel } from '@/utils/exportReportExcel';
 import { buildBangCanDoiSheets } from './bangCanDoiExport';
+import { filterBangCanDoi } from './bangCanDoiFilter';
 
 const COLORS = ['#1890ff', '#52c41a', '#faad14', '#ff4d4f', '#722ed1', '#13c2c2'];
 
@@ -65,8 +67,17 @@ const BangCanDoiPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('1');
   const [exporting, setExporting] = useState(false);
 
+  // Một bộ lọc dùng chung cho cả 2 bảng TÀI SẢN / NGUỒN VỐN (cùng bộ cột, cùng một báo cáo).
+  // Lọc trên dữ liệu gốc để dòng nhóm (A/B/C/D) và dòng TỔNG CỘNG được cộng lại theo đúng các
+  // chỉ tiêu còn hiển thị.
+  const { filters, filtering, hasPinned, filterable } = useTableColumnFilters(
+    'bao-cao-bang-can-doi',
+  );
+  const view = useMemo(() => filterBangCanDoi(data, filters), [data, filters]);
+
   const handleExport = async () => {
-    const sheets = buildBangCanDoiSheets(activeTab, data);
+    // Xuất đúng phần đang lọc để file tải về khớp với cái đang xem trên màn hình.
+    const sheets = buildBangCanDoiSheets(activeTab, view);
     if (sheets.length === 0) { message.warning("Tab này không có bảng để xuất"); return; }
     setExporting(true);
     try {
@@ -101,7 +112,7 @@ const BangCanDoiPage: React.FC = () => {
   }, [fetchData]);
 
   const columns: ColumnsType<BalanceSheetItem> = [
-    {
+    filterable<BalanceSheetItem>({
       title: 'Chỉ tiêu',
       dataIndex: 'tenChiTieu',
       key: 'tenChiTieu',
@@ -115,14 +126,14 @@ const BangCanDoiPage: React.FC = () => {
           {text}
         </span>
       ),
-    },
-    {
+    }),
+    filterable<BalanceSheetItem>({
       title: 'Mã số',
       dataIndex: 'ma',
       key: 'ma',
       width: 80,
       align: 'center',
-    },
+    }),
     {
       title: 'Số đầu năm',
       dataIndex: 'dauNam',
@@ -292,7 +303,7 @@ const BangCanDoiPage: React.FC = () => {
             {
               key: '1',
               label: 'Bảng cân đối kế toán',
-              children: data && (
+              children: view && (
                 <>
                   <Card
                     title={<span style={{ color: '#1890ff', fontWeight: 600 }}>TÀI SẢN</span>}
@@ -301,17 +312,22 @@ const BangCanDoiPage: React.FC = () => {
                   >
                     <Table
                       columns={cfgColumns}
-                      dataSource={data.taiSan}
+                      dataSource={view.taiSan}
                       rowKey="ma"
                       loading={loading}
                       pagination={false}
                       size="small"
                       bordered
+                      // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+                      scroll={{ x: hasPinned ? 'max-content' : undefined }}
                     />
-                    <div style={{ padding: '12px 16px', backgroundColor: '#e6f7ff', fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
-                      <span>TỔNG CỘNG TÀI SẢN</span>
-                      <span style={{ color: '#1890ff' }}>{formatCurrency(data.tongTaiSan.cuoiKy)}</span>
-                    </div>
+                    {/* Lọc không còn chỉ tiêu nào → không hiện dòng TỔNG CỘNG toàn số 0. */}
+                    {view.taiSan.length > 0 && (
+                      <div style={{ padding: '12px 16px', backgroundColor: '#e6f7ff', fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
+                        <span>TỔNG CỘNG TÀI SẢN</span>
+                        <span style={{ color: '#1890ff' }}>{formatCurrency(view.tongTaiSan.cuoiKy)}</span>
+                      </div>
+                    )}
                   </Card>
 
                   <Card
@@ -320,30 +336,36 @@ const BangCanDoiPage: React.FC = () => {
                   >
                     <Table
                       columns={cfgColumns}
-                      dataSource={data.nguonVon}
+                      dataSource={view.nguonVon}
                       rowKey="ma"
                       loading={loading}
                       pagination={false}
                       size="small"
                       bordered
+                      scroll={{ x: hasPinned ? 'max-content' : undefined }}
                     />
-                    <div style={{ padding: '12px 16px', backgroundColor: '#f6ffed', fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
-                      <span>TỔNG CỘNG NGUỒN VỐN</span>
-                      <span style={{ color: '#52c41a' }}>{formatCurrency(data.tongNguonVon.cuoiKy)}</span>
-                    </div>
+                    {view.nguonVon.length > 0 && (
+                      <div style={{ padding: '12px 16px', backgroundColor: '#f6ffed', fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
+                        <span>TỔNG CỘNG NGUỒN VỐN</span>
+                        <span style={{ color: '#52c41a' }}>{formatCurrency(view.tongNguonVon.cuoiKy)}</span>
+                      </div>
+                    )}
                   </Card>
 
-                  <div style={{ marginTop: 16, textAlign: 'center' }}>
-                    {data.canDoi ? (
-                      <Tag color="success" icon={<CheckCircleOutlined />} style={{ fontSize: 14, padding: '4px 16px' }}>
-                        Bảng cân đối kế toán CÂN ĐỐI (Tổng tài sản = Tổng nguồn vốn)
-                      </Tag>
-                    ) : (
-                      <Tag color="error" icon={<WarningOutlined />} style={{ fontSize: 14, padding: '4px 16px' }}>
-                        Bảng cân đối kế toán KHÔNG CÂN ĐỐI
-                      </Tag>
-                    )}
-                  </div>
+                  {/* Đang lọc thì 2 tổng chỉ là tổng phần đang xem → kết luận cân đối vô nghĩa. */}
+                  {!filtering && (
+                    <div style={{ marginTop: 16, textAlign: 'center' }}>
+                      {view.canDoi ? (
+                        <Tag color="success" icon={<CheckCircleOutlined />} style={{ fontSize: 14, padding: '4px 16px' }}>
+                          Bảng cân đối kế toán CÂN ĐỐI (Tổng tài sản = Tổng nguồn vốn)
+                        </Tag>
+                      ) : (
+                        <Tag color="error" icon={<WarningOutlined />} style={{ fontSize: 14, padding: '4px 16px' }}>
+                          Bảng cân đối kế toán KHÔNG CÂN ĐỐI
+                        </Tag>
+                      )}
+                    </div>
+                  )}
                 </>
               ),
             },

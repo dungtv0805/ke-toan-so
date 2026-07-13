@@ -1,4 +1,7 @@
 import { Table, Tag, Typography } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import { useMemo } from "react";
+import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
 import { useNhatKyChungState } from "../../NhatKyChungHandlerContext";
 import { NhomKhuyenMaiSummary } from "../../handler/sub-handler/summary/summary.state";
 
@@ -11,18 +14,33 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+/** Lấy ô theo key cột cho bộ lọc header (chỉ cột chữ mới lọc được). */
+const getCell = (row: NhomKhuyenMaiSummary, key: string): string | undefined =>
+  key === "nhomKhuyenMai" ? row.nhomKhuyenMai : undefined;
+
 export function NhomKhuyenMaiTab() {
   const [summaryByNhomKhuyenMai] = useNhatKyChungState("summaryByNhomKhuyenMai", []);
   const [summaryLoading] = useNhatKyChungState("summaryLoading", {});
   const loading = summaryLoading?.["promotion-group"] || false;
 
-  const columns = [
-    {
+  const { filterable, matches, hasPinned } = useTableColumnFilters(
+    "nkc-nhom-khuyen-mai",
+  );
+
+  // Lọc trên dữ liệu gốc; dòng "Tổng cộng" dùng `pageData` nên tự cộng lại theo dòng còn hiện.
+  const rows = useMemo(
+    () => (summaryByNhomKhuyenMai || []).filter((r) => matches(r, getCell)),
+    [summaryByNhomKhuyenMai, matches],
+  );
+
+  const columns: ColumnsType<NhomKhuyenMaiSummary> = [
+    filterable({
       title: "Nhóm khuyến mại",
       dataIndex: "nhomKhuyenMai",
       key: "nhomKhuyenMai",
+      width: 220,
       render: (t: string) => <Tag color="magenta">{t}</Tag>,
-    },
+    }),
     {
       title: "Số bút toán",
       dataIndex: "soButToan",
@@ -78,11 +96,13 @@ export function NhomKhuyenMaiTab() {
       <Table<NhomKhuyenMaiSummary>
         className="excel-table"
         columns={columns}
-        dataSource={summaryByNhomKhuyenMai || []}
+        dataSource={rows}
         rowKey="nhomKhuyenMai"
         loading={loading}
         pagination={false}
         size="small"
+        // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+        scroll={{ x: hasPinned ? "max-content" : undefined }}
         summary={(pageData) => {
           const totalThu = pageData.reduce((sum, r) => sum + r.tongThu, 0);
           const totalChi = pageData.reduce((sum, r) => sum + r.tongChi, 0);

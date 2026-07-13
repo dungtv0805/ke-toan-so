@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Card,
   Table,
@@ -14,12 +14,14 @@ import {
   Popconfirm,
   Breadcrumb,
 } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { HomeOutlined, SearchOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import type { Dayjs } from "dayjs";
 import { KiemSoatChiPhi, TieuHaoDong } from "@/types";
 import { kiemSoatService } from "@/services/kiemSoatService";
 import { formatCurrency } from "@/pages/chung-tu/phieu/lib/format";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
 
 const { RangePicker } = DatePicker;
 
@@ -73,10 +75,21 @@ const KiemSoatChiPhiPage: React.FC = () => {
     }
   };
 
-  const columns = [
-    { title: "Mã hàng", dataIndex: "hangHoaMa", key: "hangHoaMa", width: 140 },
-    { title: "Tên hàng", dataIndex: "hangHoaTen", key: "hangHoaTen", ellipsis: true },
-    { title: "ĐVT", dataIndex: "donViTinh", key: "donViTinh", width: 100 },
+  // Lọc theo cột ở header + cố định cột. Bảng phẳng, không có dòng tổng → lọc thẳng trên dòng.
+  // Các thẻ Ngân sách / Chi phí thực / Hao phí % là số của cả kỳ nên KHÔNG đổi theo bộ lọc bảng.
+  const { filterable, matches, hasPinned } = useTableColumnFilters(
+    "bep-an-kiem-soat-chi-phi",
+  );
+
+  const columns: ColumnsType<TieuHaoDong> = [
+    filterable({ title: "Mã hàng", dataIndex: "hangHoaMa", key: "hangHoaMa", width: 140 }),
+    filterable({
+      title: "Tên hàng",
+      dataIndex: "hangHoaTen",
+      key: "hangHoaTen",
+      ellipsis: true,
+    }),
+    filterable({ title: "ĐVT", dataIndex: "donViTinh", key: "donViTinh", width: 100 }),
     {
       title: "Số lượng tiêu hao",
       dataIndex: "soLuong",
@@ -86,6 +99,19 @@ const KiemSoatChiPhiPage: React.FC = () => {
       render: (value: number) => (value ?? 0).toLocaleString("vi-VN"),
     },
   ];
+
+  const tieuHao = useMemo(
+    () =>
+      (data?.tieuHao ?? []).filter((r) =>
+        matches(r, (row, key) => {
+          if (key === "hangHoaMa") return row.hangHoaMa;
+          if (key === "hangHoaTen") return row.hangHoaTen;
+          if (key === "donViTinh") return row.donViTinh;
+          return undefined;
+        }),
+      ),
+    [data, matches],
+  );
 
   return (
     <div className="space-y-3">
@@ -201,9 +227,11 @@ const KiemSoatChiPhiPage: React.FC = () => {
           >
             <Table
               columns={columns}
-              dataSource={data.tieuHao}
+              dataSource={tieuHao}
               rowKey={(record: TieuHaoDong) => record.hangHoaMa}
               pagination={false}
+              // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+              scroll={{ x: hasPinned ? "max-content" : undefined }}
             />
           </Card>
         </>

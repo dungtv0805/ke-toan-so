@@ -1,5 +1,8 @@
 import { Table, Tag, Space, Typography } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { TeamOutlined, UserOutlined } from "@ant-design/icons";
+import { useMemo } from "react";
+import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
 import { useNhatKyChungState } from "../../NhatKyChungHandlerContext";
 import { TeamSummary } from "../../handler/sub-handler/init/init.state";
 
@@ -12,14 +15,27 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+/** Lấy ô theo key cột cho bộ lọc header (chỉ cột chữ mới lọc được). */
+const getCell = (row: TeamSummary, key: string): string | undefined =>
+  key === "doi" ? row.doi : undefined;
+
 export function TeamTab() {
   const [summaryByTeam] = useNhatKyChungState("summaryByTeam", []);
   const [loading] = useNhatKyChungState("loading", false);
 
-  const totalChi = summaryByTeam?.reduce((sum, t) => sum + t.tongChi, 0) || 0;
+  const { filterable, matches, hasPinned } = useTableColumnFilters("nkc-doi");
 
-  const columns = [
-    {
+  // Lọc trên dữ liệu gốc; tổng chi (mẫu số của cột Tỷ lệ) và dòng "Tổng cộng"
+  // được cộng lại theo đúng những đội còn hiển thị → tỷ lệ vẫn cộng đủ 100%.
+  const rows = useMemo(
+    () => (summaryByTeam || []).filter((r) => matches(r, getCell)),
+    [summaryByTeam, matches],
+  );
+
+  const totalChi = rows.reduce((sum, t) => sum + t.tongChi, 0);
+
+  const columns: ColumnsType<TeamSummary> = [
+    filterable({
       title: "Đội",
       dataIndex: "doi",
       key: "doi",
@@ -30,7 +46,7 @@ export function TeamTab() {
           <Text strong>{text}</Text>
         </Space>
       ),
-    },
+    }),
     {
       title: "Số bút toán",
       dataIndex: "soButToan",
@@ -55,7 +71,7 @@ export function TeamTab() {
       key: "tyLe",
       width: 120,
       align: "right" as const,
-      render: (_: any, record: { tongChi: number }) => {
+      render: (_: unknown, record: { tongChi: number }) => {
         const percent = totalChi > 0 ? ((record.tongChi / totalChi) * 100).toFixed(1) : "0";
         return <Tag color="orange">{percent}%</Tag>;
       },
@@ -72,11 +88,13 @@ export function TeamTab() {
       <Table<TeamSummary>
         className="excel-table"
         columns={columns}
-        dataSource={summaryByTeam || []}
+        dataSource={rows}
         rowKey="doi"
         loading={loading}
         pagination={false}
         size="small"
+        // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+        scroll={{ x: hasPinned ? "max-content" : undefined }}
         expandable={{
           expandedRowRender: (record) => (
             <Table
@@ -112,7 +130,7 @@ export function TeamTab() {
                   title: "Tỷ lệ trong đội",
                   key: "tyLeNV",
                   align: "right" as const,
-                  render: (_: any, r: { soTien: number }) => {
+                  render: (_: unknown, r: { soTien: number }) => {
                     const percent =
                       record.tongChi > 0
                         ? ((r.soTien / record.tongChi) * 100).toFixed(1)

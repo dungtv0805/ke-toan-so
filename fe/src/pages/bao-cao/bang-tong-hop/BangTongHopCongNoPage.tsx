@@ -1,8 +1,10 @@
+import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
 import {
   BangTongHopCongNo,
   CongNoRowVal,
   congNoTongHopService,
 } from "@/services/congNoTongHopService";
+import { filterCongNo } from "./congNoFilter";
 import { doiTuongService } from "@/services/doiTuongService";
 import { taiKhoanService } from "@/services/taiKhoanService";
 import { TaiKhoan } from "@/types";
@@ -101,9 +103,19 @@ const BangTongHopCongNoPage: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
+  // Lọc theo cột (Mã ĐT / Tên đối tượng): chạy trên dữ liệu gốc để dòng TK và dòng
+  // TỔNG CỘNG được cộng lại theo đúng những đối tượng còn hiển thị.
+  const { filters, filtering, hasPinned, filterable } = useTableColumnFilters(
+    "bao-cao-bang-tong-hop-cong-no",
+  );
+  const view = useMemo(() => filterCongNo(data, filters), [data, filters]);
+
   // Flatten: [Tổng cộng] + mỗi TK: dòng TK + các dòng đối tượng
   const rows: FlatRow[] = useMemo(() => {
-    if (!data) return [];
+    if (!view) return [];
+    // Lọc không còn dòng nào → bảng rỗng, không hiện dòng TỔNG CỘNG toàn số 0.
+    if (filtering && view.accounts.length === 0) return [];
+
     const out: FlatRow[] = [
       {
         key: "__totals__",
@@ -112,10 +124,10 @@ const BangTongHopCongNoPage: React.FC = () => {
         drillable: false,
         ma: "",
         ten: "TỔNG CỘNG",
-        val: data.totals,
+        val: view.totals,
       },
     ];
-    for (const acc of data.accounts) {
+    for (const acc of view.accounts) {
       out.push({
         key: `acc-${acc.ma}`,
         isAccount: true,
@@ -139,7 +151,7 @@ const BangTongHopCongNoPage: React.FC = () => {
       }
     }
     return out;
-  }, [data]);
+  }, [view, filtering]);
 
   const numCol = (
     key: string,
@@ -158,7 +170,7 @@ const BangTongHopCongNoPage: React.FC = () => {
   });
 
   const columns: ColumnsType<FlatRow> = [
-    {
+    filterable({
       title: "Mã ĐT",
       dataIndex: "ma",
       key: "ma",
@@ -168,8 +180,8 @@ const BangTongHopCongNoPage: React.FC = () => {
           {text}
         </span>
       ),
-    },
-    {
+    }),
+    filterable({
       title: "Tên đối tượng",
       dataIndex: "ten",
       key: "ten",
@@ -185,7 +197,7 @@ const BangTongHopCongNoPage: React.FC = () => {
           {text}
         </span>
       ),
-    },
+    }),
     {
       title: "Số dư đầu kỳ",
       children: [
@@ -213,7 +225,8 @@ const BangTongHopCongNoPage: React.FC = () => {
   const handleExport = async () => {
     const from = range[0].format("DD/MM/YYYY");
     const to = range[1].format("DD/MM/YYYY");
-    const sheets = buildCongNoSheets(data, from, to);
+    // Xuất đúng phần đang lọc để file tải về khớp với cái đang xem trên màn hình.
+    const sheets = buildCongNoSheets(view, from, to);
     if (sheets.length === 0) {
       message.warning("Không có dữ liệu để xuất");
       return;
@@ -325,7 +338,11 @@ const BangTongHopCongNoPage: React.FC = () => {
           pagination={false}
           size="small"
           bordered
-          scroll={{ y: "calc(100vh - 320px)" }}
+          // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+          scroll={{
+            x: hasPinned ? "max-content" : undefined,
+            y: "calc(100vh - 320px)",
+          }}
           rowClassName={(r) =>
             r.isTotal
               ? "cong-no-total-row"

@@ -1,4 +1,7 @@
 import { Table, Tag, Typography } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import { useMemo } from "react";
+import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
 import { useNhatKyChungState } from "../../NhatKyChungHandlerContext";
 import { NhomQuanLySummary } from "../../handler/sub-handler/summary/summary.state";
 
@@ -11,18 +14,33 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+/** Lấy ô theo key cột cho bộ lọc header (chỉ cột chữ mới lọc được). */
+const getCell = (row: NhomQuanLySummary, key: string): string | undefined =>
+  key === "nhomQuanLy" ? row.nhomQuanLy : undefined;
+
 export function NhomQuanLyTab() {
   const [summaryByNhomQuanLy] = useNhatKyChungState("summaryByNhomQuanLy", []);
   const [summaryLoading] = useNhatKyChungState("summaryLoading", {});
   const loading = summaryLoading?.["management-group"] || false;
 
-  const columns = [
-    {
+  const { filterable, matches, hasPinned } = useTableColumnFilters(
+    "nkc-nhom-quan-ly",
+  );
+
+  // Lọc trên dữ liệu gốc; dòng "Tổng cộng" dùng `pageData` nên tự cộng lại theo dòng còn hiện.
+  const rows = useMemo(
+    () => (summaryByNhomQuanLy || []).filter((r) => matches(r, getCell)),
+    [summaryByNhomQuanLy, matches],
+  );
+
+  const columns: ColumnsType<NhomQuanLySummary> = [
+    filterable({
       title: "Nhóm quản lý",
       dataIndex: "nhomQuanLy",
       key: "nhomQuanLy",
+      width: 220,
       render: (t: string) => <Tag color="orange">{t}</Tag>,
-    },
+    }),
     {
       title: "Số bút toán",
       dataIndex: "soButToan",
@@ -78,11 +96,13 @@ export function NhomQuanLyTab() {
       <Table<NhomQuanLySummary>
         className="excel-table"
         columns={columns}
-        dataSource={summaryByNhomQuanLy || []}
+        dataSource={rows}
         rowKey="nhomQuanLy"
         loading={loading}
         pagination={false}
         size="small"
+        // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+        scroll={{ x: hasPinned ? "max-content" : undefined }}
         summary={(pageData) => {
           const totalThu = pageData.reduce((sum, r) => sum + r.tongThu, 0);
           const totalChi = pageData.reduce((sum, r) => sum + r.tongChi, 0);

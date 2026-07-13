@@ -13,6 +13,8 @@ import { MENU_CATALOG } from '@/config/menuCatalog';
 import { ICON_WHITELIST, iconByName, isCommonKey } from '@/config/modules';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
+import type { ColumnsType } from 'antd/es/table';
 
 const DEFAULT_LINH_VUC_CODE = 'KE_TOAN';
 
@@ -41,6 +43,7 @@ const LinhVucPage = () => {
   const [form] = Form.useForm();
 
   const isAssigned = useMemo(() => buildAssignedMatcher(allModules), [allModules]);
+  const { filterable, matches, hasPinned } = useTableColumnFilters('cau-hinh-linh-vuc');
 
   const iconOptions = useMemo(
     () =>
@@ -184,8 +187,8 @@ const LinhVucPage = () => {
     }
   };
 
-  const columns = [
-    {
+  const columns: ColumnsType<LinhVuc> = [
+    filterable<LinhVuc>({
       title: 'Lĩnh vực',
       key: 'name',
       render: (_: unknown, record: LinhVuc) => (
@@ -194,15 +197,15 @@ const LinhVucPage = () => {
           <span style={{ fontWeight: 500 }}>{record.name}</span>
         </span>
       ),
-    },
-    {
+    }),
+    filterable<LinhVuc>({
       title: 'Code',
       dataIndex: 'code',
       key: 'code',
       render: (code: string) => (
         <code className="bg-gray-100 px-2 py-1 rounded">{code}</code>
       ),
-    },
+    }),
     {
       title: 'Số menu',
       key: 'menuCount',
@@ -241,7 +244,20 @@ const LinhVucPage = () => {
   ];
 
   const fl = useFieldLabels('cauHinh.linhVuc');
-  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('cauHinh.linhVuc', columns);
+  // Bọc filterable TRƯỚC rồi mới đưa vào useTableTitleConfig (hook ẩn/hiện + đổi tiêu đề chỉ
+  // spread lại cột nên giữ nguyên filterDropdown + fixed).
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig<LinhVuc>(
+    'cauHinh.linhVuc',
+    columns,
+  );
+
+  const rows = useMemo(
+    () =>
+      list.filter((r) =>
+        matches(r, (row, key) => (key === 'name' ? row.name : row.code)),
+      ),
+    [list, matches],
+  );
 
   if (!user?.isSuperAdmin) {
     return (
@@ -272,10 +288,12 @@ const LinhVucPage = () => {
 
       <Table
         columns={cfgColumns}
-        dataSource={list}
+        dataSource={rows}
         rowKey="id"
         loading={loading}
         pagination={{ pageSize: 10 }}
+        // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+        scroll={{ x: hasPinned ? 'max-content' : undefined }}
       />
 
       <Modal

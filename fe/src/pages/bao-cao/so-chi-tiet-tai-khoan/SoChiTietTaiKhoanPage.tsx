@@ -26,6 +26,8 @@ import { parseReportParams } from './reportParams';
 import { FilterBar } from '@/components/common/FilterBar';
 import { exportReportExcel } from '@/utils/exportReportExcel';
 import { buildSoChiTietSheets } from './soChiTietExport';
+import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
+import { filterSoChiTietReports, withColumnFilters } from './soChiTietFilter';
 
 const { RangePicker } = DatePicker;
 
@@ -44,6 +46,17 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
   const [visibleKeys, setVisibleKeys] = useState<string[]>(() => loadVisibleKeys());
   const contentRef = useRef<HTMLDivElement>(null);
   const [tableY, setTableY] = useState<number>(400);
+
+  // Lọc theo cột ở header — giữ ở trang (không ở từng AccountReportBlock) để nhiều tài khoản
+  // dùng chung một bộ lọc / một bộ cột ghim, và nút Xuất Excel bám theo đúng phần đang lọc.
+  const { filters, filtering, filterable } = useTableColumnFilters(
+    'bao-cao-so-chi-tiet-tai-khoan',
+  );
+  // Lọc trên report gốc rồi cộng lại "Cộng số phát sinh" / "Số dư cuối kỳ" theo dòng còn hiện.
+  const viewReports = useMemo(
+    () => filterSoChiTietReports(reports, filters),
+    [reports, filters],
+  );
 
   useEffect(() => {
     (async () => {
@@ -104,7 +117,7 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
   const handleExport = async () => {
     const from = range[0].format('DD/MM/YYYY');
     const to = range[1].format('DD/MM/YYYY');
-    const sheets = buildSoChiTietSheets(reports ?? [], visibleKeys, from, to);
+    const sheets = buildSoChiTietSheets(viewReports ?? [], visibleKeys, from, to);
     if (sheets.length === 0) { message.warning('Không có dữ liệu để xuất'); return; }
     setExporting(true);
     try {
@@ -126,7 +139,10 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
     saveVisibleKeys(keys);
   };
 
-  const columns = useMemo(() => buildAntdColumns(visibleKeys), [visibleKeys]);
+  const columns = useMemo(
+    () => withColumnFilters(buildAntdColumns(visibleKeys), filterable),
+    [visibleKeys, filterable],
+  );
   const scrollX = useMemo(
     () => Math.max(1100, visibleKeys.length * 130),
     [visibleKeys],
@@ -140,7 +156,7 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
       if (!el) return;
       const top = el.getBoundingClientRect().top;
       const avail = Math.max(window.innerHeight - top - 12, 200);
-      const single = (reports?.length ?? 0) === 1;
+      const single = (viewReports?.length ?? 0) === 1;
       const CHROME = 40 /* dòng "Tài khoản:" */ + 64 /* 2 dòng footer */ + 20;
       setTableY(single ? Math.max(avail - CHROME, 160) : 340);
     };
@@ -150,7 +166,7 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', update);
     };
-  }, [reports, loading, visibleKeys]);
+  }, [viewReports, loading, visibleKeys]);
 
   const allSelected =
     accountOptions.length > 0 && maTaiKhoans.length === accountOptions.length;
@@ -239,11 +255,17 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
         bodyStyle={{ flex: 1, minHeight: 0, overflow: 'auto', padding: 8 }}
       >
         <div ref={contentRef}>
-          {reports ? (
-            reports.length === 0 ? (
-              <Empty description="Không có dữ liệu cho tài khoản và kỳ đã chọn" />
+          {viewReports ? (
+            viewReports.length === 0 ? (
+              <Empty
+                description={
+                  filtering
+                    ? 'Không có dòng nào khớp bộ lọc cột'
+                    : 'Không có dữ liệu cho tài khoản và kỳ đã chọn'
+                }
+              />
             ) : (
-              reports.map((rep) => (
+              viewReports.map((rep) => (
                 <AccountReportBlock
                   key={rep.taiKhoan.ma}
                   report={rep}

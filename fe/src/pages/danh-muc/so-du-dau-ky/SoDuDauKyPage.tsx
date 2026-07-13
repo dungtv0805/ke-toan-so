@@ -22,7 +22,10 @@ import {
 } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
+import type { ColumnsType } from 'antd/es/table';
 import { buildSoDuTree, collectExpandKeys, type SoDuTreeNode } from './buildSoDuTree';
+import { collectVisibleRows, filterSoDuTree } from './soDuFilter';
 import {
   CHI_TIET_LABEL, DOI_TUONG_LOAI, validateRows,
   type ChiTietLoai, type SoDuRow,
@@ -141,6 +144,18 @@ const SoDuDauKyPage: React.FC = () => {
 
   const tree = useMemo(() => buildSoDuTree(rows, chart), [rows, chart]);
 
+  // Lọc theo cột ở header + cố định cột. Lọc trên CÂY (không lọc phẳng) để giữ dòng TK cha và
+  // cộng lại số tổng của cha theo đúng những dòng còn hiển thị.
+  const { filters, filtering, hasPinned, filterable } =
+    useTableColumnFilters('danh-muc-so-du-dau-ky');
+  const viewTree = useMemo(() => filterSoDuTree(tree, filters), [tree, filters]);
+
+  // Đang lọc thì mở hết nhánh còn lại, nếu không dòng khớp có thể nằm trong nhánh đang thu gọn.
+  const viewExpandedKeys = useMemo(
+    () => (filtering ? collectExpandKeys(viewTree) : expandedKeys),
+    [filtering, viewTree, expandedKeys],
+  );
+
   const patchRow = (key: string, patch: Partial<SoDuRow>) =>
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
 
@@ -204,6 +219,19 @@ const SoDuDauKyPage: React.FC = () => {
     [rows],
   );
   const canDoi = Math.round(tongNo * 100) === Math.round(tongCo * 100);
+
+  // Dòng TỔNG CỘNG cộng theo các dòng ĐANG HIỂN THỊ (khớp với cái user nhìn thấy). Cảnh báo
+  // cân đối thì vẫn xét trên TOÀN BỘ số dư — đó là tính đúng đắn của dữ liệu, không phụ thuộc bộ lọc.
+  const { tongNoView, tongCoView } = useMemo(() => {
+    if (!filtering) return { tongNoView: tongNo, tongCoView: tongCo };
+    return collectVisibleRows(viewTree).reduce(
+      (a, r) => ({
+        tongNoView: a.tongNoView + (r.duNo || 0),
+        tongCoView: a.tongCoView + (r.duCo || 0),
+      }),
+      { tongNoView: 0, tongCoView: 0 },
+    );
+  }, [filtering, viewTree, tongNo, tongCo]);
 
   const accountOptions = useMemo(
     () => leafAccounts.map((a) => ({ value: a.ma, label: `${a.ma} - ${a.ten}` })),
@@ -311,9 +339,9 @@ const SoDuDauKyPage: React.FC = () => {
     return null;
   };
 
-  const columns = [
-    { title: 'Tài khoản / Đối tượng', key: 'tk', width: 360,
-      render: (_: unknown, node: SoDuTreeNode) => doiTuongCell(node) },
+  const columns: ColumnsType<SoDuTreeNode> = [
+    filterable<SoDuTreeNode>({ title: 'Tài khoản / Đối tượng', key: 'tk', width: 360,
+      render: (_: unknown, node: SoDuTreeNode) => doiTuongCell(node) }),
     { title: 'Ngân hàng', key: 'nh', width: 260,
       render: (_: unknown, node: SoDuTreeNode) => nganHangCell(node) },
     { title: 'Dư Nợ đầu kỳ', key: 'duNo', width: 160, align: 'right' as const,
@@ -360,24 +388,26 @@ const SoDuDauKyPage: React.FC = () => {
           />
         </Space>
         <Table<SoDuTreeNode>
-          rowKey="__key" loading={loading} dataSource={tree} columns={columns}
-          pagination={false} size="small" scroll={{ y: 'calc(100vh - 400px)' }}
+          rowKey="__key" loading={loading} dataSource={viewTree} columns={columns}
+          pagination={false} size="small"
+          // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+          scroll={{ x: hasPinned ? 'max-content' : undefined, y: 'calc(100vh - 400px)' }}
           expandable={{
-            expandedRowKeys: expandedKeys,
+            expandedRowKeys: viewExpandedKeys,
             onExpandedRowsChange: (keys) => setExpandedKeys([...keys]),
           }}
           summary={() => (
             <Table.Summary fixed>
               <Table.Summary.Row>
                 <Table.Summary.Cell index={0} colSpan={2}>
-                  <Text strong>Tổng cộng</Text>
+                  <Text strong>{filtering ? 'Tổng cộng (đang lọc)' : 'Tổng cộng'}</Text>
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={2} align="right">
-                  <Text strong>{formatCurrency(tongNo)}</Text>
+                  <Text strong>{formatCurrency(tongNoView)}</Text>
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={3} align="right">
                   <Text strong type={canDoi ? undefined : 'danger'}>
-                    {formatCurrency(tongCo)}
+                    {formatCurrency(tongCoView)}
                   </Text>
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={4} />

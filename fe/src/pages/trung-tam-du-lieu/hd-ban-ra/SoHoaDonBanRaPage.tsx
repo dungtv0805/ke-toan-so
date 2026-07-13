@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Breadcrumb,
   Card,
@@ -25,8 +25,25 @@ import { theoDoiHopDongService } from '@/services/theoDoiHopDongService';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
 
 const { Text } = Typography;
+
+/** Ô dùng để so khớp bộ lọc cột — key trùng `key` của cột antd. */
+const cellValue = (r: HoaDonBanRa, key: string): string | undefined => {
+  switch (key) {
+    case 'soHoaDon':
+      return r.soHoaDon;
+    case 'soHopDong':
+      return r.soHopDong;
+    case 'tenCongTrinh':
+      return r.tenCongTrinh;
+    case 'donViMua':
+      return r.donViMua;
+    default:
+      return undefined;
+  }
+};
 const fmtCur = (v?: number) => (!v ? '-' : new Intl.NumberFormat('vi-VN').format(v));
 const moneyProps = {
   className: 'w-full',
@@ -145,12 +162,44 @@ export default function SoHoaDonBanRaPage() {
     }
   };
 
+  // Lọc theo cột ở header + cố định cột. Dữ liệu load hết về client nên lọc client-side;
+  // bảng phẳng, không có dòng tổng → lọc thẳng trên mảng.
+  const { filterable, matches, hasPinned } = useTableColumnFilters('trung-tam-du-lieu-hd-ban-ra');
+  const viewRows = useMemo(() => rows.filter((r) => matches(r, cellValue)), [rows, matches]);
+
   const columns: ColumnsType<HoaDonBanRa> = [
-    { title: 'Số HĐ', dataIndex: 'soHoaDon', width: 90, align: 'center', render: (v) => v || '-' },
+    filterable<HoaDonBanRa>({
+      title: 'Số HĐ',
+      dataIndex: 'soHoaDon',
+      key: 'soHoaDon',
+      width: 90,
+      align: 'center',
+      render: (v) => v || '-',
+    }),
     { title: 'Ngày', dataIndex: 'ngay', width: 110, render: (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '-') },
-    { title: 'Hợp đồng', dataIndex: 'soHopDong', width: 150, render: (v) => <Text strong>{v || '-'}</Text> },
-    { title: 'Tên công trình', dataIndex: 'tenCongTrinh', width: 200, ellipsis: true, render: (v) => v || '-' },
-    { title: 'Đơn vị mua', dataIndex: 'donViMua', width: 180, ellipsis: true, render: (v) => v || '-' },
+    filterable<HoaDonBanRa>({
+      title: 'Hợp đồng',
+      dataIndex: 'soHopDong',
+      key: 'soHopDong',
+      width: 150,
+      render: (v) => <Text strong>{v || '-'}</Text>,
+    }),
+    filterable<HoaDonBanRa>({
+      title: 'Tên công trình',
+      dataIndex: 'tenCongTrinh',
+      key: 'tenCongTrinh',
+      width: 200,
+      ellipsis: true,
+      render: (v) => v || '-',
+    }),
+    filterable<HoaDonBanRa>({
+      title: 'Đơn vị mua',
+      dataIndex: 'donViMua',
+      key: 'donViMua',
+      width: 180,
+      ellipsis: true,
+      render: (v) => v || '-',
+    }),
     { title: 'Tiền hàng', dataIndex: 'tienHang', width: 130, align: 'right', render: (v) => fmtCur(v) },
     { title: 'Tiền thuế', dataIndex: 'tienThue', width: 120, align: 'right', render: (v) => fmtCur(v) },
     { title: 'Tổng', dataIndex: 'tong', width: 140, align: 'right', render: (v) => <Text type="success">{fmtCur(v)}</Text> },
@@ -197,11 +246,12 @@ export default function SoHoaDonBanRaPage() {
         />
         <Table<HoaDonBanRa>
           columns={cfgColumns}
-          dataSource={rows}
+          dataSource={viewRows}
           rowKey="id"
           loading={loading}
           size="small"
-          scroll={{ x: 1200 }}
+          // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được.
+          scroll={{ x: hasPinned ? 'max-content' : 1200 }}
           pagination={{ pageSize: 20, showTotal: (t) => `Tổng ${t} hóa đơn` }}
         />
       </Card>

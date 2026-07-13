@@ -26,9 +26,12 @@ import {
   BankOutlined,
   HomeOutlined,
 } from "@ant-design/icons";
+import type { ColumnsType } from "antd/es/table";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
+import { getTaiKhoanValue, keepWithAncestors } from './taiKhoanTreeFilter';
 import { TaiKhoan } from "@/types";
 import { taiKhoanService } from "@/services/taiKhoanService";
 import { loaiTaiKhoan, nhomTaiKhoan } from "@/mock-data/tai-khoan";
@@ -129,20 +132,27 @@ const TaiKhoanPage: React.FC = () => {
   const [form] = Form.useForm();
   const [pageSize, setPageSize] = useState(100);
 
-  // Filter + sort hierarchy từ toàn bộ data
+  // Lọc theo cột ở header + cố định cột
+  const { filterable, matches, hasPinned } = useTableColumnFilters("danh-muc-tai-khoan");
+
+  // Filter + sort hierarchy từ toàn bộ data.
+  // `keepWithAncestors`: dòng nào khớp thì kéo theo cả TK cha — nếu không, `sortHierarchy` mất
+  // gốc để duyệt và các TK con sẽ biến mất khỏi bảng dù chính nó khớp.
   const filteredData = React.useMemo(() => {
-    let result = allData;
-    if (filterNhom) {
-      result = result.filter(acc => acc.nhom === filterNhom);
-    }
-    if (searchText) {
-      const keyword = searchText.toLowerCase();
-      result = result.filter(
-        acc => acc.ma.toLowerCase().includes(keyword) || acc.ten.toLowerCase().includes(keyword)
-      );
-    }
+    const keyword = searchText.trim().toLowerCase();
+    const result = keepWithAncestors(allData, (acc) => {
+      if (filterNhom && acc.nhom !== filterNhom) return false;
+      if (
+        keyword &&
+        !acc.ma.toLowerCase().includes(keyword) &&
+        !acc.ten.toLowerCase().includes(keyword)
+      ) {
+        return false;
+      }
+      return matches(acc, getTaiKhoanValue);
+    });
     return sortHierarchy(result);
-  }, [allData, filterNhom, searchText]);
+  }, [allData, filterNhom, searchText, matches]);
 
   // Tính cấp độ dựa trên tài khoản cha
   const calculateCapDo = (parentId: string | null | undefined): number => {
@@ -248,8 +258,8 @@ const TaiKhoanPage: React.FC = () => {
     }
   };
 
-  const columns = [
-    {
+  const columns: ColumnsType<TaiKhoan> = [
+    filterable<TaiKhoan>({
       title: "Mã TK",
       dataIndex: "ma",
       key: "ma",
@@ -259,11 +269,13 @@ const TaiKhoanPage: React.FC = () => {
           {text}
         </Text>
       ),
-    },
-    {
+    }),
+    filterable<TaiKhoan>({
       title: "Tên tài khoản",
       dataIndex: "ten",
       key: "ten",
+      // Cần width cố định: cột ghim (fixed) mà không có width sẽ vỡ layout của antd.
+      width: 320,
       ellipsis: true,
       render: (text: string, record: TaiKhoan) => (
         <span style={{ paddingLeft: (record.capDo - 1) * 16 }}>
@@ -273,7 +285,7 @@ const TaiKhoanPage: React.FC = () => {
           {text}
         </span>
       ),
-    },
+    }),
     {
       title: "Cấp độ",
       dataIndex: "capDo",
@@ -448,7 +460,8 @@ const TaiKhoanPage: React.FC = () => {
             onChange: (_page, newPageSize) => setPageSize(newPageSize),
           }}
           size="middle"
-          scroll={{ x: 900, y: "calc(100vh - 285px)" }}
+          // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+          scroll={{ x: hasPinned ? "max-content" : 900, y: "calc(100vh - 285px)" }}
         />
       </Card>
 
