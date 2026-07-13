@@ -82,7 +82,7 @@ const doiTuongLabel = (dt: {
   soTaiKhoan?: string;
   tenNganHang?: string;
 }): string => {
-  if (dt.soTaiKhoan) return `${dt.tenNganHang || dt.ten} – Số TK: ${dt.soTaiKhoan}`;
+  if (dt.soTaiKhoan) return `${dt.ten || dt.tenNganHang} – ${dt.soTaiKhoan}`;
   return dt.ma ? `${dt.ma} - ${dt.ten}` : dt.ten;
 };
 
