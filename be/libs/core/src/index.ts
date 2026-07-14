@@ -7,3 +7,4 @@ export * from './middlewares/request-context.middleware';
 export * from './services/request-context';
 export * from './utils/dto.utils';
 export * from './permissions/all-permissions';
+export * from './utils/soft-delete-batch';
