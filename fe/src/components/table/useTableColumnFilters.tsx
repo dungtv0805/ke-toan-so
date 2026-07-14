@@ -6,8 +6,10 @@ import {
   hasActiveFilters,
   isActiveFilter,
   matchAllFilters,
+  type CellValue,
   type ColumnFilter,
   type ColumnFilters,
+  type FilterKind,
 } from './columnFilter';
 import { readPinnedKeys, savePinnedKeys, togglePinned } from './columnPin';
 
@@ -21,6 +23,13 @@ import { readPinnedKeys, savePinnedKeys, togglePinned } from './columnPin';
  * Bộ lọc sống theo vòng đời trang (rời trang là mất). Cột ghim lưu localStorage theo
  * `pageKey` + công ty đang chọn.
  */
+export interface FilterableOptions {
+  /** 'number' → popover dùng toán tử số. Mặc định 'text'. */
+  type?: FilterKind;
+  /** Nhãn "Lọc …" khi tiêu đề cột trùng nhau (vd 4 cột "Nợ"/"Có"). Mặc định lấy `col.title`. */
+  filterTitle?: string;
+}
+
 export function useTableColumnFilters(pageKey: string) {
   const [filters, setFilters] = useState<ColumnFilters>({});
   const [pinned, setPinned] = useState<string[]>(() => readPinnedKeys(pageKey));
@@ -49,9 +58,14 @@ export function useTableColumnFilters(pageKey: string) {
 
   /**
    * Gắn popover lọc + cố định vào một cột. `title` phải là chuỗi (dùng làm nhãn "Lọc ...").
+   * Cột số truyền `{ type: 'number' }`; cột trùng tiêu đề truyền thêm `filterTitle`.
    */
   const filterable = useCallback(
-    <T,>(col: ColumnType<T> & { key: string; title: string }): ColumnType<T> => {
+    <T,>(
+      col: ColumnType<T> & { key: string; title: string },
+      opts?: FilterableOptions,
+    ): ColumnType<T> => {
+      const kind: FilterKind = opts?.type ?? 'text';
       const active = isActiveFilter(filters[col.key]);
       return {
         ...col,
@@ -62,7 +76,8 @@ export function useTableColumnFilters(pageKey: string) {
         filtered: active,
         filterDropdown: ({ close }: { close: () => void }) => (
           <ColumnFilterDropdown
-            title={col.title}
+            title={opts?.filterTitle ?? col.title}
+            kind={kind}
             filter={filters[col.key]}
             pinned={pinnedSet.has(col.key)}
             onApply={(f) => setFilter(col.key, f)}
@@ -80,7 +95,7 @@ export function useTableColumnFilters(pageKey: string) {
 
   /** Dòng có khớp toàn bộ bộ lọc đang bật không. `getValue(row, key)` lấy ô theo key cột. */
   const matches = useCallback(
-    <T,>(row: T, getValue: (row: T, key: string) => string | undefined) =>
+    <T,>(row: T, getValue: (row: T, key: string) => CellValue) =>
       matchAllFilters(row, filters, getValue),
     [filters],
   );

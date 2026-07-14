@@ -61,6 +61,30 @@ const Demo: React.FC = () => {
   );
 };
 
+interface NumRow {
+  key: string;
+  ten: string;
+  no: number;
+}
+
+const NUM_DATA: NumRow[] = [
+  { key: '1', ten: 'Tiền mặt', no: 1230000 },
+  { key: '2', ten: 'Tiền gửi', no: 0 },
+];
+
+const NumDemo: React.FC = () => {
+  const { filterable, matches } = useTableColumnFilters('demo-num');
+  const columns: ColumnsType<NumRow> = [
+    { title: 'Tên', dataIndex: 'ten', key: 'ten', width: 160 },
+    filterable(
+      { title: 'Nợ', dataIndex: 'no', key: 'no', width: 140 },
+      { type: 'number', filterTitle: 'Phát sinh Nợ' },
+    ),
+  ];
+  const rows = NUM_DATA.filter((r) => matches(r, (row, key) => (key === 'no' ? row.no : undefined)));
+  return <Table columns={columns} dataSource={rows} pagination={false} />;
+};
+
 const openDropdown = () => {
   // antd bọc filterIcon trong span.ant-dropdown-trigger ở header cột
   const trigger = document.querySelector('.ant-dropdown-trigger') as HTMLElement;
@@ -110,5 +134,32 @@ describe('lọc theo cột ở header (render thật)', () => {
 
     const other = result.current.filterable({ title: 'Ghi chú', key: 'ghiChu' });
     expect(other.fixed).toBeUndefined();
+  });
+
+  it('cột số: chọn "Lớn hơn" + nhập số → chỉ còn dòng khớp', async () => {
+    render(<NumDemo />);
+    expect(screen.getByText('Tiền gửi')).toBeTruthy();
+
+    openDropdown();
+    // Nhãn dùng filterTitle, không phải title cột
+    expect(await screen.findByText('Lọc Phát sinh Nợ')).toBeTruthy();
+
+    fireEvent.mouseDown(document.querySelector('.ant-select') as HTMLElement);
+    fireEvent.click(await screen.findByTitle('Lớn hơn'));
+    fireEvent.change(screen.getByPlaceholderText('Nhập số'), { target: { value: '1.000.000' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Lọc' }));
+
+    await waitFor(() => expect(screen.queryByText('Tiền gửi')).toBeNull());
+    expect(screen.getByText('Tiền mặt')).toBeTruthy();
+  });
+
+  it('cột số: gõ chữ → báo lỗi và không cho bấm Lọc', async () => {
+    render(<NumDemo />);
+
+    openDropdown();
+    fireEvent.change(await screen.findByPlaceholderText('Nhập số'), { target: { value: 'abc' } });
+
+    expect(screen.getByText('Giá trị không hợp lệ')).toBeTruthy();
+    expect((screen.getByRole('button', { name: 'Lọc' }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
