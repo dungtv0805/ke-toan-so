@@ -31,6 +31,8 @@ const EXAMPLE_ROW: Record<BangKeVariant, Partial<Record<ImportColumnKey, string>
     tenHangHoa: "Văn phòng phẩm",
     giaTriChuaThue: "10000000",
     thueSuat: "10 - 10%",
+    tienThue: "1000000",
+    tongThanhToan: "11000000",
   },
   ban: {
     ngayHoaDon: "01/06/2026",
@@ -41,6 +43,8 @@ const EXAMPLE_ROW: Record<BangKeVariant, Partial<Record<ImportColumnKey, string>
     tenHangHoa: "Dịch vụ tư vấn",
     giaTriChuaThue: "10000000",
     thueSuat: "10 - 10%",
+    tienThue: "1000000",
+    tongThanhToan: "11000000",
   },
 };
 

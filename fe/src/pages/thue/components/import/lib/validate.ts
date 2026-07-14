@@ -14,6 +14,20 @@ import { buildHoaDonKey } from "./duplicates";
 
 const THUE_SUAT_VALUES = THUE_SUAT_OPTIONS.map((o) => o.value);
 
+/** Lệch quá mức này so với công thức thì cảnh báo; dưới ngưỡng coi như chênh lệch làm tròn. */
+const LECH_WARN_THRESHOLD = 1000;
+
+const THUE_RATE: Record<string, number> = {
+  "0": 0,
+  "5": 0.05,
+  "8": 0.08,
+  "10": 0.1,
+  KCT: 0,
+  KKKT: 0,
+};
+
+const fmtVnd = (n: number): string => new Intl.NumberFormat("vi-VN").format(n);
+
 /** MST hợp lệ: 10 chữ số (đơn vị) hoặc 13 chữ số (đơn vị + chi nhánh). */
 function isValidMst(raw: string): boolean {
   const digits = raw.replace(/[\s-]/g, "");
@@ -63,6 +77,36 @@ export function validateRows(
       err("thueSuat", `phải là một trong ${THUE_SUAT_VALUES.join(", ")}`);
     }
 
+    // Tiền thuế / Tổng thanh toán — nhập tay được; bỏ trống thì BE tính theo công thức.
+    const tienThue = normalizeAmount(row.tienThue);
+    if (asText(row.tienThue) !== "") {
+      if (tienThue === null) err("tienThue", "không phải là số");
+      else if (tienThue < 0) err("tienThue", "không được là số âm");
+    }
+
+    const tongThanhToan = normalizeAmount(row.tongThanhToan);
+    if (asText(row.tongThanhToan) !== "") {
+      if (tongThanhToan === null) err("tongThanhToan", "không phải là số");
+      else if (tongThanhToan < 0) err("tongThanhToan", "không được là số âm");
+    }
+
+    // Cảnh báo lệch công thức (không chặn): bắt lỗi gõ nhầm chữ số, bỏ qua chênh lệch làm tròn.
+    if (
+      tienThue !== null &&
+      tienThue >= 0 &&
+      giaTri !== null &&
+      THUE_RATE[thueSuat] !== undefined
+    ) {
+      const theoCongThuc = Math.round(giaTri * THUE_RATE[thueSuat]);
+      const lech = Math.abs(tienThue - theoCongThuc);
+      if (lech > LECH_WARN_THRESHOLD) {
+        warnings.push({
+          field: "tienThue",
+          message: `${labelOf("tienThue")}: lệch ${fmtVnd(lech)} đ so với công thức (${fmtVnd(theoCongThuc)} đ)`,
+        });
+      }
+    }
+
     // MST — chỉ cảnh báo
     const mst = asText(row.mst);
     if (mst !== "" && !isValidMst(mst)) {
@@ -86,6 +130,8 @@ export function validateRows(
       soHoaDon,
       giaTriChuaThue: giaTri as number,
       thueSuat,
+      ...(tienThue !== null ? { tienThue } : {}),
+      ...(tongThanhToan !== null ? { tongThanhToan } : {}),
       ...(kyHieuHoaDon ? { kyHieuHoaDon } : {}),
       ...(asText(row.tenHangHoa) ? { tenHangHoa: asText(row.tenHangHoa) } : {}),
       ...(asText(row.ghiChu) ? { ghiChu: asText(row.ghiChu) } : {}),

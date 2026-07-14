@@ -168,3 +168,72 @@ describe("validateRows — khóa hóa đơn", () => {
     expect(results[0].key).toBe("");
   });
 });
+
+describe("tiền thuế / tổng thanh toán nhập tay", () => {
+  const base = {
+    rowNumber: 2,
+    ngayHoaDon: "01/06/2026",
+    soHoaDon: "0000123",
+    ten: "Cty A",
+    mst: "0101243150",
+    giaTriChuaThue: 1_000_000,
+    thueSuat: "10",
+  };
+
+  it("bỏ trống → item không mang tienThue/tongThanhToan (BE tính công thức)", () => {
+    const { results, validItems } = validateRows([{ ...base }], "mua");
+    expect(results[0].errors).toHaveLength(0);
+    expect(validItems[0].tienThue).toBeUndefined();
+    expect(validItems[0].tongThanhToan).toBeUndefined();
+  });
+
+  it("nhập số → đưa vào item", () => {
+    const { validItems } = validateRows(
+      [{ ...base, tienThue: 99_998, tongThanhToan: 1_099_998 }],
+      "mua",
+    );
+    expect(validItems[0].tienThue).toBe(99_998);
+    expect(validItems[0].tongThanhToan).toBe(1_099_998);
+  });
+
+  it("lệch công thức trong 1.000 đ (làm tròn) → KHÔNG cảnh báo", () => {
+    const { results } = validateRows([{ ...base, tienThue: 99_998 }], "mua");
+    expect(results[0].warnings).toHaveLength(0);
+  });
+
+  it("lệch công thức quá 1.000 đ → cảnh báo nhưng vẫn import được", () => {
+    const { results, validItems, hasErrors } = validateRows(
+      [{ ...base, tienThue: 10_000 }],
+      "mua",
+    );
+    expect(hasErrors).toBe(false);
+    expect(validItems).toHaveLength(1);
+    expect(results[0].warnings.some((w) => w.field === "tienThue")).toBe(true);
+    expect(results[0].warnings[0].message).toContain("lệch");
+  });
+
+  it("tiền thuế âm → lỗi, chặn dòng đó", () => {
+    const { results, hasErrors } = validateRows([{ ...base, tienThue: -1 }], "mua");
+    expect(hasErrors).toBe(true);
+    expect(results[0].errors.some((e) => e.field === "tienThue")).toBe(true);
+  });
+
+  it("tiền thuế không phải số → lỗi", () => {
+    const { results } = validateRows([{ ...base, tienThue: "abc" }], "mua");
+    expect(results[0].errors.some((e) => e.field === "tienThue")).toBe(true);
+  });
+
+  it("tổng thanh toán âm → lỗi", () => {
+    const { results } = validateRows([{ ...base, tongThanhToan: -5 }], "mua");
+    expect(results[0].errors.some((e) => e.field === "tongThanhToan")).toBe(true);
+  });
+
+  it("thuế suất KCT: tiền thuế 0 hợp lệ, không cảnh báo", () => {
+    const { results, validItems } = validateRows(
+      [{ ...base, thueSuat: "KCT", tienThue: 0 }],
+      "mua",
+    );
+    expect(results[0].warnings).toHaveLength(0);
+    expect(validItems[0].tienThue).toBe(0);
+  });
+});
