@@ -16,6 +16,10 @@ interface PeriodFilterProps {
   loading?: boolean;
   /** Bật: đổi kiểu xem / ngày là query ngay và ẩn nút "Xem báo cáo". */
   autoApply?: boolean;
+  /** Kỳ chọn sẵn lúc mở trang (vd 'thang7', 'tuyChon'). Mặc định 'namNay'. */
+  defaultPeriod?: string;
+  /** Khoảng ngày điền sẵn khi defaultPeriod = 'tuyChon'. */
+  defaultCustomRange?: [Dayjs, Dayjs];
 }
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -38,7 +42,13 @@ export function defaultYearParams(): PeriodFilterParams {
   };
 }
 
-function buildPreset(period: string): PeriodFilterParams {
+/** Key kỳ của tháng hiện tại — dùng cho trang muốn mặc định "tháng này". */
+export function currentMonthPeriod(): string {
+  return `thang${new Date().getMonth() + 1}`;
+}
+
+/** Khoảng ngày của một kỳ trong danh sách. Trang dùng để tính state khởi tạo. */
+export function paramsOfPeriod(period: string): PeriodFilterParams {
   if (period.startsWith('thang')) {
     const m = Number(period.slice(5));
     return {
@@ -72,10 +82,18 @@ function buildPreset(period: string): PeriodFilterParams {
   }
 }
 
-export function PeriodFilter({ onFilter, loading, autoApply }: PeriodFilterProps) {
-  const [period, setPeriod] = useState('namNay');
-  const [customFrom, setCustomFrom] = useState<Dayjs | null>(dayjs().startOf('month'));
-  const [customTo, setCustomTo] = useState<Dayjs | null>(dayjs());
+export function PeriodFilter({
+  onFilter,
+  loading,
+  autoApply,
+  defaultPeriod,
+  defaultCustomRange,
+}: PeriodFilterProps) {
+  const [period, setPeriod] = useState(defaultPeriod ?? 'namNay');
+  const [customFrom, setCustomFrom] = useState<Dayjs | null>(
+    defaultCustomRange?.[0] ?? dayjs().startOf('month'),
+  );
+  const [customTo, setCustomTo] = useState<Dayjs | null>(defaultCustomRange?.[1] ?? dayjs());
   const isCustom = period === 'tuyChon';
 
   const emitCustom = (from: Dayjs | null, to: Dayjs | null) => {
@@ -89,14 +107,14 @@ export function PeriodFilter({ onFilter, loading, autoApply }: PeriodFilterProps
 
   const handleSubmit = () => {
     if (isCustom) emitCustom(customFrom, customTo);
-    else onFilter(buildPreset(period));
+    else onFilter(paramsOfPeriod(period));
   };
 
   const handlePeriodChange = (val: string) => {
     setPeriod(val);
     if (!autoApply) return;
     if (val === 'tuyChon') emitCustom(customFrom, customTo);
-    else onFilter(buildPreset(val));
+    else onFilter(paramsOfPeriod(val));
   };
 
   const handleFromChange = (d: Dayjs | null) => {
@@ -121,8 +139,8 @@ export function PeriodFilter({ onFilter, loading, autoApply }: PeriodFilterProps
       />
       {isCustom && (
         <>
-          <DatePicker value={customFrom} onChange={handleFromChange} placeholder="Từ ngày" style={{ width: 140 }} />
-          <DatePicker value={customTo} onChange={handleToChange} placeholder="Đến ngày" style={{ width: 140 }} />
+          <DatePicker value={customFrom} onChange={handleFromChange} placeholder="Từ ngày" format="DD/MM/YYYY" style={{ width: 140 }} />
+          <DatePicker value={customTo} onChange={handleToChange} placeholder="Đến ngày" format="DD/MM/YYYY" style={{ width: 140 }} />
         </>
       )}
       {!autoApply && (
