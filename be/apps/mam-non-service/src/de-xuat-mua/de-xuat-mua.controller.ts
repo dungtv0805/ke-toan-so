@@ -2,7 +2,7 @@ import { Controller, Get, Post, Put, Delete, Body, Param, Query, Headers, UseGua
 import { DeXuatMuaService } from './de-xuat-mua.service';
 import { CreateDeXuatMuaDto, UpdateDeXuatMuaDto, RejectDeXuatDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
-import { PaginationQueryDto } from '@app/dto';
+import { DeleteBatchDto, PaginationQueryDto } from '@app/dto';
 
 const READ = ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT'];
 const WRITE = ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KE_TOAN_QUY', 'MANAGER'];
@@ -39,6 +39,12 @@ export class DeXuatMuaController {
   @Post(':id/reject') @Roles(...DUYET)
   async reject(@Param('id') id: string, @Body() dto: RejectDeXuatDto) {
     return { success: true, data: await this.service.reject(id, dto.lyDoTuChoi) };
+  }
+
+  @Post('delete-batch') @Roles('ADMIN', 'KE_TOAN_TRUONG')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.service.deleteBatch(dto.ids);
+    return { success: true, data };
   }
 
   @Delete(':id') @Roles('ADMIN', 'KE_TOAN_TRUONG')

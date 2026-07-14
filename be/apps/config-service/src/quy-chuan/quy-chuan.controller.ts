@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { QuyChuan_Service } from './quy-chuan.service';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
+import { DeleteBatchDto } from '@app/dto';
 import { CreateQuyChuan_Dto, UpdateQuyChuan_Dto } from './dto';
 
 @Controller('quy-chuan')
@@ -163,6 +164,13 @@ export class QuyChuan_Controller {
   @Roles('ADMIN')
   async update(@Param('id') id: string, @Body() updateDto: UpdateQuyChuan_Dto) {
     const data = await this.quyChuan_Service.update(id, updateDto);
+    return { success: true, data };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.quyChuan_Service.deleteBatch(dto.ids);
     return { success: true, data };
   }
 

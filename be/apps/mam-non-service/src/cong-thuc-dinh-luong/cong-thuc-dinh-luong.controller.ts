@@ -12,7 +12,7 @@ import {
 import { CongThucDinhLuongService } from './cong-thuc-dinh-luong.service';
 import { CreateCongThucDinhLuongDto, UpdateCongThucDinhLuongDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
-import { PaginationQueryDto } from '@app/dto';
+import { DeleteBatchDto, PaginationQueryDto } from '@app/dto';
 
 const READ = [
   'ADMIN',
@@ -78,6 +78,13 @@ export class CongThucDinhLuongController {
     @Body() dto: UpdateCongThucDinhLuongDto,
   ) {
     return { success: true, data: await this.service.update(id, dto) };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.service.deleteBatch(dto.ids);
+    return { success: true, data };
   }
 
   @Delete(':id')

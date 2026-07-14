@@ -12,6 +12,7 @@ import {
 import { PhieuKhoService } from './phieu-kho.service';
 import { CreatePhieuKhoDto, UpdatePhieuKhoDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
+import { DeleteBatchDto } from '@app/dto';
 
 @Controller('phieu')
 @UseGuards(JwtGuard, RoleGuard)
@@ -72,6 +73,13 @@ export class PhieuKhoController {
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KE_TOAN_QUY', 'MANAGER')
   async update(@Param('id') id: string, @Body() dto: UpdatePhieuKhoDto) {
     const data = await this.phieuKhoService.update(id, dto);
+    return { success: true, data };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.phieuKhoService.deleteBatch(dto.ids);
     return { success: true, data };
   }
 

@@ -18,6 +18,7 @@ import {
   CheckDuplicatesDto,
 } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
+import { DeleteBatchDto } from '@app/dto';
 
 const KE_TOAN_ROLES = [
   'ADMIN',
@@ -76,6 +77,13 @@ export class BangKeMuaVaoController {
     @Body() updateDto: UpdateBangKeMuaVaoDto,
   ) {
     const data = await this.service.update(id, updateDto);
+    return { success: true, data };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.service.deleteBatch(dto.ids);
     return { success: true, data };
   }
 

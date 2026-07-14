@@ -1,7 +1,12 @@
-import { sanitizeUpdateDto, TenantContextService } from '@app/core';
+import {
+  sanitizeUpdateDto,
+  softDeleteBatch,
+  TenantContextService,
+  type SoftDeleteBatchResult,
+} from '@app/core';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MongoRepository, Repository } from 'typeorm';
 import { BangKeMuaVao } from '@app/entities';
 import { PaginatedResult } from '@app/dto';
 import {
@@ -161,6 +166,14 @@ export class BangKeMuaVaoService {
     if (updateDto.ngayHoaDon) item.ngayHoaDon = new Date(updateDto.ngayHoaDon);
     this.applyTotals(item, updateDto);
     return this.repo.save(item);
+  }
+
+  /** Xóa mềm hàng loạt (checkbox chọn dòng trên bảng). Repository tự lọc theo tenant. */
+  async deleteBatch(ids: string[]): Promise<SoftDeleteBatchResult> {
+    return softDeleteBatch(
+      this.repo as unknown as MongoRepository<BangKeMuaVao>,
+      ids,
+    );
   }
 
   async delete(id: string): Promise<void> {

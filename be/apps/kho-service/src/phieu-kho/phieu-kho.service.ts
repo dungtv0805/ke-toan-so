@@ -1,8 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MongoRepository, Repository } from 'typeorm';
 import { PhieuKho } from '@app/entities';
-import { TenantContextService, sanitizeUpdateDto } from '@app/core';
+import {
+  TenantContextService,
+  sanitizeUpdateDto,
+  softDeleteBatch,
+  type SoftDeleteBatchResult,
+} from '@app/core';
 import { PaginationQueryDto, PaginatedResult } from '@app/dto';
 import { CreatePhieuKhoDto, UpdatePhieuKhoDto } from './dto';
 import { PhieuKhoSequenceService } from './phieu-kho-sequence.service';
@@ -119,6 +124,14 @@ export class PhieuKhoService {
     const item = await this.findOne(id);
     item.isActive = false;
     await this.repo.save(item);
+  }
+
+  /** Xóa mềm hàng loạt (checkbox chọn dòng trên bảng). Repository tự lọc theo tenant. */
+  async deleteBatch(ids: string[]): Promise<SoftDeleteBatchResult> {
+    return softDeleteBatch(
+      this.repo as unknown as MongoRepository<PhieuKho>,
+      ids,
+    );
   }
 
   async getStats(loaiPhieu?: string): Promise<{ tongPhieu: number; tongTien: number }> {

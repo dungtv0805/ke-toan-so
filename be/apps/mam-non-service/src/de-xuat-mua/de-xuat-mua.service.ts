@@ -1,7 +1,12 @@
-import { sanitizeUpdateDto, TenantContextService } from '@app/core';
+import {
+  sanitizeUpdateDto,
+  softDeleteBatch,
+  TenantContextService,
+  type SoftDeleteBatchResult,
+} from '@app/core';
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MongoRepository, Repository } from 'typeorm';
 import { DeXuatMuaThucPham } from '@app/entities';
 import { ServiceClient } from '@app/service-client';
 import { CreateDeXuatMuaDto, UpdateDeXuatMuaDto } from './dto';
@@ -98,6 +103,18 @@ export class DeXuatMuaService {
     }
     item.isActive = false;
     await this.repo.save(item);
+  }
+
+  /**
+   * Xóa mềm hàng loạt. Giữ đúng guard của xóa đơn: đề xuất đã duyệt / đã nhận hàng không xóa được
+   * → rơi vào `skipped` thay vì làm hỏng cả lô.
+   */
+  async deleteBatch(ids: string[]): Promise<SoftDeleteBatchResult> {
+    return softDeleteBatch(
+      this.repo as unknown as MongoRepository<DeXuatMuaThucPham>,
+      ids,
+      (e) => e.trangThai !== 'DA_DUYET' && e.trangThai !== 'DA_NHAN',
+    );
   }
 
   async nhanHang(id: string, authToken?: string): Promise<DeXuatMuaThucPham> {

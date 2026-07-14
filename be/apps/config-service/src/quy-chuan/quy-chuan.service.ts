@@ -4,8 +4,9 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MongoRepository, Repository } from 'typeorm';
 import { QuyChuan } from '@app/entities';
+import { softDeleteBatch, type SoftDeleteBatchResult } from '@app/core';
 
 export interface QuyChaunStats {
   tongQuyChuan: number;
@@ -220,5 +221,13 @@ export class QuyChuan_Service {
     const item = await this.findOne(id);
     item.isActive = false;
     await this.repo.save(item);
+  }
+
+  /** Xóa mềm hàng loạt (checkbox chọn dòng trên bảng). Repository tự lọc theo tenant. */
+  async deleteBatch(ids: string[]): Promise<SoftDeleteBatchResult> {
+    return softDeleteBatch(
+      this.repo as unknown as MongoRepository<QuyChuan>,
+      ids,
+    );
   }
 }

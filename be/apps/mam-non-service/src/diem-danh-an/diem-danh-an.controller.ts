@@ -2,7 +2,7 @@ import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } fro
 import { DiemDanhAnService } from './diem-danh-an.service';
 import { CreateDiemDanhAnDto, UpdateDiemDanhAnDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
-import { PaginationQueryDto } from '@app/dto';
+import { DeleteBatchDto, PaginationQueryDto } from '@app/dto';
 
 const READ = ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT'];
 const WRITE = ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KE_TOAN_QUY', 'MANAGER'];
@@ -33,6 +33,12 @@ export class DiemDanhAnController {
   @Put(':id') @Roles(...WRITE)
   async update(@Param('id') id: string, @Body() dto: UpdateDiemDanhAnDto) {
     return { success: true, data: await this.service.update(id, dto) };
+  }
+
+  @Post('delete-batch') @Roles('ADMIN', 'KE_TOAN_TRUONG')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.service.deleteBatch(dto.ids);
+    return { success: true, data };
   }
 
   @Delete(':id') @Roles('ADMIN', 'KE_TOAN_TRUONG')
