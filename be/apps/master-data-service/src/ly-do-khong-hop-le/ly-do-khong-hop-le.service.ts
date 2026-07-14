@@ -1,11 +1,16 @@
-import { sanitizeUpdateDto, TenantContextService } from '@app/core';
+import {
+  sanitizeUpdateDto,
+  softDeleteBatch,
+  TenantContextService,
+  type SoftDeleteBatchResult,
+} from '@app/core';
 import {
   Injectable,
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MongoRepository, Repository } from 'typeorm';
 import { LyDoKhongHopLe } from '@app/entities';
 import { CreateLyDoKhongHopLeDto, UpdateLyDoKhongHopLeDto } from './dto';
 import { PaginationQueryDto, PaginatedResult } from '@app/dto';
@@ -122,6 +127,14 @@ export class LyDoKhongHopLeService {
     const lyDoKhongHopLe = await this.findOne(id);
     lyDoKhongHopLe.isActive = false;
     await this.lyDoKhongHopLeRepository.save(lyDoKhongHopLe);
+  }
+
+  /** Xóa mềm hàng loạt (checkbox chọn dòng trên bảng). Repository tự lọc theo tenant. */
+  async deleteBatch(ids: string[]): Promise<SoftDeleteBatchResult> {
+    return softDeleteBatch(
+      this.lyDoKhongHopLeRepository as unknown as MongoRepository<LyDoKhongHopLe>,
+      ids,
+    );
   }
 
   async search(keyword: string, limit = 20): Promise<LyDoKhongHopLe[]> {

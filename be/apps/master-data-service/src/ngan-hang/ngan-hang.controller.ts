@@ -12,6 +12,7 @@ import {
 import { NganHangService } from './ngan-hang.service';
 import { CreateNganHangDto, UpdateNganHangDto, NganHangQueryDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
+import { DeleteBatchDto } from '@app/dto';
 
 @Controller('ngan-hang')
 @UseGuards(JwtGuard, RoleGuard)
@@ -133,5 +134,12 @@ export class NganHangController {
   async delete(@Param('id') id: string) {
     await this.nganHangService.delete(id);
     return { success: true, message: 'Xóa thành công' };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.nganHangService.deleteBatch(dto.ids);
+    return { success: true, data };
   }
 }

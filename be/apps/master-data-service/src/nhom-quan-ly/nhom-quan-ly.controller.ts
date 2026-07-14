@@ -16,6 +16,7 @@ import {
   NhomQuanLyQueryDto,
 } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
+import { DeleteBatchDto } from '@app/dto';
 
 @Controller('nhom-quan-ly')
 @UseGuards(JwtGuard, RoleGuard)
@@ -143,5 +144,12 @@ export class NhomQuanLyController {
   async delete(@Param('id') id: string) {
     await this.nhomQuanLyService.delete(id);
     return { success: true, message: 'Xóa thành công' };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.nhomQuanLyService.deleteBatch(dto.ids);
+    return { success: true, data };
   }
 }

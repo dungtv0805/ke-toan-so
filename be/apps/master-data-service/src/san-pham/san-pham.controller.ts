@@ -12,7 +12,7 @@ import {
 import { SanPhamService } from './san-pham.service';
 import { CreateSanPhamDto, UpdateSanPhamDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
-import { PaginationQueryDto } from '@app/dto';
+import { DeleteBatchDto, PaginationQueryDto } from '@app/dto';
 
 @Controller('san-pham')
 @UseGuards(JwtGuard, RoleGuard)
@@ -149,5 +149,12 @@ export class SanPhamController {
   async delete(@Param('id') id: string) {
     await this.sanPhamService.delete(id);
     return { success: true, message: 'Xóa thành công' };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.sanPhamService.deleteBatch(dto.ids);
+    return { success: true, data };
   }
 }

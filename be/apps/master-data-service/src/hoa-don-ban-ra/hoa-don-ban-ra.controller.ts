@@ -12,6 +12,7 @@ import {
 import { HoaDonBanRaService } from './hoa-don-ban-ra.service';
 import { CreateHoaDonBanRaDto, UpdateHoaDonBanRaDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
+import { DeleteBatchDto } from '@app/dto';
 
 const READ = ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KE_TOAN_QUY', 'KE_TOAN_CONG_NO', 'MANAGER', 'KIEM_SOAT'] as const;
 const WRITE = ['ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'KE_TOAN_QUY', 'MANAGER'] as const;
@@ -55,5 +56,12 @@ export class HoaDonBanRaController {
   async remove(@Param('id') id: string) {
     await this.service.delete(id);
     return { success: true };
+  }
+
+  @Post('delete-batch')
+  @Roles(...WRITE)
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.service.deleteBatch(dto.ids);
+    return { success: true, data };
   }
 }

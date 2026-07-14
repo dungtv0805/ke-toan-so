@@ -13,6 +13,7 @@ import { DuAnService } from './du-an.service';
 import { CreateDuAnDto, UpdateDuAnDto, DuAnQueryDto } from './dto';
 import { DuAnStatus } from '@app/entities';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
+import { DeleteBatchDto } from '@app/dto';
 
 @Controller('du-an')
 @UseGuards(JwtGuard, RoleGuard)
@@ -154,6 +155,13 @@ export class DuAnController {
     @Body('trangThai') trangThai: DuAnStatus,
   ) {
     const data = await this.duAnService.updateStatus(id, trangThai);
+    return { success: true, data };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.duAnService.deleteBatch(dto.ids);
     return { success: true, data };
   }
 

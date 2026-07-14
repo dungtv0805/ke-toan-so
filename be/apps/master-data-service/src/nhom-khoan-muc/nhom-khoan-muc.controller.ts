@@ -12,7 +12,7 @@ import {
 import { NhomKhoanMucService } from './nhom-khoan-muc.service';
 import { CreateNhomKhoanMucDto, UpdateNhomKhoanMucDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
-import { PaginationQueryDto } from '@app/dto';
+import { DeleteBatchDto, PaginationQueryDto } from '@app/dto';
 import { NhomKhoanMucLoai } from '@app/entities';
 
 @Controller('nhom-khoan-muc')
@@ -112,5 +112,12 @@ export class NhomKhoanMucController {
   async delete(@Param('id') id: string) {
     await this.nhomKhoanMucService.delete(id);
     return { success: true, message: 'Xóa thành công' };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.nhomKhoanMucService.deleteBatch(dto.ids);
+    return { success: true, data };
   }
 }

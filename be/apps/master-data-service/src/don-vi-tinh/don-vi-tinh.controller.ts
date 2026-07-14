@@ -12,7 +12,7 @@ import {
 import { DonViTinhService } from './don-vi-tinh.service';
 import { CreateDonViTinhDto, UpdateDonViTinhDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
-import { PaginationQueryDto } from '@app/dto';
+import { DeleteBatchDto, PaginationQueryDto } from '@app/dto';
 
 @Controller('don-vi-tinh')
 @UseGuards(JwtGuard, RoleGuard)
@@ -141,6 +141,13 @@ export class DonViTinhController {
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
   async update(@Param('id') id: string, @Body() updateDto: UpdateDonViTinhDto) {
     const data = await this.donViTinhService.update(id, updateDto);
+    return { success: true, data };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.donViTinhService.deleteBatch(dto.ids);
     return { success: true, data };
   }
 

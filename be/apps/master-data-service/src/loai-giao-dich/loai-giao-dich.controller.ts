@@ -12,7 +12,7 @@ import {
 import { LoaiGiaoDichService } from './loai-giao-dich.service';
 import { CreateLoaiGiaoDichDto, UpdateLoaiGiaoDichDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
-import { PaginationQueryDto } from '@app/dto';
+import { DeleteBatchDto, PaginationQueryDto } from '@app/dto';
 
 @Controller('loai-giao-dich')
 @UseGuards(JwtGuard, RoleGuard)
@@ -149,5 +149,12 @@ export class LoaiGiaoDichController {
   async delete(@Param('id') id: string) {
     await this.loaiGiaoDichService.delete(id);
     return { success: true, message: 'Xóa thành công' };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.loaiGiaoDichService.deleteBatch(dto.ids);
+    return { success: true, data };
   }
 }

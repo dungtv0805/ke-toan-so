@@ -12,6 +12,7 @@ import {
 import { HopDongService } from './hop-dong.service';
 import { CreateHopDongDto, UpdateHopDongDto, HopDongQueryDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
+import { DeleteBatchDto } from '@app/dto';
 
 @Controller('hop-dong')
 @UseGuards(JwtGuard, RoleGuard)
@@ -128,6 +129,13 @@ export class HopDongController {
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'MANAGER')
   async update(@Param('id') id: string, @Body() updateDto: UpdateHopDongDto) {
     const data = await this.hopDongService.update(id, updateDto);
+    return { success: true, data };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.hopDongService.deleteBatch(dto.ids);
     return { success: true, data };
   }
 

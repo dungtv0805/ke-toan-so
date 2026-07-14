@@ -12,7 +12,7 @@ import {
 import { BoPhanService } from './bo-phan.service';
 import { CreateBoPhanDto, UpdateBoPhanDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
-import { PaginationQueryDto } from '@app/dto';
+import { DeleteBatchDto, PaginationQueryDto } from '@app/dto';
 
 @Controller('bo-phan')
 @UseGuards(JwtGuard, RoleGuard)
@@ -141,6 +141,13 @@ export class BoPhanController {
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
   async update(@Param('id') id: string, @Body() updateDto: UpdateBoPhanDto) {
     const data = await this.boPhanService.update(id, updateDto);
+    return { success: true, data };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.boPhanService.deleteBatch(dto.ids);
     return { success: true, data };
   }
 

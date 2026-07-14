@@ -12,7 +12,7 @@ import {
 import { LyDoKhongHopLeService } from './ly-do-khong-hop-le.service';
 import { CreateLyDoKhongHopLeDto, UpdateLyDoKhongHopLeDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
-import { PaginationQueryDto } from '@app/dto';
+import { DeleteBatchDto, PaginationQueryDto } from '@app/dto';
 
 @Controller('ly-do-khong-hop-le')
 @UseGuards(JwtGuard, RoleGuard)
@@ -149,5 +149,12 @@ export class LyDoKhongHopLeController {
   async delete(@Param('id') id: string) {
     await this.lyDoKhongHopLeService.delete(id);
     return { success: true, message: 'Xóa thành công' };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.lyDoKhongHopLeService.deleteBatch(dto.ids);
+    return { success: true, data };
   }
 }

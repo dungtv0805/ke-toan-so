@@ -12,7 +12,7 @@ import {
 import { HoSoChungTuService } from './ho-so-chung-tu.service';
 import { CreateHoSoChungTuDto, UpdateHoSoChungTuDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
-import { PaginationQueryDto } from '@app/dto';
+import { DeleteBatchDto, PaginationQueryDto } from '@app/dto';
 
 @Controller('ho-so-chung-tu')
 @UseGuards(JwtGuard, RoleGuard)
@@ -114,6 +114,13 @@ export class HoSoChungTuController {
     @Body() updateDto: UpdateHoSoChungTuDto,
   ) {
     const data = await this.hoSoChungTuService.update(id, updateDto);
+    return { success: true, data };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.hoSoChungTuService.deleteBatch(dto.ids);
     return { success: true, data };
   }
 

@@ -12,7 +12,7 @@ import {
 import { NhomVatTuService } from './nhom-vat-tu.service';
 import { CreateNhomVatTuDto, UpdateNhomVatTuDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
-import { PaginationQueryDto } from '@app/dto';
+import { DeleteBatchDto, PaginationQueryDto } from '@app/dto';
 
 @Controller('nhom-vat-tu')
 @UseGuards(JwtGuard, RoleGuard)
@@ -149,5 +149,12 @@ export class NhomVatTuController {
   async delete(@Param('id') id: string) {
     await this.nhomVatTuService.delete(id);
     return { success: true, message: 'Xóa thành công' };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.nhomVatTuService.deleteBatch(dto.ids);
+    return { success: true, data };
   }
 }

@@ -12,6 +12,7 @@ import {
 import { ChuDauTuService } from './chu-dau-tu.service';
 import { CreateChuDauTuDto, UpdateChuDauTuDto, ChuDauTuQueryDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
+import { DeleteBatchDto } from '@app/dto';
 
 @Controller('chu-dau-tu')
 @UseGuards(JwtGuard, RoleGuard)
@@ -125,6 +126,13 @@ export class ChuDauTuController {
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'MANAGER')
   async update(@Param('id') id: string, @Body() updateDto: UpdateChuDauTuDto) {
     const data = await this.chuDauTuService.update(id, updateDto);
+    return { success: true, data };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.chuDauTuService.deleteBatch(dto.ids);
     return { success: true, data };
   }
 

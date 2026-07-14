@@ -1,4 +1,9 @@
-import { sanitizeUpdateDto, TenantContextService } from '@app/core';
+import {
+  sanitizeUpdateDto,
+  softDeleteBatch,
+  TenantContextService,
+  type SoftDeleteBatchResult,
+} from '@app/core';
 import {
   Injectable,
   ConflictException,
@@ -7,7 +12,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MongoRepository, Repository } from 'typeorm';
 import { DuAn, DuAnStatus } from '@app/entities';
 import { CreateDuAnDto, UpdateDuAnDto } from './dto';
 import type { CreateDuAnDto as CreateDuAnDtoType } from './dto';
@@ -199,6 +204,14 @@ export class DuAnService {
     const duAn = await this.findOne(id);
     duAn.isActive = false;
     await this.duAnRepository.save(duAn);
+  }
+
+  /** Xóa mềm hàng loạt (checkbox chọn dòng trên bảng). Repository tự lọc theo tenant. */
+  async deleteBatch(ids: string[]): Promise<SoftDeleteBatchResult> {
+    return softDeleteBatch(
+      this.duAnRepository as unknown as MongoRepository<DuAn>,
+      ids,
+    );
   }
 
   async updateStatus(id: string, trangThai: DuAnStatus): Promise<DuAn> {

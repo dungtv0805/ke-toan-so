@@ -13,6 +13,7 @@ import { DoiTuongService } from './doi-tuong.service';
 import { CreateDoiTuongDto, UpdateDoiTuongDto, DoiTuongQueryDto } from './dto';
 import { DoiTuongType } from '@app/entities';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
+import { DeleteBatchDto } from '@app/dto';
 
 @Controller('doi-tuong')
 @UseGuards(JwtGuard, RoleGuard)
@@ -149,6 +150,13 @@ export class DoiTuongController {
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
   async update(@Param('id') id: string, @Body() updateDto: UpdateDoiTuongDto) {
     const data = await this.doiTuongService.update(id, updateDto);
+    return { success: true, data };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.doiTuongService.deleteBatch(dto.ids);
     return { success: true, data };
   }
 

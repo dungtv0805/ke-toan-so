@@ -12,7 +12,7 @@ import {
 import { HangHoaVatTuService } from './hang-hoa-vat-tu.service';
 import { CreateHangHoaVatTuDto, UpdateHangHoaVatTuDto } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
-import { PaginationQueryDto } from '@app/dto';
+import { DeleteBatchDto, PaginationQueryDto } from '@app/dto';
 
 @Controller('hang-hoa-vat-tu')
 @UseGuards(JwtGuard, RoleGuard)
@@ -141,6 +141,13 @@ export class HangHoaVatTuController {
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
   async update(@Param('id') id: string, @Body() updateDto: UpdateHangHoaVatTuDto) {
     const data = await this.hangHoaVatTuService.update(id, updateDto);
+    return { success: true, data };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.hangHoaVatTuService.deleteBatch(dto.ids);
     return { success: true, data };
   }
 

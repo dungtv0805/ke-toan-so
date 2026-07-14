@@ -1,11 +1,16 @@
-import { sanitizeUpdateDto, TenantContextService } from '@app/core';
+import {
+  sanitizeUpdateDto,
+  softDeleteBatch,
+  TenantContextService,
+  type SoftDeleteBatchResult,
+} from '@app/core';
 import {
   Injectable,
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MongoRepository, Repository } from 'typeorm';
 import { NhomKhuyenMai } from '@app/entities';
 import {
   CreateNhomKhuyenMaiDto,
@@ -115,6 +120,14 @@ export class NhomKhuyenMaiService {
     const nhomKhuyenMai = await this.findOne(id);
     nhomKhuyenMai.isActive = false;
     await this.nhomKhuyenMaiRepository.save(nhomKhuyenMai);
+  }
+
+  /** Xóa mềm hàng loạt (checkbox chọn dòng trên bảng). Repository tự lọc theo tenant. */
+  async deleteBatch(ids: string[]): Promise<SoftDeleteBatchResult> {
+    return softDeleteBatch(
+      this.nhomKhuyenMaiRepository as unknown as MongoRepository<NhomKhuyenMai>,
+      ids,
+    );
   }
 
   async search(keyword: string, limit = 20): Promise<NhomKhuyenMai[]> {

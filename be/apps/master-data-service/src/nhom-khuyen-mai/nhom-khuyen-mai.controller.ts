@@ -16,6 +16,7 @@ import {
   NhomKhuyenMaiQueryDto,
 } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
+import { DeleteBatchDto } from '@app/dto';
 
 @Controller('nhom-khuyen-mai')
 @UseGuards(JwtGuard, RoleGuard)
@@ -143,5 +144,12 @@ export class NhomKhuyenMaiController {
   async delete(@Param('id') id: string) {
     await this.nhomKhuyenMaiService.delete(id);
     return { success: true, message: 'Xóa thành công' };
+  }
+
+  @Post('delete-batch')
+  @Roles('ADMIN')
+  async deleteBatch(@Body() dto: DeleteBatchDto) {
+    const data = await this.nhomKhuyenMaiService.deleteBatch(dto.ids);
+    return { success: true, data };
   }
 }

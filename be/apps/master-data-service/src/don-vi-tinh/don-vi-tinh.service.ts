@@ -1,11 +1,16 @@
-import { sanitizeUpdateDto, TenantContextService } from '@app/core';
+import {
+  sanitizeUpdateDto,
+  softDeleteBatch,
+  TenantContextService,
+  type SoftDeleteBatchResult,
+} from '@app/core';
 import {
   Injectable,
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MongoRepository, Repository } from 'typeorm';
 import { DonViTinh } from '@app/entities';
 import { CreateDonViTinhDto, UpdateDonViTinhDto } from './dto';
 import { PaginationQueryDto, PaginatedResult } from '@app/dto';
@@ -122,6 +127,14 @@ export class DonViTinhService {
     const donViTinh = await this.findOne(id);
     donViTinh.isActive = false;
     await this.donViTinhRepository.save(donViTinh);
+  }
+
+  /** Xóa mềm hàng loạt (checkbox chọn dòng trên bảng). Repository tự lọc theo tenant. */
+  async deleteBatch(ids: string[]): Promise<SoftDeleteBatchResult> {
+    return softDeleteBatch(
+      this.donViTinhRepository as unknown as MongoRepository<DonViTinh>,
+      ids,
+    );
   }
 
   async search(keyword: string, limit = 20): Promise<DonViTinh[]> {
