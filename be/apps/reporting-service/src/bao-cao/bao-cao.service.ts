@@ -1,6 +1,12 @@
 import type { NhatKyChungEntry, KqkdChiTieu, KqkdReport } from '@app/dto';
 import { ServiceClient } from '@app/service-client';
 import { Injectable } from '@nestjs/common';
+import {
+  buildDoiTuongLoaiIndex,
+  makeLoaiMatcher,
+  matchLoaiBySnapshot,
+  type LoaiMatcher,
+} from '../shared/doi-tuong-loai.helper';
 
 export interface PnLEntry {
   ma: string;
@@ -115,6 +121,10 @@ export const DOI_TUONG_CHI_TIET_TYPES = new Set([
  * openingNetForSide). Chỉ giữ đối tượng đúng `expectedLoai` (= chiTietTheo của TK);
  * đối tượng sai loại / thiếu loại / chứng từ không có đối tượng đều gom vào
  * "Chưa xác định đối tượng" để Σ(các dòng) = số dư TK. Bỏ dòng ~0.
+ *
+ * `match` quyết định "đúng loại": mặc định so theo snapshot trong chứng từ, nhưng
+ * caller nên truyền matcher tra danh mục (makeLoaiMatcher) vì đối tượng có thể
+ * ĐA LOẠI trong khi snapshot chỉ giữ loại chính — xem shared/doi-tuong-loai.helper.
  */
 export function buildDoiTuongSoTien(
   vouchers: NhatKyChungEntry[],
@@ -122,6 +132,7 @@ export function buildDoiTuongSoTien(
   type: 'NO' | 'CO',
   openings: Array<{ chiTietMa?: string; chiTietTen?: string; chiTietType?: string; net: number }>,
   expectedLoai: string,
+  match: LoaiMatcher = matchLoaiBySnapshot,
 ): DoiTuongSoTien[] {
   const map = new Map<string, { ten: string; soTien: number }>();
   const add = (ma: string, ten: string, delta: number) => {
@@ -132,7 +143,7 @@ export function buildDoiTuongSoTien(
   };
 
   for (const o of openings) {
-    const ma = o.chiTietMa && o.chiTietType === expectedLoai ? o.chiTietMa : '';
+    const ma = match(o.chiTietMa, o.chiTietType, expectedLoai) ? o.chiTietMa! : '';
     add(ma, o.chiTietTen ?? '', o.net);
   }
 
@@ -141,13 +152,13 @@ export function buildDoiTuongSoTien(
     const maTKCo = v.danhMuc?.taiKhoanCo?.ma ?? v.taiKhoanCo;
     if (maTKNo === maTaiKhoan) {
       const dt = v.danhMuc?.doiTuong;
-      const dtMa = dt?.ma && dt?.loai === expectedLoai ? dt.ma : '';
+      const dtMa = match(dt?.ma, dt?.loai, expectedLoai) ? dt!.ma : '';
       add(dtMa, dtMa ? dt?.ten ?? '' : '', type === 'NO' ? v.soTien : -v.soTien);
     }
     if (maTKCo === maTaiKhoan) {
       // "Đối tượng có" ở doiTuong2; dữ liệu cũ chỉ có doiTuong → fallback
       const dt = v.danhMuc?.doiTuong2 ?? v.danhMuc?.doiTuong;
-      const dtMa = dt?.ma && dt?.loai === expectedLoai ? dt.ma : '';
+      const dtMa = match(dt?.ma, dt?.loai, expectedLoai) ? dt!.ma : '';
       add(dtMa, dtMa ? dt?.ten ?? '' : '', type === 'CO' ? v.soTien : -v.soTien);
     }
   }
@@ -437,19 +448,32 @@ export class BaoCaoService {
     authToken?: string,
     tenantId?: string,
   ): Promise<BalanceSheetReport> {
-    const [vouchersRes, accountsRes, openingRes, openingRawRes, nganHangRes] =
-      await Promise.all([
-        this.serviceClient.getNhatKyChung(
-          '2000-01-01',
-          asOfDate.toISOString(),
-          authToken,
-          tenantId,
-        ),
-        this.serviceClient.getTaiKhoan(authToken, tenantId),
-        this.serviceClient.getSoDuDauKy(authToken, tenantId),
-        this.serviceClient.getSoDuDauKyRaw(authToken, tenantId),
-        this.serviceClient.getNganHang(authToken, tenantId),
-      ]);
+    const [
+      vouchersRes,
+      accountsRes,
+      openingRes,
+      openingRawRes,
+      nganHangRes,
+      doiTuongRes,
+    ] = await Promise.all([
+      this.serviceClient.getNhatKyChung(
+        '2000-01-01',
+        asOfDate.toISOString(),
+        authToken,
+        tenantId,
+      ),
+      this.serviceClient.getTaiKhoan(authToken, tenantId),
+      this.serviceClient.getSoDuDauKy(authToken, tenantId),
+      this.serviceClient.getSoDuDauKyRaw(authToken, tenantId),
+      this.serviceClient.getNganHang(authToken, tenantId),
+      this.serviceClient.getDoiTuong(authToken, tenantId),
+    ]);
+
+    // Đối tượng có thể đa loại; snapshot trong chứng từ chỉ giữ loại chính →
+    // khớp "Chi tiết theo" của TK phải tra danh mục.
+    const matchLoai: LoaiMatcher = doiTuongRes.success
+      ? makeLoaiMatcher(buildDoiTuongLoaiIndex(doiTuongRes.data || []))
+      : matchLoaiBySnapshot;
 
     const nganHangByMa: NganHangByMa = new Map(
       (nganHangRes.success ? nganHangRes.data || [] : []).map((n) => [
@@ -523,6 +547,7 @@ export class BaoCaoService {
               net: openingNetForSide({ duNo: o.duNo, duCo: o.duCo }, 'NO'),
             })),
             account.chiTietTheo,
+            matchLoai,
           );
           if (dt.length > 0)
             taiSan[taiSan.length - 1].doiTuongChiTiet = enrichBankInfo(dt, nganHangByMa);
@@ -552,6 +577,7 @@ export class BaoCaoService {
               net: openingNetForSide({ duNo: o.duNo, duCo: o.duCo }, 'CO'),
             })),
             account.chiTietTheo,
+            matchLoai,
           );
           if (dt.length > 0)
             nguonVon[nguonVon.length - 1].doiTuongChiTiet = enrichBankInfo(dt, nganHangByMa);

@@ -1,4 +1,8 @@
 import { computeTrialRow, buildDoiTuongRows } from './so-cai.service';
+import {
+  buildDoiTuongLoaiIndex,
+  makeLoaiMatcher,
+} from '../shared/doi-tuong-loai.helper';
 
 describe('computeTrialRow', () => {
   const zeroAgg = { priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 0 };
@@ -161,5 +165,25 @@ describe('buildDoiTuongRows', () => {
     expect(rows.find((r) => r.ma === 'NCC9')).toBeUndefined();
     expect(rows.reduce((s, r) => s + r.noPhatSinh, 0)).toBe(500);
     expect(rows.find((r) => r.ma === '')?.noPhatSinh).toBe(200);
+  });
+
+  // Đối tượng đa loại: snapshot chứng từ/đầu kỳ chỉ giữ loại chính (loai[0]).
+  // Tra danh mục → vẫn thuộc NHA_CUNG_CAP nên phải hiện đúng ở TK 331.
+  it('đối tượng ĐA LOẠI (KH+NCC) hiện đúng ở TK 331, không rơi vào "Chưa xác định"', () => {
+    const match = makeLoaiMatcher(
+      buildDoiTuongLoaiIndex([{ ma: 'DT01', loai: ['KHACH_HANG', 'NHA_CUNG_CAP'] }]),
+    );
+    const rows = buildDoiTuongRows(
+      'CO',
+      [{ doiTuongMa: 'DT01', doiTuongTen: 'Cty đa loại', doiTuongLoai: 'KHACH_HANG', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 500 }],
+      [{ doiTuongMa: 'DT01', doiTuongTen: 'Cty đa loại', chiTietType: 'KHACH_HANG', duNo: 0, duCo: 1000 }],
+      'NHA_CUNG_CAP',
+      match,
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].ma).toBe('DT01');
+    expect(rows[0].coDauKy).toBe(1000);
+    expect(rows[0].coPhatSinh).toBe(500);
+    expect(rows[0].coCuoiKy).toBe(1500);
   });
 });

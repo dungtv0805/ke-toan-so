@@ -2,6 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { ServiceClient } from '@app/service-client';
 import { buildCongNoReport } from './cong-no-tong-hop.helper';
 import {
+  buildDoiTuongLoaiIndex,
+  makeLoaiMatcher,
+  matchLoaiBySnapshot,
+  type LoaiMatcher,
+} from '../shared/doi-tuong-loai.helper';
+import {
   AccountInfo,
   DtAggInput,
   DtOpeningInput,
@@ -19,7 +25,7 @@ export class CongNoTongHopService {
     filters: CongNoFilters,
     authToken?: string,
   ): Promise<BangTongHopCongNo> {
-    const [dtAggRes, accountsRes, openingRawRes] = await Promise.all([
+    const [dtAggRes, accountsRes, openingRawRes, doiTuongRes] = await Promise.all([
       this.serviceClient.aggregateBalanceByDoiTuong(
         startDate.toISOString(),
         endDate.toISOString(),
@@ -27,7 +33,14 @@ export class CongNoTongHopService {
       ),
       this.serviceClient.getTaiKhoan(authToken),
       this.serviceClient.getSoDuDauKyRaw(authToken),
+      this.serviceClient.getDoiTuong(authToken),
     ]);
+
+    // Đối tượng đa loại: snapshot chỉ giữ loại chính → tra danh mục để khớp
+    // "Chi tiết theo" của TK.
+    const matchLoai: LoaiMatcher = doiTuongRes.success
+      ? makeLoaiMatcher(buildDoiTuongLoaiIndex(doiTuongRes.data || []))
+      : matchLoaiBySnapshot;
 
     const dtAgg: DtAggInput[] = dtAggRes.success
       ? ((dtAggRes.data as unknown as DtAggInput[]) ?? [])
@@ -45,6 +58,6 @@ export class CongNoTongHopService {
         ? ((openingRawRes.data.items as unknown as DtOpeningInput[]) ?? [])
         : [];
 
-    return buildCongNoReport(accounts, dtAgg, openingRaw, filters);
+    return buildCongNoReport(accounts, dtAgg, openingRaw, filters, matchLoai);
   }
 }

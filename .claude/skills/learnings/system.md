@@ -144,3 +144,18 @@
 - **BE flow:** `SoCaiController.getLedger()` → `SoCaiService.getLedger()`
   - Calls `serviceClient.getNhatKyChung()` → Voucher Service `/nhat-ky-chung`
   - Calls `serviceClient.getTaiKhoan()` → Master Data Service `/tai-khoan`
+
+## Danh mục đối tượng — ĐA LOẠI (loai là mảng)
+
+### [2026-07-14] `doi_tuong.loai` là `string[]`, snapshot chứng từ chỉ giữ `loai[0]` (VERIFIED)
+- **Dữ liệu:** `doi_tuong.loai: DoiTuongType[]` (vd `["KHACH_HANG","NHA_CUNG_CAP"]` — 1 công ty vừa là KH vừa là NCC). Migration: `be/scripts/migrate-doi-tuong-loai-to-array.js`.
+- **Snapshot:** `danhMuc.doiTuong/doiTuong2.loai` trong chứng từ vẫn là **string** = `loai[0]` (FE `buildDoiTuongSnapshot`, `fe/src/utils/snapshotBuilder.ts`).
+- **Hệ quả:** KHÔNG được so `snapshot.loai === taiKhoan.chiTietTheo` — đối tượng đa loại có `loai[0]='KHACH_HANG'` sẽ bị loại khỏi TK 331 (`chiTietTheo='NHA_CUNG_CAP'`).
+- **Cách đúng:** tra danh mục đối tượng rồi kiểm tra `loai.includes(chiTietTheo)` — dùng `buildDoiTuongLoaiIndex` + `makeLoaiMatcher` (`be/apps/reporting-service/src/shared/doi-tuong-loai.helper.ts`).
+- **Verified:** YES (2026-07-14, API prod trả đúng đối tượng ở TK 331)
+
+### [2026-07-14] `ServiceClient.getDoiTuong()` phải gọi `/doi-tuong/all` (VERIFIED)
+- **Bẫy:** `GET /doi-tuong` (master-data) **phân trang, mặc định limit=10** → chỉ trả trang đầu, im lặng thiếu dữ liệu.
+- **Fix:** `getDoiTuong(authToken, tenantId)` gọi `/doi-tuong/all` (trả full list, `{success, data}`). Sửa ở cả `libs/service-client/src/service-client.ts` và `services/master-data/doi-tuong.service.ts` (có 2 định nghĩa, bản prototype ghi đè).
+- **Tương tự:** `getTaiKhoan()` tự phân trang limit=100; `getNganHang()` truyền `limit=500`.
+- **Verified:** YES (2026-07-14)

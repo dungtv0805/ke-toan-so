@@ -132,11 +132,19 @@ export class ServiceClient extends BaseServiceClient {
     });
   }
 
+  /**
+   * Toàn bộ danh mục đối tượng. '/doi-tuong' phân trang (mặc định 10 bản ghi)
+   * nên phải dùng '/doi-tuong/all'.
+   */
   async getDoiTuong(
     authToken?: string,
+    tenantId?: string,
   ): Promise<ServiceResponse<DoiTuongResponse[]>> {
-    return this.get<DoiTuongResponse[]>('master-data', '/doi-tuong', {
-      headers: authToken ? { Authorization: authToken } : undefined,
+    const headers: Record<string, string> = {};
+    if (authToken) headers['Authorization'] = authToken;
+    if (tenantId) headers['x-tenant-id'] = tenantId;
+    return this.get<DoiTuongResponse[]>('master-data', '/doi-tuong/all', {
+      headers: Object.keys(headers).length ? headers : undefined,
     });
   }
 

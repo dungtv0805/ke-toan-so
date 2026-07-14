@@ -82,3 +82,11 @@ Contains 3 tabs, each calls different API:
 - See `learnings/system.md` for full details
 - Root cause: ServiceClient URL parsing
 - Fix applied and verified
+
+### [2026-07-14] Phiếu đã gắn đối tượng vẫn nằm ở "Chưa xác định đối tượng" (FIXED, VERIFIED)
+- **Flow:** Báo cáo tài chính / Sổ cái / Sổ chi tiết / Bảng tổng hợp công nợ → reporting-service → phân rã TK theo đối tượng
+- **Issue:** PT155/2026 (tenant Vibiz Coach) Nợ 6422+133 / Có 331, đã gắn đối tượng Master CEO, nhưng TK 331 dồn số vào dòng "Chưa xác định đối tượng". Trên prod: 31 đối tượng đa loại, ~222 chứng từ dính.
+- **Root cause:** Đối tượng đa loại (`loai: ["KHACH_HANG","NHA_CUNG_CAP"]`) nhưng snapshot chứng từ chỉ lưu `loai[0]='KHACH_HANG'`; báo cáo so cứng `snapshot.loai === chiTietTheo` ('NHA_CUNG_CAP') → coi là sai loại → gộp orphan. Xem `learnings/system.md` (đa loại).
+- **Fix:** thêm `shared/doi-tuong-loai.helper.ts` (`buildDoiTuongLoaiIndex` + `makeLoaiMatcher`: khớp khi `danhMuc.loai.includes(chiTietTheo)`, fallback snapshot khi đối tượng đã xoá, NGAN_HANG_QUY vẫn theo snapshot). Truyền matcher vào `buildDoiTuongSoTien` (bao-cao), `buildDoiTuongRows` (so-cai + cong-no), `buildSoChiTiet/Multi` (so-chi-tiet). Kèm sửa `getDoiTuong` → `/doi-tuong/all` (trước chỉ lấy 10 bản ghi).
+- **Verified:** YES (2026-07-14, prod: TK 331 hiện Master CEO 15.000.000 = PT155; chỉ còn PT157 orphan vì thật sự chưa gắn đối tượng)
+- **Files:** `be/apps/reporting-service/src/shared/doi-tuong-loai.helper.ts`, `bao-cao/bao-cao.service.ts`, `so-cai/so-cai.service.ts`, `so-chi-tiet/so-chi-tiet.{helper,service}.ts`, `cong-no-tong-hop/cong-no-tong-hop.{helper,service}.ts`, `be/libs/service-client/src/{service-client.ts,services/master-data/doi-tuong.service.ts}`

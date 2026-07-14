@@ -184,6 +184,11 @@ describe('getTrialBalance: TK có chi tiết đối tượng lấy tổng từ c
       getSoDuDauKy: () => ok({ items: [] }),
       getSoDuDauKyRaw: () => ok({ items: [] }),
       getNganHang: () => ok([]),
+      getDoiTuong: () =>
+        ok([
+          { ma: 'KH_A', ten: 'Cty A', loai: ['KHACH_HANG'] },
+          { ma: 'KH_B', ten: 'Cty B', loai: ['KHACH_HANG'] },
+        ]),
       aggregateBalanceByDoiTuong: () =>
         ok([
           {

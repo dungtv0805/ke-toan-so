@@ -1,4 +1,8 @@
 import type { NhatKyChungEntry } from '@app/dto';
+import {
+  matchLoaiBySnapshot,
+  type LoaiMatcher,
+} from '../shared/doi-tuong-loai.helper';
 
 /**
  * Tín hiệu lọc "đối tượng rỗng": chỉ lấy bút toán CHƯA gắn đối tượng. FE truyền
@@ -112,16 +116,18 @@ export function buildSoChiTiet(
   maDoiTuong: string | undefined,
   startDate: Date,
   endDate: Date,
+  match: LoaiMatcher = matchLoaiBySnapshot,
 ): SoChiTietReport {
   const loai = account.loai;
   const chiTietTheo = account.chiTietTheo;
 
   // "Chưa xác định đối tượng" — ĐỒNG NHẤT với báo cáo tài chính
-  // (buildDoiTuongSoTien): đối tượng rỗng HOẶC loai ≠ chiTietTheo của TK. Nhờ
-  // vậy bấm dòng "chưa xác định" ở báo cáo ra đúng các phiếu đó (kể cả phiếu gắn
-  // đối tượng SAI loại).
+  // (buildDoiTuongSoTien): đối tượng rỗng HOẶC không khớp chiTietTheo của TK.
+  // Nhờ vậy bấm dòng "chưa xác định" ở báo cáo ra đúng các phiếu đó. Việc khớp
+  // loại do `match` quyết định (đối tượng đa loại → tra danh mục, không tin
+  // snapshot.loai).
   const isChuaXacDinh = (ma?: string, dtLoai?: string): boolean =>
-    !(ma && (!chiTietTheo || dtLoai === chiTietTheo));
+    !(ma && (!chiTietTheo || match(ma, dtLoai, chiTietTheo)));
 
   // Khớp đối tượng: không lọc → nhận tất cả; '__none__' → thuộc "chưa xác định";
   // ngược lại → khớp đúng mã.
@@ -255,6 +261,7 @@ export function buildSoChiTietMulti(
   maDoiTuong: string | undefined,
   startDate: Date,
   endDate: Date,
+  match: LoaiMatcher = matchLoaiBySnapshot,
 ): SoChiTietReport[] {
   const reports: SoChiTietReport[] = [];
   for (const code of codes) {
@@ -274,6 +281,7 @@ export function buildSoChiTietMulti(
       maDoiTuong,
       startDate,
       endDate,
+      match,
     );
     const isEmpty =
       report.rows.length === 0 &&

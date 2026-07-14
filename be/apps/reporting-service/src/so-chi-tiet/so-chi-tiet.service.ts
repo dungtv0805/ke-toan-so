@@ -6,6 +6,10 @@ import {
   type SoChiTietReport,
   type OpeningRow,
 } from './so-chi-tiet.helper';
+import {
+  buildDoiTuongLoaiIndex,
+  makeLoaiMatcher,
+} from '../shared/doi-tuong-loai.helper';
 
 @Injectable()
 export class SoChiTietService {
@@ -47,6 +51,10 @@ export class SoChiTietService {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
+    // Đối tượng đa loại: snapshot trong chứng từ chỉ giữ loại chính → khớp
+    // "Chi tiết theo" của TK phải tra danh mục đối tượng.
+    const matchLoai = makeLoaiMatcher(buildDoiTuongLoaiIndex(doiTuongs));
+
     const reports = buildSoChiTietMulti(
       codes,
       accounts,
@@ -55,6 +63,7 @@ export class SoChiTietService {
       maDoiTuong,
       startDate,
       end,
+      matchLoai,
     );
 
     // Gắn thông tin đối tượng khi có lọc theo đối tượng.

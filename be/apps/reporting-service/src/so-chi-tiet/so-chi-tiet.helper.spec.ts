@@ -3,6 +3,10 @@ import {
   buildSoChiTiet,
   buildSoChiTietMulti,
 } from './so-chi-tiet.helper';
+import {
+  buildDoiTuongLoaiIndex,
+  makeLoaiMatcher,
+} from '../shared/doi-tuong-loai.helper';
 
 describe('computeRelevantCodes', () => {
   const accounts = [
@@ -328,5 +332,45 @@ describe('buildSoChiTietMulti', () => {
       ['111', '999'], accounts, [voucher], [], undefined, start, end,
     );
     expect(reports.map((r) => r.taiKhoan.ma)).toEqual(['111']);
+  });
+});
+
+describe('buildSoChiTiet — đối tượng đa loại', () => {
+  const start = new Date('2026-01-01');
+  const end = new Date('2026-12-31T23:59:59.999Z');
+  const account331 = {
+    ma: '331',
+    ten: 'Phải trả NCC',
+    loai: 'CO',
+    chiTietTheo: 'NHA_CUNG_CAP',
+  };
+  const rel = new Set(['331']);
+  // Ca thật PT155/2026: đối tượng đa loại, snapshot chỉ giữ loại chính KHACH_HANG.
+  const vouchers = [
+    {
+      soPhieu: 'PT155/2026',
+      ngay: new Date('2026-05-25') as any,
+      soTien: 500,
+      noiDung: 'Phí tư vấn',
+      danhMuc: {
+        taiKhoanNo: { ma: '6422', ten: '6422', loai: 'NO', nhom: '' },
+        taiKhoanCo: { ma: '331', ten: '331', loai: 'CO', nhom: '' },
+        doiTuong2: { ma: 'DT01', ten: 'Cty đa loại', loai: 'KHACH_HANG' },
+      },
+    } as any,
+  ];
+  const match = makeLoaiMatcher(
+    buildDoiTuongLoaiIndex([{ ma: 'DT01', loai: ['KHACH_HANG', 'NHA_CUNG_CAP'] }]),
+  );
+
+  it("lọc theo đối tượng đa loại trên TK 331 → ra phiếu (trước đây rỗng)", () => {
+    const r = buildSoChiTiet(account331, rel, vouchers, [], 'DT01', start, end, match);
+    expect(r.rows.map((x) => x.soPhieu)).toEqual(['PT155/2026']);
+    expect(r.tongPhatSinhCo).toBe(500);
+  });
+
+  it("lọc '__none__' KHÔNG còn gom phiếu đã gắn đối tượng đa loại", () => {
+    const r = buildSoChiTiet(account331, rel, vouchers, [], '__none__', start, end, match);
+    expect(r.rows).toHaveLength(0);
   });
 });

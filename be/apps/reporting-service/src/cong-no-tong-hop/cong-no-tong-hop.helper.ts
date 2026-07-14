@@ -15,6 +15,10 @@ import {
   BangTongHopCongNo,
   CONG_NO_CHI_TIET_TYPES,
 } from './cong-no-tong-hop.types';
+import {
+  matchLoaiBySnapshot,
+  type LoaiMatcher,
+} from '../shared/doi-tuong-loai.helper';
 
 const zeroCell = (): CongNoCell => ({ phaiThu: 0, phaiTra: 0 });
 const zeroVal = (): CongNoRowVal => ({
@@ -42,6 +46,7 @@ export function buildCongNoReport(
   dtAgg: DtAggInput[],
   dtOpening: DtOpeningInput[],
   filters: CongNoFilters,
+  match: LoaiMatcher = matchLoaiBySnapshot,
 ): BangTongHopCongNo {
   // Gom đối tượng-agg theo mã TK
   const aggByAcc = new Map<string, DoiTuongAgg[]>();
@@ -89,6 +94,7 @@ export function buildCongNoReport(
       aggByAcc.get(acc.ma) ?? [],
       openByAcc.get(acc.ma) ?? [],
       acc.chiTietTheo!,
+      match,
     );
 
     let doiTuongs: CongNoDoiTuongRow[] = rows.map((row) => ({

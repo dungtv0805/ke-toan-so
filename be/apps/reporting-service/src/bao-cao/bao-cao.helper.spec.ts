@@ -1,4 +1,8 @@
 import { openingNetForSide, buildDoiTuongSoTien } from './bao-cao.service';
+import {
+  buildDoiTuongLoaiIndex,
+  makeLoaiMatcher,
+} from '../shared/doi-tuong-loai.helper';
 
 describe('openingNetForSide', () => {
   it('undefined opening → 0', () => {
@@ -103,5 +107,62 @@ describe('buildDoiTuongSoTien', () => {
     const vcb = rows.find((r) => r.ma === 'VCB01');
     expect(vcb).toBeDefined();
     expect(vcb!.soTien).toBe(-500); // tiền ra khỏi 112 (type NO, bên Có → trừ)
+  });
+
+  // Ca thật PT155/2026: đối tượng đa loại (KH+NCC), snapshot chứng từ chỉ giữ
+  // loại chính 'KHACH_HANG' → trước đây bị dồn vào "Chưa xác định đối tượng"
+  // ở TK 331. Tra danh mục thì loai chứa NHA_CUNG_CAP → phải hiện đúng đối tượng.
+  it('đối tượng ĐA LOẠI (KH+NCC): hiện đúng ở TK 331 dù snapshot ghi KHACH_HANG', () => {
+    const match = makeLoaiMatcher(
+      buildDoiTuongLoaiIndex([{ ma: 'DT01', loai: ['KHACH_HANG', 'NHA_CUNG_CAP'] }]),
+    );
+    const vouchers = [
+      {
+        soTien: 500,
+        danhMuc: {
+          taiKhoanNo: { ma: '6422' },
+          taiKhoanCo: { ma: '331' },
+          doiTuong2: { ma: 'DT01', ten: 'Cty đa loại', loai: 'KHACH_HANG' },
+        },
+      },
+    ];
+    const rows = buildDoiTuongSoTien(
+      vouchers as never[], '331', 'CO', [], 'NHA_CUNG_CAP', match,
+    );
+    expect(rows.find((r) => r.ma === '')).toBeUndefined(); // hết "chưa xác định"
+    expect(rows.find((r) => r.ma === 'DT01')?.soTien).toBe(500);
+  });
+
+  it('đối tượng đa loại KHÔNG chứa loại của TK vẫn gộp "Chưa xác định"', () => {
+    const match = makeLoaiMatcher(
+      buildDoiTuongLoaiIndex([{ ma: 'NV1', loai: ['NHAN_VIEN'] }]),
+    );
+    const vouchers = [
+      {
+        soTien: 200,
+        danhMuc: {
+          taiKhoanNo: { ma: '6422' },
+          taiKhoanCo: { ma: '331' },
+          doiTuong2: { ma: 'NV1', ten: 'Nhân viên', loai: 'NHAN_VIEN' },
+        },
+      },
+    ];
+    const rows = buildDoiTuongSoTien(
+      vouchers as never[], '331', 'CO', [], 'NHA_CUNG_CAP', match,
+    );
+    expect(rows.find((r) => r.ma === 'NV1')).toBeUndefined();
+    expect(rows.find((r) => r.ma === '')?.soTien).toBe(200);
+  });
+
+  it('số dư đầu kỳ của đối tượng đa loại cũng khớp TK 331', () => {
+    const match = makeLoaiMatcher(
+      buildDoiTuongLoaiIndex([{ ma: 'DT01', loai: ['KHACH_HANG', 'NHA_CUNG_CAP'] }]),
+    );
+    const rows = buildDoiTuongSoTien([], '331', 'CO', [
+      { chiTietMa: 'DT01', chiTietTen: 'Cty đa loại', chiTietType: 'KHACH_HANG', net: 1000 },
+    ], 'NHA_CUNG_CAP', match);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].ma).toBe('DT01');
+    expect(rows[0].soTien).toBe(1000);
   });
 });

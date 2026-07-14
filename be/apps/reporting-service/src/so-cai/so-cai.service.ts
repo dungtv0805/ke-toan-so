@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ServiceClient } from '@app/service-client';
 import type { TaiKhoanResponse, NhatKyChungEntry } from '@app/dto';
+import {
+  buildDoiTuongLoaiIndex,
+  makeLoaiMatcher,
+  matchLoaiBySnapshot,
+  type LoaiMatcher,
+} from '../shared/doi-tuong-loai.helper';
 
 export interface SoCaiEntry {
   ngay: Date;
@@ -144,16 +150,19 @@ export function buildDoiTuongRows(
   aggs: DoiTuongAgg[],
   openings: DoiTuongOpening[],
   expectedLoai: string,
+  match: LoaiMatcher = matchLoaiBySnapshot,
 ): TrialBalanceEntry[] {
   const keyOf = (dt: string | null) => dt ?? '';
   // Đối tượng SAI loại (hoặc thiếu loại) so với "Chi tiết theo" của TK được gộp
   // vào dòng "Chưa xác định đối tượng" (doiTuongMa=null) để Σ con = số dư TK.
+  // Đúng loại hay không do `match` quyết định (mặc định: so theo snapshot; caller
+  // nên truyền matcher tra danh mục vì đối tượng có thể đa loại).
   const normAgg = (a: DoiTuongAgg): DoiTuongAgg =>
-    a.doiTuongMa && a.doiTuongLoai === expectedLoai
+    match(a.doiTuongMa, a.doiTuongLoai, expectedLoai)
       ? a
       : { ...a, doiTuongMa: null, doiTuongTen: null };
   const normOpen = (o: DoiTuongOpening): DoiTuongOpening =>
-    o.doiTuongMa && o.chiTietType === expectedLoai
+    match(o.doiTuongMa, o.chiTietType, expectedLoai)
       ? o
       : { ...o, doiTuongMa: null, doiTuongTen: null };
   // Cộng dồn khi trùng khóa để hàm tự khớp tổng dù caller truyền list chưa gom.
@@ -476,23 +485,37 @@ export class SoCaiService {
     endDate: Date,
     authToken?: string,
   ): Promise<{ entries: TrialBalanceEntry[]; totals: TrialBalanceEntry }> {
-    const [aggRes, accountsRes, openingRes, dtAggRes, openingRawRes, nganHangRes] =
-      await Promise.all([
-        this.serviceClient.aggregateBalance(
-          startDate.toISOString(),
-          endDate.toISOString(),
-          authToken,
-        ),
-        this.serviceClient.getTaiKhoan(authToken),
-        this.serviceClient.getSoDuDauKy(authToken),
-        this.serviceClient.aggregateBalanceByDoiTuong(
-          startDate.toISOString(),
-          endDate.toISOString(),
-          authToken,
-        ),
-        this.serviceClient.getSoDuDauKyRaw(authToken),
-        this.serviceClient.getNganHang(authToken),
-      ]);
+    const [
+      aggRes,
+      accountsRes,
+      openingRes,
+      dtAggRes,
+      openingRawRes,
+      nganHangRes,
+      doiTuongRes,
+    ] = await Promise.all([
+      this.serviceClient.aggregateBalance(
+        startDate.toISOString(),
+        endDate.toISOString(),
+        authToken,
+      ),
+      this.serviceClient.getTaiKhoan(authToken),
+      this.serviceClient.getSoDuDauKy(authToken),
+      this.serviceClient.aggregateBalanceByDoiTuong(
+        startDate.toISOString(),
+        endDate.toISOString(),
+        authToken,
+      ),
+      this.serviceClient.getSoDuDauKyRaw(authToken),
+      this.serviceClient.getNganHang(authToken),
+      this.serviceClient.getDoiTuong(authToken),
+    ]);
+
+    // Đối tượng đa loại: snapshot chỉ giữ loại chính → tra danh mục để khớp
+    // "Chi tiết theo" của TK.
+    const matchLoai: LoaiMatcher = doiTuongRes.success
+      ? makeLoaiMatcher(buildDoiTuongLoaiIndex(doiTuongRes.data || []))
+      : matchLoaiBySnapshot;
 
     // Map mã ngân hàng/quỹ → tên TK + tên NH + số TK (hiện "Tên tài khoản - Số TK").
     const nganHangByMa = new Map<
@@ -598,6 +621,7 @@ export class SoCaiService {
                 (dtOpeningByAccount.get(ma) ?? new Map<string, DoiTuongOpening>()).values(),
               ),
               account.chiTietTheo,
+              matchLoai,
             )
           : [];
 
