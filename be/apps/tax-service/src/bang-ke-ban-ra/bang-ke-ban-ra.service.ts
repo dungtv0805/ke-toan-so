@@ -30,17 +30,28 @@ export class BangKeBanRaService {
     return tenantId ? { tenantId } : {};
   }
 
-  private applyTotals<T extends { giaTriChuaThue?: number; thueSuat?: string }>(
-    target: BangKeBanRa,
-    dto: T,
-  ): void {
+  /**
+   * Chốt tiền thuế + tổng thanh toán.
+   *
+   * Mặc định tính theo công thức, NHƯNG tôn trọng số người dùng gửi lên (hóa đơn hay lệch vài
+   * đồng do làm tròn trên từng dòng hàng). Quy tắc liên động do FE giữ — đổi giá trị / thuế suất
+   * thì FE gửi lên tiền thuế đã tính lại, nên ở đây KHÔNG lấy `target.tienThue` làm fallback.
+   */
+  private applyTotals<
+    T extends {
+      giaTriChuaThue?: number;
+      thueSuat?: string;
+      tienThue?: number;
+      tongThanhToan?: number;
+    },
+  >(target: BangKeBanRa, dto: T): void {
     const gia = dto.giaTriChuaThue ?? target.giaTriChuaThue ?? 0;
     const suat = dto.thueSuat ?? target.thueSuat ?? '10';
-    const tienThue = tinhTienThue(gia, suat);
+    const tienThue = dto.tienThue ?? tinhTienThue(gia, suat);
     target.giaTriChuaThue = gia;
     target.thueSuat = suat;
     target.tienThue = tienThue;
-    target.tongThanhToan = Number(gia) + tienThue;
+    target.tongThanhToan = dto.tongThanhToan ?? Number(gia) + tienThue;
   }
 
   async findAllPaginated(

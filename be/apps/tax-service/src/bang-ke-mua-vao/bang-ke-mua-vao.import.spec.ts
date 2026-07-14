@@ -245,3 +245,121 @@ describe('BangKeMuaVaoService.checkDuplicates', () => {
     expect(repo.find).not.toHaveBeenCalled();
   });
 });
+
+describe('BangKeMuaVaoService — tiền thuế nhập tay', () => {
+  it('create: không gửi tienThue → tính theo công thức', async () => {
+    const { service } = makeService();
+    const saved = await service.create(
+      dto({ giaTriChuaThue: 1_000_000, thueSuat: '10' }),
+    );
+    expect(saved.tienThue).toBe(100_000);
+    expect(saved.tongThanhToan).toBe(1_100_000);
+  });
+
+  it('create: gửi tienThue → giữ nguyên số nhập, không tính lại', async () => {
+    const { service } = makeService();
+    const saved = await service.create(
+      dto({ giaTriChuaThue: 1_000_000, thueSuat: '10', tienThue: 99_998 }),
+    );
+    expect(saved.tienThue).toBe(99_998);
+    expect(saved.tongThanhToan).toBe(1_099_998);
+  });
+
+  it('create: gửi cả tongThanhToan → giữ nguyên số nhập', async () => {
+    const { service } = makeService();
+    const saved = await service.create(
+      dto({
+        giaTriChuaThue: 1_000_000,
+        thueSuat: '10',
+        tienThue: 99_998,
+        tongThanhToan: 1_099_990,
+      }),
+    );
+    expect(saved.tienThue).toBe(99_998);
+    expect(saved.tongThanhToan).toBe(1_099_990);
+  });
+
+  it('create: tienThue = 0 vẫn được tôn trọng (không bị coi là "chưa nhập")', async () => {
+    const { service } = makeService();
+    const saved = await service.create(
+      dto({ giaTriChuaThue: 1_000_000, thueSuat: '10', tienThue: 0 }),
+    );
+    expect(saved.tienThue).toBe(0);
+    expect(saved.tongThanhToan).toBe(1_000_000);
+  });
+
+  it('importMany: mỗi dòng giữ tiền thuế của chính nó, dòng bỏ trống thì tính công thức', async () => {
+    const { service, repo } = makeService();
+    await service.importMany([
+      dto({
+        soHoaDon: 'A1',
+        giaTriChuaThue: 1_000_000,
+        thueSuat: '10',
+        tienThue: 99_998,
+      }),
+      dto({ soHoaDon: 'A2', giaTriChuaThue: 2_000_000, thueSuat: '8' }),
+    ]);
+    const entities = repo.save.mock.calls[0][0] as Array<{
+      tienThue: number;
+      tongThanhToan: number;
+    }>;
+    expect(entities[0].tienThue).toBe(99_998);
+    expect(entities[1].tienThue).toBe(160_000);
+    expect(entities[1].tongThanhToan).toBe(2_160_000);
+  });
+
+  it('DTO: tienThue âm bị chặn', async () => {
+    const instance = plainToInstance(CreateBangKeMuaVaoDto, {
+      ...dto(),
+      tienThue: -1,
+    });
+    const errors = await validate(instance);
+    expect(errors.some((e) => e.property === 'tienThue')).toBe(true);
+  });
+
+  it('DTO: tienThue / tongThanhToan hợp lệ thì qua được validation', async () => {
+    const instance = plainToInstance(CreateBangKeMuaVaoDto, {
+      ...dto(),
+      tienThue: 99_998,
+      tongThanhToan: 1_099_998,
+    });
+    const errors = await validate(instance);
+    expect(errors).toHaveLength(0);
+  });
+});
+
+describe('BangKeMuaVaoService.update — tiền thuế nhập tay', () => {
+  const existing = () =>
+    ({
+      id: 'x1',
+      giaTriChuaThue: 1_000_000,
+      thueSuat: '10',
+      tienThue: 99_998,
+      tongThanhToan: 1_099_998,
+      isActive: true,
+    }) as never;
+
+  it('update gửi kèm tienThue mới → lưu số mới', async () => {
+    const { service } = makeService();
+    jest.spyOn(service, 'findOne').mockResolvedValue(existing());
+
+    const saved = await service.update('x1', {
+      giaTriChuaThue: 2_000_000,
+      tienThue: 199_997,
+      tongThanhToan: 2_199_997,
+    });
+
+    expect(saved.tienThue).toBe(199_997);
+    expect(saved.tongThanhToan).toBe(2_199_997);
+  });
+
+  it('update chỉ đổi giaTriChuaThue (không gửi tienThue) → tính lại theo công thức', async () => {
+    const { service } = makeService();
+    jest.spyOn(service, 'findOne').mockResolvedValue(existing());
+
+    const saved = await service.update('x1', { giaTriChuaThue: 2_000_000 });
+
+    expect(saved.tienThue).toBe(200_000);
+    expect(saved.tongThanhToan).toBe(2_200_000);
+  });
+});
