@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import * as XLSX from "xlsx";
 import { buildTemplateWorkbook } from "../template";
-import { aoaToRawRows, headerMatches } from "../parseRows";
+import { aoaToRawRows, missingRequiredColumns } from "../parseRows";
 import { validateRows } from "../validate";
 import { BangKeVariant, buildColumns } from "../columns";
 
@@ -53,9 +53,9 @@ describe("ô ngày là serial nguyên như Excel thật", () => {
 });
 
 describe.each(["mua", "ban"] as const)("round-trip template %s", (variant) => {
-  it("sheet đầu tiên là sheet dữ liệu, header khớp template", async () => {
+  it("sheet đầu tiên là sheet dữ liệu, có đủ cột bắt buộc", async () => {
     const aoa = await readTemplateBack(variant);
-    expect(headerMatches(aoa, buildColumns(variant))).toBe(true);
+    expect(missingRequiredColumns(aoa, buildColumns(variant))).toEqual([]);
   });
 
   it("dòng ví dụ đọc lại được và validate không lỗi", async () => {
@@ -76,9 +76,10 @@ describe.each(["mua", "ban"] as const)("round-trip template %s", (variant) => {
     });
   });
 
-  it("file mẫu của biến thể kia bị từ chối vì lệch header", async () => {
+  it("file mẫu của biến thể kia bị từ chối: thiếu cột tên đối tác", async () => {
     const other: BangKeVariant = variant === "mua" ? "ban" : "mua";
     const aoa = await readTemplateBack(other);
-    expect(headerMatches(aoa, buildColumns(variant))).toBe(false);
+    const expected = variant === "mua" ? "Tên người bán" : "Tên người mua";
+    expect(missingRequiredColumns(aoa, buildColumns(variant))).toEqual([expected]);
   });
 });

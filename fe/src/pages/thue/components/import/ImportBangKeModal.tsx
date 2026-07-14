@@ -11,7 +11,7 @@ import {
   RowValidationResult,
   buildColumns,
 } from "./lib/columns";
-import { aoaToRawRows, headerMatches } from "./lib/parseRows";
+import { aoaToRawRows, missingRequiredColumns } from "./lib/parseRows";
 import { validateRows } from "./lib/validate";
 import { applyDuplicateWarnings } from "./lib/duplicates";
 
@@ -73,9 +73,11 @@ export function ImportBangKeModal({
       }) as unknown[][];
 
       const columns = buildColumns(variant);
-      if (!headerMatches(aoa, columns)) {
+      // Khớp cột theo TÊN tiêu đề → file mẫu cũ (chưa có cột Tiền thuế / Tổng thanh toán) vẫn dùng được.
+      const missing = missingRequiredColumns(aoa, columns);
+      if (missing.length > 0) {
         message.error(
-          "Tiêu đề cột không khớp file mẫu. Vui lòng tải lại file mẫu và nhập vào đó.",
+          `File thiếu cột bắt buộc: ${missing.join(", ")}. Vui lòng tải lại file mẫu.`,
         );
         return;
       }

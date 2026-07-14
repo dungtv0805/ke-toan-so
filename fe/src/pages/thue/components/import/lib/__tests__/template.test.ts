@@ -18,21 +18,24 @@ describe("buildTemplateWorkbook", () => {
     expect(header).toContain(mstHeader);
   });
 
-  it("có đúng 9 cột, 1 dòng ví dụ, dòng 3 trở đi để trống", () => {
+  it("có đúng 11 cột, 1 dòng ví dụ, dòng 3 trở đi để trống", () => {
     const wb = buildTemplateWorkbook("mua");
     const main = wb.getWorksheet("BangKeMuaVao")!;
 
-    expect(buildColumns("mua")).toHaveLength(9);
+    expect(buildColumns("mua")).toHaveLength(11);
     expect(main.getRow(2).getCell(1).value).toBe("01/06/2026");
     expect(main.getRow(2).getCell(8).value).toBe("10 - 10%");
     // các hàng sau chỉ tồn tại để mang dropdown, không có dữ liệu
     expect(main.getRow(3).getCell(1).value).toBeNull();
   });
 
-  it("không có cột Tiền thuế / Tổng thanh toán (BE tự tính)", () => {
-    const headers = buildColumns("mua").map((c) => c.header);
-    expect(headers.some((h) => h.includes("Tiền thuế"))).toBe(false);
-    expect(headers.some((h) => h.includes("Tổng thanh toán"))).toBe(false);
+  it("có cột Tiền thuế / Tổng thanh toán, không bắt buộc (bỏ trống thì BE tính công thức)", () => {
+    const columns = buildColumns("mua");
+    const headers = columns.map((c) => c.header);
+    expect(headers).toContain("Tiền thuế");
+    expect(headers).toContain("Tổng thanh toán");
+    expect(columns.find((c) => c.key === "tienThue")!.required).toBe(false);
+    expect(columns.find((c) => c.key === "tongThanhToan")!.required).toBe(false);
   });
 
   it("sheet DM_ThueSuat liệt kê đủ 6 thuế suất dạng 'Mã - Tên'", () => {

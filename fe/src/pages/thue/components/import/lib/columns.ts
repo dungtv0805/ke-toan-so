@@ -2,7 +2,8 @@ import { ThueSuat } from "@/services/taxService";
 
 export type BangKeVariant = "mua" | "ban";
 
-/** Khóa logic của từng cột, theo đúng thứ tự trong file Excel mẫu. */
+/** Khóa logic của từng cột. Thứ tự = thứ tự trong file mẫu; parser khớp theo TÊN nên file có
+ * thể xếp cột khác thứ tự hoặc thiếu cột không bắt buộc (file mẫu cũ 9 cột). */
 export type ImportColumnKey =
   | "ngayHoaDon"
   | "soHoaDon"
@@ -12,6 +13,8 @@ export type ImportColumnKey =
   | "tenHangHoa"
   | "giaTriChuaThue"
   | "thueSuat"
+  | "tienThue"
+  | "tongThanhToan"
   | "ghiChu";
 
 export interface ImportColumn {
@@ -32,6 +35,9 @@ export function buildColumns(variant: BangKeVariant): ImportColumn[] {
     { key: "tenHangHoa", header: "Tên hàng hóa / dịch vụ", required: false },
     { key: "giaTriChuaThue", header: "Giá trị chưa thuế", required: true },
     { key: "thueSuat", header: "Thuế suất", required: true },
+    // Để trống → BE tính theo công thức. Nhập số → tôn trọng số trên hóa đơn (chênh lệch làm tròn).
+    { key: "tienThue", header: "Tiền thuế", required: false },
+    { key: "tongThanhToan", header: "Tổng thanh toán", required: false },
     { key: "ghiChu", header: "Ghi chú", required: false },
   ];
 }
@@ -51,6 +57,8 @@ export interface BangKeImportItem {
   tenHangHoa?: string;
   giaTriChuaThue: number;
   thueSuat: ThueSuat;
+  tienThue?: number;
+  tongThanhToan?: number;
   ghiChu?: string;
 }
 
