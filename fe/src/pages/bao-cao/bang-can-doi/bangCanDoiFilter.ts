@@ -1,9 +1,31 @@
-import { hasActiveFilters, matchAllFilters, type ColumnFilters } from '@/components/table/columnFilter';
+import {
+  hasActiveFilters,
+  matchAllFilters,
+  type CellValue,
+  type ColumnFilters,
+} from '@/components/table/columnFilter';
 import type { BalanceSheetData, BalanceSheetItem } from '@/services/balanceSheetService';
 
-/** Key cột lọc được của bảng — trùng `key` trong định nghĩa cột antd. */
-const getValue = (it: BalanceSheetItem, key: string): string | undefined =>
-  key === 'tenChiTieu' ? it.tenChiTieu : key === 'ma' ? it.ma : undefined;
+/**
+ * Key cột lọc được của bảng — trùng `key` trong định nghĩa cột antd.
+ * `chenhLech` là cột tính (không có field trong dữ liệu) → tính đúng công thức đang hiển thị.
+ */
+const getValue = (it: BalanceSheetItem, key: string): CellValue => {
+  switch (key) {
+    case 'tenChiTieu':
+      return it.tenChiTieu;
+    case 'ma':
+      return it.ma;
+    case 'dauNam':
+      return it.dauNam;
+    case 'cuoiKy':
+      return it.cuoiKy;
+    case 'chenhLech':
+      return it.cuoiKy - it.dauNam;
+    default:
+      return undefined;
+  }
+};
 
 const sum = (items: BalanceSheetItem[], pick: (i: BalanceSheetItem) => number): number =>
   items.reduce((s, i) => s + pick(i), 0);

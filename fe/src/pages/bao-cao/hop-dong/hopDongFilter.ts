@@ -1,17 +1,33 @@
 import {
   hasActiveFilters,
   matchAllFilters,
+  type CellValue,
   type ColumnFilters,
 } from '@/components/table/columnFilter';
 import type { BaoCaoHopDongRow } from '@/types';
 
+/** Cột số của bảng — key trùng `key` trong định nghĩa cột antd. */
+const NUM_KEYS = new Set([
+  'soLuong',
+  'giaTri',
+  'quyetToan',
+  'thuTien',
+  'chuaCoHD',
+  'hdChuaKy',
+  'hdPhotoScan',
+  'hdGoc',
+  'giaTriBinhQuan',
+]);
+
 /**
  * Key cột lọc được — trùng `key` trong định nghĩa cột antd.
- * Bảng này chỉ có "Năm" là cột nhãn; các cột còn lại là số lượng / số tiền nên không lọc.
  * Năm rỗng hiển thị "Chưa rõ" → lọc theo đúng chữ đang thấy trên bảng.
  */
-const getValue = (r: BaoCaoHopDongRow, key: string): string | undefined =>
-  key === 'nam' ? (r.nam == null ? 'Chưa rõ' : String(r.nam)) : undefined;
+const getValue = (r: BaoCaoHopDongRow, key: string): CellValue => {
+  if (key === 'nam') return r.nam == null ? 'Chưa rõ' : String(r.nam);
+  if (NUM_KEYS.has(key)) return (r as unknown as Record<string, number>)[key];
+  return undefined;
+};
 
 const SUM_KEYS = [
   'soLuong',

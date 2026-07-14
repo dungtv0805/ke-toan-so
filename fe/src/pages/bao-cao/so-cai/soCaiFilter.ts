@@ -1,22 +1,40 @@
-import { hasActiveFilters, matchAllFilters, type ColumnFilters } from '@/components/table/columnFilter';
+import {
+  hasActiveFilters,
+  matchAllFilters,
+  type CellValue,
+  type ColumnFilters,
+} from '@/components/table/columnFilter';
 import type { SoCaiByAccount, SoCaiEntry, TrialBalance } from '@/services/soCaiService';
 
+/** Cột số của bảng tài khoản (tab Tổng hợp theo TK và tab Cân đối phát sinh). */
+const ACCOUNT_NUM_KEYS = new Set([
+  'soDuDauKyNo',
+  'soDuDauKyCo',
+  'phatSinhNo',
+  'phatSinhCo',
+  'soDuCuoiKyNo',
+  'soDuCuoiKyCo',
+]);
+
 /** Key cột lọc được của bảng tài khoản (tab Tổng hợp theo TK và tab Cân đối phát sinh). */
-const accountValue = (
-  r: { taiKhoan: string; tenTaiKhoan: string },
-  key: string,
-): string | undefined =>
-  key === 'taiKhoan' ? r.taiKhoan : key === 'tenTaiKhoan' ? r.tenTaiKhoan : undefined;
+const accountValue = (r: SoCaiByAccount | TrialBalance, key: string): CellValue => {
+  if (key === 'taiKhoan') return r.taiKhoan;
+  if (key === 'tenTaiKhoan') return r.tenTaiKhoan;
+  if (ACCOUNT_NUM_KEYS.has(key)) return (r as unknown as Record<string, number>)[key];
+  return undefined;
+};
+
+/** Cột số của bảng bút toán (tab Chi tiết tài khoản). */
+const ENTRY_NUM_KEYS = new Set(['phatSinhNo', 'phatSinhCo', 'soDuNo', 'soDuCo']);
 
 /** Key cột lọc được của bảng bút toán (tab Chi tiết tài khoản). */
-const entryValue = (e: SoCaiEntry, key: string): string | undefined =>
-  key === 'soPhieu'
-    ? e.soPhieu
-    : key === 'loaiChungTu'
-      ? e.loaiChungTu
-      : key === 'dienGiai'
-        ? e.dienGiai
-        : undefined;
+const entryValue = (e: SoCaiEntry, key: string): CellValue => {
+  if (key === 'soPhieu') return e.soPhieu;
+  if (key === 'loaiChungTu') return e.loaiChungTu;
+  if (key === 'dienGiai') return e.dienGiai;
+  if (ENTRY_NUM_KEYS.has(key)) return (e as unknown as Record<string, number>)[key];
+  return undefined;
+};
 
 /**
  * Tab "Tổng hợp theo TK". Bảng phẳng — dòng Tổng cộng của antd cộng lại từ dataSource, nên chỉ

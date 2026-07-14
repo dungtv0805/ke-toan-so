@@ -46,7 +46,7 @@ const DATA: Row[] = [
 const Demo: React.FC = () => {
   const { filterable, matches, hasPinned } = useTableColumnFilters('demo-page');
   const columns: ColumnsType<Row> = [
-    filterable({ title: 'Tên đối tượng', dataIndex: 'ten', key: 'ten', width: 200 }),
+    filterable<Row>({ title: 'Tên đối tượng', dataIndex: 'ten', key: 'ten', width: 200 }),
     { title: 'Ghi chú', dataIndex: 'ghiChu', key: 'ghiChu', width: 200 },
   ];
   const rows = DATA.filter((r) => matches(r, (row, key) => (key === 'ten' ? row.ten : undefined)));
@@ -76,7 +76,7 @@ const NumDemo: React.FC = () => {
   const { filterable, matches } = useTableColumnFilters('demo-num');
   const columns: ColumnsType<NumRow> = [
     { title: 'Tên', dataIndex: 'ten', key: 'ten', width: 160 },
-    filterable(
+    filterable<NumRow>(
       { title: 'Nợ', dataIndex: 'no', key: 'no', width: 140 },
       { type: 'number', filterTitle: 'Phát sinh Nợ' },
     ),

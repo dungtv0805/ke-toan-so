@@ -38,12 +38,12 @@ const data: BangTongHopCongNo = {
 
 describe('filterCongNo', () => {
   it('không lọc → trả nguyên dữ liệu gốc của backend (không tính lại)', () => {
-    const out = filterCongNo(data, { ten: { op: 'contains', value: '' } });
+    const out = filterCongNo(data, { ten: { kind: 'text', op: 'contains', value: '' } });
     expect(out).toBe(data);
   });
 
   it('lọc còn 1 đối tượng: dòng TK và TỔNG CỘNG bằng đúng đối tượng đó', () => {
-    const out = filterCongNo(data, { ten: { op: 'contains', value: 'g-life' } })!;
+    const out = filterCongNo(data, { ten: { kind: 'text', op: 'contains', value: 'g-life' } })!;
 
     expect(out.accounts).toHaveLength(1);
     const acc = out.accounts[0];
@@ -56,23 +56,72 @@ describe('filterCongNo', () => {
   });
 
   it('TỔNG CỘNG cộng dồn nhiều tài khoản còn lại', () => {
-    const out = filterCongNo(data, { ma: { op: 'contains', value: '0' } })!; // khớp cả 3 đối tượng
+    const out = filterCongNo(data, { ma: { kind: 'text', op: 'contains', value: '0' } })!; // khớp cả 3 đối tượng
     expect(out.accounts).toHaveLength(2);
     expect(out.totals.dauKy.phaiThu).toBe(115); // 100 + 10 + 5
     expect(out.totals.cuoiKy.phaiTra).toBe(115);
   });
 
   it('bỏ tài khoản không còn đối tượng nào khớp', () => {
-    const out = filterCongNo(data, { ma: { op: 'startsWith', value: 'kh' } })!;
+    const out = filterCongNo(data, { ma: { kind: 'text', op: 'startsWith', value: 'kh' } })!;
     expect(out.accounts.map((a) => a.ma)).toEqual(['131']);
   });
 
   it('lọc không khớp gì → không còn tài khoản nào', () => {
-    const out = filterCongNo(data, { ten: { op: 'contains', value: 'không tồn tại' } })!;
+    const out = filterCongNo(data, {
+      ten: { kind: 'text', op: 'contains', value: 'không tồn tại' },
+    })!;
     expect(out.accounts).toEqual([]);
   });
 
   it('dữ liệu null → null', () => {
-    expect(filterCongNo(null, { ten: { op: 'contains', value: 'a' } })).toBeNull();
+    expect(filterCongNo(null, { ten: { kind: 'text', op: 'contains', value: 'a' } })).toBeNull();
+  });
+});
+
+describe('lọc cột số', () => {
+  it('lọc "Cuối kỳ Phải thu > 0" và cộng lại dòng TK + TỔNG CỘNG', () => {
+    const numData: BangTongHopCongNo = {
+      accounts: [
+        {
+          ma: '131',
+          ten: 'Phải thu khách hàng',
+          dauKy: { phaiThu: 999, phaiTra: 999 },
+          phatSinh: { phaiThu: 999, phaiTra: 999 },
+          cuoiKy: { phaiThu: 999, phaiTra: 999 },
+          doiTuongs: [
+            {
+              ma: 'KH01',
+              ten: 'Khách 1',
+              dauKy: { phaiThu: 300, phaiTra: 0 },
+              phatSinh: { phaiThu: 0, phaiTra: 0 },
+              cuoiKy: { phaiThu: 300, phaiTra: 0 },
+            },
+            {
+              ma: 'KH02',
+              ten: 'Khách 2',
+              dauKy: { phaiThu: 0, phaiTra: 0 },
+              phatSinh: { phaiThu: 0, phaiTra: 0 },
+              cuoiKy: { phaiThu: 0, phaiTra: 0 },
+            },
+          ],
+        },
+      ],
+      totals: {
+        dauKy: { phaiThu: 999, phaiTra: 999 },
+        phatSinh: { phaiThu: 999, phaiTra: 999 },
+        cuoiKy: { phaiThu: 999, phaiTra: 999 },
+      },
+    };
+
+    const out = filterCongNo(numData, {
+      'ck-pt': { kind: 'number', op: 'gt', value: '0' },
+    })!;
+
+    expect(out.accounts[0].doiTuongs.map((d) => d.ma)).toEqual(['KH01']);
+    expect(out.accounts[0].cuoiKy.phaiThu).toBe(300);
+    expect(out.accounts[0].dauKy.phaiThu).toBe(300);
+    expect(out.totals.cuoiKy.phaiThu).toBe(300);
+    expect(out.totals.cuoiKy.phaiTra).toBe(0);
   });
 });

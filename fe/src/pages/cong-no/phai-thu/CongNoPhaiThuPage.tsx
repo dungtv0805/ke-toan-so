@@ -35,13 +35,7 @@ import { FilterBar } from "@/components/common/FilterBar";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
-
-// Ô chữ theo key cột — dùng cho bộ lọc cột ở header của 2 bảng.
-const getChiTietValue = (r: CongNoWithOverdue, key: string): string | undefined =>
-  key === 'doiTuongId' ? r.doiTuongId : key === 'doiTuongTen' ? r.doiTuongTen : undefined;
-
-const getTongHopValue = (r: CongNoSummaryByCustomer, key: string): string | undefined =>
-  key === 'doiTuongId' ? r.doiTuongId : key === 'doiTuongTen' ? r.doiTuongTen : undefined;
+import { chiTietValue, tongHopThuValue } from '../congNoCellValue';
 
 const CongNoPhaiThuPage: React.FC = () => {
   const { canExport } = usePagePermission("/cong-no/phai-thu");
@@ -143,7 +137,7 @@ const CongNoPhaiThuPage: React.FC = () => {
   // Dữ liệu load hết về client → lọc client-side. Dòng tổng của bảng dùng `summary(pageData)`
   // nên tự cộng lại theo đúng những dòng còn hiển thị.
   const filteredData = data.filter(item => {
-    if (!matches(item, getChiTietValue)) return false;
+    if (!matches(item, chiTietValue)) return false;
     if (filterStatus === 'all') return true;
     if (filterStatus === 'overdue') {
       return item.tinhTrangQuaHan === 'QUA_HAN' || item.tinhTrangQuaHan === 'QUA_HAN_NGHIEM_TRONG';
@@ -152,7 +146,7 @@ const CongNoPhaiThuPage: React.FC = () => {
     return true;
   });
 
-  const filteredSummary = summaryData.filter(item => matchesTH(item, getTongHopValue));
+  const filteredSummary = summaryData.filter(item => matchesTH(item, tongHopThuValue));
 
   const overdueItems = data.filter(item => 
     item.tinhTrangQuaHan === 'QUA_HAN' || item.tinhTrangQuaHan === 'QUA_HAN_NGHIEM_TRONG'
@@ -189,33 +183,42 @@ const CongNoPhaiThuPage: React.FC = () => {
       render: (date: string) => date ? new Date(date).toLocaleDateString('vi-VN') : '-',
       sorter: (a, b) => (a.hanThanhToan || '').localeCompare(b.hanThanhToan || ''),
     },
-    {
-      title: 'Số tiền gốc',
-      dataIndex: 'soTienGoc',
-      key: 'soTienGoc',
-      width: 140,
-      align: 'right',
-      render: (value) => formatCurrency(value),
-      sorter: (a, b) => a.soTienGoc - b.soTienGoc,
-    },
-    {
-      title: 'Đã thu',
-      dataIndex: 'daThu',
-      key: 'daThu',
-      width: 130,
-      align: 'right',
-      render: (value) => <span style={{ color: '#52c41a' }}>{formatCurrency(value)}</span>,
-      sorter: (a, b) => a.daThu - b.daThu,
-    },
-    {
-      title: 'Còn phải thu',
-      dataIndex: 'conLai',
-      key: 'conLai',
-      width: 140,
-      align: 'right',
-      render: (value) => <span style={{ color: '#ff4d4f', fontWeight: 600 }}>{formatCurrency(value)}</span>,
-      sorter: (a, b) => a.conLai - b.conLai,
-    },
+    filterable<CongNoWithOverdue>(
+      {
+        title: 'Số tiền gốc',
+        dataIndex: 'soTienGoc',
+        key: 'soTienGoc',
+        width: 140,
+        align: 'right',
+        render: (value) => formatCurrency(value),
+        sorter: (a, b) => a.soTienGoc - b.soTienGoc,
+      },
+      { type: 'number' },
+    ),
+    filterable<CongNoWithOverdue>(
+      {
+        title: 'Đã thu',
+        dataIndex: 'daThu',
+        key: 'daThu',
+        width: 130,
+        align: 'right',
+        render: (value) => <span style={{ color: '#52c41a' }}>{formatCurrency(value)}</span>,
+        sorter: (a, b) => a.daThu - b.daThu,
+      },
+      { type: 'number' },
+    ),
+    filterable<CongNoWithOverdue>(
+      {
+        title: 'Còn phải thu',
+        dataIndex: 'conLai',
+        key: 'conLai',
+        width: 140,
+        align: 'right',
+        render: (value) => <span style={{ color: '#ff4d4f', fontWeight: 600 }}>{formatCurrency(value)}</span>,
+        sorter: (a, b) => a.conLai - b.conLai,
+      },
+      { type: 'number' },
+    ),
     {
       title: 'Tình trạng',
       key: 'tinhTrang',
@@ -260,67 +263,85 @@ const CongNoPhaiThuPage: React.FC = () => {
       width: 200,
       ellipsis: true,
     }),
-    {
-      title: 'Số hóa đơn',
-      dataIndex: 'soHoaDon',
-      key: 'soHoaDon',
-      width: 100,
-      align: 'center',
-    },
-    {
-      title: 'Tổng nợ',
-      dataIndex: 'tongNo',
-      key: 'tongNo',
-      width: 150,
-      align: 'right',
-      render: (value) => formatCurrency(value),
-      sorter: (a, b) => a.tongNo - b.tongNo,
-    },
-    {
-      title: 'Đã thu',
-      dataIndex: 'daThu',
-      key: 'daThu',
-      width: 140,
-      align: 'right',
-      render: (value) => <span style={{ color: '#52c41a' }}>{formatCurrency(value)}</span>,
-    },
-    {
-      title: 'Còn lại',
-      dataIndex: 'conLai',
-      key: 'conLai',
-      width: 150,
-      align: 'right',
-      render: (value) => <span style={{ color: '#1890ff', fontWeight: 600 }}>{formatCurrency(value)}</span>,
-      sorter: (a, b) => a.conLai - b.conLai,
-    },
-    {
-      title: 'Nợ quá hạn',
-      dataIndex: 'quaHan',
-      key: 'quaHan',
-      width: 150,
-      align: 'right',
-      render: (value) => value > 0 
-        ? <span style={{ color: '#ff4d4f', fontWeight: 600 }}>{formatCurrency(value)}</span>
-        : <span style={{ color: '#52c41a' }}>-</span>,
-      sorter: (a, b) => a.quaHan - b.quaHan,
-    },
-    {
-      title: 'Tỷ lệ thu',
-      key: 'tyLeThu',
-      width: 150,
-      render: (_, record) => {
-        const percent = record.tongNo > 0 ? Math.round((record.daThu / record.tongNo) * 100) : 0;
-        return (
-          <Tooltip title={`${percent}% đã thu`}>
-            <Progress 
-              percent={percent} 
-              size="small" 
-              status={percent === 100 ? 'success' : 'active'}
-            />
-          </Tooltip>
-        );
+    filterableTH<CongNoSummaryByCustomer>(
+      {
+        title: 'Số hóa đơn',
+        dataIndex: 'soHoaDon',
+        key: 'soHoaDon',
+        width: 100,
+        align: 'center',
       },
-    },
+      { type: 'number' },
+    ),
+    filterableTH<CongNoSummaryByCustomer>(
+      {
+        title: 'Tổng nợ',
+        dataIndex: 'tongNo',
+        key: 'tongNo',
+        width: 150,
+        align: 'right',
+        render: (value) => formatCurrency(value),
+        sorter: (a, b) => a.tongNo - b.tongNo,
+      },
+      { type: 'number' },
+    ),
+    filterableTH<CongNoSummaryByCustomer>(
+      {
+        title: 'Đã thu',
+        dataIndex: 'daThu',
+        key: 'daThu',
+        width: 140,
+        align: 'right',
+        render: (value) => <span style={{ color: '#52c41a' }}>{formatCurrency(value)}</span>,
+      },
+      { type: 'number' },
+    ),
+    filterableTH<CongNoSummaryByCustomer>(
+      {
+        title: 'Còn lại',
+        dataIndex: 'conLai',
+        key: 'conLai',
+        width: 150,
+        align: 'right',
+        render: (value) => <span style={{ color: '#1890ff', fontWeight: 600 }}>{formatCurrency(value)}</span>,
+        sorter: (a, b) => a.conLai - b.conLai,
+      },
+      { type: 'number' },
+    ),
+    filterableTH<CongNoSummaryByCustomer>(
+      {
+        title: 'Nợ quá hạn',
+        dataIndex: 'quaHan',
+        key: 'quaHan',
+        width: 150,
+        align: 'right',
+        render: (value) => value > 0
+          ? <span style={{ color: '#ff4d4f', fontWeight: 600 }}>{formatCurrency(value)}</span>
+          : <span style={{ color: '#52c41a' }}>-</span>,
+        sorter: (a, b) => a.quaHan - b.quaHan,
+      },
+      { type: 'number' },
+    ),
+    filterableTH<CongNoSummaryByCustomer>(
+      {
+        title: 'Tỷ lệ thu',
+        key: 'tyLeThu',
+        width: 150,
+        render: (_, record) => {
+          const percent = record.tongNo > 0 ? Math.round((record.daThu / record.tongNo) * 100) : 0;
+          return (
+            <Tooltip title={`${percent}% đã thu`}>
+              <Progress
+                percent={percent}
+                size="small"
+                status={percent === 100 ? 'success' : 'active'}
+              />
+            </Tooltip>
+          );
+        },
+      },
+      { type: 'number', filterTitle: 'Tỷ lệ thu (%)' },
+    ),
   ];
 
   const tabItems = [

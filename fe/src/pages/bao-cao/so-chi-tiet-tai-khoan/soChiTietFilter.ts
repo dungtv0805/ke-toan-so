@@ -2,34 +2,42 @@ import type { ColumnsType, ColumnType } from 'antd/es/table';
 import {
   hasActiveFilters,
   matchAllFilters,
+  type CellValue,
   type ColumnFilters,
 } from '@/components/table/columnFilter';
+import type { FilterableOptions } from '@/components/table/useTableColumnFilters';
 import type { SoChiTietReport, SoChiTietRow } from '@/services/soChiTietTaiKhoanService';
 import { REGISTRY, type DisplayRow } from './columnRegistry';
 
-/** Cột không lọc bằng chữ: cột ngày và cột số tiền. */
-const NON_TEXT_KEYS = new Set([
-  'ngay',
-  'ngayChungTu',
-  'phatSinhNo',
-  'phatSinhCo',
-  'soDuNo',
-  'soDuCo',
-]);
+/** Cột ngày: chưa hỗ trợ lọc. */
+const DATE_KEYS = new Set(['ngay', 'ngayChungTu']);
 
-/** Cột có gắn popover lọc ở header (mọi cột chữ: số hiệu, diễn giải, TK đối ứng, mã/tên...). */
+/** Cột số: lọc bằng toán tử số. Tiêu đề cột chỉ là "Nợ"/"Có" nên cần nhãn riêng cho popover. */
+const NUMBER_TITLES: Record<string, string> = {
+  phatSinhNo: 'Phát sinh Nợ',
+  phatSinhCo: 'Phát sinh Có',
+  soDuNo: 'Số dư Nợ',
+  soDuCo: 'Số dư Có',
+};
+
+const isNumberKey = (key: string): boolean => key in NUMBER_TITLES;
+
+/** Cột có gắn popover lọc ở header (mọi cột trừ cột ngày). */
 export function isFilterableKey(key: string): boolean {
-  return !NON_TEXT_KEYS.has(key);
+  return !DATE_KEYS.has(key);
 }
 
 const DATA_INDEX = new Map(REGISTRY.map((c) => [c.key, c.dataIndex]));
 const DEF_BY_DATA_INDEX = new Map(REGISTRY.map((c) => [c.dataIndex, c]));
 
-type Filterable = <T>(col: ColumnType<T> & { key: string; title: string }) => ColumnType<T>;
+type Filterable = <T>(
+  col: ColumnType<T> & { key: string; title: string },
+  opts?: FilterableOptions,
+) => ColumnType<T>;
 
 /**
- * Gắn popover lọc + cố định cột vào các cột chữ của bảng antd (đi xuống cả cột con của
- * header gộp như "Chứng từ"). Cột được nhận diện qua `dataIndex` vì `buildAntdColumns`
+ * Gắn popover lọc + cố định cột vào các cột của bảng antd (đi xuống cả cột con của header gộp
+ * như "Chứng từ", "Số phát sinh"). Cột được nhận diện qua `dataIndex` vì `buildAntdColumns`
  * không đặt `key`.
  */
 export function withColumnFilters(
@@ -43,15 +51,21 @@ export function withColumnFilters(
     const leaf = col as ColumnType<DisplayRow>;
     const def = DEF_BY_DATA_INDEX.get(String(leaf.dataIndex));
     if (!def || !isFilterableKey(def.key)) return col;
-    return filterable<DisplayRow>({ ...leaf, key: def.key, title: def.title });
+    return filterable<DisplayRow>(
+      { ...leaf, key: def.key, title: def.title },
+      isNumberKey(def.key)
+        ? { type: 'number', filterTitle: NUMBER_TITLES[def.key] }
+        : undefined,
+    );
   });
 }
 
 /** Lấy ô của dòng phát sinh theo key cột (key trùng dataIndex trong REGISTRY). */
-function getValue(row: SoChiTietRow, key: string): string | undefined {
+function getValue(row: SoChiTietRow, key: string): CellValue {
   const dataIndex = DATA_INDEX.get(key);
   if (!dataIndex) return undefined;
   const v = (row as unknown as Record<string, unknown>)[dataIndex];
+  if (isNumberKey(key)) return typeof v === 'number' ? v : undefined;
   return typeof v === 'string' ? v : undefined;
 }
 

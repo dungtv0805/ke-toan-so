@@ -134,56 +134,65 @@ const BangCanDoiPage: React.FC = () => {
       width: 80,
       align: 'center',
     }),
-    {
-      title: 'Số đầu năm',
-      dataIndex: 'dauNam',
-      key: 'dauNam',
-      width: 150,
-      align: 'right',
-      render: (value: number, record: BalanceSheetItem) => (
-        <span style={{
-          fontWeight: record.isSection || record.isTotal ? 600 : 400,
-          color: value < 0 ? '#ff4d4f' : 'inherit',
-        }}>
-          {value !== 0 ? formatCurrency(value) : '-'}
-        </span>
-      ),
-    },
-    {
-      title: 'Số cuối kỳ',
-      dataIndex: 'cuoiKy',
-      key: 'cuoiKy',
-      width: 150,
-      align: 'right',
-      render: (value: number, record: BalanceSheetItem) => (
-        <span style={{
-          fontWeight: record.isSection || record.isTotal ? 600 : 400,
-          color: value < 0 ? '#ff4d4f' : 'inherit',
-        }}>
-          {value !== 0 ? formatCurrency(value) : '-'}
-        </span>
-      ),
-    },
-    {
-      title: 'Chênh lệch',
-      key: 'chenhLech',
-      width: 130,
-      align: 'right',
-      render: (_: unknown, record: BalanceSheetItem) => {
-        if (record.dauNam === 0 && record.cuoiKy === 0) return '-';
-        const diff = record.cuoiKy - record.dauNam;
-        return (
-          <Space>
-            <span style={{ color: diff >= 0 ? '#52c41a' : '#ff4d4f' }}>
-              {formatCurrencyShort(diff)}
-            </span>
-            {diff !== 0 && (
-              diff > 0 ? <RiseOutlined style={{ color: '#52c41a' }} /> : <FallOutlined style={{ color: '#ff4d4f' }} />
-            )}
-          </Space>
-        );
+    filterable<BalanceSheetItem>(
+      {
+        title: 'Số đầu năm',
+        dataIndex: 'dauNam',
+        key: 'dauNam',
+        width: 150,
+        align: 'right',
+        render: (value: number, record: BalanceSheetItem) => (
+          <span style={{
+            fontWeight: record.isSection || record.isTotal ? 600 : 400,
+            color: value < 0 ? '#ff4d4f' : 'inherit',
+          }}>
+            {value !== 0 ? formatCurrency(value) : '-'}
+          </span>
+        ),
       },
-    },
+      { type: 'number' },
+    ),
+    filterable<BalanceSheetItem>(
+      {
+        title: 'Số cuối kỳ',
+        dataIndex: 'cuoiKy',
+        key: 'cuoiKy',
+        width: 150,
+        align: 'right',
+        render: (value: number, record: BalanceSheetItem) => (
+          <span style={{
+            fontWeight: record.isSection || record.isTotal ? 600 : 400,
+            color: value < 0 ? '#ff4d4f' : 'inherit',
+          }}>
+            {value !== 0 ? formatCurrency(value) : '-'}
+          </span>
+        ),
+      },
+      { type: 'number' },
+    ),
+    filterable<BalanceSheetItem>(
+      {
+        title: 'Chênh lệch',
+        key: 'chenhLech',
+        width: 130,
+        align: 'right',
+        render: (_: unknown, record: BalanceSheetItem) => {
+          if (record.dauNam === 0 && record.cuoiKy === 0) return '-';
+          const diff = record.cuoiKy - record.dauNam;
+          return (
+            <Space>
+              <span style={{ color: diff >= 0 ? '#52c41a' : '#ff4d4f' }}>
+                {formatCurrencyShort(diff)}
+              </span>
+              {diff !== 0 && (
+                diff > 0 ? <RiseOutlined style={{ color: '#52c41a' }} /> : <FallOutlined style={{ color: '#ff4d4f' }} />
+              )}
+            </Space>
+          );
+        },
+      },
+      { type: 'number' },
+    ),
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig(

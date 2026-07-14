@@ -113,12 +113,12 @@ const ColumnFilterDropdown: React.FC<Props> = ({
         }}
       >
         <span style={{ fontWeight: 500 }}>Lọc {title}</span>
-        <Select
+        <Select<string>
           size="small"
           variant="borderless"
           value={op}
           options={isNumber ? NUMBER_OPS : TEXT_OPS}
-          onChange={(next) => setOp(next)}
+          onChange={(next) => setOp(next as TextOp | NumberOp)}
           style={{ minWidth: 150 }}
         />
       </div>

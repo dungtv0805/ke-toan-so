@@ -18,11 +18,11 @@ const labels = (rs: TndnFilterRow[]) => rs.map((r) => r.label);
 describe('filterTndnRows', () => {
   it('không có bộ lọc → giữ nguyên mảng gốc', () => {
     expect(filterTndnRows(rows, {})).toBe(rows);
-    expect(filterTndnRows(rows, { label: { op: 'contains', value: '  ' } })).toBe(rows);
+    expect(filterTndnRows(rows, { label: { kind: 'text', op: 'contains', value: '  ' } })).toBe(rows);
   });
 
   it('lọc Chỉ tiêu: bỏ dấu, không phân biệt hoa thường', () => {
-    const out = filterTndnRows(rows, { label: { op: 'contains', value: 'CHI PHI' } });
+    const out = filterTndnRows(rows, { label: { kind: 'text', op: 'contains', value: 'CHI PHI' } });
     expect(labels(out)).toEqual([
       'Các khoản chi phí không được trừ',
       'Chi phí dịch vụ, hàng hóa mua vào',
@@ -31,7 +31,7 @@ describe('filterTndnRows', () => {
   });
 
   it('dòng nhóm chỉ hiện khi trong nhóm còn dòng dữ liệu', () => {
-    const out = filterTndnRows(rows, { label: { op: 'contains', value: 'bao hiem' } });
+    const out = filterTndnRows(rows, { label: { kind: 'text', op: 'contains', value: 'bao hiem' } });
     // "Bảo hiểm xã hội" nằm trong nhóm 2; "Chi phí nhân công, bảo hiểm" nằm trong nhóm 1
     expect(labels(out)).toEqual([
       'Các khoản chi phí không được trừ',
@@ -42,20 +42,20 @@ describe('filterTndnRows', () => {
   });
 
   it('không dòng nào trong nhóm khớp → không để lại dòng tiêu đề nhóm trơ trọi', () => {
-    const out = filterTndnRows(rows, { label: { op: 'contains', value: 'doanh thu' } });
+    const out = filterTndnRows(rows, { label: { kind: 'text', op: 'contains', value: 'doanh thu' } });
     expect(labels(out)).toEqual(['Doanh thu thuần bán hàng']);
   });
 
   it('lọc cả cột Ghi chú, nhiều bộ lọc là AND', () => {
     const out = filterTndnRows(rows, {
-      label: { op: 'contains', value: 'hàng' },
-      note: { op: 'contains', value: 'tk 632' },
+      label: { kind: 'text', op: 'contains', value: 'hàng' },
+      note: { kind: 'text', op: 'contains', value: 'tk 632' },
     });
     expect(labels(out)).toEqual(['Giá vốn hàng bán']);
   });
 
   it('ô Ghi chú rỗng chỉ khớp "Không chứa"', () => {
-    const out = filterTndnRows(rows, { note: { op: 'notContains', value: 'TK' } });
+    const out = filterTndnRows(rows, { note: { kind: 'text', op: 'notContains', value: 'TK' } });
     // các dòng có note đều chứa "TK" → chỉ còn dòng không có note (dòng nhóm bị bỏ vì rỗng nhóm)
     expect(labels(out)).toEqual([
       'Lợi nhuận kế toán trước thuế',
@@ -69,6 +69,6 @@ describe('filterTndnRows', () => {
   });
 
   it('không còn dòng nào → mảng rỗng', () => {
-    expect(filterTndnRows(rows, { label: { op: 'equals', value: 'xyz' } })).toEqual([]);
+    expect(filterTndnRows(rows, { label: { kind: 'text', op: 'equals', value: 'xyz' } })).toEqual([]);
   });
 });

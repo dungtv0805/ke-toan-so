@@ -156,18 +156,23 @@ const BangTongHopCongNoPage: React.FC = () => {
   const numCol = (
     key: string,
     title: string,
+    filterTitle: string,
     pick: (v: CongNoRowVal) => number,
-  ) => ({
-    title,
-    key,
-    align: "right" as const,
-    width: 120,
-    render: (_: unknown, r: FlatRow) => (
-      <span style={{ fontWeight: r.isAccount || r.isTotal ? 700 : 400 }}>
-        {fmt(pick(r.val))}
-      </span>
-    ),
-  });
+  ) =>
+    filterable<FlatRow>(
+      {
+        title,
+        key,
+        align: "right" as const,
+        width: 120,
+        render: (_: unknown, r: FlatRow) => (
+          <span style={{ fontWeight: r.isAccount || r.isTotal ? 700 : 400 }}>
+            {fmt(pick(r.val))}
+          </span>
+        ),
+      },
+      { type: "number", filterTitle },
+    );
 
   const columns: ColumnsType<FlatRow> = [
     filterable({
@@ -201,22 +206,42 @@ const BangTongHopCongNoPage: React.FC = () => {
     {
       title: "Số dư đầu kỳ",
       children: [
-        numCol("dk-pt", "Phải thu", (v) => v.dauKy.phaiThu),
-        numCol("dk-ptr", "Phải trả", (v) => v.dauKy.phaiTra),
+        numCol("dk-pt", "Phải thu", "Đầu kỳ - Phải thu", (v) => v.dauKy.phaiThu),
+        numCol("dk-ptr", "Phải trả", "Đầu kỳ - Phải trả", (v) => v.dauKy.phaiTra),
       ],
     },
     {
       title: "Số phát sinh",
       children: [
-        numCol("ps-pt", "Phải thu", (v) => v.phatSinh.phaiThu),
-        numCol("ps-ptr", "Phải trả", (v) => v.phatSinh.phaiTra),
+        numCol(
+          "ps-pt",
+          "Phải thu",
+          "Phát sinh - Phải thu",
+          (v) => v.phatSinh.phaiThu,
+        ),
+        numCol(
+          "ps-ptr",
+          "Phải trả",
+          "Phát sinh - Phải trả",
+          (v) => v.phatSinh.phaiTra,
+        ),
       ],
     },
     {
       title: "Số dư cuối kỳ",
       children: [
-        numCol("ck-pt", "Phải thu", (v) => v.cuoiKy.phaiThu),
-        numCol("ck-ptr", "Phải trả", (v) => v.cuoiKy.phaiTra),
+        numCol(
+          "ck-pt",
+          "Phải thu",
+          "Cuối kỳ - Phải thu",
+          (v) => v.cuoiKy.phaiThu,
+        ),
+        numCol(
+          "ck-ptr",
+          "Phải trả",
+          "Cuối kỳ - Phải trả",
+          (v) => v.cuoiKy.phaiTra,
+        ),
       ],
     },
   ];

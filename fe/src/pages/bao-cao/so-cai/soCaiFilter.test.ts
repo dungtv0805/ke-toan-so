@@ -54,51 +54,51 @@ const chiTietAcc: SoCaiByAccount = {
 
 describe('filterSoCaiSummary', () => {
   it('không lọc → giữ nguyên mảng gốc', () => {
-    const out = filterSoCaiSummary(summary, { tenTaiKhoan: { op: 'contains', value: '' } });
+    const out = filterSoCaiSummary(summary, { tenTaiKhoan: { kind: 'text', op: 'contains', value: '' } });
     expect(out).toBe(summary);
   });
 
   it('lọc còn 1 tài khoản (bỏ dấu tiếng Việt)', () => {
-    const out = filterSoCaiSummary(summary, { tenTaiKhoan: { op: 'contains', value: 'phai thu' } });
+    const out = filterSoCaiSummary(summary, { tenTaiKhoan: { kind: 'text', op: 'contains', value: 'phai thu' } });
     expect(out.map((r) => r.taiKhoan)).toEqual(['131']);
   });
 
   it('lọc theo mã, toán tử "Bắt đầu bằng"', () => {
-    const out = filterSoCaiSummary(summary, { taiKhoan: { op: 'startsWith', value: '3' } });
+    const out = filterSoCaiSummary(summary, { taiKhoan: { kind: 'text', op: 'startsWith', value: '3' } });
     expect(out.map((r) => r.taiKhoan)).toEqual(['331']);
   });
 
   it('lọc không khớp gì → rỗng', () => {
-    const out = filterSoCaiSummary(summary, { taiKhoan: { op: 'contains', value: '999' } });
+    const out = filterSoCaiSummary(summary, { taiKhoan: { kind: 'text', op: 'contains', value: '999' } });
     expect(out).toEqual([]);
   });
 });
 
 describe('filterTrialBalance', () => {
   it('không lọc → giữ nguyên mảng gốc', () => {
-    const out = filterTrialBalance(trial, { taiKhoan: { op: 'contains', value: '' } });
+    const out = filterTrialBalance(trial, { taiKhoan: { kind: 'text', op: 'contains', value: '' } });
     expect(out).toBe(trial);
   });
 
   it('lọc theo tên tài khoản', () => {
-    const out = filterTrialBalance(trial, { tenTaiKhoan: { op: 'contains', value: 'doanh thu' } });
+    const out = filterTrialBalance(trial, { tenTaiKhoan: { kind: 'text', op: 'contains', value: 'doanh thu' } });
     expect(out.map((r) => r.taiKhoan)).toEqual(['511']);
   });
 
   it('lọc không khớp gì → rỗng', () => {
-    const out = filterTrialBalance(trial, { tenTaiKhoan: { op: 'equals', value: 'abc' } });
+    const out = filterTrialBalance(trial, { tenTaiKhoan: { kind: 'text', op: 'equals', value: 'abc' } });
     expect(out).toEqual([]);
   });
 });
 
 describe('filterSoCaiChiTiet', () => {
   it('không lọc → giữ nguyên số gốc của backend', () => {
-    const out = filterSoCaiChiTiet(chiTietAcc, { dienGiai: { op: 'contains', value: '' } });
+    const out = filterSoCaiChiTiet(chiTietAcc, { dienGiai: { kind: 'text', op: 'contains', value: '' } });
     expect(out).toBe(chiTietAcc);
   });
 
   it('lọc còn 1 bút toán: phát sinh Nợ/Có bằng đúng bút toán đó, số dư giữ nguyên', () => {
-    const out = filterSoCaiChiTiet(chiTietAcc, { dienGiai: { op: 'contains', value: 'g-life' } })!;
+    const out = filterSoCaiChiTiet(chiTietAcc, { dienGiai: { kind: 'text', op: 'contains', value: 'g-life' } })!;
 
     expect(out.chiTiet.map((e) => e.soPhieu)).toEqual(['PT001']);
     expect(out.phatSinhNo).toBe(100);
@@ -109,7 +109,7 @@ describe('filterSoCaiChiTiet', () => {
 
   it('lọc theo loại chứng từ', () => {
     const out = filterSoCaiChiTiet(chiTietAcc, {
-      loaiChungTu: { op: 'equals', value: 'Phiếu chi' },
+      loaiChungTu: { kind: 'text', op: 'equals', value: 'Phiếu chi' },
     })!;
     expect(out.chiTiet.map((e) => e.soPhieu)).toEqual(['PC002']);
     expect(out.phatSinhNo).toBe(10);
@@ -117,15 +117,15 @@ describe('filterSoCaiChiTiet', () => {
 
   it('nhiều bộ lọc cùng lúc: phải khớp tất cả', () => {
     const out = filterSoCaiChiTiet(chiTietAcc, {
-      loaiChungTu: { op: 'equals', value: 'Phiếu thu' },
-      dienGiai: { op: 'contains', value: 'văn phòng' },
+      loaiChungTu: { kind: 'text', op: 'equals', value: 'Phiếu thu' },
+      dienGiai: { kind: 'text', op: 'contains', value: 'văn phòng' },
     })!;
     expect(out.chiTiet).toEqual([]);
   });
 
   it('lọc không khớp gì → không còn bút toán nào, phát sinh về 0', () => {
     const out = filterSoCaiChiTiet(chiTietAcc, {
-      soPhieu: { op: 'contains', value: 'không tồn tại' },
+      soPhieu: { kind: 'text', op: 'contains', value: 'không tồn tại' },
     })!;
     expect(out.chiTiet).toEqual([]);
     expect(out.phatSinhNo).toBe(0);
@@ -133,6 +133,59 @@ describe('filterSoCaiChiTiet', () => {
   });
 
   it('chưa chọn tài khoản → null', () => {
-    expect(filterSoCaiChiTiet(null, { dienGiai: { op: 'contains', value: 'a' } })).toBeNull();
+    expect(
+      filterSoCaiChiTiet(null, { dienGiai: { kind: 'text', op: 'contains', value: 'a' } }),
+    ).toBeNull();
+  });
+});
+
+describe('lọc cột số', () => {
+  it('Tổng hợp theo TK: lọc "Phát sinh Nợ > 0" chỉ giữ TK có phát sinh', () => {
+    const rows: SoCaiByAccount[] = [
+      { ...account('111', 'Tiền mặt'), phatSinhNo: 5_000_000 },
+      { ...account('112', 'Tiền gửi ngân hàng'), phatSinhNo: 0 },
+    ];
+    const out = filterSoCaiSummary(rows, {
+      phatSinhNo: { kind: 'number', op: 'gt', value: '0' },
+    });
+    expect(out.map((r) => r.taiKhoan)).toEqual(['111']);
+  });
+
+  it('Tổng hợp theo TK: (Không trống) trên cột Phát sinh Có bỏ dòng bằng 0', () => {
+    const rows: SoCaiByAccount[] = [
+      { ...account('111', 'Tiền mặt'), phatSinhCo: 0 },
+      { ...account('511', 'Doanh thu bán hàng'), phatSinhCo: 2_000_000 },
+    ];
+    const out = filterSoCaiSummary(rows, {
+      phatSinhCo: { kind: 'number', op: 'notBlank', value: '' },
+    });
+    expect(out.map((r) => r.taiKhoan)).toEqual(['511']);
+  });
+
+  it('Cân đối phát sinh: lọc "Số dư cuối kỳ Nợ ≥ 2.000.000"', () => {
+    const rows: TrialBalance[] = [
+      { ...tb('111', 'Tiền mặt'), soDuCuoiKyNo: 2_000_000 },
+      { ...tb('112', 'Tiền gửi ngân hàng'), soDuCuoiKyNo: 500_000 },
+    ];
+    const out = filterTrialBalance(rows, {
+      soDuCuoiKyNo: { kind: 'number', op: 'gte', value: '2.000.000' },
+    });
+    expect(out.map((r) => r.taiKhoan)).toEqual(['111']);
+  });
+
+  it('Chi tiết TK: lọc số cộng lại phát sinh theo các bút toán còn hiện', () => {
+    const acc: SoCaiByAccount = {
+      ...account('111', 'Tiền mặt'),
+      chiTiet: [
+        { ...entry('PT001', 'Phiếu thu', 'Thu tiền', 0), phatSinhNo: 1_000_000, phatSinhCo: 0 },
+        { ...entry('PT002', 'Phiếu thu', 'Thu tiền', 0), phatSinhNo: 2_000_000, phatSinhCo: 0 },
+      ],
+    };
+    const out = filterSoCaiChiTiet(acc, {
+      phatSinhNo: { kind: 'number', op: 'gte', value: '2.000.000' },
+    })!;
+    expect(out.chiTiet.map((e) => e.soPhieu)).toEqual(['PT002']);
+    expect(out.phatSinhNo).toBe(2_000_000);
+    expect(out.phatSinhCo).toBe(0);
   });
 });

@@ -21,7 +21,7 @@ export default function BaoCaoHopDongPage() {
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  // Lọc theo cột "Năm" ở header: chạy trên dữ liệu gốc rồi cộng lại dòng Tổng theo các năm còn hiện.
+  // Lọc cột "Năm" + các cột số ở header: chạy trên dữ liệu gốc rồi cộng lại dòng Tổng theo các năm còn hiện.
   const { filters, filterable } = useTableColumnFilters('bao-cao-hop-dong');
   const view = useMemo(() => filterHopDong(rows, tong, filters), [rows, tong, filters]);
 
@@ -54,7 +54,7 @@ export default function BaoCaoHopDongPage() {
   }, []);
 
   const columns: ColumnsType<BaoCaoHopDongRow> = [
-    filterable({
+    filterable<BaoCaoHopDongRow>({
       title: 'Năm',
       dataIndex: 'nam',
       key: 'nam',
@@ -66,28 +66,56 @@ export default function BaoCaoHopDongPage() {
     {
       title: 'Giá trị Hợp đồng + phụ lục',
       children: [
-        { title: 'Số lượng', dataIndex: 'soLuong', width: 90, align: 'center', render: (v) => fmtNum(v) },
-        { title: 'Số tiền', dataIndex: 'giaTri', width: 160, align: 'right', render: (v) => fmtCur(v) },
+        filterable<BaoCaoHopDongRow>(
+          { title: 'Số lượng', dataIndex: 'soLuong', key: 'soLuong', width: 90, align: 'center', render: (v) => fmtNum(v) },
+          { type: 'number' },
+        ),
+        filterable<BaoCaoHopDongRow>(
+          { title: 'Số tiền', dataIndex: 'giaTri', key: 'giaTri', width: 160, align: 'right', render: (v) => fmtCur(v) },
+          { type: 'number', filterTitle: 'Giá trị hợp đồng' },
+        ),
       ],
     },
-    { title: 'Quyết toán', dataIndex: 'quyetToan', width: 150, align: 'right', render: (v) => fmtCur(v) },
-    {
-      title: 'Thu tiền',
-      dataIndex: 'thuTien',
-      width: 150,
-      align: 'right',
-      render: (v) => <Text type="success">{fmtCur(v)}</Text>,
-    },
+    filterable<BaoCaoHopDongRow>(
+      { title: 'Quyết toán', dataIndex: 'quyetToan', key: 'quyetToan', width: 150, align: 'right', render: (v) => fmtCur(v) },
+      { type: 'number' },
+    ),
+    filterable<BaoCaoHopDongRow>(
+      {
+        title: 'Thu tiền',
+        dataIndex: 'thuTien',
+        key: 'thuTien',
+        width: 150,
+        align: 'right',
+        render: (v) => <Text type="success">{fmtCur(v)}</Text>,
+      },
+      { type: 'number' },
+    ),
     {
       title: 'Tình trạng Hợp đồng',
       children: [
-        { title: 'Chưa có HĐ', dataIndex: 'chuaCoHD', width: 90, align: 'center', render: (v) => fmtNum(v) },
-        { title: 'HĐ chưa ký', dataIndex: 'hdChuaKy', width: 90, align: 'center', render: (v) => fmtNum(v) },
-        { title: 'HĐ photo/scan', dataIndex: 'hdPhotoScan', width: 100, align: 'center', render: (v) => fmtNum(v) },
-        { title: 'HĐ gốc', dataIndex: 'hdGoc', width: 80, align: 'center', render: (v) => fmtNum(v) },
+        filterable<BaoCaoHopDongRow>(
+          { title: 'Chưa có HĐ', dataIndex: 'chuaCoHD', key: 'chuaCoHD', width: 90, align: 'center', render: (v) => fmtNum(v) },
+          { type: 'number' },
+        ),
+        filterable<BaoCaoHopDongRow>(
+          { title: 'HĐ chưa ký', dataIndex: 'hdChuaKy', key: 'hdChuaKy', width: 90, align: 'center', render: (v) => fmtNum(v) },
+          { type: 'number' },
+        ),
+        filterable<BaoCaoHopDongRow>(
+          { title: 'HĐ photo/scan', dataIndex: 'hdPhotoScan', key: 'hdPhotoScan', width: 100, align: 'center', render: (v) => fmtNum(v) },
+          { type: 'number' },
+        ),
+        filterable<BaoCaoHopDongRow>(
+          { title: 'HĐ gốc', dataIndex: 'hdGoc', key: 'hdGoc', width: 80, align: 'center', render: (v) => fmtNum(v) },
+          { type: 'number' },
+        ),
       ],
     },
-    { title: 'Giá trị HĐ bình quân', dataIndex: 'giaTriBinhQuan', width: 160, align: 'right', render: (v) => fmtCur(v) },
+    filterable<BaoCaoHopDongRow>(
+      { title: 'Giá trị HĐ bình quân', dataIndex: 'giaTriBinhQuan', key: 'giaTriBinhQuan', width: 160, align: 'right', render: (v) => fmtCur(v) },
+      { type: 'number' },
+    ),
   ];
 
   return (

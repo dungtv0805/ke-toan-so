@@ -37,22 +37,22 @@ const mas = (rows: TaiKhoan[]) => rows.map((r) => r.ma);
 
 describe('keepWithAncestors', () => {
   it('khớp TK con → giữ luôn TK cha để cây không vỡ', () => {
-    const out = keepWithAncestors(data, byFilters({ ten: { op: 'contains', value: 'ngoại tệ' } }));
+    const out = keepWithAncestors(data, byFilters({ ten: { kind: 'text', op: 'contains', value: 'ngoại tệ' } }));
     expect(mas(out)).toEqual(['111', '1112']);
   });
 
   it('bỏ dấu tiếng Việt khi so khớp (dùng chung matchText)', () => {
-    const out = keepWithAncestors(data, byFilters({ ten: { op: 'contains', value: 'ngoai te' } }));
+    const out = keepWithAncestors(data, byFilters({ ten: { kind: 'text', op: 'contains', value: 'ngoai te' } }));
     expect(mas(out)).toEqual(['111', '1112']);
   });
 
   it('khớp TK cha → KHÔNG kéo theo con không khớp', () => {
-    const out = keepWithAncestors(data, byFilters({ ma: { op: 'equals', value: '111' } }));
+    const out = keepWithAncestors(data, byFilters({ ma: { kind: 'text', op: 'equals', value: '111' } }));
     expect(mas(out)).toEqual(['111']);
   });
 
   it('giữ nguyên thứ tự dòng của mảng nguồn (để sortHierarchy dựng lại cây)', () => {
-    const out = keepWithAncestors(data, byFilters({ ten: { op: 'contains', value: 'tiền việt nam' } }));
+    const out = keepWithAncestors(data, byFilters({ ten: { kind: 'text', op: 'contains', value: 'tiền việt nam' } }));
     expect(mas(out)).toEqual(['111', '1111', '112', '1121']); // 2 dòng khớp + 2 cha
   });
 
@@ -60,8 +60,8 @@ describe('keepWithAncestors', () => {
     const out = keepWithAncestors(
       data,
       byFilters({
-        ma: { op: 'startsWith', value: '111' },
-        ten: { op: 'contains', value: 'ngoai' },
+        ma: { kind: 'text', op: 'startsWith', value: '111' },
+        ten: { kind: 'text', op: 'contains', value: 'ngoai' },
       }),
     );
     expect(mas(out)).toEqual(['111', '1112']);
@@ -69,12 +69,12 @@ describe('keepWithAncestors', () => {
 
   it('cha không khớp vẫn được giữ làm dòng ngữ cảnh cho con khớp', () => {
     // "Không chứa 'tiền mặt'": 111 KHÔNG khớp, nhưng 3 TK con khớp → 111 vẫn hiện làm dòng cha.
-    const out = keepWithAncestors(data, byFilters({ ten: { op: 'notContains', value: 'tiền mặt' } }));
+    const out = keepWithAncestors(data, byFilters({ ten: { kind: 'text', op: 'notContains', value: 'tiền mặt' } }));
     expect(mas(out)).toEqual(['111', '1111', '1112', '112', '1121']);
   });
 
   it('không khớp gì → rỗng', () => {
-    const out = keepWithAncestors(data, byFilters({ ma: { op: 'contains', value: '999' } }));
+    const out = keepWithAncestors(data, byFilters({ ma: { kind: 'text', op: 'contains', value: '999' } }));
     expect(out).toEqual([]);
   });
 
@@ -85,7 +85,7 @@ describe('keepWithAncestors', () => {
 
   it('parentId trỏ vòng (dữ liệu lỗi) → không treo', () => {
     const loop: TaiKhoan[] = [acc('x', '1', 'A', 1, 'y'), acc('y', '2', 'B', 1, 'x')];
-    const out = keepWithAncestors(loop, byFilters({ ma: { op: 'equals', value: '1' } }));
+    const out = keepWithAncestors(loop, byFilters({ ma: { kind: 'text', op: 'equals', value: '1' } }));
     expect(mas(out)).toEqual(['1', '2']);
   });
 });

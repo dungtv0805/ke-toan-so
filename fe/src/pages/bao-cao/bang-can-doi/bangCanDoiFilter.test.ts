@@ -40,12 +40,12 @@ const data: BalanceSheetData = {
 
 describe('filterBangCanDoi', () => {
   it('không lọc → trả nguyên dữ liệu gốc của backend (không tính lại)', () => {
-    const out = filterBangCanDoi(data, { tenChiTieu: { op: 'contains', value: '' } });
+    const out = filterBangCanDoi(data, { tenChiTieu: { kind: 'text', op: 'contains', value: '' } });
     expect(out).toBe(data);
   });
 
   it('lọc còn 1 chỉ tiêu: dòng nhóm và TỔNG CỘNG bằng đúng chỉ tiêu đó', () => {
-    const out = filterBangCanDoi(data, { tenChiTieu: { op: 'contains', value: 'tien mat' } })!;
+    const out = filterBangCanDoi(data, { tenChiTieu: { kind: 'text', op: 'contains', value: 'tien mat' } })!;
 
     expect(out.taiSan.map((i) => i.ma)).toEqual(['A', '111']);
     expect(out.taiSan[0].cuoiKy).toBe(100); // dòng nhóm A cộng lại theo con còn hiện
@@ -58,14 +58,14 @@ describe('filterBangCanDoi', () => {
   });
 
   it('bỏ hẳn dòng nhóm không còn chỉ tiêu con nào khớp', () => {
-    const out = filterBangCanDoi(data, { ma: { op: 'startsWith', value: '1' } })!;
+    const out = filterBangCanDoi(data, { ma: { kind: 'text', op: 'startsWith', value: '1' } })!;
     expect(out.taiSan.map((i) => i.ma)).toEqual(['A', '111', '131']); // nhóm B biến mất
     expect(out.taiSan[0].cuoiKy).toBe(120);
     expect(out.tongTaiSan.cuoiKy).toBe(120);
   });
 
   it('giữ nhiều nhóm, TỔNG CỘNG cộng dồn các chỉ tiêu còn lại', () => {
-    const out = filterBangCanDoi(data, { tenChiTieu: { op: 'notContains', value: 'khách hàng' } })!;
+    const out = filterBangCanDoi(data, { tenChiTieu: { kind: 'text', op: 'notContains', value: 'khách hàng' } })!;
     expect(out.taiSan.map((i) => i.ma)).toEqual(['A', '111', 'B', '211']);
     expect(out.taiSan[0].cuoiKy).toBe(100);
     expect(out.taiSan[2].cuoiKy).toBe(500);
@@ -74,13 +74,58 @@ describe('filterBangCanDoi', () => {
   });
 
   it('lọc không khớp gì → rỗng cả 2 nửa, không còn dòng nhóm', () => {
-    const out = filterBangCanDoi(data, { tenChiTieu: { op: 'contains', value: 'không tồn tại' } })!;
+    const out = filterBangCanDoi(data, { tenChiTieu: { kind: 'text', op: 'contains', value: 'không tồn tại' } })!;
     expect(out.taiSan).toEqual([]);
     expect(out.nguonVon).toEqual([]);
     expect(out.tongTaiSan).toEqual({ dauNam: 0, cuoiKy: 0 });
   });
 
   it('dữ liệu null → null', () => {
-    expect(filterBangCanDoi(null, { ma: { op: 'contains', value: 'a' } })).toBeNull();
+    expect(filterBangCanDoi(null, { ma: { kind: 'text', op: 'contains', value: 'a' } })).toBeNull();
+  });
+});
+
+describe('lọc cột số', () => {
+  it('lọc "Số cuối kỳ > 0" bỏ chỉ tiêu bằng 0 và cộng lại số của dòng nhóm', () => {
+    const numData: BalanceSheetData = {
+      taiSan: [
+        { ma: 'A', tenChiTieu: 'A. TÀI SẢN NGẮN HẠN', level: 0, isSection: true, dauNam: 0, cuoiKy: 0 },
+        { ma: '110', tenChiTieu: 'Tiền', level: 1, dauNam: 100, cuoiKy: 300 },
+        { ma: '120', tenChiTieu: 'Đầu tư', level: 1, dauNam: 50, cuoiKy: 0 },
+      ],
+      nguonVon: [],
+      tongTaiSan: { dauNam: 150, cuoiKy: 300 },
+      tongNguonVon: { dauNam: 0, cuoiKy: 0 },
+      canDoi: false,
+    };
+
+    const out = filterBangCanDoi(numData, {
+      cuoiKy: { kind: 'number', op: 'gt', value: '0' },
+    })!;
+
+    expect(out.taiSan.map((i) => i.ma)).toEqual(['A', '110']);
+    // dòng nhóm A cộng lại từ đúng các con còn hiện
+    expect(out.taiSan[0].cuoiKy).toBe(300);
+    expect(out.taiSan[0].dauNam).toBe(100);
+    expect(out.tongTaiSan.cuoiKy).toBe(300);
+  });
+
+  it('lọc theo cột tính "Chênh lệch" (cuối kỳ - đầu năm)', () => {
+    const numData: BalanceSheetData = {
+      taiSan: [
+        { ma: 'A', tenChiTieu: 'A. TÀI SẢN NGẮN HẠN', level: 0, isSection: true, dauNam: 0, cuoiKy: 0 },
+        { ma: '110', tenChiTieu: 'Tiền', level: 1, dauNam: 100, cuoiKy: 300 }, // +200
+        { ma: '120', tenChiTieu: 'Đầu tư', level: 1, dauNam: 500, cuoiKy: 400 }, // -100
+      ],
+      nguonVon: [],
+      tongTaiSan: { dauNam: 600, cuoiKy: 700 },
+      tongNguonVon: { dauNam: 0, cuoiKy: 0 },
+      canDoi: false,
+    };
+
+    const out = filterBangCanDoi(numData, {
+      chenhLech: { kind: 'number', op: 'lt', value: '0' },
+    })!;
+    expect(out.taiSan.map((i) => i.ma)).toEqual(['A', '120']);
   });
 });

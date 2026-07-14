@@ -1,4 +1,9 @@
-import { hasActiveFilters, matchAllFilters, type ColumnFilters } from '@/components/table/columnFilter';
+import {
+  hasActiveFilters,
+  matchAllFilters,
+  type CellValue,
+  type ColumnFilters,
+} from '@/components/table/columnFilter';
 import type {
   BangTongHopCongNo,
   CongNoAccount,
@@ -6,9 +11,23 @@ import type {
   CongNoRowVal,
 } from '@/services/congNoTongHopService';
 
+/** Cột số: giá trị lồng trong val — key trùng `key` trong định nghĩa cột antd. */
+const NUM_PICKERS: Record<string, (v: CongNoRowVal) => number> = {
+  'dk-pt': (v) => v.dauKy.phaiThu,
+  'dk-ptr': (v) => v.dauKy.phaiTra,
+  'ps-pt': (v) => v.phatSinh.phaiThu,
+  'ps-ptr': (v) => v.phatSinh.phaiTra,
+  'ck-pt': (v) => v.cuoiKy.phaiThu,
+  'ck-ptr': (v) => v.cuoiKy.phaiTra,
+};
+
 /** Key cột lọc được của bảng — trùng `key` trong định nghĩa cột antd. */
-const getValue = (dt: CongNoDoiTuongRow, key: string): string | undefined =>
-  key === 'ma' ? dt.ma : key === 'ten' ? dt.ten : undefined;
+const getValue = (dt: CongNoDoiTuongRow, key: string): CellValue => {
+  if (key === 'ma') return dt.ma;
+  if (key === 'ten') return dt.ten;
+  const pick = NUM_PICKERS[key];
+  return pick ? pick(dt) : undefined;
+};
 
 const ZERO: CongNoRowVal = {
   dauKy: { phaiThu: 0, phaiTra: 0 },

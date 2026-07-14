@@ -38,11 +38,11 @@ describe('soDuNodeText', () => {
 describe('filterSoDuTree', () => {
   it('không lọc → trả nguyên cây gốc', () => {
     expect(filterSoDuTree(tree, {})).toBe(tree);
-    expect(filterSoDuTree(tree, { tk: { op: 'contains', value: '' } })).toBe(tree);
+    expect(filterSoDuTree(tree, { tk: { kind: 'text', op: 'contains', value: '' } })).toBe(tree);
   });
 
   it('khớp ở đối tượng → giữ TK cha, rollup cộng lại theo đối tượng còn hiện', () => {
-    const out = filterSoDuTree(tree, { tk: { op: 'contains', value: 'công ty a' } });
+    const out = filterSoDuTree(tree, { tk: { kind: 'text', op: 'contains', value: 'công ty a' } });
 
     expect(out.map((n) => n.__ma)).toEqual(['131']); // nhánh 111 bị bỏ
     const tk131 = out[0];
@@ -52,33 +52,33 @@ describe('filterSoDuTree', () => {
   });
 
   it('bỏ dấu tiếng Việt khi so khớp', () => {
-    const out = filterSoDuTree(tree, { tk: { op: 'contains', value: 'cong ty b' } });
+    const out = filterSoDuTree(tree, { tk: { kind: 'text', op: 'contains', value: 'cong ty b' } });
     expect(out[0].children!.map((c) => c.row!.chiTietMa)).toEqual(['KH02']);
     expect(out[0].__rollup.duNo).toBe(300);
   });
 
   it('khớp ở TK cha → giữ nguyên cả nhánh con (còn nhập được đối tượng)', () => {
-    const out = filterSoDuTree(tree, { tk: { op: 'contains', value: 'phải thu' } });
+    const out = filterSoDuTree(tree, { tk: { kind: 'text', op: 'contains', value: 'phải thu' } });
     expect(out).toHaveLength(1);
     expect(out[0].children).toHaveLength(2);
     expect(out[0].__rollup.duNo).toBe(500);
   });
 
   it('khớp TK mẹ → vẫn thấy TK con bên dưới', () => {
-    const out = filterSoDuTree(tree, { tk: { op: 'contains', value: 'tiền mặt' } });
+    const out = filterSoDuTree(tree, { tk: { kind: 'text', op: 'contains', value: 'tiền mặt' } });
     expect(out.map((n) => n.__ma)).toEqual(['111']);
     expect(out[0].children!.map((n) => n.__ma)).toEqual(['1111']);
     expect(total(out)).toBe(100);
   });
 
   it('không khớp gì → cây rỗng', () => {
-    const out = filterSoDuTree(tree, { tk: { op: 'contains', value: 'zzz' } });
+    const out = filterSoDuTree(tree, { tk: { kind: 'text', op: 'contains', value: 'zzz' } });
     expect(out).toEqual([]);
     expect(total(out)).toBe(0);
   });
 
   it('không sửa cây gốc', () => {
-    filterSoDuTree(tree, { tk: { op: 'contains', value: 'công ty a' } });
+    filterSoDuTree(tree, { tk: { kind: 'text', op: 'contains', value: 'công ty a' } });
     expect(tree.find((n) => n.__ma === '131')!.__rollup.duNo).toBe(500);
     expect(total()).toBe(600);
   });
