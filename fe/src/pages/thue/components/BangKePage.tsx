@@ -99,8 +99,32 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
 
   const giaWatch = Form.useWatch("giaTriChuaThue", form) as number | undefined;
   const suatWatch = Form.useWatch("thueSuat", form) as ThueSuat | undefined;
-  const previewThue = Math.round((giaWatch || 0) * (RATE[suatWatch ?? "10"] ?? 0));
-  const previewTong = (giaWatch || 0) + previewThue;
+  const thueWatch = Form.useWatch("tienThue", form) as number | undefined;
+
+  // Tiền thuế / tổng thanh toán sửa tay được (hóa đơn hay lệch vài đồng do làm tròn trên từng
+  // dòng hàng). Lệch quá ngưỡng này thì cảnh báo — bắt lỗi gõ nhầm chữ số, không chặn lưu.
+  const thueTheoCongThuc = Math.round((giaWatch || 0) * (RATE[suatWatch ?? "10"] ?? 0));
+  const lechTienThue = Math.abs((thueWatch || 0) - thueTheoCongThuc);
+  const LECH_WARN = 1000;
+
+  /** Quy tắc liên động: đổi giá trị/thuế suất → tính lại cả hai; sửa tiền thuế → tổng bám theo. */
+  const handleValuesChange = (
+    changed: Record<string, unknown>,
+    all: Record<string, unknown>,
+  ) => {
+    const gia = Number(all.giaTriChuaThue) || 0;
+    const suat = (all.thueSuat ?? "10") as ThueSuat;
+
+    if ("giaTriChuaThue" in changed || "thueSuat" in changed) {
+      const thue = Math.round(gia * (RATE[suat] ?? 0));
+      form.setFieldsValue({ tienThue: thue, tongThanhToan: gia + thue });
+      return;
+    }
+    if ("tienThue" in changed) {
+      form.setFieldsValue({ tongThanhToan: gia + (Number(all.tienThue) || 0) });
+    }
+    // Sửa tổng thanh toán → không đụng gì khác.
+  };
 
   const fetchData = async (
     page = pagination.current,
@@ -139,7 +163,13 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
   const handleAdd = () => {
     setEditingRecord(null);
     form.resetFields();
-    form.setFieldsValue({ ngayHoaDon: dayjs(), thueSuat: "10", giaTriChuaThue: 0 });
+    form.setFieldsValue({
+      ngayHoaDon: dayjs(),
+      thueSuat: "10",
+      giaTriChuaThue: 0,
+      tienThue: 0,
+      tongThanhToan: 0,
+    });
     setModalVisible(true);
   };
 
@@ -378,7 +408,13 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
         width={640}
         destroyOnClose
       >
-        <Form form={form} layout="vertical" size="small" className="mt-2">
+        <Form
+          form={form}
+          layout="vertical"
+          size="small"
+          className="mt-2"
+          onValuesChange={handleValuesChange}
+        >
           <Row gutter={12}>
             <Col span={8}>
               <Form.Item name="ngayHoaDon" label="Ngày hóa đơn" className="mb-3" rules={[{ required: true, message: "Chọn ngày" }]}>
@@ -417,7 +453,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
           <Row gutter={12}>
             <Col span={12}>
               <Form.Item name="giaTriChuaThue" label="Giá trị chưa thuế" className="mb-3" rules={[{ required: true, message: "Nhập giá trị" }]}>
-                <InputNumber
+                <InputNumber<number>
                   style={{ width: "100%" }}
                   min={0}
                   formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
@@ -434,13 +470,34 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
 
           <Row gutter={12}>
             <Col span={12}>
-              <Form.Item label="Tiền thuế (tự tính)" className="mb-0">
-                <Input value={fmt(previewThue)} disabled />
+              <Form.Item
+                name="tienThue"
+                label="Tiền thuế"
+                className="mb-0"
+                extra={
+                  lechTienThue > LECH_WARN ? (
+                    <span style={{ color: "#faad14" }}>
+                      Lệch {fmt(lechTienThue)} đ so với công thức ({fmt(thueTheoCongThuc)} đ)
+                    </span>
+                  ) : undefined
+                }
+              >
+                <InputNumber<number>
+                  style={{ width: "100%" }}
+                  min={0}
+                  formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                  parser={(v) => Number((v || "").replace(/,/g, ""))}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="Tổng thanh toán (tự tính)" className="mb-0">
-                <Input value={fmt(previewTong)} disabled />
+              <Form.Item name="tongThanhToan" label="Tổng thanh toán" className="mb-0">
+                <InputNumber<number>
+                  style={{ width: "100%" }}
+                  min={0}
+                  formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                  parser={(v) => Number((v || "").replace(/,/g, ""))}
+                />
               </Form.Item>
             </Col>
           </Row>
