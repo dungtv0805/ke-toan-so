@@ -287,4 +287,16 @@ export class ServiceBase {
     );
     return this.parseResponse<T>(data);
   }
+
+  /**
+   * Xóa mềm hàng loạt: POST <endpoint>/delete-batch với { ids }.
+   * BE trả { success, data: { deleted, skipped } }; `skipped` là số dòng bị guard chặn
+   * (vd đề xuất mua đã duyệt) — lô vẫn xóa được phần còn lại.
+   */
+  async deleteBatch(ids: string[]): Promise<{ deleted: number; skipped: number }> {
+    return this.post<{ deleted: number; skipped: number }>(
+      { ids },
+      { endpoint: '/delete-batch' }
+    );
+  }
 }
