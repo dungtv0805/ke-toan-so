@@ -28,6 +28,7 @@ import { FilterBar } from "@/components/common/FilterBar";
 import { loaiChungTuService, LoaiChungTuType, PhanLoaiChungTu } from "@/services/loaiChungTuService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
@@ -73,11 +74,20 @@ const LoaiChungTuPage: React.FC = () => {
     total: 0,
   });
 
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<LoaiChungTuType>({
+    enabled: canDelete,
+    itemLabel: "loại chứng từ",
+    onDeleteBatch: (ids) => loaiChungTuService.deleteBatch(ids),
+    onDone: () => fetchData(),
+  });
+
   const fetchData = async (
     page = pagination.current,
     pageSize = pagination.pageSize,
     search = searchText
   ) => {
+    // Lựa chọn chỉ có hiệu lực trong trang đang xem: đổi trang / tìm kiếm / lọc / tải lại đều bỏ chọn.
+    clearSelection();
     setLoading(true);
     try {
       const result = await loaiChungTuService.getPaginated({
@@ -280,6 +290,7 @@ const LoaiChungTuPage: React.FC = () => {
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}
+              {bulkDeleteButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -298,6 +309,7 @@ const LoaiChungTuPage: React.FC = () => {
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
+          rowSelection={rowSelection}
           loading={loading}
           scroll={{ x: 800, y: "calc(100vh - 285px)" }}
           pagination={{

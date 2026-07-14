@@ -29,6 +29,8 @@ import {
 } from "./NhomKhuyenMaiHandlerContext";
 import "./NhomKhuyenMaiPage.state";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useBulkDelete } from "@/components/table/useBulkDelete";
+import { nhomKhuyenMaiService } from "@/services/nhomKhuyenMaiService";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 import { useFieldLabels } from "@/components/glossary/useFieldLabels";
 
@@ -51,16 +53,25 @@ function NhomKhuyenMaiPageInner() {
   );
   const [form] = Form.useForm();
 
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<NhomKhuyenMai>({
+    enabled: canDelete,
+    itemLabel: "nhóm khuyến mãi",
+    onDeleteBatch: (ids) => nhomKhuyenMaiService.deleteBatch(ids),
+    onDone: () => handler.executeEvent("refresh", {}),
+  });
+
   useEffect(() => {
     handler.executeEvent("init", {});
   }, [handler]);
 
   const handleSearch = (value: string) => {
+    clearSelection();
     setSearchText(value);
     handler.executeEvent("search", { keyword: value });
   };
 
   const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
+    clearSelection();
     handler.executeEvent("changePage", {
       page: pag.current || 1,
       pageSize: pag.pageSize || 10,
@@ -100,6 +111,7 @@ function NhomKhuyenMaiPageInner() {
   };
 
   const handleDelete = async (id: string) => {
+    clearSelection();
     try {
       await handler.executeEvent("remove", { id });
       message.success("Xóa thành công");
@@ -205,12 +217,14 @@ function NhomKhuyenMaiPageInner() {
             width: 300,
           }}
           onReset={() => {
+            clearSelection();
             setSearchText("");
             handler.executeEvent("refresh", {});
           }}
           actions={
             <>
               {settingsButton}
+              {bulkDeleteButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -228,6 +242,7 @@ function NhomKhuyenMaiPageInner() {
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
+          rowSelection={rowSelection}
           loading={loading}
           scroll={{ y: "calc(100vh - 285px)" }}
           pagination={{

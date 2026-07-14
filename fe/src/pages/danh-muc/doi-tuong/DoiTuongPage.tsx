@@ -40,6 +40,7 @@ import { doiTuongService } from "@/services/doiTuongService";
 import { loaiDoiTuong } from "@/mock-data/doi-tuong";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
@@ -107,12 +108,21 @@ const DoiTuongPage: React.FC = () => {
     }
   };
 
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<DoiTuong>({
+    enabled: canDelete,
+    itemLabel: "đối tượng",
+    onDeleteBatch: (ids) => doiTuongService.deleteBatch(ids),
+    onDone: () => fetchData(),
+  });
+
   const fetchData = async (
     page = pagination.current,
     pageSize = pagination.pageSize,
     search = searchText,
     loai?: DoiTuong["loai"][number]
   ) => {
+    // Lựa chọn chỉ có hiệu lực trong trang đang xem: đổi trang / tìm kiếm / lọc / tải lại đều bỏ chọn.
+    clearSelection();
     setLoading(true);
     try {
       const result = await doiTuongService.getPaginated({
@@ -512,6 +522,7 @@ const DoiTuongPage: React.FC = () => {
             <>
               {settingsButton}
               {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+              {bulkDeleteButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -530,6 +541,7 @@ const DoiTuongPage: React.FC = () => {
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
+          rowSelection={rowSelection}
           loading={loading}
           pagination={{
             current: pagination.current,

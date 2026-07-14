@@ -29,6 +29,8 @@ import {
 } from "./NhomQuanLyHandlerContext";
 import "./NhomQuanLyPage.state";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useBulkDelete } from "@/components/table/useBulkDelete";
+import { nhomQuanLyService } from "@/services/nhomQuanLyService";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 import { useFieldLabels } from "@/components/glossary/useFieldLabels";
 
@@ -49,16 +51,25 @@ function NhomQuanLyPageInner() {
   const [editingRecord, setEditingRecord] = useState<NhomQuanLy | null>(null);
   const [form] = Form.useForm();
 
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<NhomQuanLy>({
+    enabled: canDelete,
+    itemLabel: "nhóm quản lý",
+    onDeleteBatch: (ids) => nhomQuanLyService.deleteBatch(ids),
+    onDone: () => handler.executeEvent("refresh", {}),
+  });
+
   useEffect(() => {
     handler.executeEvent("init", {});
   }, [handler]);
 
   const handleSearch = (value: string) => {
+    clearSelection();
     setSearchText(value);
     handler.executeEvent("search", { keyword: value });
   };
 
   const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
+    clearSelection();
     handler.executeEvent("changePage", {
       page: pag.current || 1,
       pageSize: pag.pageSize || 10,
@@ -98,6 +109,7 @@ function NhomQuanLyPageInner() {
   };
 
   const handleDelete = async (id: string) => {
+    clearSelection();
     try {
       await handler.executeEvent("remove", { id });
       message.success("Xóa thành công");
@@ -203,12 +215,14 @@ function NhomQuanLyPageInner() {
             width: 300,
           }}
           onReset={() => {
+            clearSelection();
             setSearchText("");
             handler.executeEvent("refresh", {});
           }}
           actions={
             <>
               {settingsButton}
+              {bulkDeleteButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -226,6 +240,7 @@ function NhomQuanLyPageInner() {
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
+          rowSelection={rowSelection}
           loading={loading}
           scroll={{ y: "calc(100vh - 285px)" }}
           pagination={{

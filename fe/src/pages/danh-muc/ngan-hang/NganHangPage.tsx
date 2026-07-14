@@ -29,6 +29,7 @@ import { FilterBar } from "@/components/common/FilterBar";
 import { nganHangService } from "@/services/nganHangService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
@@ -83,11 +84,20 @@ const NganHangPage: React.FC = () => {
     total: 0,
   });
 
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<TaiKhoanNganHang>({
+    enabled: canDelete,
+    itemLabel: "ngân hàng",
+    onDeleteBatch: (ids) => nganHangService.deleteBatch(ids),
+    onDone: () => fetchData(),
+  });
+
   const fetchData = async (
     page = pagination.current,
     pageSize = pagination.pageSize,
     search = searchText
   ) => {
+    // Lựa chọn chỉ có hiệu lực trong trang đang xem: đổi trang / tìm kiếm / lọc / tải lại đều bỏ chọn.
+    clearSelection();
     setLoading(true);
     try {
       const result = await nganHangService.getPaginated({
@@ -316,6 +326,7 @@ const NganHangPage: React.FC = () => {
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}
+              {bulkDeleteButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -333,6 +344,7 @@ const NganHangPage: React.FC = () => {
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
+          rowSelection={rowSelection}
           loading={loading}
           scroll={{ x: 1000, y: "calc(100vh - 285px)" }}
           pagination={{

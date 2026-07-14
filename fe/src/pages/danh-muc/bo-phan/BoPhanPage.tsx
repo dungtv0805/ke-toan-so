@@ -30,6 +30,7 @@ import { boPhanService, BoPhanStats } from "@/services/boPhanService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
+import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
@@ -66,11 +67,20 @@ const BoPhanPage: React.FC = () => {
     total: 0,
   });
 
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<BoPhan>({
+    enabled: canDelete,
+    itemLabel: "bộ phận",
+    onDeleteBatch: (ids) => boPhanService.deleteBatch(ids),
+    onDone: () => fetchData(),
+  });
+
   const fetchData = async (
     page = pagination.current,
     pageSize = pagination.pageSize,
     search = searchText
   ) => {
+    // Lựa chọn chỉ có hiệu lực trong trang đang xem: đổi trang / tìm kiếm / tải lại đều bỏ chọn.
+    clearSelection();
     setLoading(true);
     try {
       const [result, statsData] = await Promise.all([
@@ -275,6 +285,7 @@ const BoPhanPage: React.FC = () => {
               >
                 Làm mới
               </Button>
+              {bulkDeleteButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -292,6 +303,7 @@ const BoPhanPage: React.FC = () => {
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
+          rowSelection={rowSelection}
           loading={loading}
           scroll={{
             y: "calc(100vh - 285px)",

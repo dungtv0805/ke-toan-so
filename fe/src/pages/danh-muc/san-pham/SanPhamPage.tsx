@@ -32,6 +32,7 @@ import { sanPhamService, SanPhamStats } from "@/services/sanPhamService";
 import { donViOptions } from "@/mock-data/san-pham";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
@@ -75,11 +76,20 @@ const SanPhamPage: React.FC = () => {
     total: 0,
   });
 
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<SanPham>({
+    enabled: canDelete,
+    itemLabel: "sản phẩm",
+    onDeleteBatch: (ids) => sanPhamService.deleteBatch(ids),
+    onDone: () => fetchData(),
+  });
+
   const fetchData = async (
     page = pagination.current,
     pageSize = pagination.pageSize,
     search = searchText
   ) => {
+    // Lựa chọn chỉ có hiệu lực trong trang đang xem: đổi trang / tìm kiếm / lọc / tải lại đều bỏ chọn.
+    clearSelection();
     setLoading(true);
     try {
       const [result, statsData] = await Promise.all([
@@ -341,6 +351,7 @@ const SanPhamPage: React.FC = () => {
               >
                 Làm mới
               </Button>
+              {bulkDeleteButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -358,6 +369,7 @@ const SanPhamPage: React.FC = () => {
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
+          rowSelection={rowSelection}
           loading={loading}
           scroll={{ x: 900, y: "calc(100vh - 285px)" }}
           pagination={{

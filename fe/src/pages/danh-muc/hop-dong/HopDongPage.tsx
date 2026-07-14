@@ -45,6 +45,8 @@ import {
 } from "./HopDongHandlerContext";
 import "./HopDongPage.state";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useBulkDelete } from "@/components/table/useBulkDelete";
+import { hopDongService } from "@/services/hopDongService";
 
 const { Title, Text } = Typography;
 
@@ -135,16 +137,25 @@ function HopDongPageInner() {
   const [activeTab, setActiveTab] = useState("1");
   const [form] = Form.useForm<FormValues>();
 
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<HopDong>({
+    enabled: canDelete,
+    itemLabel: "hợp đồng",
+    onDeleteBatch: (ids) => hopDongService.deleteBatch(ids),
+    onDone: () => handler.executeEvent("refresh", {}),
+  });
+
   useEffect(() => {
     handler.executeEvent("init", {});
   }, [handler]);
 
   const handleSearch = (value: string) => {
+    clearSelection();
     setSearchText(value);
     handler.executeEvent("search", { keyword: value });
   };
 
   const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
+    clearSelection();
     handler.executeEvent("changePage", {
       page: pag.current || 1,
       pageSize: pag.pageSize || 50,
@@ -266,6 +277,7 @@ function HopDongPageInner() {
   };
 
   const handleDelete = async (id: string) => {
+    clearSelection();
     try {
       await handler.executeEvent("remove", { id });
       message.success("Xóa hợp đồng thành công");
@@ -821,12 +833,14 @@ function HopDongPageInner() {
             width: 320,
           }}
           onReset={() => {
+            clearSelection();
             setSearchText("");
             handler.executeEvent("refresh", {});
           }}
           actions={
             <>
               {settingsButton}
+              {bulkDeleteButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -844,6 +858,7 @@ function HopDongPageInner() {
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
+          rowSelection={rowSelection}
           loading={loading}
           pagination={{
             current: pagination.current,

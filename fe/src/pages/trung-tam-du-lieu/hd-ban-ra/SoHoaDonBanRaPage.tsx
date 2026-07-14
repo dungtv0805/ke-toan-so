@@ -23,6 +23,7 @@ import type { HoaDonBanRa, TheoDoiHopDongRow } from '@/types';
 import { hoaDonBanRaService } from '@/services/hoaDonBanRaService';
 import { theoDoiHopDongService } from '@/services/theoDoiHopDongService';
 import { usePagePermission } from '@/hooks/usePagePermission';
+import { useBulkDelete } from '@/components/table/useBulkDelete';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
@@ -78,7 +79,17 @@ export default function SoHoaDonBanRaPage() {
   const tienThue = Form.useWatch('tienThue', form);
   const tong = (Number(tienHang) || 0) + (Number(tienThue) || 0);
 
+  // HoaDonBanRa khai báo `id?: string` nên dùng thẳng `{ id: string }` cho tham số kiểu của hook.
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<{ id: string }>({
+    enabled: canDelete,
+    itemLabel: 'hóa đơn',
+    onDeleteBatch: (ids) => hoaDonBanRaService.deleteBatch(ids),
+    onDone: () => load(),
+  });
+
   const load = async () => {
+    // Lựa chọn chỉ có hiệu lực trên tập dòng đang xem: tìm kiếm / tải lại đều bỏ chọn.
+    clearSelection();
     setLoading(true);
     try {
       setRows(await hoaDonBanRaService.getList({ search: search || undefined }));
@@ -167,6 +178,11 @@ export default function SoHoaDonBanRaPage() {
   const { filterable, matches, hasPinned } = useTableColumnFilters('trung-tam-du-lieu-hd-ban-ra');
   const viewRows = useMemo(() => rows.filter((r) => matches(r, cellValue)), [rows, matches]);
 
+  // Đổi bộ lọc cột → tập dòng đang xem đổi theo (`matches` chỉ đổi khi bộ lọc đổi) → bỏ chọn.
+  useEffect(() => {
+    clearSelection();
+  }, [matches, clearSelection]);
+
   const columns: ColumnsType<HoaDonBanRa> = [
     filterable<HoaDonBanRa>({
       title: 'Số HĐ',
@@ -242,12 +258,13 @@ export default function SoHoaDonBanRaPage() {
         <FilterBar
           search={{ value: search, onChange: setSearch, onSearch: load, placeholder: 'Tìm số HĐ, công trình, đơn vị mua...', width: 320 }}
           onReset={() => { setSearch(''); load(); }}
-          actions={<>{canCreate && <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>Thêm hóa đơn</Button>}{settingsButton}</>}
+          actions={<>{bulkDeleteButton}{canCreate && <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>Thêm hóa đơn</Button>}{settingsButton}</>}
         />
         <Table<HoaDonBanRa>
           columns={cfgColumns}
           dataSource={viewRows}
           rowKey="id"
+          rowSelection={rowSelection}
           loading={loading}
           size="small"
           // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được.

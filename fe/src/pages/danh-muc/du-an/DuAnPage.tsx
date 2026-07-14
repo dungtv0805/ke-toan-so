@@ -42,6 +42,7 @@ import { chuDauTuService } from "@/services/chuDauTuService";
 import { trangThaiDuAnOptions } from "@/mock-data/du-an";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
@@ -87,12 +88,21 @@ const DuAnPage: React.FC = () => {
   });
   const [chuDauTuList, setChuDauTuList] = useState<ChuDauTu[]>([]);
 
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<DuAn>({
+    enabled: canDelete,
+    itemLabel: "dự án",
+    onDeleteBatch: (ids) => duAnService.deleteBatch(ids),
+    onDone: () => fetchData(),
+  });
+
   const fetchData = async (
     page = pagination.current,
     pageSize = pagination.pageSize,
     search = searchText,
     trangThai?: DuAn["trangThai"]
   ) => {
+    // Lựa chọn chỉ có hiệu lực trong trang đang xem: đổi trang / tìm kiếm / lọc / tải lại đều bỏ chọn.
+    clearSelection();
     setLoading(true);
     try {
       const [result, statsData, chuDauTuData] = await Promise.all([
@@ -568,6 +578,7 @@ const DuAnPage: React.FC = () => {
               >
                 Làm mới
               </Button>
+              {bulkDeleteButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -585,6 +596,7 @@ const DuAnPage: React.FC = () => {
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
+          rowSelection={rowSelection}
           loading={loading}
           scroll={{ x: 1000, y: "calc(100vh - 285px)" }}
           pagination={{

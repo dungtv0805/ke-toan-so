@@ -35,6 +35,7 @@ import { nhomKhoanMucService, NhomKhoanMuc } from "@/services/nhomKhoanMucServic
 import { loaiKhoanMucOptions } from "@/mock-data/khoan-muc";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 
@@ -89,12 +90,21 @@ const KhoanMucPage: React.FC = () => {
     }
   };
 
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<KhoanMuc>({
+    enabled: canDelete,
+    itemLabel: "khoản mục",
+    onDeleteBatch: (ids) => khoanMucService.deleteBatch(ids),
+    onDone: () => fetchData(),
+  });
+
   const fetchData = async (
     page = pagination.current,
     pageSize = pagination.pageSize,
     search = searchText,
     loai?: KhoanMuc["loai"]
   ) => {
+    // Lựa chọn chỉ có hiệu lực trong trang đang xem: đổi trang / tìm kiếm / lọc / tải lại đều bỏ chọn.
+    clearSelection();
     setLoading(true);
     try {
       const [result, statsData] = await Promise.all([
@@ -411,6 +421,7 @@ const KhoanMucPage: React.FC = () => {
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}
+              {bulkDeleteButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -428,6 +439,7 @@ const KhoanMucPage: React.FC = () => {
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
+          rowSelection={rowSelection}
           loading={loading}
           scroll={{ x: 800, y: "calc(100vh - 285px)" }}
           pagination={{
