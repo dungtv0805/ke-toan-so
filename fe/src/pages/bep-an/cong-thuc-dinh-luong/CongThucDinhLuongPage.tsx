@@ -31,6 +31,7 @@ import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { useBulkDelete } from '@/components/table/useBulkDelete';
 import { CongThucChiTietTable } from "./CongThucChiTietTable";
 
 const { Text } = Typography;
@@ -112,6 +113,13 @@ const CongThucDinhLuongPage: React.FC = () => {
     }
   };
 
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<CongThucDinhLuong>({
+    enabled: canDelete,
+    itemLabel: "công thức",
+    onDeleteBatch: (ids) => congThucDinhLuongService.deleteBatch(ids),
+    onDone: () => fetchData(pagination.current, pagination.pageSize, searchText),
+  });
+
   useEffect(() => {
     fetchData(1, pagination.pageSize, "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -129,6 +137,7 @@ const CongThucDinhLuongPage: React.FC = () => {
     current?: number;
     pageSize?: number;
   }) => {
+    clearSelection();
     fetchData(
       paginationConfig.current || 1,
       paginationConfig.pageSize || 50,
@@ -137,6 +146,7 @@ const CongThucDinhLuongPage: React.FC = () => {
   };
 
   const handleSearch = (value: string) => {
+    clearSelection();
     setSearchText(value);
   };
 
@@ -317,10 +327,14 @@ const CongThucDinhLuongPage: React.FC = () => {
               )}
               <Button
                 icon={<ReloadOutlined />}
-                onClick={() => fetchData(1, pagination.pageSize, "")}
+                onClick={() => {
+                  clearSelection();
+                  fetchData(1, pagination.pageSize, "");
+                }}
               >
                 Làm mới
               </Button>
+              {bulkDeleteButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -340,6 +354,7 @@ const CongThucDinhLuongPage: React.FC = () => {
           dataSource={data}
           rowKey="id"
           loading={loading}
+          rowSelection={rowSelection}
           scroll={{ x: 900, y: "calc(100vh - 285px)" }}
           pagination={{
             current: pagination.current,

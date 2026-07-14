@@ -21,9 +21,11 @@ const DEFAULT_PAGINATION: PaginationMeta = {
 
 interface QuyChaunHeaderProps {
   settingsButton?: React.ReactNode;
+  /** Nút "Xóa đã chọn (N)" — do trang cha dựng (useBulkDelete). */
+  bulkDeleteButton?: React.ReactNode;
 }
 
-export const QuyChaunHeader: React.FC<QuyChaunHeaderProps> = ({ settingsButton }) => {
+export const QuyChaunHeader: React.FC<QuyChaunHeaderProps> = ({ settingsButton, bulkDeleteButton }) => {
   const handler = useQuyChaunHandler();
   const { canCreate, canExport } = usePagePermission("/danh-muc/quy-chuan");
   const [searchText] = useQuyChaunState('searchText', '');
@@ -84,6 +86,7 @@ export const QuyChaunHeader: React.FC<QuyChaunHeaderProps> = ({ settingsButton }
           <>
             {settingsButton}
             {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+            {bulkDeleteButton}
             {canCreate && (
               <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
                 Thêm mới

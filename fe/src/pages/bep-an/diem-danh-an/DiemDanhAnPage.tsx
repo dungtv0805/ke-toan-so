@@ -35,6 +35,7 @@ import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { useBulkDelete } from '@/components/table/useBulkDelete';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -123,6 +124,13 @@ const DiemDanhAnPage: React.FC = () => {
     }
   };
 
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<DiemDanhAn>({
+    enabled: canDelete,
+    itemLabel: "buổi điểm danh",
+    onDeleteBatch: (ids) => diemDanhAnService.deleteBatch(ids),
+    onDone: () => fetchData(pagination.current, pagination.pageSize, searchText),
+  });
+
   useEffect(() => {
     fetchData(1, pagination.pageSize, "");
     fetchCongThucOptions();
@@ -141,6 +149,7 @@ const DiemDanhAnPage: React.FC = () => {
     current?: number;
     pageSize?: number;
   }) => {
+    clearSelection();
     fetchData(
       paginationConfig.current || 1,
       paginationConfig.pageSize || 50,
@@ -149,6 +158,7 @@ const DiemDanhAnPage: React.FC = () => {
   };
 
   const handleSearch = (value: string) => {
+    clearSelection();
     setSearchText(value);
   };
 
@@ -313,10 +323,14 @@ const DiemDanhAnPage: React.FC = () => {
               )}
               <Button
                 icon={<ReloadOutlined />}
-                onClick={() => fetchData(1, pagination.pageSize, "")}
+                onClick={() => {
+                  clearSelection();
+                  fetchData(1, pagination.pageSize, "");
+                }}
               >
                 Làm mới
               </Button>
+              {bulkDeleteButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -336,6 +350,7 @@ const DiemDanhAnPage: React.FC = () => {
           dataSource={data}
           rowKey="id"
           loading={loading}
+          rowSelection={rowSelection}
           scroll={{ x: 900, y: "calc(100vh - 285px)" }}
           pagination={{
             current: pagination.current,

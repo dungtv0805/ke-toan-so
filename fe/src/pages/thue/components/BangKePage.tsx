@@ -29,6 +29,7 @@ import {
 import dayjs from "dayjs";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
+import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import {
   BangKeRecord,
@@ -154,6 +155,13 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
       setLoading(false);
     }
   };
+
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<BangKeRecord>({
+    enabled: canDelete,
+    itemLabel: "hóa đơn",
+    onDeleteBatch: (ids) => service.deleteBatch(ids),
+    onDone: () => fetchData(pagination.current, pagination.pageSize, searchText, nam, quy),
+  });
 
   useEffect(() => {
     fetchData(1, pagination.pageSize, "", nam, quy);
@@ -310,11 +318,15 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
           search={{
             value: searchText,
             onChange: setSearchText,
-            onSearch: () => fetchData(1, pagination.pageSize, searchText, nam, quy),
+            onSearch: () => {
+              clearSelection();
+              fetchData(1, pagination.pageSize, searchText, nam, quy);
+            },
             placeholder: "Tìm theo số HĐ, tên hoặc MST...",
             width: 360,
           }}
           onReset={() => {
+            clearSelection();
             setSearchText("");
             fetchData(1, pagination.pageSize, "", nam, quy);
           }}
@@ -323,6 +335,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
               <Select
                 value={quy}
                 onChange={(v) => {
+                  clearSelection();
                   setQuy(v);
                   fetchData(1, pagination.pageSize, searchText, nam, v);
                 }}
@@ -333,6 +346,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
                 value={nam}
                 onChange={(v) => {
                   const y = v || dayjs().year();
+                  clearSelection();
                   setNam(y);
                   fetchData(1, pagination.pageSize, searchText, y, quy);
                 }}
@@ -343,6 +357,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
                   Import Excel
                 </Button>
               )}
+              {bulkDeleteButton}
               {canCreate && (
                 <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
                   Thêm hóa đơn
@@ -358,6 +373,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
           dataSource={data}
           rowKey="id"
           loading={loading}
+          rowSelection={rowSelection}
           scroll={{ x: 1200, y: "calc(100vh - 285px)" }}
           pagination={{
             current: pagination.current,
@@ -367,30 +383,34 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
             showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} hóa đơn`,
             pageSizeOptions: ["10", "20", "50", "100"],
           }}
-          onChange={(pag) =>
-            fetchData(pag.current || 1, pag.pageSize || 50, searchText, nam, quy)
-          }
+          onChange={(pag) => {
+            clearSelection();
+            fetchData(pag.current || 1, pag.pageSize || 50, searchText, nam, quy);
+          }}
           summary={(pageData) => {
             const tGia = pageData.reduce((s, r) => s + (r.giaTriChuaThue || 0), 0);
             const tThue = pageData.reduce((s, r) => s + (r.tienThue || 0), 0);
             const tTong = pageData.reduce((s, r) => s + (r.tongThanhToan || 0), 0);
+            // Cột checkbox (khi có quyền xóa) chiếm 1 ô ở đầu → dòng tổng phải dịch theo, nếu không lệch cột.
+            const off = rowSelection ? 1 : 0;
             return (
               <Table.Summary fixed>
                 <Table.Summary.Row>
-                  <Table.Summary.Cell index={0} colSpan={6}>
+                  {rowSelection && <Table.Summary.Cell index={0} />}
+                  <Table.Summary.Cell index={off} colSpan={6}>
                     <Text strong>Tổng trang</Text>
                   </Table.Summary.Cell>
-                  <Table.Summary.Cell index={6} align="right">
+                  <Table.Summary.Cell index={off + 6} align="right">
                     <Text strong>{fmt(tGia)}</Text>
                   </Table.Summary.Cell>
-                  <Table.Summary.Cell index={7} />
-                  <Table.Summary.Cell index={8} align="right">
+                  <Table.Summary.Cell index={off + 7} />
+                  <Table.Summary.Cell index={off + 8} align="right">
                     <Text strong>{fmt(tThue)}</Text>
                   </Table.Summary.Cell>
-                  <Table.Summary.Cell index={9} align="right">
+                  <Table.Summary.Cell index={off + 9} align="right">
                     <Text strong>{fmt(tTong)}</Text>
                   </Table.Summary.Cell>
-                  <Table.Summary.Cell index={10} />
+                  <Table.Summary.Cell index={off + 10} />
                 </Table.Summary.Row>
               </Table.Summary>
             );
@@ -511,7 +531,10 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
       <ImportBangKeModal
         open={importVisible}
         onClose={() => setImportVisible(false)}
-        onImported={() => fetchData(1, pagination.pageSize, searchText, nam, quy)}
+        onImported={() => {
+          clearSelection();
+          fetchData(1, pagination.pageSize, searchText, nam, quy);
+        }}
         variant={variant}
         service={service}
       />

@@ -32,6 +32,7 @@ import { usePrintKhoPhieu } from './print/usePrintKhoPhieu';
 import { KhoTemplateModal } from './print/KhoTemplateModal';
 import { KHO_TEMPLATE_KEY } from './print/khoPrintTemplates';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useBulkDelete } from '@/components/table/useBulkDelete';
 
 const { RangePicker } = DatePicker;
 
@@ -104,6 +105,13 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
     loadData();
   }, [loadData]);
 
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<PhieuKho>({
+    enabled: canDelete,
+    itemLabel: 'phiếu',
+    onDeleteBatch: (ids) => phieuKhoService.deleteBatch(ids),
+    onDone: () => loadData(),
+  });
+
   const handleOpenCreate = () => {
     setEditingId(null);
     setEditorOpen(true);
@@ -125,6 +133,7 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
   };
 
   const handleSearch = () => {
+    clearSelection();
     if (page === 1) {
       // Already on page 1; loadData deps (search, dateRange) are up-to-date via onChange,
       // so trigger one explicit fetch instead of relying on a stale effect.
@@ -265,13 +274,14 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
             format="DD/MM/YYYY"
             placeholder={['Từ ngày', 'Đến ngày']}
             value={dateRange}
-            onChange={(vals) =>
+            onChange={(vals) => {
+              clearSelection();
               setDateRange(
                 vals
                   ? [vals[0] ?? null, vals[1] ?? null]
                   : null,
-              )
-            }
+              );
+            }}
           />
           <Button
             size="small"
@@ -282,6 +292,7 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
             Tìm
           </Button>
           <Space style={{ marginLeft: 'auto' }} size={8}>
+            {bulkDeleteButton}
             {settingsButton}
             {isAdmin && (
               <Button
@@ -313,6 +324,7 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
           rowKey="id"
           loading={loading}
           size="small"
+          rowSelection={rowSelection}
           scroll={{ x: 800 }}
           pagination={{
             current: page,
@@ -320,7 +332,10 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
             total,
             showSizeChanger: false,
             showTotal: (t) => `Tổng ${t} phiếu`,
-            onChange: (p) => setPage(p),
+            onChange: (p) => {
+              clearSelection();
+              setPage(p);
+            },
           }}
         />
       </Card>

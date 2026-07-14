@@ -41,6 +41,7 @@ import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { useBulkDelete } from '@/components/table/useBulkDelete';
 import { DeXuatChiTietTable } from "./DeXuatChiTietTable";
 
 const { Text } = Typography;
@@ -124,6 +125,14 @@ const DeXuatMuaPage: React.FC = () => {
     }
   };
 
+  // BE bỏ qua đề xuất đã duyệt / đã nhận (rơi vào `skipped`) → không lọc gì thêm ở FE.
+  const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<DeXuatMua>({
+    enabled: canDelete,
+    itemLabel: "đề xuất",
+    onDeleteBatch: (ids) => deXuatMuaService.deleteBatch(ids),
+    onDone: () => fetchData(pagination.current, pagination.pageSize, searchText),
+  });
+
   useEffect(() => {
     fetchData(1, pagination.pageSize, "");
     doiTuongService
@@ -149,6 +158,7 @@ const DeXuatMuaPage: React.FC = () => {
     current?: number;
     pageSize?: number;
   }) => {
+    clearSelection();
     fetchData(
       paginationConfig.current || 1,
       paginationConfig.pageSize || 50,
@@ -157,6 +167,7 @@ const DeXuatMuaPage: React.FC = () => {
   };
 
   const handleSearch = (value: string) => {
+    clearSelection();
     setSearchText(value);
   };
 
@@ -447,10 +458,14 @@ const DeXuatMuaPage: React.FC = () => {
               )}
               <Button
                 icon={<ReloadOutlined />}
-                onClick={() => fetchData(1, pagination.pageSize, "")}
+                onClick={() => {
+                  clearSelection();
+                  fetchData(1, pagination.pageSize, "");
+                }}
               >
                 Làm mới
               </Button>
+              {bulkDeleteButton}
               {canCreate && (
                 <Button
                   type="primary"
@@ -470,6 +485,7 @@ const DeXuatMuaPage: React.FC = () => {
           dataSource={data}
           rowKey="id"
           loading={loading}
+          rowSelection={rowSelection}
           scroll={{ x: 900, y: "calc(100vh - 285px)" }}
           pagination={{
             current: pagination.current,

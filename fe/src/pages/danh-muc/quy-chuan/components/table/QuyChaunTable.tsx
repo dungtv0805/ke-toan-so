@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useEffect } from "react";
 import { Table, Tag, Space, Button, Popconfirm, Tabs, Tooltip } from "antd";
 import { EditOutlined, DeleteOutlined, SwapOutlined } from "@ant-design/icons";
-import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
+import type { ColumnsType, TablePaginationConfig, TableProps } from "antd/es/table";
 import { QuyChuan, LoaiGiaoDich, HoSoChungTuRef } from "@/types";
 import {
   useQuyChaunHandler,
@@ -14,6 +14,8 @@ import { PaginationMeta } from "./QuyChaunTable.state";
 
 interface QuyChaunTableProps {
   onSettingsButton?: (btn: React.ReactNode) => void;
+  /** Checkbox chọn dòng — state do trang cha giữ (useBulkDelete). */
+  rowSelection?: TableProps<QuyChuan>["rowSelection"];
 }
 
 const DEFAULT_PAGINATION: PaginationMeta = {
@@ -23,7 +25,7 @@ const DEFAULT_PAGINATION: PaginationMeta = {
   totalPages: 0,
 };
 
-export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton }) => {
+export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton, rowSelection }) => {
   const handler = useQuyChaunHandler();
   const { canEdit, canDelete } = usePagePermission("/danh-muc/quy-chuan");
   const [quyChaunList] = useQuyChaunState("quyChaunList", []);
@@ -239,6 +241,7 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton }
           dataSource={quyChaunList}
           rowKey="id"
           loading={loading}
+          rowSelection={rowSelection}
           pagination={paginationConfig}
           onChange={handleTableChange}
           size="middle"
@@ -262,6 +265,7 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton }
           dataSource={quyChaunList}
           rowKey="id"
           loading={loading}
+          rowSelection={rowSelection}
           pagination={paginationConfig}
           onChange={handleTableChange}
           size="middle"
