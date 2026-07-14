@@ -9,7 +9,6 @@ import {
   Breadcrumb,
   Button,
   Card,
-  DatePicker,
   Empty, message,
   Select,
   Space,
@@ -22,25 +21,24 @@ import ColumnChooser from './ColumnChooser';
 import {
   buildAntdColumns, loadVisibleKeys, saveVisibleKeys,
 } from './columnRegistry';
-import { parseReportParams } from './reportParams';
+import { initialPeriod, parseReportParams } from './reportParams';
+import { PeriodFilter, type PeriodFilterParams } from '@/components/shared/PeriodFilter';
 import { FilterBar } from '@/components/common/FilterBar';
 import { exportReportExcel } from '@/utils/exportReportExcel';
 import { buildSoChiTietSheets } from './soChiTietExport';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
 import { filterSoChiTietReports, withColumnFilters } from './soChiTietFilter';
 
-const { RangePicker } = DatePicker;
-
 const SoChiTietTaiKhoanPage: React.FC = () => {
   const [searchParams] = useSearchParams();
+  // Kỳ khởi tạo tính đồng bộ từ query param để dropdown khớp dữ liệu ngay lần render đầu
+  // (mở từ link drill-down → "Tùy chọn" + đúng khoảng ngày của link).
+  const [initial] = useState(() => initialPeriod(searchParams.get.bind(searchParams)));
   const [accountOptions, setAccountOptions] = useState<{ value: string; label: string }[]>([]);
   const [doiTuongOptions, setDoiTuongOptions] = useState<{ value: string; label: string }[]>([]);
   const [maTaiKhoans, setMaTaiKhoans] = useState<string[]>([]);
   const [maDoiTuong, setMaDoiTuong] = useState<string>();
-  const [range, setRange] = useState<[Dayjs, Dayjs]>([
-    dayjs().startOf('month'),
-    dayjs().endOf('month'),
-  ]);
+  const [range, setRange] = useState<[Dayjs, Dayjs]>(initial.range);
   const [reports, setReports] = useState<SoChiTietReport[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [visibleKeys, setVisibleKeys] = useState<string[]>(() => loadVisibleKeys());
@@ -87,9 +85,9 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
       : dayjs().endOf('month');
 
     // Phản ánh lựa chọn lên bộ lọc để người dùng thấy đang xem gì.
+    // (`range` + kỳ trên dropdown đã khởi tạo từ chính param này qua `initialPeriod`.)
     setMaTaiKhoans([p.maTaiKhoan]);
     if (p.maDoiTuong) setMaDoiTuong(p.maDoiTuong);
-    setRange([start, end]);
 
     // Tải trực tiếp từ param (tránh đọc state chưa cập nhật).
     (async () => {
@@ -207,11 +205,11 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
         className="mb-2"
         filters={
           <>
-            <RangePicker
-              value={range}
-              format="DD/MM/YYYY"
-              onChange={(v) => v && v[0] && v[1] && setRange([v[0], v[1]])}
-              allowClear={false}
+            <PeriodFilter
+              autoApply
+              defaultPeriod={initial.period}
+              defaultCustomRange={initial.customRange}
+              onFilter={(p: PeriodFilterParams) => setRange([dayjs(p.startDate), dayjs(p.endDate)])}
             />
             <Select
               mode="multiple"
