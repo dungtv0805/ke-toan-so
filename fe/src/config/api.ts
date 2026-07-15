@@ -63,6 +63,18 @@ export class ApiError extends Error {
 }
 
 /**
+ * Lấy message hiển thị cho người dùng từ lỗi API.
+ * Khi server có phản hồi (statusCode) → dùng message thật từ backend
+ * (vd "Người dùng đã là thành viên của công ty này"); còn lại → fallback.
+ */
+export function apiErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiError && error.statusCode && error.message) {
+    return error.message;
+  }
+  return fallback;
+}
+
+/**
  * API Response interfaces
  */
 export interface ApiSuccessResponse<T> {

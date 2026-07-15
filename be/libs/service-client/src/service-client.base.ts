@@ -12,6 +12,17 @@ import {
   ServiceError,
 } from './interfaces/service-response.interface';
 
+// Map HTTP status → mã lỗi ngữ nghĩa, khớp với GlobalExceptionFilter và với
+// throwFromServiceError phía service gọi (NOT_FOUND/CONFLICT/... → đúng exception).
+const STATUS_CODE_MAP: Record<number, string> = {
+  400: 'VALIDATION_ERROR',
+  401: 'UNAUTHORIZED',
+  403: 'FORBIDDEN',
+  404: 'NOT_FOUND',
+  409: 'CONFLICT',
+  502: 'BAD_GATEWAY',
+};
+
 @Injectable()
 export abstract class BaseServiceClient {
   protected configs: Map<string, ServiceClientConfig> = new Map();
@@ -114,15 +125,11 @@ export abstract class BaseServiceClient {
         res.on('data', (chunk: Buffer) => (data += chunk.toString()));
         res.on('end', () => {
           try {
-            const response = JSON.parse(data) as ServiceResponse<T>;
+            const response = JSON.parse(data) as ServiceResponse<T> & {
+              message?: string;
+            };
             if (res.statusCode && res.statusCode >= 400) {
-              resolve(
-                this.createErrorResponse<T>(
-                  `HTTP_ERROR_${res.statusCode}`,
-                  response.error?.message || `HTTP Error ${res.statusCode}`,
-                  response.error?.details,
-                ),
-              );
+              resolve(this.mapHttpError<T>(res.statusCode, response));
             } else {
               resolve(response);
             }
@@ -176,6 +183,27 @@ export abstract class BaseServiceClient {
       }
     }
     return params.toString();
+  }
+
+  /**
+   * Chuyển body lỗi HTTP (status ≥ 400) thành ServiceResponse thất bại với mã
+   * ngữ nghĩa + message thật. Hỗ trợ 2 shape:
+   *  - Service nội bộ (GlobalExceptionFilter): { error: { code, message, details } }
+   *  - NestJS mặc định (vd identity-service):   { statusCode, message, error: "Conflict" }
+   */
+  protected mapHttpError<T>(
+    statusCode: number,
+    body: unknown,
+  ): ServiceResponse<T> {
+    const resp = (body ?? {}) as { error?: unknown; message?: string };
+    const err = resp.error;
+    const errObj =
+      err && typeof err === 'object' ? (err as ServiceError) : undefined;
+    const code =
+      errObj?.code || STATUS_CODE_MAP[statusCode] || `HTTP_ERROR_${statusCode}`;
+    const message =
+      errObj?.message || resp.message || `HTTP Error ${statusCode}`;
+    return this.createErrorResponse<T>(code, message, errObj?.details);
   }
 
   protected createErrorResponse<T>(

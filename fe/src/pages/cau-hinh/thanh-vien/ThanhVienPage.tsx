@@ -16,6 +16,7 @@ import {
 import { UserAddOutlined, DeleteOutlined, EditOutlined, UserOutlined, TeamOutlined, KeyOutlined } from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { tenantService, TenantMember, AddMemberDto } from '@/services/tenantService';
+import { apiErrorMessage } from '@/config/api';
 import { vaiTroService, VaiTroResponse } from '@/services/vaiTroService';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
@@ -113,8 +114,8 @@ const ThanhVienPage = () => {
       setAddModalVisible(false);
       addForm.resetFields();
       fetchMembers();
-    } catch {
-      message.error('Không thể thêm thành viên');
+    } catch (e) {
+      message.error(apiErrorMessage(e, 'Không thể thêm thành viên'));
     }
   };
 
@@ -134,8 +135,8 @@ const ThanhVienPage = () => {
       message.success('Đã cập nhật thành viên');
       setEditingMember(null);
       fetchMembers();
-    } catch {
-      message.error('Không thể cập nhật thành viên');
+    } catch (e) {
+      message.error(apiErrorMessage(e, 'Không thể cập nhật thành viên'));
     }
   };
 

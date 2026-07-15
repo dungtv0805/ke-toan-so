@@ -21,6 +21,7 @@ import {
   UserOption,
 } from '@/services/tenantService';
 import { vaiTroService, VaiTroResponse } from '@/services/vaiTroService';
+import { apiErrorMessage } from '@/config/api';
 
 const DEFAULT_PASSWORD = '123456';
 
@@ -109,8 +110,8 @@ const TenantMembersModal = ({ tenant, open, onClose }: Props) => {
       setAddModalVisible(false);
       addForm.resetFields();
       fetchMembers();
-    } catch {
-      message.error('Không thể thêm thành viên');
+    } catch (e) {
+      message.error(apiErrorMessage(e, 'Không thể thêm thành viên'));
     }
   };
 
@@ -122,8 +123,8 @@ const TenantMembersModal = ({ tenant, open, onClose }: Props) => {
       message.success('Đã cập nhật vai trò');
       setEditingMember(null);
       fetchMembers();
-    } catch {
-      message.error('Không thể cập nhật vai trò');
+    } catch (e) {
+      message.error(apiErrorMessage(e, 'Không thể cập nhật vai trò'));
     }
   };
 
