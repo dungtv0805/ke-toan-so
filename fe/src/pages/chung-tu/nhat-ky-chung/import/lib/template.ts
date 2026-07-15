@@ -15,7 +15,15 @@ const REF_SHEETS: RefSheet[] = [
   { name: "DM_LoaiGiaoDich", items: (md) => md.loaiGiaoDichList.map((x) => `${x.ma} - ${x.ten}`) },
   { name: "DM_NghiepVu", items: (md) => md.quyChuanList.map((q) => `${q.nghiepVu} - ${q.moTa || q.nghiepVu} (${q.loaiGiaoDich})`) },
   { name: "DM_TaiKhoan", items: (md) => md.taiKhoanList.map((x) => `${x.ma} - ${x.ten}`) },
-  { name: "DM_DoiTuong", items: (md) => md.doiTuongList.map((x) => `${x.ma} - ${x.ten}`) },
+  {
+    name: "DM_DoiTuong",
+    // Gồm cả Đối tượng thường (KH/NCC/…) và Ngân hàng & Quỹ, để cột Đối tượng
+    // của TK chiTietTheo = NGAN_HANG_QUY chọn được — giống lúc nhập tay.
+    items: (md) => [
+      ...md.doiTuongList.map((x) => `${x.ma} - ${x.ten}`),
+      ...md.nganHangList.map((x) => `${x.ma} - ${x.ten}`),
+    ],
+  },
   { name: "DM_DuAn", items: (md) => md.duAnList.map((x) => `${x.ma} - ${x.ten}`) },
   { name: "DM_BoPhan", items: (md) => md.boPhanList.map((x) => `${x.ma} - ${x.ten}`) },
   { name: "DM_SanPham", items: (md) => md.sanPhamList.map((x) => `${x.ma} - ${x.ten}`) },

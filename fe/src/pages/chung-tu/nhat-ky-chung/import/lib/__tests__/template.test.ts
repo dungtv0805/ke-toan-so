@@ -8,6 +8,7 @@ const md: ImportMasterData = {
   loaiGiaoDichList: [{ id: "1", ma: "PHIEU_THU", ten: "Phiếu thu" }] as ImportMasterData["loaiGiaoDichList"],
   quyChuanList: [{ id: "q1", loaiGiaoDich: "PHIEU_THU", nghiepVu: "NV01", taiKhoanNo: "111", taiKhoanCo: "511", moTa: "Bán hàng" }] as ImportMasterData["quyChuanList"],
   doiTuongList: [{ id: "d1", ma: "KH001", ten: "KH A", loai: ["KHACH_HANG"] }] as ImportMasterData["doiTuongList"],
+  nganHangList: [{ id: "nh1", ma: "TK_VCB", ten: "Vietcombank" }] as ImportMasterData["nganHangList"],
   duAnList: [],
   boPhanList: [],
   sanPhamList: [],
@@ -42,6 +43,14 @@ describe("buildTemplateWorkbook", () => {
     const wb = buildTemplateWorkbook(md);
     expect(wb.getWorksheet("DM_TaiKhoan")!.getCell("A1").value).toBe("111 - Tiền mặt");
     expect(wb.getWorksheet("DM_NghiepVu")!.getCell("A1").value).toBe("NV01 - Bán hàng (PHIEU_THU)");
+  });
+
+  it("sheet DM_DoiTuong gồm cả đối tượng thường và ngân hàng & quỹ", () => {
+    const wb = buildTemplateWorkbook(md);
+    const ws = wb.getWorksheet("DM_DoiTuong")!;
+    const values = ws.getColumn(1).values.filter(Boolean).map(String);
+    expect(values).toContain("KH001 - KH A");
+    expect(values).toContain("TK_VCB - Vietcombank");
   });
 
   it("header có cột Ngày ghi sổ và Nhóm chứng từ", () => {

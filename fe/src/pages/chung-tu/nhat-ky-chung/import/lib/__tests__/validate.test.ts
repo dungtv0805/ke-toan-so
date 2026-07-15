@@ -10,6 +10,7 @@ const masterData: ImportMasterData = {
   loaiGiaoDichList: [{ id: "1", ma: "PHIEU_THU", ten: "Phiếu thu" }] as ImportMasterData["loaiGiaoDichList"],
   quyChuanList: [{ id: "q1", loaiGiaoDich: "PHIEU_THU", nghiepVu: "NV01", taiKhoanNo: "111", taiKhoanCo: "511" }] as ImportMasterData["quyChuanList"],
   doiTuongList: [{ id: "dt1", ma: "KH001", ten: "KH A", loai: ["KHACH_HANG"] }] as ImportMasterData["doiTuongList"],
+  nganHangList: [{ id: "nh1", ma: "TK_VCB", ten: "Vietcombank", soTaiKhoan: "007123" }] as ImportMasterData["nganHangList"],
   duAnList: [],
   boPhanList: [],
   sanPhamList: [],
@@ -96,6 +97,20 @@ describe("validateAndBuild", () => {
     const res = validateAndBuild([row({ doiTuong: "KH001" })], masterData);
     expect(res.hasErrors).toBe(false);
     expect(res.validItems[0].danhMuc?.doiTuong?.ma).toBe("KH001");
+  });
+
+  it("đối tượng là ngân hàng & quỹ → khớp danh mục NH, snapshot loai NGAN_HANG_QUY", () => {
+    const res = validateAndBuild([row({ doiTuong: "TK_VCB" })], masterData);
+    expect(res.hasErrors).toBe(false);
+    const dt = res.validItems[0].danhMuc?.doiTuong;
+    expect(dt?.ma).toBe("TK_VCB");
+    expect(dt?.loai).toBe("NGAN_HANG_QUY");
+  });
+
+  it("đối tượng ngân hàng nhận dạng dropdown 'Mã - Tên'", () => {
+    const res = validateAndBuild([row({ doiTuong: "TK_VCB - Vietcombank" })], masterData);
+    expect(res.hasErrors).toBe(false);
+    expect(res.validItems[0].danhMuc?.doiTuong?.ma).toBe("TK_VCB");
   });
 
   it("gắn ngayGhiSo và nhomGop vào item", () => {

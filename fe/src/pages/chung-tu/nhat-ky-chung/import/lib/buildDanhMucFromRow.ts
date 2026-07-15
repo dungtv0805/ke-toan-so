@@ -1,6 +1,7 @@
 import {
   DanhMuc,
   DoiTuong,
+  DoiTuongSnapshot,
   DuAn,
   BoPhan,
   SanPham,
@@ -11,7 +12,6 @@ import {
   HopDong,
 } from "@/types";
 import {
-  buildDoiTuongSnapshot,
   buildDuAnSnapshot,
   buildBoPhanSnapshot,
   buildDoiSnapshot,
@@ -38,8 +38,9 @@ export interface ResolvedRow {
   loaiGiaoDich: { ma: string; ten: string };
   nghiepVu: string;
   nghiepVuTen?: string;
-  doiTuong?: DoiTuong;
-  doiTuong2?: DoiTuong;
+  // Snapshot đã dựng sẵn (đối tượng thường hoặc ngân hàng & quỹ)
+  doiTuong?: DoiTuongSnapshot;
+  doiTuong2?: DoiTuongSnapshot;
   duAn?: DuAn;
   boPhan?: BoPhan;
   doi?: BoPhan;
@@ -60,8 +61,8 @@ export function buildDanhMucFromResolved(r: ResolvedRow): DanhMuc {
   danhMuc.loaiGiaoDich = { ...r.loaiGiaoDich };
   danhMuc.nghiepVu = { ma: r.nghiepVu, ten: r.nghiepVuTen || r.nghiepVu };
 
-  if (r.doiTuong) danhMuc.doiTuong = buildDoiTuongSnapshot(r.doiTuong) as DanhMuc["doiTuong"];
-  if (r.doiTuong2) danhMuc.doiTuong2 = buildDoiTuongSnapshot(r.doiTuong2) as DanhMuc["doiTuong2"];
+  if (r.doiTuong) danhMuc.doiTuong = r.doiTuong as DanhMuc["doiTuong"];
+  if (r.doiTuong2) danhMuc.doiTuong2 = r.doiTuong2 as DanhMuc["doiTuong2"];
   if (r.duAn) danhMuc.duAn = buildDuAnSnapshot(r.duAn) as DanhMuc["duAn"];
   if (r.boPhan) danhMuc.boPhan = buildBoPhanSnapshot(r.boPhan) as DanhMuc["boPhan"];
   if (r.doi) danhMuc.doi = buildDoiSnapshot(r.doi) as DanhMuc["doi"];

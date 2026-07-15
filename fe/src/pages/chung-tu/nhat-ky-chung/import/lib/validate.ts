@@ -10,7 +10,13 @@ import {
   LoaiGiaoDich,
   QuyChuan,
   KhoanMuc,
+  TaiKhoanNganHang,
+  DoiTuongSnapshot,
 } from "@/types";
+import {
+  buildDoiTuongSnapshot,
+  buildNganHangSnapshot,
+} from "@/utils/snapshotBuilder";
 import { CreateEntryDto } from "@/services/nhatKyChungService";
 import { LoaiChungTu } from "@/types";
 import {
@@ -33,6 +39,8 @@ export interface ImportMasterData {
   loaiGiaoDichList: LoaiGiaoDich[];
   quyChuanList: QuyChuan[];
   doiTuongList: DoiTuong[];
+  /** Danh mục Ngân hàng & Quỹ — nguồn đối tượng khi TK có chiTietTheo = NGAN_HANG_QUY */
+  nganHangList: TaiKhoanNganHang[];
   duAnList: DuAn[];
   boPhanList: BoPhan[];
   sanPhamList: SanPham[];
@@ -149,17 +157,12 @@ function validateRow(
   }
 
   // 7. Các chiều phân bổ (chỉ kiểm khi có điền)
-  const doiTuong = resolveOptional(
-    row.doiTuong,
-    md.doiTuongList,
-    "ma",
-    errors,
-    "doiTuong",
-  );
-  const doiTuong2 = resolveOptional(
+  // Đối tượng có thể là đối tượng thường (KH/NCC/…) hoặc ngân hàng & quỹ
+  // (khi TK khai chiTietTheo = NGAN_HANG_QUY) — giống lúc nhập tay.
+  const doiTuong = resolveDoiTuongSnapshot(row.doiTuong, md, errors, "doiTuong");
+  const doiTuong2 = resolveDoiTuongSnapshot(
     row.doiTuong2,
-    md.doiTuongList,
-    "ma",
+    md,
     errors,
     "doiTuong2",
   );
@@ -274,6 +277,29 @@ function validateRow(
   };
 
   return { rowNumber: row.rowNumber, errors, warnings, item };
+}
+
+/**
+ * Resolve đối tượng theo mã: ưu tiên danh mục Đối tượng (KH/NCC/NV/…),
+ * nếu không có thì tìm trong danh mục Ngân hàng & Quỹ. Trả về snapshot đã dựng
+ * (khác nguồn → khác builder) để danhMuc lưu giống hệt lúc nhập tay.
+ */
+function resolveDoiTuongSnapshot(
+  code: string | undefined,
+  md: ImportMasterData,
+  errors: RowError[],
+  fieldName: string,
+): DoiTuongSnapshot | undefined {
+  if (!code || code.trim() === "") return undefined;
+  const doiTuong = md.doiTuongList.find((x) => x.ma === code);
+  if (doiTuong) return buildDoiTuongSnapshot(doiTuong);
+  const nganHang = md.nganHangList.find((x) => x.ma === code);
+  if (nganHang) return buildNganHangSnapshot(nganHang);
+  errors.push({
+    field: fieldName,
+    message: `${labelOf(fieldName)} '${code}' không tồn tại`,
+  });
+  return undefined;
 }
 
 /** Tìm bản ghi theo field khóa; nếu có điền mã mà không tìm thấy thì push lỗi. */

@@ -3,6 +3,7 @@ import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler"
 import { taiKhoanService } from "@/services/taiKhoanService";
 import { khoanMucService } from "@/services/khoanMucService";
 import { doiTuongService } from "@/services/doiTuongService";
+import { nganHangService } from "@/services/nganHangService";
 import { duAnService } from "@/services/duAnService";
 import { boPhanService } from "@/services/boPhanService";
 import { sanPhamService } from "@/services/sanPhamService";
@@ -28,6 +29,7 @@ export class LoadMasterDataHandler extends CSubHanlder<ImportEvents, ImportState
         taiKhoanLeaf,
         khoanMucRes,
         doiTuong,
+        nganHang,
         duAn,
         boPhan,
         sanPham,
@@ -41,6 +43,7 @@ export class LoadMasterDataHandler extends CSubHanlder<ImportEvents, ImportState
         taiKhoanService.getLeafAccounts(),
         khoanMucService.getPaginated({ limit: 500 }),
         doiTuongService.getAll(),
+        nganHangService.getAll(),
         duAnService.getAll(),
         boPhanService.getAll(),
         sanPhamService.getAll(),
@@ -61,6 +64,7 @@ export class LoadMasterDataHandler extends CSubHanlder<ImportEvents, ImportState
         })),
         khoanMucList: khoanMucRes.data,
         doiTuongList: doiTuong,
+        nganHangList: nganHang,
         duAnList: duAn,
         boPhanList: boPhan,
         sanPhamList: sanPham,
