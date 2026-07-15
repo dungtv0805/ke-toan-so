@@ -96,14 +96,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check for existing token and fetch user on mount
   useEffect(() => {
     const initAuth = async () => {
-      await ssoHandoff(); // SSO từ Portal: nếu có ?tenant, nạp token trước
+      // SSO từ Portal: nếu có ?tenant, nạp token trước. handoffTenant = công ty
+      // user vừa chọn ở Portal — PHẢI ưu tiên hơn currentTenant cũ trong localStorage,
+      // nếu không tenant cũ sẽ đè lựa chọn mới và (khi tenant cũ hết hiệu lực) gây
+      // vòng lặp "chọn công ty xong lại quay về chọn app".
+      const handoffTenant = await ssoHandoff();
 
       // SLO / nguồn chân lý là phiên identity (cookie mc_session), KHÔNG phải token
       // cache trong localStorage. Khi identity được cấu hình và ta có tenant hiện
       // tại → xin access token tươi từ identity. Nếu trả null nghĩa là đã logout ở
       // portal (cookie/refresh chết) → token cache vô hiệu, xoá đi để rơi về portal.
       if (isIdentityConfigured()) {
-        const tenantId = getCurrentTenant()?.tenantId ?? decodeTenantId(getAuthToken());
+        const tenantId =
+          handoffTenant ?? getCurrentTenant()?.tenantId ?? decodeTenantId(getAuthToken());
         if (tenantId) {
           const fresh = await refreshFromIdentity(tenantId);
           if (fresh) {

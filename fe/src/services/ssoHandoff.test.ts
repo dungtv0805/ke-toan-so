@@ -13,13 +13,30 @@ beforeEach(() => { vi.restoreAllMocks(); (setAuthToken as any).mockClear?.(); })
 afterEach(() => { setUrl(''); vi.unstubAllEnvs(); });
 
 describe('ssoHandoff', () => {
-  it('không có ?tenant → không gọi fetch, không lưu token', async () => {
+  it('không có ?tenant → không gọi fetch, không lưu token, trả null', async () => {
     setUrl('');
     const f = vi.fn();
     vi.stubGlobal('fetch', f);
-    await ssoHandoff();
+    const result = await ssoHandoff();
     expect(f).not.toHaveBeenCalled();
     expect(setAuthToken).not.toHaveBeenCalled();
+    expect(result).toBeNull();
+  });
+
+  it('có ?tenant → trả về tenantId (để initAuth ưu tiên hơn tenant cũ trong localStorage)', async () => {
+    vi.stubEnv('VITE_IDENTITY_URL', 'http://localhost:3020');
+    setUrl('?tenant=t1');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true, data: { accessToken: 'AT' } }) }));
+    const result = await ssoHandoff();
+    expect(result).toBe('t1');
+  });
+
+  it('có ?tenant nhưng refresh lỗi → vẫn trả về tenantId (intent của user thắng tenant cũ)', async () => {
+    vi.stubEnv('VITE_IDENTITY_URL', 'http://localhost:3020');
+    setUrl('?tenant=t1');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 401, json: async () => ({}) }));
+    const result = await ssoHandoff();
+    expect(result).toBe('t1');
   });
 
   it('có ?tenant + refresh 200 → lưu token, gọi /api/refresh credentials, dọn URL', async () => {
