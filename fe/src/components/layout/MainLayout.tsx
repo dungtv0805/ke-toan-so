@@ -84,6 +84,9 @@ const { Header, Sider, Content } = Layout;
 
 type MenuItem = Required<MenuProps>["items"][number];
 
+// Ảnh avatar thật của user được identity-service phục vụ; ?v= để bust cache khi avatar đổi.
+const IDENTITY_URL = import.meta.env.VITE_IDENTITY_URL as string | undefined;
+
 // Mobile/tablet (gồm iPad iPadOS 13+ báo là Macintosh) → hiện mục "Cài đặt ứng dụng" trong menu user.
 const IS_MOBILE_OR_TABLET =
   /android|iphone|ipod|ipad/i.test(navigator.userAgent) ||
@@ -407,6 +410,10 @@ const MainLayout: React.FC = () => {
   const isMobile = useIsMobile();
 
   const roleInfo = currentRole ? { label: currentRole, color: 'blue' } : null;
+  const avatarUrl =
+    IDENTITY_URL && user?.id && user?.avatarUpdatedAt
+      ? `${IDENTITY_URL.replace(/\/$/, "")}/api/users/${user.id}/avatar?v=${encodeURIComponent(user.avatarUpdatedAt)}`
+      : undefined;
 
   const canAccessRoute = (path: string): boolean => {
     if (isSuperAdmin) return true;
@@ -932,6 +939,7 @@ const MainLayout: React.FC = () => {
                 <Avatar
                   size={24}
                   style={{ backgroundColor: roleInfo?.color || "#1890ff" }}
+                  src={avatarUrl}
                   icon={<UserOutlined />}
                 />
                 <div className="hidden md:block">

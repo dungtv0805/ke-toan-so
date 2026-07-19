@@ -18,6 +18,8 @@ export interface AuthUserResponse {
   email: string;
   hoTen: string;
   isSuperAdmin?: boolean;
+  // Timestamp cuối cùng avatar được cập nhật (identity-service); dùng làm cache-busting query cho ảnh avatar.
+  avatarUpdatedAt?: string | null;
 }
 
 // Login response - 2 cases:

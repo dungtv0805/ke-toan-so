@@ -38,6 +38,11 @@ const ProfilePage = () => {
     );
   }
 
+  const avatarUrl =
+    IDENTITY_URL && user.id && user.avatarUpdatedAt
+      ? `${IDENTITY_URL.replace(/\/$/, "")}/api/users/${user.id}/avatar?v=${encodeURIComponent(user.avatarUpdatedAt)}`
+      : undefined;
+
   const tabItems = [
     {
       key: "info",
@@ -55,6 +60,7 @@ const ProfilePage = () => {
               <Avatar
                 size={100}
                 style={{ backgroundColor: "#1890ff" }}
+                src={avatarUrl}
                 icon={<UserOutlined />}
                 className="mb-4"
               />
