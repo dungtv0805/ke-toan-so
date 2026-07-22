@@ -81,6 +81,20 @@ describe("aoaToRawRows", () => {
     expect(rows[0].values.ngayBatDau).toBe(45870);
   });
 
+  it("giữ nguyên số ở cột kiểu number, không ép về chuỗi", () => {
+    const numberColumns: ImportColumn[] = [
+      { key: "ma", header: "Mã", required: true },
+      { key: "giaBan", header: "Giá bán", type: "number" },
+    ];
+    const aoa = [
+      ["Mã", "Giá bán"],
+      ["A", 1500.5],
+    ];
+    const rows = aoaToRawRows(aoa, numberColumns);
+    expect(rows[0].values.giaBan).toBe(1500.5);
+    expect(typeof rows[0].values.giaBan).toBe("number");
+  });
+
   it("cột khai báo trong config nhưng không có trong file thì để chuỗi rỗng", () => {
     const aoa = [
       ["Mã đơn vị tính", "Tên đơn vị tính"],

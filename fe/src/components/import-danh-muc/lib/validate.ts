@@ -59,12 +59,29 @@ function parseDate(raw: string | number): string | null {
   return dt.toISOString().slice(0, 10);
 }
 
-/** "1.000.000" hoặc "1,000,000" hoặc "1000000" → 1000000. Không hợp lệ trả null. */
+/**
+ * Nhận số theo quy ước Việt Nam: dấu "." ngăn cách nhóm nghìn, dấu "," là phần thập phân.
+ * Vẫn chấp nhận số thập phân dạng máy tính (chỉ có dấu "."), ví dụ ô number gốc từ Excel.
+ * "1.000.000" → 1000000; "1.500,5" hoặc "1500,5" → 1500.5; "1500.5" → 1500.5.
+ * Không hợp lệ (rỗng, không phải số, hai dấu chấm liền...) trả null.
+ */
 function parseNumber(raw: string | number): number | null {
   if (typeof raw === "number") return raw;
-  const cleaned = String(raw).replace(/[.,\s]/g, "");
-  if (cleaned === "" || !/^-?\d+$/.test(cleaned)) return null;
-  return Number(cleaned);
+
+  // \s trong JS đã bao gồm cả NBSP (U+00A0), Excel hay chèn ký tự này khi dán số.
+  let text = String(raw).replace(/\s/g, "");
+
+  if (text.includes(",")) {
+    // Có dấu phẩy ⇒ đó là phần thập phân, mọi dấu chấm còn lại là ngăn cách nghìn.
+    text = text.replace(/\./g, "").replace(",", ".");
+  } else if (/^-?\d{1,3}(\.\d{3})+$/.test(text)) {
+    // Không có dấu phẩy nhưng đúng hình dạng nhóm nghìn (vd "1.000.000") ⇒ bỏ dấu chấm.
+    text = text.replace(/\./g, "");
+  }
+  // Còn lại (vd "1500.5", "1.5") giữ nguyên, coi dấu chấm là thập phân kiểu máy tính.
+
+  if (!/^-?\d+(\.\d+)?$/.test(text)) return null;
+  return Number(text);
 }
 
 /** Nhận Có/Không, true/false, 1/0, x. Không hợp lệ trả null. */
@@ -75,7 +92,11 @@ function parseBoolean(raw: string | number): boolean | null {
   return null;
 }
 
-/** Ô có thể là "CDT01" hoặc "CDT01 - Công ty A" (do dropdown file mẫu). Lấy phần mã. */
+/**
+ * Ô có thể là "CDT01" hoặc "CDT01 - Công ty A" (do dropdown file mẫu). Lấy phần mã.
+ * Giới hạn đã biết: tách theo lần xuất hiện ĐẦU TIÊN của " - ", nên một mã hoặc tên
+ * có chứa đúng chuỗi " - " sẽ bị cắt cụt. Cố ý không xử lý (hiếm gặp trong dữ liệu thật).
+ */
 function refKeyOf(raw: string): string {
   const idx = raw.indexOf(" - ");
   return (idx === -1 ? raw : raw.slice(0, idx)).trim();
@@ -120,6 +141,10 @@ export function validateAndBuild(
   for (const row of rows) {
     const errors: string[] = [];
     const payload: Record<string, unknown> = {};
+    // Giá trị đã quy đổi của từng cột, khóa theo ImportColumn.key — dùng để dò trùng
+    // và hiển thị preview, KHÔNG dùng để dựng payload (payload đến từ nhánh switch/ref
+    // ở trên, có thể ghi vào tên trường DTO khác với col.key, ví dụ "chuDauTuId").
+    const converted: Record<string, unknown> = {};
 
     for (const col of config.columns) {
       const raw = row.values[col.key];
@@ -149,12 +174,20 @@ export function validateAndBuild(
           }
           if (found.length === keys.length && found.length > 0) {
             Object.assign(payload, ref.assign(found));
+            // Khóa canonical để dò trùng: mã (matchBy) của từng bản ghi dò được,
+            // không phải chuỗi người dùng gõ trong ô.
+            converted[col.key] = found
+              .map((f) => field(f, ref.matchBy))
+              .join(",");
           }
         } else {
           const k = refKeyOf(rawText);
           const hit = pool.find((p) => matches(p, k));
           if (!hit) errors.push(`${ref.label} "${k}" không tồn tại`);
-          else Object.assign(payload, ref.assign(hit as RefRecord));
+          else {
+            Object.assign(payload, ref.assign(hit as RefRecord));
+            converted[col.key] = field(hit as RefRecord, ref.matchBy);
+          }
         }
         continue;
       }
@@ -163,26 +196,38 @@ export function validateAndBuild(
         case "number": {
           const n = parseNumber(raw);
           if (n === null) errors.push(`${col.header} phải là số`);
-          else payload[col.key] = n;
+          else {
+            payload[col.key] = n;
+            converted[col.key] = n;
+          }
           break;
         }
         case "date": {
           const d = parseDate(raw);
           if (d === null)
             errors.push(`${col.header} không đúng định dạng ngày/tháng/năm`);
-          else payload[col.key] = d;
+          else {
+            payload[col.key] = d;
+            converted[col.key] = d;
+          }
           break;
         }
         case "boolean": {
           const b = parseBoolean(raw);
           if (b === null) errors.push(`${col.header} chỉ nhận Có hoặc Không`);
-          else payload[col.key] = b;
+          else {
+            payload[col.key] = b;
+            converted[col.key] = b;
+          }
           break;
         }
         case "enum": {
           const v = resolveEnum(col, String(raw));
           if (v === null) errors.push(enumHint(col));
-          else payload[col.key] = v;
+          else {
+            payload[col.key] = v;
+            converted[col.key] = v;
+          }
           break;
         }
         case "enumList": {
@@ -195,16 +240,26 @@ export function validateAndBuild(
             else mapped.push(v);
           }
           if (bad || mapped.length === 0) errors.push(enumHint(col));
-          else payload[col.key] = mapped;
+          else {
+            payload[col.key] = mapped;
+            converted[col.key] = mapped;
+          }
           break;
         }
-        default:
-          payload[col.key] = String(raw).trim();
+        default: {
+          const s = String(raw).trim();
+          payload[col.key] = s;
+          converted[col.key] = s;
+        }
       }
     }
 
-    // kiểm tra trùng chỉ khi đã có đủ giá trị của các cột tạo khóa
-    const keyParts = config.uniqueBy.map((k) => norm(row.values[k]));
+    // kiểm tra trùng chỉ khi đã có đủ giá trị của các cột tạo khóa. Ưu tiên giá trị
+    // đã quy đổi (converted) — ô chưa quy đổi được (lỗi, hoặc cột không thuộc dòng
+    // này) thì lấy tạm giá trị thô để không làm gãy luồng, dù khi đó dòng đã có lỗi rồi.
+    const keyParts = config.uniqueBy.map((k) =>
+      norm(k in converted ? converted[k] : row.values[k]),
+    );
     if (keyParts.every((p) => p !== "")) {
       const key = keyParts.join("|");
       if (existingKeys.has(key)) {
@@ -218,9 +273,10 @@ export function validateAndBuild(
       }
     }
 
+    // Preview cũng ưu tiên giá trị đã quy đổi, để cột ngày không hiện số serial thô.
     const display = config.columns
       .slice(0, 2)
-      .map((c) => String(row.values[c.key] ?? ""))
+      .map((c) => String((c.key in converted ? converted[c.key] : row.values[c.key]) ?? ""))
       .filter(Boolean)
       .join(" — ");
 

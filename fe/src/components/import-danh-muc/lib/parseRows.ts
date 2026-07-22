@@ -34,7 +34,8 @@ export function findMissingHeaders(
 /**
  * Chuyển array-of-arrays đọc từ sheet → RawImportRow[].
  * Dòng 0 là header. Map theo TÊN header nên đổi thứ tự cột vẫn chạy đúng.
- * Ô của cột kiểu 'date' giữ nguyên số serial để bước validate tự quy đổi.
+ * Ô của cột kiểu 'date' hoặc 'number' giữ nguyên kiểu number của Excel (không ép về
+ * chuỗi) để bước validate nhận được giá trị gốc, không phải văn bản đã mất dấu thập phân.
  * Dòng trống hoàn toàn bị bỏ qua nhưng rowNumber vẫn theo đúng vị trí trong file.
  */
 export function aoaToRawRows(
@@ -57,7 +58,7 @@ export function aoaToRawRows(
     for (const col of columns) {
       const at = index[col.key];
       const cell = at === -1 ? "" : cells[at];
-      if (col.type === "date" && typeof cell === "number") {
+      if ((col.type === "date" || col.type === "number") && typeof cell === "number") {
         values[col.key] = cell;
       } else {
         values[col.key] =
