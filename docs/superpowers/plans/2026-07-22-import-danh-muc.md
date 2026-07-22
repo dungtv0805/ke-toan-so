@@ -1141,7 +1141,7 @@ export function aoaToRawRows(
 - [ ] **Step 4: Chạy test để xác nhận PASS**
 
 Run: `cd fe && npx vitest run src/components/import-danh-muc/lib/__tests__/parseRows.test.ts`
-Expected: PASS — 11 passed
+Expected: PASS — 10 passed
 
 - [ ] **Step 5: Commit**
 
