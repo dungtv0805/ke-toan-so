@@ -46,6 +46,8 @@ import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { ImportDanhMucButton } from "@/components/import-danh-muc";
+import { duAnImportConfig } from "@/components/import-danh-muc/configs";
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -139,6 +141,14 @@ const DuAnPage: React.FC = () => {
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleImported = () => {
+    // Giống nút "Làm mới": xóa bộ lọc tìm kiếm và đưa tab về "Tất cả" để các dòng
+    // vừa import không bị ẩn sau một từ khóa hoặc tab trạng thái không còn khớp.
+    setSearchText("");
+    setActiveTab("all");
+    fetchData(1, pagination.pageSize, "", undefined);
+  };
 
   const handleTabChange = (key: string) => {
     setActiveTab(key);
@@ -560,6 +570,11 @@ const DuAnPage: React.FC = () => {
           actions={
             <>
               {settingsButton}
+              <ImportDanhMucButton
+                config={duAnImportConfig}
+                canCreate={canCreate}
+                onImported={handleImported}
+              />
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}

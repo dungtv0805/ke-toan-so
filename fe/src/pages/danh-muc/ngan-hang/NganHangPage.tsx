@@ -32,6 +32,8 @@ import { usePagePermission } from "@/hooks/usePagePermission";
 import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { ImportDanhMucButton } from "@/components/import-danh-muc";
+import { nganHangImportConfig } from "@/components/import-danh-muc/configs";
 
 const { Text } = Typography;
 
@@ -133,6 +135,13 @@ const NganHangPage: React.FC = () => {
       paginationConfig.pageSize || 10,
       searchText
     );
+  };
+
+  const handleImported = () => {
+    // Giống nút "Làm mới" (nút đặt lại bộ lọc): xóa bộ lọc tìm kiếm để các dòng
+    // vừa import không bị ẩn sau một từ khóa không còn khớp.
+    setSearchText("");
+    fetchData(1, pagination.pageSize, "");
   };
 
   const handleAdd = () => {
@@ -323,6 +332,11 @@ const NganHangPage: React.FC = () => {
           actions={
             <>
               {settingsButton}
+              <ImportDanhMucButton
+                config={nganHangImportConfig}
+                canCreate={canCreate}
+                onImported={handleImported}
+              />
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}

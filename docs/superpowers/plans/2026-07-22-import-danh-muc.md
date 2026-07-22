@@ -807,36 +807,63 @@ git commit -m "feat(import-danh-muc): endpoint import cho Quy chuẩn hạch to�
 
 **Interfaces:**
 - Consumes: không có.
-- Produces: `ImportDanhMucConfig`, `ImportColumn`, `RefSpec`, `RawImportRow`, `RowValidationResult`, `ValidateOutcome` — mọi task FE sau đều import từ đây.
+- Produces: `RefItem`, `RefRecord`, `RefSource`, `SingleRefSpec`, `MultiRefSpec`, `RefSpec`, `ImportColumnType`, `ImportColumn`, `ImportDanhMucConfig`, `RawImportRow`, `RowValidationResult`, `ValidateOutcome` — mọi task FE sau đều import từ đây.
 
 - [ ] **Step 1: Viết file kiểu dữ liệu**
 
 Tạo `fe/src/components/import-danh-muc/types.ts`:
 
 ```typescript
-/** Một bản ghi danh mục tham chiếu (kết quả getAll của service khác). */
+/**
+ * Ràng buộc tối thiểu cho một bản ghi danh mục tham chiếu.
+ * KHÔNG khai index signature: các interface thật (DuAn, DonViTinh, ChuDauTu...) không có
+ * index signature, nên nếu thêm vào đây thì không service nào gán được và cả 22 file config
+ * sẽ phải cast.
+ */
 export interface RefItem {
   id?: string;
-  [key: string]: unknown;
 }
 
-export interface RefSpec {
+/**
+ * Bản ghi tham chiếu ở dạng đọc được mọi trường. Chỉ dùng bên trong lib (khi dò mã)
+ * và ở tham số của `assign`, để config viết thẳng `found.ma`, `found.ten`.
+ */
+export type RefRecord = RefItem & Record<string, unknown>;
+
+/** Phần duy nhất của một service danh mục mà module import cần đến. */
+export interface RefSource {
+  getAll(): Promise<RefItem[]>;
+}
+
+interface RefSpecBase {
   /** Service của danh mục được tham chiếu. */
-  service: { getAll(): Promise<RefItem[]> };
+  service: RefSource;
   /** Trường dùng để dò khớp với giá trị trong ô Excel, thường là "ma". */
   matchBy: string;
   /** Tên hiển thị trong thông báo lỗi, ví dụ "Chủ đầu tư". */
   label: string;
   /** Trường hiển thị kèm mã trong danh sách thả xuống của file mẫu. */
   displayField?: string;
-  /** Cho phép nhiều giá trị ngăn cách bằng dấu phẩy. */
-  multi?: boolean;
-  /**
-   * Ánh xạ bản ghi dò được → các trường của DTO gửi lên BE.
-   * Với `multi: true`, tham số là mảng các bản ghi dò được.
-   */
-  assign: (found: RefItem | RefItem[]) => Record<string, unknown>;
 }
+
+/** Cột tham chiếu một giá trị — trường hợp phổ biến. */
+export interface SingleRefSpec extends RefSpecBase {
+  multi?: false;
+  /** Ánh xạ bản ghi dò được → các trường của DTO gửi lên BE. */
+  assign: (found: RefRecord) => Record<string, unknown>;
+}
+
+/** Cột tham chiếu nhiều giá trị, ngăn cách bằng dấu phẩy trong ô Excel. */
+export interface MultiRefSpec extends RefSpecBase {
+  multi: true;
+  assign: (found: RefRecord[]) => Record<string, unknown>;
+}
+
+/**
+ * Union phân biệt theo `multi`, nhờ đó `assign` của cột một-giá-trị nhận thẳng
+ * một bản ghi chứ không phải `RefRecord | RefRecord[]` rồi phải tự thu hẹp kiểu.
+ */
+export type RefSpec = SingleRefSpec | MultiRefSpec;
 
 export type ImportColumnType =
   | 'string'
@@ -868,7 +895,7 @@ export interface ImportDanhMucConfig {
   /** Mặc định '/master-data'. Quy chuẩn hạch toán dùng '/config'. */
   apiPrefix?: string;
   /** Service của chính danh mục này — dùng để lấy dữ liệu hiện có mà dò trùng. */
-  service: { getAll(): Promise<RefItem[]> };
+  service: RefSource;
   /** Các key tạo nên khóa trùng. Hầu hết là ['ma']; Quy chuẩn là ['loaiGiaoDich','nghiepVu']. */
   uniqueBy: string[];
   columns: ImportColumn[];
@@ -1114,7 +1141,7 @@ export function aoaToRawRows(
 - [ ] **Step 4: Chạy test để xác nhận PASS**
 
 Run: `cd fe && npx vitest run src/components/import-danh-muc/lib/__tests__/parseRows.test.ts`
-Expected: PASS — 11 passed
+Expected: PASS — 10 passed
 
 - [ ] **Step 5: Commit**
 
@@ -1322,7 +1349,7 @@ describe("validateAndBuild — cột tham chiếu", () => {
           service: noopService,
           matchBy: "ma",
           label: "Chủ đầu tư",
-          assign: (found) => ({ chuDauTuId: (found as RefItem).id }),
+          assign: (found) => ({ chuDauTuId: found.id }),
         },
       },
     ],
@@ -1370,7 +1397,7 @@ describe("validateAndBuild — cột tham chiếu", () => {
             label: "Hồ sơ chứng từ",
             multi: true,
             assign: (found) => ({
-              hoSoChungTu: (found as RefItem[]).map((f) => ({
+              hoSoChungTu: found.map((f) => ({
                 id: f.id,
                 ma: f.ma,
                 ten: f.ten,
@@ -1420,12 +1447,16 @@ import type {
   ImportDanhMucConfig,
   RawImportRow,
   RefItem,
+  RefRecord,
   RowValidationResult,
   ValidateOutcome,
 } from "../types";
 
 /** Dữ liệu danh mục tham chiếu, khóa là ImportColumn.key. */
 export type RefData = Record<string, RefItem[]>;
+
+/** Đọc một trường bất kỳ của bản ghi tham chiếu. RefItem cố ý không có index signature. */
+const field = (item: RefItem, key: string): unknown => (item as RefRecord)[key];
 
 const norm = (v: unknown): string => String(v ?? "").trim().toLowerCase();
 
@@ -1520,7 +1551,9 @@ export function validateAndBuild(
 ): ValidateOutcome {
   // khóa trùng của dữ liệu đã có trong hệ thống
   const existingKeys = new Set(
-    existing.map((item) => config.uniqueBy.map((k) => norm(item[k])).join("|")),
+    existing.map((item) =>
+      config.uniqueBy.map((k) => norm(field(item, k))).join("|"),
+    ),
   );
   // khóa trùng đã gặp trong chính file, ghi lại dòng đầu tiên
   const seenInFile = new Map<string, number>();
@@ -1544,22 +1577,28 @@ export function validateAndBuild(
       if (col.ref) {
         const pool = refData[col.key] ?? [];
         const rawText = String(raw);
-        if (col.ref.multi) {
+        const ref = col.ref;
+        const matches = (p: RefItem, k: string) =>
+          norm(field(p, ref.matchBy)) === norm(k);
+
+        // So sánh tường minh === true: `if (ref.multi)` không loại được MultiRefSpec
+        // ở nhánh else, khiến ref.assign nhận kiểu giao và không gọi được.
+        if (ref.multi === true) {
           const keys = rawText.split(",").map((s) => refKeyOf(s)).filter(Boolean);
-          const found: RefItem[] = [];
+          const found: RefRecord[] = [];
           for (const k of keys) {
-            const hit = pool.find((p) => norm(p[col.ref!.matchBy]) === norm(k));
-            if (!hit) errors.push(`${col.ref.label} "${k}" không tồn tại`);
-            else found.push(hit);
+            const hit = pool.find((p) => matches(p, k));
+            if (!hit) errors.push(`${ref.label} "${k}" không tồn tại`);
+            else found.push(hit as RefRecord);
           }
           if (found.length === keys.length && found.length > 0) {
-            Object.assign(payload, col.ref.assign(found));
+            Object.assign(payload, ref.assign(found));
           }
         } else {
           const k = refKeyOf(rawText);
-          const hit = pool.find((p) => norm(p[col.ref!.matchBy]) === norm(k));
-          if (!hit) errors.push(`${col.ref.label} "${k}" không tồn tại`);
-          else Object.assign(payload, col.ref.assign(hit));
+          const hit = pool.find((p) => matches(p, k));
+          if (!hit) errors.push(`${ref.label} "${k}" không tồn tại`);
+          else Object.assign(payload, ref.assign(hit as RefRecord));
         }
         continue;
       }
@@ -1712,7 +1751,7 @@ const config: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Chủ đầu tư",
         displayField: "ten",
-        assign: (f) => ({ chuDauTuId: (f as RefItem).id }),
+        assign: (f) => ({ chuDauTuId: f.id }),
       },
     },
   ],
@@ -1795,7 +1834,7 @@ Tạo `fe/src/components/import-danh-muc/lib/template.ts`:
 
 ```typescript
 import * as ExcelJS from "exceljs";
-import type { ImportColumn, ImportDanhMucConfig } from "../types";
+import type { ImportColumn, ImportDanhMucConfig, RefItem, RefRecord } from "../types";
 import type { RefData } from "./validate";
 
 /** Số dòng dữ liệu được gắn dropdown ở sheet chính (hàng 2 → MAX_DATA_ROWS+1). */
@@ -1811,10 +1850,11 @@ function listValuesOf(col: ImportColumn, refData: RefData): string[] {
   }
   if (col.ref) {
     const items = refData[col.key] ?? [];
-    const display = col.ref.displayField;
+    const ref = col.ref;
+    const read = (it: RefItem, key: string) => (it as RefRecord)[key];
     return items.map((it) => {
-      const ma = String(it[col.ref!.matchBy] ?? "");
-      const ten = display ? String(it[display] ?? "") : "";
+      const ma = String(read(it, ref.matchBy) ?? "");
+      const ten = ref.displayField ? String(read(it, ref.displayField) ?? "") : "";
       return ten ? `${ma} - ${ten}` : ma;
     });
   }
@@ -2670,42 +2710,47 @@ export { donViTinhImportConfig } from "./donViTinh.config";
 
 - [ ] **Step 2: Gắn nút Import vào trang Đơn vị tính**
 
-Trong `fe/src/pages/danh-muc/don-vi-tinh/DonViTinhPage.tsx`:
+Toàn bộ phần mở/đóng modal đã được gói trong `ImportDanhMucButton`, nên mỗi trang chỉ cần
+**một dòng JSX + một dòng import**:
 
-Thêm `FileExcelOutlined` vào **câu lệnh import `@ant-design/icons` đã có sẵn** ở đầu file
-(đừng viết thêm một dòng `import ... from "@ant-design/icons"` thứ hai — ESLint sẽ báo
-`no-duplicate-imports`), rồi thêm 2 dòng import mới:
-
-```typescript
-import { ImportDanhMucModal } from "@/components/import-danh-muc";
+```tsx
+import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { donViTinhImportConfig } from "@/components/import-danh-muc/configs";
 ```
 
-Thêm state, đặt cạnh các `useState` khác trong component:
-
-```typescript
-const [importOpen, setImportOpen] = useState(false);
-```
-
-Trong `<FilterBar actions={...}>`, thêm nút ngay **trước** khối `{canExport && (...)}` (hiện ở dòng 291–293):
+Trong `<FilterBar actions={...}>`, đặt ngay **trước** khối `{canExport && (...)}`:
 
 ```tsx
-{canCreate && (
-  <Button icon={<FileExcelOutlined />} onClick={() => setImportOpen(true)}>
-    Import Excel
-  </Button>
-)}
-```
-
-Thêm modal ngay trước thẻ đóng `</div>` cuối cùng của JSX:
-
-```tsx
-<ImportDanhMucModal
-  open={importOpen}
+<ImportDanhMucButton
   config={donViTinhImportConfig}
-  onClose={() => setImportOpen(false)}
-  onImported={() => fetchData(1, pagination.pageSize, searchText)}
+  canCreate={canCreate}
+  onImported={handleImported}
 />
+```
+
+Props của component (khớp chính xác, các task sau viết theo đây):
+
+```ts
+interface ImportDanhMucButtonProps {
+  config: ImportDanhMucConfig;
+  canCreate: boolean;
+  onImported: () => void;
+}
+```
+
+Component tự giữ state đóng/mở, tự ẩn hoàn toàn khi `canCreate` là false, và tự render modal.
+Trang **không** khai `useState` cho modal, **không** tự đặt `<Button icon={<FileExcelOutlined/>}>`,
+**không** render `<ImportDanhMucModal>`.
+
+`onImported` phải nạp lại bảng **và xoá bộ lọc tìm kiếm** — nếu giữ nguyên từ khoá đang gõ,
+bản ghi vừa import có thể không khớp bộ lọc và người dùng thấy thông báo "Đã import N" nhưng
+bảng không có gì mới, trông y như import hỏng. Dùng đúng tên hàm/biến có sẵn của từng trang:
+
+```tsx
+const handleImported = () => {
+  setSearchText("");
+  fetchData(1, pagination.pageSize, "");
+};
 ```
 
 - [ ] **Step 3: Kiểm tra lint và type-check**
@@ -2903,7 +2948,9 @@ export { hoSoChungTuImportConfig } from "./hoSoChungTu.config";
 
 - [ ] **Step 3: Gắn nút Import vào 7 trang**
 
-Với mỗi trang, làm đúng 3 sửa đổi như Task 11 Step 2, thay tên config tương ứng:
+Với mỗi trang, thêm 2 dòng import + 1 phần tử `<ImportDanhMucButton .../>` như Task 11 Step 2,
+thay tên config tương ứng. Mỗi trang cần một `handleImported` xoá bộ lọc tìm kiếm rồi nạp lại
+bảng, viết theo đúng tên hàm/biến có sẵn của trang đó:
 
 | Trang | Config |
 |---|---|
@@ -2915,10 +2962,12 @@ Với mỗi trang, làm đúng 3 sửa đổi như Task 11 Step 2, thay tên con
 | `fe/src/pages/danh-muc/nhom-quan-ly/NhomQuanLyPage.tsx` | `nhomQuanLyImportConfig` |
 | `fe/src/pages/danh-muc/ho-so-chung-tu/HoSoChungTuPage.tsx` | `hoSoChungTuImportConfig` |
 
-**Lưu ý về 4 trang dùng CHanlder** (Chủ đầu tư, Nhóm khuyến mại, Nhóm quản lý — và Hợp đồng ở Task 14): các trang này không có hàm `fetchData`. Mở file, tìm hàm/sự kiện đang được nút "Làm mới" gọi và dùng đúng cái đó cho `onImported`. Ví dụ nếu nút Làm mới gọi `handler.executeEvent("init", {})` thì viết:
+**Lưu ý về 4 trang dùng CHanlder** (Chủ đầu tư, Nhóm khuyến mại, Nhóm quản lý — và Hợp đồng ở Task 14): các trang này không có hàm `fetchData`. Mở file, tìm hàm/sự kiện đang được nút "Làm mới" gọi và dùng đúng cái đó, đồng thời xoá từ khoá tìm kiếm nếu trang có ô tìm kiếm:
 
 ```tsx
-onImported={() => handler.executeEvent("init", {})}
+const handleImported = () => {
+  handler.executeEvent("init", {});
+};
 ```
 
 - [ ] **Step 4: Kiểm tra lint và type-check**
@@ -3206,7 +3255,8 @@ export { doiTuongImportConfig } from "./doiTuong.config";
 
 - [ ] **Step 3: Gắn nút Import vào 8 trang**
 
-Làm đúng 3 sửa đổi như Task 11 Step 2 cho từng trang:
+Thêm 2 dòng import + 1 phần tử `<ImportDanhMucButton .../>` như Task 11 Step 2 cho từng trang,
+kèm `handleImported` xoá bộ lọc rồi nạp lại bảng:
 
 | Trang | Config |
 |---|---|
@@ -3268,7 +3318,7 @@ Expected: in ra đủ 6 file. File nào thiếu thì mở ra xem tên hàm lấy
 
 ```typescript
 import { taiKhoanService } from "@/services/taiKhoanService";
-import type { ImportDanhMucConfig, RefItem } from "../types";
+import type { ImportDanhMucConfig } from "../types";
 
 export const taiKhoanImportConfig: ImportDanhMucConfig = {
   title: "Tài khoản",
@@ -3318,7 +3368,7 @@ export const taiKhoanImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Tài khoản cha",
         displayField: "ten",
-        assign: (found) => ({ parentId: (found as RefItem).id }),
+        assign: (found) => ({ parentId: found.id }),
       },
     },
     {
@@ -3344,7 +3394,7 @@ export const taiKhoanImportConfig: ImportDanhMucConfig = {
 ```typescript
 import { duAnService } from "@/services/duAnService";
 import { chuDauTuService } from "@/services/chuDauTuService";
-import type { ImportDanhMucConfig, RefItem } from "../types";
+import type { ImportDanhMucConfig } from "../types";
 
 export const duAnImportConfig: ImportDanhMucConfig = {
   title: "Dự án",
@@ -3365,7 +3415,7 @@ export const duAnImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Chủ đầu tư",
         displayField: "ten",
-        assign: (found) => ({ chuDauTuId: (found as RefItem).id }),
+        assign: (found) => ({ chuDauTuId: found.id }),
       },
     },
     { key: "chuDuAn", header: "Chủ dự án", example: "Nguyễn Văn A" },
@@ -3391,7 +3441,7 @@ export const duAnImportConfig: ImportDanhMucConfig = {
 import { hangHoaVatTuService } from "@/services/hangHoaVatTuService";
 import { donViTinhService } from "@/services/donViTinhService";
 import { nhomVatTuService } from "@/services/nhomVatTuService";
-import type { ImportDanhMucConfig, RefItem } from "../types";
+import type { ImportDanhMucConfig } from "../types";
 
 export const hangHoaVatTuImportConfig: ImportDanhMucConfig = {
   title: "Hàng hóa vật tư",
@@ -3421,13 +3471,10 @@ export const hangHoaVatTuImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Đơn vị tính",
         displayField: "ten",
-        assign: (found) => {
-          const item = found as RefItem;
-          return {
-            donViTinhMa: String(item.ma ?? ""),
-            donViTinhTen: String(item.ten ?? ""),
-          };
-        },
+        assign: (found) => ({
+          donViTinhMa: String(found.ma ?? ""),
+          donViTinhTen: String(found.ten ?? ""),
+        }),
       },
     },
     {
@@ -3439,13 +3486,10 @@ export const hangHoaVatTuImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Nhóm vật tư",
         displayField: "ten",
-        assign: (found) => {
-          const item = found as RefItem;
-          return {
-            nhomVatTuMa: String(item.ma ?? ""),
-            nhomVatTuTen: String(item.ten ?? ""),
-          };
-        },
+        assign: (found) => ({
+          nhomVatTuMa: String(found.ma ?? ""),
+          nhomVatTuTen: String(found.ten ?? ""),
+        }),
       },
     },
     { key: "quyCach", header: "Quy cách", example: "Bao 50kg" },
@@ -3472,7 +3516,7 @@ export const hangHoaVatTuImportConfig: ImportDanhMucConfig = {
 ```typescript
 import { loaiGiaoDichService } from "@/services/loaiGiaoDichService";
 import { loaiChungTuService } from "@/services/loaiChungTuService";
-import type { ImportDanhMucConfig, RefItem } from "../types";
+import type { ImportDanhMucConfig } from "../types";
 
 export const loaiGiaoDichImportConfig: ImportDanhMucConfig = {
   title: "Loại giao dịch",
@@ -3491,7 +3535,7 @@ export const loaiGiaoDichImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Loại chứng từ",
         displayField: "ten",
-        assign: (found) => ({ loaiChungTuMa: String((found as RefItem).ma ?? "") }),
+        assign: (found) => ({ loaiChungTuMa: String(found.ma ?? "") }),
       },
     },
     { key: "color", header: "Màu sắc", example: "#1677ff" },
@@ -3505,7 +3549,7 @@ export const loaiGiaoDichImportConfig: ImportDanhMucConfig = {
 ```typescript
 import { hopDongService } from "@/services/hopDongService";
 import { doiTuongService } from "@/services/doiTuongService";
-import type { ImportDanhMucConfig, RefItem } from "../types";
+import type { ImportDanhMucConfig } from "../types";
 
 export const hopDongImportConfig: ImportDanhMucConfig = {
   title: "Hợp đồng",
@@ -3527,7 +3571,7 @@ export const hopDongImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Đối tượng",
         displayField: "ten",
-        assign: (found) => ({ doiTuongId: (found as RefItem).id }),
+        assign: (found) => ({ doiTuongId: found.id }),
       },
     },
     { key: "nguoiKy", header: "Người ký", example: "Nguyễn Văn A" },
@@ -3570,7 +3614,7 @@ export { hopDongImportConfig } from "./hopDong.config";
 | `fe/src/pages/danh-muc/loai-giao-dich/LoaiGiaoDichPage.tsx` | `loaiGiaoDichImportConfig` |
 | `fe/src/pages/danh-muc/hop-dong/HopDongPage.tsx` | `hopDongImportConfig` |
 
-Trang Hợp đồng dùng CHanlder — dùng đúng sự kiện nạp lại như hướng dẫn ở Task 12 Step 3.
+Trang Hợp đồng dùng CHanlder — `handleImported` gọi đúng sự kiện nạp lại như hướng dẫn ở Task 12 Step 3.
 
 - [ ] **Step 5: Kiểm tra lint và type-check**
 
@@ -3621,7 +3665,7 @@ import { quyChaunService } from "@/services/quyChaunService";
 import { loaiGiaoDichService } from "@/services/loaiGiaoDichService";
 import { taiKhoanService } from "@/services/taiKhoanService";
 import { hoSoChungTuService } from "@/services/hoSoChungTuService";
-import type { ImportDanhMucConfig, RefItem } from "../types";
+import type { ImportDanhMucConfig } from "../types";
 
 export const quyChuanImportConfig: ImportDanhMucConfig = {
   title: "Quy chuẩn hạch toán",
@@ -3641,7 +3685,7 @@ export const quyChuanImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Loại giao dịch",
         displayField: "ten",
-        assign: (found) => ({ loaiGiaoDich: String((found as RefItem).ma ?? "") }),
+        assign: (found) => ({ loaiGiaoDich: String(found.ma ?? "") }),
       },
     },
     { key: "nghiepVu", header: "Nghiệp vụ", required: true, example: "Thu tiền khách hàng" },
@@ -3655,7 +3699,7 @@ export const quyChuanImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Tài khoản Nợ",
         displayField: "ten",
-        assign: (found) => ({ taiKhoanNo: String((found as RefItem).ma ?? "") }),
+        assign: (found) => ({ taiKhoanNo: String(found.ma ?? "") }),
       },
     },
     {
@@ -3668,7 +3712,7 @@ export const quyChuanImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Tài khoản Có",
         displayField: "ten",
-        assign: (found) => ({ taiKhoanCo: String((found as RefItem).ma ?? "") }),
+        assign: (found) => ({ taiKhoanCo: String(found.ma ?? "") }),
       },
     },
     {
@@ -3682,7 +3726,7 @@ export const quyChuanImportConfig: ImportDanhMucConfig = {
         displayField: "ten",
         multi: true,
         assign: (found) => ({
-          hoSoChungTu: (found as RefItem[]).map((f) => ({
+          hoSoChungTu: found.map((f) => ({
             id: String(f.id ?? ""),
             ma: String(f.ma ?? ""),
             ten: String(f.ten ?? ""),
@@ -3705,7 +3749,9 @@ Thêm vào `configs/index.ts`:
 export { quyChuanImportConfig } from "./quyChuan.config";
 ```
 
-Gắn nút Import + modal vào `fe/src/pages/danh-muc/quy-chuan/QuyChaunPage.tsx` (hoặc component con render thanh công cụ) theo đúng mẫu Task 11 Step 2, dùng `quyChuanImportConfig` và sự kiện nạp lại ghi được ở Step 1.
+Gắn `<ImportDanhMucButton config={quyChuanImportConfig} canCreate={canCreate} onImported={handleImported} />`
+vào `fe/src/pages/danh-muc/quy-chuan/QuyChaunPage.tsx` (hoặc component con render thanh công cụ)
+theo đúng mẫu Task 11 Step 2, với `handleImported` gọi sự kiện nạp lại ghi được ở Step 1.
 
 - [ ] **Step 4: Kiểm tra lint và type-check**
 
@@ -3739,7 +3785,7 @@ git commit -m "feat(import-danh-muc): import Excel cho Quy chuẩn hạch toán"
 
 - [ ] **Step 1: Đếm đủ 22 trang đã gắn nút Import**
 
-Run: `cd fe && grep -rl "ImportDanhMucModal" src/pages/danh-muc | sort`
+Run: `cd fe && grep -rl "ImportDanhMucButton" src/pages/danh-muc | sort`
 Expected: đúng 22 file. Đối chiếu với bảng ở spec; thiếu trang nào thì quay lại task tương ứng bổ sung.
 
 Run: `cd fe && ls src/components/import-danh-muc/configs/*.config.ts | wc -l`
@@ -3753,7 +3799,7 @@ Expected: PASS, không có test nào fail. Ghi lại số test.
 - [ ] **Step 3: Chạy toàn bộ test BE liên quan**
 
 Run: `cd be && npx jest apps/master-data-service/src/import-danh-muc/`
-Expected: PASS — 11 passed.
+Expected: PASS — 31 passed (4 service + 24 registry + 3 controller).
 
 - [ ] **Step 4: Build cả FE và BE**
 

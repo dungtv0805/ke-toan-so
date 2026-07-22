@@ -33,6 +33,8 @@ import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { nhomKhuyenMaiService } from "@/services/nhomKhuyenMaiService";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 import { useFieldLabels } from "@/components/glossary/useFieldLabels";
+import { ImportDanhMucButton } from "@/components/import-danh-muc";
+import { nhomKhuyenMaiImportConfig } from "@/components/import-danh-muc/configs";
 
 const { Title, Text } = Typography;
 
@@ -76,6 +78,15 @@ function NhomKhuyenMaiPageInner() {
       page: pag.current || 1,
       pageSize: pag.pageSize || 10,
     });
+  };
+
+  const handleImported = () => {
+    // Giống nút đặt lại bộ lọc (nút "Làm mới" thực tế của trang này): phải xóa bộ lọc
+    // tìm kiếm ĐANG ÁP DỤNG trong handler (không chỉ ô input) bằng event "search" với
+    // keyword rỗng, để các dòng vừa import không bị ẩn bởi bộ lọc cũ.
+    clearSelection();
+    setSearchText("");
+    handler.executeEvent("search", { keyword: "" });
   };
 
   const openModal = (record?: NhomKhuyenMai) => {
@@ -219,11 +230,16 @@ function NhomKhuyenMaiPageInner() {
           onReset={() => {
             clearSelection();
             setSearchText("");
-            handler.executeEvent("refresh", {});
+            handler.executeEvent("search", { keyword: "" });
           }}
           actions={
             <>
               {settingsButton}
+              <ImportDanhMucButton
+                config={nhomKhuyenMaiImportConfig}
+                canCreate={canCreate}
+                onImported={handleImported}
+              />
               {bulkDeleteButton}
               {canCreate && (
                 <Button

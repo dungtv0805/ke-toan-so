@@ -198,8 +198,26 @@ export class ServiceBase {
     }
 
     const status = error.response.status;
-    const data = error.response.data as { message?: string; success?: boolean };
-    const message = data?.message || error.message || 'An error occurred';
+    const data = error.response.data as {
+      message?: string;
+      success?: boolean;
+      error?: { message?: string; details?: { validation?: string[] } };
+    };
+    // GlobalExceptionFilter (be/libs/core) trả lỗi dạng { success: false, error: { code,
+    // message } } — không có `data.message` ở gốc. Đọc thêm `data.error.message` để những
+    // message tiếng Việt từ backend (vd "Mỗi lần import tối đa 2000 dòng") đến được người
+    // dùng, thay vì luôn rơi về "Request failed with status code NNN" của axios.
+    //
+    // Riêng lỗi validate của class-validator, GlobalExceptionFilter đặt `error.message` cố
+    // định là "Validation failed" (tiếng Anh) và chuyển message thật (tiếng Việt) vào mảng
+    // `error.details.validation`. Phải đọc mảng này TRƯỚC `data.error.message`, nếu không sẽ
+    // luôn dừng lại ở "Validation failed" vì `data.error.message` cũng có giá trị (không rỗng).
+    const message =
+      data?.message ||
+      data?.error?.details?.validation?.join('; ') ||
+      data?.error?.message ||
+      error.message ||
+      'An error occurred';
 
     switch (status) {
       case 401:

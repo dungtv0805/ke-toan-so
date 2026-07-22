@@ -64,6 +64,15 @@
 | Hang hoa vat tu | `/danh-muc/hang-hoa-vat-tu` | ACTIVE | master-data:3002 |
 | Don vi tinh | `/danh-muc/don-vi-tinh` | ACTIVE | master-data:3002 |
 | Nhom vat tu | `/danh-muc/nhom-vat-tu` | ACTIVE | master-data:3002 |
+| Ho so chung tu | `/danh-muc/ho-so-chung-tu` | ACTIVE | master-data:3002 |
+| Ly do khong hop le | `/danh-muc/ly-do-khong-hop-le` | ACTIVE | master-data:3002 |
+| So du dau ky | `/danh-muc/so-du-dau-ky` | ACTIVE | master-data:3002 |
+
+> Tất cả 22 trang danh mục (trừ Số dư đầu kỳ) đều có nút "Import Excel" dùng chung
+> `fe/src/components/import-danh-muc/`, config từng danh mục ở `configs/*.config.ts`.
+> Nút gọi `POST /master-data/import/:resource` (21 danh mục) hoặc `POST /config/import/quy-chuan`
+> (Quy chuẩn hạch toán). Trang Quy chuẩn hạch toán gắn nút ở component con
+> `QuyChaunHeader.tsx` vì trang này không có toolbar riêng ở page — vẫn tính là đã wire.
 
 ### KHO (Warehouse)
 | Menu Item | Route | Status | API |

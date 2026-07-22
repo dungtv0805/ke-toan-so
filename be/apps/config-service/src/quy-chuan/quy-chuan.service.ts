@@ -185,7 +185,7 @@ export class QuyChuan_Service {
       );
       if (isDuplicate) {
         throw new ConflictException(
-          `QuyChuan with loaiGiaoDich ${data.loaiGiaoDich} and nghiepVu ${data.nghiepVu} already exists`,
+          `Nghiệp vụ "${data.nghiepVu}" của loại giao dịch "${data.loaiGiaoDich}" đã tồn tại`,
         );
       }
     }
@@ -208,7 +208,7 @@ export class QuyChuan_Service {
       );
       if (isDuplicate) {
         throw new ConflictException(
-          `QuyChuan with loaiGiaoDich ${data.loaiGiaoDich} and nghiepVu ${data.nghiepVu} already exists`,
+          `Nghiệp vụ "${data.nghiepVu}" của loại giao dịch "${data.loaiGiaoDich}" đã tồn tại`,
         );
       }
     }

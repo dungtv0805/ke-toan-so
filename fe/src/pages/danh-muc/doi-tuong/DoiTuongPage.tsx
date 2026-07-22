@@ -43,6 +43,8 @@ import { usePagePermission } from "@/hooks/usePagePermission";
 import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { ImportDanhMucButton } from "@/components/import-danh-muc";
+import { doiTuongImportConfig } from "@/components/import-danh-muc/configs";
 
 const { Title, Text } = Typography;
 
@@ -187,6 +189,14 @@ const DoiTuongPage: React.FC = () => {
       searchText,
       activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"][number])
     );
+  };
+
+  const handleImported = () => {
+    // Giống nút "Làm mới" (nút đặt lại bộ lọc): xóa bộ lọc tìm kiếm và đưa tab
+    // về "Tất cả" để các dòng vừa import không bị ẩn sau một từ khóa hoặc tab loại không còn khớp.
+    setSearchText("");
+    setActiveTab("all");
+    fetchData(1, pagination.pageSize, "", undefined);
   };
 
   const openModal = (record?: DoiTuong) => {
@@ -521,6 +531,11 @@ const DoiTuongPage: React.FC = () => {
           actions={
             <>
               {settingsButton}
+              <ImportDanhMucButton
+                config={doiTuongImportConfig}
+                canCreate={canCreate}
+                onImported={handleImported}
+              />
               {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
               {bulkDeleteButton}
               {canCreate && (

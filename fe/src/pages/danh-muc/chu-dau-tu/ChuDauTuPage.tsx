@@ -34,6 +34,8 @@ import { FilterBar } from "@/components/common/FilterBar";
 import { useTerm } from "@/contexts/TermContext";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 import { useFieldLabels } from "@/components/glossary/useFieldLabels";
+import { ImportDanhMucButton } from "@/components/import-danh-muc";
+import { chuDauTuImportConfig } from "@/components/import-danh-muc/configs";
 
 const { Title, Text } = Typography;
 
@@ -77,6 +79,15 @@ function ChuDauTuPageInner() {
       page: pag.current || 1,
       pageSize: pag.pageSize || 10,
     });
+  };
+
+  const handleImported = () => {
+    // Giống nút đặt lại bộ lọc (nút "Làm mới" thực tế của trang này): phải xóa bộ lọc
+    // tìm kiếm ĐANG ÁP DỤNG trong handler (không chỉ ô input) bằng event "search" với
+    // keyword rỗng, để các dòng vừa import không bị ẩn bởi bộ lọc cũ.
+    clearSelection();
+    setSearchText("");
+    handler.executeEvent("search", { keyword: "" });
   };
 
   const openModal = (record?: ChuDauTu) => {
@@ -220,11 +231,16 @@ function ChuDauTuPageInner() {
           onReset={() => {
             clearSelection();
             setSearchText("");
-            handler.executeEvent("refresh", {});
+            handler.executeEvent("search", { keyword: "" });
           }}
           actions={
             <>
               {settingsButton}
+              <ImportDanhMucButton
+                config={chuDauTuImportConfig}
+                canCreate={canCreate}
+                onImported={handleImported}
+              />
               {bulkDeleteButton}
               {canCreate && (
                 <Button

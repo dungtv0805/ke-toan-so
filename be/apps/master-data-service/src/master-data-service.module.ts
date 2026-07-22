@@ -31,6 +31,7 @@ import { NhomVatTuModule } from './nhom-vat-tu/nhom-vat-tu.module';
 import { HangHoaVatTuModule } from './hang-hoa-vat-tu/hang-hoa-vat-tu.module';
 import { HoSoChungTuModule } from './ho-so-chung-tu/ho-so-chung-tu.module';
 import { LyDoKhongHopLeModule } from './ly-do-khong-hop-le/ly-do-khong-hop-le.module';
+import { ImportDanhMucModule } from './import-danh-muc/import-danh-muc.module';
 import {
   TaiKhoan,
   DoiTuong,
@@ -120,6 +121,7 @@ import {
     HangHoaVatTuModule,
     HoSoChungTuModule,
     LyDoKhongHopLeModule,
+    ImportDanhMucModule,
   ],
 })
 export class MasterDataServiceModule {}
