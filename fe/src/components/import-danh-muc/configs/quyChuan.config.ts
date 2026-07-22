@@ -1,0 +1,76 @@
+import { quyChauanService } from "@/services/quyChaunService";
+import { loaiGiaoDichService } from "@/services/loaiGiaoDichService";
+import { taiKhoanService } from "@/services/taiKhoanService";
+import { hoSoChungTuService } from "@/services/hoSoChungTuService";
+import type { ImportDanhMucConfig } from "../types";
+
+export const quyChuanImportConfig: ImportDanhMucConfig = {
+  title: "Quy chuẩn hạch toán",
+  resource: "quy-chuan",
+  apiPrefix: "/config",
+  service: quyChauanService,
+  // Không có cột mã — một nghiệp vụ là duy nhất trong phạm vi một loại giao dịch.
+  uniqueBy: ["loaiGiaoDich", "nghiepVu"],
+  columns: [
+    {
+      key: "loaiGiaoDich",
+      header: "Mã loại giao dịch",
+      required: true,
+      example: "LGD01",
+      ref: {
+        service: loaiGiaoDichService,
+        matchBy: "ma",
+        label: "Loại giao dịch",
+        displayField: "ten",
+        assign: (found) => ({ loaiGiaoDich: String(found.ma ?? "") }),
+      },
+    },
+    { key: "nghiepVu", header: "Nghiệp vụ", required: true, example: "Thu tiền khách hàng" },
+    {
+      key: "taiKhoanNo",
+      header: "TK Nợ",
+      required: true,
+      example: "1111",
+      ref: {
+        service: taiKhoanService,
+        matchBy: "ma",
+        label: "Tài khoản Nợ",
+        displayField: "ten",
+        assign: (found) => ({ taiKhoanNo: String(found.ma ?? "") }),
+      },
+    },
+    {
+      key: "taiKhoanCo",
+      header: "TK Có",
+      required: true,
+      example: "1311",
+      ref: {
+        service: taiKhoanService,
+        matchBy: "ma",
+        label: "Tài khoản Có",
+        displayField: "ten",
+        assign: (found) => ({ taiKhoanCo: String(found.ma ?? "") }),
+      },
+    },
+    {
+      key: "hoSo",
+      header: "Mã hồ sơ chứng từ",
+      example: "HS01, HS02",
+      ref: {
+        service: hoSoChungTuService,
+        matchBy: "ma",
+        label: "Hồ sơ chứng từ",
+        displayField: "ten",
+        multi: true,
+        assign: (found) => ({
+          hoSoChungTu: found.map((f) => ({
+            id: String(f.id ?? ""),
+            ma: String(f.ma ?? ""),
+            ten: String(f.ten ?? ""),
+          })),
+        }),
+      },
+    },
+    { key: "moTa", header: "Mô tả", example: "" },
+  ],
+};

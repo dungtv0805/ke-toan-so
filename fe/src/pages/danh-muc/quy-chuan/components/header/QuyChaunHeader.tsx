@@ -9,6 +9,8 @@ import {
 import { FilterBar } from '@/components/common/FilterBar';
 import { useQuyChaunHandler, useQuyChaunState } from '../../QuyChaunHandlerContext';
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { ImportDanhMucButton } from '@/components/import-danh-muc';
+import { quyChuanImportConfig } from '@/components/import-danh-muc/configs';
 import './QuyChaunHeader.state';
 import { PaginationMeta } from '../table/QuyChaunTable.state';
 
@@ -56,6 +58,10 @@ export const QuyChaunHeader: React.FC<QuyChaunHeaderProps> = ({ settingsButton, 
     handler.executeEvent('openModal', {});
   };
 
+  const handleImported = () => {
+    handler.executeEvent('refresh', {});
+  };
+
   return (
     <>
       <Breadcrumb style={{ marginBottom: 16 }}>
@@ -86,6 +92,11 @@ export const QuyChaunHeader: React.FC<QuyChaunHeaderProps> = ({ settingsButton, 
           <>
             {settingsButton}
             {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+            <ImportDanhMucButton
+              config={quyChuanImportConfig}
+              canCreate={canCreate}
+              onImported={handleImported}
+            />
             {bulkDeleteButton}
             {canCreate && (
               <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
