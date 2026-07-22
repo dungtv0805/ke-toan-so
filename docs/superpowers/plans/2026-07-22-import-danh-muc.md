@@ -277,6 +277,7 @@ git commit -m "feat(import-danh-muc): service chạy import dùng chung cho mast
 **Files:**
 - Create: `be/apps/master-data-service/src/import-danh-muc/import-danh-muc.registry.ts`
 - Create: `be/apps/master-data-service/src/import-danh-muc/import-danh-muc.controller.ts`
+- Test: `be/apps/master-data-service/src/import-danh-muc/import-danh-muc.registry.spec.ts`
 - Create: `be/apps/master-data-service/src/import-danh-muc/import-danh-muc.module.ts`
 - Create: `be/apps/master-data-service/src/import-danh-muc/dto/import-items.dto.ts`
 - Modify: `be/apps/master-data-service/src/master-data-service.module.ts`
@@ -308,6 +309,7 @@ Tạo `be/apps/master-data-service/src/import-danh-muc/import-danh-muc.controlle
 import { NotFoundException } from '@nestjs/common';
 import { ImportDanhMucController } from './import-danh-muc.controller';
 import { ImportDanhMucService } from './import-danh-muc.service';
+import { ImportDanhMucRegistry } from './import-danh-muc.registry';
 import { ImportEntry } from './import-danh-muc.types';
 
 describe('ImportDanhMucController', () => {
@@ -319,12 +321,11 @@ describe('ImportDanhMucController', () => {
 
   function makeController(importItems: jest.Mock) {
     const importService = { importItems } as unknown as ImportDanhMucService;
-    const controller = new ImportDanhMucController(importService);
-    // registry được dựng trong constructor từ các service inject vào;
-    // ghi đè trong test để không phải mock 21 service.
-    (controller as unknown as { registry: Map<string, ImportEntry> }).registry =
-      new Map([['don-vi-tinh', entry]]);
-    return controller;
+    const registry = {
+      get: (resource: string) => (resource === 'don-vi-tinh' ? entry : undefined),
+      resources: () => ['don-vi-tinh'],
+    } as unknown as ImportDanhMucRegistry;
+    return new ImportDanhMucController(importService, registry);
   }
 
   it('resource hợp lệ thì gọi importItems và bọc kết quả', async () => {
@@ -370,54 +371,14 @@ Expected: FAIL — `Cannot find module './import-danh-muc.controller'`
 
 - [ ] **Step 4: Viết registry**
 
-Tạo `be/apps/master-data-service/src/import-danh-muc/import-danh-muc.registry.ts`. File này chỉ khai báo tên resource + nhãn, phần service/dto được ghép ở controller:
+Registry là một provider riêng, gom toàn bộ 21 service danh mục. Tách khỏi controller để
+controller chỉ nhận đúng 2 dependency — dễ test, và chỗ khai báo resource nằm gọn một chỗ.
+
+Tạo `be/apps/master-data-service/src/import-danh-muc/import-danh-muc.registry.ts`:
 
 ```typescript
-/** Tên resource hợp lệ trên URL — trùng với `resource` trong config phía FE. */
-export const IMPORT_RESOURCES = [
-  'tai-khoan',
-  'doi-tuong',
-  'du-an',
-  'san-pham',
-  'hop-dong',
-  'bo-phan',
-  'khoan-muc',
-  'kho',
-  'hang-hoa-vat-tu',
-  'don-vi-tinh',
-  'ly-do-khong-hop-le',
-  'nhom-vat-tu',
-  'chu-dau-tu',
-  'nhom-khoan-muc',
-  'ngan-hang',
-  'dong-tien',
-  'nhom-khuyen-mai',
-  'nhom-quan-ly',
-  'loai-chung-tu',
-  'loai-giao-dich',
-  'ho-so-chung-tu',
-] as const;
-
-export type ImportResource = (typeof IMPORT_RESOURCES)[number];
-```
-
-- [ ] **Step 5: Viết controller**
-
-Tạo `be/apps/master-data-service/src/import-danh-muc/import-danh-muc.controller.ts`:
-
-```typescript
-import {
-  Body,
-  Controller,
-  NotFoundException,
-  Param,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
-import { JwtGuard, RoleGuard, Roles } from '@app/auth';
-import { ImportDanhMucService } from './import-danh-muc.service';
+import { Injectable } from '@nestjs/common';
 import { ImportEntry } from './import-danh-muc.types';
-import { ImportItemsDto } from './dto/import-items.dto';
 
 import { TaiKhoanService } from '../tai-khoan/tai-khoan.service';
 import { DoiTuongService } from '../doi-tuong/doi-tuong.service';
@@ -463,36 +424,34 @@ import { CreateLoaiChungTuDto } from '../loai-chung-tu/dto';
 import { CreateLoaiGiaoDichDto } from '../loai-giao-dich/dto';
 import { CreateHoSoChungTuDto } from '../ho-so-chung-tu/dto';
 
-@Controller('import')
-@UseGuards(JwtGuard, RoleGuard)
-export class ImportDanhMucController {
-  private registry: Map<string, ImportEntry>;
+@Injectable()
+export class ImportDanhMucRegistry {
+  private readonly entries: Map<string, ImportEntry>;
 
   constructor(
-    private readonly importService: ImportDanhMucService,
-    taiKhoan?: TaiKhoanService,
-    doiTuong?: DoiTuongService,
-    duAn?: DuAnService,
-    sanPham?: SanPhamService,
-    hopDong?: HopDongService,
-    boPhan?: BoPhanService,
-    khoanMuc?: KhoanMucService,
-    kho?: KhoService,
-    hangHoaVatTu?: HangHoaVatTuService,
-    donViTinh?: DonViTinhService,
-    lyDoKhongHopLe?: LyDoKhongHopLeService,
-    nhomVatTu?: NhomVatTuService,
-    chuDauTu?: ChuDauTuService,
-    nhomKhoanMuc?: NhomKhoanMucService,
-    nganHang?: NganHangService,
-    dongTien?: DongTienService,
-    nhomKhuyenMai?: NhomKhuyenMaiService,
-    nhomQuanLy?: NhomQuanLyService,
-    loaiChungTu?: LoaiChungTuService,
-    loaiGiaoDich?: LoaiGiaoDichService,
-    hoSoChungTu?: HoSoChungTuService,
+    taiKhoan: TaiKhoanService,
+    doiTuong: DoiTuongService,
+    duAn: DuAnService,
+    sanPham: SanPhamService,
+    hopDong: HopDongService,
+    boPhan: BoPhanService,
+    khoanMuc: KhoanMucService,
+    kho: KhoService,
+    hangHoaVatTu: HangHoaVatTuService,
+    donViTinh: DonViTinhService,
+    lyDoKhongHopLe: LyDoKhongHopLeService,
+    nhomVatTu: NhomVatTuService,
+    chuDauTu: ChuDauTuService,
+    nhomKhoanMuc: NhomKhoanMucService,
+    nganHang: NganHangService,
+    dongTien: DongTienService,
+    nhomKhuyenMai: NhomKhuyenMaiService,
+    nhomQuanLy: NhomQuanLyService,
+    loaiChungTu: LoaiChungTuService,
+    loaiGiaoDich: LoaiGiaoDichService,
+    hoSoChungTu: HoSoChungTuService,
   ) {
-    this.registry = new Map<string, ImportEntry>([
+    this.entries = new Map<string, ImportEntry>([
       ['tai-khoan', { service: taiKhoan, dtoClass: CreateTaiKhoanDto, label: 'Tài khoản' }],
       ['doi-tuong', { service: doiTuong, dtoClass: CreateDoiTuongDto, label: 'Đối tượng' }],
       ['du-an', { service: duAn, dtoClass: CreateDuAnDto, label: 'Dự án' }],
@@ -514,8 +473,91 @@ export class ImportDanhMucController {
       ['loai-chung-tu', { service: loaiChungTu, dtoClass: CreateLoaiChungTuDto, label: 'Loại chứng từ' }],
       ['loai-giao-dich', { service: loaiGiaoDich, dtoClass: CreateLoaiGiaoDichDto, label: 'Loại giao dịch' }],
       ['ho-so-chung-tu', { service: hoSoChungTu, dtoClass: CreateHoSoChungTuDto, label: 'Hồ sơ chứng từ' }],
-    ] as [string, ImportEntry][]);
+    ]);
   }
+
+  /** Trả về entry của resource, hoặc undefined nếu resource không được hỗ trợ. */
+  get(resource: string): ImportEntry | undefined {
+    return this.entries.get(resource);
+  }
+
+  /** Danh sách resource đang hỗ trợ — dùng cho test và thông báo lỗi. */
+  resources(): string[] {
+    return [...this.entries.keys()];
+  }
+}
+```
+
+**Lưu ý:** nếu import DTO từ `'../<module>/dto'` báo không tìm thấy, mở `dto/index.ts` của module
+đó xem tên export thật rồi sửa cho khớp.
+
+- [ ] **Step 4b: Viết test cho registry**
+
+Tạo `be/apps/master-data-service/src/import-danh-muc/import-danh-muc.registry.spec.ts`:
+
+```typescript
+import { ImportDanhMucRegistry } from './import-danh-muc.registry';
+
+describe('ImportDanhMucRegistry', () => {
+  /** 21 service giả, chỉ cần có create() vì registry không gọi gì khác. */
+  const fakes = Array.from({ length: 21 }, () => ({ create: jest.fn() }));
+  const registry = new ImportDanhMucRegistry(
+    ...(fakes as unknown as ConstructorParameters<typeof ImportDanhMucRegistry>),
+  );
+
+  it('đăng ký đủ 21 danh mục', () => {
+    expect(registry.resources()).toHaveLength(21);
+  });
+
+  it('mỗi entry có đủ service, dtoClass và label', () => {
+    for (const resource of registry.resources()) {
+      const entry = registry.get(resource)!;
+      expect(entry.service).toBeDefined();
+      expect(typeof entry.dtoClass).toBe('function');
+      expect(entry.label.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('resource không đăng ký trả về undefined', () => {
+    expect(registry.get('khong-ton-tai')).toBeUndefined();
+  });
+
+  it('ghép đúng service theo thứ tự tham số constructor', () => {
+    // tham số đầu tiên là TaiKhoanService, cuối cùng là HoSoChungTuService
+    expect(registry.get('tai-khoan')!.service).toBe(fakes[0]);
+    expect(registry.get('ho-so-chung-tu')!.service).toBe(fakes[20]);
+  });
+});
+```
+
+Run: `cd be && npx jest apps/master-data-service/src/import-danh-muc/import-danh-muc.registry.spec.ts`
+Expected: PASS — 4 passed.
+
+- [ ] **Step 5: Viết controller**
+
+Tạo `be/apps/master-data-service/src/import-danh-muc/import-danh-muc.controller.ts`:
+
+```typescript
+import {
+  Body,
+  Controller,
+  NotFoundException,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtGuard, RoleGuard, Roles } from '@app/auth';
+import { ImportDanhMucService } from './import-danh-muc.service';
+import { ImportDanhMucRegistry } from './import-danh-muc.registry';
+import { ImportItemsDto } from './dto/import-items.dto';
+
+@Controller('import')
+@UseGuards(JwtGuard, RoleGuard)
+export class ImportDanhMucController {
+  constructor(
+    private readonly importService: ImportDanhMucService,
+    private readonly registry: ImportDanhMucRegistry,
+  ) {}
 
   @Post(':resource')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
@@ -533,8 +575,6 @@ export class ImportDanhMucController {
 }
 ```
 
-**Lưu ý cho người triển khai:** các tham số service khai báo `?` chỉ để test dựng controller được mà không phải mock 21 service — Nest vẫn inject đầy đủ ở runtime nhờ metadata kiểu. Nếu import DTO từ `'../<module>/dto'` báo lỗi không tìm thấy, mở `dto/index.ts` của module đó xem tên export thật rồi sửa lại đúng tên (ví dụ Quy chuẩn dùng `CreateQuyChuan_Dto`).
-
 - [ ] **Step 6: Viết module**
 
 Tạo `be/apps/master-data-service/src/import-danh-muc/import-danh-muc.module.ts`:
@@ -543,6 +583,7 @@ Tạo `be/apps/master-data-service/src/import-danh-muc/import-danh-muc.module.ts
 import { Module } from '@nestjs/common';
 import { ImportDanhMucController } from './import-danh-muc.controller';
 import { ImportDanhMucService } from './import-danh-muc.service';
+import { ImportDanhMucRegistry } from './import-danh-muc.registry';
 
 import { TaiKhoanModule } from '../tai-khoan/tai-khoan.module';
 import { DoiTuongModule } from '../doi-tuong/doi-tuong.module';
@@ -591,7 +632,7 @@ import { HoSoChungTuModule } from '../ho-so-chung-tu/ho-so-chung-tu.module';
     HoSoChungTuModule,
   ],
   controllers: [ImportDanhMucController],
-  providers: [ImportDanhMucService],
+  providers: [ImportDanhMucService, ImportDanhMucRegistry],
 })
 export class ImportDanhMucModule {}
 ```
@@ -614,7 +655,7 @@ và thêm `ImportDanhMucModule,` vào cuối mảng `imports` của `@Module`.
 - [ ] **Step 9: Chạy test để xác nhận PASS**
 
 Run: `cd be && npx jest apps/master-data-service/src/import-danh-muc/`
-Expected: PASS — 7 passed (4 của service + 3 của controller)
+Expected: PASS — 11 passed (4 service + 4 registry + 3 controller)
 
 - [ ] **Step 10: Build BE để chắc chắn không lỗi type**
 
@@ -3712,7 +3753,7 @@ Expected: PASS, không có test nào fail. Ghi lại số test.
 - [ ] **Step 3: Chạy toàn bộ test BE liên quan**
 
 Run: `cd be && npx jest apps/master-data-service/src/import-danh-muc/`
-Expected: PASS — 7 passed.
+Expected: PASS — 11 passed.
 
 - [ ] **Step 4: Build cả FE và BE**
 
