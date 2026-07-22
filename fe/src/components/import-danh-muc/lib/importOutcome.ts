@@ -31,11 +31,19 @@ export function resolveImportOutcome(
   }
 
   const byRow = mapFailuresToRows(results, res.failed);
-  const updatedResults = results.map((r) =>
-    byRow.has(r.rowNumber)
-      ? { ...r, errors: [byRow.get(r.rowNumber) as string], payload: null }
-      : r,
-  );
+  const updatedResults = results.map((r) => {
+    if (byRow.has(r.rowNumber)) {
+      return { ...r, errors: [byRow.get(r.rowNumber) as string], payload: null };
+    }
+    // Dòng đã gửi lên BE (payload khác null) và không nằm trong danh sách lỗi trả về ⇒
+    // đã được tạo thành công. Null hoá payload để không bao giờ bị gửi lại nếu người dùng
+    // bấm Import lần nữa trong cùng phiên, và đánh dấu `created` để preview hiển thị đúng
+    // trạng thái thứ ba (không phải "chưa import", không phải "Lỗi").
+    if (r.payload !== null) {
+      return { ...r, created: true, payload: null };
+    }
+    return r;
+  });
 
   return {
     kind: "partial",

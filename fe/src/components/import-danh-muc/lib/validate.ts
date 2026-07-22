@@ -102,6 +102,42 @@ function refKeyOf(raw: string): string {
   return (idx === -1 ? raw : raw.slice(0, idx)).trim();
 }
 
+/**
+ * Tách một ô cột tham chiếu nhiều-giá-trị (nối bằng dấu phẩy) thành các phần tử.
+ *
+ * Mỗi phần tử có thể là mã trần ("HS01") hoặc dạng hiển thị "<mã> - <tên>" do chính
+ * dropdown của file mẫu sinh ra khi người dùng chọn — và <tên> đó có thể tự nó chứa dấu
+ * phẩy (vd "Hóa đơn GTGT, bảng kê"). KHÔNG thể tách đơn giản bằng `split(",")` trước khi
+ * bóc mã như trước, vì sẽ cắt tên có dấu phẩy thành hai phần tử giả.
+ *
+ * Mã không bao giờ chứa dấu phẩy lẫn " - " (đảm bảo của toàn hệ thống), nên dùng chính sự
+ * xuất hiện của " - " để phân biệt hai chế độ:
+ * - Nếu KHÔNG mảnh nào chứa " - " (toàn bộ ô chỉ gồm mã trần): tách thẳng theo dấu phẩy,
+ *   y hệt hành vi cũ — mã trần không có gì để nối lại.
+ * - Nếu có ít nhất một mảnh dạng hiển thị: một mảnh chỉ mở đầu phần tử MỚI khi bản thân nó
+ *   chứa " - " (hoặc là mảnh đầu tiên); mảnh không có " - " được coi là phần tiếp nối của
+ *   TÊN hiển thị ngay trước, nối lại bằng dấu phẩy.
+ */
+function splitMultiRefCell(raw: string): string[] {
+  const pieces = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s !== "");
+
+  const anyDisplayForm = pieces.some((p) => p.includes(" - "));
+  if (!anyDisplayForm) return pieces;
+
+  const entries: string[] = [];
+  for (const piece of pieces) {
+    if (entries.length === 0 || piece.includes(" - ")) {
+      entries.push(piece);
+    } else {
+      entries[entries.length - 1] += `, ${piece}`;
+    }
+  }
+  return entries;
+}
+
 function resolveEnum(col: ImportColumn, raw: string): string | null {
   const list = col.enumValues ?? [];
   const hit = list.find(
@@ -165,7 +201,7 @@ export function validateAndBuild(
         // So sánh tường minh === true: `if (ref.multi)` không loại được MultiRefSpec
         // ở nhánh else, khiến ref.assign nhận kiểu giao và không gọi được.
         if (ref.multi === true) {
-          const keys = rawText.split(",").map((s) => refKeyOf(s)).filter(Boolean);
+          const keys = splitMultiRefCell(rawText).map((s) => refKeyOf(s)).filter(Boolean);
           const found: RefRecord[] = [];
           for (const k of keys) {
             const hit = pool.find((p) => matches(p, k));

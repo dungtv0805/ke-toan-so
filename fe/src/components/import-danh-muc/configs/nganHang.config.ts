@@ -8,8 +8,8 @@ export const nganHangImportConfig: ImportDanhMucConfig = {
   service: nganHangCompleteSource,
   uniqueBy: ["ma"],
   columns: [
-    { key: "ma", header: "Mã", required: true, example: "NH01" },
-    { key: "ten", header: "Tên", required: true, example: "Tài khoản Vietcombank" },
+    { key: "ma", header: "Mã tài khoản", required: true, example: "NH01" },
+    { key: "ten", header: "Tên tài khoản", required: true, example: "Tài khoản Vietcombank" },
     {
       key: "loai",
       header: "Loại",
@@ -28,6 +28,6 @@ export const nganHangImportConfig: ImportDanhMucConfig = {
     { key: "soTaiKhoan", header: "Số tài khoản", example: "0011001234567" },
     { key: "chiNhanh", header: "Chi nhánh", example: "Hà Nội" },
     { key: "chuTaiKhoan", header: "Chủ tài khoản", example: "Công ty A" },
-    { key: "trangThai", header: "Đang hoạt động", type: "boolean", example: "Có" },
+    { key: "trangThai", header: "Trạng thái", type: "boolean", example: "Có" },
   ],
 };

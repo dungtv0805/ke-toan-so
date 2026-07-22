@@ -37,7 +37,7 @@ export const taiKhoanImportConfig: ImportDanhMucConfig = {
       enumValues: [
         { label: "Nợ", value: "NO" },
         { label: "Có", value: "CO" },
-        { label: "Lưỡng tính", value: "LUONG_TINH" },
+        { label: "Lưỡng tính (Số dư 2 bên)", value: "LUONG_TINH" },
         { label: "Không có số dư", value: "KHONG_CO_SO_DU" },
       ],
       example: "Nợ",

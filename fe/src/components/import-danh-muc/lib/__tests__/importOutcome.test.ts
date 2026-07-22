@@ -20,7 +20,7 @@ describe("resolveImportOutcome", () => {
     }
   });
 
-  it('có dòng lỗi từ BE → kind "partial", đổ đúng lỗi vào dòng tương ứng và giữ nguyên các dòng còn lại', () => {
+  it('có dòng lỗi từ BE → kind "partial", đổ đúng lỗi vào dòng tương ứng; các dòng đã gửi và KHÔNG lỗi được đánh dấu created + null hoá payload (Fix 4)', () => {
     const res: ImportApiResult = {
       created: 2,
       failed: [{ index: 1, message: "Mã B đã tồn tại" }],
@@ -34,10 +34,16 @@ describe("resolveImportOutcome", () => {
       const rowB = outcome.results.find((r) => r.rowNumber === 3);
       expect(rowB?.errors).toEqual(["Mã B đã tồn tại"]);
       expect(rowB?.payload).toBeNull();
-      // Các dòng không lỗi phải giữ nguyên, không bị đổi payload.
+      expect(rowB?.created).toBeFalsy();
+      // Các dòng đã gửi lên BE và không nằm trong danh sách lỗi ⇒ đã được tạo thành công:
+      // đánh dấu created = true và null hoá payload để không bao giờ bị gửi lại.
       const rowA = outcome.results.find((r) => r.rowNumber === 2);
       expect(rowA?.errors).toEqual([]);
-      expect(rowA?.payload).toEqual({ ma: "A" });
+      expect(rowA?.created).toBe(true);
+      expect(rowA?.payload).toBeNull();
+      const rowC = outcome.results.find((r) => r.rowNumber === 4);
+      expect(rowC?.created).toBe(true);
+      expect(rowC?.payload).toBeNull();
     }
   });
 
@@ -61,13 +67,17 @@ describe("resolveImportOutcome", () => {
 });
 
 /**
- * Đây chính là nhánh mà lỗi Critical đã ẩn: cả 2 kết quả (thành công toàn phần và một
- * phần) đều gọi `params.onSuccess?.()` giống hệt nhau, nên modal không thể biết để đóng
- * hay ở lại. Test dưới mô phỏng đúng cách `submit.handler.ts` dùng `resolveImportOutcome`
- * để quyết định gọi callback nào — không dựng CSubHanlder/CHanlder thật (cần Provider,
- * DI, effect subscription... không cần thiết cho riêng quyết định này).
+ * QUAN TRỌNG (Fix 8): describe block dưới đây KHÔNG gọi `submit.handler.ts` thật — nó tự
+ * định nghĩa lại `runOutcomeBranch` bên trong file test, mô phỏng lại đúng cách handler
+ * đang if/else theo `outcome.kind`. Vì vậy các test này chỉ chứng minh MỘT ĐIỀU: nếu ai đó
+ * viết một hàm if/else theo `outcome.kind` giống hệt thế này thì nó gọi đúng callback — chứ
+ * KHÔNG chứng minh rằng `submit.handler.ts` thật sự làm đúng như vậy. Nếu wiring thật trong
+ * `submit.handler.ts` bị đổi/hỏng (vd gọi nhầm `onSuccess` cho cả nhánh partial), các test
+ * này vẫn xanh như thường vì chúng không hề chạm vào file đó. Phần bọc CSubHanlder/CHanlder
+ * (Provider, DI, effect subscription...) cần để test `submit.handler.ts` thật không có ở
+ * đây — đây là khoảng trống chưa được test, không phải bài test end-to-end.
  */
-describe("submit.handler.ts dùng resolveImportOutcome để chọn callback (mô phỏng nhánh outcome)", () => {
+describe("hàm nội bộ mô phỏng lại nhánh if/else theo outcome.kind (KHÔNG phải submit.handler.ts thật)", () => {
   function runOutcomeBranch(
     res: ImportApiResult,
     callbacks: { onImported?: () => void; onSuccess?: () => void },
@@ -82,7 +92,7 @@ describe("submit.handler.ts dùng resolveImportOutcome để chọn callback (m�
     return outcome;
   }
 
-  it("thành công toàn phần → gọi onImported VÀ onSuccess (modal phải đóng)", () => {
+  it('outcome.kind === "success" → hàm mô phỏng gọi cả onImported lẫn onSuccess', () => {
     let importedCalled = false;
     let successCalled = false;
     runOutcomeBranch(
@@ -101,7 +111,7 @@ describe("submit.handler.ts dùng resolveImportOutcome để chọn callback (m�
     expect(successCalled).toBe(true);
   });
 
-  it("thành công một phần → CHỈ gọi onImported (trang cha nạp lại), KHÔNG gọi onSuccess (modal phải ở lại)", () => {
+  it('outcome.kind === "partial" → hàm mô phỏng CHỈ gọi onImported, không gọi onSuccess', () => {
     let importedCalled = false;
     let successCalled = false;
     runOutcomeBranch(

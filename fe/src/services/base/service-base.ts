@@ -198,8 +198,17 @@ export class ServiceBase {
     }
 
     const status = error.response.status;
-    const data = error.response.data as { message?: string; success?: boolean };
-    const message = data?.message || error.message || 'An error occurred';
+    const data = error.response.data as {
+      message?: string;
+      success?: boolean;
+      error?: { message?: string };
+    };
+    // GlobalExceptionFilter (be/libs/core) trả lỗi dạng { success: false, error: { code,
+    // message } } — không có `data.message` ở gốc. Đọc thêm `data.error.message` để những
+    // message tiếng Việt từ backend (vd "Mỗi lần import tối đa 2000 dòng") đến được người
+    // dùng, thay vì luôn rơi về "Request failed with status code NNN" của axios.
+    const message =
+      data?.message || data?.error?.message || error.message || 'An error occurred';
 
     switch (status) {
       case 401:

@@ -97,8 +97,15 @@ export interface RowValidationResult {
   /** Giá trị hiển thị lại trên bảng preview (2 cột đầu của config). */
   display: string;
   errors: string[];
-  /** Payload gửi lên BE; null nếu dòng có lỗi. */
+  /** Payload gửi lên BE; null nếu dòng có lỗi HOẶC dòng đã được tạo (created === true). */
   payload: Record<string, unknown> | null;
+  /**
+   * Dòng này đã được BE tạo thành công ở lần import trước (một phần của kết quả "partial") —
+   * KHÔNG phải "Hợp lệ, chưa import" (đã gửi rồi) và cũng KHÔNG phải "Lỗi". Preview phải hiển
+   * thị trạng thái riêng để người dùng biết chính xác dòng nào cần xoá khỏi file trước khi sửa
+   * các dòng lỗi và tải lại — tránh tạo trùng và tránh hiểu nhầm "phải làm lại từ đầu".
+   */
+  created?: boolean;
 }
 
 export interface ValidateOutcome {

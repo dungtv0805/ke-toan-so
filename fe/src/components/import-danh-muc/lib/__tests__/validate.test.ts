@@ -343,6 +343,100 @@ describe("validateAndBuild — cột tham chiếu", () => {
   });
 });
 
+describe("validateAndBuild — cột tham chiếu nhiều giá trị, tên có chứa dấu phẩy (Fix 5)", () => {
+  const multiConfig: ImportDanhMucConfig = {
+    ...simpleConfig,
+    columns: [
+      { key: "ma", header: "Mã", required: true },
+      {
+        key: "hoSo",
+        header: "Hồ sơ chứng từ",
+        ref: {
+          service: noopService,
+          matchBy: "ma",
+          label: "Hồ sơ chứng từ",
+          multi: true,
+          assign: (found) => ({
+            hoSoChungTu: found.map((f) => ({ id: f.id, ma: f.ma, ten: f.ten })),
+          }),
+        },
+      },
+    ],
+  };
+  const hoSoRefData = {
+    hoSo: [
+      { id: "1", ma: "HS01", ten: "Hóa đơn GTGT, bảng kê" },
+      { id: "2", ma: "HS02", ten: "Biên bản bàn giao" },
+    ],
+  };
+
+  it('một giá trị dạng "MÃ - Tên" do dropdown sinh ra, TÊN chứa dấu phẩy: không bị cắt thành hai mã giả', () => {
+    const out = validateAndBuild(
+      [row(2, { ma: "A", hoSo: "HS01 - Hóa đơn GTGT, bảng kê" })],
+      multiConfig,
+      [],
+      hoSoRefData,
+    );
+    expect(out.results[0].errors).toEqual([]);
+    expect(out.validItems[0].hoSoChungTu).toEqual([
+      { id: "1", ma: "HS01", ten: "Hóa đơn GTGT, bảng kê" },
+    ]);
+  });
+
+  it("nhiều giá trị đều ở dạng mã trần", () => {
+    const out = validateAndBuild(
+      [row(2, { ma: "A", hoSo: "HS01,HS02" })],
+      multiConfig,
+      [],
+      hoSoRefData,
+    );
+    expect(out.results[0].errors).toEqual([]);
+    expect(out.validItems[0].hoSoChungTu).toEqual([
+      { id: "1", ma: "HS01", ten: "Hóa đơn GTGT, bảng kê" },
+      { id: "2", ma: "HS02", ten: "Biên bản bàn giao" },
+    ]);
+  });
+
+  it('nhiều giá trị đều ở dạng hiển thị "MÃ - Tên"', () => {
+    const out = validateAndBuild(
+      [row(2, { ma: "A", hoSo: "HS01 - Hóa đơn GTGT, bảng kê,HS02 - Biên bản bàn giao" })],
+      multiConfig,
+      [],
+      hoSoRefData,
+    );
+    expect(out.results[0].errors).toEqual([]);
+    expect(out.validItems[0].hoSoChungTu).toEqual([
+      { id: "1", ma: "HS01", ten: "Hóa đơn GTGT, bảng kê" },
+      { id: "2", ma: "HS02", ten: "Biên bản bàn giao" },
+    ]);
+  });
+
+  it('trộn lẫn: một mã trần và một giá trị dạng hiển thị có tên chứa dấu phẩy', () => {
+    const out = validateAndBuild(
+      [row(2, { ma: "A", hoSo: "HS02,HS01 - Hóa đơn GTGT, bảng kê" })],
+      multiConfig,
+      [],
+      hoSoRefData,
+    );
+    expect(out.results[0].errors).toEqual([]);
+    expect(out.validItems[0].hoSoChungTu).toEqual([
+      { id: "2", ma: "HS02", ten: "Biên bản bàn giao" },
+      { id: "1", ma: "HS01", ten: "Hóa đơn GTGT, bảng kê" },
+    ]);
+  });
+
+  it("mã không dò được vẫn báo lỗi (không bị nuốt bởi việc gộp theo tên có dấu phẩy)", () => {
+    const out = validateAndBuild(
+      [row(2, { ma: "A", hoSo: "HS01,HS99" })],
+      multiConfig,
+      [],
+      hoSoRefData,
+    );
+    expect(out.results[0].errors).toContain('Hồ sơ chứng từ "HS99" không tồn tại');
+    expect(out.results[0].payload).toBeNull();
+  });
+});
+
 describe("validateAndBuild — khóa trùng dựng từ giá trị đã quy đổi", () => {
   it('cột uniqueBy kiểu enum: nhãn tiếng Việt và giá trị thô phải bị coi là trùng nhau', () => {
     const config: ImportDanhMucConfig = {
