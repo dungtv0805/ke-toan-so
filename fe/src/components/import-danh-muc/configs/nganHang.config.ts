@@ -14,10 +14,12 @@ export const nganHangImportConfig: ImportDanhMucConfig = {
       header: "Loại",
       required: true,
       type: "enum",
-      enumValues: [
-        { label: "Tiền mặt", value: "TIEN_MAT" },
-        { label: "Ngân hàng", value: "NGAN_HANG" },
-      ],
+      // Cố ý CHỈ có NGAN_HANG, dù backend DTO còn chấp nhận TIEN_MAT: trang này
+      // (NganHangPage) chỉ lọc và tạo mới với loai: "NGAN_HANG" — không có trang
+      // nào hiển thị/sửa được TIEN_MAT. Nếu cho import TIEN_MAT, dòng sẽ được BE
+      // chấp nhận nhưng biến mất khỏi bảng ngay khi tải lại, không có lỗi/cảnh báo
+      // nào giải thích. Đừng "nới lại" enum này nếu chưa có trang liệt kê TIEN_MAT.
+      enumValues: [{ label: "Ngân hàng", value: "NGAN_HANG" }],
       example: "Ngân hàng",
     },
     { key: "soDu", header: "Số dư", type: "number", example: "0" },
