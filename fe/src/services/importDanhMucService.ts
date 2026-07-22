@@ -30,7 +30,7 @@ class ImportDanhMucService extends ServiceBase {
     config: ImportDanhMucConfig,
     items: Record<string, unknown>[],
   ): Promise<ImportApiResult> {
-    const prefix = config.apiPrefix ?? '/master-data';
+    const prefix = config.apiPrefix || '/master-data';
     return this.post<ImportApiResult>(
       { items },
       { endpoint: `${prefix}/import/${config.resource}` },

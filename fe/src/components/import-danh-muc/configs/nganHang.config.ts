@@ -1,10 +1,11 @@
-import { nganHangService } from "@/services/nganHangService";
+import { nganHangCompleteSource } from "./completeSetSources";
 import type { ImportDanhMucConfig } from "../types";
 
 export const nganHangImportConfig: ImportDanhMucConfig = {
   title: "Ngân hàng & Quỹ",
   resource: "ngan-hang",
-  service: nganHangService,
+  // Fix 1: KHÔNG dùng nganHangService (getAll() bị giới hạn 100 dòng) — xem completeSetSources.ts.
+  service: nganHangCompleteSource,
   uniqueBy: ["ma"],
   columns: [
     { key: "ma", header: "Mã", required: true, example: "NH01" },

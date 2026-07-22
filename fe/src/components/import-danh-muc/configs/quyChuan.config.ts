@@ -1,7 +1,7 @@
 import { quyChauanService } from "@/services/quyChaunService";
 import { loaiGiaoDichService } from "@/services/loaiGiaoDichService";
-import { taiKhoanService } from "@/services/taiKhoanService";
 import { hoSoChungTuService } from "@/services/hoSoChungTuService";
+import { taiKhoanCompleteSource } from "./completeSetSources";
 import type { ImportDanhMucConfig } from "../types";
 
 export const quyChuanImportConfig: ImportDanhMucConfig = {
@@ -32,7 +32,9 @@ export const quyChuanImportConfig: ImportDanhMucConfig = {
       required: true,
       example: "1111",
       ref: {
-        service: taiKhoanService,
+        // Fix 1: 150-800 tài khoản thật vượt xa 100 dòng của taiKhoanService.getAll() —
+        // gần như mọi dòng sẽ báo "Tài khoản Nợ ... không tồn tại" nếu dùng service gốc.
+        service: taiKhoanCompleteSource,
         matchBy: "ma",
         label: "Tài khoản Nợ",
         displayField: "ten",
@@ -45,7 +47,8 @@ export const quyChuanImportConfig: ImportDanhMucConfig = {
       required: true,
       example: "1311",
       ref: {
-        service: taiKhoanService,
+        // Fix 1: cùng lý do — dùng nguồn đầy đủ, không phải taiKhoanService.getAll() (100 dòng).
+        service: taiKhoanCompleteSource,
         matchBy: "ma",
         label: "Tài khoản Có",
         displayField: "ten",

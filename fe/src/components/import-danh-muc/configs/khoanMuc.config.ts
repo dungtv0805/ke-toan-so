@@ -1,10 +1,11 @@
-import { khoanMucService } from "@/services/khoanMucService";
+import { khoanMucCompleteSource } from "./completeSetSources";
 import type { ImportDanhMucConfig } from "../types";
 
 export const khoanMucImportConfig: ImportDanhMucConfig = {
   title: "Khoản mục",
   resource: "khoan-muc",
-  service: khoanMucService,
+  // Fix 1: KHÔNG dùng khoanMucService (getAll() bị giới hạn 100 dòng) — xem completeSetSources.ts.
+  service: khoanMucCompleteSource,
   uniqueBy: ["ma"],
   columns: [
     { key: "ma", header: "Mã khoản mục", required: true, example: "KM01" },

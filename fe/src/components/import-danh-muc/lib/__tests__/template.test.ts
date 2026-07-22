@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import * as ExcelJS from "exceljs";
+import * as XLSX from "xlsx";
 import { buildTemplateWorkbook } from "../template";
+import { aoaToRawRows } from "../parseRows";
 import type { ImportColumn, ImportDanhMucConfig, RefItem } from "../../types";
 
 const noopService = { getAll: async (): Promise<RefItem[]> => [] };
@@ -53,12 +55,41 @@ describe("buildTemplateWorkbook", () => {
     ]);
   });
 
-  it("có đúng một dòng ví dụ lấy từ example", () => {
+  it('sheet dữ liệu KHÔNG còn dòng ví dụ ở dòng 2 (Fix 2) — chỉ có 1 dòng header, để tải mẫu rồi tải lên ngay không tạo bản ghi rác', () => {
     const wb = buildTemplateWorkbook(config, refData);
     const main = wb.worksheets[0];
-    const values = (main.getRow(2).values as unknown[]).slice(1);
-    expect(values).toEqual(["DA01", "Dự án A", "Đang thực hiện", "CDT01"]);
-    expect(main.rowCount).toBe(2);
+    expect(main.rowCount).toBe(1);
+  });
+
+  it('ví dụ từng cột vẫn xem được ở sheet "HuongDan" riêng (Fix 2)', () => {
+    const wb = buildTemplateWorkbook(config, refData);
+    const guide = wb.getWorksheet("HuongDan")!;
+    expect(guide).toBeDefined();
+    expect((guide.getRow(1).values as unknown[]).slice(1)).toEqual([
+      "Cột",
+      "Bắt buộc",
+      "Ví dụ",
+    ]);
+    expect((guide.getRow(2).values as unknown[]).slice(1)).toEqual([
+      "Mã dự án",
+      "Bắt buộc",
+      "DA01",
+    ]);
+    expect((guide.getRow(3).values as unknown[]).slice(1)).toEqual([
+      "Tên dự án",
+      "Bắt buộc",
+      "Dự án A",
+    ]);
+    expect((guide.getRow(4).values as unknown[]).slice(1)).toEqual([
+      "Trạng thái",
+      "Tùy chọn",
+      "Đang thực hiện",
+    ]);
+    expect((guide.getRow(5).values as unknown[]).slice(1)).toEqual([
+      "Mã chủ đầu tư",
+      "Tùy chọn",
+      "CDT01",
+    ]);
   });
 
   it("tạo sheet danh sách cho cột enum và cột tham chiếu", () => {
@@ -90,7 +121,7 @@ describe("buildTemplateWorkbook", () => {
     expect(main.dataValidations.model["C2:C501"]?.type).toBe("list");
   });
 
-  it("config không có cột enum/ref thì chỉ có 1 sheet", () => {
+  it("config không có cột enum/ref thì chỉ có 2 sheet: DuLieu và HuongDan", () => {
     const plain: ImportDanhMucConfig = {
       title: "Đơn vị tính",
       resource: "don-vi-tinh",
@@ -102,7 +133,7 @@ describe("buildTemplateWorkbook", () => {
       ],
     };
     const wb = buildTemplateWorkbook(plain, {});
-    expect(wb.worksheets).toHaveLength(1);
+    expect(wb.worksheets.map((w) => w.name)).toEqual(["DuLieu", "HuongDan"]);
   });
 });
 
@@ -238,7 +269,9 @@ describe("buildTemplateWorkbook — tên sheet danh sách an toàn khi key dài 
     };
 
     const wb = buildTemplateWorkbook(config, {});
-    const sheetNames = wb.worksheets.map((w) => w.name).filter((n) => n !== "DuLieu");
+    const sheetNames = wb.worksheets
+      .map((w) => w.name)
+      .filter((n) => n !== "DuLieu" && n !== "HuongDan");
 
     expect(sheetNames).toHaveLength(2);
     expect(new Set(sheetNames).size).toBe(2);
@@ -289,7 +322,7 @@ describe("buildTemplateWorkbook — các hành vi khác cần cho 22 danh mục 
     expect(() => buildTemplateWorkbook(config, {})).not.toThrow();
     const wb = buildTemplateWorkbook(config, {});
     expect(wb.getWorksheet("DS_chuDauTu")).toBeUndefined();
-    expect(wb.worksheets).toHaveLength(1);
+    expect(wb.worksheets).toHaveLength(2); // DuLieu + HuongDan
     const main = wb.worksheets[0];
     expect(main.getCell(2, 2).dataValidation).toBeUndefined();
 
@@ -297,7 +330,7 @@ describe("buildTemplateWorkbook — các hành vi khác cần cho 22 danh mục 
     expect(() => buildTemplateWorkbook(config, { chuDauTu: [] })).not.toThrow();
     const wb2 = buildTemplateWorkbook(config, { chuDauTu: [] });
     expect(wb2.getWorksheet("DS_chuDauTu")).toBeUndefined();
-    expect(wb2.worksheets).toHaveLength(1);
+    expect(wb2.worksheets).toHaveLength(2); // DuLieu + HuongDan
   });
 
   it("allowBlank phản ánh đúng col.required: true cho cột tùy chọn, false cho cột bắt buộc", () => {
@@ -413,14 +446,15 @@ describe("buildTemplateWorkbook — gộp dropdown thành đúng một dải li�
     expect(keys).toContain("C2:C501");
     expect(keys).toContain("D2:D501");
 
-    // Thuộc tính mà lần sửa rowCount trước bảo vệ: sheet chính vẫn chỉ có 2 dòng,
-    // không phình lên 501 dòng vì việc gắn validation.
-    expect(main.rowCount).toBe(2);
+    // Thuộc tính mà lần sửa rowCount trước bảo vệ: sheet chính chỉ có 1 dòng header
+    // (Fix 2 bỏ dòng ví dụ ở dòng 2 — xem describe "Fix 2" phía trên), không phình lên
+    // 501 dòng vì việc gắn validation.
+    expect(main.rowCount).toBe(1);
   });
 
   it("sau khi ghi buffer thật rồi tải lại: dải phủ đúng từ dòng 2 đến dòng 501, đầu/giữa/cuối cùng công thức, không lem ra ngoài", async () => {
     const wb = buildTemplateWorkbook(config, refData);
-    expect(wb.worksheets[0].rowCount).toBe(2);
+    expect(wb.worksheets[0].rowCount).toBe(1);
     const buffer = await wb.xlsx.writeBuffer();
 
     const reloaded = new ExcelJS.Workbook();
@@ -430,7 +464,7 @@ describe("buildTemplateWorkbook — gộp dropdown thành đúng một dải li�
     // Kiểm tra rowCount NGAY sau khi tải lại, trước mọi lần gọi getCell bên dưới —
     // bản thân getCell tạo Row như tác dụng phụ (đây chính là nguồn gốc bug rowCount
     // 501 ở lần sửa trước), nên gọi sau sẽ tự làm sai lệch phép đo.
-    expect(main.rowCount).toBe(2);
+    expect(main.rowCount).toBe(1);
 
     // Sau khi tải lại, exceljs khai triển dải "C2:C501" thành từng ô riêng trong
     // model — nên getCell(...).dataValidation tra đúng ở đây (khác lúc trong bộ
@@ -497,5 +531,96 @@ describe("buildTemplateWorkbook — cột tham chiếu nhiều giá trị (Multi
     expect(dv?.formulae).toEqual(["'DS_donViThamGia'!$A$1:$A$2"]);
     expect(dv?.showErrorMessage).not.toBe(true);
     expect(dv?.errorStyle).toBeUndefined();
+  });
+});
+
+describe("buildTemplateWorkbook — file mẫu tải về rồi tải lên ngay không tạo bản ghi rác (Fix 2)", () => {
+  /** Đọc y hệt parse.handler.ts thật: XLSX.read + sheet_to_json({ header: 1, raw: true, defval: "" }). */
+  function readMainSheetAoa(buffer: ArrayBuffer | Uint8Array): unknown[][] {
+    const wb = XLSX.read(buffer, { type: "array" });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    return XLSX.utils.sheet_to_json<unknown[]>(ws, {
+      header: 1,
+      raw: true,
+      defval: "",
+    }) as unknown[][];
+  }
+
+  const refCol: ImportColumn = {
+    key: "chuDauTu",
+    header: "Mã chủ đầu tư",
+    example: "CDT01",
+    ref: {
+      service: noopService,
+      matchBy: "ma",
+      label: "Chủ đầu tư",
+      displayField: "ten",
+      assign: (f) => ({ chuDauTuId: f.id }),
+    },
+  };
+  const configWithRef: ImportDanhMucConfig = {
+    title: "Dự án",
+    resource: "du-an",
+    service: noopService,
+    uniqueBy: ["ma"],
+    columns: [
+      { key: "ma", header: "Mã dự án", required: true, example: "DA01" },
+      { key: "ten", header: "Tên dự án", required: true, example: "Dự án A" },
+      refCol,
+    ],
+  };
+  const refDataWithRef = { chuDauTu: [{ id: "1", ma: "CDT01", ten: "Công ty A" }] };
+
+  it("template tải về rồi đọc lại bằng ĐÚNG bộ đọc thật (xlsx + aoaToRawRows) cho 0 dòng dữ liệu", async () => {
+    const wb = buildTemplateWorkbook(configWithRef, refDataWithRef);
+    const buffer = await wb.xlsx.writeBuffer();
+
+    const aoa = readMainSheetAoa(buffer);
+    const rows = aoaToRawRows(aoa, configWithRef.columns);
+
+    // Trước Fix 2: dòng ví dụ ("DA01", "Dự án A", "CDT01") bị đọc thành 1 dòng dữ liệu thật
+    // ở đây. Sau Fix 2: sheet dữ liệu chỉ còn header, nên phải ra đúng 0 dòng.
+    expect(rows).toHaveLength(0);
+  });
+
+  it("danh mục đơn giản (không cột tham chiếu) cũng cho 0 dòng khi đọc lại template vừa tải", async () => {
+    const simple: ImportDanhMucConfig = {
+      title: "Đơn vị tính",
+      resource: "don-vi-tinh",
+      service: noopService,
+      uniqueBy: ["ma"],
+      columns: [
+        { key: "ma", header: "Mã", required: true, example: "DVT01" },
+        { key: "ten", header: "Tên", required: true, example: "Cái" },
+        { key: "moTa", header: "Mô tả", example: "Đơn vị đếm" },
+      ],
+    };
+    const wb = buildTemplateWorkbook(simple, {});
+    const buffer = await wb.xlsx.writeBuffer();
+
+    const rows = aoaToRawRows(readMainSheetAoa(buffer), simple.columns);
+
+    expect(rows).toHaveLength(0);
+  });
+
+  it('ví dụ vẫn đọc lại được từ sheet "HuongDan" sau khi ghi buffer .xlsx thật và tải lại', async () => {
+    const wb = buildTemplateWorkbook(configWithRef, refDataWithRef);
+    const buffer = await wb.xlsx.writeBuffer();
+
+    const reloaded = new ExcelJS.Workbook();
+    await reloaded.xlsx.load(buffer);
+    const guide = reloaded.getWorksheet("HuongDan")!;
+
+    expect(guide).toBeDefined();
+    expect((guide.getRow(2).values as unknown[]).slice(1)).toEqual([
+      "Mã dự án",
+      "Bắt buộc",
+      "DA01",
+    ]);
+    expect((guide.getRow(4).values as unknown[]).slice(1)).toEqual([
+      "Mã chủ đầu tư",
+      "Tùy chọn",
+      "CDT01",
+    ]);
   });
 });

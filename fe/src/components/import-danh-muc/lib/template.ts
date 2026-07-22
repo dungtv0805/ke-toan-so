@@ -69,6 +69,35 @@ function listValuesOf(col: ImportColumn, refData: RefData): string[] {
   return [];
 }
 
+/**
+ * Sheet hướng dẫn riêng, thay cho việc ghi ví dụ ngay ở dòng 2 của sheet dữ liệu.
+ *
+ * Trước đây dòng 2 của "DuLieu" chứa `config.columns.map(c => c.example)`, không đánh dấu
+ * gì khác dòng dữ liệu thật. `parseRows.ts` bắt đầu đọc từ dòng 2 và chỉ bỏ qua dòng TRỐNG
+ * HOÀN TOÀN, nên dòng ví dụ đó bị đọc y như một bản ghi thật:
+ *   - Danh mục đơn giản (Đơn vị tính, ...): tải mẫu rồi import ngay (không xoá dòng 2) âm
+ *     thầm tạo một bản ghi rác (vd "DVT01 / Cái / Đơn vị đếm").
+ *   - Danh mục có cột tham chiếu: giá trị ví dụ (CDT01, 111, LGD01, "HS01, HS02"...) thường
+ *     không tồn tại trên tenant thật → dòng 2 báo lỗi và khoá luôn IMPORT của CẢ FILE cho
+ *     đến khi người dùng tự đoán ra phải xoá dòng 2.
+ *
+ * Sửa bằng cách không ghi ví dụ vào sheet dữ liệu nữa — sheet "DuLieu" tải về chỉ có ĐÚNG
+ * 1 dòng (header), nên file tải về rồi tải lên ngay luôn cho 0 dòng dữ liệu (đã có sẵn
+ * cảnh báo tiếng Việt "File không có dòng dữ liệu" ở parse.handler.ts), không bao giờ biến
+ * thành bản ghi thật. Ví dụ từng cột vẫn xem được ở sheet "HuongDan" này.
+ */
+function addGuideSheet(wb: ExcelJS.Workbook, config: ImportDanhMucConfig): void {
+  const guide = wb.addWorksheet("HuongDan");
+  guide.addRow(["Cột", "Bắt buộc", "Ví dụ"]);
+  guide.getRow(1).font = { bold: true };
+  for (const col of config.columns) {
+    guide.addRow([col.header, col.required ? "Bắt buộc" : "Tùy chọn", col.example ?? ""]);
+  }
+  guide.getColumn(1).width = 28;
+  guide.getColumn(2).width = 12;
+  guide.getColumn(3).width = 30;
+}
+
 /** Dựng workbook file mẫu (đồng bộ để test được). */
 export function buildTemplateWorkbook(
   config: ImportDanhMucConfig,
@@ -78,11 +107,12 @@ export function buildTemplateWorkbook(
 
   const main = wb.addWorksheet("DuLieu");
   main.addRow(config.columns.map((c) => c.header));
-  main.addRow(config.columns.map((c) => c.example ?? ""));
   main.getRow(1).font = { bold: true };
   config.columns.forEach((c, i) => {
     main.getColumn(i + 1).width = Math.max(14, c.header.length + 4);
   });
+
+  addGuideSheet(wb, config);
 
   const usedSheetNames = new Set<string>();
 

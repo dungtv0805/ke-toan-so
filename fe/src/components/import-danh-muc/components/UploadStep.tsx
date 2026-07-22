@@ -73,7 +73,7 @@ export function UploadStep() {
         {fileName && <Text type="secondary">{fileName}</Text>}
       </Space>
       <Text type="secondary">
-        {`Mỗi dòng là 1 bản ghi.${requiredHeadersClause} Dòng có mã đã tồn tại sẽ báo lỗi và không được import. File còn lỗi thì không import được.`}
+        {`Mỗi dòng là 1 bản ghi. Xem ví dụ cho từng cột ở sheet "HuongDan" trong file mẫu tải về — sheet "DuLieu" chỉ điền dữ liệu thật, không chứa dòng ví dụ.${requiredHeadersClause} Dòng có mã đã tồn tại sẽ báo lỗi và không được import. File còn lỗi thì không import được.`}
       </Text>
     </Space>
   );

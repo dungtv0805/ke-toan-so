@@ -1,10 +1,12 @@
-import { taiKhoanService } from "@/services/taiKhoanService";
+import { taiKhoanCompleteSource } from "./completeSetSources";
 import type { ImportDanhMucConfig } from "../types";
 
 export const taiKhoanImportConfig: ImportDanhMucConfig = {
   title: "Tài khoản",
   resource: "tai-khoan",
-  service: taiKhoanService,
+  // Fix 1: KHÔNG dùng taiKhoanService (getAll() bị giới hạn 100 dòng) — dò trùng phải thấy
+  // TOÀN BỘ tài khoản hiện có, không chỉ 100 dòng đầu. Xem lý do đầy đủ ở completeSetSources.ts.
+  service: taiKhoanCompleteSource,
   uniqueBy: ["ma"],
   columns: [
     { key: "ma", header: "Số tài khoản", required: true, example: "1111" },
@@ -45,7 +47,8 @@ export const taiKhoanImportConfig: ImportDanhMucConfig = {
       header: "Số tài khoản cha",
       example: "111",
       ref: {
-        service: taiKhoanService,
+        // Fix 1: cũng phải dò trên TOÀN BỘ tài khoản, không phải 100 dòng đầu.
+        service: taiKhoanCompleteSource,
         matchBy: "ma",
         label: "Tài khoản cha",
         displayField: "ten",
