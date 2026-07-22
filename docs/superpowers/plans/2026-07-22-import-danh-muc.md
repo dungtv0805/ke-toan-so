@@ -807,36 +807,63 @@ git commit -m "feat(import-danh-muc): endpoint import cho Quy chuẩn hạch to�
 
 **Interfaces:**
 - Consumes: không có.
-- Produces: `ImportDanhMucConfig`, `ImportColumn`, `RefSpec`, `RawImportRow`, `RowValidationResult`, `ValidateOutcome` — mọi task FE sau đều import từ đây.
+- Produces: `RefItem`, `RefRecord`, `RefSource`, `SingleRefSpec`, `MultiRefSpec`, `RefSpec`, `ImportColumnType`, `ImportColumn`, `ImportDanhMucConfig`, `RawImportRow`, `RowValidationResult`, `ValidateOutcome` — mọi task FE sau đều import từ đây.
 
 - [ ] **Step 1: Viết file kiểu dữ liệu**
 
 Tạo `fe/src/components/import-danh-muc/types.ts`:
 
 ```typescript
-/** Một bản ghi danh mục tham chiếu (kết quả getAll của service khác). */
+/**
+ * Ràng buộc tối thiểu cho một bản ghi danh mục tham chiếu.
+ * KHÔNG khai index signature: các interface thật (DuAn, DonViTinh, ChuDauTu...) không có
+ * index signature, nên nếu thêm vào đây thì không service nào gán được và cả 22 file config
+ * sẽ phải cast.
+ */
 export interface RefItem {
   id?: string;
-  [key: string]: unknown;
 }
 
-export interface RefSpec {
+/**
+ * Bản ghi tham chiếu ở dạng đọc được mọi trường. Chỉ dùng bên trong lib (khi dò mã)
+ * và ở tham số của `assign`, để config viết thẳng `found.ma`, `found.ten`.
+ */
+export type RefRecord = RefItem & Record<string, unknown>;
+
+/** Phần duy nhất của một service danh mục mà module import cần đến. */
+export interface RefSource {
+  getAll(): Promise<RefItem[]>;
+}
+
+interface RefSpecBase {
   /** Service của danh mục được tham chiếu. */
-  service: { getAll(): Promise<RefItem[]> };
+  service: RefSource;
   /** Trường dùng để dò khớp với giá trị trong ô Excel, thường là "ma". */
   matchBy: string;
   /** Tên hiển thị trong thông báo lỗi, ví dụ "Chủ đầu tư". */
   label: string;
   /** Trường hiển thị kèm mã trong danh sách thả xuống của file mẫu. */
   displayField?: string;
-  /** Cho phép nhiều giá trị ngăn cách bằng dấu phẩy. */
-  multi?: boolean;
-  /**
-   * Ánh xạ bản ghi dò được → các trường của DTO gửi lên BE.
-   * Với `multi: true`, tham số là mảng các bản ghi dò được.
-   */
-  assign: (found: RefItem | RefItem[]) => Record<string, unknown>;
 }
+
+/** Cột tham chiếu một giá trị — trường hợp phổ biến. */
+export interface SingleRefSpec extends RefSpecBase {
+  multi?: false;
+  /** Ánh xạ bản ghi dò được → các trường của DTO gửi lên BE. */
+  assign: (found: RefRecord) => Record<string, unknown>;
+}
+
+/** Cột tham chiếu nhiều giá trị, ngăn cách bằng dấu phẩy trong ô Excel. */
+export interface MultiRefSpec extends RefSpecBase {
+  multi: true;
+  assign: (found: RefRecord[]) => Record<string, unknown>;
+}
+
+/**
+ * Union phân biệt theo `multi`, nhờ đó `assign` của cột một-giá-trị nhận thẳng
+ * một bản ghi chứ không phải `RefRecord | RefRecord[]` rồi phải tự thu hẹp kiểu.
+ */
+export type RefSpec = SingleRefSpec | MultiRefSpec;
 
 export type ImportColumnType =
   | 'string'
@@ -868,7 +895,7 @@ export interface ImportDanhMucConfig {
   /** Mặc định '/master-data'. Quy chuẩn hạch toán dùng '/config'. */
   apiPrefix?: string;
   /** Service của chính danh mục này — dùng để lấy dữ liệu hiện có mà dò trùng. */
-  service: { getAll(): Promise<RefItem[]> };
+  service: RefSource;
   /** Các key tạo nên khóa trùng. Hầu hết là ['ma']; Quy chuẩn là ['loaiGiaoDich','nghiepVu']. */
   uniqueBy: string[];
   columns: ImportColumn[];
@@ -1322,7 +1349,7 @@ describe("validateAndBuild — cột tham chiếu", () => {
           service: noopService,
           matchBy: "ma",
           label: "Chủ đầu tư",
-          assign: (found) => ({ chuDauTuId: (found as RefItem).id }),
+          assign: (found) => ({ chuDauTuId: found.id }),
         },
       },
     ],
@@ -1370,7 +1397,7 @@ describe("validateAndBuild — cột tham chiếu", () => {
             label: "Hồ sơ chứng từ",
             multi: true,
             assign: (found) => ({
-              hoSoChungTu: (found as RefItem[]).map((f) => ({
+              hoSoChungTu: found.map((f) => ({
                 id: f.id,
                 ma: f.ma,
                 ten: f.ten,
@@ -1420,12 +1447,16 @@ import type {
   ImportDanhMucConfig,
   RawImportRow,
   RefItem,
+  RefRecord,
   RowValidationResult,
   ValidateOutcome,
 } from "../types";
 
 /** Dữ liệu danh mục tham chiếu, khóa là ImportColumn.key. */
 export type RefData = Record<string, RefItem[]>;
+
+/** Đọc một trường bất kỳ của bản ghi tham chiếu. RefItem cố ý không có index signature. */
+const field = (item: RefItem, key: string): unknown => (item as RefRecord)[key];
 
 const norm = (v: unknown): string => String(v ?? "").trim().toLowerCase();
 
@@ -1520,7 +1551,9 @@ export function validateAndBuild(
 ): ValidateOutcome {
   // khóa trùng của dữ liệu đã có trong hệ thống
   const existingKeys = new Set(
-    existing.map((item) => config.uniqueBy.map((k) => norm(item[k])).join("|")),
+    existing.map((item) =>
+      config.uniqueBy.map((k) => norm(field(item, k))).join("|"),
+    ),
   );
   // khóa trùng đã gặp trong chính file, ghi lại dòng đầu tiên
   const seenInFile = new Map<string, number>();
@@ -1544,22 +1577,26 @@ export function validateAndBuild(
       if (col.ref) {
         const pool = refData[col.key] ?? [];
         const rawText = String(raw);
-        if (col.ref.multi) {
+        const ref = col.ref;
+        const matches = (p: RefItem, k: string) =>
+          norm(field(p, ref.matchBy)) === norm(k);
+
+        if (ref.multi) {
           const keys = rawText.split(",").map((s) => refKeyOf(s)).filter(Boolean);
-          const found: RefItem[] = [];
+          const found: RefRecord[] = [];
           for (const k of keys) {
-            const hit = pool.find((p) => norm(p[col.ref!.matchBy]) === norm(k));
-            if (!hit) errors.push(`${col.ref.label} "${k}" không tồn tại`);
-            else found.push(hit);
+            const hit = pool.find((p) => matches(p, k));
+            if (!hit) errors.push(`${ref.label} "${k}" không tồn tại`);
+            else found.push(hit as RefRecord);
           }
           if (found.length === keys.length && found.length > 0) {
-            Object.assign(payload, col.ref.assign(found));
+            Object.assign(payload, ref.assign(found));
           }
         } else {
           const k = refKeyOf(rawText);
-          const hit = pool.find((p) => norm(p[col.ref!.matchBy]) === norm(k));
-          if (!hit) errors.push(`${col.ref.label} "${k}" không tồn tại`);
-          else Object.assign(payload, col.ref.assign(hit));
+          const hit = pool.find((p) => matches(p, k));
+          if (!hit) errors.push(`${ref.label} "${k}" không tồn tại`);
+          else Object.assign(payload, ref.assign(hit as RefRecord));
         }
         continue;
       }
@@ -1712,7 +1749,7 @@ const config: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Chủ đầu tư",
         displayField: "ten",
-        assign: (f) => ({ chuDauTuId: (f as RefItem).id }),
+        assign: (f) => ({ chuDauTuId: f.id }),
       },
     },
   ],
@@ -1795,7 +1832,7 @@ Tạo `fe/src/components/import-danh-muc/lib/template.ts`:
 
 ```typescript
 import * as ExcelJS from "exceljs";
-import type { ImportColumn, ImportDanhMucConfig } from "../types";
+import type { ImportColumn, ImportDanhMucConfig, RefItem, RefRecord } from "../types";
 import type { RefData } from "./validate";
 
 /** Số dòng dữ liệu được gắn dropdown ở sheet chính (hàng 2 → MAX_DATA_ROWS+1). */
@@ -1811,10 +1848,11 @@ function listValuesOf(col: ImportColumn, refData: RefData): string[] {
   }
   if (col.ref) {
     const items = refData[col.key] ?? [];
-    const display = col.ref.displayField;
+    const ref = col.ref;
+    const read = (it: RefItem, key: string) => (it as RefRecord)[key];
     return items.map((it) => {
-      const ma = String(it[col.ref!.matchBy] ?? "");
-      const ten = display ? String(it[display] ?? "") : "";
+      const ma = String(read(it, ref.matchBy) ?? "");
+      const ten = ref.displayField ? String(read(it, ref.displayField) ?? "") : "";
       return ten ? `${ma} - ${ten}` : ma;
     });
   }
@@ -3268,7 +3306,7 @@ Expected: in ra đủ 6 file. File nào thiếu thì mở ra xem tên hàm lấy
 
 ```typescript
 import { taiKhoanService } from "@/services/taiKhoanService";
-import type { ImportDanhMucConfig, RefItem } from "../types";
+import type { ImportDanhMucConfig } from "../types";
 
 export const taiKhoanImportConfig: ImportDanhMucConfig = {
   title: "Tài khoản",
@@ -3318,7 +3356,7 @@ export const taiKhoanImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Tài khoản cha",
         displayField: "ten",
-        assign: (found) => ({ parentId: (found as RefItem).id }),
+        assign: (found) => ({ parentId: found.id }),
       },
     },
     {
@@ -3344,7 +3382,7 @@ export const taiKhoanImportConfig: ImportDanhMucConfig = {
 ```typescript
 import { duAnService } from "@/services/duAnService";
 import { chuDauTuService } from "@/services/chuDauTuService";
-import type { ImportDanhMucConfig, RefItem } from "../types";
+import type { ImportDanhMucConfig } from "../types";
 
 export const duAnImportConfig: ImportDanhMucConfig = {
   title: "Dự án",
@@ -3365,7 +3403,7 @@ export const duAnImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Chủ đầu tư",
         displayField: "ten",
-        assign: (found) => ({ chuDauTuId: (found as RefItem).id }),
+        assign: (found) => ({ chuDauTuId: found.id }),
       },
     },
     { key: "chuDuAn", header: "Chủ dự án", example: "Nguyễn Văn A" },
@@ -3391,7 +3429,7 @@ export const duAnImportConfig: ImportDanhMucConfig = {
 import { hangHoaVatTuService } from "@/services/hangHoaVatTuService";
 import { donViTinhService } from "@/services/donViTinhService";
 import { nhomVatTuService } from "@/services/nhomVatTuService";
-import type { ImportDanhMucConfig, RefItem } from "../types";
+import type { ImportDanhMucConfig } from "../types";
 
 export const hangHoaVatTuImportConfig: ImportDanhMucConfig = {
   title: "Hàng hóa vật tư",
@@ -3421,13 +3459,10 @@ export const hangHoaVatTuImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Đơn vị tính",
         displayField: "ten",
-        assign: (found) => {
-          const item = found as RefItem;
-          return {
-            donViTinhMa: String(item.ma ?? ""),
-            donViTinhTen: String(item.ten ?? ""),
-          };
-        },
+        assign: (found) => ({
+          donViTinhMa: String(found.ma ?? ""),
+          donViTinhTen: String(found.ten ?? ""),
+        }),
       },
     },
     {
@@ -3439,13 +3474,10 @@ export const hangHoaVatTuImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Nhóm vật tư",
         displayField: "ten",
-        assign: (found) => {
-          const item = found as RefItem;
-          return {
-            nhomVatTuMa: String(item.ma ?? ""),
-            nhomVatTuTen: String(item.ten ?? ""),
-          };
-        },
+        assign: (found) => ({
+          nhomVatTuMa: String(found.ma ?? ""),
+          nhomVatTuTen: String(found.ten ?? ""),
+        }),
       },
     },
     { key: "quyCach", header: "Quy cách", example: "Bao 50kg" },
@@ -3472,7 +3504,7 @@ export const hangHoaVatTuImportConfig: ImportDanhMucConfig = {
 ```typescript
 import { loaiGiaoDichService } from "@/services/loaiGiaoDichService";
 import { loaiChungTuService } from "@/services/loaiChungTuService";
-import type { ImportDanhMucConfig, RefItem } from "../types";
+import type { ImportDanhMucConfig } from "../types";
 
 export const loaiGiaoDichImportConfig: ImportDanhMucConfig = {
   title: "Loại giao dịch",
@@ -3491,7 +3523,7 @@ export const loaiGiaoDichImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Loại chứng từ",
         displayField: "ten",
-        assign: (found) => ({ loaiChungTuMa: String((found as RefItem).ma ?? "") }),
+        assign: (found) => ({ loaiChungTuMa: String(found.ma ?? "") }),
       },
     },
     { key: "color", header: "Màu sắc", example: "#1677ff" },
@@ -3505,7 +3537,7 @@ export const loaiGiaoDichImportConfig: ImportDanhMucConfig = {
 ```typescript
 import { hopDongService } from "@/services/hopDongService";
 import { doiTuongService } from "@/services/doiTuongService";
-import type { ImportDanhMucConfig, RefItem } from "../types";
+import type { ImportDanhMucConfig } from "../types";
 
 export const hopDongImportConfig: ImportDanhMucConfig = {
   title: "Hợp đồng",
@@ -3527,7 +3559,7 @@ export const hopDongImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Đối tượng",
         displayField: "ten",
-        assign: (found) => ({ doiTuongId: (found as RefItem).id }),
+        assign: (found) => ({ doiTuongId: found.id }),
       },
     },
     { key: "nguoiKy", header: "Người ký", example: "Nguyễn Văn A" },
@@ -3621,7 +3653,7 @@ import { quyChaunService } from "@/services/quyChaunService";
 import { loaiGiaoDichService } from "@/services/loaiGiaoDichService";
 import { taiKhoanService } from "@/services/taiKhoanService";
 import { hoSoChungTuService } from "@/services/hoSoChungTuService";
-import type { ImportDanhMucConfig, RefItem } from "../types";
+import type { ImportDanhMucConfig } from "../types";
 
 export const quyChuanImportConfig: ImportDanhMucConfig = {
   title: "Quy chuẩn hạch toán",
@@ -3641,7 +3673,7 @@ export const quyChuanImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Loại giao dịch",
         displayField: "ten",
-        assign: (found) => ({ loaiGiaoDich: String((found as RefItem).ma ?? "") }),
+        assign: (found) => ({ loaiGiaoDich: String(found.ma ?? "") }),
       },
     },
     { key: "nghiepVu", header: "Nghiệp vụ", required: true, example: "Thu tiền khách hàng" },
@@ -3655,7 +3687,7 @@ export const quyChuanImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Tài khoản Nợ",
         displayField: "ten",
-        assign: (found) => ({ taiKhoanNo: String((found as RefItem).ma ?? "") }),
+        assign: (found) => ({ taiKhoanNo: String(found.ma ?? "") }),
       },
     },
     {
@@ -3668,7 +3700,7 @@ export const quyChuanImportConfig: ImportDanhMucConfig = {
         matchBy: "ma",
         label: "Tài khoản Có",
         displayField: "ten",
-        assign: (found) => ({ taiKhoanCo: String((found as RefItem).ma ?? "") }),
+        assign: (found) => ({ taiKhoanCo: String(found.ma ?? "") }),
       },
     },
     {
@@ -3682,7 +3714,7 @@ export const quyChuanImportConfig: ImportDanhMucConfig = {
         displayField: "ten",
         multi: true,
         assign: (found) => ({
-          hoSoChungTu: (found as RefItem[]).map((f) => ({
+          hoSoChungTu: found.map((f) => ({
             id: String(f.id ?? ""),
             ma: String(f.ma ?? ""),
             ten: String(f.ten ?? ""),
