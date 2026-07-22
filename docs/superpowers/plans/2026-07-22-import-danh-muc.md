@@ -2710,42 +2710,47 @@ export { donViTinhImportConfig } from "./donViTinh.config";
 
 - [ ] **Step 2: Gắn nút Import vào trang Đơn vị tính**
 
-Trong `fe/src/pages/danh-muc/don-vi-tinh/DonViTinhPage.tsx`:
+Toàn bộ phần mở/đóng modal đã được gói trong `ImportDanhMucButton`, nên mỗi trang chỉ cần
+**một dòng JSX + một dòng import**:
 
-Thêm `FileExcelOutlined` vào **câu lệnh import `@ant-design/icons` đã có sẵn** ở đầu file
-(đừng viết thêm một dòng `import ... from "@ant-design/icons"` thứ hai — ESLint sẽ báo
-`no-duplicate-imports`), rồi thêm 2 dòng import mới:
-
-```typescript
-import { ImportDanhMucModal } from "@/components/import-danh-muc";
+```tsx
+import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { donViTinhImportConfig } from "@/components/import-danh-muc/configs";
 ```
 
-Thêm state, đặt cạnh các `useState` khác trong component:
-
-```typescript
-const [importOpen, setImportOpen] = useState(false);
-```
-
-Trong `<FilterBar actions={...}>`, thêm nút ngay **trước** khối `{canExport && (...)}` (hiện ở dòng 291–293):
+Trong `<FilterBar actions={...}>`, đặt ngay **trước** khối `{canExport && (...)}`:
 
 ```tsx
-{canCreate && (
-  <Button icon={<FileExcelOutlined />} onClick={() => setImportOpen(true)}>
-    Import Excel
-  </Button>
-)}
-```
-
-Thêm modal ngay trước thẻ đóng `</div>` cuối cùng của JSX:
-
-```tsx
-<ImportDanhMucModal
-  open={importOpen}
+<ImportDanhMucButton
   config={donViTinhImportConfig}
-  onClose={() => setImportOpen(false)}
-  onImported={() => fetchData(1, pagination.pageSize, searchText)}
+  canCreate={canCreate}
+  onImported={handleImported}
 />
+```
+
+Props của component (khớp chính xác, các task sau viết theo đây):
+
+```ts
+interface ImportDanhMucButtonProps {
+  config: ImportDanhMucConfig;
+  canCreate: boolean;
+  onImported: () => void;
+}
+```
+
+Component tự giữ state đóng/mở, tự ẩn hoàn toàn khi `canCreate` là false, và tự render modal.
+Trang **không** khai `useState` cho modal, **không** tự đặt `<Button icon={<FileExcelOutlined/>}>`,
+**không** render `<ImportDanhMucModal>`.
+
+`onImported` phải nạp lại bảng **và xoá bộ lọc tìm kiếm** — nếu giữ nguyên từ khoá đang gõ,
+bản ghi vừa import có thể không khớp bộ lọc và người dùng thấy thông báo "Đã import N" nhưng
+bảng không có gì mới, trông y như import hỏng. Dùng đúng tên hàm/biến có sẵn của từng trang:
+
+```tsx
+const handleImported = () => {
+  setSearchText("");
+  fetchData(1, pagination.pageSize, "");
+};
 ```
 
 - [ ] **Step 3: Kiểm tra lint và type-check**
@@ -2943,7 +2948,9 @@ export { hoSoChungTuImportConfig } from "./hoSoChungTu.config";
 
 - [ ] **Step 3: Gắn nút Import vào 7 trang**
 
-Với mỗi trang, làm đúng 3 sửa đổi như Task 11 Step 2, thay tên config tương ứng:
+Với mỗi trang, thêm 2 dòng import + 1 phần tử `<ImportDanhMucButton .../>` như Task 11 Step 2,
+thay tên config tương ứng. Mỗi trang cần một `handleImported` xoá bộ lọc tìm kiếm rồi nạp lại
+bảng, viết theo đúng tên hàm/biến có sẵn của trang đó:
 
 | Trang | Config |
 |---|---|
@@ -2955,10 +2962,12 @@ Với mỗi trang, làm đúng 3 sửa đổi như Task 11 Step 2, thay tên con
 | `fe/src/pages/danh-muc/nhom-quan-ly/NhomQuanLyPage.tsx` | `nhomQuanLyImportConfig` |
 | `fe/src/pages/danh-muc/ho-so-chung-tu/HoSoChungTuPage.tsx` | `hoSoChungTuImportConfig` |
 
-**Lưu ý về 4 trang dùng CHanlder** (Chủ đầu tư, Nhóm khuyến mại, Nhóm quản lý — và Hợp đồng ở Task 14): các trang này không có hàm `fetchData`. Mở file, tìm hàm/sự kiện đang được nút "Làm mới" gọi và dùng đúng cái đó cho `onImported`. Ví dụ nếu nút Làm mới gọi `handler.executeEvent("init", {})` thì viết:
+**Lưu ý về 4 trang dùng CHanlder** (Chủ đầu tư, Nhóm khuyến mại, Nhóm quản lý — và Hợp đồng ở Task 14): các trang này không có hàm `fetchData`. Mở file, tìm hàm/sự kiện đang được nút "Làm mới" gọi và dùng đúng cái đó, đồng thời xoá từ khoá tìm kiếm nếu trang có ô tìm kiếm:
 
 ```tsx
-onImported={() => handler.executeEvent("init", {})}
+const handleImported = () => {
+  handler.executeEvent("init", {});
+};
 ```
 
 - [ ] **Step 4: Kiểm tra lint và type-check**
@@ -3246,7 +3255,8 @@ export { doiTuongImportConfig } from "./doiTuong.config";
 
 - [ ] **Step 3: Gắn nút Import vào 8 trang**
 
-Làm đúng 3 sửa đổi như Task 11 Step 2 cho từng trang:
+Thêm 2 dòng import + 1 phần tử `<ImportDanhMucButton .../>` như Task 11 Step 2 cho từng trang,
+kèm `handleImported` xoá bộ lọc rồi nạp lại bảng:
 
 | Trang | Config |
 |---|---|
@@ -3604,7 +3614,7 @@ export { hopDongImportConfig } from "./hopDong.config";
 | `fe/src/pages/danh-muc/loai-giao-dich/LoaiGiaoDichPage.tsx` | `loaiGiaoDichImportConfig` |
 | `fe/src/pages/danh-muc/hop-dong/HopDongPage.tsx` | `hopDongImportConfig` |
 
-Trang Hợp đồng dùng CHanlder — dùng đúng sự kiện nạp lại như hướng dẫn ở Task 12 Step 3.
+Trang Hợp đồng dùng CHanlder — `handleImported` gọi đúng sự kiện nạp lại như hướng dẫn ở Task 12 Step 3.
 
 - [ ] **Step 5: Kiểm tra lint và type-check**
 
@@ -3739,7 +3749,9 @@ Thêm vào `configs/index.ts`:
 export { quyChuanImportConfig } from "./quyChuan.config";
 ```
 
-Gắn nút Import + modal vào `fe/src/pages/danh-muc/quy-chuan/QuyChaunPage.tsx` (hoặc component con render thanh công cụ) theo đúng mẫu Task 11 Step 2, dùng `quyChuanImportConfig` và sự kiện nạp lại ghi được ở Step 1.
+Gắn `<ImportDanhMucButton config={quyChuanImportConfig} canCreate={canCreate} onImported={handleImported} />`
+vào `fe/src/pages/danh-muc/quy-chuan/QuyChaunPage.tsx` (hoặc component con render thanh công cụ)
+theo đúng mẫu Task 11 Step 2, với `handleImported` gọi sự kiện nạp lại ghi được ở Step 1.
 
 - [ ] **Step 4: Kiểm tra lint và type-check**
 
@@ -3773,7 +3785,7 @@ git commit -m "feat(import-danh-muc): import Excel cho Quy chuẩn hạch toán"
 
 - [ ] **Step 1: Đếm đủ 22 trang đã gắn nút Import**
 
-Run: `cd fe && grep -rl "ImportDanhMucModal" src/pages/danh-muc | sort`
+Run: `cd fe && grep -rl "ImportDanhMucButton" src/pages/danh-muc | sort`
 Expected: đúng 22 file. Đối chiếu với bảng ở spec; thiếu trang nào thì quay lại task tương ứng bổ sung.
 
 Run: `cd fe && ls src/components/import-danh-muc/configs/*.config.ts | wc -l`
