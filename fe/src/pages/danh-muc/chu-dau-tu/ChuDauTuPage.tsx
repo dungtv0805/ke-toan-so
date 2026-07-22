@@ -82,11 +82,12 @@ function ChuDauTuPageInner() {
   };
 
   const handleImported = () => {
-    // Giống nút đặt lại bộ lọc (nút "Làm mới" thực tế của trang này): xóa bộ lọc
-    // tìm kiếm rồi nạp lại dữ liệu qua handler, để các dòng vừa import không bị ẩn.
+    // Giống nút đặt lại bộ lọc (nút "Làm mới" thực tế của trang này): phải xóa bộ lọc
+    // tìm kiếm ĐANG ÁP DỤNG trong handler (không chỉ ô input) bằng event "search" với
+    // keyword rỗng, để các dòng vừa import không bị ẩn bởi bộ lọc cũ.
     clearSelection();
     setSearchText("");
-    handler.executeEvent("refresh", {});
+    handler.executeEvent("search", { keyword: "" });
   };
 
   const openModal = (record?: ChuDauTu) => {
@@ -230,7 +231,7 @@ function ChuDauTuPageInner() {
           onReset={() => {
             clearSelection();
             setSearchText("");
-            handler.executeEvent("refresh", {});
+            handler.executeEvent("search", { keyword: "" });
           }}
           actions={
             <>
