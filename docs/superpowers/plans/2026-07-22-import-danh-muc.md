@@ -1581,7 +1581,9 @@ export function validateAndBuild(
         const matches = (p: RefItem, k: string) =>
           norm(field(p, ref.matchBy)) === norm(k);
 
-        if (ref.multi) {
+        // So sánh tường minh === true: `if (ref.multi)` không loại được MultiRefSpec
+        // ở nhánh else, khiến ref.assign nhận kiểu giao và không gọi được.
+        if (ref.multi === true) {
           const keys = rawText.split(",").map((s) => refKeyOf(s)).filter(Boolean);
           const found: RefRecord[] = [];
           for (const k of keys) {
