@@ -156,6 +156,17 @@ KE_TOAN/KHO khi collection rỗng (OnModuleInit). FE lọc menu theo `menuKeys`;
 | POST | /clone/preview | Xem trước {sourceTenantId,targetTenantId,categories[]} → willInsert/willSkip |
 | POST | /clone/execute | Thực thi copy (idempotent, skip trùng) |
 
+### /import (Import Excel hàng loạt danh mục — module dùng chung `fe/src/components/import-danh-muc/`)
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | /import/:resource | Import hàng loạt 1 danh mục. `resource` là 1 trong 21 key: tai-khoan, doi-tuong, du-an, san-pham, hop-dong, bo-phan, khoan-muc, kho, hang-hoa-vat-tu, don-vi-tinh, ly-do-khong-hop-le, nhom-vat-tu, chu-dau-tu, nhom-khoan-muc, ngan-hang, dong-tien, nhom-khuyen-mai, nhom-quan-ly, loai-chung-tu, loai-giao-dich, ho-so-chung-tu |
+
+Request: `{ items: Record<string, unknown>[] }` (tối đa 2000 dòng/lần — `@ArrayMaxSize(2000)`). Mỗi phần tử được validate bằng DTO `Create...Dto` của chính danh mục đó rồi gọi lại `service.create()` sẵn có (giữ nguyên check trùng mã, tenant scoping). Chạy tuần tự, không `Promise.all`, để check trùng trong cùng 1 lần import vẫn đúng; 1 dòng lỗi không chặn các dòng sau.
+
+Response: `{ success: true, data: { created: number, failed: [{ index: number, message: string }] } }`
+- `index` là vị trí 0-based trong mảng `items` mà FE đã gửi lên — **không phải số dòng Excel**. FE bỏ qua các dòng trống hoàn toàn khi đọc file nên mảng gửi lên không còn khớp 1-1 với dòng Excel gốc; chỉ FE mới biết dòng Excel thật của từng phần tử nó gửi, nên việc quy đổi `index → rowNumber` để hiển thị lỗi làm ở FE.
+- `message` tiếng Việt cố định kèm tên trường lỗi (lỗi validate) hoặc message thật từ `service.create()` (vd trùng mã).
+
 ## Voucher Service (3003)
 
 ### /nhat-ky-chung (Journal Entries)
@@ -301,6 +312,13 @@ Same pattern as /phai-thu (with summary-by-supplier instead)
 | GET | /phieu-template/:loai | Lấy mẫu in HTML theo loại (PHIEU_THU/PHIEU_CHI); null nếu chưa cấu hình |
 | PUT | /phieu-template/:loai | Upsert (upload) mẫu in `{ html }` |
 | DELETE | /phieu-template/:loai | Xoá mẫu (FE về mẫu mặc định) |
+
+### /import/quy-chuan (Import Excel Quy chuẩn hạch toán)
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | /import/quy-chuan | Import hàng loạt Quy chuẩn hạch toán — cùng shape request/response với `/import/:resource` của master-data-service ở trên (`{ items: [] }` → `{ success: true, data: { created, failed: [{ index, message }] } }`) |
+
+Đây là danh mục duy nhất trong 22 trang Import Excel nằm ở config-service (các danh mục còn lại đều ở master-data-service). Route mounted tại `@Controller('import')` riêng của config-service (không dùng chung registry với master-data-service).
 
 ## Kho Service (3008)
 
