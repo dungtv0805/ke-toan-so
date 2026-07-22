@@ -19,8 +19,33 @@ declare module "exceljs" {
 /** Số dòng dữ liệu được gắn dropdown ở sheet chính (hàng 2 → MAX_DATA_ROWS+1). */
 const MAX_DATA_ROWS = 500;
 
-/** Tên sheet danh sách của một cột. Tên sheet Excel không được chứa dấu/khoảng trắng lạ. */
-const listSheetName = (col: ImportColumn): string => `DS_${col.key}`;
+/** Excel cắt cụt tên sheet dài quá 31 ký tự (exceljs chỉ warn, không tự tránh đụng độ). */
+const MAX_SHEET_NAME_LEN = 31;
+
+/**
+ * Tên sheet danh sách cho một cột, đảm bảo hợp lệ (≤31 ký tự) và không trùng sheet
+ * nào khác đã sinh ra trong cùng lần build. Cột key ngắn (đa số trường hợp thật, vd
+ * "chuDauTu") giữ nguyên dạng `DS_<key>` dễ đọc; chỉ khi vượt 31 ký tự — hoặc sau khi
+ * cắt lại trùng một tên đã dùng — mới cắt bớt và thêm hậu tố số để phân biệt. Nhận
+ * `used` từ ngoài truyền vào vì tên phải duy nhất trong phạm vi CẢ workbook, không
+ * chỉ dựa vào col.key của riêng cột đó.
+ */
+function makeListSheetName(col: ImportColumn, used: Set<string>): string {
+  const base = `DS_${col.key}`;
+  const candidate = base.length <= MAX_SHEET_NAME_LEN ? base : base.slice(0, MAX_SHEET_NAME_LEN);
+  if (!used.has(candidate)) {
+    used.add(candidate);
+    return candidate;
+  }
+  for (let n = 2; ; n++) {
+    const suffix = `_${n}`;
+    const truncated = `${base.slice(0, MAX_SHEET_NAME_LEN - suffix.length)}${suffix}`;
+    if (!used.has(truncated)) {
+      used.add(truncated);
+      return truncated;
+    }
+  }
+}
 
 /** Các giá trị đưa vào sheet danh sách của một cột. Rỗng nghĩa là cột không cần dropdown. */
 function listValuesOf(col: ImportColumn, refData: RefData): string[] {
@@ -55,18 +80,25 @@ export function buildTemplateWorkbook(
     main.getColumn(i + 1).width = Math.max(14, c.header.length + 4);
   });
 
+  const usedSheetNames = new Set<string>();
+
   config.columns.forEach((col, idx) => {
     const values = listValuesOf(col, refData);
     if (values.length === 0) return;
 
-    const sheetName = listSheetName(col);
+    const sheetName = makeListSheetName(col, usedSheetNames);
     const ws = wb.addWorksheet(sheetName);
     for (const v of values) ws.addRow([v]);
 
-    // Gắn thẳng vào worksheet.dataValidations (khớp địa chỉ ô) thay vì
-    // main.getCell(r, c).dataValidation = ... — cách đó gọi getRow(r) và
-    // TẠO các dòng trống tới tận MAX_DATA_ROWS, khiến rowCount phình lên
-    // dù sheet chỉ có 1 dòng ví dụ.
+    // `enumList` là nhiều giá trị cách nhau bởi dấu phẩy trong CÙNG MỘT Ô (xem
+    // validate.ts, vd "Khách hàng, Nhà cung cấp"). Nếu gắn validation "list" chặt
+    // như enum một-giá-trị, Excel sẽ mặc định errorStyle="stop" khi thiếu
+    // showErrorMessage và từ chối mọi ô không khớp NGUYÊN VĂN một item trong danh
+    // sách — chặn luôn chính tổ hợp hợp lệ mà cột này yêu cầu. Tắt showErrorMessage
+    // riêng cho enumList: dropdown vẫn hiện để tra cứu nhãn hợp lệ, nhưng gõ tay tổ
+    // hợp nhiều giá trị không bị Excel chặn. Cột enum một-giá-trị và cột tham chiếu
+    // vẫn giữ chặt vì đúng nghĩa chỉ nhận một giá trị khớp sheet danh sách.
+    const strict = col.type !== "enumList";
     const colLetter = main.getColumn(idx + 1).letter;
     const formula = `'${sheetName}'!$A$1:$A$${values.length}`;
     for (let r = 2; r <= MAX_DATA_ROWS + 1; r++) {
@@ -74,6 +106,7 @@ export function buildTemplateWorkbook(
         type: "list",
         allowBlank: !col.required,
         formulae: [formula],
+        ...(strict ? { showErrorMessage: true, errorStyle: "stop" } : { showErrorMessage: false }),
       });
     }
   });
