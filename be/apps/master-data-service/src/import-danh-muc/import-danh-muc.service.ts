@@ -28,7 +28,7 @@ export class ImportDanhMucService {
       // items[0] là dòng 2 của file Excel vì dòng 1 là header
       const row = i + 2;
       const dto = plainToInstance(entry.dtoClass, items[i]);
-      const errors = await validate(dto as object, {
+      const errors = await validate(dto, {
         whitelist: true,
         forbidNonWhitelisted: false,
       });
@@ -53,16 +53,16 @@ export class ImportDanhMucService {
     return { created, failed };
   }
 
+  /**
+   * class-validator trả constraint bằng tiếng Anh (vd "ma should not be empty") vì hầu hết
+   * DTO danh mục không khai báo message tuỳ chỉnh. Không dịch từng constraint (không đủ tin cậy
+   * và phải sửa 21 DTO) — thay vào đó trả thông báo tiếng Việt cố định, chỉ giữ lại tên trường
+   * để người dùng biết ô nào trong file Excel bị sai.
+   */
   private formatValidationErrors(
     errors: { property: string; constraints?: Record<string, string> }[],
   ): string {
-    return errors
-      .map((e) => {
-        const detail = e.constraints
-          ? Object.values(e.constraints).join(', ')
-          : 'không hợp lệ';
-        return `${e.property}: ${detail}`;
-      })
-      .join('; ');
+    const fields = errors.map((e) => e.property).join(', ');
+    return `Dữ liệu không hợp lệ ở các trường: ${fields}`;
   }
 }

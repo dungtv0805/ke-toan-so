@@ -46,13 +46,17 @@ describe('ImportDanhMucService', () => {
     expect(result.failed).toHaveLength(1);
     // dòng 1 của items = dòng 2 của file Excel (dòng 1 là header)
     expect(result.failed[0].row).toBe(2);
-    expect(result.failed[0].message).toContain('ma');
+    expect(result.failed[0].message).toBe(
+      'Dữ liệu không hợp lệ ở các trường: ma',
+    );
   });
 
   it('dòng lỗi không chặn dòng sau, message lấy từ exception', async () => {
     const create = jest
       .fn()
-      .mockRejectedValueOnce(new ConflictException('Mã đơn vị tính DVT01 đã tồn tại'))
+      .mockRejectedValueOnce(
+        new ConflictException('Mã đơn vị tính DVT01 đã tồn tại'),
+      )
       .mockResolvedValueOnce({ id: 'y' });
 
     const result = await service.importItems(makeEntry(create), [
