@@ -35,22 +35,55 @@ describe("ServiceBase.handleError", () => {
     expect(apiError.statusCode).toBe(409);
   });
 
-  it('đọc message từ envelope GlobalExceptionFilter { success: false, error: { code, message } }', () => {
+  it('đọc message từ envelope GlobalExceptionFilter { success: false, error: { code, message } } khi message là chuỗi (HttpException thường, vd 409 trùng dữ liệu)', () => {
     const error = new AxiosError(
-      "Request failed with status code 413",
+      "Request failed with status code 409",
       undefined,
       undefined,
       undefined,
       {
-        status: 413,
-        statusText: "Payload Too Large",
+        status: 409,
+        statusText: "Conflict",
+        headers: {},
+        config: {} as never,
+        data: {
+          success: false,
+          error: {
+            code: "CONFLICT",
+            message: "Email đã tồn tại trong hệ thống",
+          },
+        },
+      },
+    );
+
+    const apiError = callHandleError(error);
+
+    expect(apiError.message).toBe("Email đã tồn tại trong hệ thống");
+    expect(apiError.statusCode).toBe(409);
+  });
+
+  it('lỗi validate của class-validator (nhiều field): GlobalExceptionFilter luôn đặt error.message cố định là "Validation failed" và chuyển message tiếng Việt thật vào error.details.validation — phải đọc mảng này, không phải error.message', () => {
+    // Đúng hình dạng thật GlobalExceptionFilter trả về khi ValidationPipe ném lỗi (vd
+    // `@ArrayMaxSize(2000, { message: 'Mỗi lần import tối đa 2000 dòng' })` của ImportItemsDto):
+    // class-validator luôn gói message thật vào MẢNG (kể cả khi chỉ có 1 phần tử), nên
+    // GlobalExceptionFilter luôn rơi vào nhánh `Array.isArray(resp.message)` và ghi đè
+    // `message = 'Validation failed'` (tiếng Anh) + `details.validation = resp.message`.
+    const error = new AxiosError(
+      "Request failed with status code 400",
+      undefined,
+      undefined,
+      undefined,
+      {
+        status: 400,
+        statusText: "Bad Request",
         headers: {},
         config: {} as never,
         data: {
           success: false,
           error: {
             code: "VALIDATION_ERROR",
-            message: "Mỗi lần import tối đa 2000 dòng",
+            message: "Validation failed",
+            details: { validation: ["Mỗi lần import tối đa 2000 dòng"] },
           },
         },
       },
@@ -59,7 +92,7 @@ describe("ServiceBase.handleError", () => {
     const apiError = callHandleError(error);
 
     expect(apiError.message).toBe("Mỗi lần import tối đa 2000 dòng");
-    expect(apiError.statusCode).toBe(413);
+    expect(apiError.statusCode).toBe(400);
   });
 
   it("không có message ở cả 2 envelope → rơi về error.message của axios", () => {

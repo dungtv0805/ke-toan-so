@@ -110,29 +110,65 @@ function refKeyOf(raw: string): string {
  * phẩy (vd "Hóa đơn GTGT, bảng kê"). KHÔNG thể tách đơn giản bằng `split(",")` trước khi
  * bóc mã như trước, vì sẽ cắt tên có dấu phẩy thành hai phần tử giả.
  *
- * Mã không bao giờ chứa dấu phẩy lẫn " - " (đảm bảo của toàn hệ thống), nên dùng chính sự
- * xuất hiện của " - " để phân biệt hai chế độ:
- * - Nếu KHÔNG mảnh nào chứa " - " (toàn bộ ô chỉ gồm mã trần): tách thẳng theo dấu phẩy,
- *   y hệt hành vi cũ — mã trần không có gì để nối lại.
- * - Nếu có ít nhất một mảnh dạng hiển thị: một mảnh chỉ mở đầu phần tử MỚI khi bản thân nó
- *   chứa " - " (hoặc là mảnh đầu tiên); mảnh không có " - " được coi là phần tiếp nối của
- *   TÊN hiển thị ngay trước, nối lại bằng dấu phẩy.
+ * Bản sửa trước chỉ dựa vào cấu trúc (mảnh CÓ hay KHÔNG chứa " - ") để quyết định mở phần
+ * tử mới — nhưng làm vậy thì MỌI mảnh không chứa " - " đều bị nuốt vào tên của phần tử
+ * trước, kể cả khi mảnh đó thực ra là một MÃ TRẦN hợp lệ khác (vd "HS01 - Hóa đơn GTGT,HS02"
+ * chỉ còn lại 1 phần tử "HS01", HS02 bị nuốt mất). Sửa lại: dùng thêm chính pool đã dò được
+ * (`refData[col.key]`, so khớp qua `ref.matchBy` giống hệt cách resolver ở call site làm) để
+ * nhận diện — một mảnh mở đầu phần tử MỚI khi:
+ * - là mảnh đầu tiên, hoặc
+ * - bản thân nó ở dạng hiển thị (chứa " - "), hoặc
+ * - bản thân nó khớp một MÃ đã biết trong pool (mã trần đứng riêng, như "HS02" ở ví dụ trên).
+ *
+ * Mảnh còn lại (không rơi vào 3 trường hợp trên) là ứng viên nối tiếp TÊN hiển thị của phần
+ * tử ngay trước. Nhưng một mảnh rác không dò được (vd gõ nhầm "HS99") cũng có HÌNH DẠNG y hệt
+ * một mảnh tên hợp lệ — cả hai đều là văn bản trần không khớp mã nào. Để không nuốt câm mảnh
+ * rác đó (lặp lại đúng lỗi đang sửa, chỉ khác hình dạng đầu vào), chỉ chấp nhận nối tiếp khi
+ * xác minh được bằng dữ liệu THẬT của bản ghi: phần tử trước phải đang ở dạng hiển thị, dò
+ * được bản ghi qua mã của nó, ref có khai `displayField`, và tên ghép lại (đã chuẩn hoá) phải
+ * khớp — đúng hoặc là phần đầu — giá trị `displayField` thật của bản ghi đó (chính là "tên"
+ * mà dropdown của file mẫu dùng để dựng ra "<mã> - <tên>", nên đây là nguồn xác thực đáng tin
+ * duy nhất). Nếu không xác minh được, mảnh đó không phải phần tiếp nối — tách thành phần tử
+ * riêng, để sau đó lỗi thật ra: "<label> "<value>" không tồn tại", KHÔNG bị nuốt câm.
  */
-function splitMultiRefCell(raw: string): string[] {
+function splitMultiRefCell(
+  raw: string,
+  pool: RefItem[],
+  ref: { matchBy: string; displayField?: string },
+): string[] {
   const pieces = raw
     .split(",")
     .map((s) => s.trim())
     .filter((s) => s !== "");
+  if (pieces.length === 0) return pieces;
 
-  const anyDisplayForm = pieces.some((p) => p.includes(" - "));
-  if (!anyDisplayForm) return pieces;
+  const findByCode = (code: string): RefItem | undefined =>
+    pool.find((p) => norm(field(p, ref.matchBy)) === norm(code));
 
   const entries: string[] = [];
   for (const piece of pieces) {
-    if (entries.length === 0 || piece.includes(" - ")) {
+    const isDisplayForm = piece.includes(" - ");
+    const isKnownCode = !isDisplayForm && findByCode(piece) !== undefined;
+
+    if (entries.length === 0 || isDisplayForm || isKnownCode) {
       entries.push(piece);
+      continue;
+    }
+
+    const prevIdx = entries.length - 1;
+    const prevEntry = entries[prevIdx];
+    const dashIdx = prevEntry.indexOf(" - ");
+    const prevItem =
+      dashIdx === -1 || !ref.displayField ? undefined : findByCode(prevEntry.slice(0, dashIdx));
+    const expectedName =
+      prevItem && ref.displayField ? norm(field(prevItem, ref.displayField)) : undefined;
+    const candidateName =
+      dashIdx === -1 ? "" : norm(`${prevEntry.slice(dashIdx + 3)}, ${piece}`);
+
+    if (expectedName !== undefined && expectedName.startsWith(candidateName)) {
+      entries[prevIdx] = `${prevEntry}, ${piece}`;
     } else {
-      entries[entries.length - 1] += `, ${piece}`;
+      entries.push(piece);
     }
   }
   return entries;
@@ -201,7 +237,9 @@ export function validateAndBuild(
         // So sánh tường minh === true: `if (ref.multi)` không loại được MultiRefSpec
         // ở nhánh else, khiến ref.assign nhận kiểu giao và không gọi được.
         if (ref.multi === true) {
-          const keys = splitMultiRefCell(rawText).map((s) => refKeyOf(s)).filter(Boolean);
+          const keys = splitMultiRefCell(rawText, pool, ref)
+            .map((s) => refKeyOf(s))
+            .filter(Boolean);
           const found: RefRecord[] = [];
           for (const k of keys) {
             const hit = pool.find((p) => matches(p, k));

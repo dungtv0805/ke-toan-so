@@ -343,7 +343,7 @@ describe("validateAndBuild — cột tham chiếu", () => {
   });
 });
 
-describe("validateAndBuild — cột tham chiếu nhiều giá trị, tên có chứa dấu phẩy (Fix 5)", () => {
+describe("validateAndBuild — cột tham chiếu nhiều giá trị, tên có chứa dấu phẩy (Fix 5, dò mã theo pool)", () => {
   const multiConfig: ImportDanhMucConfig = {
     ...simpleConfig,
     columns: [
@@ -355,6 +355,7 @@ describe("validateAndBuild — cột tham chiếu nhiều giá trị, tên có c
           service: noopService,
           matchBy: "ma",
           label: "Hồ sơ chứng từ",
+          displayField: "ten",
           multi: true,
           assign: (found) => ({
             hoSoChungTu: found.map((f) => ({ id: f.id, ma: f.ma, ten: f.ten })),
@@ -428,6 +429,46 @@ describe("validateAndBuild — cột tham chiếu nhiều giá trị, tên có c
   it("mã không dò được vẫn báo lỗi (không bị nuốt bởi việc gộp theo tên có dấu phẩy)", () => {
     const out = validateAndBuild(
       [row(2, { ma: "A", hoSo: "HS01,HS99" })],
+      multiConfig,
+      [],
+      hoSoRefData,
+    );
+    expect(out.results[0].errors).toContain('Hồ sơ chứng từ "HS99" không tồn tại');
+    expect(out.results[0].payload).toBeNull();
+  });
+
+  it('dạng hiển thị theo sau bởi một MÃ TRẦN khác: không được nuốt mã trần vào tên phần tử trước (bug đang sửa)', () => {
+    const out = validateAndBuild(
+      [row(2, { ma: "A", hoSo: "HS01 - Hóa đơn GTGT,HS02" })],
+      multiConfig,
+      [],
+      hoSoRefData,
+    );
+    expect(out.results[0].errors).toEqual([]);
+    expect(out.validItems[0].hoSoChungTu).toEqual([
+      { id: "1", ma: "HS01", ten: "Hóa đơn GTGT, bảng kê" },
+      { id: "2", ma: "HS02", ten: "Biên bản bàn giao" },
+    ]);
+  });
+
+  it('mã trần, rồi dạng hiển thị, rồi lại mã trần: cả 3 phần tử đều được nhận diện (bug đang sửa)', () => {
+    const out = validateAndBuild(
+      [row(2, { ma: "A", hoSo: "HS02,HS01 - Hóa đơn GTGT,HS02" })],
+      multiConfig,
+      [],
+      hoSoRefData,
+    );
+    expect(out.results[0].errors).toEqual([]);
+    expect(out.validItems[0].hoSoChungTu).toEqual([
+      { id: "2", ma: "HS02", ten: "Biên bản bàn giao" },
+      { id: "1", ma: "HS01", ten: "Hóa đơn GTGT, bảng kê" },
+      { id: "2", ma: "HS02", ten: "Biên bản bàn giao" },
+    ]);
+  });
+
+  it('một mảnh trần không dò được đứng ngay sau một phần tử dạng hiển thị hợp lệ: phải báo lỗi riêng, không bị nuốt câm thành phần nối tiếp tên', () => {
+    const out = validateAndBuild(
+      [row(2, { ma: "A", hoSo: "HS01 - Hóa đơn GTGT,HS99" })],
       multiConfig,
       [],
       hoSoRefData,
