@@ -37,8 +37,14 @@ function ImportDanhMucModalInner({ open, config, onClose, onImported }: Props) {
 
   const handleImport = () => {
     handler.executeEvent("submitImport", {
-      onSuccess: () => {
+      // Có bản ghi được tạo (thành công toàn phần hoặc một phần) — trang cha nạp lại bảng.
+      onImported: () => {
         onImported?.();
+      },
+      // Chỉ bắn khi import thành công toàn phần — đóng modal qua đúng đường reset dùng
+      // chung với nút "Đóng"/X/mask/Esc, không tự ý đóng khi còn dòng lỗi.
+      onSuccess: () => {
+        handleClose();
       },
     });
   };
@@ -52,7 +58,7 @@ function ImportDanhMucModalInner({ open, config, onClose, onImported }: Props) {
       open={open}
       onCancel={handleClose}
       width={900}
-      destroyOnClose
+      destroyOnHidden
       footer={[
         <Button key="cancel" onClick={handleClose}>
           Đóng

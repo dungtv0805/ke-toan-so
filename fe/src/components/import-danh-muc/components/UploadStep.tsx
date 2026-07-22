@@ -16,6 +16,7 @@ export function UploadStep() {
   const [refsLoaded] = useImportState("refsLoaded", false);
   const [refData] = useImportState("refData", {} as RefData);
   const [fileName] = useImportState("fileName", "");
+  const [submitting] = useImportState("submitting", false);
 
   const uploadProps: UploadProps = {
     accept: ".xlsx,.xls",
@@ -42,14 +43,19 @@ export function UploadStep() {
         .map((c) => c.header)
         .join(", ")
     : "";
+  const requiredHeadersClause = requiredHeaders
+    ? ` Cột bắt buộc: ${requiredHeaders}.`
+    : "";
 
   return (
     <Space direction="vertical" style={{ width: "100%" }} size="middle">
       <Space>
         <Button
           icon={<DownloadOutlined />}
-          loading={loadingRefs}
-          disabled={!refsLoaded || !config}
+          // Không dùng `submitting` để bật spinner — chỉ để tắt nháy loading khi submit
+          // đang chạy song song refresh loadRefs (nút này không phải nút người dùng đang bấm).
+          loading={loadingRefs && !submitting}
+          disabled={!refsLoaded || !config || submitting}
           onClick={handleDownload}
         >
           Tải file mẫu
@@ -58,8 +64,8 @@ export function UploadStep() {
           <Button
             type="primary"
             icon={<UploadOutlined />}
-            loading={parsing || loadingRefs}
-            disabled={loadingRefs || !refsLoaded}
+            loading={(parsing || loadingRefs) && !submitting}
+            disabled={loadingRefs || !refsLoaded || submitting}
           >
             Chọn file Excel
           </Button>
@@ -67,7 +73,7 @@ export function UploadStep() {
         {fileName && <Text type="secondary">{fileName}</Text>}
       </Space>
       <Text type="secondary">
-        {`Mỗi dòng là 1 bản ghi. Cột bắt buộc: ${requiredHeaders}. Dòng có mã đã tồn tại sẽ báo lỗi và không được import. File còn lỗi thì không import được.`}
+        {`Mỗi dòng là 1 bản ghi.${requiredHeadersClause} Dòng có mã đã tồn tại sẽ báo lỗi và không được import. File còn lỗi thì không import được.`}
       </Text>
     </Space>
   );

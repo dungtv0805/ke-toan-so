@@ -5,8 +5,9 @@ import "./submit.event";
 import { ImportDanhMucEvents } from "../../import.handler";
 import { ImportDanhMucStates } from "../../import.state";
 import { importDanhMucService } from "@/services/importDanhMucService";
-import { mapFailuresToRows } from "../../lib/mapFailures";
+import { resolveImportOutcome } from "../../lib/importOutcome";
 import type { ImportDanhMucConfig, RowValidationResult } from "../../types";
+import type { SubmitImportEvent } from "./submit.event";
 
 @RegisterHandler("import-danh-muc")
 export class SubmitImportHandler extends CSubHanlder<
@@ -14,7 +15,9 @@ export class SubmitImportHandler extends CSubHanlder<
   ImportDanhMucStates
 > {
   @HandlerDecorator("submitImport")
-  async submitImport(params: { onSuccess?: () => void }): Promise<void> {
+  async submitImport(
+    params: SubmitImportEvent["submitImport"]["params"],
+  ): Promise<void> {
     const config = this.getState("config") as ImportDanhMucConfig | null;
     const hasErrors = this.getState("hasErrors") as boolean;
     const items =
@@ -44,35 +47,32 @@ export class SubmitImportHandler extends CSubHanlder<
         await this.executeEvent("loadRefs", { config });
       }
 
-      if (res.failed.length > 0) {
+      // Tách quyết định kết quả ra hàm thuần (dễ test) — handler chỉ lo cập nhật state
+      // và gọi đúng callback theo từng nhánh.
+      const outcome = resolveImportOutcome(results, res);
+
+      if (outcome.kind === "partial") {
         // Đổ lỗi từ BE vào đúng dòng trong bảng preview, giữ modal để người dùng xem.
-        // BE trả index trong mảng items đã gửi, không phải rowNumber — quy đổi trước khi khớp.
-        const byRow = mapFailuresToRows(results, res.failed);
-        this.setState(
-          "results",
-          results.map((r) =>
-            byRow.has(r.rowNumber)
-              ? {
-                  ...r,
-                  errors: [byRow.get(r.rowNumber) as string],
-                  payload: null,
-                }
-              : r,
-          ),
-        );
+        this.setState("results", outcome.results);
         this.setState("hasErrors", true);
         message.warning(
-          `Đã import ${res.created}/${items.length} bản ghi, ${res.failed.length} dòng lỗi`,
+          `Đã import ${outcome.created}/${items.length} bản ghi, ${outcome.failedCount} dòng lỗi`,
         );
-        params.onSuccess?.();
+        // Đã có bản ghi được tạo (nếu outcome.created > 0) — trang cha vẫn phải nạp lại,
+        // nhưng KHÔNG gọi onSuccess vì modal phải ở lại cho người dùng sửa các dòng lỗi.
+        params.onImported?.();
         return;
       }
 
-      message.success(`Đã import ${res.created} ${config.title.toLowerCase()}`);
+      message.success(
+        `Đã import ${outcome.created} ${config.title.toLowerCase()}`,
+      );
       this.setState("parsed", false);
       this.setState("results", []);
       this.setState("validItems", []);
       this.setState("fileName", "");
+      // Thành công toàn phần: trang cha nạp lại VÀ modal phải đóng.
+      params.onImported?.();
       params.onSuccess?.();
     } catch (e) {
       const err = e as { message?: string };
