@@ -14,3 +14,8 @@ export { loaiChungTuImportConfig } from "./loaiChungTu.config";
 export { khoImportConfig } from "./kho.config";
 export { sanPhamImportConfig } from "./sanPham.config";
 export { doiTuongImportConfig } from "./doiTuong.config";
+export { taiKhoanImportConfig } from "./taiKhoan.config";
+export { duAnImportConfig } from "./duAn.config";
+export { hangHoaVatTuImportConfig } from "./hangHoaVatTu.config";
+export { loaiGiaoDichImportConfig } from "./loaiGiaoDich.config";
+export { hopDongImportConfig } from "./hopDong.config";

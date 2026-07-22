@@ -37,6 +37,8 @@ import { taiKhoanService } from "@/services/taiKhoanService";
 import { loaiTaiKhoan, nhomTaiKhoan } from "@/mock-data/tai-khoan";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { ImportDanhMucButton } from "@/components/import-danh-muc";
+import { taiKhoanImportConfig } from "@/components/import-danh-muc/configs";
 
 const { Text } = Typography;
 
@@ -182,6 +184,14 @@ const TaiKhoanPage: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleImported = () => {
+    // Giống nút "Làm mới": xóa bộ lọc tìm kiếm + bộ lọc nhóm để các dòng vừa import
+    // không bị ẩn sau một từ khóa hoặc nhóm không còn khớp.
+    setSearchText("");
+    setFilterNhom(undefined);
+    fetchData();
+  };
 
   const openModal = (record?: TaiKhoan) => {
     if (record) {
@@ -431,6 +441,11 @@ const TaiKhoanPage: React.FC = () => {
           }
           actions={
             <>
+              <ImportDanhMucButton
+                config={taiKhoanImportConfig}
+                canCreate={canCreate}
+                onImported={handleImported}
+              />
               {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
               {canCreate && (
                 <Button

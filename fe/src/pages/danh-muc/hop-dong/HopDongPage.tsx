@@ -47,6 +47,8 @@ import "./HopDongPage.state";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { hopDongService } from "@/services/hopDongService";
+import { ImportDanhMucButton } from "@/components/import-danh-muc";
+import { hopDongImportConfig } from "@/components/import-danh-muc/configs";
 
 const { Title, Text } = Typography;
 
@@ -152,6 +154,14 @@ function HopDongPageInner() {
     clearSelection();
     setSearchText(value);
     handler.executeEvent("search", { keyword: value });
+  };
+
+  const handleImported = () => {
+    // Trang này dùng CHanlder: bộ lọc tìm kiếm áp dụng nằm trong state store của handler,
+    // chỉ sự kiện "search" mới ghi đè nó — setSearchText("") chỉ xóa ô nhập, không đủ để
+    // các dòng vừa import khỏi bị ẩn sau từ khóa cũ.
+    setSearchText("");
+    handler.executeEvent("search", { keyword: "" });
   };
 
   const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
@@ -840,6 +850,11 @@ function HopDongPageInner() {
           actions={
             <>
               {settingsButton}
+              <ImportDanhMucButton
+                config={hopDongImportConfig}
+                canCreate={canCreate}
+                onImported={handleImported}
+              />
               {bulkDeleteButton}
               {canCreate && (
                 <Button
