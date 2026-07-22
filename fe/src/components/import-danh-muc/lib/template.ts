@@ -90,15 +90,17 @@ export function buildTemplateWorkbook(
     const ws = wb.addWorksheet(sheetName);
     for (const v of values) ws.addRow([v]);
 
-    // `enumList` là nhiều giá trị cách nhau bởi dấu phẩy trong CÙNG MỘT Ô (xem
-    // validate.ts, vd "Khách hàng, Nhà cung cấp"). Nếu gắn validation "list" chặt
-    // như enum một-giá-trị, Excel sẽ mặc định errorStyle="stop" khi thiếu
-    // showErrorMessage và từ chối mọi ô không khớp NGUYÊN VĂN một item trong danh
-    // sách — chặn luôn chính tổ hợp hợp lệ mà cột này yêu cầu. Tắt showErrorMessage
-    // riêng cho enumList: dropdown vẫn hiện để tra cứu nhãn hợp lệ, nhưng gõ tay tổ
-    // hợp nhiều giá trị không bị Excel chặn. Cột enum một-giá-trị và cột tham chiếu
-    // vẫn giữ chặt vì đúng nghĩa chỉ nhận một giá trị khớp sheet danh sách.
-    const strict = col.type !== "enumList";
+    // KHÔNG bật showErrorMessage/errorStyle cho BẤT KỲ cột nào (enum, enumList,
+    // hay tham chiếu) — dropdown ở đây chỉ để tra cứu nhanh, không phải rào chặn.
+    // Lý do:
+    // 1. Sheet danh sách là ẢNH CHỤP tại thời điểm tải file mẫu. Nếu sau đó có
+    //    thêm chủ đầu tư/đơn vị tính mới, việc chặn cứng sẽ khiến người dùng
+    //    không gõ được mã mới hợp lệ — dữ liệu mà chính app vẫn chấp nhận bình
+    //    thường khi validate.
+    // 2. Nơi phán quyết đúng/sai thật sự là bảng preview import (validate.ts):
+    //    nó báo lỗi tiếng Việt chính xác theo từng dòng kèm số dòng Excel, và
+    //    khóa nút Import khi còn dòng lỗi. Hộp thoại lỗi chung chung của Excel
+    //    vừa kém hơn vừa thừa. Đừng "sửa lại cho chặt" — đây là cố ý.
     const colLetter = main.getColumn(idx + 1).letter;
     const formula = `'${sheetName}'!$A$1:$A$${values.length}`;
     for (let r = 2; r <= MAX_DATA_ROWS + 1; r++) {
@@ -106,7 +108,6 @@ export function buildTemplateWorkbook(
         type: "list",
         allowBlank: !col.required,
         formulae: [formula],
-        ...(strict ? { showErrorMessage: true, errorStyle: "stop" } : { showErrorMessage: false }),
       });
     }
   });

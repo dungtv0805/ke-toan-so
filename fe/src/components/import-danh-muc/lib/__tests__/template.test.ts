@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as ExcelJS from "exceljs";
+import JSZip from "jszip";
 import { buildTemplateWorkbook } from "../template";
 import type { ImportColumn, ImportDanhMucConfig, RefItem } from "../../types";
 
@@ -103,11 +104,12 @@ describe("buildTemplateWorkbook", () => {
   });
 });
 
-describe("buildTemplateWorkbook — dropdown enumList không chặn nhập nhiều giá trị (Fix 1)", () => {
-  // Đúng tình huống thật ở task Đối tượng: "Loại đối tượng" là enumList, ví dụ
-  // "Khách hàng, Nhà cung cấp" — tổ hợp này không khớp NGUYÊN VĂN một item nào
-  // trong sheet danh sách, nên nếu validation chặt như enum một-giá-trị, Excel
-  // sẽ chặn luôn giá trị mẫu hợp lệ.
+describe("buildTemplateWorkbook — không cột nào bị Excel chặn cứng khi nhập tay (Fix 1)", () => {
+  // Dropdown chỉ để tra cứu nhanh, KHÔNG được chặn nhập tay — dù là enum một-giá-trị,
+  // enumList nhiều-giá-trị (vd "Khách hàng, Nhà cung cấp"), hay cột tham chiếu (vd mã
+  // chủ đầu tư mới thêm sau khi tải file mẫu). Excel chỉ thật sự chặn (errorStyle=stop)
+  // khi showErrorMessage=true; exceljs không bao giờ tự bật thuộc tính này, nên việc cần
+  // xác nhận là template.ts KHÔNG cố tình bật nó cho bất kỳ loại cột nào.
   const enumListCol: ImportColumn = {
     key: "loaiDoiTuong",
     header: "Loại đối tượng",
@@ -128,6 +130,18 @@ describe("buildTemplateWorkbook — dropdown enumList không chặn nhập nhi�
     ],
     example: "Hoạt động",
   };
+  const refCol: ImportColumn = {
+    key: "chuDauTu",
+    header: "Mã chủ đầu tư",
+    example: "CDT01",
+    ref: {
+      service: noopService,
+      matchBy: "ma",
+      label: "Chủ đầu tư",
+      displayField: "ten",
+      assign: (f) => ({ chuDauTuId: f.id }),
+    },
+  };
   const config: ImportDanhMucConfig = {
     title: "Đối tượng",
     resource: "doi-tuong",
@@ -137,47 +151,63 @@ describe("buildTemplateWorkbook — dropdown enumList không chặn nhập nhi�
       { key: "ma", header: "Mã", required: true, example: "DT01" },
       enumListCol,
       enumCol,
+      refCol,
     ],
   };
+  const refData = { chuDauTu: [{ id: "1", ma: "CDT01", ten: "Công ty A" }] };
 
-  it("cột enumList: dropdown vẫn có nhưng showErrorMessage=false (không chặn nhập tay)", () => {
-    const wb = buildTemplateWorkbook(config, {});
+  it("trong bộ nhớ: cả 3 loại cột (enumList, enum, tham chiếu) đều không bật showErrorMessage/errorStyle", () => {
+    const wb = buildTemplateWorkbook(config, refData);
     const main = wb.worksheets[0];
-    const dv = main.getCell(2, 2).dataValidation;
-    expect(dv?.type).toBe("list");
-    expect(dv?.formulae).toEqual(["'DS_loaiDoiTuong'!$A$1:$A$2"]);
-    expect(dv?.showErrorMessage).toBe(false);
+
+    const dvEnumList = main.getCell(2, 2).dataValidation;
+    const dvEnum = main.getCell(2, 3).dataValidation;
+    const dvRef = main.getCell(2, 4).dataValidation;
+
+    for (const dv of [dvEnumList, dvEnum, dvRef]) {
+      expect(dv?.type).toBe("list");
+      expect(dv?.showErrorMessage).not.toBe(true);
+      expect(dv?.errorStyle).toBeUndefined();
+    }
   });
 
-  it("cột enum một-giá-trị: vẫn chặt, showErrorMessage=true và errorStyle=stop", () => {
-    const wb = buildTemplateWorkbook(config, {});
-    const main = wb.worksheets[0];
-    const dv = main.getCell(2, 3).dataValidation;
-    expect(dv?.type).toBe("list");
-    expect(dv?.showErrorMessage).toBe(true);
-    expect(dv?.errorStyle).toBe("stop");
-  });
-
-  it("bằng chứng thực nghiệm: sau khi ghi buffer .xlsx thật và load lại, enumList và enum khác nhau về chặn lỗi", async () => {
-    const wb = buildTemplateWorkbook(config, {});
+  it("bằng chứng thực nghiệm: sau khi ghi buffer .xlsx thật và load lại, không cột nào chặn lỗi", async () => {
+    const wb = buildTemplateWorkbook(config, refData);
     const buffer = await wb.xlsx.writeBuffer();
 
     const reloaded = new ExcelJS.Workbook();
     await reloaded.xlsx.load(buffer as unknown as Buffer);
     const main = reloaded.getWorksheet("DuLieu")!;
 
-    // Cột "Loại đối tượng" (B) — enumList: round-trip qua XML thật vẫn phải giữ
-    // showErrorMessage tắt (không có thuộc tính này trong XML ⇒ Excel không chặn).
+    // Cột "Loại đối tượng" (B) — enumList.
     const dvEnumList = main.getCell("B2").dataValidation;
     expect(dvEnumList?.type).toBe("list");
     expect(dvEnumList?.showErrorMessage).not.toBe(true);
+    expect(dvEnumList?.errorStyle).toBeUndefined();
 
-    // Cột "Trạng thái" (C) — enum một-giá-trị: round-trip vẫn phải giữ nguyên
-    // showErrorMessage=true + errorStyle=stop, tức Excel thật sự chặn giá trị sai.
+    // Cột "Trạng thái" (C) — enum một-giá-trị.
     const dvEnum = main.getCell("C2").dataValidation;
     expect(dvEnum?.type).toBe("list");
-    expect(dvEnum?.showErrorMessage).toBe(true);
-    expect(dvEnum?.errorStyle).toBe("stop");
+    expect(dvEnum?.showErrorMessage).not.toBe(true);
+    expect(dvEnum?.errorStyle).toBeUndefined();
+
+    // Cột "Mã chủ đầu tư" (D) — tham chiếu.
+    const dvRef = main.getCell("D2").dataValidation;
+    expect(dvRef?.type).toBe("list");
+    expect(dvRef?.showErrorMessage).not.toBe(true);
+    expect(dvRef?.errorStyle).toBeUndefined();
+  });
+
+  it("bằng chứng ở tầng XML thô: sqref của cả 3 cột không có showErrorMessage=\"1\" hay errorStyle=\"stop\"", async () => {
+    const wb = buildTemplateWorkbook(config, refData);
+    const buffer = await wb.xlsx.writeBuffer();
+
+    const zip = await JSZip.loadAsync(buffer as unknown as Buffer);
+    const sheetXml = await zip.file("xl/worksheets/sheet1.xml")!.async("string");
+
+    expect(sheetXml).toContain('type="list"');
+    expect(sheetXml).not.toContain("showErrorMessage");
+    expect(sheetXml).not.toContain("errorStyle");
   });
 });
 
