@@ -252,10 +252,12 @@ POST /config/import/quy-chuan
 Cùng hình dạng request/response, chỉ đăng ký một resource. Viết theo đúng khuôn của
 controller bên master-data.
 
-### Gateway
+### Gateway — không cần sửa
 
-Thêm route proxy cho `POST /master-data/import/:resource` và `POST /config/import/:resource`
-theo đúng cách các route master-data / config hiện có đang khai báo.
+Gateway là proxy catch-all định tuyến theo **tiền tố đường dẫn**, không khai báo từng
+endpoint: `be/apps/gateway/src/environments/environment.ts:64,69` map `/master-data` →
+masterData và `/config` → config với `stripPrefix: true`. Hai endpoint mới tự động đi qua.
+Deploy đợt này vì vậy chỉ gồm master-data-service, config-service và FE.
 
 ### Phía FE gọi API
 
@@ -293,6 +295,6 @@ vào 22 service riêng lẻ.
 Đợt này đụng cả FE lẫn BE:
 
 - FE: build + deploy như thường lệ (verify ở `ketoan.masterceo.com.vn`).
-- BE: deploy lại **master-data-service**, **config-service** và **gateway**.
+- BE: deploy lại **master-data-service** và **config-service**. Gateway không cần deploy.
 
 Không cần grant quyền lại sau deploy vì không thêm permission key mới.
