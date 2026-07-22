@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import * as ExcelJS from "exceljs";
-import JSZip from "jszip";
 import { buildTemplateWorkbook } from "../template";
 import type { ImportColumn, ImportDanhMucConfig, RefItem } from "../../types";
 
@@ -85,7 +84,10 @@ describe("buildTemplateWorkbook", () => {
   it("gắn data validation cho cột enum ở dòng dữ liệu", () => {
     const wb = buildTemplateWorkbook(config, refData);
     const main = wb.worksheets[0];
-    expect(main.getCell(2, 3).dataValidation?.type).toBe("list");
+    // `Cell.dataValidation` (exceljs) chỉ tra đúng address khớp y hệt trong model;
+    // vì cột được gắn dưới dạng MỘT dải "C2:C501" (Fix 1) chứ không phải từng ô rời,
+    // tra thẳng bản đồ dataValidations bằng khoá dải thay vì qua getCell(2, 3).
+    expect(main.dataValidations.model["C2:C501"]?.type).toBe("list");
   });
 
   it("config không có cột enum/ref thì chỉ có 1 sheet", () => {
@@ -160,9 +162,11 @@ describe("buildTemplateWorkbook — không cột nào bị Excel chặn cứng k
     const wb = buildTemplateWorkbook(config, refData);
     const main = wb.worksheets[0];
 
-    const dvEnumList = main.getCell(2, 2).dataValidation;
-    const dvEnum = main.getCell(2, 3).dataValidation;
-    const dvRef = main.getCell(2, 4).dataValidation;
+    // Tra bản đồ dataValidations bằng khoá dải (Fix 1), không dùng getCell(...).dataValidation
+    // — getCell chỉ tra đúng address khớp y hệt, không khớp được khi model lưu theo dải.
+    const dvEnumList = main.dataValidations.model["B2:B501"];
+    const dvEnum = main.dataValidations.model["C2:C501"];
+    const dvRef = main.dataValidations.model["D2:D501"];
 
     for (const dv of [dvEnumList, dvEnum, dvRef]) {
       expect(dv?.type).toBe("list");
@@ -176,7 +180,7 @@ describe("buildTemplateWorkbook — không cột nào bị Excel chặn cứng k
     const buffer = await wb.xlsx.writeBuffer();
 
     const reloaded = new ExcelJS.Workbook();
-    await reloaded.xlsx.load(buffer as unknown as Buffer);
+    await reloaded.xlsx.load(buffer);
     const main = reloaded.getWorksheet("DuLieu")!;
 
     // Cột "Loại đối tượng" (B) — enumList.
@@ -198,17 +202,6 @@ describe("buildTemplateWorkbook — không cột nào bị Excel chặn cứng k
     expect(dvRef?.errorStyle).toBeUndefined();
   });
 
-  it("bằng chứng ở tầng XML thô: sqref của cả 3 cột không có showErrorMessage=\"1\" hay errorStyle=\"stop\"", async () => {
-    const wb = buildTemplateWorkbook(config, refData);
-    const buffer = await wb.xlsx.writeBuffer();
-
-    const zip = await JSZip.loadAsync(buffer as unknown as Buffer);
-    const sheetXml = await zip.file("xl/worksheets/sheet1.xml")!.async("string");
-
-    expect(sheetXml).toContain('type="list"');
-    expect(sheetXml).not.toContain("showErrorMessage");
-    expect(sheetXml).not.toContain("errorStyle");
-  });
 });
 
 describe("buildTemplateWorkbook — tên sheet danh sách an toàn khi key dài (Fix 2)", () => {
@@ -254,8 +247,9 @@ describe("buildTemplateWorkbook — tên sheet danh sách an toàn khi key dài 
     }
 
     const main = wb.worksheets[0];
-    const dvA = main.getCell(2, 2).dataValidation;
-    const dvB = main.getCell(2, 3).dataValidation;
+    // Tra bản đồ dataValidations bằng khoá dải (Fix 1) thay vì getCell(...).dataValidation.
+    const dvA = main.dataValidations.model["B2:B501"];
+    const dvB = main.dataValidations.model["C2:C501"];
     const [sheetA, sheetB] = sheetNames;
 
     // Mỗi cột phải trỏ formula về đúng sheet của chính nó (không lẫn lộn),
@@ -334,8 +328,9 @@ describe("buildTemplateWorkbook — các hành vi khác cần cho 22 danh mục 
 
     const wb = buildTemplateWorkbook(config, {});
     const main = wb.worksheets[0];
-    expect(main.getCell(2, 2).dataValidation?.allowBlank).toBe(false);
-    expect(main.getCell(2, 3).dataValidation?.allowBlank).toBe(true);
+    // Tra bản đồ dataValidations bằng khoá dải (Fix 1) thay vì getCell(...).dataValidation.
+    expect(main.dataValidations.model["B2:B501"]?.allowBlank).toBe(false);
+    expect(main.dataValidations.model["C2:C501"]?.allowBlank).toBe(true);
   });
 
   it("round-trip serialize/reload thật: ghi buffer .xlsx rồi load lại, dropdown và formula vẫn còn nguyên", async () => {
@@ -343,7 +338,7 @@ describe("buildTemplateWorkbook — các hành vi khác cần cho 22 danh mục 
     const buffer = await wb.xlsx.writeBuffer();
 
     const reloaded = new ExcelJS.Workbook();
-    await reloaded.xlsx.load(buffer as unknown as Buffer);
+    await reloaded.xlsx.load(buffer);
     const main = reloaded.getWorksheet("DuLieu")!;
 
     const dv = main.getCell("C2").dataValidation; // cột "Trạng thái", type enum
@@ -353,5 +348,154 @@ describe("buildTemplateWorkbook — các hành vi khác cần cho 22 danh mục 
     const listWs = reloaded.getWorksheet("DS_trangThai")!;
     expect(listWs.getCell("A1").value).toBe("Đang thực hiện");
     expect(listWs.getCell("A2").value).toBe("Hoàn thành");
+  });
+});
+
+describe("buildTemplateWorkbook — gộp dropdown thành đúng một dải liên tục mỗi cột (Fix 1)", () => {
+  // Bug đã sửa: lặp add() từng ô một khiến exceljs (khi sắp xếp address theo chuỗi
+  // để gộp dải ở bước optimiseDataValidations) tạo ra HAI dải chồng lấn cho mỗi cột
+  // thay vì một. Test này khẳng định cấu trúc TỔNG THỂ — không chỉ một ô — bằng
+  // cách đọc thẳng bản đồ address→rule (`dataValidations.model`) và bằng cách dò
+  // các ô ở đầu/giữa/cuối dải sau khi ghi buffer thật rồi tải lại.
+  const enumListCol: ImportColumn = {
+    key: "loaiDoiTuong",
+    header: "Loại đối tượng",
+    type: "enumList",
+    enumValues: [
+      { label: "Khách hàng", value: "KHACH_HANG" },
+      { label: "Nhà cung cấp", value: "NHA_CUNG_CAP" },
+    ],
+    example: "Khách hàng, Nhà cung cấp",
+  };
+  const enumCol: ImportColumn = {
+    key: "trangThai",
+    header: "Trạng thái",
+    type: "enum",
+    enumValues: [
+      { label: "Hoạt động", value: "HOAT_DONG" },
+      { label: "Ngừng", value: "NGUNG" },
+    ],
+    example: "Hoạt động",
+  };
+  const refCol: ImportColumn = {
+    key: "chuDauTu",
+    header: "Mã chủ đầu tư",
+    example: "CDT01",
+    ref: {
+      service: noopService,
+      matchBy: "ma",
+      label: "Chủ đầu tư",
+      displayField: "ten",
+      assign: (f) => ({ chuDauTuId: f.id }),
+    },
+  };
+  const config: ImportDanhMucConfig = {
+    title: "Đối tượng",
+    resource: "doi-tuong",
+    service: noopService,
+    uniqueBy: ["ma"],
+    columns: [
+      { key: "ma", header: "Mã", required: true, example: "DT01" },
+      enumListCol,
+      enumCol,
+      refCol,
+    ],
+  };
+  const refData = { chuDauTu: [{ id: "1", ma: "CDT01", ten: "Công ty A" }] };
+
+  it("bản đồ dataValidations chỉ có ĐÚNG MỘT entry cho mỗi cột, đúng khoá dải B2:B501/C2:C501/D2:D501 — không phải 500 entry rời rạc mỗi cột", () => {
+    const wb = buildTemplateWorkbook(config, refData);
+    const main = wb.worksheets[0];
+
+    const keys = Object.keys(main.dataValidations.model);
+    expect(keys).toHaveLength(3);
+    expect(keys).toContain("B2:B501");
+    expect(keys).toContain("C2:C501");
+    expect(keys).toContain("D2:D501");
+
+    // Thuộc tính mà lần sửa rowCount trước bảo vệ: sheet chính vẫn chỉ có 2 dòng,
+    // không phình lên 501 dòng vì việc gắn validation.
+    expect(main.rowCount).toBe(2);
+  });
+
+  it("sau khi ghi buffer thật rồi tải lại: dải phủ đúng từ dòng 2 đến dòng 501, đầu/giữa/cuối cùng công thức, không lem ra ngoài", async () => {
+    const wb = buildTemplateWorkbook(config, refData);
+    expect(wb.worksheets[0].rowCount).toBe(2);
+    const buffer = await wb.xlsx.writeBuffer();
+
+    const reloaded = new ExcelJS.Workbook();
+    await reloaded.xlsx.load(buffer);
+    const main = reloaded.getWorksheet("DuLieu")!;
+
+    // Kiểm tra rowCount NGAY sau khi tải lại, trước mọi lần gọi getCell bên dưới —
+    // bản thân getCell tạo Row như tác dụng phụ (đây chính là nguồn gốc bug rowCount
+    // 501 ở lần sửa trước), nên gọi sau sẽ tự làm sai lệch phép đo.
+    expect(main.rowCount).toBe(2);
+
+    // Sau khi tải lại, exceljs khai triển dải "C2:C501" thành từng ô riêng trong
+    // model — nên getCell(...).dataValidation tra đúng ở đây (khác lúc trong bộ
+    // nhớ trước khi ghi buffer, khi model vẫn còn lưu theo khoá dải).
+    const expectedFormula = ["'DS_trangThai'!$A$1:$A$2"];
+    for (const rowNumber of [2, 250, 501]) {
+      const dv = main.getCell(`C${rowNumber}`).dataValidation;
+      expect(dv?.type).toBe("list");
+      expect(dv?.formulae).toEqual(expectedFormula);
+    }
+
+    // Ngoài dải (dòng header và dòng ngay sau dòng cuối) không bị gắn dropdown.
+    expect(main.getCell("C1").dataValidation).toBeUndefined();
+    expect(main.getCell("C502").dataValidation).toBeUndefined();
+  });
+});
+
+describe("buildTemplateWorkbook — cột tham chiếu nhiều giá trị (MultiRefSpec, multi: true)", () => {
+  const multiRefCol: ImportColumn = {
+    key: "donViThamGia",
+    header: "Các đơn vị tham gia",
+    example: "DV01, DV02",
+    ref: {
+      service: noopService,
+      matchBy: "ma",
+      label: "Đơn vị tham gia",
+      displayField: "ten",
+      multi: true,
+      assign: (found) => ({ donViIds: found.map((f) => f.id) }),
+    },
+  };
+  const config: ImportDanhMucConfig = {
+    title: "Dự án",
+    resource: "du-an",
+    service: noopService,
+    uniqueBy: ["ma"],
+    columns: [
+      { key: "ma", header: "Mã dự án", required: true, example: "DA01" },
+      multiRefCol,
+    ],
+  };
+  const refData = {
+    donViThamGia: [
+      { id: "1", ma: "DV01", ten: "Đơn vị 1" },
+      { id: "2", ma: "DV02", ten: "Đơn vị 2" },
+    ],
+  };
+
+  it("sinh sheet danh sách cho cột tham chiếu multi, cùng cách gắn dropdown như cột tham chiếu một-giá-trị", () => {
+    const wb = buildTemplateWorkbook(config, refData);
+
+    const listWs = wb.getWorksheet("DS_donViThamGia")!;
+    expect(listWs).toBeDefined();
+    expect(listWs.getCell("A1").value).toBe("DV01 - Đơn vị 1");
+    expect(listWs.getCell("A2").value).toBe("DV02 - Đơn vị 2");
+
+    const main = wb.worksheets[0];
+    const keys = Object.keys(main.dataValidations.model);
+    expect(keys).toEqual(["B2:B501"]);
+
+    // Tra bản đồ dataValidations bằng khoá dải (Fix 1) thay vì getCell(...).dataValidation.
+    const dv = main.dataValidations.model["B2:B501"];
+    expect(dv?.type).toBe("list");
+    expect(dv?.formulae).toEqual(["'DS_donViThamGia'!$A$1:$A$2"]);
+    expect(dv?.showErrorMessage).not.toBe(true);
+    expect(dv?.errorStyle).toBeUndefined();
   });
 });

@@ -12,6 +12,10 @@ declare module "exceljs" {
   interface Worksheet {
     dataValidations: {
       add(address: string, validation: ExcelJS.DataValidation): ExcelJS.DataValidation;
+      /** Bản đồ address → rule, phẳng, đúng như exceljs lưu ở runtime. Test dùng để
+       *  xác nhận mỗi cột chỉ có ĐÚNG MỘT entry (dải liên tục), không phải đọc qua
+       *  từng ô — đây chính là điều bị hỏng ở bug gộp dải trùng lặp (xem template.ts). */
+      model: Record<string, ExcelJS.DataValidation>;
     };
   }
 }
@@ -101,15 +105,19 @@ export function buildTemplateWorkbook(
     //    nó báo lỗi tiếng Việt chính xác theo từng dòng kèm số dòng Excel, và
     //    khóa nút Import khi còn dòng lỗi. Hộp thoại lỗi chung chung của Excel
     //    vừa kém hơn vừa thừa. Đừng "sửa lại cho chặt" — đây là cố ý.
+    // Một lệnh add() duy nhất cho CẢ dải ô, không lặp add() từng dòng: exceljs sắp
+    // xếp các address theo thứ tự chuỗi khi gộp dải (optimiseDataValidations), nên
+    // "B10" đứng trước "B2" — thêm từng ô một khiến nó gộp nhầm thành 2 dải chồng
+    // lấn nhau (vd "B10:B501" VÀ "B2:B501") thay vì đúng một dải "B2:B501". Dùng
+    // `getColumn().letter` (helper có sẵn của exceljs) để suy ra chữ cái cột, đúng
+    // cả với cột sau Z (AA, AB, ...), thay vì tự tính bằng tay.
     const colLetter = main.getColumn(idx + 1).letter;
     const formula = `'${sheetName}'!$A$1:$A$${values.length}`;
-    for (let r = 2; r <= MAX_DATA_ROWS + 1; r++) {
-      main.dataValidations.add(`${colLetter}${r}`, {
-        type: "list",
-        allowBlank: !col.required,
-        formulae: [formula],
-      });
-    }
+    main.dataValidations.add(`${colLetter}2:${colLetter}${MAX_DATA_ROWS + 1}`, {
+      type: "list",
+      allowBlank: !col.required,
+      formulae: [formula],
+    });
   });
 
   return wb;
