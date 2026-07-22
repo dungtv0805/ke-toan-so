@@ -22,6 +22,7 @@ import {
   ExportOutlined,
   ReloadOutlined,
   HomeOutlined,
+  FileExcelOutlined,
 } from "@ant-design/icons";
 import { DonViTinh } from "@/types";
 import { donViTinhService } from "@/services/donViTinhService";
@@ -31,6 +32,8 @@ import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { ImportDanhMucModal } from "@/components/import-danh-muc";
+import { donViTinhImportConfig } from "@/components/import-danh-muc/configs";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -56,6 +59,7 @@ const DonViTinhPage: React.FC = () => {
   const [searchText, setSearchText] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<DonViTinh | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
   const [form] = Form.useForm();
   const [pagination, setPagination] = useState({
     current: 1,
@@ -288,6 +292,11 @@ const DonViTinhPage: React.FC = () => {
           }}
           actions={
             <>
+              {canCreate && (
+                <Button icon={<FileExcelOutlined />} onClick={() => setImportOpen(true)}>
+                  Import Excel
+                </Button>
+              )}
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}
@@ -390,6 +399,13 @@ const DonViTinhPage: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
+
+      <ImportDanhMucModal
+        open={importOpen}
+        config={donViTinhImportConfig}
+        onClose={() => setImportOpen(false)}
+        onImported={() => fetchData(1, pagination.pageSize, searchText)}
+      />
     </div>
   );
 };
