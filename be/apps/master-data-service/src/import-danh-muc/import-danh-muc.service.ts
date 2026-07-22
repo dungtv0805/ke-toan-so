@@ -25,8 +25,6 @@ export class ImportDanhMucService {
     let created = 0;
 
     for (let i = 0; i < items.length; i++) {
-      // items[0] là dòng 2 của file Excel vì dòng 1 là header
-      const row = i + 2;
       const dto = plainToInstance(entry.dtoClass, items[i]);
       const errors = await validate(dto, {
         whitelist: true,
@@ -34,7 +32,10 @@ export class ImportDanhMucService {
       });
 
       if (errors.length > 0) {
-        failed.push({ row, message: this.formatValidationErrors(errors) });
+        failed.push({
+          index: i,
+          message: this.formatValidationErrors(errors),
+        });
         continue;
       }
 
@@ -45,8 +46,10 @@ export class ImportDanhMucService {
         const message =
           (e as { message?: string })?.message ??
           `Không tạo được ${entry.label}`;
-        this.logger.warn(`Import ${entry.label} dòng ${row} lỗi: ${message}`);
-        failed.push({ row, message });
+        this.logger.warn(
+          `Import ${entry.label} phần tử #${i} lỗi: ${message}`,
+        );
+        failed.push({ index: i, message });
       }
     }
 

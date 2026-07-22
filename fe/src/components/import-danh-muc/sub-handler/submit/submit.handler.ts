@@ -5,6 +5,7 @@ import "./submit.event";
 import { ImportDanhMucEvents } from "../../import.handler";
 import { ImportDanhMucStates } from "../../import.state";
 import { importDanhMucService } from "@/services/importDanhMucService";
+import { mapFailuresToRows } from "../../lib/mapFailures";
 import type { ImportDanhMucConfig, RowValidationResult } from "../../types";
 
 @RegisterHandler("import-danh-muc")
@@ -35,14 +36,27 @@ export class SubmitImportHandler extends CSubHanlder<
     try {
       const res = await importDanhMucService.importItems(config, items);
 
+      // Đã tạo được bản ghi mới trong lần import này — `existing`/`refData` mà loadRefs
+      // nạp lúc mở modal giờ đã cũ. Nạp lại để nếu người dùng sửa các dòng lỗi rồi
+      // upload lại file trong cùng phiên modal, việc dò trùng thấy đúng dữ liệu mới nhất
+      // (không tạo trùng các dòng vừa import thành công).
+      if (res.created > 0) {
+        await this.executeEvent("loadRefs", { config });
+      }
+
       if (res.failed.length > 0) {
         // Đổ lỗi từ BE vào đúng dòng trong bảng preview, giữ modal để người dùng xem.
-        const byRow = new Map(res.failed.map((f) => [f.row, f.message]));
+        // BE trả index trong mảng items đã gửi, không phải rowNumber — quy đổi trước khi khớp.
+        const byRow = mapFailuresToRows(results, res.failed);
         this.setState(
           "results",
           results.map((r) =>
             byRow.has(r.rowNumber)
-              ? { ...r, errors: [byRow.get(r.rowNumber) as string] }
+              ? {
+                  ...r,
+                  errors: [byRow.get(r.rowNumber) as string],
+                  payload: null,
+                }
               : r,
           ),
         );

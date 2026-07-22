@@ -8,8 +8,14 @@ export interface ImportEntry {
 }
 
 export interface ImportFailure {
-  /** Số dòng trong file Excel (1-based, đã gồm dòng header). */
-  row: number;
+  /**
+   * Vị trí (0-based) của dòng lỗi trong mảng `items` mà FE gửi lên — KHÔNG phải số dòng
+   * Excel. FE bỏ qua các dòng trống hoàn toàn khi đọc file nhưng vẫn giữ đúng rowNumber
+   * gốc của các dòng còn lại, nên vị trí trong mảng đã gửi không còn khớp 1-1 với dòng
+   * Excel nữa. Chỉ FE mới biết dòng Excel thật của từng phần tử nó đã gửi, nên việc quy
+   * đổi index → rowNumber phải làm ở FE.
+   */
+  index: number;
   message: string;
 }
 

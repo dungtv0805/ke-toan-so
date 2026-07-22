@@ -44,8 +44,8 @@ describe('ImportDanhMucService', () => {
     expect(create).not.toHaveBeenCalled();
     expect(result.created).toBe(0);
     expect(result.failed).toHaveLength(1);
-    // dòng 1 của items = dòng 2 của file Excel (dòng 1 là header)
-    expect(result.failed[0].row).toBe(2);
+    // dòng duy nhất của items ở vị trí 0
+    expect(result.failed[0].index).toBe(0);
     expect(result.failed[0].message).toBe(
       'Dữ liệu không hợp lệ ở các trường: ma',
     );
@@ -67,7 +67,27 @@ describe('ImportDanhMucService', () => {
     expect(create).toHaveBeenCalledTimes(2);
     expect(result.created).toBe(1);
     expect(result.failed).toEqual([
-      { row: 2, message: 'Mã đơn vị tính DVT01 đã tồn tại' },
+      { index: 0, message: 'Mã đơn vị tính DVT01 đã tồn tại' },
+    ]);
+  });
+
+  it('dòng lỗi ở giữa batch báo đúng index, không lệch theo số dòng đã bỏ qua', async () => {
+    const create = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'a' })
+      .mockRejectedValueOnce(new ConflictException('Mã DVT02 đã tồn tại'))
+      .mockResolvedValueOnce({ id: 'c' });
+
+    const result = await service.importItems(makeEntry(create), [
+      { ma: 'DVT01', ten: 'Cái' },
+      { ma: 'DVT02', ten: 'Hộp' },
+      { ma: 'DVT03', ten: 'Thùng' },
+    ]);
+
+    expect(create).toHaveBeenCalledTimes(3);
+    expect(result.created).toBe(2);
+    expect(result.failed).toEqual([
+      { index: 1, message: 'Mã DVT02 đã tồn tại' },
     ]);
   });
 
