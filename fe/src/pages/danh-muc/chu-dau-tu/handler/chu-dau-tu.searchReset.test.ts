@@ -15,7 +15,7 @@ vi.mock("@/services/chuDauTuService", () => {
 import { chuDauTuService } from "@/services/chuDauTuService";
 import { ChuDauTuHandler } from "./chu-dau-tu.handler";
 
-const getPaginatedMock = chuDauTuService.getPaginated as unknown as ReturnType<typeof vi.fn>;
+const getPaginatedMock = vi.mocked(chuDauTuService.getPaginated);
 
 describe("ChuDauTuHandler - search / reset filter (Task 12 fix)", () => {
   beforeEach(() => {

@@ -15,7 +15,7 @@ vi.mock("@/services/nhomQuanLyService", () => {
 import { nhomQuanLyService } from "@/services/nhomQuanLyService";
 import { NhomQuanLyHandler } from "./nhom-quan-ly.handler";
 
-const getPaginatedMock = nhomQuanLyService.getPaginated as unknown as ReturnType<typeof vi.fn>;
+const getPaginatedMock = vi.mocked(nhomQuanLyService.getPaginated);
 
 describe("NhomQuanLyHandler - search / reset filter (Task 12 fix)", () => {
   beforeEach(() => {

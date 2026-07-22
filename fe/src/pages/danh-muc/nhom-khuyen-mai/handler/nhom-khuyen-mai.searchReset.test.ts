@@ -15,7 +15,7 @@ vi.mock("@/services/nhomKhuyenMaiService", () => {
 import { nhomKhuyenMaiService } from "@/services/nhomKhuyenMaiService";
 import { NhomKhuyenMaiHandler } from "./nhom-khuyen-mai.handler";
 
-const getPaginatedMock = nhomKhuyenMaiService.getPaginated as unknown as ReturnType<typeof vi.fn>;
+const getPaginatedMock = vi.mocked(nhomKhuyenMaiService.getPaginated);
 
 describe("NhomKhuyenMaiHandler - search / reset filter (Task 12 fix)", () => {
   beforeEach(() => {
