@@ -33,6 +33,8 @@ import { FilterBar } from "@/components/common/FilterBar";
 import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { ImportDanhMucButton } from "@/components/import-danh-muc";
+import { boPhanImportConfig } from "@/components/import-danh-muc/configs";
 
 const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -119,6 +121,13 @@ const BoPhanPage: React.FC = () => {
       paginationConfig.pageSize || 50,
       searchText
     );
+  };
+
+  const handleImported = () => {
+    // Giống nút "Làm mới" (nút đặt lại bộ lọc): xóa bộ lọc tìm kiếm để các dòng
+    // vừa import không bị ẩn sau một từ khóa không còn khớp.
+    setSearchText("");
+    fetchData(1, pagination.pageSize, "");
   };
 
   const handleAdd = () => {
@@ -276,6 +285,11 @@ const BoPhanPage: React.FC = () => {
           actions={
             <>
               {settingsButton}
+              <ImportDanhMucButton
+                config={boPhanImportConfig}
+                canCreate={canCreate}
+                onImported={handleImported}
+              />
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}

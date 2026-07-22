@@ -33,6 +33,8 @@ import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { nhomQuanLyService } from "@/services/nhomQuanLyService";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 import { useFieldLabels } from "@/components/glossary/useFieldLabels";
+import { ImportDanhMucButton } from "@/components/import-danh-muc";
+import { nhomQuanLyImportConfig } from "@/components/import-danh-muc/configs";
 
 const { Title, Text } = Typography;
 
@@ -74,6 +76,14 @@ function NhomQuanLyPageInner() {
       page: pag.current || 1,
       pageSize: pag.pageSize || 10,
     });
+  };
+
+  const handleImported = () => {
+    // Giống nút đặt lại bộ lọc (nút "Làm mới" thực tế của trang này): xóa bộ lọc
+    // tìm kiếm rồi nạp lại dữ liệu qua handler, để các dòng vừa import không bị ẩn.
+    clearSelection();
+    setSearchText("");
+    handler.executeEvent("refresh", {});
   };
 
   const openModal = (record?: NhomQuanLy) => {
@@ -222,6 +232,11 @@ function NhomQuanLyPageInner() {
           actions={
             <>
               {settingsButton}
+              <ImportDanhMucButton
+                config={nhomQuanLyImportConfig}
+                canCreate={canCreate}
+                onImported={handleImported}
+              />
               {bulkDeleteButton}
               {canCreate && (
                 <Button

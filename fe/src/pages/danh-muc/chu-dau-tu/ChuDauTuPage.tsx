@@ -34,6 +34,8 @@ import { FilterBar } from "@/components/common/FilterBar";
 import { useTerm } from "@/contexts/TermContext";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 import { useFieldLabels } from "@/components/glossary/useFieldLabels";
+import { ImportDanhMucButton } from "@/components/import-danh-muc";
+import { chuDauTuImportConfig } from "@/components/import-danh-muc/configs";
 
 const { Title, Text } = Typography;
 
@@ -77,6 +79,14 @@ function ChuDauTuPageInner() {
       page: pag.current || 1,
       pageSize: pag.pageSize || 10,
     });
+  };
+
+  const handleImported = () => {
+    // Giống nút đặt lại bộ lọc (nút "Làm mới" thực tế của trang này): xóa bộ lọc
+    // tìm kiếm rồi nạp lại dữ liệu qua handler, để các dòng vừa import không bị ẩn.
+    clearSelection();
+    setSearchText("");
+    handler.executeEvent("refresh", {});
   };
 
   const openModal = (record?: ChuDauTu) => {
@@ -225,6 +235,11 @@ function ChuDauTuPageInner() {
           actions={
             <>
               {settingsButton}
+              <ImportDanhMucButton
+                config={chuDauTuImportConfig}
+                canCreate={canCreate}
+                onImported={handleImported}
+              />
               {bulkDeleteButton}
               {canCreate && (
                 <Button

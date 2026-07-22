@@ -30,6 +30,8 @@ import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { ImportDanhMucButton } from "@/components/import-danh-muc";
+import { lyDoKhongHopLeImportConfig } from "@/components/import-danh-muc/configs";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -138,6 +140,13 @@ const LyDoKhongHopLePage: React.FC = () => {
 
   const handleSearch = (value: string) => {
     setSearchText(value);
+  };
+
+  const handleImported = () => {
+    // Giống nút "Làm mới": xóa bộ lọc tìm kiếm để các dòng vừa import không bị ẩn
+    // sau một từ khóa không còn khớp — kể cả ô tìm kiếm cũng phải rỗng theo.
+    setSearchText("");
+    fetchData(1, pagination.pageSize, "");
   };
 
   const handleAdd = () => {
@@ -287,6 +296,11 @@ const LyDoKhongHopLePage: React.FC = () => {
           }}
           actions={
             <>
+              <ImportDanhMucButton
+                config={lyDoKhongHopLeImportConfig}
+                canCreate={canCreate}
+                onImported={handleImported}
+              />
               {canExport && (
                 <Button icon={<ExportOutlined />}>Xuất Excel</Button>
               )}
