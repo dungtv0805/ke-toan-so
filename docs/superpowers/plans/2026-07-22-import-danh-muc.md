@@ -3753,7 +3753,7 @@ Expected: PASS, không có test nào fail. Ghi lại số test.
 - [ ] **Step 3: Chạy toàn bộ test BE liên quan**
 
 Run: `cd be && npx jest apps/master-data-service/src/import-danh-muc/`
-Expected: PASS — 11 passed.
+Expected: PASS — 31 passed (4 service + 24 registry + 3 controller).
 
 - [ ] **Step 4: Build cả FE và BE**
 
