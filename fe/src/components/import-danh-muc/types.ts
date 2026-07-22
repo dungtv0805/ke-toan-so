@@ -1,26 +1,53 @@
-/** Một bản ghi danh mục tham chiếu (kết quả getAll của service khác). */
+/**
+ * Ràng buộc tối thiểu cho một bản ghi danh mục tham chiếu.
+ * KHÔNG khai index signature: các interface thật (DuAn, DonViTinh, ChuDauTu...) không có
+ * index signature, nên nếu thêm vào đây thì không service nào gán được và cả 22 file config
+ * sẽ phải cast.
+ */
 export interface RefItem {
   id?: string;
-  [key: string]: unknown;
 }
 
-export interface RefSpec {
+/**
+ * Bản ghi tham chiếu ở dạng đọc được mọi trường. Chỉ dùng bên trong lib (khi dò mã)
+ * và ở tham số của `assign`, để config viết thẳng `found.ma`, `found.ten`.
+ */
+export type RefRecord = RefItem & Record<string, unknown>;
+
+/** Phần duy nhất của một service danh mục mà module import cần đến. */
+export interface RefSource {
+  getAll(): Promise<RefItem[]>;
+}
+
+interface RefSpecBase {
   /** Service của danh mục được tham chiếu. */
-  service: { getAll(): Promise<RefItem[]> };
+  service: RefSource;
   /** Trường dùng để dò khớp với giá trị trong ô Excel, thường là "ma". */
   matchBy: string;
   /** Tên hiển thị trong thông báo lỗi, ví dụ "Chủ đầu tư". */
   label: string;
   /** Trường hiển thị kèm mã trong danh sách thả xuống của file mẫu. */
   displayField?: string;
-  /** Cho phép nhiều giá trị ngăn cách bằng dấu phẩy. */
-  multi?: boolean;
-  /**
-   * Ánh xạ bản ghi dò được → các trường của DTO gửi lên BE.
-   * Với `multi: true`, tham số là mảng các bản ghi dò được.
-   */
-  assign: (found: RefItem | RefItem[]) => Record<string, unknown>;
 }
+
+/** Cột tham chiếu một giá trị — trường hợp phổ biến. */
+export interface SingleRefSpec extends RefSpecBase {
+  multi?: false;
+  /** Ánh xạ bản ghi dò được → các trường của DTO gửi lên BE. */
+  assign: (found: RefRecord) => Record<string, unknown>;
+}
+
+/** Cột tham chiếu nhiều giá trị, ngăn cách bằng dấu phẩy trong ô Excel. */
+export interface MultiRefSpec extends RefSpecBase {
+  multi: true;
+  assign: (found: RefRecord[]) => Record<string, unknown>;
+}
+
+/**
+ * Union phân biệt theo `multi`, nhờ đó `assign` của cột một-giá-trị nhận thẳng
+ * một bản ghi chứ không phải `RefRecord | RefRecord[]` rồi phải tự thu hẹp kiểu.
+ */
+export type RefSpec = SingleRefSpec | MultiRefSpec;
 
 export type ImportColumnType =
   | 'string'
@@ -52,7 +79,7 @@ export interface ImportDanhMucConfig {
   /** Mặc định '/master-data'. Quy chuẩn hạch toán dùng '/config'. */
   apiPrefix?: string;
   /** Service của chính danh mục này — dùng để lấy dữ liệu hiện có mà dò trùng. */
-  service: { getAll(): Promise<RefItem[]> };
+  service: RefSource;
   /** Các key tạo nên khóa trùng. Hầu hết là ['ma']; Quy chuẩn là ['loaiGiaoDich','nghiepVu']. */
   uniqueBy: string[];
   columns: ImportColumn[];
