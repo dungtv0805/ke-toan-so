@@ -12,7 +12,7 @@ import { usePagePermission } from "@/hooks/usePagePermission";
 import { ImportDanhMucButton } from '@/components/import-danh-muc';
 import { quyChuanImportConfig } from '@/components/import-danh-muc/configs';
 import { ExportDanhMucButton, ExportDanhMucConfig } from '@/components/export-danh-muc';
-import { quyChaunService } from '@/services/quyChaunService';
+import { quyChauanService } from '@/services/quyChaunService';
 import './QuyChaunHeader.state';
 import { PaginationMeta } from '../table/QuyChaunTable.state';
 
@@ -49,7 +49,7 @@ export const QuyChaunHeader: React.FC<QuyChaunHeaderProps> = ({ settingsButton, 
       { header: "Mô tả", dataKey: "moTa", width: 40 },
     ],
     fetchData: async () => {
-      const data = await quyChaunService.getAll();
+      const data = await quyChauanService.getAll();
       return data.map((item) => ({
         nghiepVu: item.nghiepVu || item.ten || "",
         loaiGiaoDich: item.loaiGiaoDichMa || "",
