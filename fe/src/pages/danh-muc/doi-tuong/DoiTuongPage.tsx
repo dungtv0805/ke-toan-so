@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
   Table,
@@ -45,6 +45,7 @@ import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { doiTuongImportConfig } from "@/components/import-danh-muc/configs";
+import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
 
 const { Title, Text } = Typography;
 
@@ -116,6 +117,37 @@ const DoiTuongPage: React.FC = () => {
     onDeleteBatch: (ids) => doiTuongService.deleteBatch(ids),
     onDone: () => fetchData(),
   });
+
+  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
+    fileName: "danh-muc-doi-tuong",
+    sheetName: "Đối tượng",
+    title: "DANH MỤC ĐỐI TƯỢNG",
+    columns: [
+      { header: "Mã", dataKey: "ma", width: 15 },
+      { header: "Tên", dataKey: "ten", width: 30 },
+      { header: "Loại", dataKey: "loai", width: 25 },
+      { header: "Điện thoại", dataKey: "soDienThoai", width: 15 },
+      { header: "Email", dataKey: "email", width: 25 },
+      { header: "Mã số thuế", dataKey: "maSoThue", width: 15 },
+      { header: "Địa chỉ", dataKey: "diaChi", width: 35 },
+    ],
+    fetchData: async () => {
+      const result = await doiTuongService.getPaginated({ limit: 10000 });
+      const loaiMap: Record<string, string> = {
+        KHACH_HANG: "Khách hàng", NHA_CUNG_CAP: "Nhà cung cấp",
+        NHAN_VIEN: "Nhân viên", NHA_THAU: "Nhà thầu",
+      };
+      return result.data.map((item) => ({
+        ma: item.ma,
+        ten: item.ten,
+        loai: Array.isArray(item.loai) ? item.loai.map((l) => loaiMap[l] || l).join(", ") : "",
+        soDienThoai: item.soDienThoai || "",
+        email: item.email || "",
+        maSoThue: item.maSoThue || "",
+        diaChi: item.diaChi || "",
+      }));
+    },
+  }), []);
 
   const fetchData = async (
     page = pagination.current,
@@ -536,7 +568,7 @@ const DoiTuongPage: React.FC = () => {
                 canCreate={canCreate}
                 onImported={handleImported}
               />
-              {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+              {canExport && <ExportDanhMucButton config={exportConfig} canExport={canExport} />}
               {bulkDeleteButton}
               {canCreate && (
                 <Button

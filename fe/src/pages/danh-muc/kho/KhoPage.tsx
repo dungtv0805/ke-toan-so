@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
   Table,
@@ -33,6 +33,7 @@ import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { khoImportConfig } from "@/components/import-danh-muc/configs";
+import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -73,6 +74,29 @@ const KhoPage: React.FC = () => {
     onDeleteBatch: (ids) => khoService.deleteBatch(ids),
     onDone: () => fetchData(),
   });
+
+  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
+    fileName: "danh-muc-kho",
+    sheetName: "Kho",
+    title: "DANH MỤC KHO",
+    columns: [
+      { header: "Mã", dataKey: "ma", width: 15 },
+      { header: "Tên kho", dataKey: "ten", width: 35 },
+      { header: "Địa chỉ", dataKey: "diaChi", width: 35 },
+      { header: "Thủ kho", dataKey: "thuKho", width: 20 },
+      { header: "Mô tả", dataKey: "moTa", width: 30 },
+    ],
+    fetchData: async () => {
+      const result = await khoService.getPaginated({ limit: 10000 });
+      return result.data.map((item) => ({
+        ma: item.ma,
+        ten: item.ten,
+        diaChi: item.diaChi || "",
+        thuKho: item.thuKho || "",
+        moTa: item.moTa || "",
+      }));
+    },
+  }), []);
 
   const fetchData = async (
     page = pagination.current,
@@ -310,9 +334,7 @@ const KhoPage: React.FC = () => {
                 canCreate={canCreate}
                 onImported={handleImported}
               />
-              {canExport && (
-                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
-              )}
+              <ExportDanhMucButton config={exportConfig} canExport={canExport} />
               <Button
                 icon={<ReloadOutlined />}
                 onClick={() => fetchData(1, pagination.pageSize, "")}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
   Table,
@@ -32,6 +32,7 @@ import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { lyDoKhongHopLeImportConfig } from "@/components/import-danh-muc/configs";
+import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -70,6 +71,25 @@ const LyDoKhongHopLePage: React.FC = () => {
     onDeleteBatch: (ids) => lyDoKhongHopLeService.deleteBatch(ids),
     onDone: () => fetchData(),
   });
+
+  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
+    fileName: "danh-muc-ly-do-khong-hop-le",
+    sheetName: "Lý do không hợp lệ",
+    title: "DANH MỤC LÝ DO KHÔNG HỢP LỆ",
+    columns: [
+      { header: "Mã", dataKey: "ma", width: 15 },
+      { header: "Tên", dataKey: "ten", width: 35 },
+      { header: "Mô tả", dataKey: "moTa", width: 40 },
+    ],
+    fetchData: async () => {
+      const result = await lyDoKhongHopLeService.getPaginated({ limit: 10000 });
+      return result.data.map((item) => ({
+        ma: item.ma,
+        ten: item.ten,
+        moTa: item.moTa || "",
+      }));
+    },
+  }), []);
 
   const fetchData = async (
     page = pagination.current,
@@ -301,9 +321,7 @@ const LyDoKhongHopLePage: React.FC = () => {
                 canCreate={canCreate}
                 onImported={handleImported}
               />
-              {canExport && (
-                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
-              )}
+              <ExportDanhMucButton config={exportConfig} canExport={canExport} />
               <Button
                 icon={<ReloadOutlined />}
                 onClick={() => fetchData(1, pagination.pageSize, "")}

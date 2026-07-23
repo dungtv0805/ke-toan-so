@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
   Table,
@@ -40,6 +40,7 @@ import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { khoanMucImportConfig } from "@/components/import-danh-muc/configs";
+import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
 
 const { Text } = Typography;
 
@@ -98,6 +99,27 @@ const KhoanMucPage: React.FC = () => {
     onDeleteBatch: (ids) => khoanMucService.deleteBatch(ids),
     onDone: () => fetchData(),
   });
+
+  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
+    fileName: "danh-muc-khoan-muc",
+    sheetName: "Khoản mục",
+    title: "DANH MỤC KHOẢN MỤC",
+    columns: [
+      { header: "Mã", dataKey: "ma", width: 15 },
+      { header: "Tên khoản mục", dataKey: "ten", width: 35 },
+      { header: "Loại", dataKey: "loai", width: 15 },
+      { header: "Nhóm khoản mục", dataKey: "nhom", width: 25 },
+    ],
+    fetchData: async () => {
+      const result = await khoanMucService.getPaginated({ limit: 10000 });
+      return result.data.map((item) => ({
+        ma: item.ma,
+        ten: item.ten,
+        loai: item.loai === "CHI_PHI" ? "Chi phí" : item.loai === "DOANH_THU" ? "Doanh thu" : item.loai,
+        nhom: item.nhom || "",
+      }));
+    },
+  }), []);
 
   const fetchData = async (
     page = pagination.current,
@@ -433,9 +455,7 @@ const KhoanMucPage: React.FC = () => {
                 canCreate={canCreate}
                 onImported={handleImported}
               />
-              {canExport && (
-                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
-              )}
+              <ExportDanhMucButton config={exportConfig} canExport={canExport} />
               {bulkDeleteButton}
               {canCreate && (
                 <Button

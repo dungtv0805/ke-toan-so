@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
   Table,
@@ -48,6 +48,7 @@ import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { duAnImportConfig } from "@/components/import-danh-muc/configs";
+import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -96,6 +97,30 @@ const DuAnPage: React.FC = () => {
     onDeleteBatch: (ids) => duAnService.deleteBatch(ids),
     onDone: () => fetchData(),
   });
+
+  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
+    fileName: "danh-muc-du-an",
+    sheetName: "Dự án",
+    title: "DANH MỤC DỰ ÁN",
+    columns: [
+      { header: "Mã", dataKey: "ma", width: 15 },
+      { header: "Tên dự án", dataKey: "ten", width: 35 },
+      { header: "Chủ đầu tư", dataKey: "chuDauTu", width: 25 },
+      { header: "Trạng thái", dataKey: "trangThai", width: 18 },
+    ],
+    fetchData: async () => {
+      const result = await duAnService.getPaginated({ limit: 10000 });
+      const trangThaiMap: Record<string, string> = {
+        DANG_THUC_HIEN: "Đang thực hiện", HOAN_THANH: "Hoàn thành", TAM_DUNG: "Tạm dừng",
+      };
+      return result.data.map((item) => ({
+        ma: item.ma,
+        ten: item.ten,
+        chuDauTu: (item as any).chuDauTuTen || "",
+        trangThai: trangThaiMap[item.trangThai] || item.trangThai,
+      }));
+    },
+  }), []);
 
   const fetchData = async (
     page = pagination.current,
@@ -575,9 +600,7 @@ const DuAnPage: React.FC = () => {
                 canCreate={canCreate}
                 onImported={handleImported}
               />
-              {canExport && (
-                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
-              )}
+              <ExportDanhMucButton config={exportConfig} canExport={canExport} />
               <Button
                 icon={<ReloadOutlined />}
                 onClick={() =>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
   Table,
@@ -32,6 +32,7 @@ import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { hoSoChungTuImportConfig } from "@/components/import-danh-muc/configs";
+import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -70,6 +71,25 @@ const HoSoChungTuPage: React.FC = () => {
     onDeleteBatch: (ids) => hoSoChungTuService.deleteBatch(ids),
     onDone: () => fetchData(),
   });
+
+  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
+    fileName: "danh-muc-ho-so-chung-tu",
+    sheetName: "Hồ sơ chứng từ",
+    title: "DANH MỤC HỒ SƠ CHỨNG TỪ",
+    columns: [
+      { header: "Mã", dataKey: "ma", width: 15 },
+      { header: "Tên", dataKey: "ten", width: 35 },
+      { header: "Mô tả", dataKey: "moTa", width: 40 },
+    ],
+    fetchData: async () => {
+      const result = await hoSoChungTuService.getPaginated({ limit: 10000 });
+      return result.data.map((item) => ({
+        ma: item.ma,
+        ten: item.ten,
+        moTa: item.moTa || "",
+      }));
+    },
+  }), []);
 
   const fetchData = async (
     page = pagination.current,
@@ -279,9 +299,7 @@ const HoSoChungTuPage: React.FC = () => {
                 canCreate={canCreate}
                 onImported={handleImported}
               />
-              {canExport && (
-                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
-              )}
+              <ExportDanhMucButton config={exportConfig} canExport={canExport} />
               {bulkDeleteButton}
               {canCreate && (
                 <Button

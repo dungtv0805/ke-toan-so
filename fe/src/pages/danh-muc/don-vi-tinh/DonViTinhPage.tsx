@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
   Table,
@@ -33,6 +33,7 @@ import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { donViTinhImportConfig } from "@/components/import-danh-muc/configs";
+import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -71,6 +72,25 @@ const DonViTinhPage: React.FC = () => {
     onDeleteBatch: (ids) => donViTinhService.deleteBatch(ids),
     onDone: () => fetchData(),
   });
+
+  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
+    fileName: "danh-muc-don-vi-tinh",
+    sheetName: "Đơn vị tính",
+    title: "DANH MỤC ĐƠN VỊ TÍNH",
+    columns: [
+      { header: "Mã", dataKey: "ma", width: 15 },
+      { header: "Tên", dataKey: "ten", width: 35 },
+      { header: "Mô tả", dataKey: "moTa", width: 40 },
+    ],
+    fetchData: async () => {
+      const result = await donViTinhService.getPaginated({ limit: 10000 });
+      return result.data.map((item) => ({
+        ma: item.ma,
+        ten: item.ten,
+        moTa: item.moTa || "",
+      }));
+    },
+  }), []);
 
   const fetchData = async (
     page = pagination.current,
@@ -302,9 +322,7 @@ const DonViTinhPage: React.FC = () => {
                 canCreate={canCreate}
                 onImported={handleImported}
               />
-              {canExport && (
-                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
-              )}
+              <ExportDanhMucButton config={exportConfig} canExport={canExport} />
               <Button
                 icon={<ReloadOutlined />}
                 onClick={() => fetchData(1, pagination.pageSize, "")}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
   Table,
@@ -34,6 +34,7 @@ import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { nganHangImportConfig } from "@/components/import-danh-muc/configs";
+import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
 
 const { Text } = Typography;
 
@@ -92,6 +93,31 @@ const NganHangPage: React.FC = () => {
     onDeleteBatch: (ids) => nganHangService.deleteBatch(ids),
     onDone: () => fetchData(),
   });
+
+  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
+    fileName: "danh-muc-ngan-hang",
+    sheetName: "Ngân hàng",
+    title: "DANH MỤC TÀI KHOẢN NGÂN HÀNG",
+    columns: [
+      { header: "Mã", dataKey: "ma", width: 15 },
+      { header: "Tên", dataKey: "ten", width: 30 },
+      { header: "Số tài khoản", dataKey: "soTaiKhoan", width: 20 },
+      { header: "Ngân hàng", dataKey: "nganHang", width: 25 },
+      { header: "Chi nhánh", dataKey: "chiNhanh", width: 25 },
+      { header: "Chủ tài khoản", dataKey: "chuTaiKhoan", width: 25 },
+    ],
+    fetchData: async () => {
+      const result = await nganHangService.getPaginated({ limit: 10000, loai: "NGAN_HANG" });
+      return result.data.map((item) => ({
+        ma: item.ma,
+        ten: item.ten,
+        soTaiKhoan: item.soTaiKhoan || "",
+        nganHang: item.nganHang || "",
+        chiNhanh: item.chiNhanh || "",
+        chuTaiKhoan: item.chuTaiKhoan || "",
+      }));
+    },
+  }), []);
 
   const fetchData = async (
     page = pagination.current,
@@ -337,9 +363,7 @@ const NganHangPage: React.FC = () => {
                 canCreate={canCreate}
                 onImported={handleImported}
               />
-              {canExport && (
-                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
-              )}
+              <ExportDanhMucButton config={exportConfig} canExport={canExport} />
               {bulkDeleteButton}
               {canCreate && (
                 <Button

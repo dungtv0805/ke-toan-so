@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Space, Button, Breadcrumb } from 'antd';
 import {
   PlusOutlined,
@@ -11,6 +11,8 @@ import { useQuyChaunHandler, useQuyChaunState } from '../../QuyChaunHandlerConte
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { ImportDanhMucButton } from '@/components/import-danh-muc';
 import { quyChuanImportConfig } from '@/components/import-danh-muc/configs';
+import { ExportDanhMucButton, ExportDanhMucConfig } from '@/components/export-danh-muc';
+import { quyChaunService } from '@/services/quyChaunService';
 import './QuyChaunHeader.state';
 import { PaginationMeta } from '../table/QuyChaunTable.state';
 
@@ -34,6 +36,29 @@ export const QuyChaunHeader: React.FC<QuyChaunHeaderProps> = ({ settingsButton, 
   const [activeTab] = useQuyChaunState('activeTab', 'all');
   const [pagination] = useQuyChaunState('pagination', DEFAULT_PAGINATION);
   const [localSearchText, setLocalSearchText] = useState(searchText);
+
+  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
+    fileName: "danh-muc-quy-chuan",
+    sheetName: "Quy chuẩn",
+    title: "DANH MỤC QUY CHUẨN HẠCH TOÁN",
+    columns: [
+      { header: "Nghiệp vụ", dataKey: "nghiepVu", width: 30 },
+      { header: "Loại giao dịch", dataKey: "loaiGiaoDich", width: 20 },
+      { header: "TK Nợ", dataKey: "tkNo", width: 12 },
+      { header: "TK Có", dataKey: "tkCo", width: 12 },
+      { header: "Mô tả", dataKey: "moTa", width: 40 },
+    ],
+    fetchData: async () => {
+      const data = await quyChaunService.getAll();
+      return data.map((item) => ({
+        nghiepVu: item.nghiepVu || item.ten || "",
+        loaiGiaoDich: item.loaiGiaoDichMa || "",
+        tkNo: item.tkNo || "",
+        tkCo: item.tkCo || "",
+        moTa: item.moTa || "",
+      }));
+    },
+  }), []);
 
   // Sync local state with global state (for refresh button)
   useEffect(() => {
@@ -91,7 +116,7 @@ export const QuyChaunHeader: React.FC<QuyChaunHeaderProps> = ({ settingsButton, 
         actions={
           <>
             {settingsButton}
-            {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+            <ExportDanhMucButton config={exportConfig} canExport={canExport} />
             <ImportDanhMucButton
               config={quyChuanImportConfig}
               canCreate={canCreate}

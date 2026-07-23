@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
   Table,
@@ -36,6 +36,7 @@ import { usePagePermission } from "@/hooks/usePagePermission";
 import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { nhomKhoanMucImportConfig } from "@/components/import-danh-muc/configs";
+import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
 
 const { Text } = Typography;
 
@@ -69,6 +70,27 @@ const NhomKhoanMucPage: React.FC = () => {
     onDeleteBatch: (ids) => nhomKhoanMucService.deleteBatch(ids),
     onDone: () => fetchData(),
   });
+
+  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
+    fileName: "danh-muc-nhom-khoan-muc",
+    sheetName: "Nhóm khoản mục",
+    title: "DANH MỤC NHÓM KHOẢN MỤC",
+    columns: [
+      { header: "Mã", dataKey: "ma", width: 15 },
+      { header: "Tên nhóm", dataKey: "ten", width: 35 },
+      { header: "Loại", dataKey: "loai", width: 15 },
+      { header: "Mô tả", dataKey: "moTa", width: 40 },
+    ],
+    fetchData: async () => {
+      const result = await nhomKhoanMucService.getPaginated({ limit: 10000 });
+      return result.data.map((item) => ({
+        ma: item.ma,
+        ten: item.ten,
+        loai: item.loai === "CHI_PHI" ? "Chi phí" : item.loai === "DOANH_THU" ? "Doanh thu" : item.loai,
+        moTa: item.moTa || "",
+      }));
+    },
+  }), []);
 
   const fetchData = async (
     page = pagination.current,
@@ -273,9 +295,7 @@ const NhomKhoanMucPage: React.FC = () => {
                 canCreate={canCreate}
                 onImported={handleImported}
               />
-              {canExport && (
-                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
-              )}
+              <ExportDanhMucButton config={exportConfig} canExport={canExport} />
               {bulkDeleteButton}
               {canCreate && (
                 <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>

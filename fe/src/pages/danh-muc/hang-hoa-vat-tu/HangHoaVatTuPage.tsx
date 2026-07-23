@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
   Table,
@@ -38,6 +38,7 @@ import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { hangHoaVatTuImportConfig } from "@/components/import-danh-muc/configs";
+import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -104,6 +105,38 @@ const HangHoaVatTuPage: React.FC = () => {
     onDeleteBatch: (ids) => hangHoaVatTuService.deleteBatch(ids),
     onDone: () => fetchData(),
   });
+
+  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
+    fileName: "danh-muc-hang-hoa-vat-tu",
+    sheetName: "Hàng hóa vật tư",
+    title: "DANH MỤC HÀNG HÓA VẬT TƯ",
+    columns: [
+      { header: "Mã", dataKey: "ma", width: 15 },
+      { header: "Tên", dataKey: "ten", width: 35 },
+      { header: "Tính chất", dataKey: "tinhChat", width: 15 },
+      { header: "Đơn vị tính", dataKey: "donViTinh", width: 15 },
+      { header: "Nhóm vật tư", dataKey: "nhomVatTu", width: 20 },
+      { header: "Quy cách", dataKey: "quyCach", width: 20 },
+      { header: "TK Kho", dataKey: "tkKho", width: 12 },
+      { header: "Đơn giá", dataKey: "donGia", width: 15 },
+    ],
+    fetchData: async () => {
+      const result = await hangHoaVatTuService.getPaginated({ limit: 10000 });
+      const tinhChatMap: Record<string, string> = {
+        TAI_SAN: "Tài sản", HANG_HOA: "Hàng hóa", NGUYEN_LIEU: "Nguyên liệu",
+      };
+      return result.data.map((item) => ({
+        ma: item.ma,
+        ten: item.ten,
+        tinhChat: item.tinhChat ? (tinhChatMap[item.tinhChat] || item.tinhChat) : "",
+        donViTinh: item.donViTinhTen || item.donViTinhMa || "",
+        nhomVatTu: item.nhomVatTuTen || item.nhomVatTuMa || "",
+        quyCach: item.quyCach || "",
+        tkKho: item.tkKho || "",
+        donGia: item.donGia || "",
+      }));
+    },
+  }), []);
 
   const fetchData = async (
     page = pagination.current,
@@ -390,9 +423,7 @@ const HangHoaVatTuPage: React.FC = () => {
                 canCreate={canCreate}
                 onImported={handleImported}
               />
-              {canExport && (
-                <Button icon={<ExportOutlined />}>Xuất Excel</Button>
-              )}
+              <ExportDanhMucButton config={exportConfig} canExport={canExport} />
               <Button
                 icon={<ReloadOutlined />}
                 onClick={() => fetchData(1, pagination.pageSize, "")}

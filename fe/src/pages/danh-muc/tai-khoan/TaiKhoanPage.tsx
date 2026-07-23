@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
   Table,
@@ -39,6 +39,7 @@ import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { taiKhoanImportConfig } from "@/components/import-danh-muc/configs";
+import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
 
 const { Text } = Typography;
 
@@ -136,6 +137,41 @@ const TaiKhoanPage: React.FC = () => {
 
   // Lọc theo cột ở header + cố định cột
   const { filterable, matches, hasPinned } = useTableColumnFilters("danh-muc-tai-khoan");
+
+  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
+    fileName: "danh-muc-tai-khoan",
+    sheetName: "Tài khoản",
+    title: "DANH MỤC TÀI KHOẢN",
+    columns: [
+      { header: "Mã tài khoản", dataKey: "ma", width: 15 },
+      { header: "Tên tài khoản", dataKey: "ten", width: 40 },
+      { header: "Loại", dataKey: "loai", width: 20 },
+      { header: "Nhóm", dataKey: "nhom", width: 15 },
+      { header: "Chi tiết theo", dataKey: "chiTietTheo", width: 20 },
+    ],
+    fetchData: async () => {
+      const data = await taiKhoanService.getHierarchy();
+      const loaiMap: Record<string, string> = {
+        TAI_SAN: "Tài sản", NO_PHAI_TRA: "Nợ phải trả", VON_CHU_SO_HUU: "Vốn chủ sở hữu",
+        DOANH_THU: "Doanh thu", CHI_PHI: "Chi phí", THU_NHAP_KHAC: "Thu nhập khác",
+        CHI_PHI_KHAC: "Chi phí khác", XAC_DINH_KQKD: "Xác định KQKD",
+      };
+      const nhomMap: Record<string, string> = {
+        NO: "Nợ", CO: "Có", LUONG_TINH: "Lưỡng tính", KHONG_CO_SO_DU: "Không có số dư",
+      };
+      const chiTietMap: Record<string, string> = {
+        KHACH_HANG: "Khách hàng", NHA_CUNG_CAP: "Nhà cung cấp",
+        NHAN_VIEN: "Nhân viên", NHA_THAU: "Nhà thầu", NGAN_HANG_QUY: "Ngân hàng & Quỹ",
+      };
+      return sortHierarchy(data).map((item) => ({
+        ma: item.ma,
+        ten: item.ten,
+        loai: loaiMap[item.loai] || item.loai,
+        nhom: nhomMap[item.nhom] || item.nhom,
+        chiTietTheo: item.chiTietTheo ? (chiTietMap[item.chiTietTheo] || item.chiTietTheo) : "",
+      }));
+    },
+  }), []);
 
   // Filter + sort hierarchy từ toàn bộ data.
   // `keepWithAncestors`: dòng nào khớp thì kéo theo cả TK cha — nếu không, `sortHierarchy` mất
@@ -446,7 +482,7 @@ const TaiKhoanPage: React.FC = () => {
                 canCreate={canCreate}
                 onImported={handleImported}
               />
-              {canExport && <Button icon={<ExportOutlined />}>Xuất Excel</Button>}
+              <ExportDanhMucButton config={exportConfig} canExport={canExport} />
               {canCreate && (
                 <Button
                   type="primary"
