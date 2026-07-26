@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   BadRequestException,
+  Headers,
 } from '@nestjs/common';
 import { ChungTuService } from './chung-tu.service';
 import { CreateChungTuDto, UpdateChungTuDto } from '../dto';
@@ -122,10 +123,14 @@ export class ChungTuController {
 
   @Get('chung-tu/cash-flow-series')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
-  async cashFlowSeries(@Query('year') year?: string, @Query('month') month?: string) {
+  async cashFlowSeries(
+    @Headers('authorization') authToken: string,
+    @Query('year') year?: string,
+    @Query('month') month?: string,
+  ) {
     const y = Number(year) || new Date().getFullYear();
     const m = month ? Number(month) : undefined;
-    return this.chungTuService.getCashFlowSeries(y, m);
+    return this.chungTuService.getCashFlowSeries(y, m, authToken);
   }
 
   @Post('phieu-thu/import')

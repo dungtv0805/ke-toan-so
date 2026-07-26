@@ -24,6 +24,18 @@ export interface CashFlowCompositionItem {
   soTien: number;
 }
 
+export interface CashFlowPoint {
+  thang: number;
+  thu: number;
+  chi: number;
+}
+
+export interface CashFlowSeries {
+  /** Tồn quỹ 111/112 tại đầu kỳ hiển thị (số dư đầu kỳ + phát sinh các kỳ trước). */
+  soDuDauKy: number;
+  series: CashFlowPoint[];
+}
+
 export interface PhieuQueryParams {
   page?: number;
   limit?: number;
@@ -105,13 +117,21 @@ export class PhieuService extends ServiceBase {
     return this.get<PhieuSummaryItem[]>({ endpoint: `/summary/${type}`, params });
   }
 
-  /** Dòng tiền theo tháng (hoặc theo tuần nếu có month) — thu=Nợ 111/112, chi=Có 111/112. */
-  async getCashFlowSeries(year: number, month?: number): Promise<{ thang: number; thu: number; chi: number }[]> {
-    const data = await this.get<{ thang: number; thu: number; chi: number }[]>({
+  /**
+   * Dòng tiền theo tháng (hoặc theo tuần nếu có month) — thu=Nợ 111/112, chi=Có 111/112,
+   * kèm tồn quỹ đầu kỳ để số dư luỹ kế không bắt đầu từ 0.
+   */
+  async getCashFlowSeries(year: number, month?: number): Promise<CashFlowSeries> {
+    const data = await this.get<CashFlowSeries | CashFlowPoint[]>({
       endpoint: '/../chung-tu/cash-flow-series',
       params: month ? { year, month } : { year },
     });
-    return Array.isArray(data) ? data : [];
+    // BE cũ trả thẳng mảng (chưa có soDuDauKy) — giữ tương thích khi FE deploy trước.
+    if (Array.isArray(data)) return { soDuDauKy: 0, series: data };
+    return {
+      soDuDauKy: data?.soDuDauKy || 0,
+      series: Array.isArray(data?.series) ? data.series : [],
+    };
   }
 
   /** Tỷ trọng tiền thu/chi theo mã dòng tiền (phân loại theo Nợ/Có 111/112). */

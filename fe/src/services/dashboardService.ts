@@ -141,13 +141,18 @@ export const dashboardService = {
     }
   },
 
-  /** Dòng tiền theo tháng (hoặc theo tuần nếu truyền month): thu=Nợ 111/112, chi=Có 111/112; số dư lũy kế. */
+  /**
+   * Dòng tiền theo tháng (hoặc theo tuần nếu truyền month): thu=Nợ 111/112, chi=Có 111/112.
+   *
+   * Số dư luỹ kế bắt đầu từ TỒN ĐẦU KỲ, không phải 0 — nếu không, "Tồn" hiển thị
+   * chênh lệch thu chi trong kỳ và ra âm ngay khi công ty tiêu vào số dư mang sang.
+   */
   async getCashSeries(year: number, month?: number): Promise<CashSeriesPoint[]> {
     const buckets = month ? 5 : 12;
     try {
-      const rows = await phieuThuService.getCashFlowSeries(year, month);
-      const by = new Map(rows.map((r) => [r.thang, r]));
-      let soDu = 0;
+      const { soDuDauKy, series } = await phieuThuService.getCashFlowSeries(year, month);
+      const by = new Map(series.map((r) => [r.thang, r]));
+      let soDu = soDuDauKy;
       return Array.from({ length: buckets }, (_, i) => {
         const r = by.get(i + 1);
         const thu = r?.thu || 0;

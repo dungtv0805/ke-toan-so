@@ -6,6 +6,7 @@ import { CreateChungTuDto, UpdateChungTuDto } from '../dto';
 import { VoucherNumberService, LoaiResolverService } from '../shared';
 import { PaginatedResult } from '@app/dto';
 import { TenantContextService } from '@app/core';
+import { ServiceClient } from '@app/service-client';
 import { ChungTuQueryDto } from './dto/chung-tu-query.dto';
 import { buildChungTuMongoQuery } from './helpers';
 import { buildSummaryAggregation } from '../nhat-ky-chung/helpers';
@@ -37,6 +38,7 @@ export class ChungTuService {
     private readonly voucherNumberService: VoucherNumberService,
     private readonly tenantContext: TenantContextService,
     private readonly loaiResolver: LoaiResolverService,
+    private readonly serviceClient: ServiceClient,
   ) {}
 
   async findAllPaginated(
@@ -156,24 +158,84 @@ export class ChungTuService {
   }
 
   /**
+   * Số dư tiền (111/112, gồm TK con) tại thời điểm ngay TRƯỚC `before`.
+   *
+   * = số dư đầu kỳ nhập tay (master-data /so-du-dau-ky) + phát sinh tiền của các
+   * chứng từ trước mốc đó. Cùng công thức với `buildSoChiTiet` (reporting-service)
+   * và `buildSoQuy` (cash-book-service) để ba báo cáo luôn khớp nhau.
+   */
+  private async getCashOpeningBalance(
+    before: Date,
+    tenantId: string | undefined,
+    authToken?: string,
+  ): Promise<number> {
+    const openingRes = await this.serviceClient.getSoDuDauKyRaw(authToken);
+    let opening = 0;
+    if (openingRes.success) {
+      for (const row of openingRes.data?.items ?? []) {
+        if (!/^11[12]/.test(row.maTaiKhoan || '')) continue;
+        opening += (Number(row.duNo) || 0) - (Number(row.duCo) || 0);
+      }
+    }
+
+    const match: Record<string, unknown> = { ngay: { $lt: before } };
+    if (tenantId) match.tenantId = tenantId;
+
+    const agg = (await this.chungTuRepository
+      .aggregate([
+        { $match: match },
+        {
+          $facet: {
+            thu: [
+              { $match: { 'danhMuc.taiKhoanNo.ma': { $regex: '^11[12]' } } },
+              { $group: { _id: null, v: { $sum: '$soTien' } } },
+            ],
+            chi: [
+              { $match: { 'danhMuc.taiKhoanCo.ma': { $regex: '^11[12]' } } },
+              { $group: { _id: null, v: { $sum: '$soTien' } } },
+            ],
+          },
+        },
+      ])
+      .toArray()) as { thu: { v: number }[]; chi: { v: number }[] }[];
+    const facet = agg[0] || { thu: [], chi: [] };
+
+    return opening + (facet.thu[0]?.v || 0) - (facet.chi[0]?.v || 0);
+  }
+
+  /**
    * Dòng tiền theo tháng cho năm chọn: thu = Nợ 111/112, chi = Có 111/112 (gồm TK con),
    * tính trực tiếp bằng aggregation (không qua sổ quỹ phân trang). Lọc theo tenant.
+   *
+   * Trả kèm `soDuDauKy` — tồn quỹ tại đầu kỳ hiển thị. Thiếu nó thì FE cộng dồn
+   * thu−chi từ 0 nên "Tồn" trên dashboard chỉ là chênh lệch thu chi trong kỳ,
+   * âm ngay khi công ty tiêu vào số dư mang sang từ kỳ trước.
    */
   async getCashFlowSeries(
     year: number,
     month?: number,
-  ): Promise<{ success: boolean; data: { thang: number; thu: number; chi: number }[] }> {
+    authToken?: string,
+  ): Promise<{
+    success: boolean;
+    data: {
+      soDuDauKy: number;
+      series: { thang: number; thu: number; chi: number }[];
+    };
+  }> {
     const tenantId = this.tenantContext.getCurrentTenantId();
     // month có giá trị → chia theo TUẦN trong tháng (Tuần 1–5); ngược lại theo 12 tháng.
     const weekly = !!month && month >= 1 && month <= 12;
+    const periodStart = weekly
+      ? new Date(year, month - 1, 1, 0, 0, 0, 0)
+      : new Date(year, 0, 1, 0, 0, 0, 0);
     const match: Record<string, unknown> = {
       ngay: weekly
         ? {
-            $gte: new Date(year, month - 1, 1, 0, 0, 0, 0),
+            $gte: periodStart,
             $lte: new Date(year, month, 0, 23, 59, 59, 999),
           }
         : {
-            $gte: new Date(year, 0, 1, 0, 0, 0, 0),
+            $gte: periodStart,
             $lte: new Date(year, 11, 31, 23, 59, 59, 999),
           },
     };
@@ -207,12 +269,17 @@ export class ChungTuService {
     const thuBy = new Map(facet.thu.map((g) => [g._id, g.v]));
     const chiBy = new Map(facet.chi.map((g) => [g._id, g.v]));
     const buckets = weekly ? 5 : 12;
-    const data = Array.from({ length: buckets }, (_, i) => ({
+    const series = Array.from({ length: buckets }, (_, i) => ({
       thang: i + 1,
       thu: thuBy.get(i + 1) || 0,
       chi: chiBy.get(i + 1) || 0,
     }));
-    return { success: true, data };
+    const soDuDauKy = await this.getCashOpeningBalance(
+      periodStart,
+      tenantId,
+      authToken,
+    );
+    return { success: true, data: { soDuDauKy, series } };
   }
 
   async findAll(loai?: LoaiChungTu): Promise<ChungTu[]> {

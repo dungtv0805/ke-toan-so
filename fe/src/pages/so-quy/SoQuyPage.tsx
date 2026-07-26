@@ -428,7 +428,9 @@ const SoQuyPage: React.FC = () => {
                   <Table
                     columns={cfgColumns}
                     dataSource={data}
-                    rowKey="id"
+                    // Entry sổ quỹ không có id, và một chứng từ chuyển quỹ sinh 2 dòng
+                    // (thu + chi) cùng số phiếu → khoá phải gộp cả vị trí.
+                    rowKey={(r, index) => `${r.soPhieu}-${index}`}
                     loading={loading}
                     pagination={{
                       total: data.length,
