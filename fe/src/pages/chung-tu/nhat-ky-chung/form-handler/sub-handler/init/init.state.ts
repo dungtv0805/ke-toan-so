@@ -109,6 +109,9 @@ export interface InitFormStates extends BaseStates {
   submitting: boolean;
   isEditing: boolean;
   masterDataLoaded: boolean;
+
+  // Số phiếu của chứng từ gốc khi đang nhân bản (null nếu không phải nhân bản)
+  cloneFromSoPhieu: string | null;
 }
 
 declare module "../../nhat-ky-chung-form.handler" {

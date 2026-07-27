@@ -2,7 +2,9 @@ import {
   DatePicker,
   Select,
   Input,
+  Tag,
 } from "antd";
+import { CopyOutlined } from "@ant-design/icons";
 import {
   useNhatKyChungFormState,
   useNhatKyChungFormHandler,
@@ -14,6 +16,7 @@ export function FormHeader() {
   const handler = useNhatKyChungFormHandler();
   const [header] = useNhatKyChungFormState("header", null);
   const [isEditing] = useNhatKyChungFormState("isEditing", false);
+  const [cloneFromSoPhieu] = useNhatKyChungFormState("cloneFromSoPhieu", null);
   const [loaiGiaoDichList] = useNhatKyChungFormState("loaiGiaoDichList", [] as LoaiGiaoDich[]);
 
   // Convert loaiGiaoDichList to options format
@@ -32,6 +35,14 @@ export function FormHeader() {
 
   return (
     <div className="nkc-header-form">
+      {cloneFromSoPhieu && (
+        <div className="mb-2">
+          <Tag icon={<CopyOutlined />} color="processing">
+            Bản sao từ chứng từ {cloneFromSoPhieu} — lưu sẽ tạo chứng từ mới
+          </Tag>
+        </div>
+      )}
+
       {/* Row 1: Các field cơ bản */}
       <div className="flex flex-wrap gap-3 items-end mb-2">
         {isEditing && header?.soPhieu && (

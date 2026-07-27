@@ -171,6 +171,7 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
     ]);
 
     this.setState("isEditing", false);
+    this.setState("cloneFromSoPhieu", null);
   }
 
   private buildDanhMuc(chiTiet: ChungTuChiTiet, header: ChungTuHeader): DanhMuc {

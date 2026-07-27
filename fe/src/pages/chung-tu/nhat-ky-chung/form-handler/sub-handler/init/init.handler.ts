@@ -15,54 +15,89 @@ import { loaiGiaoDichService } from "@/services/loaiGiaoDichService";
 import { hopDongService } from "@/services/hopDongService";
 import { nganHangService } from "@/services/nganHangService";
 import dayjs from "dayjs";
+import { message } from "antd";
 import { v4 as uuidv4 } from "uuid";
 import "./init.event";
 import "./init.state";
 import { NhatKyChungFormStates, NhatKyChungFormEvents } from "../../nhat-ky-chung-form.handler";
+import { buildCloneFromLoaded } from "../../cloneChungTu";
+import { ChungTuHeader, ChungTuChiTiet } from "./init.state";
 
 @RegisterHandler("nhat-ky-chung-form")
 export class InitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyChungFormStates> {
   @HandlerDecorator("init")
-  async init(params: { soPhieu?: string }): Promise<void> {
+  async init(params: { soPhieu?: string; mode?: "edit" | "clone" }): Promise<void> {
     this.initializeDefaultStates();
 
     // Load master data
     await this.executeEvent("loadMasterData", {});
 
-    // Nếu có soPhieu → load data để sửa
+    const isClone = params.mode === "clone";
+
+    // Nếu có soPhieu → load data để sửa hoặc để nhân bản
     if (params.soPhieu) {
       await this.executeEvent("loadDataBySoPhieu", { soPhieu: params.soPhieu });
-      this.setState("isEditing", true);
+
+      if (isClone) {
+        this.applyClone(params.soPhieu);
+      } else {
+        this.setState("isEditing", true);
+      }
     } else {
-      // Tạo mới - khởi tạo header và 1 dòng chi tiết mặc định
-      this.setState("header", {
-        ngay: dayjs(),
-        ngayGhiSo: dayjs(),
-        loaiGiaoDich: undefined,
-        loai: undefined,
-        loaiTen: undefined,
-        dienGiaiChung: "",
-        nguoiGiaoDich: "",
-        diaChi: "",
-        ghiChu: "",
-      });
-
-      this.setState("chiTietList", [
-        {
-          key: uuidv4(),
-          taiKhoanNo: "",
-          taiKhoanCo: "",
-          soTien: 0,
-          noiDung: "",
-          nghiepVu: undefined,
-          nghiepVuTen: undefined,
-        },
-      ]);
-
-      this.setState("isEditing", false);
+      this.initializeNewChungTu();
     }
 
     this.setState("loading", false);
+  }
+
+  /**
+   * Biến dữ liệu chứng từ vừa load thành bản nháp chứng từ mới (nhân bản).
+   * isEditing = false → submit đi nhánh createBatch, backend sinh số phiếu mới.
+   */
+  private applyClone(soPhieuGoc: string): void {
+    const header = this.getState("header") as ChungTuHeader | null;
+    const chiTietList = (this.getState("chiTietList") as ChungTuChiTiet[]) || [];
+
+    if (!header) {
+      message.error("Không tải được chứng từ gốc để nhân bản");
+      this.initializeNewChungTu();
+      return;
+    }
+
+    const cloned = buildCloneFromLoaded(header, chiTietList);
+    this.setState("header", cloned.header);
+    this.setState("chiTietList", cloned.chiTietList);
+    this.setState("cloneFromSoPhieu", soPhieuGoc);
+    this.setState("isEditing", false);
+  }
+
+  /** Tạo mới - khởi tạo header và 1 dòng chi tiết mặc định */
+  private initializeNewChungTu(): void {
+    this.setState("header", {
+      ngay: dayjs(),
+      ngayGhiSo: dayjs(),
+      loaiGiaoDich: undefined,
+      loai: undefined,
+      loaiTen: undefined,
+      dienGiaiChung: "",
+      nguoiGiaoDich: "",
+      diaChi: "",
+      ghiChu: "",
+    });
+
+    this.setState("chiTietList", [
+      {
+        key: uuidv4(),
+        taiKhoanNo: "",
+        taiKhoanCo: "",
+        soTien: 0,
+        noiDung: "",
+        nghiepVu: undefined,
+        nghiepVuTen: undefined,
+      },
+    ]);
+
+    this.setState("isEditing", false);
   }
 
   @HandlerDecorator("loadMasterData")
@@ -151,6 +186,7 @@ export class InitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyCh
     this.setState("submitting", false);
     this.setState("isEditing", false);
     this.setState("masterDataLoaded", false);
+    this.setState("cloneFromSoPhieu", null);
     this.setState("header", null);
     this.setState("chiTietList", []);
     this.setState("taiKhoanList", []);

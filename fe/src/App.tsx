@@ -304,6 +304,14 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+                    path="nhat-ky-chung/:soPhieu/nhan-ban"
+                    element={
+                      <ProtectedRoute requiredPermission="/chung-tu/nhat-ky-chung:xem">
+                        <NhatKyChungFormPage />
+                      </ProtectedRoute>
+                    }
+                  />
                   {/* Coming Soon */}
                   <Route path="phieu-nhap" element={<ComingSoonPage />} />
                   <Route path="phieu-xuat" element={<ComingSoonPage />} />

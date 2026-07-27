@@ -1,7 +1,7 @@
 import { BaseEvents } from "@/common";
 
 export interface InitFormEvent extends BaseEvents {
-  init: { params: { soPhieu?: string }; result: void };
+  init: { params: { soPhieu?: string; mode?: "edit" | "clone" }; result: void };
   loadMasterData: { params: {}; result: void };
 }
 

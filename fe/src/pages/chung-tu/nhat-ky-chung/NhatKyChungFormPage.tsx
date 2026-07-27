@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useMatch } from "react-router-dom";
 import { Card } from "antd";
 import {
   NhatKyChungFormHandlerProvider,
@@ -18,11 +18,12 @@ import {
 function NhatKyChungFormPageInner() {
   const handler = useNhatKyChungFormHandler();
   const { soPhieu } = useParams<{ soPhieu?: string }>();
+  const isCloneRoute = !!useMatch("/chung-tu/nhat-ky-chung/:soPhieu/nhan-ban");
   const [loading] = useNhatKyChungFormState("loading", true);
 
   useEffect(() => {
-    handler.executeEvent("init", { soPhieu });
-  }, [handler, soPhieu]);
+    handler.executeEvent("init", { soPhieu, mode: isCloneRoute ? "clone" : "edit" });
+  }, [handler, soPhieu, isCloneRoute]);
 
   if (loading) {
     return (

@@ -2,6 +2,7 @@ import { Space, Button, Tooltip, Popconfirm } from "antd";
 import {
   EyeOutlined,
   EditOutlined,
+  CopyOutlined,
   DeleteOutlined,
   CheckOutlined,
   CloseOutlined,
@@ -21,7 +22,7 @@ interface EntryActionsProps {
 export function EntryActions({ entry }: EntryActionsProps) {
   const navigate = useNavigate();
   const handler = useNhatKyChungHandler();
-  const { canEdit, canDelete } = usePagePermission("/chung-tu/nhat-ky-chung");
+  const { canCreate, canEdit, canDelete } = usePagePermission("/chung-tu/nhat-ky-chung");
 
   // Row edit state (for inline edit via double-click)
   const [editingRowId] = useNhatKyChungState("editingRowId", null);
@@ -43,6 +44,13 @@ export function EntryActions({ entry }: EntryActionsProps) {
   // Navigate to edit page (for Edit button)
   const handleEdit = () => {
     navigate(`/chung-tu/nhat-ky-chung/${encodeURIComponent(entry.soPhieu)}/sua`);
+  };
+
+  // Nhân bản: mở form tạo mới đã điền sẵn dữ liệu của chứng từ này
+  const handleClone = () => {
+    navigate(
+      `/chung-tu/nhat-ky-chung/${encodeURIComponent(entry.soPhieu)}/nhan-ban`
+    );
   };
 
   // Inline row edit handlers (for double-click)
@@ -99,6 +107,18 @@ export function EntryActions({ entry }: EntryActionsProps) {
           disabled={isOtherRowEditing}
         />
       </Tooltip>
+
+      {canCreate && (
+        <Tooltip title="Nhân bản chứng từ">
+          <Button
+            type="text"
+            size="small"
+            icon={<CopyOutlined />}
+            onClick={handleClone}
+            disabled={isOtherRowEditing}
+          />
+        </Tooltip>
+      )}
 
       {canEdit && (isApproved ? (
         <Tooltip title="Không thể sửa bút toán đã duyệt">
