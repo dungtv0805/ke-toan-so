@@ -10,8 +10,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ChungTu, LoaiChungTu } from "@/types";
 import { phieuTemplateService } from "@/services/phieuTemplateService";
+import { nhatKyChungService } from "@/services/nhatKyChungService";
 import { printPhieu } from "../../../phieu/lib/printPhieu";
 import { getDefaultTemplate } from "../../../phieu/lib/printTemplates";
+import { toPhieuLines, type PhieuLine } from "../../../phieu/lib/phieuLines";
 import {
   useNhatKyChungState,
   useNhatKyChungHandler,
@@ -65,10 +67,26 @@ export function EntryViewModal() {
         taiKhoanCo: { ma: entry.taiKhoanCo ?? danhMuc?.taiKhoanCo?.ma },
       },
     } as unknown as ChungTu;
-    printPhieu(phieu, template, {
-      tenCongTy: currentTenant?.tenantName ?? "",
-      diaChiCongTy: "",
-    });
+
+    // Modal chỉ giữ 1 dòng, nhưng chứng từ có thể nhiều dòng cùng số phiếu →
+    // nạp đủ để phiếu in ra có bảng chi tiết và số tiền là tổng.
+    let dong: PhieuLine[] | undefined;
+    try {
+      const records = await nhatKyChungService.getBySoPhieu(entry.soPhieu);
+      if (records.length > 0) dong = toPhieuLines(records);
+    } catch (e) {
+      console.error("Error loading voucher lines for print:", e);
+    }
+
+    printPhieu(
+      phieu,
+      template,
+      {
+        tenCongTy: currentTenant?.tenantName ?? "",
+        diaChiCongTy: "",
+      },
+      dong
+    );
   };
 
   return (

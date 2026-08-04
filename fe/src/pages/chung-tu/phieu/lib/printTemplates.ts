@@ -26,6 +26,10 @@ export const PHIEU_PLACEHOLDERS: PlaceholderDoc[] = [
   { token: "{{ghiChu}}", moTa: "Kèm theo / ghi chú" },
   { token: "{{tenCongTy}}", moTa: "Tên công ty" },
   { token: "{{diaChiCongTy}}", moTa: "Địa chỉ công ty" },
+  {
+    token: "{{bangChiTiet}}",
+    moTa: "Bảng liệt kê các dòng hạch toán của chứng từ (diễn giải, TK Nợ, TK Có, số tiền) kèm dòng cộng",
+  },
 ];
 
 const BASE_STYLE = `
@@ -46,6 +50,12 @@ const BASE_STYLE = `
     .phieu .signs > div { flex: 1; font-size: 12px; }
     .phieu .signs .role { font-weight: bold; }
     .phieu .signs .note { font-style: italic; }
+    .phieu .ct-chi-tiet { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 12px; }
+    .phieu .ct-chi-tiet th, .phieu .ct-chi-tiet td { border: 1px solid #000; padding: 3px 6px; }
+    .phieu .ct-chi-tiet th { font-weight: bold; text-align: center; }
+    .phieu .ct-chi-tiet .tk { text-align: center; white-space: nowrap; }
+    .phieu .ct-chi-tiet .tien { text-align: right; white-space: nowrap; }
+    .phieu .ct-chi-tiet tfoot td { font-weight: bold; }
   </style>
 `;
 
@@ -67,6 +77,7 @@ const PHIEU_THU = `
   <div class="row"><span class="label">Họ và tên người nộp tiền: </span><span class="val">{{nguoiGiaoDich}}</span></div>
   <div class="row"><span class="label">Địa chỉ: </span>{{diaChi}}</div>
   <div class="row"><span class="label">Lý do nộp: </span>{{noiDung}}</div>
+  {{bangChiTiet}}
   <div class="row"><span class="label">Số tiền: </span><span class="val">{{soTien}}</span></div>
   <div class="row"><span class="label">Viết bằng chữ: </span><i>{{soTienBangChu}}</i></div>
   <div class="row"><span class="label">Kèm theo: </span>{{ghiChu}} chứng từ gốc.</div>
@@ -98,6 +109,7 @@ const PHIEU_CHI = `
   <div class="row"><span class="label">Họ và tên người nhận tiền: </span><span class="val">{{nguoiGiaoDich}}</span></div>
   <div class="row"><span class="label">Địa chỉ: </span>{{diaChi}}</div>
   <div class="row"><span class="label">Lý do chi: </span>{{noiDung}}</div>
+  {{bangChiTiet}}
   <div class="row"><span class="label">Số tiền: </span><span class="val">{{soTien}}</span></div>
   <div class="row"><span class="label">Viết bằng chữ: </span><i>{{soTienBangChu}}</i></div>
   <div class="row"><span class="label">Kèm theo: </span>{{ghiChu}} chứng từ gốc.</div>

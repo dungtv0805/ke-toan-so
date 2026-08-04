@@ -90,6 +90,16 @@ export class PhieuService extends ServiceBase {
     return mapChungTu(data);
   }
 
+  /**
+   * Mọi dòng hạch toán cùng một số phiếu — 1 chứng từ = nhiều bản ghi ChungTu.
+   * Dùng khi in để phiếu thể hiện đủ các dòng thay vì chỉ dòng đang chọn.
+   */
+  async getBySoPhieu(soPhieu: string): Promise<ChungTu[]> {
+    const response = await this.getAll({ search: soPhieu, limit: 100 });
+    // search là tìm gần đúng nên phải lọc lại cho khớp chính xác số phiếu.
+    return response.data.filter((item) => item.soPhieu === soPhieu);
+  }
+
   async create(dto: CreatePhieuDto): Promise<ChungTu> {
     const result = await this.post<ChungTuResponse>(dto);
     return mapChungTu(result);
