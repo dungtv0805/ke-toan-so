@@ -50,6 +50,7 @@ import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
 import GhiNhanDoanhThuSection from './GhiNhanDoanhThuSection';
 import ThuTienDonHangModal from './ThuTienDonHangModal';
+import TaoNhanhHopDongModal from './TaoNhanhHopDongModal';
 
 const { Text, Title } = Typography;
 
@@ -84,6 +85,10 @@ const moneyProps = {
   parser: (value?: string) => (value?.replace(/[^\d.-]/g, '') ?? '') as unknown as number,
 };
 
+/** Vùng cuộn dọc của app (MainLayout <Content>) — dùng cho header dính của bảng. */
+const getScrollContainer = (): HTMLElement | Window =>
+  document.querySelector<HTMLElement>('.ant-layout-content') || window;
+
 const NAM_OPTIONS = Array.from({ length: 16 }, (_, i) => {
   const y = 2022 + i;
   return { value: y, label: `Năm ${y}` };
@@ -113,6 +118,8 @@ interface ScalarForm {
 
 export default function QuanLyHopDongPage() {
   const { canEdit } = usePagePermission('/trung-tam-du-lieu/hop-dong');
+  // Tạo nhanh ghi vào danh mục Hợp đồng → xin quyền "thêm" của chính danh mục đó.
+  const { canCreate: canCreateHopDong } = usePagePermission('/danh-muc/hop-dong');
   const fl = useFieldLabels('trungTamDuLieu.hopDong');
 
   const [rows, setRows] = useState<TheoDoiHopDongRow[]>([]);
@@ -401,6 +408,7 @@ export default function QuanLyHopDongPage() {
                 onChange={(v) => setNam(v)}
               />
               {settingsButton}
+              {canCreateHopDong && <TaoNhanhHopDongModal onCreated={loadList} />}
             </>
           }
         />
@@ -413,6 +421,9 @@ export default function QuanLyHopDongPage() {
           size="small"
           // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được.
           scroll={{ x: hasPinned ? 'max-content' : 1500 }}
+          // Header dính khi cuộn dọc. Vùng cuộn của app là <Content> trong MainLayout
+          // (overflow:auto), KHÔNG phải window → phải trỏ getContainer vào đó.
+          sticky={{ offsetHeader: 0, getContainer: getScrollContainer }}
           pagination={{ pageSize: 20, showTotal: (t) => `Tổng ${t} hợp đồng` }}
         />
       </Card>
