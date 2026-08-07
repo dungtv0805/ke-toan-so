@@ -99,6 +99,21 @@ export class CreateHopDongDto {
   @Transform(emptyToUndefined)
   @IsOptional()
   @IsNumber()
+  giaTriTruocThue?: number;
+
+  @Transform(emptyToUndefined)
+  @IsOptional()
+  @IsString()
+  thueSuat?: string;
+
+  @Transform(emptyToUndefined)
+  @IsOptional()
+  @IsNumber()
+  tienThue?: number;
+
+  @Transform(emptyToUndefined)
+  @IsOptional()
+  @IsNumber()
   giaTriSauThue?: number;
 
   @Transform(emptyToUndefined)

@@ -18,6 +18,7 @@ import {
   Divider,
   Typography,
   Select,
+  Tag,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -44,6 +45,7 @@ import {
 import { thuTienHopDongService } from '@/services/thuTienHopDongService';
 import { hoaDonBanRaService } from '@/services/hoaDonBanRaService';
 import { doiTuongService } from '@/services/doiTuongService';
+import { THUE_SUAT_OPTIONS } from '@/services/taxService';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
@@ -307,6 +309,16 @@ export default function QuanLyHopDongPage() {
       ellipsis: true,
       render: (v: string) => doiTuongMap[v] || '-',
     }),
+    {
+      title: 'Thuế suất',
+      dataIndex: 'thueSuat',
+      key: 'thueSuat',
+      width: 100,
+      align: 'center',
+      render: (v: string) =>
+        v ? <Tag>{THUE_SUAT_OPTIONS.find((o) => o.value === v)?.label ?? v}</Tag> : '-',
+    },
+    { title: 'Tiền thuế', dataIndex: 'tienThue', width: 130, align: 'right', render: (v) => fmtCur(v) },
     { title: 'Giá trị', dataIndex: 'giaTriSauThue', width: 140, align: 'right', render: (v) => fmtCur(v) },
     {
       title: 'Quyết toán',

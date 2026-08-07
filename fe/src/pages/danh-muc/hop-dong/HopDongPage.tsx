@@ -47,6 +47,7 @@ import "./HopDongPage.state";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { hopDongService } from "@/services/hopDongService";
+import { THUE_SUAT_OPTIONS, tinhTienThue } from "@/services/taxService";
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { hopDongImportConfig } from "@/components/import-danh-muc/configs";
 
@@ -82,6 +83,9 @@ interface FormValues {
   soHopDong: string;
   tenCongTrinh: string;
   nam?: number;
+  giaTriTruocThue?: number;
+  thueSuat?: string;
+  tienThue?: number;
   giaTriSauThue?: number;
   ngayKy?: Dayjs;
   trangThai?: TrangThaiHopDong;
@@ -177,6 +181,9 @@ function HopDongPageInner() {
       soHopDong: record.soHopDong,
       tenCongTrinh: record.tenCongTrinh,
       nam: record.nam,
+      giaTriTruocThue: record.giaTriTruocThue,
+      thueSuat: record.thueSuat,
+      tienThue: record.tienThue,
       giaTriSauThue: record.giaTriSauThue,
       ngayKy: record.ngayKy ? dayjs(record.ngayKy) : undefined,
       trangThai: record.trangThai,
@@ -218,6 +225,9 @@ function HopDongPageInner() {
       soHopDong: values.soHopDong,
       tenCongTrinh: values.tenCongTrinh,
       nam: values.nam,
+      giaTriTruocThue: values.giaTriTruocThue,
+      thueSuat: values.thueSuat,
+      tienThue: values.tienThue,
       giaTriSauThue: values.giaTriSauThue,
       ngayKy: values.ngayKy?.format("YYYY-MM-DD"),
       trangThai: values.trangThai,
@@ -260,6 +270,23 @@ function HopDongPageInner() {
       form.resetFields();
     }
     setModalVisible(true);
+  };
+
+  /**
+   * Liên động giá trị: đổi trước thuế / thuế suất → tính lại tiền thuế và sau thuế;
+   * sửa tay tiền thuế → sau thuế bám theo; sửa tay sau thuế → không đụng gì (hợp đồng
+   * cũ nhiều khi chỉ ghi mỗi số tổng).
+   */
+  const onValuesChange = (changed: Partial<FormValues>, all: FormValues) => {
+    const truocThue = Number(all.giaTriTruocThue) || 0;
+    if ("giaTriTruocThue" in changed || "thueSuat" in changed) {
+      const thue = tinhTienThue(truocThue, all.thueSuat);
+      form.setFieldsValue({ tienThue: thue, giaTriSauThue: truocThue + thue });
+      return;
+    }
+    if ("tienThue" in changed) {
+      form.setFieldValue("giaTriSauThue", truocThue + (Number(all.tienThue) || 0));
+    }
   };
 
   const handleSubmit = async () => {
@@ -472,10 +499,49 @@ function HopDongPageInner() {
             />
           </Form.Item>
           <Row gutter={16}>
+            <Col span={9}>
+              <Form.Item
+                name="giaTriTruocThue"
+                label={fl('giaTriTruocThue', 'Giá trị trước thuế')}
+              >
+                <InputNumber
+                  className="w-full"
+                  placeholder="0"
+                  formatter={(value) =>
+                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) => value?.replace(/\$\s?|(,*)/g, "") as unknown as number}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={7}>
+              <Form.Item name="thueSuat" label={fl('thueSuat', 'Thuế suất')}>
+                <Select options={THUE_SUAT_OPTIONS} allowClear placeholder="Chọn" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="tienThue"
+                label={fl('tienThue', 'Tiền thuế')}
+                tooltip="Tự tính khi đổi giá trị trước thuế hoặc thuế suất; vẫn sửa tay được"
+              >
+                <InputNumber
+                  className="w-full"
+                  placeholder="0"
+                  formatter={(value) =>
+                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) => value?.replace(/\$\s?|(,*)/g, "") as unknown as number}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="giaTriSauThue"
                 label={fl('giaTriSauThue', 'Giá trị sau thuế')}
+                tooltip="Tự cộng trước thuế + tiền thuế; sửa tay được nếu hợp đồng chỉ ghi số tổng"
               >
                 <InputNumber
                   className="w-full"
@@ -914,6 +980,7 @@ function HopDongPageInner() {
           className="mt-2"
           size="small"
           preserve={false}
+          onValuesChange={onValuesChange}
         >
           <Tabs
             activeKey={activeTab}

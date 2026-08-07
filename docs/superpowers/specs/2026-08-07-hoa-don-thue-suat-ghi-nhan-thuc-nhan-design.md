@@ -38,6 +38,20 @@ Hệ số thuế đang khai báo cục bộ trong `BangKePage.tsx` — chuyển 
 Cột **Thuế suất** hiện dưới dạng Tag, đặt trước cột *Tiền thuế*, nằm trong cấu hình
 ẩn/hiện cột. Hóa đơn cũ để trống thuế suất — không migrate dữ liệu.
 
+## 1b. Thuế suất trên hợp đồng
+
+Cùng cách làm, áp cho bản thân hợp đồng: `HopDong` thêm `giaTriTruocThue`, `thueSuat`,
+`tienThue` (entity + `CreateHopDongDto`; update DTO là `PartialType` nên tự có).
+
+Liên động ở cả hai form (modal *Tạo nhanh hợp đồng* và form đầy đủ ở Danh mục → Hợp
+đồng): đổi *Giá trị trước thuế* hoặc *Thuế suất* → tính lại *Tiền thuế* và *Giá trị sau
+thuế*; sửa tay *Tiền thuế* → sau thuế bám theo; sửa tay *Giá trị sau thuế* → không đụng
+gì, vì hợp đồng cũ nhiều khi chỉ ghi mỗi số tổng.
+
+Bảng **Quản lý hợp đồng** thêm 2 cột **Thuế suất** (Tag) và **Tiền thuế**, trước cột
+*Giá trị*. `TheoDoiHopDongRow` (cả BE lẫn FE) mang thêm `thueSuat` + `tienThue`, lấy
+thẳng từ hợp đồng trong `toRow()`.
+
 ## 2. Ghi nhận doanh thu mặc định = số thực nhận
 
 Mặc định số tiền trong modal = **`đã thu − đã ghi nhận doanh thu`**, trong đó *đã thu* là

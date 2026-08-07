@@ -157,6 +157,10 @@ export interface HopDong {
   soHopDong: string;
   tenCongTrinh: string;
   nam?: number;
+  giaTriTruocThue?: number;
+  /** Mã thuế suất — cùng bộ giá trị với bảng kê thuế (THUE_SUAT_OPTIONS). */
+  thueSuat?: string;
+  tienThue?: number;
   giaTriSauThue?: number;
   ngayKy?: string;
   phuLuc1?: PhuLuc;
@@ -271,6 +275,8 @@ export interface TheoDoiHopDongRow {
   soHopDong: string;
   tenCongTrinh: string;
   nam?: number;
+  thueSuat?: string;
+  tienThue?: number;
   giaTriSauThue?: number;
   ngayKy?: string;
   doiTuongId?: string;

@@ -17,6 +17,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { TrangThaiHopDong, type DoiTuong } from '@/types';
 import { hopDongService } from '@/services/hopDongService';
 import { doiTuongService } from '@/services/doiTuongService';
+import { THUE_SUAT_OPTIONS, tinhTienThue } from '@/services/taxService';
 
 const { Text } = Typography;
 
@@ -39,6 +40,9 @@ interface FormValues {
   tenCongTrinh: string;
   nam?: number;
   ngayKy?: Dayjs;
+  giaTriTruocThue?: number;
+  thueSuat?: string;
+  tienThue?: number;
   giaTriSauThue?: number;
   doiTuongId?: string;
   trangThai?: TrangThaiHopDong;
@@ -70,6 +74,23 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
     setOpen(true);
   };
 
+  /**
+   * Liên động giá trị: đổi trước thuế / thuế suất → tính lại tiền thuế và sau thuế;
+   * sửa tay tiền thuế → sau thuế bám theo; sửa tay sau thuế → không đụng gì (hợp đồng
+   * cũ nhiều khi chỉ ghi mỗi số tổng).
+   */
+  const onValuesChange = (changed: Partial<FormValues>, all: FormValues) => {
+    const truocThue = Number(all.giaTriTruocThue) || 0;
+    if ('giaTriTruocThue' in changed || 'thueSuat' in changed) {
+      const thue = tinhTienThue(truocThue, all.thueSuat);
+      form.setFieldsValue({ tienThue: thue, giaTriSauThue: truocThue + thue });
+      return;
+    }
+    if ('tienThue' in changed) {
+      form.setFieldValue('giaTriSauThue', truocThue + (Number(all.tienThue) || 0));
+    }
+  };
+
   const handleOk = async () => {
     let v: FormValues;
     try {
@@ -84,6 +105,9 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
         tenCongTrinh: v.tenCongTrinh.trim(),
         nam: v.nam,
         ngayKy: v.ngayKy?.format('YYYY-MM-DD'),
+        giaTriTruocThue: v.giaTriTruocThue,
+        thueSuat: v.thueSuat,
+        tienThue: v.tienThue,
         giaTriSauThue: v.giaTriSauThue,
         doiTuongId: v.doiTuongId,
         trangThai: v.trangThai,
@@ -116,7 +140,13 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
         width={640}
         destroyOnClose
       >
-        <Form form={form} layout="vertical" size="small" className="pt-2">
+        <Form
+          form={form}
+          layout="vertical"
+          size="small"
+          className="pt-2"
+          onValuesChange={onValuesChange}
+        >
           <Row gutter={12}>
             <Col span={9}>
               <Form.Item
@@ -159,8 +189,34 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
           </Form.Item>
 
           <Row gutter={12}>
+            <Col span={9}>
+              <Form.Item name="giaTriTruocThue" label="Giá trị trước thuế">
+                <InputNumber {...moneyProps} placeholder="0" />
+              </Form.Item>
+            </Col>
+            <Col span={7}>
+              <Form.Item name="thueSuat" label="Thuế suất">
+                <Select options={THUE_SUAT_OPTIONS} allowClear placeholder="Chọn" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="tienThue"
+                label="Tiền thuế"
+                tooltip="Tự tính khi đổi giá trị trước thuế hoặc thuế suất; vẫn sửa tay được"
+              >
+                <InputNumber {...moneyProps} placeholder="0" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={12}>
             <Col span={12}>
-              <Form.Item name="giaTriSauThue" label="Giá trị sau thuế">
+              <Form.Item
+                name="giaTriSauThue"
+                label="Giá trị sau thuế"
+                tooltip="Tự cộng trước thuế + tiền thuế; sửa tay được nếu hợp đồng chỉ ghi số tổng"
+              >
                 <InputNumber {...moneyProps} placeholder="0" addonAfter="VNĐ" />
               </Form.Item>
             </Col>

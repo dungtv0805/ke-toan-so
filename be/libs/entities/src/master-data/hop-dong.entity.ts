@@ -43,6 +43,16 @@ export class HopDong extends BaseEntity {
   nam?: number;
 
   @Column({ type: 'decimal', nullable: true })
+  giaTriTruocThue?: number;
+
+  /** Mã thuế suất: '0' | '5' | '8' | '10' | 'KCT' | 'KKKT' (cùng bộ với bảng kê thuế). */
+  @Column({ nullable: true })
+  thueSuat?: string;
+
+  @Column({ type: 'decimal', nullable: true })
+  tienThue?: number;
+
+  @Column({ type: 'decimal', nullable: true })
   giaTriSauThue?: number;
 
   @Column({ nullable: true })

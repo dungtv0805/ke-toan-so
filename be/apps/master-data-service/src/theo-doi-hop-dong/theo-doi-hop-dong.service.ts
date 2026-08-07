@@ -15,6 +15,8 @@ export interface TheoDoiHopDongRow {
   soHopDong: string;
   tenCongTrinh: string;
   nam?: number;
+  thueSuat?: string;
+  tienThue?: number;
   giaTriSauThue?: number;
   ngayKy?: Date;
   doiTuongId?: string;
@@ -108,6 +110,8 @@ export class TheoDoiHopDongService {
       soHopDong: hd.soHopDong,
       tenCongTrinh: hd.tenCongTrinh,
       nam: hd.nam,
+      thueSuat: hd.thueSuat,
+      tienThue: hd.tienThue,
       giaTriSauThue: hd.giaTriSauThue,
       ngayKy: hd.ngayKy,
       doiTuongId: hd.doiTuongId,
