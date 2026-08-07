@@ -52,6 +52,7 @@ export const permissionModules: PermissionModule[] = [
           { key: '/bao-cao/so-chi-tiet-phat-sinh', label: 'Sổ chi tiết phát sinh' },
           { key: '/bao-cao/bang-tong-hop', label: 'Bảng tổng hợp' },
           { key: '/bao-cao/hop-dong', label: 'Báo cáo hợp đồng' },
+          { key: '/bao-cao/doanh-thu', label: 'Báo cáo doanh thu' },
         ],
       },
       {
