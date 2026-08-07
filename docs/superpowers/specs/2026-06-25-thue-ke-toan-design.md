@@ -95,7 +95,7 @@ DTO validate bằng `class-validator`; `tienThue`/`tongThanhToan` tính lại �
 - 4 dòng **chi phí không được trừ** + **thu nhập miễn thuế / lỗ chuyển**: lấy từ `dieu-chinh-thue` (nhập tay).
 - LN kế toán trước thuế = (511+515+711) − (632+641+642+811).
 - Thu nhập tính thuế = LN trước thuế + chi phí không được trừ − thu nhập miễn thuế − lỗ chuyển.
-- **Thuế suất TNDN bậc thang theo doanh thu lũy kế năm:** <1 tỷ → 0; 1–3 tỷ → 15%; 3–50 tỷ → 17%; >50 tỷ → 20%.
+- **Thuế suất TNDN bậc thang theo doanh thu lũy kế năm:** <3 tỷ → 15%; 3–50 tỷ → 17%; >50 tỷ → 20%. (Không có bậc 0%.)
 - Ra: thuế TNDN phải nộp (tạm tính) theo quý + lũy kế, LN sau thuế.
 - Phần nghĩa vụ ngân sách: thuế GTGT bán ra (3331), VAT khấu trừ (133), VAT còn phải nộp, TNCN, các khoản BHXH (3383/3384/3386) — lấy từ `dieu-chinh-thue` và/hoặc sổ cái.
 - **Cảnh báo Vàng/Đỏ: KHÔNG làm phase này.**
@@ -129,6 +129,6 @@ DTO validate bằng `class-validator`; `tienThue`/`tongThanhToan` tính lại �
 
 Nghĩa vụ ngân sách: Thuế TNDN phải nộp; Thuế GTGT bán ra (3331); TNCN; VAT đã khấu trừ (133); VAT tạm nộp (3331); VAT còn phải nộp; BHXH (3383), BHYT (3384), BHTN (3386).
 
-Thuế suất TNDN bậc thang theo doanh thu lũy kế: `<1 tỷ → 0` · `1–3 tỷ → 15%` · `3–50 tỷ → 17%` · `>50 tỷ → 20%`.
+Thuế suất TNDN bậc thang theo doanh thu lũy kế: `<3 tỷ → 15%` · `3–50 tỷ → 17%` · `>50 tỷ → 20%`.
 
 (Phase sau) Cảnh báo tự động: CP không trừ >5% DT → Vàng; >10% DT → Đỏ; VAT âm 3 kỳ liên tục → Vàng; chưa nộp TNDN tạm tính → Đỏ; hồ sơ chờ bổ sung quá hạn → Đỏ.

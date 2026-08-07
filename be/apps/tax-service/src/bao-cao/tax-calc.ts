@@ -1,11 +1,11 @@
 // Pure functions tính thuế — không phụ thuộc framework, dễ test (TDD).
 
 /**
- * Thuế suất TNDN bậc thang theo doanh thu lũy kế năm.
- * <1 tỷ → 0 · 1–3 tỷ → 15% · 3–50 tỷ → 17% · ≥50 tỷ → 20%.
+ * Thuế suất TNDN bậc thang theo doanh thu lũy kế năm (Luật TNDN 2025).
+ * <3 tỷ → 15% · 3–50 tỷ → 17% · ≥50 tỷ → 20%.
+ * Không có bậc 0%: doanh thu nhỏ vẫn phải nộp thuế nếu có thu nhập tính thuế.
  */
 export function tinhThueSuatTNDN(doanhThuLuyKe: number): number {
-  if (doanhThuLuyKe < 1_000_000_000) return 0;
   if (doanhThuLuyKe < 3_000_000_000) return 0.15;
   if (doanhThuLuyKe < 50_000_000_000) return 0.17;
   return 0.2;
@@ -36,6 +36,19 @@ export interface TNDNQuyResult {
   thuNhapTinhThue: number;
   thueTNDN: number;
   lnSauThue: number;
+}
+
+/**
+ * Thuế + LN sau thuế lũy kế theo quyết toán năm: tính 1 lần trên thu nhập tính
+ * thuế cả năm (lỗ quý này bù trừ lãi quý khác), KHÔNG cộng thuế tạm tính 4 quý.
+ */
+export function tinhTNDNLuyKe(i: {
+  lnTruocThue: number;
+  thuNhapTinhThue: number;
+  thueSuat: number;
+}): { thueTNDN: number; lnSauThue: number } {
+  const thueTNDN = Math.max(0, i.thuNhapTinhThue) * i.thueSuat;
+  return { thueTNDN, lnSauThue: i.lnTruocThue - thueTNDN };
 }
 
 /** Tính các chỉ tiêu TNDN cho một quý. */

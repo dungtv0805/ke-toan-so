@@ -9,6 +9,7 @@ import {
   tinhThueSuatTNDN,
   tongVatTheoKy,
   tinhTNDNQuy,
+  tinhTNDNLuyKe,
   TNDNQuyResult,
 } from './tax-calc';
 import { quyToRange, inDateRange } from '../shared/tax-helpers';
@@ -158,6 +159,18 @@ export class BaoCaoService {
     const sum = (sel: (q: TNDNQuyData) => number): number =>
       quy.reduce((s, q) => s + sel(q), 0);
 
+    // Lũy kế = quyết toán năm: thuế tính 1 lần trên thu nhập tính thuế cả năm
+    // (lỗ quý này bù trừ lãi quý khác) với thuế suất theo doanh thu cả năm.
+    // Vì vậy thuế lũy kế có thể khác tổng thuế tạm tính 4 quý.
+    const thueSuatNam = tinhThueSuatTNDN(doanhThuLuyKe);
+    const thuNhapTinhThueNam = sum((q) => q.thuNhapTinhThue);
+    const lnTruocThueNam = sum((q) => q.lnTruocThue);
+    const namResult = tinhTNDNLuyKe({
+      lnTruocThue: lnTruocThueNam,
+      thuNhapTinhThue: thuNhapTinhThueNam,
+      thueSuat: thueSuatNam,
+    });
+
     const luyKe: TNDNQuyData = {
       quy: 0,
       dt511: sum((q) => q.dt511),
@@ -174,12 +187,12 @@ export class BaoCaoService {
       thuNhapMien: sum((q) => q.thuNhapMien),
       loChuyen: sum((q) => q.loChuyen),
       doanhThuLuyKe,
-      thueSuat: quy.length ? quy[quy.length - 1].thueSuat : 0,
+      thueSuat: thueSuatNam,
       tongChiPhi: sum((q) => q.tongChiPhi),
-      lnTruocThue: sum((q) => q.lnTruocThue),
-      thuNhapTinhThue: sum((q) => q.thuNhapTinhThue),
-      thueTNDN: sum((q) => q.thueTNDN),
-      lnSauThue: sum((q) => q.lnSauThue),
+      lnTruocThue: lnTruocThueNam,
+      thuNhapTinhThue: thuNhapTinhThueNam,
+      thueTNDN: namResult.thueTNDN,
+      lnSauThue: namResult.lnSauThue,
     };
 
     return { nam, quy, luyKe };
