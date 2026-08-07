@@ -1,4 +1,11 @@
-import { isValidElement, useCallback, useMemo, useState } from "react";
+import {
+  isValidElement,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { TermText } from "@/components/glossary/TermText";
 import { useTerm } from "@/contexts/TermContext";
 import { useColumnVisibility } from "@/components/table/useColumnVisibility";
@@ -790,6 +797,72 @@ const getColumnDefinitions = (
 // Calculate total width
 const TOTAL_WIDTH = Object.values(DEFAULT_WIDTHS).reduce((sum, w) => sum + w, 0);
 
+// Chừa dưới đáy trang (padding của Content) + vài px đệm.
+const BOTTOM_GAP = 20;
+// Fallback khi chưa render xong DOM của antd Table.
+const FALLBACK_HEADER_H = 33;
+const FALLBACK_PAGINATION_H = 56;
+
+/** Chiều cao thực chiếm chỗ của hàng phân trang (kể cả margin trên/dưới của antd). */
+function paginationOuterHeight(el: HTMLElement): number {
+  const pag = el.querySelector<HTMLElement>(".ant-pagination");
+  if (!pag) return FALLBACK_PAGINATION_H;
+  const cs = window.getComputedStyle(pag);
+  return (
+    pag.offsetHeight +
+    parseFloat(cs.marginTop || "0") +
+    parseFloat(cs.marginBottom || "0")
+  );
+}
+
+/**
+ * Chiều cao thân bảng = phần viewport còn lại tính từ đỉnh bảng, trừ đi header bảng
+ * và hàng phân trang (ĐO TỪ DOM). Trước đây dùng `calc(100vh - 250px)` cứng nên chỉ cần
+ * thêm một thanh ngang phía trên là phân trang bị tràn ra ngoài khung `overflow:hidden`.
+ */
+function useTableBodyHeight() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState(400);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const recalc = () => {
+      const top = el.getBoundingClientRect().top;
+      const headerH =
+        el.querySelector<HTMLElement>(".ant-table-header")?.offsetHeight ??
+        FALLBACK_HEADER_H;
+      const next = Math.max(
+        200,
+        Math.round(
+          window.innerHeight -
+            top -
+            headerH -
+            paginationOuterHeight(el) -
+            BOTTOM_GAP,
+        ),
+      );
+      // Chỉ set khi lệch đáng kể — tránh vòng lặp ResizeObserver.
+      setHeight((prev) => (Math.abs(prev - next) > 1 ? next : prev));
+    };
+
+    recalc();
+    // Đo lại sau khi trình duyệt vẽ xong (font/scrollbar có thể đổi chiều cao header).
+    const raf = requestAnimationFrame(recalc);
+    const ro = new ResizeObserver(recalc);
+    ro.observe(document.body);
+    window.addEventListener("resize", recalc);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      window.removeEventListener("resize", recalc);
+    };
+  }, []);
+
+  return { ref, height };
+}
+
 export function EntryListTab() {
   const navigate = useNavigate();
   const handler = useNhatKyChungHandler();
@@ -815,6 +888,7 @@ export function EntryListTab() {
   const [deletingBatch] = useNhatKyChungState("deletingBatch", false);
   const { canCreate, canDelete } = usePagePermission("/chung-tu/nhat-ky-chung");
   const [importOpen, setImportOpen] = useState(false);
+  const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
 
   // Enable column resize via DOM manipulation (no React re-renders)
   // storageKey bump 'v2': cấu trúc cột đổi (thêm cột Ngày ghi sổ) → bỏ width cũ lưu theo chỉ số (đã lệch).
@@ -993,33 +1067,36 @@ export function EntryListTab() {
       </div>
 
       {/* Table */}
-      <Table
-        columns={visibleColumns}
-        dataSource={data || []}
-        rowKey="id"
-        rowSelection={rowSelection}
-        loading={loading}
-        className="excel-table resizable-table"
-        rowClassName={getRowClassName}
-        pagination={{
-          current: pagination?.page || 1,
-          pageSize: 100,
-          total: pagination?.total || 0,
-          showSizeChanger: false,
-          showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
-          size: "small",
-        }}
-        onChange={handleTableChange}
-        size="small"
-        bordered
-        scroll={{
-          x: visibleColumns.reduce(
-            (sum, c) => sum + (typeof c.width === "number" ? c.width : 100),
-            0
-          ) || TOTAL_WIDTH,
-          y: "calc(100vh - 250px)",
-        }}
-      />
+      {/* flex-col để `.excel-table { flex: 1 }` vẫn ăn như khi Table là con trực tiếp */}
+      <div ref={tableWrapRef} className="flex flex-col flex-1 min-h-0">
+        <Table
+          columns={visibleColumns}
+          dataSource={data || []}
+          rowKey="id"
+          rowSelection={rowSelection}
+          loading={loading}
+          className="excel-table resizable-table"
+          rowClassName={getRowClassName}
+          pagination={{
+            current: pagination?.page || 1,
+            pageSize: 100,
+            total: pagination?.total || 0,
+            showSizeChanger: false,
+            showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+            size: "small",
+          }}
+          onChange={handleTableChange}
+          size="small"
+          bordered
+          scroll={{
+            x: visibleColumns.reduce(
+              (sum, c) => sum + (typeof c.width === "number" ? c.width : 100),
+              0
+            ) || TOTAL_WIDTH,
+            y: tableBodyHeight,
+          }}
+        />
+      </div>
       <ImportExcelModal
         open={importOpen}
         onClose={() => setImportOpen(false)}
