@@ -26,6 +26,7 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/bao-cao/so-chi-tiet-phat-sinh', label: 'Sổ chi tiết phát sinh', parentLabel: 'Báo cáo' },
   { key: '/bao-cao/bang-tong-hop', label: 'Bảng tổng hợp', parentLabel: 'Báo cáo' },
   { key: '/bao-cao/hop-dong', label: 'Báo cáo hợp đồng', parentLabel: 'Báo cáo' },
+  { key: '/bao-cao/doanh-thu', label: 'Báo cáo doanh thu', parentLabel: 'Báo cáo' },
 
   // ===== KẾ TOÁN — Thuế =====
   { key: '/thue/bang-ke-mua-vao', label: 'Bảng kê mua vào', parentLabel: 'Thuế' },

@@ -73,6 +73,17 @@ export interface DanhMucNghiepVu {
   ten: string;
 }
 
+// Snapshot hợp đồng trên dòng hạch toán. Khác các danh mục khác: định danh là
+// `soHopDong` (dữ liệu cũ tạo từ form Nhật ký chung không có `ma`).
+export interface DanhMucHopDong {
+  id?: string;
+  ma?: string;
+  ten?: string;
+  soHopDong: string;
+  tenCongTrinh?: string;
+  giaTriSauThue?: number;
+}
+
 export interface DanhMuc {
   doiTuong?: DanhMucDoiTuong;
   doiTuong2?: DanhMucDoiTuong;
@@ -87,6 +98,7 @@ export interface DanhMuc {
   dongTien?: DanhMucDongTien;
   loaiGiaoDich?: DanhMucLoaiGiaoDich;
   nghiepVu?: DanhMucNghiepVu;
+  hopDong?: DanhMucHopDong;
 }
 
 export interface ChungTuResponse {

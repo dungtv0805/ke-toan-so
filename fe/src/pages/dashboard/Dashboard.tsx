@@ -12,7 +12,7 @@ import NghiaVuChinhSachTable from './components/NghiaVuChinhSachTable';
 import MockTabDashboard, { MOCK_TABS } from './components/MockTabDashboard';
 import DashboardSettingsModal, { ALL_BLOCK_KEYS } from './components/DashboardSettingsModal';
 import { Row, Col } from 'antd';
-import { PERIOD_OPTIONS, resolvePeriod, type DashboardPeriod } from './period';
+import { PERIOD_OPTIONS, resolvePeriod, type DashboardPeriod } from '@/components/shared/period';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { tenantService } from '@/services/tenantService';
 

@@ -74,6 +74,7 @@ import {
   ComingSoonPage,
   QuanLyHopDongPage,
   BaoCaoHopDongPage,
+  BaoCaoDoanhThuPage,
   SoThuTienPage,
   SoHoaDonBanRaPage,
   BangKeMuaVaoPage,
@@ -484,6 +485,14 @@ const App = () => (
                     element={
                       <ProtectedRoute requiredPermission="/bao-cao/hop-dong:xem">
                         <BaoCaoHopDongPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="doanh-thu"
+                    element={
+                      <ProtectedRoute requiredPermission="/bao-cao/doanh-thu:xem">
+                        <BaoCaoDoanhThuPage />
                       </ProtectedRoute>
                     }
                   />

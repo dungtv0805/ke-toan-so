@@ -73,7 +73,7 @@ const chiTietTheoOptions = [
   { value: "NGAN_HANG_QUY", label: "Ngân hàng & Quỹ" },
 ];
 
-// 8 trường phân bổ cấu hình được mức nhập liệu trên dòng hạch toán
+// Các trường phân bổ cấu hình được mức nhập liệu trên dòng hạch toán
 const FIELD_RULE_FIELDS: Array<{ key: string; label: string }> = [
   { key: "doiTuong", label: "Đối tượng" },
   { key: "duAn", label: "Dự án" },
@@ -83,6 +83,7 @@ const FIELD_RULE_FIELDS: Array<{ key: string; label: string }> = [
   { key: "sanPham", label: "Sản phẩm" },
   { key: "dongTien", label: "Dòng tiền" },
   { key: "khoanMuc", label: "Khoản mục" },
+  { key: "hopDong", label: "Hợp đồng" },
   { key: "soTaiKhoanNganHang", label: "Số tài khoản ngân hàng" },
 ];
 

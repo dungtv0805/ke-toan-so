@@ -57,4 +57,8 @@ export class NhatKyChungQueryDto {
   @IsOptional()
   @IsString()
   taiKhoanCo?: string;
+
+  @IsOptional()
+  @IsString()
+  hopDong?: string;
 }

@@ -20,6 +20,7 @@ const FIELD_LABELS: Record<string, string> = {
   sanPham: 'Sản phẩm',
   dongTien: 'Dòng tiền',
   khoanMuc: 'Khoản mục',
+  hopDong: 'Hợp đồng',
   soTaiKhoanNganHang: 'Số tài khoản ngân hàng',
 };
 
@@ -68,6 +69,9 @@ export class FieldRulesValidationService {
             filled = Boolean(doiTuong?.ma);
           } else if (field === 'soTaiKhoanNganHang') {
             filled = Boolean(doiTuong?.soTaiKhoan && String(doiTuong.soTaiKhoan).trim());
+          } else if (field === 'hopDong') {
+            // Snapshot hợp đồng không có `ma` — định danh là soHopDong
+            filled = Boolean(dm.hopDong?.soHopDong);
           } else {
             filled = Boolean(
               (dm as Record<string, { ma?: string } | undefined>)[field]?.ma,

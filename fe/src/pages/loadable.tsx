@@ -268,6 +268,10 @@ export const BaoCaoHopDongPage = loadable(() => import('./bao-cao/hop-dong/BaoCa
   fallback: <PageLoader />
 });
 
+export const BaoCaoDoanhThuPage = loadable(() => import('./bao-cao/doanh-thu/BaoCaoDoanhThuPage'), {
+  fallback: <PageLoader />
+});
+
 export const SoThuTienPage = loadable(() => import('./trung-tam-du-lieu/thu-tien/SoThuTienPage'), {
   fallback: <PageLoader />
 });

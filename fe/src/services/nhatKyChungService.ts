@@ -1,4 +1,4 @@
-import { NhatKyChung, ChungTuResponse, LoaiChungTu, DanhMuc, HoSoChungTuItem, KiemSoatChungTu } from '@/types';
+import { NhatKyChung, ChungTuResponse, LoaiChungTu, LoaiChungTuLuu, DanhMuc, HoSoChungTuItem, KiemSoatChungTu } from '@/types';
 import { ServiceBase, PaginatedResponse } from './base/service-base';
 
 export interface NhatKyChungStats {
@@ -38,10 +38,12 @@ export interface GetEntriesParams {
   boPhan?: string;
   taiKhoanNo?: string;
   taiKhoanCo?: string;
+  /** Số hợp đồng (đơn hàng) — khớp danhMuc.hopDong.soHopDong */
+  hopDong?: string;
 }
 
 export interface CreateEntryDto {
-  loai: LoaiChungTu;
+  loai: LoaiChungTuLuu;
   ngay: string;
   ngayGhiSo?: string;
   soTien: number;
@@ -98,7 +100,12 @@ class NhatKyChungService extends ServiceBase {
    * Map ChungTuResponse from backend to NhatKyChung for frontend display
    */
   private mapChungTuToNhatKyChung(item: ChungTuResponse): NhatKyChung {
-    const loaiChungTu = item.loai === 'PHIEU_THU' ? 'Phiếu thu' : 'Phiếu chi';
+    const loaiChungTu =
+      item.loai === 'PHIEU_THU'
+        ? 'Phiếu thu'
+        : item.loai === 'PHIEU_CHI'
+          ? 'Phiếu chi'
+          : 'Chứng từ khác';
     const danhMuc = item.danhMuc;
 
     const ngayStr =
@@ -153,6 +160,7 @@ class NhatKyChungService extends ServiceBase {
     if (params.boPhan) queryParams.boPhan = params.boPhan;
     if (params.taiKhoanNo) queryParams.taiKhoanNo = params.taiKhoanNo;
     if (params.taiKhoanCo) queryParams.taiKhoanCo = params.taiKhoanCo;
+    if (params.hopDong) queryParams.hopDong = params.hopDong;
 
     const response = await this.get<PaginatedResponse<ChungTuResponse>>({ params: queryParams });
     
@@ -160,6 +168,22 @@ class NhatKyChungService extends ServiceBase {
       data: response.data.map((item) => this.mapChungTuToNhatKyChung(item)),
       meta: response.meta,
     };
+  }
+
+  /**
+   * Toàn bộ dòng hạch toán gắn một hợp đồng (đơn hàng). Lặp hết trang vì API mặc
+   * định chỉ trả 15 bản ghi và tối đa 100/trang.
+   */
+  async getByHopDong(soHopDong: string): Promise<NhatKyChung[]> {
+    const all: NhatKyChung[] = [];
+    let page = 1;
+    for (;;) {
+      const res = await this.getEntries({ hopDong: soHopDong, page, limit: 100 });
+      all.push(...res.data);
+      if (page >= (res.meta?.totalPages ?? 1) || res.data.length === 0) break;
+      page += 1;
+    }
+    return all;
   }
 
   /**

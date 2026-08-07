@@ -53,6 +53,18 @@ describe('buildMongoQuery', () => {
     });
   });
 
+  describe('hopDong filter', () => {
+    it('khớp theo soHopDong (snapshot hợp đồng không có ma)', () => {
+      const query = buildMongoQuery({ hopDong: 'DH03' } as NhatKyChungQueryDto);
+      expect(query['danhMuc.hopDong.soHopDong']).toBe('DH03');
+    });
+
+    it('không truyền hopDong → không thêm điều kiện', () => {
+      const query = buildMongoQuery({} as NhatKyChungQueryDto);
+      expect(query['danhMuc.hopDong.soHopDong']).toBeUndefined();
+    });
+  });
+
   describe('doiTuong filter', () => {
     it('should match đối tượng ở bên Nợ hoặc bên Có', () => {
       const query = buildMongoQuery({

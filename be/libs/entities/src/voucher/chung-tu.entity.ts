@@ -98,6 +98,16 @@ export interface DanhMucLoaiChungTu {
   ten: string;
 }
 
+// Snapshot hợp đồng trên dòng hạch toán. Khác các danh mục khác: KHÔNG có `ma`,
+// định danh là `soHopDong` (`id` chỉ có ở chứng từ lập từ bản FE mới).
+export interface DanhMucHopDong {
+  id?: string;
+  soHopDong: string;
+  tenCongTrinh?: string;
+  giaTriSauThue?: number;
+  [key: string]: unknown;
+}
+
 // Gộp tất cả danh mục vào 1 field
 export interface DanhMuc {
   doiTuong?: DanhMucDoiTuong;
@@ -117,6 +127,7 @@ export interface DanhMuc {
   nghiepVu?: DanhMucNghiepVu;
   loaiGiaoDich?: DanhMucLoaiGiaoDich;
   loaiChungTu?: DanhMucLoaiChungTu;
+  hopDong?: DanhMucHopDong;
 }
 
 // Types cho kiểm soát hồ sơ & hạch toán

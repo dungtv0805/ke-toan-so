@@ -39,6 +39,7 @@ export const FIELD_RULE_KEYS = [
   'sanPham',
   'dongTien',
   'khoanMuc',
+  'hopDong',
   'soTaiKhoanNganHang',
 ] as const;
 export type FieldRuleKey = (typeof FIELD_RULE_KEYS)[number];

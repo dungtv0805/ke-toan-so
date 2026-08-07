@@ -15,8 +15,9 @@ export class BatchItemDto {
   @IsString()
   id?: string; // undefined = create new, string = update existing
 
+  // KHAC: chứng từ tổng hợp chỉ hiện ở Nhật ký chung — sửa lại được như phiếu thu/chi
   @IsNotEmpty()
-  @IsIn(['PHIEU_THU', 'PHIEU_CHI'])
+  @IsIn(['PHIEU_THU', 'PHIEU_CHI', 'KHAC'])
   loai: LoaiChungTu;
 
   @IsNotEmpty()

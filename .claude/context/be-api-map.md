@@ -246,6 +246,7 @@ Same pattern as /phai-thu (with summary-by-supplier instead)
 | GET | /bao-cao/pnl | P&L report |
 | GET | /bao-cao/balance-sheet | Balance sheet |
 | GET | /bao-cao/kqkd | Operational results |
+| GET | /bao-cao/doanh-thu | Doanh thu theo đơn hàng × tháng (pivot Có 511, `startDate`/`endDate`) |
 
 ### /so-cai (Ledger)
 | Method | Path | Description |

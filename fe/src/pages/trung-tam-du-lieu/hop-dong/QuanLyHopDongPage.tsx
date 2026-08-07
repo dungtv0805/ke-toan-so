@@ -48,6 +48,7 @@ import { usePagePermission } from '@/hooks/usePagePermission';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
+import GhiNhanDoanhThuSection from './GhiNhanDoanhThuSection';
 
 const { Text, Title } = Typography;
 
@@ -503,6 +504,9 @@ export default function QuanLyHopDongPage() {
 
               <Divider orientation="left">Hóa đơn bán ra</Divider>
               <Table size="small" rowKey={(r) => r.id || ''} columns={invoiceCols} dataSource={invoices} pagination={false} locale={{ emptyText: 'Chưa có hóa đơn' }} />
+
+              <Divider orientation="left">Ghi nhận doanh thu</Divider>
+              <GhiNhanDoanhThuSection key={current.hopDongId} hopDong={current} canEdit={canEdit} />
 
               <Divider orientation="left">Tình trạng hồ sơ</Divider>
               <Space wrap size="large">

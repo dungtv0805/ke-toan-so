@@ -15,6 +15,7 @@ describe('FieldRulesValidationService', () => {
     { ma: '131', fieldRules: { duAn: 'CANH_BAO' } },
     { ma: '511' },
     { ma: '1121', fieldRules: { soTaiKhoanNganHang: 'BAT_BUOC' } },
+    { ma: '3387', fieldRules: { hopDong: 'BAT_BUOC' } },
   ];
 
   it('thiếu trường BAT_BUOC → BadRequestException', async () => {
@@ -116,6 +117,34 @@ describe('FieldRulesValidationService', () => {
         'Bearer x',
       ),
     ).rejects.toThrow(/Số tài khoản ngân hàng/);
+  });
+
+  it('rule hopDong: dòng không gắn hợp đồng → BadRequestException', async () => {
+    const { service } = makeService(accounts);
+    await expect(
+      service.validateItems(
+        [{ danhMuc: { taiKhoanNo: { ma: '3387' }, taiKhoanCo: { ma: '511' } } }] as never,
+        'Bearer x',
+      ),
+    ).rejects.toThrow(/Hợp đồng/);
+  });
+
+  it('rule hopDong: snapshot chỉ có soHopDong (không có ma) → pass', async () => {
+    const { service } = makeService(accounts);
+    await expect(
+      service.validateItems(
+        [
+          {
+            danhMuc: {
+              taiKhoanNo: { ma: '3387' },
+              taiKhoanCo: { ma: '511' },
+              hopDong: { soHopDong: 'DH03', tenCongTrinh: 'Business in the Box' },
+            },
+          },
+        ] as never,
+        'Bearer x',
+      ),
+    ).resolves.toBeUndefined();
   });
 
   it('master-data không phản hồi → bỏ qua, không chặn', async () => {

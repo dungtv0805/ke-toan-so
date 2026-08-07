@@ -7,6 +7,7 @@ import {
   matchLoaiBySnapshot,
   type LoaiMatcher,
 } from '../shared/doi-tuong-loai.helper';
+import { buildDoanhThuReport, type DoanhThuReport } from './doanh-thu.helper';
 
 export interface PnLEntry {
   ma: string;
@@ -751,6 +752,25 @@ export class BaoCaoService {
         endDate: prevPeriod.endDate.toISOString(),
       },
     };
+  }
+
+  /**
+   * Báo cáo doanh thu theo đơn hàng × tháng — pivot phát sinh Có 511 trong kỳ.
+   * Xem `doanh-thu.helper.ts` cho quy tắc gom nhóm.
+   */
+  async getDoanhThu(
+    startDate: Date,
+    endDate: Date,
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<DoanhThuReport> {
+    const res = await this.serviceClient.getNhatKyChung(
+      startDate.toISOString(),
+      endDate.toISOString(),
+      authToken,
+      tenantId,
+    );
+    return buildDoanhThuReport(res.success ? res.data || [] : []);
   }
 
   private getPreviousPeriod(

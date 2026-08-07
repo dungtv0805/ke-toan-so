@@ -5,7 +5,7 @@ import {
   ComposedChart, Bar, Line, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { dashboardService } from '@/services/dashboardService';
-import { sliceToRange } from '../period';
+import { sliceToRange } from '@/components/shared/period';
 import { formatCurrency, DASH_COLORS } from './format';
 
 interface Props { year: number; startMonth: number; endMonth: number; }

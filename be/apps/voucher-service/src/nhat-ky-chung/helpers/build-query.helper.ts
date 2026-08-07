@@ -7,7 +7,7 @@ function escapeRegex(str: string): string {
 export function buildMongoQuery(
   query: NhatKyChungQueryDto,
 ): Record<string, unknown> {
-  const { search, startDate, endDate, loai, doiTuong, duAn, boPhan, taiKhoanNo, taiKhoanCo } = query;
+  const { search, startDate, endDate, loai, doiTuong, duAn, boPhan, taiKhoanNo, taiKhoanCo, hopDong } = query;
   const mongoQuery: Record<string, unknown> = {};
 
   // Filter by loai (loại giao dịch - stored in danhMuc.loaiGiaoDich.ma)
@@ -81,6 +81,11 @@ export function buildMongoQuery(
   // Filter by tài khoản có
   if (taiKhoanCo) {
     mongoQuery['danhMuc.taiKhoanCo.ma'] = taiKhoanCo;
+  }
+
+  // Filter by hợp đồng — snapshot hợp đồng không có `ma`, định danh là soHopDong
+  if (hopDong) {
+    mongoQuery['danhMuc.hopDong.soHopDong'] = hopDong;
   }
 
   return mongoQuery;

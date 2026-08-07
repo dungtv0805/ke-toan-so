@@ -19,6 +19,7 @@ export const FIELD_RULE_LABELS: Record<string, string> = {
   sanPham: "Sản phẩm",
   dongTien: "Dòng tiền",
   khoanMuc: "Khoản mục",
+  hopDong: "Hợp đồng",
   soTaiKhoanNganHang: "Số tài khoản ngân hàng",
 };
 
@@ -37,6 +38,7 @@ const FIELD_TO_LINE_KEY: Record<string, keyof ChungTuChiTiet> = {
   sanPham: "sanPhamId",
   dongTien: "dongTienId",
   khoanMuc: "khoanMucId",
+  hopDong: "hopDongId",
 };
 
 const heavier = (a?: FieldRuleLevel, b?: FieldRuleLevel): FieldRuleLevel | undefined =>

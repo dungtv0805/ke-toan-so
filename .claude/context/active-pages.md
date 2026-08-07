@@ -15,6 +15,7 @@
 | So cai | `/bao-cao/so-cai` | ACTIVE | reporting:3006 |
 | PnL | `/bao-cao/pnl` | ACTIVE | reporting:3006 |
 | So chi tiet TK | `/bao-cao/so-chi-tiet-tai-khoan` | ACTIVE | reporting:3006 |
+| Bao cao doanh thu | `/bao-cao/doanh-thu` | ACTIVE | reporting:3006 |
 | Bang tong hop | `/bao-cao/bang-tong-hop` | COMING SOON | — |
 
 ### KE TOAN — Trung Tam Du Lieu (Data Center)

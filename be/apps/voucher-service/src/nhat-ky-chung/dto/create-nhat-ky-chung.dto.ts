@@ -11,8 +11,10 @@ import {
 import type { LoaiChungTu, DanhMuc } from '@app/entities';
 
 export class CreateNhatKyChungDto {
+  // KHAC: chứng từ tổng hợp chỉ hiện ở Nhật ký chung (vd bút toán ghi nhận
+  // doanh thu Nợ 3387 / Có 511 sinh từ đơn hàng)
   @IsNotEmpty()
-  @IsIn(['PHIEU_THU', 'PHIEU_CHI'])
+  @IsIn(['PHIEU_THU', 'PHIEU_CHI', 'KHAC'])
   loai: LoaiChungTu;
 
   @IsNotEmpty()

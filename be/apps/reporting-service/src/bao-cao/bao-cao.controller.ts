@@ -134,4 +134,22 @@ export class BaoCaoController {
     );
     return { success: true, data };
   }
+
+  @Get('doanh-thu')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async getDoanhThu(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Headers('authorization') authToken: string,
+    @CurrentUser() user: UserPayload,
+  ) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      throw new BadRequestException('startDate và endDate phải là ngày hợp lệ');
+    }
+
+    const data = await this.baoCaoService.getDoanhThu(start, end, authToken, user.tenantId);
+    return { success: true, data };
+  }
 }

@@ -23,7 +23,8 @@ export interface TaiKhoan {
   moTa?: string;
   chiTietTheo?: 'KHACH_HANG' | 'NHA_CUNG_CAP' | 'NHAN_VIEN' | 'NHA_THAU' | 'NGAN_HANG_QUY';
   fieldRules?: Partial<Record<
-    'doiTuong' | 'duAn' | 'boPhan' | 'doi' | 'nhanVien' | 'sanPham' | 'dongTien' | 'khoanMuc',
+    | 'doiTuong' | 'duAn' | 'boPhan' | 'doi' | 'nhanVien' | 'sanPham' | 'dongTien'
+    | 'khoanMuc' | 'hopDong' | 'soTaiKhoanNganHang',
     'BAT_BUOC' | 'CANH_BAO'
   >> | null;
 }
@@ -282,6 +283,10 @@ export interface TheoDoiHopDongRow {
 
 export type LoaiChungTu = 'PHIEU_THU' | 'PHIEU_CHI';
 
+// Loại chứng từ lưu ở BE: ngoài phiếu thu/chi còn KHAC — chứng từ tổng hợp chỉ
+// hiện ở Nhật ký chung (vd bút toán ghi nhận doanh thu Nợ 3387 / Có 511).
+export type LoaiChungTuLuu = LoaiChungTu | 'KHAC';
+
 // DanhMuc nested types (matching backend DTO)
 export interface DanhMucDoiTuong {
   ma: string;
@@ -427,7 +432,7 @@ export interface DanhMuc {
 export interface ChungTuResponse {
   _id: string;
   soPhieu: string;
-  loai: LoaiChungTu;
+  loai: LoaiChungTuLuu;
   ngay: string | Date;
   ngayGhiSo?: string | Date;
   soTien: number;
@@ -518,6 +523,10 @@ export interface DongTienSnapshot {
 
 export interface HopDongSnapshot {
   id: string;
+  // ma/ten = soHopDong/tenCongTrinh — giữ cho đồng dạng với các snapshot danh mục
+  // khác (cột xuất Excel, hiển thị chung đều đọc ma/ten)
+  ma: string;
+  ten: string;
   soHopDong: string;
   tenCongTrinh: string;
   giaTriSauThue?: number;

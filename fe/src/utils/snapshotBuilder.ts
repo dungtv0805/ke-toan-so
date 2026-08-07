@@ -146,6 +146,8 @@ export const buildNhomQuanLySnapshot = (nhomQuanLy: NhomQuanLy): DanhMucNhomQuan
  */
 export const buildHopDongSnapshot = (hopDong: HopDong): HopDongSnapshot => ({
   id: hopDong.id,
+  ma: hopDong.soHopDong,
+  ten: hopDong.tenCongTrinh || hopDong.soHopDong,
   soHopDong: hopDong.soHopDong,
   tenCongTrinh: hopDong.tenCongTrinh,
   giaTriSauThue: hopDong.giaTriSauThue,
