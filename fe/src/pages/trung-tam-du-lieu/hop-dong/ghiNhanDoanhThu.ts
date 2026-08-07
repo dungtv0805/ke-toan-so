@@ -19,6 +19,20 @@ export interface DoanhThuHopDong {
 }
 
 /**
+ * Số tiền gợi ý cho một lần ghi nhận doanh thu = tiền đã thu (Sổ thu tiền của đơn
+ * hàng) trừ phần doanh thu đã ghi nhận. Lấy theo tiền đã thu chứ không theo số dư
+ * 3387, để chạy đúng cả khi kế toán nhập phiếu thu tay không qua nút "+ Thu tiền".
+ * Hết phần để ghi nhận → `undefined` (bỏ trống ô, không điền số vô nghĩa).
+ */
+export function tinhMacDinhGhiNhan(
+  daThanhToan: number,
+  daGhiNhan: number,
+): number | undefined {
+  const conLai = (Number(daThanhToan) || 0) - (Number(daGhiNhan) || 0);
+  return conLai > 0 ? conLai : undefined;
+}
+
+/**
  * Tách các dòng hạch toán của một đơn hàng thành phần đã / chưa ghi nhận doanh thu.
  * Chỉ đọc, không phụ thuộc thứ tự chứng từ.
  */

@@ -35,21 +35,12 @@ import {
   BangKeRecord,
   THUE_SUAT_OPTIONS,
   ThueSuat,
+  tinhTienThue,
 } from "@/services/taxService";
 import type { ServiceBase } from "@/services/base/service-base";
 import { ImportBangKeModal, type ImportService } from "./import/ImportBangKeModal";
 
 const { Text } = Typography;
-
-// Hệ số thuế suất để xem trước (BE là nguồn chân lý khi lưu).
-const RATE: Record<ThueSuat, number> = {
-  "0": 0,
-  "5": 0.05,
-  "8": 0.08,
-  "10": 0.1,
-  KCT: 0,
-  KKKT: 0,
-};
 
 const fmt = (n?: number) => (n ?? 0).toLocaleString("vi-VN");
 
@@ -104,7 +95,8 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
 
   // Tiền thuế / tổng thanh toán sửa tay được (hóa đơn hay lệch vài đồng do làm tròn trên từng
   // dòng hàng). Lệch quá ngưỡng này thì cảnh báo — bắt lỗi gõ nhầm chữ số, không chặn lưu.
-  const thueTheoCongThuc = Math.round((giaWatch || 0) * (RATE[suatWatch ?? "10"] ?? 0));
+  // Tiền thuế theo công thức (BE là nguồn chân lý khi lưu).
+  const thueTheoCongThuc = tinhTienThue(giaWatch, suatWatch ?? "10");
   const lechTienThue = Math.abs((thueWatch || 0) - thueTheoCongThuc);
   const LECH_WARN = 1000;
 
@@ -117,7 +109,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
     const suat = (all.thueSuat ?? "10") as ThueSuat;
 
     if ("giaTriChuaThue" in changed || "thueSuat" in changed) {
-      const thue = Math.round(gia * (RATE[suat] ?? 0));
+      const thue = tinhTienThue(gia, suat);
       form.setFieldsValue({ tienThue: thue, tongThanhToan: gia + thue });
       return;
     }

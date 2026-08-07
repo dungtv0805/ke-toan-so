@@ -532,7 +532,12 @@ export default function QuanLyHopDongPage() {
               <Table size="small" rowKey={(r) => r.id || ''} columns={invoiceCols} dataSource={invoices} pagination={false} locale={{ emptyText: 'Chưa có hóa đơn' }} />
 
               <Divider orientation="left">Ghi nhận doanh thu</Divider>
-              <GhiNhanDoanhThuSection key={current.hopDongId} hopDong={current} canEdit={canEdit} />
+              <GhiNhanDoanhThuSection
+                key={current.hopDongId}
+                hopDong={current}
+                canEdit={canEdit}
+                daThanhToan={daThanhToan}
+              />
 
               <Divider orientation="left">Tình trạng hồ sơ</Divider>
               <Space wrap size="large">

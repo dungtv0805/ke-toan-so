@@ -19,7 +19,12 @@ import dayjs, { type Dayjs } from 'dayjs';
 import type { NhatKyChung, TaiKhoan, TheoDoiHopDongRow } from '@/types';
 import { nhatKyChungService } from '@/services/nhatKyChungService';
 import { taiKhoanService } from '@/services/taiKhoanService';
-import { TK_CHUA_THUC_HIEN, TK_DOANH_THU, tinhDoanhThuHopDong } from './ghiNhanDoanhThu';
+import {
+  TK_CHUA_THUC_HIEN,
+  TK_DOANH_THU,
+  tinhDoanhThuHopDong,
+  tinhMacDinhGhiNhan,
+} from './ghiNhanDoanhThu';
 import { defaultTaiKhoan, loadDonHangSnapshots, taiKhoanSnapshot } from './donHangChungTu';
 
 const { Text } = Typography;
@@ -38,6 +43,8 @@ interface FormValues {
 interface Props {
   hopDong: TheoDoiHopDongRow;
   canEdit: boolean;
+  /** Tổng tiền đã thu của đơn hàng (Sổ thu tiền) — dùng làm số mặc định khi ghi nhận. */
+  daThanhToan: number;
 }
 
 /**
@@ -47,7 +54,7 @@ interface Props {
  * Chứng từ sinh ra là chứng từ Nhật ký chung bình thường (loai KHAC) — sửa/xóa ở
  * Nhật ký chung, không có bảng lưu riêng.
  */
-export default function GhiNhanDoanhThuSection({ hopDong, canEdit }: Props) {
+export default function GhiNhanDoanhThuSection({ hopDong, canEdit, daThanhToan }: Props) {
   const [entries, setEntries] = useState<NhatKyChung[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -85,7 +92,7 @@ export default function GhiNhanDoanhThuSection({ hopDong, canEdit }: Props) {
   const openModal = () => {
     form.setFieldsValue({
       ngay: dayjs(),
-      soTien: chuaGhiNhan > 0 ? chuaGhiNhan : undefined,
+      soTien: tinhMacDinhGhiNhan(daThanhToan, daGhiNhan),
       taiKhoanNo: defaultTaiKhoan(taiKhoanList, TK_CHUA_THUC_HIEN),
       taiKhoanCo: defaultTaiKhoan(taiKhoanList, TK_DOANH_THU),
       noiDung: `Ghi nhận doanh thu ${hopDong.soHopDong}`,
@@ -155,7 +162,9 @@ export default function GhiNhanDoanhThuSection({ hopDong, canEdit }: Props) {
     <>
       <Row gutter={12} align="middle" className="mb-2">
         <Col flex="auto">
-          <Text type="secondary">Đã ghi nhận: </Text>
+          <Text type="secondary">Thực nhận: </Text>
+          <Text strong>{fmtCur(daThanhToan)}</Text>
+          <Text type="secondary"> · Đã ghi nhận: </Text>
           <Text strong type="success">{fmtCur(daGhiNhan)}</Text>
           <Text type="secondary"> · Chưa ghi nhận: </Text>
           <Text strong type="warning">{fmtCur(chuaGhiNhan)}</Text>
@@ -205,6 +214,7 @@ export default function GhiNhanDoanhThuSection({ hopDong, canEdit }: Props) {
                 name="soTien"
                 label="Số tiền"
                 rules={[{ required: true, message: 'Nhập số tiền' }]}
+                tooltip="Mặc định = tiền đã thu − đã ghi nhận doanh thu"
               >
                 <InputNumber<number>
                   className="w-full"

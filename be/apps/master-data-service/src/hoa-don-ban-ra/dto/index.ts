@@ -21,6 +21,7 @@ export class CreateHoaDonBanRaDto {
   @IsOptional() @IsString() doiTuongId?: string;
   @IsOptional() @IsString() donViMua?: string;
   @Transform(emptyToUndefined) @IsOptional() @IsNumber() tienHang?: number;
+  @Transform(emptyToUndefined) @IsOptional() @IsString() thueSuat?: string;
   @Transform(emptyToUndefined) @IsOptional() @IsNumber() tienThue?: number;
   @IsNumber() tong: number;
   @Transform(emptyToUndefined) @IsOptional() @IsInt() lan?: number;
@@ -38,6 +39,7 @@ export class UpdateHoaDonBanRaDto {
   @IsOptional() @IsString() doiTuongId?: string;
   @IsOptional() @IsString() donViMua?: string;
   @Transform(emptyToUndefined) @IsOptional() @IsNumber() tienHang?: number;
+  @Transform(emptyToUndefined) @IsOptional() @IsString() thueSuat?: string;
   @Transform(emptyToUndefined) @IsOptional() @IsNumber() tienThue?: number;
   @Transform(emptyToUndefined) @IsOptional() @IsNumber() tong?: number;
   @Transform(emptyToUndefined) @IsOptional() @IsInt() lan?: number;

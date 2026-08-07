@@ -15,6 +15,22 @@ export const THUE_SUAT_OPTIONS: { value: ThueSuat; label: string }[] = [
   { value: 'KKKT', label: 'Không kê khai/khấu trừ' },
 ];
 
+/** Hệ số thuế suất. Dùng chung cho bảng kê thuế và hóa đơn bán ra. */
+export const THUE_RATE: Record<ThueSuat, number> = {
+  '0': 0,
+  '5': 0.05,
+  '8': 0.08,
+  '10': 0.1,
+  KCT: 0,
+  KKKT: 0,
+};
+
+/** Tiền thuế = tiền hàng × hệ số, làm tròn về đồng. Suất lạ/để trống → 0. */
+export function tinhTienThue(tienHang?: number, thueSuat?: string): number {
+  const rate = THUE_RATE[thueSuat as ThueSuat] ?? 0;
+  return Math.round((Number(tienHang) || 0) * rate);
+}
+
 export interface BangKeRecord {
   id: string;
   _id?: string;

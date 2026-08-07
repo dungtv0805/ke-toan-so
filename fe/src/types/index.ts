@@ -246,6 +246,8 @@ export interface HoaDonBanRa {
   doiTuongId?: string;
   donViMua?: string;
   tienHang?: number;
+  /** Mã thuế suất — cùng bộ giá trị với bảng kê thuế (THUE_SUAT_OPTIONS). */
+  thueSuat?: string;
   tienThue?: number;
   tong: number;
   lan?: number;

@@ -13,6 +13,7 @@ import {
   Space,
   Popconfirm,
   message,
+  Tag,
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -21,6 +22,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { FilterBar } from '@/components/common/FilterBar';
 import type { HoaDonBanRa, TheoDoiHopDongRow } from '@/types';
 import { hoaDonBanRaService } from '@/services/hoaDonBanRaService';
+import { THUE_SUAT_OPTIONS, tinhTienThue } from '@/services/taxService';
 import { theoDoiHopDongService } from '@/services/theoDoiHopDongService';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { useBulkDelete } from '@/components/table/useBulkDelete';
@@ -59,6 +61,7 @@ interface FormVals {
   noiDung?: string;
   donViMua?: string;
   tienHang?: number;
+  thueSuat?: string;
   tienThue?: number;
   lan?: number;
   nam?: number;
@@ -116,6 +119,7 @@ export default function SoHoaDonBanRaPage() {
         noiDung: r.noiDung,
         donViMua: r.donViMua,
         tienHang: r.tienHang,
+        thueSuat: r.thueSuat,
         tienThue: r.tienThue,
         lan: r.lan,
         nam: r.nam,
@@ -126,6 +130,17 @@ export default function SoHoaDonBanRaPage() {
       form.resetFields();
     }
     setOpen(true);
+  };
+
+  /**
+   * Đổi tiền hàng hoặc thuế suất → tính lại tiền thuế (ghi đè). Sửa tay tiền thuế thì
+   * giữ nguyên số sửa tay cho tới lần đụng lại một trong hai ô kia — hóa đơn hay lệch
+   * vài đồng do làm tròn trên từng dòng hàng.
+   */
+  const onValuesChange = (changed: Partial<FormVals>, all: FormVals) => {
+    if ('tienHang' in changed || 'thueSuat' in changed) {
+      form.setFieldValue('tienThue', tinhTienThue(all.tienHang, all.thueSuat));
+    }
   };
 
   const onHopDongChange = (id: string) => {
@@ -146,6 +161,7 @@ export default function SoHoaDonBanRaPage() {
       noiDung: v.noiDung,
       donViMua: v.donViMua,
       tienHang: v.tienHang,
+      thueSuat: v.thueSuat,
       tienThue: v.tienThue,
       tong: (Number(v.tienHang) || 0) + (Number(v.tienThue) || 0),
       lan: v.lan,
@@ -217,6 +233,15 @@ export default function SoHoaDonBanRaPage() {
       render: (v) => v || '-',
     }),
     { title: 'Tiền hàng', dataIndex: 'tienHang', width: 130, align: 'right', render: (v) => fmtCur(v) },
+    {
+      title: 'Thuế suất',
+      dataIndex: 'thueSuat',
+      key: 'thueSuat',
+      width: 110,
+      align: 'center',
+      render: (v: string) =>
+        v ? <Tag>{THUE_SUAT_OPTIONS.find((o) => o.value === v)?.label ?? v}</Tag> : '-',
+    },
     { title: 'Tiền thuế', dataIndex: 'tienThue', width: 120, align: 'right', render: (v) => fmtCur(v) },
     { title: 'Tổng', dataIndex: 'tong', width: 140, align: 'right', render: (v) => <Text type="success">{fmtCur(v)}</Text> },
     { title: 'Lần', dataIndex: 'lan', width: 60, align: 'center', render: (v) => v || '-' },
@@ -283,7 +308,13 @@ export default function SoHoaDonBanRaPage() {
         width={680}
         destroyOnClose
       >
-        <Form form={form} layout="vertical" size="small" className="mt-2">
+        <Form
+          form={form}
+          layout="vertical"
+          size="small"
+          className="mt-2"
+          onValuesChange={onValuesChange}
+        >
           <Form.Item name="hopDongId" label={fl('hopDongId', 'Hợp đồng')} rules={[{ required: true, message: 'Chọn hợp đồng' }]}>
             <Select showSearch optionFilterProp="label" options={hdOptions} placeholder="Chọn hợp đồng" onChange={onHopDongChange} />
           </Form.Item>
@@ -306,9 +337,16 @@ export default function SoHoaDonBanRaPage() {
           </Form.Item>
           <Space size="large" className="flex">
             <Form.Item name="tienHang" label={fl('tienHang', 'Tiền hàng')}>
-              <InputNumber {...moneyProps} style={{ width: 200 }} />
+              <InputNumber {...moneyProps} style={{ width: 180 }} />
             </Form.Item>
-            <Form.Item name="tienThue" label={fl('tienThue', 'Tiền thuế')}>
+            <Form.Item name="thueSuat" label={fl('thueSuat', 'Thuế suất')}>
+              <Select options={THUE_SUAT_OPTIONS} allowClear placeholder="Chọn" style={{ width: 160 }} />
+            </Form.Item>
+            <Form.Item
+              name="tienThue"
+              label={fl('tienThue', 'Tiền thuế')}
+              tooltip="Tự tính khi đổi tiền hàng hoặc thuế suất; vẫn sửa tay được"
+            >
               <InputNumber {...moneyProps} style={{ width: 160 }} />
             </Form.Item>
             <Form.Item label="Tổng">
