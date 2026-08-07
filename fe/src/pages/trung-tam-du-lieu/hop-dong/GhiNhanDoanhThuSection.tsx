@@ -16,13 +16,11 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
-import type { DoiTuong, HopDong, NhatKyChung, TaiKhoan, TheoDoiHopDongRow } from '@/types';
+import type { NhatKyChung, TaiKhoan, TheoDoiHopDongRow } from '@/types';
 import { nhatKyChungService } from '@/services/nhatKyChungService';
-import { hopDongService } from '@/services/hopDongService';
-import { doiTuongService } from '@/services/doiTuongService';
 import { taiKhoanService } from '@/services/taiKhoanService';
-import { buildDoiTuongSnapshot, buildHopDongSnapshot } from '@/utils/snapshotBuilder';
 import { TK_CHUA_THUC_HIEN, TK_DOANH_THU, tinhDoanhThuHopDong } from './ghiNhanDoanhThu';
+import { defaultTaiKhoan, loadDonHangSnapshots, taiKhoanSnapshot } from './donHangChungTu';
 
 const { Text } = Typography;
 
@@ -84,18 +82,12 @@ export default function GhiNhanDoanhThuSection({ hopDong, canEdit }: Props) {
       .catch(() => setTaiKhoanList([]));
   }, []);
 
-  // TK mặc định: khớp chính xác 3387/511, không có thì lấy TK con đầu tiên
-  // (công ty dùng 33871 / 5113 vẫn ra đúng).
-  const defaultTk = (prefix: string) =>
-    taiKhoanList.find((tk) => tk.ma === prefix)?.ma ??
-    taiKhoanList.find((tk) => tk.ma.startsWith(prefix))?.ma;
-
   const openModal = () => {
     form.setFieldsValue({
       ngay: dayjs(),
       soTien: chuaGhiNhan > 0 ? chuaGhiNhan : undefined,
-      taiKhoanNo: defaultTk(TK_CHUA_THUC_HIEN),
-      taiKhoanCo: defaultTk(TK_DOANH_THU),
+      taiKhoanNo: defaultTaiKhoan(taiKhoanList, TK_CHUA_THUC_HIEN),
+      taiKhoanCo: defaultTaiKhoan(taiKhoanList, TK_DOANH_THU),
       noiDung: `Ghi nhận doanh thu ${hopDong.soHopDong}`,
     } as FormValues);
     setOpen(true);
@@ -105,20 +97,7 @@ export default function GhiNhanDoanhThuSection({ hopDong, canEdit }: Props) {
     const v = await form.validateFields();
     setSaving(true);
     try {
-      // Snapshot lấy từ bản ghi gốc để chứng từ mang đủ thông tin đơn hàng như khi
-      // kế toán tự chọn hợp đồng trên Nhật ký chung.
-      const [hd, dt] = await Promise.all([
-        hopDongService.getById(hopDong.hopDongId),
-        hopDong.doiTuongId
-          ? doiTuongService.getById(hopDong.doiTuongId).catch(() => undefined)
-          : Promise.resolve(undefined),
-      ]);
-
-      const tk = (ma: string) => {
-        const found = taiKhoanList.find((x) => x.ma === ma);
-        return { ma, ten: found?.ten ?? '', loai: found?.loai ?? '', nhom: found?.nhom ?? '' };
-      };
-      const doiTuong = dt ? buildDoiTuongSnapshot(dt as DoiTuong) : undefined;
+      const snap = await loadDonHangSnapshots(hopDong.hopDongId, hopDong.doiTuongId);
 
       await nhatKyChungService.create({
         loai: 'KHAC',
@@ -127,10 +106,13 @@ export default function GhiNhanDoanhThuSection({ hopDong, canEdit }: Props) {
         soTien: v.soTien,
         noiDung: v.noiDung,
         danhMuc: {
-          taiKhoanNo: tk(v.taiKhoanNo),
-          taiKhoanCo: tk(v.taiKhoanCo),
-          hopDong: buildHopDongSnapshot(hd as HopDong),
-          ...(doiTuong ? { doiTuong, doiTuong2: doiTuong } : {}),
+          taiKhoanNo: taiKhoanSnapshot(taiKhoanList, v.taiKhoanNo),
+          taiKhoanCo: taiKhoanSnapshot(taiKhoanList, v.taiKhoanCo),
+          hopDong: snap.hopDong,
+          // Cả hai bên đều là công nợ/doanh thu của khách hàng này
+          ...(snap.khachHang
+            ? { doiTuong: snap.khachHang, doiTuong2: snap.khachHang }
+            : {}),
         },
       });
       message.success('Đã ghi nhận doanh thu');

@@ -99,10 +99,35 @@ Menu **KẾ TOÁN → Báo cáo → Báo cáo doanh thu**, đặt ngay dưới P
 chuẩn dự án: `App.tsx`, `loadable.tsx`, `routePermissions.ts`, `menuCatalog.ts`,
 `MainLayout.tsx` (2 chỗ), `tenant.service`. Sau deploy phải grant quyền cho Admin.
 
+## 5. Nút "Thu tiền" trên đơn hàng (bổ sung 2026-08-07)
+
+Trước đây bước đưa tiền vào 3387 phải kế toán hạch toán tay: Sổ thu tiền hợp đồng
+(`thu_tien_hop_dong`, master-data) chỉ là bảng theo dõi, không hề gọi sang
+voucher-service nên không sinh bút toán nào.
+
+Nay khối *Các khoản thu* trong Drawer đơn hàng có nút **+ Thu tiền**, một thao tác
+ghi hai nơi:
+
+1. `POST /voucher/phieu-thu` — phiếu thu thật (số PT…/YYYY, in được ở Chứng từ →
+   Phiếu thu): Nợ 112 / Có 3387, `danhMuc.hopDong` gắn sẵn đơn hàng
+2. `POST /master-data/thu-tien-hop-dong` — dòng Sổ thu tiền, `ghiChu` ghi số chứng
+   từ để đối chiếu ngược
+
+Modal: Ngày thu, Số tiền, TK Nợ (mặc định 112), TK Có (mặc định 3387), Quỹ/Ngân
+hàng nhận tiền (tùy chọn), Nội dung. Đối tượng bên Nợ là quỹ/ngân hàng, bên Có là
+khách hàng — đúng bản chất từng vế.
+
+**Bù trừ khi lỗi:** tạo phiếu thu trước, ghi Sổ thu tiền sau. Sổ thu tiền hỏng thì
+xóa phiếu thu vừa tạo để không lệch sổ; xóa cũng hỏng thì báo rõ số phiếu để kế
+toán tự kiểm.
+
+**Quy ước bắt buộc:** với đơn hàng, dùng nút này *thay cho* việc vào Chứng từ nhập
+phiếu thu. Nhập cả hai nơi sẽ ghi trùng doanh thu chưa thực hiện.
+
 ## Ngoài phạm vi
 
 - Không thêm trường Sản phẩm vào entity hợp đồng (báo cáo lấy sản phẩm từ dòng
   hạch toán 511)
-- Không tự sinh bút toán ghi nhận doanh thu chưa thực hiện (Nợ 111/112 / Có 3387)
-  — kế toán vẫn nhập tay ở Nhật ký chung hoặc Thu tiền hợp đồng
+- Sổ thu tiền hợp đồng (trang riêng ở Trung tâm dữ liệu) vẫn KHÔNG sinh bút toán —
+  chỉ nút Thu tiền trên đơn hàng mới sinh
 - Không đổi cách các báo cáo hiện có tính doanh thu

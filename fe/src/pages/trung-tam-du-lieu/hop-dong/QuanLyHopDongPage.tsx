@@ -49,6 +49,7 @@ import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
 import GhiNhanDoanhThuSection from './GhiNhanDoanhThuSection';
+import ThuTienDonHangModal from './ThuTienDonHangModal';
 
 const { Text, Title } = Typography;
 
@@ -169,6 +170,9 @@ export default function QuanLyHopDongPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nam]);
 
+  const loadReceipts = (hopDongId: string) =>
+    thuTienHopDongService.getList({ hopDongId }).then(setReceipts).catch(() => {});
+
   const openEditor = async (row: TheoDoiHopDongRow) => {
     setCurrent(row);
     setOpen(true);
@@ -176,7 +180,7 @@ export default function QuanLyHopDongPage() {
     setReceipts([]);
     setInvoices([]);
     // Đã thanh toán / Đã trả hóa đơn: tự cộng từ Sổ thu tiền + Sổ HĐ bán ra
-    thuTienHopDongService.getList({ hopDongId: row.hopDongId }).then(setReceipts).catch(() => {});
+    loadReceipts(row.hopDongId);
     hoaDonBanRaService.getList({ hopDongId: row.hopDongId }).then(setInvoices).catch(() => {});
     try {
       const t = await theoDoiHopDongService.getByHopDongId(row.hopDongId);
@@ -498,8 +502,19 @@ export default function QuanLyHopDongPage() {
                 <InputNumber {...moneyProps} addonAfter="VNĐ" style={{ width: 240 }} />
               </Form.Item>
 
-              <Divider orientation="left">Các khoản thu (từ Sổ thu tiền)</Divider>
-              <Text type="secondary" className="text-xs">Nhập ở mục Trung tâm dữ liệu → Thu tiền hợp đồng; tại đây chỉ xem và tự cộng.</Text>
+              <Divider orientation="left">Các khoản thu</Divider>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <Text type="secondary" className="text-xs">
+                  Thu tiền tại đây sẽ tạo phiếu thu Nợ 112 / Có 3387 gắn sẵn đơn hàng và ghi vào Sổ thu tiền.
+                </Text>
+                {canEdit && (
+                  <ThuTienDonHangModal
+                    hopDong={current}
+                    soLanDaThu={receipts.length}
+                    onCreated={() => loadReceipts(current.hopDongId)}
+                  />
+                )}
+              </div>
               <Table size="small" rowKey={(r) => r.id || ''} columns={receiptCols} dataSource={receipts} pagination={false} locale={{ emptyText: 'Chưa có khoản thu' }} />
 
               <Divider orientation="left">Hóa đơn bán ra</Divider>
