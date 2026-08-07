@@ -1,5 +1,21 @@
 # Active Pages — Sidebar → Route → API Map
 
+## Thanh ngang trong trang (SectionNav) — KHÔNG nằm trong sidebar
+
+Một số mục đã được gỡ khỏi dropdown sidebar và chuyển lên thanh ngang đầu trang
+(`fe/src/components/layout/SectionNav.tsx`, cấu hình ở `fe/src/config/sectionNavs.tsx`):
+
+| Thanh | Mục | Hiện trên trang |
+|-------|-----|-----------------|
+| `CHUNG_TU_NAV` | Phiếu thu, Phiếu chi, Phiếu kế toán (soon) | Dữ liệu tổng hợp + các trang phiếu |
+| `KHO_NAV` | Nhập kho, Xuất kho, Chuyển kho, Kiểm kê kho (soon) | Trang phiếu kho + 4 nhóm hàng trong Kho |
+| `BAN_HANG_NAV` | Bán hàng, Báo cáo | Quản lý hợp đồng + Báo cáo hợp đồng |
+
+> Menu "Kho" trong sidebar giờ là 4 nhóm hàng (Hàng hóa / Nguyên vật liệu / Dụng cụ /
+> Văn phòng phẩm) dùng route `/trung-tam-du-lieu/*` — giữ key cũ để không phải cấp lại quyền.
+> Menu "Danh mục" là 1 mục lá dẫn tới trang toàn màn hình `/danh-muc`
+> (nội dung ở `fe/src/config/danhMucCatalog.ts`).
+
 ## Sidebar Structure
 
 ### DIEU HANH (Management)
@@ -16,7 +32,8 @@
 | PnL | `/bao-cao/pnl` | ACTIVE | reporting:3006 |
 | So chi tiet TK | `/bao-cao/so-chi-tiet-tai-khoan` | ACTIVE | reporting:3006 |
 | Bao cao doanh thu | `/bao-cao/doanh-thu` | ACTIVE | reporting:3006 |
-| Bang tong hop | `/bao-cao/bang-tong-hop` | COMING SOON | — |
+| Tong hop cong no | `/bao-cao/bang-tong-hop` | ACTIVE | reporting:3006 |
+| Bao cao hop dong | `/bao-cao/hop-dong` | ACTIVE (thanh ngang Bán hàng) | reporting:3006 |
 
 ### KE TOAN — Trung Tam Du Lieu (Data Center)
 | Menu Item | Route | Status |
@@ -26,9 +43,9 @@
 ### KE TOAN — Chung Tu (Documents)
 | Menu Item | Route | Status | API |
 |-----------|-------|--------|-----|
-| Nhat ky chung | `/chung-tu/nhat-ky-chung` | ACTIVE | voucher:3003 |
-| Phieu thu | `/chung-tu/phieu-thu` | ACTIVE | voucher:3003 |
-| Phieu chi | `/chung-tu/phieu-chi` | ACTIVE | voucher:3003 |
+| Nhat ky chung ("Dữ liệu tổng hợp") | `/chung-tu/nhat-ky-chung` | ACTIVE | voucher:3003 |
+| Phieu thu | `/chung-tu/phieu-thu` | ACTIVE (thanh ngang, không ở sidebar) | voucher:3003 |
+| Phieu chi | `/chung-tu/phieu-chi` | ACTIVE (thanh ngang, không ở sidebar) | voucher:3003 |
 | 8 other items | `/chung-tu/*` | COMING SOON | — |
 
 ### KE TOAN — So Quy (Cash Book)
@@ -43,6 +60,9 @@
 | Phai tra | `/cong-no/phai-tra` | ACTIVE | payable:3005 |
 
 ### THU VIEN — Danh Muc (Catalog)
+
+> Sidebar chỉ còn 1 mục "Danh mục" → `/danh-muc` (trang toàn màn hình liệt kê các link dưới đây).
+
 | Menu Item | Route | Status | API |
 |-----------|-------|--------|-----|
 | Tai khoan | `/danh-muc/tai-khoan` | ACTIVE | master-data:3002 |
@@ -78,9 +98,11 @@
 ### KHO (Warehouse)
 | Menu Item | Route | Status | API |
 |-----------|-------|--------|-----|
-| Nhap kho | `/kho/nhap-kho` | ACTIVE | kho:3008 |
-| Xuat kho | `/kho/xuat-kho` | ACTIVE | kho:3008 |
-| Chuyen kho | `/kho/chuyen-kho` | ACTIVE | kho:3008 |
+| Nhap kho | `/kho/nhap-kho` | ACTIVE (thanh ngang) | kho:3008 |
+| Xuat kho | `/kho/xuat-kho` | ACTIVE (thanh ngang) | kho:3008 |
+| Chuyen kho | `/kho/chuyen-kho` | ACTIVE (thanh ngang) | kho:3008 |
+| Kiem ke kho | `/kho/kiem-ke` | COMING SOON | — |
+| Hang hoa / NVL / Dung cu / VPP | `/trung-tam-du-lieu/{hang-hoa,nguyen-lieu,dung-cu,van-phong-pham}` | COMING SOON (sidebar Kho) | — |
 
 ### CAU HINH (Configuration)
 | Menu Item | Route | Status | API |

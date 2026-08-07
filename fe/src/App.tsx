@@ -17,6 +17,7 @@ import {
   LoginPage,
   Dashboard,
   ProfilePage,
+  DanhMucIndexPage,
   TaiKhoanPage,
   DoiTuongPage,
   SanPhamPage,
@@ -28,6 +29,7 @@ import {
   NhapKhoPage,
   XuatKhoPage,
   ChuyenKhoPage,
+  KhoNhomHangPage,
   DuAnPage,
   BoPhanPage,
   KhoanMucPage,
@@ -137,6 +139,8 @@ const App = () => (
                 
                 {/* Danh mục */}
                 <Route path="danh-muc">
+                  {/* Trang tổng hợp toàn màn hình — tự lọc link theo quyền/lĩnh vực */}
+                  <Route index element={<DanhMucIndexPage />} />
                   <Route
                     path="tai-khoan"
                     element={
@@ -395,6 +399,8 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
+                  {/* Kiểm kê kho — mới có mục trên thanh ngang, chức năng làm sau */}
+                  <Route path="kiem-ke" element={<ComingSoonPage />} />
                 </Route>
 
                 {/* Sổ quỹ */}
@@ -550,9 +556,11 @@ const App = () => (
                   <Route path="ke-hoach" element={<ComingSoonPage />} />
                   <Route path="du-bao" element={<ComingSoonPage />} />
                   <Route path="tai-san" element={<ComingSoonPage />} />
-                  <Route path="hang-hoa" element={<ComingSoonPage />} />
-                  <Route path="nguyen-lieu" element={<ComingSoonPage />} />
-                  <Route path="dung-cu" element={<ComingSoonPage />} />
+                  {/* 4 nhóm hàng hiện nằm dưới menu Kho — kèm thanh ngang phiếu kho */}
+                  <Route path="hang-hoa" element={<KhoNhomHangPage />} />
+                  <Route path="nguyen-lieu" element={<KhoNhomHangPage />} />
+                  <Route path="dung-cu" element={<KhoNhomHangPage />} />
+                  <Route path="van-phong-pham" element={<KhoNhomHangPage />} />
                   <Route path="hop-dong" element={
                     <ProtectedRoute requiredPermission="/trung-tam-du-lieu/hop-dong:xem">
                       <QuanLyHopDongPage />

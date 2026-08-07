@@ -33,6 +33,8 @@ import { KhoTemplateModal } from './print/KhoTemplateModal';
 import { KHO_TEMPLATE_KEY } from './print/khoPrintTemplates';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useBulkDelete } from '@/components/table/useBulkDelete';
+import { SectionNav } from '@/components/layout/SectionNav';
+import { KHO_NAV } from '@/config/sectionNavs';
 
 const { RangePicker } = DatePicker;
 
@@ -246,6 +248,8 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
           { title: tieuDe },
         ]}
       />
+
+      <SectionNav items={KHO_NAV} />
 
       <Card className="shadow-sm">
         {/* FilterBar */}

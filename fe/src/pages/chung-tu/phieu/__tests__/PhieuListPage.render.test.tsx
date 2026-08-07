@@ -5,9 +5,13 @@ import { MemoryRouter } from "react-router-dom";
 import { PhieuListPage } from "../PhieuListPage";
 import { PHIEU_CONFIG } from "../phieuConfig";
 
-// Trang in (usePrintPhieu) đọc tenant qua useAuth; mock để test mount độc lập.
+// Trang in (usePrintPhieu) đọc tenant, SectionNav đọc quyền — đều qua useAuth.
 vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => ({ currentTenant: { tenantName: "Test Co" } }),
+  useAuth: () => ({
+    currentTenant: { tenantName: "Test Co" },
+    user: { isSuperAdmin: true },
+    hasPermission: () => true,
+  }),
 }));
 
 beforeAll(() => {

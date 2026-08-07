@@ -22,18 +22,22 @@ const pathTitles: Record<string, string> = {
   "/bao-cao/so-chi-tiet-tai-khoan": "Sổ chi tiết tài khoản",
   "/bao-cao/so-chi-tiet-cong-no": "Sổ chi tiết công nợ",
   "/bao-cao/so-chi-tiet-phat-sinh": "Sổ chi tiết phát sinh",
-  "/bao-cao/bang-tong-hop": "Bảng tổng hợp",
+  "/bao-cao/bang-tong-hop": "Tổng hợp công nợ",
 
   // Trung tâm dữ liệu
   "/trung-tam-du-lieu/ke-hoach": "Kế hoạch",
   "/trung-tam-du-lieu/du-bao": "Dự báo",
   "/trung-tam-du-lieu/tai-san": "Quản lý Tài sản",
-  "/trung-tam-du-lieu/hang-hoa": "Quản lý Hàng hóa",
-  "/trung-tam-du-lieu/nguyen-lieu": "Quản lý Nguyên liệu",
-  "/trung-tam-du-lieu/dung-cu": "Quản lý Dụng cụ",
-  "/trung-tam-du-lieu/hop-dong": "Quản lý Hợp đồng",
+  "/trung-tam-du-lieu/hop-dong": "Bán hàng",
   "/trung-tam-du-lieu/nhan-su": "Quản lý Nhân sự",
   "/trung-tam-du-lieu/luong-bhxh": "Lương & BHXH",
+
+  // Kho — 4 nhóm hàng + kiểm kê
+  "/trung-tam-du-lieu/hang-hoa": "Hàng hóa",
+  "/trung-tam-du-lieu/nguyen-lieu": "Nguyên vật liệu",
+  "/trung-tam-du-lieu/dung-cu": "Dụng cụ",
+  "/trung-tam-du-lieu/van-phong-pham": "Văn phòng phẩm",
+  "/kho/kiem-ke": "Kiểm kê kho",
 
   // Chứng từ
   "/chung-tu/phieu-thu": "Phiếu thu",

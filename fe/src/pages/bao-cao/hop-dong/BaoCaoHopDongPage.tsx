@@ -8,6 +8,8 @@ import { exportReportExcel } from '@/utils/exportReportExcel';
 import { buildHopDongSheets } from './hopDongExport';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
 import { filterHopDong } from './hopDongFilter';
+import { SectionNav } from '@/components/layout/SectionNav';
+import { BAN_HANG_NAV } from '@/config/sectionNavs';
 
 const { Text, Title } = Typography;
 
@@ -123,10 +125,12 @@ export default function BaoCaoHopDongPage() {
       <Breadcrumb
         items={[
           { href: '/', title: <><HomeOutlined /> Trang chủ</> },
+          { title: 'Bán hàng' },
           { title: 'Báo cáo' },
-          { title: 'Báo cáo hợp đồng' },
         ]}
       />
+
+      <SectionNav items={BAN_HANG_NAV} />
 
       <Card className="shadow-sm">
         <div className="flex items-center justify-between mb-3">

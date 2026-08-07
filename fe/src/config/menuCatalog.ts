@@ -24,8 +24,8 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/bao-cao/so-chi-tiet-tai-khoan', label: 'Sổ chi tiết tài khoản', parentLabel: 'Báo cáo' },
   { key: '/bao-cao/so-chi-tiet-cong-no', label: 'Sổ chi tiết công nợ', parentLabel: 'Báo cáo' },
   { key: '/bao-cao/so-chi-tiet-phat-sinh', label: 'Sổ chi tiết phát sinh', parentLabel: 'Báo cáo' },
-  { key: '/bao-cao/bang-tong-hop', label: 'Bảng tổng hợp', parentLabel: 'Báo cáo' },
-  { key: '/bao-cao/hop-dong', label: 'Báo cáo hợp đồng', parentLabel: 'Báo cáo' },
+  { key: '/bao-cao/bang-tong-hop', label: 'Tổng hợp công nợ', parentLabel: 'Báo cáo' },
+  { key: '/bao-cao/hop-dong', label: 'Báo cáo', parentLabel: 'Bán hàng' },
   { key: '/bao-cao/doanh-thu', label: 'Báo cáo doanh thu', parentLabel: 'Báo cáo' },
 
   // ===== KẾ TOÁN — Thuế =====
@@ -39,12 +39,7 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/trung-tam-du-lieu/du-bao', label: 'Dự báo', parentLabel: 'Trung tâm dữ liệu' },
   { key: '/chung-tu/nhat-ky-chung', label: 'Dữ liệu tổng hợp', parentLabel: 'Trung tâm dữ liệu' },
   { key: '/trung-tam-du-lieu/tai-san', label: 'Quản lý Tài sản', parentLabel: 'Trung tâm dữ liệu' },
-  { key: '/trung-tam-du-lieu/hang-hoa', label: 'Quản lý Hàng hóa', parentLabel: 'Trung tâm dữ liệu' },
-  { key: '/trung-tam-du-lieu/nguyen-lieu', label: 'Quản lý Nguyên liệu', parentLabel: 'Trung tâm dữ liệu' },
-  { key: '/trung-tam-du-lieu/dung-cu', label: 'Quản lý Dụng cụ', parentLabel: 'Trung tâm dữ liệu' },
-  { key: '/trung-tam-du-lieu/hop-dong', label: 'Quản lý Hợp đồng', parentLabel: 'Trung tâm dữ liệu' },
-  { key: '/trung-tam-du-lieu/thu-tien-hop-dong', label: 'Thu tiền hợp đồng', parentLabel: 'Trung tâm dữ liệu' },
-  { key: '/trung-tam-du-lieu/hd-ban-ra', label: 'Hóa đơn bán ra', parentLabel: 'Trung tâm dữ liệu' },
+  { key: '/trung-tam-du-lieu/hop-dong', label: 'Bán hàng', parentLabel: 'Trung tâm dữ liệu' },
   { key: '/trung-tam-du-lieu/nhan-su', label: 'Quản lý nhân sự', parentLabel: 'Trung tâm dữ liệu' },
   { key: '/trung-tam-du-lieu/luong-bhxh', label: 'Lương & BHXH', parentLabel: 'Trung tâm dữ liệu' },
 
@@ -62,6 +57,11 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/chung-tu/de-nghi-thanh-toan', label: 'Đề nghị thanh toán', parentLabel: 'Chứng từ' },
 
   // ===== KẾ TOÁN — Kho =====
+  // 4 nhóm hàng là mục sidebar; Nhập/Xuất/Chuyển/Kiểm kê kho nằm trên thanh ngang.
+  { key: '/trung-tam-du-lieu/hang-hoa', label: 'Hàng hóa', parentLabel: 'Kho' },
+  { key: '/trung-tam-du-lieu/nguyen-lieu', label: 'Nguyên vật liệu', parentLabel: 'Kho' },
+  { key: '/trung-tam-du-lieu/dung-cu', label: 'Dụng cụ', parentLabel: 'Kho' },
+  { key: '/trung-tam-du-lieu/van-phong-pham', label: 'Văn phòng phẩm', parentLabel: 'Kho' },
   { key: '/kho/nhap-kho', label: 'Nhập kho', parentLabel: 'Kho' },
   { key: '/kho/xuat-kho', label: 'Xuất kho', parentLabel: 'Kho' },
   { key: '/kho/chuyen-kho', label: 'Chuyển kho', parentLabel: 'Kho' },

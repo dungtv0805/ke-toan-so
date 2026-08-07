@@ -53,6 +53,8 @@ import { useTableColumnFilters } from '@/components/table/useTableColumnFilters'
 import GhiNhanDoanhThuSection from './GhiNhanDoanhThuSection';
 import ThuTienDonHangModal from './ThuTienDonHangModal';
 import TaoNhanhHopDongModal from './TaoNhanhHopDongModal';
+import { SectionNav } from '@/components/layout/SectionNav';
+import { BAN_HANG_NAV } from '@/config/sectionNavs';
 
 const { Text, Title } = Typography;
 
@@ -374,9 +376,11 @@ export default function QuanLyHopDongPage() {
         items={[
           { href: '/', title: <><HomeOutlined /> Trang chủ</> },
           { title: 'Trung tâm dữ liệu' },
-          { title: 'Quản lý Hợp đồng' },
+          { title: 'Bán hàng' },
         ]}
       />
+
+      <SectionNav items={BAN_HANG_NAV} />
 
       <Row gutter={16}>
         <Col xs={24} sm={8}>

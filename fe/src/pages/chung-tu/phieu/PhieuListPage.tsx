@@ -12,6 +12,8 @@ import { SummaryTabs } from "./components/summary/SummaryTabs";
 import { TemplateModal } from "./components/template-modal/TemplateModal";
 import { ImportExcelModal } from "./import/ImportExcelModal";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
+import { SectionNav } from "@/components/layout/SectionNav";
+import { CHUNG_TU_NAV } from "@/config/sectionNavs";
 
 function PhieuListPageInner() {
   const handler = usePhieuHandler();
@@ -35,6 +37,8 @@ function PhieuListPageInner() {
           { title: config.title },
         ]}
       />
+
+      <SectionNav items={CHUNG_TU_NAV} />
 
       <StatsCards />
 

@@ -23,6 +23,10 @@ export const ProfilePage = loadable(() => import('./profile/ProfilePage'), {
 });
 
 // Danh mục
+export const DanhMucIndexPage = loadable(() => import('./danh-muc/DanhMucIndexPage'), {
+  fallback: <PageLoader />
+});
+
 export const TaiKhoanPage = loadable(() => import('./danh-muc/tai-khoan/TaiKhoanPage'), {
   fallback: <PageLoader />
 });
@@ -138,6 +142,10 @@ export const XuatKhoPage = loadable(() => import('./kho/xuat-kho/XuatKhoPage'), 
 });
 
 export const ChuyenKhoPage = loadable(() => import('./kho/chuyen-kho/ChuyenKhoPage'), {
+  fallback: <PageLoader />
+});
+
+export const KhoNhomHangPage = loadable(() => import('./kho/KhoNhomHangPage'), {
   fallback: <PageLoader />
 });
 

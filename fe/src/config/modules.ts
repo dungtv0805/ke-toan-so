@@ -51,6 +51,12 @@ export const isCommonKey = (key: string): boolean => {
   return false;
 };
 
+/** Item hiển thị nếu key thuộc COMMON hoặc nằm trong tập menuKeys được truyền vào. */
+export const keyMatches = (key: string, moduleKeys: string[]): boolean => {
+  if (isCommonKey(key)) return true;
+  return moduleKeys.some((k) => key === k || key.startsWith(k + '/'));
+};
+
 /**
  * Code lĩnh vực khả dụng: SuperAdmin = mọi code active; user thường = giao
  * tenantModules ∩ code active. Fallback ['KE_TOAN'] nếu rỗng.

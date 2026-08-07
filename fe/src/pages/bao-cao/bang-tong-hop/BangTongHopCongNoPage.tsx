@@ -295,7 +295,7 @@ const BangTongHopCongNoPage: React.FC = () => {
             ),
           },
           { title: "Báo cáo" },
-          { title: "Bảng tổng hợp công nợ" },
+          { title: "Tổng hợp công nợ" },
         ]}
         style={{ marginBottom: 16 }}
       />
@@ -303,7 +303,7 @@ const BangTongHopCongNoPage: React.FC = () => {
         title={
           <Space>
             <TableOutlined />
-            <span>Bảng tổng hợp công nợ</span>
+            <span>Tổng hợp công nợ</span>
           </Space>
         }
         extra={

@@ -21,7 +21,7 @@ const { Text } = Typography;
 const TAB_OPTIONS = [
   { label: 'Tài chính', value: 'tai-chinh' },
   { label: 'Nhân sự', value: 'nhan-su' },
-  { label: 'Kinh doanh', value: 'kinh-doanh' },
+  { label: 'Bán hàng', value: 'kinh-doanh' },
   { label: 'Điều hành', value: 'dieu-hanh' },
 ];
 

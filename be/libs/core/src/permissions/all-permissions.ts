@@ -29,6 +29,7 @@ export const PERMISSION_MODULES = [
   '/trung-tam-du-lieu/hang-hoa',
   '/trung-tam-du-lieu/nguyen-lieu',
   '/trung-tam-du-lieu/dung-cu',
+  '/trung-tam-du-lieu/van-phong-pham',
   '/trung-tam-du-lieu/hop-dong',
   '/trung-tam-du-lieu/nhan-su',
   '/trung-tam-du-lieu/luong-bhxh',

@@ -27,6 +27,13 @@ export const routePermissions: Record<string, string> = {
   '/danh-muc/nhom-vat-tu': '/danh-muc/nhom-vat-tu:xem',
   '/danh-muc/hang-hoa-vat-tu': '/danh-muc/hang-hoa-vat-tu:xem',
 
+  // Kho — 4 nhóm hàng vẫn giữ key /trung-tam-du-lieu/* (quyền đã cấp sẵn),
+  // chỉ đổi chỗ hiển thị sang menu Kho.
+  '/trung-tam-du-lieu/hang-hoa': '/trung-tam-du-lieu/hang-hoa:xem',
+  '/trung-tam-du-lieu/nguyen-lieu': '/trung-tam-du-lieu/nguyen-lieu:xem',
+  '/trung-tam-du-lieu/dung-cu': '/trung-tam-du-lieu/dung-cu:xem',
+  '/trung-tam-du-lieu/van-phong-pham': '/trung-tam-du-lieu/van-phong-pham:xem',
+
   '/kho/nhap-kho': '/kho/nhap-kho:xem',
   '/kho/xuat-kho': '/kho/xuat-kho:xem',
   '/kho/chuyen-kho': '/kho/chuyen-kho:xem',

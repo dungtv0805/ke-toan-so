@@ -23,8 +23,6 @@ import {
   DownloadOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  BankOutlined,
-  ProjectOutlined,
   AppstoreOutlined,
   DollarOutlined,
   AuditOutlined,
@@ -32,8 +30,6 @@ import {
   MenuOutlined,
   CloseOutlined,
   SafetyCertificateOutlined,
-  TagOutlined,
-  SwapOutlined,
   LineChartOutlined,
   ShoppingCartOutlined,
   ShoppingOutlined,
@@ -57,14 +53,12 @@ import {
   ClockCircleOutlined,
   FieldTimeOutlined,
   PartitionOutlined,
-  CreditCardOutlined,
   FileSearchOutlined,
   AccountBookOutlined,
   PieChartOutlined,
   SnippetsOutlined,
   NodeIndexOutlined,
   FileAddOutlined,
-  StopOutlined,
   CopyOutlined,
   CoffeeOutlined,
   ExperimentOutlined,
@@ -76,9 +70,9 @@ import { useTerm } from "@/contexts/TermContext";
 import { TenantSwitcher } from "./TenantSwitcher";
 import { AppSwitcher } from "./AppSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { isCommonKey, unionMenuKeys } from "@/config/modules";
-import { MENU_CATALOG } from "@/config/menuCatalog";
-import type { LinhVuc } from "@/services/linhVucService";
+import { keyMatches } from "@/config/modules";
+import { DANH_MUC_ROUTES } from "@/config/danhMucCatalog";
+import { useEffectiveMenuKeys } from "@/hooks/useEffectiveMenuKeys";
 
 const { Header, Sider, Content } = Layout;
 
@@ -92,10 +86,16 @@ const IS_MOBILE_OR_TABLET =
   /android|iphone|ipod|ipad/i.test(navigator.userAgent) ||
   (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 
-// Item hiển thị nếu key thuộc COMMON hoặc nằm trong tập menuKeys được truyền vào.
-function keyMatches(key: string, moduleKeys: string[]): boolean {
-  if (isCommonKey(key)) return true;
-  return moduleKeys.some((k) => key === k || key.startsWith(k + "/"));
+// Mục menu gộp nhiều trang con vào 1 trang tổng hợp: hiển thị/mở khóa theo tập route con.
+const AGGREGATE_MENU_ROUTES: Record<string, string[]> = {
+  "/danh-muc": DANH_MUC_ROUTES,
+};
+
+// Như keyMatches nhưng hiểu cả mục gộp (Danh mục).
+function menuKeyVisible(key: string, moduleKeys: string[]): boolean {
+  const routes = AGGREGATE_MENU_ROUTES[key];
+  if (routes) return routes.some((r) => keyMatches(r, moduleKeys));
+  return keyMatches(key, moduleKeys);
 }
 
 // Lọc menu theo lĩnh vực đang chọn: giữ COMMON + mục thuộc menuKeys của lĩnh vực.
@@ -110,7 +110,7 @@ function filterByModule(items: MenuItem[], moduleKeys: string[]): MenuItem[] {
         if (fc.length === 0) return null;
         return { ...mi, children: fc } as MenuItem;
       }
-      return keyMatches(mi.key as string, moduleKeys) ? item : null;
+      return menuKeyVisible(mi.key as string, moduleKeys) ? item : null;
     })
     .filter(Boolean) as MenuItem[];
 }
@@ -119,6 +119,7 @@ function filterByModule(items: MenuItem[], moduleKeys: string[]): MenuItem[] {
 const existingRoutes = new Set([
   "/",
   "/profile",
+  "/danh-muc",
   "/danh-muc/tai-khoan",
   "/danh-muc/doi-tuong",
   "/danh-muc/du-an",
@@ -275,8 +276,7 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Sổ chi tiết tài khoản", "/bao-cao/so-chi-tiet-tai-khoan", <AccountBookOutlined />),
     getMenuItem("Sổ chi tiết công nợ", "/bao-cao/so-chi-tiet-cong-no", <FileSearchOutlined />),
     getMenuItem("Sổ chi tiết phát sinh", "/bao-cao/so-chi-tiet-phat-sinh", <ProfileOutlined />),
-    getMenuItem("Bảng tổng hợp", "/bao-cao/bang-tong-hop", <TableOutlined />),
-    getMenuItem("Báo cáo hợp đồng", "/bao-cao/hop-dong", <FileProtectOutlined />),
+    getMenuItem("Tổng hợp công nợ", "/bao-cao/bang-tong-hop", <TableOutlined />),
     getMenuItem("Báo cáo doanh thu", "/bao-cao/doanh-thu", <RiseOutlined />),
   ]),
 
@@ -292,19 +292,14 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Dự báo", "/trung-tam-du-lieu/du-bao", <RiseOutlined />),
     getMenuItem("Dữ liệu tổng hợp", "/chung-tu/nhat-ky-chung", <AuditOutlined />),
     getMenuItem("Quản lý Tài sản", "/trung-tam-du-lieu/tai-san", <CarOutlined />),
-    getMenuItem("Quản lý Hàng hóa", "/trung-tam-du-lieu/hang-hoa", <AppstoreOutlined />),
-    getMenuItem("Quản lý Nguyên liệu", "/trung-tam-du-lieu/nguyen-lieu", <ContainerOutlined />),
-    getMenuItem("Quản lý Dụng cụ", "/trung-tam-du-lieu/dung-cu", <ToolOutlined />),
-    getMenuItem("Quản lý Hợp đồng", "/trung-tam-du-lieu/hop-dong", <FileProtectOutlined />),
-    getMenuItem("Thu tiền hợp đồng", "/trung-tam-du-lieu/thu-tien-hop-dong", <DollarOutlined />),
-    getMenuItem("Hóa đơn bán ra", "/trung-tam-du-lieu/hd-ban-ra", <FileDoneOutlined />),
+    getMenuItem("Bán hàng", "/trung-tam-du-lieu/hop-dong", <FileProtectOutlined />),
     getMenuItem("Quản lý nhân sự", "/trung-tam-du-lieu/nhan-su", <SolutionOutlined />),
     getMenuItem("Lương & BHXH", "/trung-tam-du-lieu/luong-bhxh", <InsuranceOutlined />),
   ]),
 
+  // Phiếu thu / Phiếu chi / Phiếu kế toán đã chuyển lên thanh ngang của trang
+  // "Dữ liệu tổng hợp" (xem CHUNG_TU_NAV) nên không còn nằm trong dropdown này.
   getItem("Chứng từ", "/chung-tu", <FileTextOutlined />, [
-    getMenuItem("Phiếu thu", "/chung-tu/phieu-thu", <CreditCardOutlined />),
-    getMenuItem("Phiếu chi", "/chung-tu/phieu-chi", <WalletOutlined />),
     getMenuItem("Phiếu nhập", "/chung-tu/phieu-nhap", <FileAddOutlined />),
     getMenuItem("Phiếu xuất", "/chung-tu/phieu-xuat", <FileDoneOutlined />),
     getMenuItem("Phiếu lương", "/chung-tu/phieu-luong", <SnippetsOutlined />),
@@ -312,14 +307,16 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Bảng chấm công", "/chung-tu/bang-cham-cong", <ClockCircleOutlined />),
     getMenuItem("Bảng chấm công làm thêm giờ", "/chung-tu/cham-cong-lam-them", <FieldTimeOutlined />),
     getMenuItem("Bảng phân bổ khấu hao TSCĐ", "/chung-tu/phan-bo-khau-hao", <PartitionOutlined />),
-    getMenuItem("Phiếu kế toán", "/chung-tu/phieu-ke-toan", <AuditOutlined />),
     getMenuItem("Đề nghị thanh toán", "/chung-tu/de-nghi-thanh-toan", <FormOutlined />),
   ]),
 
+  // Nhập / Xuất / Chuyển / Kiểm kê kho nằm trên thanh ngang của các trang kho
+  // (xem KHO_NAV); dropdown chỉ giữ 4 nhóm hàng trong kho.
   getItem("Kho", "/kho", <InboxOutlined />, [
-    getMenuItem("Nhập kho", "/kho/nhap-kho", <FileAddOutlined />),
-    getMenuItem("Xuất kho", "/kho/xuat-kho", <FileDoneOutlined />),
-    getMenuItem("Chuyển kho", "/kho/chuyen-kho", <SwapOutlined />),
+    getMenuItem("Hàng hóa", "/trung-tam-du-lieu/hang-hoa", <AppstoreOutlined />),
+    getMenuItem("Nguyên vật liệu", "/trung-tam-du-lieu/nguyen-lieu", <ContainerOutlined />),
+    getMenuItem("Dụng cụ", "/trung-tam-du-lieu/dung-cu", <ToolOutlined />),
+    getMenuItem("Văn phòng phẩm", "/trung-tam-du-lieu/van-phong-pham", <SnippetsOutlined />),
   ]),
 
   getItem("Bếp ăn", "/bep-an", <CoffeeOutlined />, [
@@ -333,34 +330,9 @@ const keToAnMenuItems: MenuItem[] = [
 
 // ===== THƯ VIỆN - Library menu =====
 const thuVienMenuItems: MenuItem[] = [
-  // Danh mục
-  getItem("Danh mục", "/danh-muc", <BookOutlined />, [
-    getMenuItem("Tài khoản", "/danh-muc/tai-khoan", <BankOutlined />),
-    getMenuItem("Đối tượng", "/danh-muc/doi-tuong", <TeamOutlined />),
-    getMenuItem("Dự án", "/danh-muc/du-an", <ProjectOutlined />),
-    getMenuItem("Sản phẩm", "/danh-muc/san-pham", <AppstoreOutlined />),
-    getMenuItem("Hợp đồng", "/danh-muc/hop-dong", <FileProtectOutlined />),
-    getMenuItem("Bộ phận", "/danh-muc/bo-phan", <TeamOutlined />),
-    getMenuItem("Khoản mục", "/danh-muc/khoan-muc", <DollarOutlined />),
-    getMenuItem("Số dư đầu kỳ", "/danh-muc/so-du-dau-ky", <DollarOutlined />),
-    getMenuItem("Kho", "/danh-muc/kho", <InboxOutlined />),
-    getMenuItem("Hàng hóa vật tư", "/danh-muc/hang-hoa-vat-tu", <InboxOutlined />),
-    getMenuItem("Đơn vị tính", "/danh-muc/don-vi-tinh", <TagOutlined />),
-    getMenuItem("Lý do không hợp lệ", "/danh-muc/ly-do-khong-hop-le", <StopOutlined />),
-    getMenuItem("Nhóm vật tư", "/danh-muc/nhom-vat-tu", <AppstoreOutlined />),
-    getItem("Khác", "/danh-muc/khac", <AppstoreOutlined />, [
-      getMenuItem("Chủ đầu tư", "/danh-muc/chu-dau-tu", <UserOutlined />),
-      getMenuItem("Nhóm khoản mục", "/danh-muc/nhom-khoan-muc", <TagOutlined />),
-      getMenuItem("Ngân hàng & Quỹ", "/danh-muc/ngan-hang", <BankOutlined />),
-      getMenuItem("Dòng tiền", "/danh-muc/dong-tien", <DollarOutlined />),
-      getMenuItem("Nhóm khuyến mại", "/danh-muc/nhom-khuyen-mai", <AppstoreOutlined />),
-      getMenuItem("Nhóm quản lý", "/danh-muc/nhom-quan-ly", <TeamOutlined />),
-      getMenuItem("Loại chứng từ", "/danh-muc/loai-chung-tu", <FileTextOutlined />),
-      getMenuItem("Loại giao dịch", "/danh-muc/loai-giao-dich", <SwapOutlined />),
-      getMenuItem("Quy chuẩn hạch toán", "/danh-muc/quy-chuan", <AuditOutlined />),
-      getMenuItem("Hồ sơ chứng từ", "/danh-muc/ho-so-chung-tu", <FileTextOutlined />),
-    ]),
-  ]),
+  // Danh mục — gộp toàn bộ vào 1 trang toàn màn hình (/danh-muc) thay vì
+  // danh sách thả xuống dài; nội dung trang xem `config/danhMucCatalog.ts`.
+  getMenuItem("Danh mục", "/danh-muc", <BookOutlined />),
 
   // getMenuItem("Sổ quỹ", "/so-quy", <WalletOutlined />),
 
@@ -397,15 +369,7 @@ const MainLayout: React.FC = () => {
   });
   const navigate = useNavigate();
   const location = useLocation();
-  const {
-    user,
-    logout,
-    currentTenant,
-    hasPermission,
-    availableModules,
-    allModules,
-    getModule,
-  } = useAuth();
+  const { user, logout, currentTenant, hasPermission } = useAuth();
   const { t } = useTerm();
   const currentRole = currentTenant?.role;
   const isSuperAdmin = user?.isSuperAdmin || false;
@@ -420,6 +384,9 @@ const MainLayout: React.FC = () => {
   const canAccessRoute = (path: string): boolean => {
     if (isSuperAdmin) return true;
     if (path === '/') return hasPermission('/:xem') || hasPermission('/tong-quan:xem');
+    // Mục gộp (Danh mục): mở nếu có quyền xem ít nhất 1 trang con.
+    const routes = AGGREGATE_MENU_ROUTES[path];
+    if (routes) return routes.some((r) => hasPermission(`${r}:xem`));
     return hasPermission(`${path}:xem`);
   };
 
@@ -457,27 +424,12 @@ const MainLayout: React.FC = () => {
   };
 
   // Phân hệ khả dụng (đã sắp theo order) — hiển thị GỘP, không cần chọn.
-  const availableModuleDefs: LinhVuc[] = availableModules
-    .map((code) => getModule(code))
-    .filter((m): m is LinhVuc => !!m)
-    .sort((a, b) => a.order - b.order);
-
-  // Menu chưa gán cho phân hệ nào → coi như thuộc KE_TOAN.
-  const isAssigned = (key: string): boolean =>
-    allModules.some((m) =>
-      m.menuKeys.some((k) => key === k || key.startsWith(k + "/")),
-    );
-  const unassignedKeys = availableModules.includes("KE_TOAN")
-    ? MENU_CATALOG.map((e) => e.key).filter(
-        (key) => !isCommonKey(key) && !isAssigned(key),
-      )
-    : [];
-
   // Union menuKeys mọi phân hệ + phần chưa gán → dùng cho ĐIỀU HÀNH & THƯ VIỆN.
-  const allEffectiveKeys = [
-    ...unionMenuKeys(availableModuleDefs),
-    ...unassignedKeys,
-  ];
+  const {
+    moduleDefs: availableModuleDefs,
+    unassignedKeys,
+    allEffectiveKeys,
+  } = useEffectiveMenuKeys();
 
   // Lọc theo vai trò (SuperAdmin bỏ qua).
   const byRole = (items: MenuItem[]): MenuItem[] =>
@@ -503,6 +455,10 @@ const MainLayout: React.FC = () => {
       return { code: def.code, title: def.name.toUpperCase(), items };
     })
     .filter((s) => s.items.length > 0);
+
+  // Công ty chỉ có 1 lĩnh vực → giấu tên lĩnh vực đi, người dùng trong 1 công ty
+  // không cần nhìn thấy dòng ngành nghề. Nhiều lĩnh vực thì vẫn cần để phân biệt.
+  const showModuleSectionTitle = moduleSections.length > 1;
 
   useEffect(() => {
     if (darkMode) {
@@ -702,9 +658,11 @@ const MainLayout: React.FC = () => {
       {/* Nghiệp vụ — 1 section / phân hệ */}
       {moduleSections.map((sec) => (
         <div className="sidebar-section" key={sec.code}>
-          <div className="sidebar-section-header">
-            <span className="sidebar-section-title">{sec.title}</span>
-          </div>
+          {showModuleSectionTitle && (
+            <div className="sidebar-section-header">
+              <span className="sidebar-section-title">{sec.title}</span>
+            </div>
+          )}
           <Menu
             theme="dark"
             mode="inline"
@@ -816,7 +774,7 @@ const MainLayout: React.FC = () => {
             {/* Nghiệp vụ — 1 section / phân hệ */}
             {moduleSections.map((sec) => (
               <div className="sidebar-section" key={sec.code}>
-                {!collapsed && (
+                {!collapsed && showModuleSectionTitle && (
                   <div className="sidebar-section-header">
                     <span className="sidebar-section-title">{sec.title}</span>
                   </div>
