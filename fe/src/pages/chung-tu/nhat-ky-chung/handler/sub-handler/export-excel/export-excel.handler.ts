@@ -1,10 +1,7 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
-import {
-  nhatKyChungService,
-  GetEntriesParams,
-} from "@/services/nhatKyChungService";
 import { NhatKyChung } from "@/types";
+import { buildFilterParams, fetchAllEntries } from "../../lib/filteredEntries";
 import { exportToExcel, ExcelColumn } from "@/utils/exportExcel";
 import { message } from "antd";
 import dayjs from "dayjs";
@@ -61,8 +58,8 @@ export class ExportExcelHandler extends CSubHanlder<ExportExcelEvent, NhatKyChun
   async exportExcel(): Promise<void> {
     this.setState("exportingExcel", true);
     try {
-      const params = this.buildExportParams();
-      const allEntries = await this.fetchAllEntries(params);
+      const params = buildFilterParams((k) => this.getState(k));
+      const allEntries = await fetchAllEntries(params);
 
       if (allEntries.length === 0) {
         message.warning("Không có dữ liệu để xuất");
@@ -126,63 +123,5 @@ export class ExportExcelHandler extends CSubHanlder<ExportExcelEvent, NhatKyChun
     } finally {
       this.setState("exportingExcel", false);
     }
-  }
-
-  private async fetchAllEntries(params: GetEntriesParams): Promise<NhatKyChung[]> {
-    const PAGE_SIZE = 100;
-    const allEntries: NhatKyChung[] = [];
-    let currentPage = 1;
-    let totalPages = 1;
-
-    do {
-      const response = await nhatKyChungService.getEntries({
-        ...params,
-        page: currentPage,
-        limit: PAGE_SIZE,
-      });
-
-      allEntries.push(...response.data);
-      totalPages = response.meta.totalPages;
-      currentPage++;
-    } while (currentPage <= totalPages);
-
-    return allEntries;
-  }
-
-  private buildExportParams(): GetEntriesParams {
-    const searchText = (this.getState("searchText") as string) || "";
-    const dateRange = this.getState("dateRange") as
-      | [{ format: (f: string) => string }, { format: (f: string) => string }]
-      | null;
-    const filterLoaiChungTu = this.getState("filterLoaiChungTu") as
-      | string
-      | undefined;
-    const filterAccount = this.getState("filterAccount") as
-      | string
-      | undefined;
-    const filterTaiKhoanCo = this.getState("filterTaiKhoanCo") as
-      | string
-      | undefined;
-    const filterDoiTuong = this.getState("filterDoiTuong") as
-      | string
-      | undefined;
-    const filterDuAn = this.getState("filterDuAn") as string | undefined;
-    const filterBoPhan = this.getState("filterBoPhan") as string | undefined;
-
-    const params: GetEntriesParams = {};
-    if (searchText) params.search = searchText;
-    if (dateRange && dateRange[0] && dateRange[1]) {
-      params.startDate = dateRange[0].format("YYYY-MM-DD");
-      params.endDate = dateRange[1].format("YYYY-MM-DD");
-    }
-    if (filterLoaiChungTu)
-      params.loai = filterLoaiChungTu as GetEntriesParams["loai"];
-    if (filterAccount) params.taiKhoanNo = filterAccount;
-    if (filterTaiKhoanCo) params.taiKhoanCo = filterTaiKhoanCo;
-    if (filterDoiTuong) params.doiTuong = filterDoiTuong;
-    if (filterDuAn) params.duAn = filterDuAn;
-    if (filterBoPhan) params.boPhan = filterBoPhan;
-
-    return params;
   }
 }

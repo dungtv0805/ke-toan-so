@@ -9,6 +9,7 @@ import {
   ReloadOutlined,
   FileExcelOutlined,
   DeleteOutlined,
+  PrinterOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { NhatKyChung, QuyChuan, HoSoChungTu } from "@/types";
@@ -61,6 +62,10 @@ import type { ColumnType } from "antd/es/table";
 // Import inline-edit handler to register it
 import "../../handler/sub-handler/inline-edit/inline-edit.handler";
 import { ImportExcelModal } from "../../import/ImportExcelModal";
+import { useAuth } from "@/contexts/AuthContext";
+
+// Đăng ký handler in danh sách bút toán
+import "../../handler/sub-handler/print-list/print-list.handler";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("vi-VN").format(value);
@@ -801,6 +806,8 @@ export function EntryListTab() {
   const [hoSoChungTuList] = useNhatKyChungState("hoSoChungTuList", []);
   const [editingRowId] = useNhatKyChungState("editingRowId", null);
   const [exportingExcel] = useNhatKyChungState("exportingExcel", false);
+  const [printingList] = useNhatKyChungState("printingList", false);
+  const { currentTenant } = useAuth();
   const [selectedEntryIds, setSelectedEntryIds] = useNhatKyChungState(
     "selectedEntryIds",
     []
@@ -961,6 +968,18 @@ export function EntryListTab() {
             onClick={() => handler.executeEvent("exportExcel", {})}
           >
             Xuất Excel
+          </Button>
+          <Button
+            size="small"
+            icon={<PrinterOutlined />}
+            loading={printingList}
+            onClick={() =>
+              handler.executeEvent("printList", {
+                tenCongTy: currentTenant?.tenantName,
+              })
+            }
+          >
+            In
           </Button>
           <Button
             size="small"
