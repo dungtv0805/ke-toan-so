@@ -12,13 +12,11 @@ import { useColumnVisibility } from "@/components/table/useColumnVisibility";
 import type { Key } from "react";
 import { Table, Button, Space, Tooltip, Popconfirm } from "antd";
 import {
-  PlusOutlined,
   ReloadOutlined,
   FileExcelOutlined,
   DeleteOutlined,
   PrinterOutlined,
 } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
 import { NhatKyChung, QuyChuan, HoSoChungTu } from "@/types";
 import { useTableColumnResize } from "@/hooks/useTableColumnResize";
 import { usePagePermission } from "@/hooks/usePagePermission";
@@ -54,7 +52,6 @@ import {
   useNhatKyChungState,
   useNhatKyChungHandler,
 } from "../../NhatKyChungHandlerContext";
-import { FilterDrawer } from "../filter-drawer/FilterDrawer";
 import { EntryActions } from "../entry-actions/EntryActions";
 import { TableTitleSettings } from '@/components/glossary/TableTitleSettings';
 import { NKC_TITLE_TERMS } from './nkcTitleTerms';
@@ -864,7 +861,6 @@ function useTableBodyHeight() {
 }
 
 export function EntryListTab() {
-  const navigate = useNavigate();
   const handler = useNhatKyChungHandler();
   const [data] = useNhatKyChungState("data", []);
   const [loading] = useNhatKyChungState("loading", false);
@@ -976,10 +972,6 @@ export function EntryListTab() {
     }
   );
 
-  const handleCreateEntry = () => {
-    navigate("/chung-tu/nhat-ky-chung/tao-moi");
-  };
-
   // Row class name for highlighting editing row
   const getRowClassName = (record: NhatKyChung) => {
     if (editingRowId === record.id) {
@@ -990,19 +982,9 @@ export function EntryListTab() {
 
   return (
     <div className="excel-tab-content">
-      {/* Toolbar */}
+      {/* Toolbar — nút "Thêm mới" đã chuyển lên góc phải hàng lọc (FilterBar) */}
       <div className="excel-toolbar">
         <Space size="small">
-          {canCreate && (
-            <Button
-              type="primary"
-              size="small"
-              icon={<PlusOutlined />}
-              onClick={handleCreateEntry}
-            >
-              Thêm mới
-            </Button>
-          )}
           {canDelete && selectedEntryIds.length > 0 && (
             <Popconfirm
               title={`Xóa ${selectedEntryIds.length} bút toán đã chọn?`}
@@ -1062,7 +1044,6 @@ export function EntryListTab() {
           />
           {chooserButton}
           <TableTitleSettings terms={NKC_TITLE_TERMS} />
-          <FilterDrawer />
         </Space>
       </div>
 

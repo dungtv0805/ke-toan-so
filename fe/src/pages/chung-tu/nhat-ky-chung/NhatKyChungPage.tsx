@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { NhatKyChungHandlerProvider, useNhatKyChungHandler } from "./NhatKyChungHandlerContext";
 import { DataTabs } from "./components/data-tabs/DataTabs";
+import { FilterBar } from "./components/filter-bar/FilterBar";
+import { OverviewBar } from "./components/overview-bar/OverviewBar";
 import { EntryFormModal } from "./components/entry-form-modal/EntryFormModal";
 import { EntryViewModal } from "./components/entry-view-modal/EntryViewModal";
 import { SectionNav } from "@/components/layout/SectionNav";
@@ -17,6 +19,8 @@ function NhatKyChungPageInner() {
   return (
     <div className="nkc-page">
       <SectionNav items={CHUNG_TU_NAV} className="mb-2" />
+      <FilterBar />
+      <OverviewBar />
       <DataTabs />
       <EntryFormModal />
       <EntryViewModal />

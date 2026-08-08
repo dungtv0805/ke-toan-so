@@ -52,6 +52,12 @@ export class NhatKyChungController {
     return this.nhatKyChungService.getStats(query);
   }
 
+  @Get('nguoi-giao-dich')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async getNguoiGiaoDichOptions() {
+    return this.nhatKyChungService.getNguoiGiaoDichOptions();
+  }
+
   @Get('aggregate-balance')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async aggregateBalance(

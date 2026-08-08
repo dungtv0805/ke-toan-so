@@ -21,6 +21,7 @@ export function StatsCards() {
     tongThu: 0,
     tongChi: 0,
     soDu: 0,
+    tongGiaTri: 0,
   });
   const [statsCollapsed, setStatsCollapsed] = useNhatKyChungState(
     "statsCollapsed",

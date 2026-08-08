@@ -55,16 +55,16 @@ export function AppSwitcher() {
 
   return (
     <>
+      {/* Chỉ còn icon — tên app đã bỏ theo tài liệu cải tiến 08.08.26 để nhường
+          chỗ cho hàng lọc; tên vẫn hiện ở tooltip. */}
       <Button
         type="text"
         onClick={() => setOpen(true)}
-        aria-label="Chuyển ứng dụng"
-        className="!flex items-center gap-2 !text-foreground"
+        aria-label={`Chuyển ứng dụng (đang dùng ${currentName})`}
+        title={currentName}
+        className="!flex items-center !text-foreground"
       >
         <AppstoreOutlined style={{ fontSize: 16 }} />
-        <span className="hidden sm:inline font-medium max-w-[160px] truncate">
-          {currentName}
-        </span>
       </Button>
 
       <Modal

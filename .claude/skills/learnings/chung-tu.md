@@ -31,7 +31,18 @@
 ### Stats
 - **FE API:** `GET /api/voucher/nhat-ky-chung/stats?startDate=...&endDate=...`
 - **Service:** `NhatKyChungService.getStats()` — MongoDB $group aggregation
+- **Trả về:** `tongSo`, `tongPhatSinhNo`, `tongPhatSinhCo`, `tongGiaTri` (= $sum soTien, thêm 2026-08-08 cho hàng số liệu tổng quan)
 - **Verified:** NO
+
+### Bộ lọc của /chung-tu/nhat-ky-chung (2026-08-08)
+- Query param dùng CHUNG cho `GET /nhat-ky-chung`, `/stats`, `/summary/:type` — cả 3 đều đi qua `buildMongoQuery`.
+- Ngoài bộ cũ (`search`, `startDate`, `endDate`, `loai`, `doiTuong`, `duAn`, `boPhan`, `taiKhoanNo`, `taiKhoanCo`, `hopDong`) nay có thêm:
+  `taiKhoan` (khớp Nợ HOẶC Có, dùng `$or` → gộp `$and` cùng `search`/`doiTuong`), `nghiepVu`, `khoanMuc`,
+  `nhanVien`, `sanPham`, `doi`, `nhomKhuyenMai`, `nguoiGiaoDich`, `kiemSoat`.
+- `kiemSoat=CHUA_KIEM_SOAT` → `{'kiemSoat.trangThai': {$nin: [HOP_LE, CHUA_HOP_LE, KHONG_DUOC_TRU]}}` ($nin khớp cả document thiếu field).
+- `GET /nhat-ky-chung/nguoi-giao-dich` → distinct `nguoiGiaoDich` (trường nhập tay, không có danh mục) làm options cho dropdown.
+- **FE:** nguồn duy nhất của map state↔param là `fe/src/pages/chung-tu/nhat-ky-chung/handler/lib/nkcFilters.ts`;
+  `buildFilterParams` (lib/filteredEntries.ts) dựng params cho cả list, stats, Xuất Excel và In.
 
 ### Summary
 - **FE API:** `GET /api/voucher/nhat-ky-chung/summary/:type`

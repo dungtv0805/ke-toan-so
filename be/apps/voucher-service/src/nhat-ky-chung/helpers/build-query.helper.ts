@@ -4,10 +4,35 @@ function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** Giá trị hợp lệ của `kiemSoat.trangThai` (khớp KiemSoatTrangThai bên FE). */
+const KIEM_SOAT_TRANG_THAI = ['HOP_LE', 'CHUA_HOP_LE', 'KHONG_DUOC_TRU'];
+/** Giá trị lọc ảo: chứng từ chưa được kiểm soát. */
+const CHUA_KIEM_SOAT = 'CHUA_KIEM_SOAT';
+
 export function buildMongoQuery(
   query: NhatKyChungQueryDto,
 ): Record<string, unknown> {
-  const { search, startDate, endDate, loai, doiTuong, duAn, boPhan, taiKhoanNo, taiKhoanCo, hopDong } = query;
+  const {
+    search,
+    startDate,
+    endDate,
+    loai,
+    doiTuong,
+    duAn,
+    boPhan,
+    taiKhoanNo,
+    taiKhoanCo,
+    hopDong,
+    taiKhoan,
+    nghiepVu,
+    khoanMuc,
+    nhanVien,
+    sanPham,
+    doi,
+    nhomKhuyenMai,
+    nguoiGiaoDich,
+    kiemSoat,
+  } = query;
   const mongoQuery: Record<string, unknown> = {};
 
   // Filter by loai (loại giao dịch - stored in danhMuc.loaiGiaoDich.ma)
@@ -57,6 +82,14 @@ export function buildMongoQuery(
     ]);
   }
 
+  // Filter by tài khoản (gộp) — khớp bên Nợ hoặc bên Có
+  if (taiKhoan) {
+    orConditions.push([
+      { 'danhMuc.taiKhoanNo.ma': taiKhoan },
+      { 'danhMuc.taiKhoanCo.ma': taiKhoan },
+    ]);
+  }
+
   if (orConditions.length === 1) {
     mongoQuery.$or = orConditions[0];
   } else if (orConditions.length > 1) {
@@ -86,6 +119,25 @@ export function buildMongoQuery(
   // Filter by hợp đồng — snapshot hợp đồng không có `ma`, định danh là soHopDong
   if (hopDong) {
     mongoQuery['danhMuc.hopDong.soHopDong'] = hopDong;
+  }
+
+  // Các tiêu chí lọc còn lại của màn hình "Dữ liệu tổng hợp" — đều khớp theo `ma`
+  // của snapshot danh mục lưu trên chứng từ.
+  if (nghiepVu) mongoQuery['danhMuc.nghiepVu.ma'] = nghiepVu;
+  if (khoanMuc) mongoQuery['danhMuc.khoanMuc.ma'] = khoanMuc;
+  if (nhanVien) mongoQuery['danhMuc.nhanVien.ma'] = nhanVien;
+  if (sanPham) mongoQuery['danhMuc.sanPham.ma'] = sanPham;
+  if (doi) mongoQuery['danhMuc.doi.ma'] = doi;
+  if (nhomKhuyenMai) mongoQuery['danhMuc.nhomKhuyenMai.ma'] = nhomKhuyenMai;
+  if (nguoiGiaoDich) mongoQuery['nguoiGiaoDich'] = nguoiGiaoDich;
+
+  // Trạng thái kiểm soát. "CHUA_KIEM_SOAT" = chứng từ chưa có kiemSoat.trangThai —
+  // $nin cũng khớp document thiếu hẳn field nên không cần thêm $exists.
+  if (kiemSoat) {
+    mongoQuery['kiemSoat.trangThai'] =
+      kiemSoat === CHUA_KIEM_SOAT
+        ? { $nin: KIEM_SOAT_TRANG_THAI }
+        : kiemSoat;
   }
 
   return mongoQuery;

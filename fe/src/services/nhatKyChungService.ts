@@ -5,6 +5,8 @@ export interface NhatKyChungStats {
   tongSo: number;
   tongPhatSinhNo: number;
   tongPhatSinhCo: number;
+  /** Tổng giá trị (cộng soTien) của các bút toán khớp bộ lọc. */
+  tongGiaTri: number;
 }
 
 export interface SummaryItem {
@@ -40,6 +42,49 @@ export interface GetEntriesParams {
   taiKhoanCo?: string;
   /** Số hợp đồng (đơn hàng) — khớp danhMuc.hopDong.soHopDong */
   hopDong?: string;
+  /** Tài khoản gộp — khớp bên Nợ HOẶC bên Có */
+  taiKhoan?: string;
+  nghiepVu?: string;
+  khoanMuc?: string;
+  nhanVien?: string;
+  sanPham?: string;
+  doi?: string;
+  nhomKhuyenMai?: string;
+  nguoiGiaoDich?: string;
+  /** HOP_LE | CHUA_HOP_LE | KHONG_DUOC_TRU | CHUA_KIEM_SOAT */
+  kiemSoat?: string;
+}
+
+/** Các tiêu chí lọc gửi lên BE (không gồm phân trang). */
+const FILTER_KEYS = [
+  'search',
+  'startDate',
+  'endDate',
+  'loai',
+  'doiTuong',
+  'duAn',
+  'boPhan',
+  'taiKhoanNo',
+  'taiKhoanCo',
+  'hopDong',
+  'taiKhoan',
+  'nghiepVu',
+  'khoanMuc',
+  'nhanVien',
+  'sanPham',
+  'doi',
+  'nhomKhuyenMai',
+  'nguoiGiaoDich',
+  'kiemSoat',
+] as const satisfies readonly (keyof GetEntriesParams)[];
+
+function toQueryParams(params: GetEntriesParams): Record<string, string> {
+  const query: Record<string, string> = {};
+  for (const key of FILTER_KEYS) {
+    const value = params[key];
+    if (value) query[key] = String(value);
+  }
+  return query;
 }
 
 export interface CreateEntryDto {
@@ -147,20 +192,10 @@ class NhatKyChungService extends ServiceBase {
    * Get paginated journal entries with filters
    */
   async getEntries(params: GetEntriesParams = {}): Promise<NhatKyChungPaginatedResponse> {
-    const queryParams: Record<string, string> = {};
-    
+    const queryParams = toQueryParams(params);
+
     if (params.page) queryParams.page = String(params.page);
     if (params.limit) queryParams.limit = String(params.limit);
-    if (params.search) queryParams.search = params.search;
-    if (params.startDate) queryParams.startDate = params.startDate;
-    if (params.endDate) queryParams.endDate = params.endDate;
-    if (params.loai) queryParams.loai = params.loai;
-    if (params.doiTuong) queryParams.doiTuong = params.doiTuong;
-    if (params.duAn) queryParams.duAn = params.duAn;
-    if (params.boPhan) queryParams.boPhan = params.boPhan;
-    if (params.taiKhoanNo) queryParams.taiKhoanNo = params.taiKhoanNo;
-    if (params.taiKhoanCo) queryParams.taiKhoanCo = params.taiKhoanCo;
-    if (params.hopDong) queryParams.hopDong = params.hopDong;
 
     const response = await this.get<PaginatedResponse<ChungTuResponse>>({ params: queryParams });
     
@@ -229,22 +264,15 @@ class NhatKyChungService extends ServiceBase {
   }
 
   async getStats(params: GetEntriesParams = {}): Promise<NhatKyChungStats> {
-    const queryParams: Record<string, string> = {};
-
-    if (params.search) queryParams.search = params.search;
-    if (params.startDate) queryParams.startDate = params.startDate;
-    if (params.endDate) queryParams.endDate = params.endDate;
-    if (params.loai) queryParams.loai = params.loai;
-    if (params.doiTuong) queryParams.doiTuong = params.doiTuong;
-    if (params.duAn) queryParams.duAn = params.duAn;
-    if (params.boPhan) queryParams.boPhan = params.boPhan;
-    if (params.taiKhoanNo) queryParams.taiKhoanNo = params.taiKhoanNo;
-    if (params.taiKhoanCo) queryParams.taiKhoanCo = params.taiKhoanCo;
-
     return this.get<NhatKyChungStats>({
       endpoint: '/stats',
-      params: queryParams
+      params: toQueryParams(params)
     });
+  }
+
+  /** Danh sách "Người giao dịch" đã dùng — nguồn options cho bộ lọc thả xuống. */
+  async getNguoiGiaoDichOptions(): Promise<string[]> {
+    return this.get<string[]>({ endpoint: '/nguoi-giao-dich' });
   }
 
   async getSummaryByAccount(): Promise<SummaryItem[]> {
@@ -279,22 +307,10 @@ class NhatKyChungService extends ServiceBase {
    * Get summary data by type
    */
   async getSummary(type: SummaryType, params: GetEntriesParams = {}): Promise<SummaryItem[]> {
-    const queryParams: Record<string, string> = {};
-
-    if (params.search) queryParams.search = params.search;
-    if (params.startDate) queryParams.startDate = params.startDate;
-    if (params.endDate) queryParams.endDate = params.endDate;
-    if (params.loai) queryParams.loai = params.loai;
-    if (params.doiTuong) queryParams.doiTuong = params.doiTuong;
-    if (params.duAn) queryParams.duAn = params.duAn;
-    if (params.boPhan) queryParams.boPhan = params.boPhan;
-    if (params.taiKhoanNo) queryParams.taiKhoanNo = params.taiKhoanNo;
-    if (params.taiKhoanCo) queryParams.taiKhoanCo = params.taiKhoanCo;
-
     // parseResponse in service-base already extracts data from { success, data } format
-    return this.get<SummaryItem[]>({ 
+    return this.get<SummaryItem[]>({
       endpoint: `/summary/${type}`,
-      params: queryParams 
+      params: toQueryParams(params)
     });
   }
 

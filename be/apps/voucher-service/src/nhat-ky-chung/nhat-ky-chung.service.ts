@@ -91,6 +91,7 @@ export class NhatKyChungService {
               $cond: [{ $eq: ['$loai', 'PHIEU_CHI'] }, '$soTien', 0],
             },
           },
+          tongGiaTri: { $sum: '$soTien' },
         },
       },
     ];
@@ -103,6 +104,7 @@ export class NhatKyChungService {
       tongSo: 0,
       tongPhatSinhNo: 0,
       tongPhatSinhCo: 0,
+      tongGiaTri: 0,
     };
 
     return {
@@ -111,7 +113,38 @@ export class NhatKyChungService {
         tongSo: stats.tongSo,
         tongPhatSinhNo: stats.tongPhatSinhNo,
         tongPhatSinhCo: stats.tongPhatSinhCo,
+        tongGiaTri: stats.tongGiaTri ?? 0,
       },
+    };
+  }
+
+  /**
+   * Danh sách "Người giao dịch" đã dùng trên chứng từ — để bộ lọc trên màn hình
+   * "Dữ liệu tổng hợp" hiển thị dạng thả xuống (trường này nhập tay, không có danh mục).
+   */
+  async getNguoiGiaoDichOptions(): Promise<{
+    success: boolean;
+    data: string[];
+  }> {
+    const match: Record<string, unknown> = {
+      nguoiGiaoDich: { $nin: [null, ''] },
+    };
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    if (tenantId) match['tenantId'] = tenantId;
+
+    const rows = await this.chungTuRepository
+      .aggregate([
+        { $match: match },
+        { $group: { _id: '$nguoiGiaoDich' } },
+        { $sort: { _id: 1 } },
+      ])
+      .toArray();
+
+    return {
+      success: true,
+      data: (rows as Array<{ _id: string }>)
+        .map((r) => r._id)
+        .filter((v): v is string => typeof v === 'string' && v.trim() !== ''),
     };
   }
 

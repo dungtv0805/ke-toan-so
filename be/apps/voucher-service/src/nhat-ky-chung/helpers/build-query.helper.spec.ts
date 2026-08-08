@@ -109,4 +109,61 @@ describe('buildMongoQuery', () => {
       expect(query.$or).toHaveLength(2);
     });
   });
+
+  describe('taiKhoan filter (gộp Nợ/Có)', () => {
+    it('khớp tài khoản ở bên Nợ hoặc bên Có', () => {
+      const query = buildMongoQuery({ taiKhoan: '1331' } as NhatKyChungQueryDto);
+      expect(query.$or).toEqual([
+        { 'danhMuc.taiKhoanNo.ma': '1331' },
+        { 'danhMuc.taiKhoanCo.ma': '1331' },
+      ]);
+    });
+
+    it('không gộp nhầm với $or của doiTuong — phải nằm trong $and', () => {
+      const query = buildMongoQuery({
+        taiKhoan: '1331',
+        doiTuong: 'KH01',
+      } as NhatKyChungQueryDto);
+      expect(query.$or).toBeUndefined();
+      expect(query.$and).toHaveLength(2);
+    });
+  });
+
+  describe('kiemSoat filter', () => {
+    it('lọc theo đúng trạng thái', () => {
+      const query = buildMongoQuery({
+        kiemSoat: 'KHONG_DUOC_TRU',
+      } as NhatKyChungQueryDto);
+      expect(query['kiemSoat.trangThai']).toBe('KHONG_DUOC_TRU');
+    });
+
+    it('CHUA_KIEM_SOAT = không thuộc 3 trạng thái đã kiểm soát', () => {
+      const query = buildMongoQuery({
+        kiemSoat: 'CHUA_KIEM_SOAT',
+      } as NhatKyChungQueryDto);
+      expect(query['kiemSoat.trangThai']).toEqual({
+        $nin: ['HOP_LE', 'CHUA_HOP_LE', 'KHONG_DUOC_TRU'],
+      });
+    });
+  });
+
+  describe('các tiêu chí lọc theo mã snapshot', () => {
+    it.each([
+      ['nghiepVu', 'danhMuc.nghiepVu.ma'],
+      ['khoanMuc', 'danhMuc.khoanMuc.ma'],
+      ['nhanVien', 'danhMuc.nhanVien.ma'],
+      ['sanPham', 'danhMuc.sanPham.ma'],
+      ['doi', 'danhMuc.doi.ma'],
+      ['nhomKhuyenMai', 'danhMuc.nhomKhuyenMai.ma'],
+      ['nguoiGiaoDich', 'nguoiGiaoDich'],
+    ])('%s → %s', (param, path) => {
+      const query = buildMongoQuery({ [param]: 'X1' } as NhatKyChungQueryDto);
+      expect(query[path]).toBe('X1');
+    });
+
+    it('không truyền → không thêm điều kiện nào', () => {
+      const query = buildMongoQuery({} as NhatKyChungQueryDto);
+      expect(Object.keys(query)).toHaveLength(0);
+    });
+  });
 });

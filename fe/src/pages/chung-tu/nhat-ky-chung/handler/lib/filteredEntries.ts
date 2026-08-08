@@ -3,40 +3,35 @@ import {
   GetEntriesParams,
 } from "@/services/nhatKyChungService";
 import { NhatKyChung } from "@/types";
+import { NKC_FILTER_PARAMS, NKC_FILTER_STATE_KEYS } from "./nkcFilters";
 
 type GetState = (key: string) => unknown;
 
 /**
- * Dựng params từ bộ lọc đang áp trên màn hình — dùng chung cho Xuất Excel và In,
- * để bản xuất/bản in luôn khớp đúng cái người dùng đang xem.
+ * Dựng params từ bộ lọc đang áp trên màn hình — dùng chung cho danh sách bút toán,
+ * các báo cáo tổng hợp, Xuất Excel và In, để mọi thứ luôn khớp đúng cái người dùng
+ * đang xem.
  */
 export function buildFilterParams(getState: GetState): GetEntriesParams {
+  const params: Record<string, string> = {};
+
   const searchText = (getState("searchText") as string) || "";
+  if (searchText) params.search = searchText;
+
   const dateRange = getState("dateRange") as
     | [{ format: (f: string) => string }, { format: (f: string) => string }]
     | null;
-  const filterLoaiChungTu = getState("filterLoaiChungTu") as string | undefined;
-  const filterAccount = getState("filterAccount") as string | undefined;
-  const filterTaiKhoanCo = getState("filterTaiKhoanCo") as string | undefined;
-  const filterDoiTuong = getState("filterDoiTuong") as string | undefined;
-  const filterDuAn = getState("filterDuAn") as string | undefined;
-  const filterBoPhan = getState("filterBoPhan") as string | undefined;
-
-  const params: GetEntriesParams = {};
-  if (searchText) params.search = searchText;
   if (dateRange && dateRange[0] && dateRange[1]) {
     params.startDate = dateRange[0].format("YYYY-MM-DD");
     params.endDate = dateRange[1].format("YYYY-MM-DD");
   }
-  if (filterLoaiChungTu)
-    params.loai = filterLoaiChungTu as GetEntriesParams["loai"];
-  if (filterAccount) params.taiKhoanNo = filterAccount;
-  if (filterTaiKhoanCo) params.taiKhoanCo = filterTaiKhoanCo;
-  if (filterDoiTuong) params.doiTuong = filterDoiTuong;
-  if (filterDuAn) params.duAn = filterDuAn;
-  if (filterBoPhan) params.boPhan = filterBoPhan;
 
-  return params;
+  for (const stateKey of NKC_FILTER_STATE_KEYS) {
+    const value = getState(stateKey) as string | undefined;
+    if (value) params[NKC_FILTER_PARAMS[stateKey]] = value;
+  }
+
+  return params as GetEntriesParams;
 }
 
 /** Lấy TOÀN BỘ bút toán khớp bộ lọc (API phân trang → gọi lần lượt từng trang). */

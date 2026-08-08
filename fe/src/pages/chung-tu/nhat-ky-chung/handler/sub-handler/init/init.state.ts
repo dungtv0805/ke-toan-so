@@ -23,6 +23,8 @@ export interface StatsData {
   tongThu: number;
   tongChi: number;
   soDu: number;
+  /** Tổng giá trị bút toán khớp bộ lọc — hàng số liệu tổng quan. */
+  tongGiaTri: number;
 }
 
 export interface AccountSummary {
@@ -85,6 +87,7 @@ export interface InitStates extends BaseStates {
   loading: boolean;
   taiKhoanList: TaiKhoanItem[];
   khoanMucList: KhoanMucItem[];
+  nguoiGiaoDichList: string[];
   stats: StatsData;
   summaryByAccount: AccountSummary[];
   summaryByTeam: TeamSummary[];
@@ -95,14 +98,24 @@ export interface InitStates extends BaseStates {
   summaryByDongTien: DongTienSummary[];
   // Pagination state
   pagination: PaginationMeta;
-  // Filter states
+  // Filter states — mỗi key khớp một tiêu chí trong NKC_FILTER_PARAMS
   searchText: string;
   dateRange: [dayjs.Dayjs, dayjs.Dayjs] | null;
-  filterAccount: string | undefined;
+  filterKiemSoat: string | undefined;
   filterLoaiChungTu: string | undefined;
+  filterNghiepVu: string | undefined;
+  filterTaiKhoan: string | undefined;
   filterDoiTuong: string | undefined;
+  filterKhoanMuc: string | undefined;
+  filterNhanVien: string | undefined;
   filterDuAn: string | undefined;
+  filterSanPham: string | undefined;
+  filterHopDong: string | undefined;
+  filterNguoiGiaoDich: string | undefined;
+  filterDoi: string | undefined;
   filterBoPhan: string | undefined;
+  filterNhomKhuyenMai: string | undefined;
+  filterAccount: string | undefined;
   filterTaiKhoanCo: string | undefined;
   // UI states
   activeTab: string;

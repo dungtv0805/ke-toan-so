@@ -1,20 +1,14 @@
 import dayjs from "dayjs";
+import { NKC_FILTER_STATE_KEYS } from "./lib/nkcFilters";
 
 // Persist the "Dữ liệu tổng hợp" filter state across page remounts
 // (e.g. when the user opens a voucher to edit and navigates back).
 // Stored in sessionStorage so it lives for the browser tab session only.
-const STORAGE_KEY = "nkc:filters";
+// Bump 'v2': bộ tiêu chí lọc đổi (thêm 8 tiêu chí) — payload cũ thiếu key mới.
+const STORAGE_KEY = "nkc:filters:v2";
 
 // Simple string/undefined filter keys handled generically
-const SCALAR_FILTER_KEYS = [
-  "searchText",
-  "filterAccount",
-  "filterLoaiChungTu",
-  "filterDoiTuong",
-  "filterDuAn",
-  "filterBoPhan",
-  "filterTaiKhoanCo",
-] as const;
+const SCALAR_FILTER_KEYS = ["searchText", ...NKC_FILTER_STATE_KEYS] as const;
 
 interface StateAccessor {
   getState: (key: string) => unknown;

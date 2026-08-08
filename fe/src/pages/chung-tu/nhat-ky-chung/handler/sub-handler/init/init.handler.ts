@@ -6,15 +6,24 @@ import {
 } from "@/services/nhatKyChungService";
 import { taiKhoanService } from "@/services/taiKhoanService";
 import { khoanMucService } from "@/services/khoanMucService";
+import dayjs from "dayjs";
 import "./init.event";
 import "./init.state";
 import { NhatKyChungStates } from "../../nhat-ky-chung.handler";
 import { InitEvent } from "./init.event";
 import { restoreFilters, saveFilters } from "../../filterPersistence";
+import { buildFilterParams } from "../../lib/filteredEntries";
+import { NKC_FILTER_STATE_KEYS } from "../../lib/nkcFilters";
 
 const DEFAULT_PAGE_SIZE = 100;
 const TAI_KHOAN_LIMIT = 500;
 const KHOAN_MUC_LIMIT = 500;
+
+/** Mặc định màn hình mở ra là dữ liệu NĂM NAY (theo tài liệu cải tiến 08.08.26). */
+export const defaultDateRange = (): [dayjs.Dayjs, dayjs.Dayjs] => [
+  dayjs().startOf("year"),
+  dayjs().endOf("year"),
+];
 
 @RegisterHandler("nhat-ky-chung")
 export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
@@ -30,8 +39,10 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
         page: 1,
         limit: DEFAULT_PAGE_SIZE,
       }),
+      this.loadStats(),
       this.loadTaiKhoanList(),
       this.loadKhoanMucList(),
+      this.loadNguoiGiaoDichList(),
       this.executeEvent("loadMasterData", {}),
     ]);
   }
@@ -45,23 +56,15 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
       | undefined;
     const currentPage = pagination?.page || 1;
     const currentLimit = pagination?.limit || DEFAULT_PAGE_SIZE;
-    const statsCollapsed = this.getState("statsCollapsed") as boolean;
-    
+
     const params: GetEntriesParams = {
       ...this.buildQueryParams(),
       page: currentPage,
       limit: currentLimit,
     };
 
-    // Only reload stats if panel is open
-    if (statsCollapsed) {
-      await this.loadEntries(params);
-    } else {
-      await Promise.all([
-        this.loadEntries(params),
-        this.loadStats(),
-      ]);
-    }
+    // Hàng số liệu tổng quan luôn hiển thị → stats phải nạp lại cùng danh sách.
+    await Promise.all([this.loadEntries(params), this.loadStats()]);
   }
 
   @HandlerDecorator("loadPage")
@@ -87,6 +90,7 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
         tongThu: stats.tongPhatSinhNo,
         tongChi: stats.tongPhatSinhCo,
         soDu: stats.tongPhatSinhNo - stats.tongPhatSinhCo,
+        tongGiaTri: stats.tongGiaTri ?? 0,
       });
     } catch (error) {
       console.error("Error loading stats:", error);
@@ -94,32 +98,7 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
   }
 
   private buildQueryParams(): GetEntriesParams {
-    const searchText = (this.getState("searchText") as string) || "";
-    const dateRange = this.getState("dateRange") as
-      | [{ format: (f: string) => string }, { format: (f: string) => string }]
-      | null;
-    const filterLoaiChungTu = this.getState("filterLoaiChungTu") as string | undefined;
-    const filterAccount = this.getState("filterAccount") as string | undefined;
-    const filterTaiKhoanCo = this.getState("filterTaiKhoanCo") as string | undefined;
-    const filterDoiTuong = this.getState("filterDoiTuong") as string | undefined;
-    const filterDuAn = this.getState("filterDuAn") as string | undefined;
-    const filterBoPhan = this.getState("filterBoPhan") as string | undefined;
-
-    const params: GetEntriesParams = {};
-
-    if (searchText) params.search = searchText;
-    if (dateRange && dateRange[0] && dateRange[1]) {
-      params.startDate = dateRange[0].format("YYYY-MM-DD");
-      params.endDate = dateRange[1].format("YYYY-MM-DD");
-    }
-    if (filterLoaiChungTu) params.loai = filterLoaiChungTu as GetEntriesParams["loai"];
-    if (filterAccount) params.taiKhoanNo = filterAccount;
-    if (filterTaiKhoanCo) params.taiKhoanCo = filterTaiKhoanCo;
-    if (filterDoiTuong) params.doiTuong = filterDoiTuong;
-    if (filterDuAn) params.duAn = filterDuAn;
-    if (filterBoPhan) params.boPhan = filterBoPhan;
-
-    return params;
+    return buildFilterParams((key) => this.getState(key));
   }
 
   private async loadEntries(params: GetEntriesParams): Promise<void> {
@@ -154,6 +133,16 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
     }
   }
 
+  /** "Người giao dịch" nhập tay trên chứng từ — options lấy từ giá trị đã dùng. */
+  private async loadNguoiGiaoDichList(): Promise<void> {
+    try {
+      const list = await nhatKyChungService.getNguoiGiaoDichOptions();
+      this.setState("nguoiGiaoDichList", list);
+    } catch (error) {
+      console.error("Error loading nguoi giao dich list:", error);
+    }
+  }
+
   private async loadKhoanMucList(): Promise<void> {
     try {
       const response = await khoanMucService.getPaginated({ limit: KHOAN_MUC_LIMIT });
@@ -177,31 +166,21 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
       this.setState("searchText", "");
     }
     if (!this.hasState("dateRange")) {
-      this.setState("dateRange", null);
+      this.setState("dateRange", defaultDateRange());
     }
-    if (!this.hasState("filterAccount")) {
-      this.setState("filterAccount", undefined);
-    }
-    if (!this.hasState("filterLoaiChungTu")) {
-      this.setState("filterLoaiChungTu", undefined);
-    }
-    if (!this.hasState("filterDoiTuong")) {
-      this.setState("filterDoiTuong", undefined);
-    }
-    if (!this.hasState("filterDuAn")) {
-      this.setState("filterDuAn", undefined);
-    }
-    if (!this.hasState("filterBoPhan")) {
-      this.setState("filterBoPhan", undefined);
-    }
-    if (!this.hasState("filterTaiKhoanCo")) {
-      this.setState("filterTaiKhoanCo", undefined);
+    for (const key of NKC_FILTER_STATE_KEYS) {
+      if (!this.hasState(key)) {
+        this.setState(key, undefined);
+      }
     }
     if (!this.hasState("taiKhoanList")) {
       this.setState("taiKhoanList", []);
     }
     if (!this.hasState("khoanMucList")) {
       this.setState("khoanMucList", []);
+    }
+    if (!this.hasState("nguoiGiaoDichList")) {
+      this.setState("nguoiGiaoDichList", []);
     }
     if (!this.hasState("activeTab")) {
       this.setState("activeTab", "list");
@@ -215,6 +194,7 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
         tongThu: 0,
         tongChi: 0,
         soDu: 0,
+        tongGiaTri: 0,
       });
     }
     // Initialize empty summaries

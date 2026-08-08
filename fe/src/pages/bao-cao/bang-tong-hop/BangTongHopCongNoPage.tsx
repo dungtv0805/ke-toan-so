@@ -10,11 +10,13 @@ import { taiKhoanService } from "@/services/taiKhoanService";
 import { TaiKhoan } from "@/types";
 import { exportReportExcel } from "@/utils/exportReportExcel";
 import { buildCongNoSheets } from "./congNoExport";
+import { printCongNo } from "./congNoPrint";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   ExportOutlined,
   HomeOutlined,
+  PrinterOutlined,
   ReloadOutlined,
-  TableOutlined,
 } from "@ant-design/icons";
 import {
   Breadcrumb,
@@ -40,7 +42,6 @@ const fmt = (v: number) => (v ? new Intl.NumberFormat("vi-VN").format(v) : "-");
 interface FlatRow {
   key: string;
   isAccount: boolean;
-  isTotal: boolean;
   drillable: boolean;
   accMa?: string; // mã TK (cho drill-down của dòng đối tượng)
   ma: string;
@@ -110,28 +111,18 @@ const BangTongHopCongNoPage: React.FC = () => {
   );
   const view = useMemo(() => filterCongNo(data, filters), [data, filters]);
 
-  // Flatten: [Tổng cộng] + mỗi TK: dòng TK + các dòng đối tượng
+  // Flatten mỗi TK: dòng TK + các dòng đối tượng.
+  // Dòng TỔNG CỘNG KHÔNG nằm trong dataSource — nó là summary ghim ở đầu bảng.
   const rows: FlatRow[] = useMemo(() => {
     if (!view) return [];
     // Lọc không còn dòng nào → bảng rỗng, không hiện dòng TỔNG CỘNG toàn số 0.
     if (filtering && view.accounts.length === 0) return [];
 
-    const out: FlatRow[] = [
-      {
-        key: "__totals__",
-        isAccount: false,
-        isTotal: true,
-        drillable: false,
-        ma: "",
-        ten: "TỔNG CỘNG",
-        val: view.totals,
-      },
-    ];
+    const out: FlatRow[] = [];
     for (const acc of view.accounts) {
       out.push({
         key: `acc-${acc.ma}`,
         isAccount: true,
-        isTotal: false,
         drillable: false,
         ma: acc.ma,
         ten: acc.ten,
@@ -141,7 +132,6 @@ const BangTongHopCongNoPage: React.FC = () => {
         out.push({
           key: `acc-${acc.ma}-dt-${dt.ma || "none"}`,
           isAccount: false,
-          isTotal: false,
           drillable: !!dt.ma,
           accMa: acc.ma,
           ma: dt.ma,
@@ -152,6 +142,16 @@ const BangTongHopCongNoPage: React.FC = () => {
     }
     return out;
   }, [view, filtering]);
+
+  // Thứ tự 6 cột số — dùng chung cho dòng TỔNG CỘNG ghim ở đầu bảng.
+  const TOTAL_PICKS: ((v: CongNoRowVal) => number)[] = [
+    (v) => v.dauKy.phaiThu,
+    (v) => v.dauKy.phaiTra,
+    (v) => v.phatSinh.phaiThu,
+    (v) => v.phatSinh.phaiTra,
+    (v) => v.cuoiKy.phaiThu,
+    (v) => v.cuoiKy.phaiTra,
+  ];
 
   const numCol = (
     key: string,
@@ -166,7 +166,7 @@ const BangTongHopCongNoPage: React.FC = () => {
         align: "right" as const,
         width: 120,
         render: (_: unknown, r: FlatRow) => (
-          <span style={{ fontWeight: r.isAccount || r.isTotal ? 700 : 400 }}>
+          <span style={{ fontWeight: r.isAccount ? 700 : 400 }}>
             {fmt(pick(r.val))}
           </span>
         ),
@@ -181,7 +181,7 @@ const BangTongHopCongNoPage: React.FC = () => {
       key: "ma",
       width: 90,
       render: (text: string, r: FlatRow) => (
-        <span style={{ fontWeight: r.isAccount || r.isTotal ? 700 : 400 }}>
+        <span style={{ fontWeight: r.isAccount ? 700 : 400 }}>
           {text}
         </span>
       ),
@@ -194,9 +194,9 @@ const BangTongHopCongNoPage: React.FC = () => {
       render: (text: string, r: FlatRow) => (
         <span
           style={{
-            fontWeight: r.isAccount || r.isTotal ? 700 : 400,
+            fontWeight: r.isAccount ? 700 : 400,
             color: r.isAccount ? "#1890ff" : "inherit",
-            paddingLeft: r.isAccount || r.isTotal ? 0 : 16,
+            paddingLeft: r.isAccount ? 0 : 16,
           }}
         >
           {text}
@@ -271,6 +271,20 @@ const BangTongHopCongNoPage: React.FC = () => {
     }
   };
 
+  const { currentTenant } = useAuth();
+  const handlePrint = () => {
+    if (!view || rows.length === 0) {
+      message.warning("Không có dữ liệu để in");
+      return;
+    }
+    // In đúng phần đang lọc, khớp với cái đang xem trên màn hình.
+    printCongNo(view, {
+      tenCongTy: currentTenant?.tenantName,
+      tuNgay: range[0].format("DD/MM/YYYY"),
+      denNgay: range[1].format("DD/MM/YYYY"),
+    });
+  };
+
   const handleDrill = (r: FlatRow) => {
     if (!r.drillable || !r.accMa) return;
     const q = new URLSearchParams({
@@ -301,13 +315,22 @@ const BangTongHopCongNoPage: React.FC = () => {
       />
       <Card
         title={
-          <Space>
-            <TableOutlined />
-            <span>Tổng hợp công nợ</span>
-          </Space>
+          <div
+            style={{
+              textAlign: "center",
+              fontWeight: 700,
+              fontSize: 16,
+              textTransform: "uppercase",
+            }}
+          >
+            Tổng hợp công nợ
+          </div>
         }
         extra={
           <Space>
+            <Button icon={<PrinterOutlined />} onClick={handlePrint}>
+              In
+            </Button>
             <Button
               icon={<ExportOutlined />}
               onClick={handleExport}
@@ -368,22 +391,33 @@ const BangTongHopCongNoPage: React.FC = () => {
             x: hasPinned ? "max-content" : undefined,
             y: "calc(100vh - 320px)",
           }}
-          rowClassName={(r) =>
-            r.isTotal
-              ? "cong-no-total-row"
-              : r.isAccount
-                ? "cong-no-account-row"
-                : ""
+          // Dòng TỔNG CỘNG ghim ngay dưới header, luôn thấy khi cuộn danh sách.
+          summary={() =>
+            !view || rows.length === 0 ? null : (
+              <Table.Summary fixed="top">
+                <Table.Summary.Row className="cong-no-total-row">
+                  <Table.Summary.Cell index={0} colSpan={2}>
+                    <span style={{ fontWeight: 700 }}>TỔNG CỘNG</span>
+                  </Table.Summary.Cell>
+                  {TOTAL_PICKS.map((pick, i) => (
+                    <Table.Summary.Cell key={i} index={i + 2} align="right">
+                      <span style={{ fontWeight: 700 }}>
+                        {fmt(pick(view.totals))}
+                      </span>
+                    </Table.Summary.Cell>
+                  ))}
+                </Table.Summary.Row>
+              </Table.Summary>
+            )
           }
+          rowClassName={(r) => (r.isAccount ? "cong-no-account-row" : "")}
           onRow={(r) => ({
             onClick: () => handleDrill(r),
             style: r.drillable
               ? { cursor: "pointer" }
               : r.isAccount
                 ? { background: "#fff7e6" }
-                : r.isTotal
-                  ? { background: "#e6f7ff" }
-                  : undefined,
+                : undefined,
           })}
         />
       </Card>

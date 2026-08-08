@@ -1043,6 +1043,95 @@
   }
 }
 
+/* Bảng tổng hợp công nợ — dòng TỔNG CỘNG ghim (Table.Summary fixed="top").
+   Summary mặc định nền trong suốt nên khi ghim sẽ nhìn xuyên qua dữ liệu cuộn
+   bên dưới → phải tô nền đặc. */
+.cong-no-total-row > td.ant-table-cell {
+  background: #e6f7ff !important;
+  font-weight: 700;
+}
+
+.dark .cong-no-total-row > td.ant-table-cell {
+  background: #111d2c !important;
+}
+
+/* Hàng lọc trên cùng của "Dữ liệu tổng hợp" */
+.nkc-filter-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  background: #fafafa;
+  border: 1px solid #d9d9d9;
+  border-bottom: none;
+  flex-shrink: 0;
+}
+
+.nkc-filter-bar__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.nkc-filter-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Hàng số liệu tổng quan ngay dưới hàng lọc */
+.nkc-overview-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 6px 10px;
+  background: #e6f4ff;
+  border: 1px solid #d9d9d9;
+  border-bottom: none;
+  flex-shrink: 0;
+}
+
+.nkc-overview-bar__item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.nkc-overview-bar__label {
+  font-size: 12px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.nkc-overview-bar__value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.nkc-overview-bar__value--money {
+  color: #1677ff;
+}
+
+.dark .nkc-filter-bar {
+  background: #1f1f1f;
+  border-color: #303030;
+}
+
+.dark .nkc-overview-bar {
+  background: #111d2c;
+  border-color: #303030;
+}
+
+.dark .nkc-overview-bar__value {
+  color: #e5e7eb;
+}
+
 /* Excel container */
 .excel-container {
   flex: 1;
