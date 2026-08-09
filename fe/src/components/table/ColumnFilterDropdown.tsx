@@ -90,32 +90,56 @@ const ColumnFilterDropdown: React.FC<Props> = ({
 }) => {
   if (kind === 'select') {
     return (
-      <Shell>
-        <PinButton pinned={pinned} onTogglePin={onTogglePin} />
-        <div style={{ fontWeight: 500, marginBottom: 8 }}>Lọc {title}</div>
-        <Select<string>
-          autoFocus
-          showSearch
-          allowClear
-          size="small"
-          optionFilterProp="label"
-          placeholder={`Chọn ${title.toLowerCase()}`}
-          style={{ width: '100%' }}
-          // Danh sách chọn phải nằm TRONG popover: render ra body thì antd coi là click
-          // ngoài và đóng luôn popover lọc trước khi kịp chọn.
-          getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
-          value={filter?.kind === 'select' && filter.value ? filter.value : undefined}
-          options={options ?? []}
-          onChange={(next) => {
-            onApply(next ? { kind: 'select', value: next } : undefined);
-            onClose();
-          }}
-        />
-      </Shell>
+      <SelectFilterBody
+        {...{ title, filter, options, pinned, onApply, onTogglePin, onClose }}
+      />
     );
   }
 
   return <ValueFilterBody {...{ title, kind, filter, pinned, onApply, onTogglePin, onClose }} />;
+};
+
+/**
+ * Nhánh cột chọn-từ-danh-mục. Danh sách bung ra sẵn khi mở popover — bấm kính lúp là
+ * thấy ngay các giá trị có thể lọc, không phải bấm thêm một lần nữa.
+ */
+const SelectFilterBody: React.FC<Omit<Props, 'kind'>> = ({
+  title,
+  filter,
+  options,
+  pinned,
+  onApply,
+  onTogglePin,
+  onClose,
+}) => {
+  const [open, setOpen] = useState(true);
+
+  return (
+    <Shell>
+      <PinButton pinned={pinned} onTogglePin={onTogglePin} />
+      <div style={{ fontWeight: 500, marginBottom: 8 }}>Lọc {title}</div>
+      <Select<string>
+        autoFocus
+        showSearch
+        allowClear
+        size="small"
+        open={open}
+        onOpenChange={setOpen}
+        optionFilterProp="label"
+        placeholder={`Chọn ${title.toLowerCase()}`}
+        style={{ width: '100%' }}
+        // Danh sách chọn phải nằm TRONG popover: render ra body thì antd coi là click
+        // ngoài và đóng luôn popover lọc trước khi kịp chọn.
+        getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
+        value={filter?.kind === 'select' && filter.value ? filter.value : undefined}
+        options={options ?? []}
+        onChange={(next) => {
+          onApply(next ? { kind: 'select', value: next } : undefined);
+          onClose();
+        }}
+      />
+    </Shell>
+  );
 };
 
 /** Nhánh cột chữ / cột số: chọn toán tử rồi gõ giá trị. */

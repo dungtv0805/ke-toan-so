@@ -195,7 +195,7 @@ describe('lọc theo cột ở header (render thật)', () => {
     expect(screen.getByText('Tiền mặt')).toBeTruthy();
   });
 
-  it('cột chọn: chọn một mục → áp ngay, không cần bấm "Lọc"', async () => {
+  it('cột chọn: mở popover là danh sách bung sẵn, chọn một mục → áp ngay', async () => {
     render(<SelectDemo />);
     expect(screen.getByText('331')).toBeTruthy();
 
@@ -204,7 +204,7 @@ describe('lọc theo cột ở header (render thật)', () => {
     // Không có ghim cột khi component không nhận onTogglePin
     expect(screen.queryByRole('button', { name: /Cố định cột này/ })).toBeNull();
 
-    fireEvent.mouseDown(document.querySelector('.ant-select') as HTMLElement);
+    // Không bấm thêm lần nào vào ô chọn — danh sách phải có sẵn
     fireEvent.click(await screen.findByTitle('131 - Phải thu khách hàng'));
 
     // Chỉ soi trong thân bảng — danh sách chọn cũng chứa chữ "331".
