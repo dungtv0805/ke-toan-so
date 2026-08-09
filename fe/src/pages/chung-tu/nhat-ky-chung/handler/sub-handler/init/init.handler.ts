@@ -39,7 +39,9 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
         page: 1,
         limit: DEFAULT_PAGE_SIZE,
       }),
-      this.loadStats(),
+      // PHẢI qua executeEvent: `loadStats` có @HandlerDecorator nên gọi thẳng
+      // `this.loadStats()` sẽ bị decorator thoát sớm (thiếu uniqId) — im lặng không chạy.
+      this.executeEvent("loadStats", {}),
       this.loadTaiKhoanList(),
       this.loadKhoanMucList(),
       this.loadNguoiGiaoDichList(),
@@ -64,7 +66,10 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
     };
 
     // Hàng số liệu tổng quan luôn hiển thị → stats phải nạp lại cùng danh sách.
-    await Promise.all([this.loadEntries(params), this.loadStats()]);
+    await Promise.all([
+      this.loadEntries(params),
+      this.executeEvent("loadStats", {}),
+    ]);
   }
 
   @HandlerDecorator("loadPage")
