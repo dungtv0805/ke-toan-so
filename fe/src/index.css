@@ -1403,12 +1403,12 @@
 
 .excel-table .ant-table-thead > tr > th {
   background: #f0f0f0 !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
   font-size: 11px !important;
   padding: 6px 8px !important;
   text-transform: none !important;
   letter-spacing: normal !important;
-  color: #444;
+  color: #1f1f1f;
   /* Viền header đậm hơn viền ô — Excel phân định rõ vùng tiêu đề cột */
   border-bottom: 1px solid var(--xl-head-border) !important;
   border-right: 1px solid var(--xl-head-border) !important;
@@ -1428,8 +1428,8 @@
   /* Lưới ô xám đều cả hai chiều — bảng tính không có đường đậm đường nhạt */
   border-bottom: 1px solid var(--xl-grid) !important;
   border-right: 1px solid var(--xl-grid) !important;
-  /* Ô nhiều dòng canh trên như Excel bật "wrap text" */
-  vertical-align: top;
+  /* Ô nhiều dòng canh giữa theo chiều dọc — dễ soi ngang giữa các cột */
+  vertical-align: middle;
   white-space: normal;
   overflow-wrap: anywhere;
   line-height: 1.45;
