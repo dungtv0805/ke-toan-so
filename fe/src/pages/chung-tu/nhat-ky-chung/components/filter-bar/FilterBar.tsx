@@ -55,7 +55,11 @@ export function FilterBar() {
           }
         />
 
+        <span className="xl-cmd-sep" />
+
         <PeriodRangeFilter />
+
+        <span className="xl-cmd-sep" />
 
         <Tooltip
           title={

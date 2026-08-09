@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { SearchOutlined } from "@ant-design/icons";
+import { FilterFilled, SearchOutlined } from "@ant-design/icons";
 import type { ColumnType } from "antd/es/table";
 import ColumnFilterDropdown from "@/components/table/ColumnFilterDropdown";
 import { useNhatKyChungHandler } from "../NhatKyChungHandlerContext";
@@ -34,9 +34,12 @@ export function useNkcColumnFilters() {
       return {
         ...col,
         filtered: active,
-        // Kính lúp thay cho mũi tên: người dùng nhận ra "bấm để tìm/lọc" ngay.
-        filterIcon: (
-          <SearchOutlined style={{ color: active ? "#1890ff" : undefined }} />
+        // Kính lúp = "bấm để tìm/lọc"; đang lọc thì đổi thành phễu, đúng quy ước Excel.
+        // Chỉ đổi icon, KHÔNG nhuộm nền cột — badge trên nút "Xóa lọc" đã đếm sẵn rồi.
+        filterIcon: active ? (
+          <FilterFilled style={{ color: "#217346" }} />
+        ) : (
+          <SearchOutlined />
         ),
         filterDropdown: ({ close }: { close: () => void }) => (
           <ColumnFilterDropdown
