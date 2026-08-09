@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { CaretDownOutlined } from '@ant-design/icons';
+import { SearchOutlined } from '@ant-design/icons';
 import type { ColumnType } from 'antd/es/table';
 import ColumnFilterDropdown from './ColumnFilterDropdown';
 import {
@@ -72,8 +72,9 @@ export function useTableColumnFilters(pageKey: string) {
       return {
         ...col,
         fixed: pinnedSet.has(col.key) ? 'left' : col.fixed,
+        // Kính lúp thay cho mũi tên: người dùng nhận ra "bấm để tìm/lọc" ngay.
         filterIcon: (
-          <CaretDownOutlined style={{ color: active ? '#1890ff' : undefined }} />
+          <SearchOutlined style={{ color: active ? '#1890ff' : undefined }} />
         ),
         filtered: active,
         filterDropdown: ({ close }: { close: () => void }) => (

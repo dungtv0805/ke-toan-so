@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { CaretDownOutlined } from "@ant-design/icons";
+import { SearchOutlined } from "@ant-design/icons";
 import type { ColumnType } from "antd/es/table";
 import ColumnFilterDropdown from "@/components/table/ColumnFilterDropdown";
 import { useNhatKyChungHandler } from "../NhatKyChungHandlerContext";
@@ -34,8 +34,9 @@ export function useNkcColumnFilters() {
       return {
         ...col,
         filtered: active,
+        // Kính lúp thay cho mũi tên: người dùng nhận ra "bấm để tìm/lọc" ngay.
         filterIcon: (
-          <CaretDownOutlined style={{ color: active ? "#1890ff" : undefined }} />
+          <SearchOutlined style={{ color: active ? "#1890ff" : undefined }} />
         ),
         filterDropdown: ({ close }: { close: () => void }) => (
           <ColumnFilterDropdown
