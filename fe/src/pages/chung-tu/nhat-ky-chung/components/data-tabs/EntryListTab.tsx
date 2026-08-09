@@ -52,6 +52,7 @@ import {
   useNhatKyChungState,
   useNhatKyChungHandler,
 } from "../../NhatKyChungHandlerContext";
+import { useNkcColumnFilters } from "../../hooks/useNkcColumnFilters";
 import { EntryActions } from "../entry-actions/EntryActions";
 import { TableTitleSettings } from '@/components/glossary/TableTitleSettings';
 import { NKC_TITLE_TERMS } from './nkcTitleTerms';
@@ -85,7 +86,8 @@ const renderEllipsisText = (text: string | undefined | null) => {
   );
 };
 
-// Default column widths
+// Default column widths.
+// Cột có nút lọc ở header (xem NKC_COLUMN_FILTER_KEYS) rộng hơn ~22px để chừa chỗ cho icon.
 const DEFAULT_WIDTHS: Record<string, number> = {
   ngay: 120,
   ngayGhiSo: 100,
@@ -93,37 +95,37 @@ const DEFAULT_WIDTHS: Record<string, number> = {
   loaiGiaoDich: 120,
   nghiepVu: 150,
   dienGiai: 150,
-  taiKhoanNo: 55,
-  taiKhoanCo: 55,
+  taiKhoanNo: 78,
+  taiKhoanCo: 78,
   soTien: 100,
-  doiTuongMa: 65,
+  doiTuongMa: 88,
   doiTuong: 110,
-  doiTuong2Ma: 65,
+  doiTuong2Ma: 88,
   doiTuong2: 110,
   chuDauTuMa: 65,
   chuDauTu: 110,
-  duAnMa: 65,
+  duAnMa: 88,
   duAn: 110,
-  sanPhamMa: 65,
+  sanPhamMa: 88,
   sanPham: 110,
-  boPhanMa: 55,
-  boPhan: 90,
-  doiMa: 55,
-  doi: 90,
-  nhanVienMa: 55,
-  nhanVien: 90,
+  boPhanMa: 78,
+  boPhan: 108,
+  doiMa: 78,
+  doi: 108,
+  nhanVienMa: 78,
+  nhanVien: 108,
   dongTienMa: 55,
   dongTien: 100,
-  khoanMucMa: 55,
+  khoanMucMa: 78,
   khoanMuc: 100,
-  nhomKhuyenMaiMa: 55,
+  nhomKhuyenMaiMa: 78,
   nhomKhuyenMai: 100,
   nhomQuanLyMa: 55,
   nhomQuanLy: 100,
-  hopDongSo: 80,
+  hopDongSo: 100,
   hopDong: 120,
   soTaiKhoan: 100,
-  nguoiGiaoDich: 100,
+  nguoiGiaoDich: 110,
   diaChi: 120,
   ghiChu: 120,
   hoSoChungTu: 160,
@@ -794,6 +796,9 @@ const getColumnDefinitions = (
 // Calculate total width
 const TOTAL_WIDTH = Object.values(DEFAULT_WIDTHS).reduce((sum, w) => sum + w, 0);
 
+/** Width cột do người dùng kéo — lưu theo CHỈ SỐ cột nên phải đổi key khi cấu trúc cột đổi. */
+const WIDTH_STORAGE_KEY = "table-col-widths-nkc-v3";
+
 // Chừa dưới đáy trang (padding của Content) + vài px đệm.
 const BOTTOM_GAP = 20;
 // Fallback khi chưa render xong DOM của antd Table.
@@ -885,10 +890,11 @@ export function EntryListTab() {
   const { canCreate, canDelete } = usePagePermission("/chung-tu/nhat-ky-chung");
   const [importOpen, setImportOpen] = useState(false);
   const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
+  const { withColumnFilter } = useNkcColumnFilters();
 
   // Enable column resize via DOM manipulation (no React re-renders)
-  // storageKey bump 'v2': cấu trúc cột đổi (thêm cột Ngày ghi sổ) → bỏ width cũ lưu theo chỉ số (đã lệch).
-  useTableColumnResize("resizable-table", "table-col-widths-nkc-v2");
+  // storageKey bump 'v3': cột có nút lọc được nới rộng → bỏ width cũ (quá hẹp, che mất tiêu đề).
+  useTableColumnResize("resizable-table", WIDTH_STORAGE_KEY);
 
   const { t } = useTerm();
 
@@ -935,11 +941,14 @@ export function EntryListTab() {
         quyChaunList,
         hoSoChungTuList,
         handleRefresh
-      ).map((col) => ({
-        ...col,
-        width: col.width || DEFAULT_WIDTHS[col.key as string] || 100,
-      })),
-    [taiKhoanOptions, quyChaunList, hoSoChungTuList, handleRefresh]
+      ).map((col) =>
+        // Lọc gắn ngay ở header cột → hàng lọc trên cùng không phải bày 14 dropdown nữa.
+        withColumnFilter({
+          ...col,
+          width: col.width || DEFAULT_WIDTHS[col.key as string] || 100,
+        })
+      ),
+    [taiKhoanOptions, quyChaunList, hoSoChungTuList, handleRefresh, withColumnFilter]
   );
 
   // Ẩn/hiện cột. Tiêu đề cột có thể là chuỗi hoặc node <TermText> → lấy nhãn tương ứng.
@@ -964,7 +973,7 @@ export function EntryListTab() {
       // Width resize lưu theo CHỈ SỐ cột → ẩn/hiện làm lệch. Xoá để cột về width mặc định.
       onChange: () => {
         try {
-          localStorage.removeItem("table-col-widths-nkc-v2");
+          localStorage.removeItem(WIDTH_STORAGE_KEY);
         } catch {
           /* ignore */
         }

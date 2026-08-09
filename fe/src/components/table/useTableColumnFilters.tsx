@@ -24,10 +24,12 @@ import { readPinnedKeys, savePinnedKeys, togglePinned } from './columnPin';
  * `pageKey` + công ty đang chọn.
  */
 export interface FilterableOptions {
-  /** 'number' → popover dùng toán tử số. Mặc định 'text'. */
+  /** 'number' → toán tử số; 'select' → chọn từ danh mục. Mặc định 'text'. */
   type?: FilterKind;
   /** Nhãn "Lọc …" khi tiêu đề cột trùng nhau (vd 4 cột "Nợ"/"Có"). Mặc định lấy `col.title`. */
   filterTitle?: string;
+  /** Danh sách chọn, bắt buộc khi `type: 'select'`. */
+  options?: { value: string; label: string }[];
 }
 
 export function useTableColumnFilters(pageKey: string) {
@@ -78,6 +80,7 @@ export function useTableColumnFilters(pageKey: string) {
           <ColumnFilterDropdown
             title={opts?.filterTitle ?? col.title}
             kind={kind}
+            options={opts?.options}
             filter={filters[col.key]}
             pinned={pinnedSet.has(col.key)}
             onApply={(f) => setFilter(col.key, f)}

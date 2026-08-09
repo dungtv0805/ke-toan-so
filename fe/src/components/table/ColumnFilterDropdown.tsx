@@ -10,31 +10,116 @@ import {
   parseFilterNumber,
   type ColumnFilter,
   type FilterKind,
+  type NumberFilter,
   type NumberOp,
+  type TextFilter,
   type TextOp,
 } from './columnFilter';
 
 interface Props {
   /** Nhãn cột, hiện ở dòng "Lọc {title}". */
   title: string;
-  /** Cột chữ hay cột số — quyết định danh sách toán tử và cách nhập giá trị. */
+  /** Cột chữ / cột số / cột chọn từ danh mục — quyết định cách nhập giá trị. */
   kind: FilterKind;
   filter: ColumnFilter | undefined;
-  pinned: boolean;
+  /** Danh sách chọn, BẮT BUỘC khi `kind='select'`. */
+  options?: { value: string; label: string }[];
   onApply: (filter: ColumnFilter | undefined) => void;
-  onTogglePin: () => void;
   /** antd cấp sẵn: đóng popover. */
   onClose: () => void;
+  /** Ghim cột — bỏ trống thì popover không có mục cố định cột. */
+  pinned?: boolean;
+  onTogglePin?: () => void;
 }
 
 const defaultOpOf = (kind: FilterKind): TextOp | NumberOp =>
   kind === 'number' ? DEFAULT_NUMBER_OP : DEFAULT_TEXT_OP;
 
+/** Bộ lọc hiện tại nếu đúng kiểu cột VÀ là loại có toán tử (chữ/số). */
+function opFilterOf(
+  filter: ColumnFilter | undefined,
+  kind: FilterKind,
+): TextFilter | NumberFilter | undefined {
+  if (!filter || filter.kind !== kind) return undefined;
+  return filter.kind === 'select' ? undefined : filter;
+}
+
+/** Khung chung của popover — chặn click lọt xuống header (antd dùng click header để sort/resize). */
+const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div
+    style={{
+      background: '#fff',
+      padding: 12,
+      borderRadius: 8,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+      minWidth: 260,
+    }}
+    onClick={(e) => e.stopPropagation()}
+  >
+    {children}
+  </div>
+);
+
+const PinButton: React.FC<{ pinned?: boolean; onTogglePin?: () => void }> = ({
+  pinned,
+  onTogglePin,
+}) =>
+  onTogglePin ? (
+    <>
+      <Button type="text" size="small" icon={<PushpinOutlined />} onClick={onTogglePin}>
+        {pinned ? 'Bỏ cố định cột' : 'Cố định cột này'}
+      </Button>
+      <Divider style={{ margin: '8px 0' }} />
+    </>
+  ) : null;
+
 /**
  * Popover lọc ở header cột: cố định cột + chọn toán tử + nhập giá trị.
  * Giá trị gõ dở chỉ nằm trong state cục bộ — bảng chỉ lọc lại khi bấm "Lọc" (hoặc Enter).
+ * Riêng cột `select` áp ngay khi chọn (không có gì để gõ dở).
  */
 const ColumnFilterDropdown: React.FC<Props> = ({
+  title,
+  kind,
+  filter,
+  options,
+  pinned,
+  onApply,
+  onTogglePin,
+  onClose,
+}) => {
+  if (kind === 'select') {
+    return (
+      <Shell>
+        <PinButton pinned={pinned} onTogglePin={onTogglePin} />
+        <div style={{ fontWeight: 500, marginBottom: 8 }}>Lọc {title}</div>
+        <Select<string>
+          autoFocus
+          showSearch
+          allowClear
+          size="small"
+          optionFilterProp="label"
+          placeholder={`Chọn ${title.toLowerCase()}`}
+          style={{ width: '100%' }}
+          // Danh sách chọn phải nằm TRONG popover: render ra body thì antd coi là click
+          // ngoài và đóng luôn popover lọc trước khi kịp chọn.
+          getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
+          value={filter?.kind === 'select' && filter.value ? filter.value : undefined}
+          options={options ?? []}
+          onChange={(next) => {
+            onApply(next ? { kind: 'select', value: next } : undefined);
+            onClose();
+          }}
+        />
+      </Shell>
+    );
+  }
+
+  return <ValueFilterBody {...{ title, kind, filter, pinned, onApply, onTogglePin, onClose }} />;
+};
+
+/** Nhánh cột chữ / cột số: chọn toán tử rồi gõ giá trị. */
+const ValueFilterBody: React.FC<Omit<Props, 'options'>> = ({
   title,
   kind,
   filter,
@@ -43,13 +128,13 @@ const ColumnFilterDropdown: React.FC<Props> = ({
   onTogglePin,
   onClose,
 }) => {
-  const current = filter && filter.kind === kind ? filter : undefined;
+  const current = opFilterOf(filter, kind);
   const [op, setOp] = useState<TextOp | NumberOp>(current?.op ?? defaultOpOf(kind));
   const [value, setValue] = useState(current?.value ?? '');
 
   // Mở lại popover sau khi bộ lọc đổi từ ngoài (vd bấm "Bỏ lọc") → hiện đúng trạng thái.
   useEffect(() => {
-    const f = filter && filter.kind === kind ? filter : undefined;
+    const f = opFilterOf(filter, kind);
     setOp(f?.op ?? defaultOpOf(kind));
     setValue(f?.value ?? '');
   }, [filter, kind]);
@@ -86,22 +171,8 @@ const ColumnFilterDropdown: React.FC<Props> = ({
   };
 
   return (
-    <div
-      style={{
-        background: '#fff',
-        padding: 12,
-        borderRadius: 8,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-        minWidth: 260,
-      }}
-      // Chặn click lọt xuống header (antd dùng click header để sort/resize).
-      onClick={(e) => e.stopPropagation()}
-    >
-      <Button type="text" size="small" icon={<PushpinOutlined />} onClick={onTogglePin}>
-        {pinned ? 'Bỏ cố định cột' : 'Cố định cột này'}
-      </Button>
-
-      <Divider style={{ margin: '8px 0' }} />
+    <Shell>
+      <PinButton pinned={pinned} onTogglePin={onTogglePin} />
 
       <div
         style={{
@@ -151,7 +222,7 @@ const ColumnFilterDropdown: React.FC<Props> = ({
           Lọc
         </Button>
       </Space>
-    </div>
+    </Shell>
   );
 };
 

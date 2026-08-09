@@ -3,16 +3,19 @@ import {
   isActiveFilter,
   matchAllFilters,
   matchNumber,
+  matchSelect,
   matchText,
   parseFilterNumber,
   type NumberFilter,
   type NumberOp,
+  type SelectFilter,
   type TextFilter,
   type TextOp,
 } from './columnFilter';
 
 const t = (op: TextOp, value: string): TextFilter => ({ kind: 'text', op, value });
 const n = (op: NumberOp, value = ''): NumberFilter => ({ kind: 'number', op, value });
+const s = (value: string): SelectFilter => ({ kind: 'select', value });
 
 describe('matchText', () => {
   it('Chứa: khớp chuỗi con, không phân biệt hoa thường', () => {
@@ -189,5 +192,33 @@ describe('matchAllFilters', () => {
   it('(Trống) trên cột số bằng 0', () => {
     expect(matchAllFilters(row, { co: n('blank') }, getValue)).toBe(true);
     expect(matchAllFilters(row, { co: n('notBlank') }, getValue)).toBe(false);
+  });
+
+  it('cột chọn-từ-danh-mục dùng so bằng, không so gần đúng', () => {
+    const withMa = { ...row, ma: '131' };
+    const getMa = (r: typeof withMa, key: string) => (key === 'ma' ? r.ma : getValue(r, key));
+
+    expect(matchAllFilters(withMa, { ma: s('131') }, getMa)).toBe(true);
+    // "13" là tiền tố của "131" — cột chữ sẽ khớp, cột chọn thì không.
+    expect(matchAllFilters(withMa, { ma: s('13') }, getMa)).toBe(false);
+  });
+});
+
+describe('matchSelect', () => {
+  it('khớp đúng mã đã chọn; bỏ khoảng trắng thừa hai phía', () => {
+    expect(matchSelect('131', s('131'))).toBe(true);
+    expect(matchSelect(' 131 ', s('131'))).toBe(true);
+    expect(matchSelect('1311', s('131'))).toBe(false);
+  });
+
+  it('chưa chọn gì → không lọc; ô rỗng → không khớp', () => {
+    expect(matchSelect('131', s(''))).toBe(true);
+    expect(matchSelect(null, s('131'))).toBe(false);
+    expect(matchSelect(undefined, s('131'))).toBe(false);
+  });
+
+  it('isActiveFilter: chỉ bật khi đã chọn giá trị', () => {
+    expect(isActiveFilter(s('131'))).toBe(true);
+    expect(isActiveFilter(s(''))).toBe(false);
   });
 });

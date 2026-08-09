@@ -17,7 +17,13 @@ export interface NumberFilter {
   value: string;
 }
 
-export type ColumnFilter = TextFilter | NumberFilter;
+export interface SelectFilter {
+  kind: 'select';
+  /** Giá trị đã chọn (mã trong danh mục). Rỗng = chưa lọc. */
+  value: string;
+}
+
+export type ColumnFilter = TextFilter | NumberFilter | SelectFilter;
 export type FilterKind = ColumnFilter['kind'];
 
 /** Ô đưa vào so khớp: cột chữ trả chuỗi, cột số trả số. */
@@ -162,6 +168,15 @@ export function matchNumber(raw: CellValue, filter: NumberFilter): boolean {
   }
 }
 
+/**
+ * Một ô có khớp giá trị đã chọn không. Cột chọn-từ-danh-mục so bằng đúng mã,
+ * không so gần đúng như cột chữ.
+ */
+export function matchSelect(raw: CellValue, filter: SelectFilter): boolean {
+  if (!isActiveFilter(filter)) return true;
+  return String(raw ?? '').trim() === filter.value.trim();
+}
+
 /** Dòng có khớp TẤT CẢ bộ lọc đang bật không. `getValue` lấy ô theo key cột. */
 export function matchAllFilters<T>(
   row: T,
@@ -171,7 +186,12 @@ export function matchAllFilters<T>(
   for (const [key, filter] of Object.entries(filters)) {
     if (!filter || !isActiveFilter(filter)) continue;
     const cell = getValue(row, key);
-    const ok = filter.kind === 'number' ? matchNumber(cell, filter) : matchText(cell, filter);
+    const ok =
+      filter.kind === 'number'
+        ? matchNumber(cell, filter)
+        : filter.kind === 'select'
+          ? matchSelect(cell, filter)
+          : matchText(cell, filter);
     if (!ok) return false;
   }
   return true;

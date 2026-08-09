@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
-import { render, renderHook, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, renderHook, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTableColumnFilters } from '../useTableColumnFilters';
+import ColumnFilterDropdown from '../ColumnFilterDropdown';
+import { matchAllFilters, type ColumnFilter } from '../columnFilter';
 import { readPinnedKeys, savePinnedKeys } from '../columnPin';
 
 beforeAll(() => {
@@ -85,6 +87,46 @@ const NumDemo: React.FC = () => {
   return <Table columns={columns} dataSource={rows} pagination={false} />;
 };
 
+interface SelRow {
+  key: string;
+  ma: string;
+}
+
+const SEL_DATA: SelRow[] = [
+  { key: '1', ma: '131' },
+  { key: '2', ma: '331' },
+];
+
+/** Cột chọn-từ-danh-mục, KHÔNG có ghim cột (không truyền onTogglePin). */
+const SelectDemo: React.FC = () => {
+  const [filter, setFilter] = React.useState<ColumnFilter | undefined>(undefined);
+  const rows = SEL_DATA.filter((r) =>
+    matchAllFilters(r, { ma: filter }, (row, key) => (key === 'ma' ? row.ma : undefined)),
+  );
+  const columns: ColumnsType<SelRow> = [
+    {
+      title: 'Tài khoản',
+      dataIndex: 'ma',
+      key: 'ma',
+      width: 200,
+      filterDropdown: ({ close }: { close: () => void }) => (
+        <ColumnFilterDropdown
+          title="Tài khoản"
+          kind="select"
+          options={[
+            { value: '131', label: '131 - Phải thu khách hàng' },
+            { value: '331', label: '331 - Phải trả người bán' },
+          ]}
+          filter={filter}
+          onApply={setFilter}
+          onClose={close}
+        />
+      ),
+    },
+  ];
+  return <Table columns={columns} dataSource={rows} pagination={false} />;
+};
+
 const openDropdown = () => {
   // antd bọc filterIcon trong span.ant-dropdown-trigger ở header cột
   const trigger = document.querySelector('.ant-dropdown-trigger') as HTMLElement;
@@ -151,6 +193,24 @@ describe('lọc theo cột ở header (render thật)', () => {
 
     await waitFor(() => expect(screen.queryByText('Tiền gửi')).toBeNull());
     expect(screen.getByText('Tiền mặt')).toBeTruthy();
+  });
+
+  it('cột chọn: chọn một mục → áp ngay, không cần bấm "Lọc"', async () => {
+    render(<SelectDemo />);
+    expect(screen.getByText('331')).toBeTruthy();
+
+    openDropdown();
+    expect(await screen.findByText('Lọc Tài khoản')).toBeTruthy();
+    // Không có ghim cột khi component không nhận onTogglePin
+    expect(screen.queryByRole('button', { name: /Cố định cột này/ })).toBeNull();
+
+    fireEvent.mouseDown(document.querySelector('.ant-select') as HTMLElement);
+    fireEvent.click(await screen.findByTitle('131 - Phải thu khách hàng'));
+
+    // Chỉ soi trong thân bảng — danh sách chọn cũng chứa chữ "331".
+    const body = () => within(document.querySelector('.ant-table-tbody') as HTMLElement);
+    await waitFor(() => expect(body().queryByText('331')).toBeNull());
+    expect(body().getByText('131')).toBeTruthy();
   });
 
   it('cột số: gõ chữ → báo lỗi và không cho bấm Lọc', async () => {

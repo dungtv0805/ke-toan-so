@@ -1,5 +1,4 @@
-import { useMemo } from "react";
-import { Button, DatePicker, Input, Select, Tooltip } from "antd";
+import { Badge, Button, DatePicker, Input, Select, Tooltip } from "antd";
 import { ClearOutlined, PlusOutlined, SearchOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
@@ -9,22 +8,20 @@ import {
   useNhatKyChungHandler,
 } from "../../NhatKyChungHandlerContext";
 import {
-  KIEM_SOAT_OPTIONS,
   NKC_FILTER_BAR_KEYS,
   NKC_FILTER_LABELS,
+  NKC_FILTER_STATE_KEYS,
   type NkcFilterStateKey,
 } from "../../handler/lib/nkcFilters";
+import {
+  useNkcFilterOptions,
+  useNkcFilterValues,
+  type FilterOption as Option,
+} from "../../hooks/useNkcFilterOptions";
 import { NKC_VIEWS } from "../data-tabs/nkcViews";
 import "./FilterBar.state";
 
 const { RangePicker } = DatePicker;
-
-type Option = { value: string; label: string };
-
-const byMa = (items: { ma?: string; ten?: string }[] = []): Option[] =>
-  items
-    .filter((x): x is { ma: string; ten?: string } => !!x?.ma)
-    .map((x) => ({ value: x.ma, label: x.ten ? `${x.ma} - ${x.ten}` : x.ma }));
 
 type Range = [dayjs.Dayjs, dayjs.Dayjs];
 
@@ -60,8 +57,12 @@ function rangePresets(): { label: string; value: Range }[] {
 }
 
 /**
- * Hàng lọc trên cùng của "Dữ liệu tổng hợp": toàn bộ tiêu chí lọc ở dạng thả xuống,
- * dropdown chọn báo cáo (thay thanh tab cũ) và nút "Thêm mới" ở góc phải.
+ * Hàng lọc trên cùng của "Dữ liệu tổng hợp": tìm kiếm, khoảng thời gian, dropdown chọn
+ * báo cáo (thay thanh tab cũ) và nút "Thêm mới" ở góc phải.
+ *
+ * Ở view "Bút toán" các tiêu chí lọc nằm ngay trên header cột (xem `useNkcColumnFilters`)
+ * nên hàng này KHÔNG bày 14 dropdown nữa — nhường diện tích cho bảng. Các view báo cáo
+ * không có cột tương ứng nên vẫn giữ đủ dropdown.
  */
 export function FilterBar() {
   const navigate = useNavigate();
@@ -72,72 +73,15 @@ export function FilterBar() {
   const [searchText, setSearchText] = useNhatKyChungState("searchText", "");
   const [activeTab, setActiveTab] = useNhatKyChungState("activeTab", "list");
 
-  const [taiKhoanList] = useNhatKyChungState("taiKhoanList", []);
-  const [khoanMucList] = useNhatKyChungState("khoanMucList", []);
-  const [doiTuongList] = useNhatKyChungState("doiTuongList", []);
-  const [duAnList] = useNhatKyChungState("duAnList", []);
-  const [boPhanList] = useNhatKyChungState("boPhanList", []);
-  const [sanPhamList] = useNhatKyChungState("sanPhamList", []);
-  const [hopDongList] = useNhatKyChungState("hopDongList", []);
-  const [nhomKhuyenMaiList] = useNhatKyChungState("nhomKhuyenMaiList", []);
-  const [loaiGiaoDichList] = useNhatKyChungState("loaiGiaoDichList", []);
-  const [quyChaunList] = useNhatKyChungState("quyChaunList", []);
-  const [nguoiGiaoDichList] = useNhatKyChungState("nguoiGiaoDichList", []);
+  const optionsByKey = useNkcFilterOptions();
+  const filterValues = useNkcFilterValues();
 
-  const optionsByKey = useMemo((): Record<NkcFilterStateKey, Option[]> => {
-    // Nhân viên / Đội không có danh mục riêng — lấy từ đối tượng loại NHAN_VIEN và
-    // bộ phận có tên chứa "đội" (giống cách form bút toán dựng options).
-    const nhanVien = (doiTuongList ?? []).filter((d) =>
-      (d.loai ?? []).includes("NHAN_VIEN"),
-    );
-    const doi = (boPhanList ?? []).filter((bp) =>
-      (bp.ten ?? "").toLowerCase().includes("đội"),
-    );
-    const nghiepVu = Array.from(
-      new Set((quyChaunList ?? []).map((qc) => qc.nghiepVu).filter(Boolean)),
-    ).map((nv) => ({ value: nv, label: nv }));
-
-    return {
-      filterKiemSoat: KIEM_SOAT_OPTIONS,
-      filterLoaiChungTu: byMa(loaiGiaoDichList),
-      filterNghiepVu: nghiepVu,
-      filterTaiKhoan: byMa(taiKhoanList),
-      filterDoiTuong: byMa(doiTuongList),
-      filterKhoanMuc: byMa(khoanMucList),
-      filterNhanVien: byMa(nhanVien),
-      filterDuAn: byMa(duAnList),
-      filterSanPham: byMa(sanPhamList),
-      filterHopDong: (hopDongList ?? [])
-        .filter((hd) => !!hd.soHopDong)
-        .map((hd) => ({
-          value: hd.soHopDong,
-          label: hd.tenCongTrinh
-            ? `${hd.soHopDong} - ${hd.tenCongTrinh}`
-            : hd.soHopDong,
-        })),
-      filterNguoiGiaoDich: (nguoiGiaoDichList ?? []).map((v) => ({
-        value: v,
-        label: v,
-      })),
-      filterDoi: byMa(doi),
-      filterBoPhan: byMa(boPhanList),
-      filterNhomKhuyenMai: byMa(nhomKhuyenMaiList),
-      filterAccount: byMa(taiKhoanList),
-      filterTaiKhoanCo: byMa(taiKhoanList),
-    };
-  }, [
-    boPhanList,
-    doiTuongList,
-    duAnList,
-    hopDongList,
-    khoanMucList,
-    loaiGiaoDichList,
-    nguoiGiaoDichList,
-    nhomKhuyenMaiList,
-    quyChaunList,
-    sanPhamList,
-    taiKhoanList,
-  ]);
+  const isEntryList = activeTab === "list";
+  // Tiêu chí đang bật — ở view Bút toán dropdown bị ẩn, phải có chỗ cho người dùng
+  // biết mình vẫn đang lọc (kể cả tiêu chí đặt từ view khác hoặc từ drill-down).
+  const activeFilterLabels = NKC_FILTER_STATE_KEYS.filter(
+    (key) => !!filterValues[key],
+  ).map((key) => NKC_FILTER_LABELS[key]);
 
   return (
     <div className="nkc-filter-bar">
@@ -158,9 +102,10 @@ export function FilterBar() {
             handler.executeEvent("search", { text: searchText || "" })
           }
         />
-        {NKC_FILTER_BAR_KEYS.map((key) => (
-          <FilterSelect key={key} filterKey={key} options={optionsByKey[key]} />
-        ))}
+        {!isEntryList &&
+          NKC_FILTER_BAR_KEYS.map((key) => (
+            <FilterSelect key={key} filterKey={key} options={optionsByKey[key]} />
+          ))}
         <RangePicker
           size="small"
           format="DD/MM/YYYY"
@@ -174,12 +119,20 @@ export function FilterBar() {
             })
           }
         />
-        <Tooltip title="Xóa lọc (về mặc định năm nay)">
-          <Button
-            size="small"
-            icon={<ClearOutlined />}
-            onClick={() => handler.executeEvent("resetFilters", {})}
-          />
+        <Tooltip
+          title={
+            activeFilterLabels.length
+              ? `Đang lọc: ${activeFilterLabels.join(", ")} — bấm để xóa lọc (về mặc định năm nay)`
+              : "Xóa lọc (về mặc định năm nay)"
+          }
+        >
+          <Badge count={activeFilterLabels.length} size="small" offset={[-2, 2]}>
+            <Button
+              size="small"
+              icon={<ClearOutlined />}
+              onClick={() => handler.executeEvent("resetFilters", {})}
+            />
+          </Badge>
         </Tooltip>
       </div>
 

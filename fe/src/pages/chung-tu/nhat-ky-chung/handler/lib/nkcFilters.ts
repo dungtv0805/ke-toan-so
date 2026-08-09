@@ -71,6 +71,42 @@ export const NKC_FILTER_BAR_KEYS: NkcFilterStateKey[] = [
   "filterNhomKhuyenMai",
 ];
 
+/**
+ * Cột của bảng bút toán → tiêu chí lọc gắn vào header cột đó.
+ * Cột "Mã" và cột "Tên" của cùng một danh mục dùng CHUNG một tiêu chí — bấm ở đâu cũng
+ * ra cùng popover. Cột không có mặt ở đây thì không có nút lọc (BE chưa có tham số lọc;
+ * lọc phía client sẽ chỉ lọc trong 1 trang 100 dòng nên gây hiểu nhầm).
+ */
+export const NKC_COLUMN_FILTER_KEYS: Record<string, NkcFilterStateKey> = {
+  kiemSoat: "filterKiemSoat",
+  loaiGiaoDich: "filterLoaiChungTu",
+  nghiepVu: "filterNghiepVu",
+  taiKhoanNo: "filterAccount",
+  taiKhoanCo: "filterTaiKhoanCo",
+  // Tham số `doiTuong` của BE khớp cả đối tượng Nợ lẫn đối tượng Có.
+  doiTuongMa: "filterDoiTuong",
+  doiTuong: "filterDoiTuong",
+  doiTuong2Ma: "filterDoiTuong",
+  doiTuong2: "filterDoiTuong",
+  khoanMucMa: "filterKhoanMuc",
+  khoanMuc: "filterKhoanMuc",
+  nhanVienMa: "filterNhanVien",
+  nhanVien: "filterNhanVien",
+  duAnMa: "filterDuAn",
+  duAn: "filterDuAn",
+  sanPhamMa: "filterSanPham",
+  sanPham: "filterSanPham",
+  hopDongSo: "filterHopDong",
+  hopDong: "filterHopDong",
+  doiMa: "filterDoi",
+  doi: "filterDoi",
+  boPhanMa: "filterBoPhan",
+  boPhan: "filterBoPhan",
+  nhomKhuyenMaiMa: "filterNhomKhuyenMai",
+  nhomKhuyenMai: "filterNhomKhuyenMai",
+  nguoiGiaoDich: "filterNguoiGiaoDich",
+};
+
 export const KIEM_SOAT_OPTIONS = [
   { value: "HOP_LE", label: "Hợp lệ" },
   { value: "CHUA_HOP_LE", label: "Chưa hợp lệ" },
