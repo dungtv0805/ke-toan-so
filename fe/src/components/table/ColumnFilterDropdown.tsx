@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Divider, Input, Select, Space } from 'antd';
-import { PushpinOutlined } from '@ant-design/icons';
+import { PushpinOutlined, SearchOutlined } from '@ant-design/icons';
 import {
   DEFAULT_NUMBER_OP,
   DEFAULT_TEXT_OP,
   NUMBER_OPS,
   TEXT_OPS,
+  fold,
   isValuelessOp,
   parseFilterNumber,
   type ColumnFilter,
@@ -100,8 +101,9 @@ const ColumnFilterDropdown: React.FC<Props> = ({
 };
 
 /**
- * Nhánh cột chọn-từ-danh-mục. Danh sách bung ra sẵn khi mở popover — bấm kính lúp là
- * thấy ngay các giá trị có thể lọc, không phải bấm thêm một lần nữa.
+ * Nhánh cột chọn-từ-danh-mục: ô tìm kiếm + danh sách NGAY BÊN DƯỚI, trong cùng một
+ * popover. Trước đây dùng `Select` — nó tự bung thêm một tầng popup nữa, nhìn thành
+ * hai popup chồng nhau.
  */
 const SelectFilterBody: React.FC<Omit<Props, 'kind'>> = ({
   title,
@@ -112,33 +114,87 @@ const SelectFilterBody: React.FC<Omit<Props, 'kind'>> = ({
   onTogglePin,
   onClose,
 }) => {
-  const [open, setOpen] = useState(true);
+  const [search, setSearch] = useState('');
+  const selected = filter?.kind === 'select' ? filter.value : '';
+
+  const needle = fold(search);
+  const matched = (options ?? []).filter((o) => fold(o.label).includes(needle));
+
+  const pick = (value: string) => {
+    onApply(value ? { kind: 'select', value } : undefined);
+    onClose();
+  };
 
   return (
     <Shell>
       <PinButton pinned={pinned} onTogglePin={onTogglePin} />
       <div style={{ fontWeight: 500, marginBottom: 8 }}>Lọc {title}</div>
-      <Select<string>
+
+      <Input
         autoFocus
-        showSearch
-        allowClear
         size="small"
-        open={open}
-        onOpenChange={setOpen}
-        optionFilterProp="label"
-        placeholder={`Chọn ${title.toLowerCase()}`}
-        style={{ width: '100%' }}
-        // Danh sách chọn phải nằm TRONG popover: render ra body thì antd coi là click
-        // ngoài và đóng luôn popover lọc trước khi kịp chọn.
-        getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
-        value={filter?.kind === 'select' && filter.value ? filter.value : undefined}
-        options={options ?? []}
-        onChange={(next) => {
-          onApply(next ? { kind: 'select', value: next } : undefined);
-          onClose();
-        }}
+        allowClear
+        prefix={<SearchOutlined style={{ color: 'rgba(0,0,0,.45)' }} />}
+        placeholder={`Tìm ${title.toLowerCase()}...`}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        // Gõ xong Enter → lấy luôn mục đầu tiên, khỏi phải rời tay khỏi bàn phím.
+        onPressEnter={() => matched[0] && pick(matched[0].value)}
       />
+
+      <div style={{ maxHeight: 260, overflowY: 'auto', marginTop: 8 }}>
+        {selected && <OptionRow label="(Bỏ lọc)" muted onPick={() => pick('')} />}
+
+        {matched.map((o) => (
+          <OptionRow
+            key={o.value}
+            label={o.label}
+            active={o.value === selected}
+            onPick={() => pick(o.value)}
+          />
+        ))}
+
+        {matched.length === 0 && (
+          <div style={{ padding: '8px 4px', color: 'rgba(0,0,0,.45)' }}>
+            Không có dữ liệu
+          </div>
+        )}
+      </div>
     </Shell>
+  );
+};
+
+/** Một dòng trong danh sách chọn. Tự tô nền khi rê chuột (inline style không có :hover). */
+const OptionRow: React.FC<{
+  label: string;
+  active?: boolean;
+  muted?: boolean;
+  onPick: () => void;
+}> = ({ label, active, muted, onPick }) => {
+  const [hover, setHover] = useState(false);
+
+  return (
+    <div
+      role="option"
+      aria-selected={!!active}
+      title={label}
+      onClick={onPick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        padding: '5px 8px',
+        borderRadius: 4,
+        cursor: 'pointer',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        fontWeight: active ? 600 : undefined,
+        color: muted ? 'rgba(0,0,0,.45)' : undefined,
+        background: active ? '#e6f4ff' : hover ? '#f5f5f5' : undefined,
+      }}
+    >
+      {label}
+    </div>
   );
 };
 

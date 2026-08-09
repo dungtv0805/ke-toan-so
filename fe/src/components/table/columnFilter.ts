@@ -59,7 +59,7 @@ export function isValuelessOp(op: NumberOp): boolean {
 }
 
 /** Hạ hoa thường + bỏ dấu tiếng Việt để so khớp "cong ty" ↔ "CÔNG TY". */
-function fold(s: string): string {
+export function fold(s: string): string {
   return s
     .trim()
     .toLowerCase()

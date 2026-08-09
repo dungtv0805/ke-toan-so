@@ -213,6 +213,45 @@ describe('lọc theo cột ở header (render thật)', () => {
     expect(body().getByText('131')).toBeTruthy();
   });
 
+  it('cột chọn: chỉ MỘT popover — danh sách nằm luôn trong đó, không bung thêm tầng nữa', async () => {
+    render(<SelectDemo />);
+    openDropdown();
+
+    const popover = (await screen.findByText('Lọc Tài khoản')).parentElement as HTMLElement;
+    // Cả ô tìm kiếm lẫn danh sách đều nằm trong cùng một khung
+    expect(within(popover).getByPlaceholderText('Tìm tài khoản...')).toBeTruthy();
+    expect(within(popover).getAllByRole('option')).toHaveLength(2);
+    // Không còn Select của antd (thứ tự tự bung popup thứ hai)
+    expect(document.querySelector('.ant-select-dropdown')).toBeNull();
+  });
+
+  it('cột chọn: gõ vào ô tìm kiếm thì danh sách lọc theo, bỏ dấu vẫn khớp', async () => {
+    render(<SelectDemo />);
+    openDropdown();
+
+    const search = await screen.findByPlaceholderText('Tìm tài khoản...');
+    fireEvent.change(search, { target: { value: 'phai tra' } });
+
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(1));
+    expect(screen.getByRole('option').getAttribute('title')).toBe('331 - Phải trả người bán');
+
+    fireEvent.change(search, { target: { value: 'khong co gi' } });
+    await waitFor(() => expect(screen.getByText('Không có dữ liệu')).toBeTruthy());
+  });
+
+  it('cột chọn: đang lọc thì có mục "(Bỏ lọc)" để trả bảng về đủ dòng', async () => {
+    render(<SelectDemo />);
+
+    openDropdown();
+    fireEvent.click(await screen.findByTitle('131 - Phải thu khách hàng'));
+    const body = () => within(document.querySelector('.ant-table-tbody') as HTMLElement);
+    await waitFor(() => expect(body().queryByText('331')).toBeNull());
+
+    openDropdown();
+    fireEvent.click(await screen.findByTitle('(Bỏ lọc)'));
+    await waitFor(() => expect(body().getByText('331')).toBeTruthy());
+  });
+
   it('cột số: gõ chữ → báo lỗi và không cho bấm Lọc', async () => {
     render(<NumDemo />);
 
