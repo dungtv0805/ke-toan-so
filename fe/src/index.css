@@ -1083,39 +1083,65 @@
   flex-shrink: 0;
 }
 
-/* Hàng số liệu tổng quan ngay dưới hàng lọc */
-.nkc-overview-bar {
+/* Khối số liệu tổng quan — đứng cùng hàng với các nút thao tác của bảng */
+.nkc-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
-  padding: 6px 10px;
-  background: #e6f4ff;
-  border: 1px solid #d9d9d9;
-  border-bottom: none;
-  flex-shrink: 0;
+  gap: 10px;
+  min-width: 0;
 }
 
-.nkc-overview-bar__item {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
+.nkc-stat {
+  min-width: 190px;
+  padding: 5px 12px;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-left-width: 3px;
+  border-radius: 4px;
 }
 
-.nkc-overview-bar__label {
-  font-size: 12px;
+.nkc-stat--count {
+  border-left-color: #52c41a;
+}
+
+.nkc-stat--money {
+  border-left-color: #1677ff;
+}
+
+.nkc-stat__label {
+  font-size: 11px;
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+  line-height: 1.4;
 }
 
-.nkc-overview-bar__value {
-  font-size: 14px;
+.nkc-stat__value {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 17px;
   font-weight: 700;
   color: #0f172a;
+  line-height: 1.3;
 }
 
-.nkc-overview-bar__value--money {
+.nkc-stat__icon {
+  font-size: 14px;
+}
+
+.nkc-stat--count .nkc-stat__icon {
+  color: #52c41a;
+}
+
+.nkc-stat--money .nkc-stat__icon {
   color: #1677ff;
+}
+
+.nkc-stat__unit {
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 .dark .nkc-filter-bar {
@@ -1123,12 +1149,12 @@
   border-color: #303030;
 }
 
-.dark .nkc-overview-bar {
-  background: #111d2c;
+.dark .nkc-stat {
+  background: #141414;
   border-color: #303030;
 }
 
-.dark .nkc-overview-bar__value {
+.dark .nkc-stat__value {
   color: #e5e7eb;
 }
 

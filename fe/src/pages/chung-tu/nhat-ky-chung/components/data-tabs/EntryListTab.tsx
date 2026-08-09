@@ -54,6 +54,7 @@ import {
 } from "../../NhatKyChungHandlerContext";
 import { useNkcColumnFilters } from "../../hooks/useNkcColumnFilters";
 import { EntryActions } from "../entry-actions/EntryActions";
+import { OverviewBar } from "../overview-bar/OverviewBar";
 import { TableTitleSettings } from '@/components/glossary/TableTitleSettings';
 import { NKC_TITLE_TERMS } from './nkcTitleTerms';
 import { DetailPopover } from "./DetailPopover";
@@ -991,9 +992,11 @@ export function EntryListTab() {
 
   return (
     <div className="excel-tab-content">
-      {/* Toolbar — nút "Thêm mới" đã chuyển lên góc phải hàng lọc (FilterBar) */}
+      {/* Hàng thao tác — gộp luôn khối số liệu bên trái để cả trang chỉ còn 2 hàng.
+          Nút "Thêm mới" nằm ở góc phải hàng lọc (FilterBar). */}
       <div className="excel-toolbar">
         <Space size="small">
+          <OverviewBar />
           {canDelete && selectedEntryIds.length > 0 && (
             <Popconfirm
               title={`Xóa ${selectedEntryIds.length} bút toán đã chọn?`}
