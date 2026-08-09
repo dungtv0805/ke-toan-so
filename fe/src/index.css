@@ -1343,7 +1343,10 @@
   letter-spacing: normal !important;
   border-bottom: 1px solid #d9d9d9 !important;
   border-right: 1px solid #e8e8e8 !important;
-  white-space: nowrap;
+  /* Tiêu đề dài cũng xuống dòng — cột hẹp không còn nuốt mất chữ */
+  white-space: normal;
+  line-height: 1.35;
+  vertical-align: middle;
 }
 
 .excel-table .ant-table-thead > tr > th:last-child {
@@ -1355,7 +1358,17 @@
   font-size: 12px !important;
   border-bottom: 1px solid #e8e8e8 !important;
   border-right: 1px solid #f0f0f0 !important;
-  vertical-align: middle;
+  /* Ô nhiều dòng canh trên như Excel bật "wrap text" */
+  vertical-align: top;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
+
+/* Chữ số thẳng cột như Excel (mọi chữ số cùng bề rộng) */
+.excel-table .ant-table-tbody > tr > td,
+.excel-table .ant-table-summary > tr > td {
+  font-variant-numeric: tabular-nums;
 }
 
 .excel-table .ant-table-tbody > tr > td:last-child {
@@ -1374,13 +1387,13 @@
   background-color: #e6f7ff !important;
 }
 
-/* Excel cell text */
+/* Excel cell text — xuống dòng thay vì cắt cụt bằng "...".
+   `overflow-wrap: anywhere` để chuỗi dài không dấu cách (số chứng từ, mã) cũng ngắt được. */
 .excel-cell-text {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 /* Excel tag */

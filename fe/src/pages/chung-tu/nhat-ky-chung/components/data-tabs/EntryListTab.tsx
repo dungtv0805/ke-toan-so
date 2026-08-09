@@ -10,7 +10,7 @@ import { TermText } from "@/components/glossary/TermText";
 import { useTerm } from "@/contexts/TermContext";
 import { useColumnVisibility } from "@/components/table/useColumnVisibility";
 import type { Key } from "react";
-import { Table, Button, Space, Tooltip, Popconfirm } from "antd";
+import { Table, Button, Space, Popconfirm } from "antd";
 import {
   ReloadOutlined,
   FileExcelOutlined,
@@ -77,14 +77,13 @@ const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("vi-VN").format(value);
 };
 
-// Render text với ellipsis và tooltip - compact style
+/**
+ * Chữ trong ô: hiện đủ, dài thì xuống dòng (không cắt bằng "...").
+ * Vì đã hiện đủ nên KHÔNG bọc Tooltip nữa — rê chuột ô nào cũng bung tooltip rất rối.
+ */
 const renderEllipsisText = (text: string | undefined | null) => {
   if (!text) return <span className="text-gray-400">-</span>;
-  return (
-    <Tooltip title={text} placement="topLeft">
-      <span className="excel-cell-text">{text}</span>
-    </Tooltip>
-  );
+  return <span className="excel-cell-text">{text}</span>;
 };
 
 // Default column widths.
@@ -220,30 +219,14 @@ const getColumnDefinitions = (
   {
     title: "Loại GD",
     key: "loaiGiaoDich",
-    render: (_: unknown, record: NhatKyChung) => {
-      const loaiGD = record.danhMuc?.loaiGiaoDich?.ten;
-      return loaiGD ? (
-        <Tooltip title={loaiGD}>
-          <span className="excel-cell-text">{loaiGD}</span>
-        </Tooltip>
-      ) : (
-        <span className="text-gray-400">-</span>
-      );
-    },
+    render: (_: unknown, record: NhatKyChung) =>
+      renderEllipsisText(record.danhMuc?.loaiGiaoDich?.ten),
   },
   {
     title: "Nghiệp vụ",
     key: "nghiepVu",
-    render: (_: unknown, record: NhatKyChung) => {
-      const nghiepVu = record.danhMuc?.nghiepVu?.ten;
-      return nghiepVu ? (
-        <Tooltip title={nghiepVu}>
-          <span className="excel-cell-text">{nghiepVu}</span>
-        </Tooltip>
-      ) : (
-        <span className="text-gray-400">-</span>
-      );
-    },
+    render: (_: unknown, record: NhatKyChung) =>
+      renderEllipsisText(record.danhMuc?.nghiepVu?.ten),
   },
   {
     title: "Diễn giải",
