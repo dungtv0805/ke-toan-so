@@ -19,6 +19,16 @@
 - Test FE: `vitest`, file `*.test.ts` đặt **cạnh** file được test. Test BE: `jest`, file `*.spec.ts` đặt cạnh, chỉ test helper thuần (không dựng Nest module).
 - Không thêm thư viện mới vào `package.json` ở cả FE lẫn BE.
 - Commit message tiếng Việt, prefix `feat(dashboard):` / `fix(dashboard):` / `refactor(dashboard):` theo lệ repo.
+- **Môi trường:** node cài qua nvm và KHÔNG có sẵn trong PATH của shell không tương tác.
+  Mọi lệnh `npm` / `npx` / `yarn` phải chạy sau:
+  `export PATH="$HOME/.nvm/versions/node/v22.0.0/bin:$PATH"`
+- **Baseline BE có lỗi sẵn, không phải do bạn:** `yarn test` toàn bộ đang fail 13 suite
+  / 34 test ở `auth`, `gateway`, `master-data`, `voucher`, `cash-book`; `npx tsc --noEmit`
+  cũng có lỗi sẵn ở `voucher-service` và `libs/auth`. Chỉ chạy `yarn test reporting-service`
+  (baseline 9 suite / 84 test PASS) và chỉ quan tâm lỗi type thuộc `reporting-service`
+  hoặc `libs/dto`. **Không sửa** các test fail sẵn — ngoài phạm vi.
+- Baseline FE sạch: `npm run test` = 710 test / 99 file PASS. Sau thay đổi phải vẫn PASS
+  toàn bộ, cộng thêm các test mới của task.
 - **Ngoài phạm vi tuyệt đối:** module kế hoạch/ngân sách/dự báo; danh mục Khu vực-Điểm và Nguồn khách hàng; luồng ký biên bản đối chiếu.
 
 ## File Structure
@@ -1586,7 +1596,7 @@ Trong khối `return` cuối hàm, thêm trường `ebitda` ngay sau `chiTieu`:
 - [ ] **Step 7: Chạy toàn bộ test BE + build**
 
 ```bash
-cd be && yarn test && npx tsc --noEmit -p tsconfig.json
+cd be && yarn test reporting-service && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "reporting-service|libs/dto" || echo "không có lỗi type mới"
 ```
 
 Kỳ vọng: PASS. Nếu `tsc` báo lỗi ở nơi khác dựng `KqkdReport` thiếu `ebitda`, bổ sung trường đó tại chỗ.
@@ -1731,7 +1741,7 @@ Trong vòng lặp gom nhóm, thay chỗ đang lấy tên hiển thị của `dim
 - [ ] **Step 6: Chạy test BE + kiểm tra type**
 
 ```bash
-cd be && yarn test && npx tsc --noEmit -p tsconfig.json
+cd be && yarn test reporting-service && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "reporting-service|libs/dto" || echo "không có lỗi type mới"
 ```
 
 Kỳ vọng: PASS.
@@ -2350,17 +2360,32 @@ git commit -m "feat(dashboard): lịch thanh toán theo mốc đến hạn"
 - Consumes: `doiChieuCongNo`, `DoiChieuRow` (Task 3); `tinhLichThanhToan` + `LichThanhToanTables` (Task 10); `AgingCharts`, `TopPartnersCharts`, `OverdueTables` (đã có trong repo, không nhận props); `exportReportExcel` từ `@/utils/exportReportExcel`.
 - Produces: `buildDoiChieuSheets(rows: DoiChieuRow[], loai: 'thu' | 'tra', kyLabel: string)`
 
-- [ ] **Step 1: Đọc chữ ký của tiện ích xuất Excel**
+Kiểu dữ liệu của tiện ích xuất Excel (`fe/src/utils/exportReportExcel.ts`) — đã
+xác thực, dùng đúng như sau:
 
-```bash
-sed -n '1,60p' fe/src/utils/exportReportExcel.ts
-sed -n '1,40p' fe/src/pages/bao-cao/kqkd/kqkdExport.ts
+```ts
+export interface ReportCol {
+  key: string;
+  header: string;          // KHÔNG phải 'title'
+  width?: number;
+  align?: 'left' | 'right' | 'center';
+  numFmt?: string;         // dùng NUM_FMT cho cột số
+}
+export interface ReportRow {
+  cells?: Record<string, string | number | null | undefined>;  // optional → truy cập bằng ?.
+  bold?: boolean;
+  indent?: number;
+  fill?: 'total' | 'group' | 'category';
+}
+export interface ReportSheet {
+  name: string; title: string; meta?: string[];
+  columns: ReportCol[]; rows: ReportRow[];
+}
+export const NUM_FMT: string;
+export async function exportReportExcel(fileName: string, sheets: ReportSheet[]): Promise<void>;
 ```
 
-Ghi lại kiểu `ReportSheet` (tên trường `name`, `title`, `columns`, `rows`, và hình
-dạng của `rows[].cells`). Các bước sau dùng đúng kiểu đó.
-
-- [ ] **Step 2: Viết test cho hàm dựng sheet**
+- [ ] **Step 1: Viết test cho hàm dựng sheet**
 
 Tạo `fe/src/pages/dashboard/doiChieuExport.test.ts`:
 
@@ -2394,18 +2419,22 @@ describe('buildDoiChieuSheets', () => {
     const [sheet] = buildDoiChieuSheets(rows, 'thu', 'Năm 2026');
     expect(sheet.rows).toHaveLength(3);
     const tong = sheet.rows[2];
-    expect(tong.cells.doiTuong).toBe('TỔNG CỘNG');
-    expect(tong.cells.duCuoiKy).toBe(500);
-    expect(tong.cells.phatSinhTang).toBe(700);
+    expect(tong.cells?.doiTuong).toBe('TỔNG CỘNG');
+    expect(tong.cells?.duCuoiKy).toBe(500);
+    expect(tong.cells?.phatSinhTang).toBe(700);
     expect(tong.bold).toBe(true);
+  });
+
+  it('cột số dùng header tiếng Việt và định dạng số', () => {
+    const [sheet] = buildDoiChieuSheets(rows, 'thu', 'Năm 2026');
+    expect(sheet.columns[0].header).toBe('Đối tượng');
+    expect(sheet.columns[4].align).toBe('right');
+    expect(sheet.columns[4].numFmt).toBeTruthy();
   });
 });
 ```
 
-Nếu Step 1 cho thấy `rows[].cells` hoặc `bold` có tên khác, sửa test cho khớp
-**trước** khi viết implementation.
-
-- [ ] **Step 3: Chạy test để chắc chắn nó fail**
+- [ ] **Step 2: Chạy test để chắc chắn nó fail**
 
 ```bash
 cd fe && npx vitest run src/pages/dashboard/doiChieuExport.test.ts
@@ -2413,19 +2442,28 @@ cd fe && npx vitest run src/pages/dashboard/doiChieuExport.test.ts
 
 Kỳ vọng: FAIL.
 
-- [ ] **Step 4: Viết implementation**
+- [ ] **Step 3: Viết implementation**
 
-Tạo `fe/src/pages/dashboard/doiChieuExport.ts`, theo đúng kiểu `ReportSheet` đọc được ở Step 1:
+Tạo `fe/src/pages/dashboard/doiChieuExport.ts`:
 
 ```ts
+import { NUM_FMT, type ReportCol, type ReportSheet } from '@/utils/exportReportExcel';
 import type { DoiChieuRow } from './trialBalanceDerive';
 
-const COLUMNS = [
-  { key: 'doiTuong', title: 'Đối tượng', width: 36 },
-  { key: 'duDauKy', title: 'Số dư đầu kỳ', width: 18, numeric: true },
-  { key: 'phatSinhTang', title: 'Phát sinh tăng', width: 18, numeric: true },
-  { key: 'phatSinhGiam', title: 'Phát sinh giảm', width: 18, numeric: true },
-  { key: 'duCuoiKy', title: 'Số dư cuối kỳ', width: 18, numeric: true },
+const soCot = (key: string, header: string): ReportCol => ({
+  key,
+  header,
+  width: 18,
+  align: 'right',
+  numFmt: NUM_FMT,
+});
+
+const COLUMNS: ReportCol[] = [
+  { key: 'doiTuong', header: 'Đối tượng', width: 36 },
+  soCot('duDauKy', 'Số dư đầu kỳ'),
+  soCot('phatSinhTang', 'Phát sinh tăng'),
+  soCot('phatSinhGiam', 'Phát sinh giảm'),
+  soCot('duCuoiKy', 'Số dư cuối kỳ'),
 ];
 
 /** Một sheet "Đối chiếu công nợ", dòng cuối là tổng cộng. */
@@ -2433,7 +2471,7 @@ export function buildDoiChieuSheets(
   rows: DoiChieuRow[],
   loai: 'thu' | 'tra',
   kyLabel: string,
-) {
+): ReportSheet[] {
   if (!rows.length) return [];
 
   const nhan = loai === 'thu' ? 'PHẢI THU' : 'PHẢI TRẢ';
@@ -2463,15 +2501,15 @@ export function buildDoiChieuSheets(
 }
 ```
 
-- [ ] **Step 5: Chạy test để xác nhận PASS**
+- [ ] **Step 4: Chạy test để xác nhận PASS**
 
 ```bash
 cd fe && npx vitest run src/pages/dashboard/doiChieuExport.test.ts
 ```
 
-Kỳ vọng: PASS, 4 test.
+Kỳ vọng: PASS, 5 test.
 
-- [ ] **Step 6: Viết bảng đối chiếu công nợ**
+- [ ] **Step 5: Viết bảng đối chiếu công nợ**
 
 Tạo `fe/src/pages/dashboard/components/DoiChieuCongNoTable.tsx`:
 
@@ -2544,10 +2582,7 @@ const DoiChieuCongNoTable: React.FC<Props> = ({ thu, tra, loading, kyLabel }) =>
 export default DoiChieuCongNoTable;
 ```
 
-> `exportReportExcel` có thể nhận tham số khác thứ tự này. Đối chiếu với cách gọi
-> trong `fe/src/pages/bao-cao/so-cai/SoCaiPage.tsx` và chỉnh cho khớp.
-
-- [ ] **Step 7: Dựng tab Công nợ**
+- [ ] **Step 6: Dựng tab Công nợ**
 
 Thay toàn bộ `fe/src/pages/dashboard/tabs/CongNoTab.tsx`:
 
@@ -2636,7 +2671,7 @@ export default CongNoTab;
 > `fe/src/services/congNoPhaiThuService.ts` xác nhận BE có trả trường này; nếu
 > luôn `undefined`, đổi sang `soKhoanQuaHan` và cho thẻ KPI `format: 'soLuong'`.
 
-- [ ] **Step 8: Chạy lint + build + test**
+- [ ] **Step 7: Chạy lint + build + test**
 
 ```bash
 cd fe && npm run lint && npm run build && npm run test
@@ -2644,7 +2679,7 @@ cd fe && npm run lint && npm run build && npm run test
 
 Kỳ vọng: PASS.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add fe/src/pages/dashboard
@@ -3010,7 +3045,7 @@ Trong `be/apps/reporting-service/src/bao-cao/bao-cao.controller.ts`, thêm trư�
 - [ ] **Step 8: Chạy test BE + kiểm tra type**
 
 ```bash
-cd be && yarn test && npx tsc --noEmit -p tsconfig.json
+cd be && yarn test reporting-service && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "reporting-service|libs/dto" || echo "không có lỗi type mới"
 ```
 
 Kỳ vọng: PASS.
@@ -3425,7 +3460,7 @@ Kỳ vọng: PASS cả ba. Ghi lại số test đã chạy.
 - [ ] **Step 4: Chạy toàn bộ kiểm tra BE**
 
 ```bash
-cd be && yarn test && npx tsc --noEmit -p tsconfig.json
+cd be && yarn test reporting-service && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "reporting-service|libs/dto" || echo "không có lỗi type mới"
 ```
 
 Kỳ vọng: PASS.
