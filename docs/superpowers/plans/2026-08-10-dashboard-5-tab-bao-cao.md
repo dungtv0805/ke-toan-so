@@ -29,6 +29,12 @@
   hoặc `libs/dto`. **Không sửa** các test fail sẵn — ngoài phạm vi.
 - Baseline FE sạch: `npm run test` = 710 test / 99 file PASS. Sau thay đổi phải vẫn PASS
   toàn bộ, cộng thêm các test mới của task.
+- **Cổng loading của `KpiRow` phải phủ MỌI query cấp dữ liệu cho hàng KPI đó.** Thiếu một
+  query là thẻ tương ứng hiện số 0 như thể là số thật trong lúc chờ, rồi mới nhảy sang số
+  đúng — với số liệu kế toán, cú nháy đó làm người dùng mất tin vào cả trang.
+- FE **không** chạy `tsc` khi build (`npm run build` = `vite build`) và repo có sẵn ~172 lỗi
+  type ở `mock-data`, `c-handler`… không liên quan. Nếu cần kiểm type, chạy
+  `npx tsc -b --noEmit` rồi chỉ lọc lỗi thuộc file mình vừa chạm.
 - **Ngoài phạm vi tuyệt đối:** module kế hoạch/ngân sách/dự báo; danh mục Khu vực-Điểm và Nguồn khách hàng; luồng ký biên bản đối chiếu.
 
 ## File Structure
@@ -1389,7 +1395,7 @@ const DongTienTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
     queryKey: ['dash-tb', year, startMonth, endMonth],
     queryFn: () => dashboardService.getTrialBalance(year, startMonth, endMonth),
   });
-  const { data: cash = [] } = useQuery({
+  const { data: cash = [], isLoading: loadingCash } = useQuery({
     queryKey: ['dash-cash', year],
     queryFn: () => dashboardService.getCashSeries(year),
   });
@@ -1421,9 +1427,13 @@ const DongTienTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
     { key: 'cuoi', label: 'Số dư cuối kỳ', value: soDuDau + tongThu - tongChi, icon: <BankOutlined /> },
   ];
 
+  // Cổng skeleton phải phủ MỌI query cấp dữ liệu cho hàng KPI — thiếu một cái là
+  // thẻ đó nháy số 0 như thể là số thật trước khi nhảy sang số đúng.
+  const loadingKpi = loadingTb || loadingCash;
+
   return (
     <div className="space-y-3">
-      <KpiRow items={kpis} loading={loadingTb} span={5} />
+      <KpiRow items={kpis} loading={loadingKpi} span={5} />
       <CashFlowChart year={year} startMonth={startMonth} endMonth={endMonth} />
       <TienTheoTaiKhoanTable rows={rows} loading={loadingTb} />
       <Row gutter={[12, 12]}>
@@ -2603,11 +2613,11 @@ import { doiChieuCongNo } from '../trialBalanceDerive';
 import type { TabProps } from './TabProps';
 
 const CongNoTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
-  const { data: statsThu } = useQuery({
+  const { data: statsThu, isLoading: loadingStatsThu } = useQuery({
     queryKey: ['dash-stats-thu'],
     queryFn: () => congNoPhaiThuService.getStats(),
   });
-  const { data: statsTra } = useQuery({
+  const { data: statsTra, isLoading: loadingStatsTra } = useQuery({
     queryKey: ['dash-stats-tra'],
     queryFn: () => congNoPhaiTraService.getStats(),
   });
@@ -2615,7 +2625,7 @@ const CongNoTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
     queryKey: ['dash-khoan-thu'],
     queryFn: () => dashboardService.getKhoanPhaiThanhToan('thu'),
   });
-  const { data: khoanTra = [] } = useQuery({
+  const { data: khoanTra = [], isLoading: loadingLichTra } = useQuery({
     queryKey: ['dash-khoan-tra'],
     queryFn: () => dashboardService.getKhoanPhaiThanhToan('tra'),
   });
@@ -2645,9 +2655,13 @@ const CongNoTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
 
   const kyLabel = startMonth === endMonth ? `Tháng ${startMonth}/${year}` : `Tháng ${startMonth}-${endMonth}/${year}`;
 
+  // Cổng skeleton phải phủ MỌI query cấp dữ liệu cho hàng KPI — thiếu một cái là
+  // thẻ đó nháy số 0 như thể là số thật trước khi nhảy sang số đúng.
+  const loadingKpi = loadingLich || loadingLichTra || loadingStatsThu || loadingStatsTra;
+
   return (
     <div className="space-y-3">
-      <KpiRow items={kpis} loading={loadingLich} />
+      <KpiRow items={kpis} loading={loadingKpi} />
       <AgingCharts />
       <TopPartnersCharts />
       <LichThanhToanTables
