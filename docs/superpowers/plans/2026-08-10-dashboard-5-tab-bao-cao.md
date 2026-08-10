@@ -1601,15 +1601,14 @@ cd be && yarn test reporting-service && npx tsc --noEmit -p tsconfig.json 2>&1 |
 
 Kỳ vọng: PASS. Nếu `tsc` báo lỗi ở nơi khác dựng `KqkdReport` thiếu `ebitda`, bổ sung trường đó tại chỗ.
 
-- [ ] **Step 8: Thêm ebitda vào type ở FE**
+- [ ] **Step 8: Thêm ebitda vào type ở FE — ĐÃ LÀM Ở TASK 5**
 
-Trong `fe/src/services/kqkdService.ts`, thêm vào interface `KqkdReport`
-(interface chứa `chiTieu`):
+Trường `ebitda?: { kyHienTai: number; kyTruoc: number }` đã được thêm vào interface
+`KqkdReport` trong `fe/src/services/kqkdService.ts` ngay tại Task 5, vì Task 5 là nơi
+đầu tiên đọc trường này (`dashboardService.getKqkdTongHop`) và để lệch hai task sẽ
+tạo lỗi type treo ở giữa.
 
-```ts
-  /** Có từ bản BE 2026-08; optional để FE cũ vẫn chạy được với BE chưa deploy. */
-  ebitda?: { kyHienTai: number; kyTruoc: number };
-```
+Chỉ cần **kiểm tra lại** trường đó còn nguyên; nếu có thì bỏ qua bước này.
 
 - [ ] **Step 9: Commit**
 
