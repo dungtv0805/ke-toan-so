@@ -57,6 +57,18 @@ const KpiRow: React.FC<Props> = ({ items, loading, span = 4 }) => {
             hoverable={!!item.onClick}
             onClick={item.onClick}
             style={item.onClick ? { cursor: 'pointer' } : undefined}
+            role={item.onClick ? 'button' : undefined}
+            tabIndex={item.onClick ? 0 : undefined}
+            onKeyDown={
+              item.onClick
+                ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      item.onClick?.();
+                    }
+                  }
+                : undefined
+            }
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">

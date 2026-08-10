@@ -4,6 +4,8 @@ import { baoCaoReportService } from './baoCaoReportService';
 import { congNoPhaiThuService } from './congNoPhaiThuService';
 import { congNoPhaiTraService } from './congNoPhaiTraService';
 import { phieuThuService, phieuChiService, type PhieuService } from './phieuService';
+import { soCaiService, type TrialBalance } from './soCaiService';
+import { kqkdService } from './kqkdService';
 
 // ============ Types ============
 
@@ -162,6 +164,38 @@ export const dashboardService = {
       });
     } catch {
       return Array.from({ length: buckets }, (_, i) => ({ thang: i + 1, thu: 0, chi: 0, soDu: 0 }));
+    }
+  },
+
+  /** Bảng cân đối phát sinh của kỳ — nguồn cho KPI tiền/tồn kho và bảng đối chiếu. */
+  async getTrialBalance(year: number, startMonth: number, endMonth: number): Promise<TrialBalance[]> {
+    try {
+      const start = new Date(year, startMonth - 1, 1).toISOString();
+      const end = new Date(year, endMonth, 0, 23, 59, 59, 999).toISOString();
+      return await soCaiService.getTrialBalance(start, end);
+    } catch {
+      return [];
+    }
+  },
+
+  /** Doanh thu (mã 01) và lợi nhuận sau thuế (mã 60) của kỳ. */
+  async getKqkdTongHop(
+    year: number,
+    startMonth: number,
+    endMonth: number,
+  ): Promise<{ doanhThu: number; loiNhuanSauThue: number; ebitda: number }> {
+    try {
+      const startDate = new Date(year, startMonth - 1, 1).toISOString();
+      const endDate = new Date(year, endMonth, 0, 23, 59, 59, 999).toISOString();
+      const report = await kqkdService.getData({ startDate, endDate, periodType: 'tuyChon' });
+      const lay = (ma: string) => report.chiTieu.find((c) => c.ma === ma)?.kyHienTai ?? 0;
+      return {
+        doanhThu: lay('01'),
+        loiNhuanSauThue: lay('60'),
+        ebitda: report.ebitda?.kyHienTai ?? 0,
+      };
+    } catch {
+      return { doanhThu: 0, loiNhuanSauThue: 0, ebitda: 0 };
     }
   },
 
