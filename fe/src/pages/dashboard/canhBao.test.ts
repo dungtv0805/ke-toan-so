@@ -53,11 +53,15 @@ describe('tinhCanhBao', () => {
     expect(out[0].duong).toBe('/so-quy');
   });
 
+  it('TK tiền số dư bằng 0 không phải cảnh báo', () => {
+    expect(tinhCanhBao({ ...trong, taiKhoanTien: [tkTien('1111', 0)] })).toEqual([]);
+  });
+
   it('lợi nhuận sau thuế âm đếm đúng một lần', () => {
     const out = tinhCanhBao({ ...trong, loiNhuanSauThue: -1000 });
     expect(out).toHaveLength(1);
     expect(out[0].loai).toBe('LOI_NHUAN_AM');
-    expect(out[0].duong).toBe('/bao-cao/kqkd');
+    expect(out[0].duong).toBe('/bao-cao/tai-chinh');
   });
 
   it('lợi nhuận bằng 0 không phải cảnh báo', () => {

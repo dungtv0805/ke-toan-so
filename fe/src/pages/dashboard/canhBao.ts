@@ -52,7 +52,7 @@ export function tinhCanhBao(input: CanhBaoInput): CanhBao[] {
     out.push({
       loai: 'LOI_NHUAN_AM',
       moTa: `Lợi nhuận sau thuế kỳ này âm: ${formatShortCurrency(input.loiNhuanSauThue)}`,
-      duong: '/bao-cao/kqkd',
+      duong: '/bao-cao/tai-chinh',
     });
   }
 
