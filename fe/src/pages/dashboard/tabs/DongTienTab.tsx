@@ -8,8 +8,10 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 import KpiRow, { type KpiItem } from '../components/KpiRow';
 import CashFlowChart from '../components/CashFlowChart';
 import TienTheoTaiKhoanTable from '../components/TienTheoTaiKhoanTable';
+import LichThanhToanTables from '../components/LichThanhToanTables';
 import { dashboardService } from '@/services/dashboardService';
 import { tienTheoTaiKhoan } from '../trialBalanceDerive';
+import { tinhLichThanhToan } from '../lichThanhToan';
 import { formatCurrency } from '../components/format';
 import type { TabProps } from './TabProps';
 
@@ -54,8 +56,19 @@ const DongTienTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
     queryKey: ['dash-comp-chi', year, startMonth, endMonth],
     queryFn: () => dashboardService.getCashCompositionByRange('chi', year, startMonth, endMonth),
   });
+  const { data: khoanThu = [], isLoading: loadingLich } = useQuery({
+    queryKey: ['dash-khoan-thu'],
+    queryFn: () => dashboardService.getKhoanPhaiThanhToan('thu'),
+  });
+  const { data: khoanTra = [] } = useQuery({
+    queryKey: ['dash-khoan-tra'],
+    queryFn: () => dashboardService.getKhoanPhaiThanhToan('tra'),
+  });
 
   const rows = useMemo(() => tienTheoTaiKhoan(tb), [tb]);
+  const homNay = useMemo(() => new Date(), []);
+  const lichThu = useMemo(() => tinhLichThanhToan(khoanThu, homNay), [khoanThu, homNay]);
+  const lichChi = useMemo(() => tinhLichThanhToan(khoanTra, homNay), [khoanTra, homNay]);
 
   const trongKy = useMemo(
     () => cash.filter((p) => p.thang >= startMonth && p.thang <= endMonth),
@@ -87,6 +100,13 @@ const DongTienTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
         <Col xs={24} lg={12}><Donut title="Tỷ trọng tiền thu theo nhóm" data={thu} /></Col>
         <Col xs={24} lg={12}><Donut title="Tỷ trọng tiền chi theo nhóm" data={chi} /></Col>
       </Row>
+      <LichThanhToanTables
+        thu={lichThu}
+        tra={lichChi}
+        loading={loadingLich}
+        tieuDeThu="Khoản thu sắp đến hạn"
+        tieuDeTra="Khoản chi sắp đến hạn"
+      />
     </div>
   );
 };

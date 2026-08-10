@@ -6,6 +6,7 @@ import { congNoPhaiTraService } from './congNoPhaiTraService';
 import { phieuThuService, phieuChiService, type PhieuService } from './phieuService';
 import { soCaiService, type TrialBalance } from './soCaiService';
 import { kqkdService } from './kqkdService';
+import type { KhoanPhaiThanhToan } from '@/pages/dashboard/lichThanhToan';
 
 // ============ Types ============
 
@@ -344,6 +345,23 @@ export const dashboardService = {
           hanThanhToan: d.hanThanhToan,
         }))
         .sort((a, b) => b.soNgayQuaHan - a.soNgayQuaHan);
+    } catch {
+      return [];
+    }
+  },
+
+  /**
+   * Toàn bộ khoản phải thu / phải trả còn dư, kèm hạn thanh toán.
+   * `/payable/phai-thu` và `/payable/phai-tra` gọi findAll() nên trả đủ bản ghi,
+   * không phân trang.
+   */
+  async getKhoanPhaiThanhToan(loai: 'thu' | 'tra'): Promise<KhoanPhaiThanhToan[]> {
+    try {
+      const rows =
+        loai === 'thu'
+          ? await congNoPhaiThuService.getAll()
+          : await congNoPhaiTraService.getAll();
+      return rows.map((r) => ({ hanThanhToan: r.hanThanhToan, conLai: r.conLai }));
     } catch {
       return [];
     }
