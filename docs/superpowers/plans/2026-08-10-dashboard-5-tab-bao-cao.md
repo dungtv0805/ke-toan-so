@@ -916,7 +916,7 @@ describe('tinhCanhBao', () => {
     const out = tinhCanhBao({ ...trong, loiNhuanSauThue: -1000 });
     expect(out).toHaveLength(1);
     expect(out[0].loai).toBe('LOI_NHUAN_AM');
-    expect(out[0].duong).toBe('/bao-cao/kqkd');
+    expect(out[0].duong).toBe('/bao-cao/tai-chinh');
   });
 
   it('lợi nhuận bằng 0 không phải cảnh báo', () => {
@@ -1008,7 +1008,7 @@ export function tinhCanhBao(input: CanhBaoInput): CanhBao[] {
     out.push({
       loai: 'LOI_NHUAN_AM',
       moTa: `Lợi nhuận sau thuế kỳ này âm: ${formatShortCurrency(input.loiNhuanSauThue)}`,
-      duong: '/bao-cao/kqkd',
+      duong: '/bao-cao/tai-chinh',
     });
   }
 
@@ -1076,7 +1076,7 @@ Thêm hai method vào object `dashboardService` (đặt ngay sau `getCashSeries`
     try {
       const startDate = new Date(year, startMonth - 1, 1).toISOString();
       const endDate = new Date(year, endMonth, 0, 23, 59, 59, 999).toISOString();
-      const report = await kqkdService.getKqkd({ startDate, endDate, periodType: 'tuyChon' });
+      const report = await kqkdService.getData({ startDate, endDate, periodType: 'tuyChon' });
       const lay = (ma: string) => report.chiTieu.find((c) => c.ma === ma)?.kyHienTai ?? 0;
       return {
         doanhThu: lay('01'),
@@ -1089,10 +1089,10 @@ Thêm hai method vào object `dashboardService` (đặt ngay sau `getCashSeries`
   },
 ```
 
-> `kqkdService.getKqkd` phải nhận `{ startDate, endDate, periodType }`. Mở
-> `fe/src/services/kqkdService.ts` xác nhận chữ ký thật; nếu khác, chỉnh lời gọi cho
-> khớp thay vì đổi service. Trường `ebitda` chỉ có sau Task 7 — tới lúc đó nó là
-> `undefined` và `?? 0` giữ cho code chạy được.
+> Chữ ký thật đã xác thực: `kqkdService.getData(params: KqkdQueryParams): Promise<KqkdReport>`
+> với `KqkdQueryParams = { startDate: string; endDate: string; periodType: 'thang' | 'quy' | 'nam' | 'tuyChon' }`.
+> **Không có method tên `getKqkd` ở FE** — chỉ BE mới đặt tên đó. Trường `ebitda` chỉ có
+> sau Task 7; tới lúc đó nó là `undefined` và `?? 0` giữ cho code chạy được.
 
 - [ ] **Step 2: Viết CanhBaoModal**
 
@@ -1555,7 +1555,7 @@ export interface KqkdReport {
   chiTieu: KqkdChiTieu[];
   /**
    * EBITDA của kỳ. Để riêng ngoài `chiTieu` vì mảng đó là mẫu B02-DN đang được
-   * render nguyên văn ở /bao-cao/kqkd — chèn dòng lạ vào sẽ làm sai báo cáo chính thức.
+   * render nguyên văn ở tab KQKD của /bao-cao/tai-chinh — chèn dòng lạ vào sẽ làm sai báo cáo chính thức.
    */
   ebitda: { kyHienTai: number; kyTruoc: number };
   kyHienTai: { startDate: string; endDate: string };
@@ -1603,7 +1603,7 @@ Kỳ vọng: PASS. Nếu `tsc` báo lỗi ở nơi khác dựng `KqkdReport` thi
 
 - [ ] **Step 8: Thêm ebitda vào type ở FE**
 
-Trong `fe/src/services/kqkdService.ts`, thêm vào interface trả về của `getKqkd`
+Trong `fe/src/services/kqkdService.ts`, thêm vào interface `KqkdReport`
 (interface chứa `chiTieu`):
 
 ```ts
@@ -1781,7 +1781,7 @@ Trong `fe/src/services/dashboardService.ts`, thêm method sau `getKqkdTongHop`:
     try {
       const startDate = new Date(year, startMonth - 1, 1).toISOString();
       const endDate = new Date(year, endMonth, 0, 23, 59, 59, 999).toISOString();
-      const report = await kqkdService.getKqkd({ startDate, endDate, periodType: 'tuyChon' });
+      const report = await kqkdService.getData({ startDate, endDate, periodType: 'tuyChon' });
       const out: Record<string, number> = {};
       for (const c of report.chiTieu) out[c.ma] = c.kyHienTai;
       out.ebitda = report.ebitda?.kyHienTai ?? 0;
@@ -3437,7 +3437,7 @@ và thêm vào prop `extra` của `<Card>` một link (nếu `extra` đã có n�
 | Component | Đích |
 |---|---|
 | `TienTheoTaiKhoanTable.tsx` | `/so-quy` |
-| `XuHuongChiTieuChart.tsx` | `/bao-cao/kqkd` |
+| `XuHuongChiTieuChart.tsx` | `/bao-cao/tai-chinh` |
 | `DoiChieuCongNoTable.tsx` | `/bao-cao/bang-tong-hop` |
 | `DoanhSoTheoThoiGianChart.tsx` | `/bao-cao/doanh-thu` |
 
