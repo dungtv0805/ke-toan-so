@@ -14,6 +14,8 @@ import { tinhLichThanhToan } from '../lichThanhToan';
 import { doiChieuCongNo } from '../trialBalanceDerive';
 import type { TabProps } from './TabProps';
 
+const KHONG_THEO_KY = 'Tính đến hôm nay, không đổi theo bộ lọc kỳ (bảng đối chiếu bên dưới thì có).';
+
 const CongNoTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
   const { data: statsThu, isLoading: loadingStatsThu } = useQuery({
     queryKey: ['dash-stats-thu'],
@@ -63,11 +65,17 @@ const CongNoTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
     quaHanThu.reduce((s, r) => s + r.conLai, 0) +
     quaHanTra.reduce((s, r) => s + r.conLai, 0);
 
+  // CẢ BỐN thẻ tính "đến hôm nay", KHÔNG theo bộ lọc kỳ phía trên: `getStats()`
+  // không nhận tham số ngày, `tinhLichThanhToan` và danh sách quá hạn mốc từ
+  // `new Date()`. Bảng "Đối chiếu công nợ" cùng tab thì CÓ theo kỳ — nhãn phải
+  // nói rõ, nếu không đổi Quý 1 → Năm nay mà hàng KPI đứng yên sẽ đọc như lỗi.
+  // Dùng chung `getStats()` với tab Tổng quan là quyết định của spec (hai tab
+  // không được lệch số), nên sửa bằng nhãn chứ không đổi nguồn dữ liệu.
   const kpis: KpiItem[] = [
-    { key: 'phaiThu', label: 'Tổng phải thu', value: statsThu?.conLai ?? 0, icon: <ArrowDownOutlined /> },
-    { key: 'phaiTra', label: 'Tổng phải trả', value: statsTra?.conLai ?? 0, icon: <ArrowUpOutlined /> },
-    { key: 'denHan', label: 'Đến hạn trong 30 ngày', value: denHan, icon: <CalendarOutlined /> },
-    { key: 'quaHan', label: 'Quá hạn', value: quaHan, inverse: true, icon: <WarningOutlined /> },
+    { key: 'phaiThu', label: 'Phải thu đến hôm nay', value: statsThu?.conLai ?? 0, tooltip: KHONG_THEO_KY, icon: <ArrowDownOutlined /> },
+    { key: 'phaiTra', label: 'Phải trả đến hôm nay', value: statsTra?.conLai ?? 0, tooltip: KHONG_THEO_KY, icon: <ArrowUpOutlined /> },
+    { key: 'denHan', label: 'Đến hạn trong 30 ngày', value: denHan, tooltip: KHONG_THEO_KY, icon: <CalendarOutlined /> },
+    { key: 'quaHan', label: 'Quá hạn đến hôm nay', value: quaHan, inverse: true, tooltip: KHONG_THEO_KY, icon: <WarningOutlined /> },
   ];
 
   const kyLabel = startMonth === endMonth ? `Tháng ${startMonth}/${year}` : `Tháng ${startMonth}-${endMonth}/${year}`;

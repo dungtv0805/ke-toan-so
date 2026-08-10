@@ -25,6 +25,8 @@ interface Props extends TabProps {
   visibleKeys: string[];
 }
 
+const KHONG_THEO_KY = 'Số dư công nợ tính đến hôm nay, không đổi theo bộ lọc kỳ.';
+
 const TongQuanTab: React.FC<Props> = ({ year, startMonth, endMonth, visibleKeys }) => {
   const show = (key: string) => visibleKeys.includes(key);
 
@@ -84,11 +86,18 @@ const TongQuanTab: React.FC<Props> = ({ year, startMonth, endMonth, visibleKeys 
 
   const kpis: KpiItem[] = [
     { key: 'tongTien', label: 'Tổng tiền', value: tongTien(tb), icon: <WalletOutlined /> },
-    { key: 'doanhThu', label: 'Doanh thu', value: kqkd?.doanhThu ?? 0, icon: <RiseOutlined /> },
-    { key: 'loiNhuan', label: 'Lợi nhuận', value: kqkd?.loiNhuanSauThue ?? 0, icon: <LineChartOutlined /> },
+    // Nhãn nói rõ công thức: biểu đồ ngay dưới lấy từ `pnl-series` (doanh thu =
+    // mọi TK 5x, lợi nhuận = 5x − 6x, tức TRƯỚC thuế), còn hai thẻ này lấy chỉ
+    // tiêu KQKD 01 (Có 511) và 60 (LN SAU thuế). Công ty có TK 515/521 hoặc
+    // thuế TNDN khác 0 sẽ thấy hai con số khác nhau trong cùng một khung nhìn.
+    { key: 'doanhThu', label: 'Doanh thu bán hàng', value: kqkd?.doanhThu ?? 0, icon: <RiseOutlined /> },
+    { key: 'loiNhuan', label: 'Lợi nhuận sau thuế', value: kqkd?.loiNhuanSauThue ?? 0, icon: <LineChartOutlined /> },
     { key: 'dongTien', label: 'Dòng tiền thuần', value: dongTienThuan, icon: <SwapOutlined /> },
-    { key: 'phaiThu', label: 'Phải thu', value: statsThu?.conLai ?? 0, icon: <ArrowDownOutlined /> },
-    { key: 'phaiTra', label: 'Phải trả', value: statsTra?.conLai ?? 0, icon: <ArrowUpOutlined /> },
+    // `getStats()` không nhận tham số ngày → hai thẻ này tính đến hôm nay,
+    // không đổi theo bộ lọc kỳ. Nhãn nói rõ (giữ nguồn dùng chung với tab Công
+    // nợ theo spec, để hai tab không lệch số).
+    { key: 'phaiThu', label: 'Phải thu đến hôm nay', value: statsThu?.conLai ?? 0, tooltip: KHONG_THEO_KY, icon: <ArrowDownOutlined /> },
+    { key: 'phaiTra', label: 'Phải trả đến hôm nay', value: statsTra?.conLai ?? 0, tooltip: KHONG_THEO_KY, icon: <ArrowUpOutlined /> },
     { key: 'tonKho', label: 'Giá trị tồn kho', value: giaTriTonKho(tb), icon: <InboxOutlined /> },
     {
       key: 'canhBao',

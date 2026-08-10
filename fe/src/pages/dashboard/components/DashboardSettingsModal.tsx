@@ -137,7 +137,7 @@ const DashboardSettingsModal: React.FC<Props> = ({ open, value, saving, onSave, 
       confirmLoading={saving}
       width={760}
     >
-      <div className="text-xs text-muted-foreground mb-2">Tick vào báo cáo muốn hiển thị trên Tổng quan (tab Tài chính).</div>
+      <div className="text-xs text-muted-foreground mb-2">Tick vào báo cáo muốn hiển thị trên tab Tổng quan.</div>
       <Row gutter={[12, 12]}>
         {DASHBOARD_BLOCKS.map((b) => {
           const Preview = PREVIEWS[b.key];

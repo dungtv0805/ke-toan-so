@@ -9,10 +9,13 @@ import { formatCurrency, formatShortCurrency, DASH_COLORS } from './format';
 
 type ChiTieu = 'doanhThu' | 'chiPhi' | 'loiNhuan';
 
+// Nguồn là `pnl-series`: doanh thu = tổng mọi TK 5xx, lợi nhuận = 5xx − 6xx
+// (TRƯỚC thuế). Hàng KPI ngay trên dùng chỉ tiêu KQKD 01/60 (Có 511, LN SAU
+// thuế) — nhãn phải nói rõ công thức để hai con số khác nhau không đọc như một.
 const OPTIONS: { label: string; value: ChiTieu }[] = [
-  { label: 'Doanh thu', value: 'doanhThu' },
-  { label: 'Chi phí', value: 'chiPhi' },
-  { label: 'Lợi nhuận', value: 'loiNhuan' },
+  { label: 'Doanh thu 5xx', value: 'doanhThu' },
+  { label: 'Chi phí 6xx', value: 'chiPhi' },
+  { label: 'LN trước thuế', value: 'loiNhuan' },
 ];
 
 const MAU: Record<ChiTieu, string> = {
@@ -40,7 +43,7 @@ const XuHuongChiTieuChart: React.FC<Props> = ({ year, startMonth, endMonth }) =>
 
   return (
     <Card
-      title={<span className="text-sm sm:text-base"><LineChartOutlined className="text-primary mr-2" />Xu hướng theo tháng</span>}
+      title={<span className="text-sm sm:text-base"><LineChartOutlined className="text-primary mr-2" />Xu hướng theo tháng (theo TK 5xx/6xx)</span>}
       extra={
         <Space>
           <Segmented size="small" value={chiTieu} options={OPTIONS} onChange={(v) => setChiTieu(v as ChiTieu)} />
