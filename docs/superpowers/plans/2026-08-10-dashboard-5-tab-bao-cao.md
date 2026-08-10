@@ -2702,6 +2702,15 @@ const CongNoTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
     queryKey: ['dash-tb', year, startMonth, endMonth],
     queryFn: () => dashboardService.getTrialBalance(year, startMonth, endMonth),
   });
+  // Cùng queryKey với tab Tổng quan → React Query dùng chung cache, không gọi lại.
+  const { data: quaHanThu = [], isLoading: loadingQhThu } = useQuery({
+    queryKey: ['dash-qh-thu'],
+    queryFn: () => dashboardService.getOverdueAr(),
+  });
+  const { data: quaHanTra = [], isLoading: loadingQhTra } = useQuery({
+    queryKey: ['dash-qh-tra'],
+    queryFn: () => dashboardService.getOverdueAp(),
+  });
 
   const homNay = useMemo(() => new Date(), []);
   const lichThu = useMemo(() => tinhLichThanhToan(khoanThu, homNay), [khoanThu, homNay]);
@@ -2713,7 +2722,13 @@ const CongNoTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
   // "Đến hạn" = tổng hai mốc gần nhất (trong 30 ngày) của cả thu lẫn trả.
   const denHan =
     lichThu[0].soTien + lichThu[1].soTien + lichTra[0].soTien + lichTra[1].soTien;
-  const quaHan = (statsThu?.tongQuaHan ?? 0) + (statsTra?.tongQuaHan ?? 0);
+
+  // "Quá hạn" là SỐ TIỀN, cộng từ danh sách khoản quá hạn.
+  // KHÔNG dùng `stats.tongQuaHan` — backend không bao giờ trả trường đó (chỉ có
+  // `soKhoanQuaHan`, là số khoản), nên thẻ sẽ luôn đứng 0.
+  const quaHan =
+    quaHanThu.reduce((s, r) => s + r.conLai, 0) +
+    quaHanTra.reduce((s, r) => s + r.conLai, 0);
 
   const kpis: KpiItem[] = [
     { key: 'phaiThu', label: 'Tổng phải thu', value: statsThu?.conLai ?? 0, icon: <ArrowDownOutlined /> },
@@ -2726,7 +2741,9 @@ const CongNoTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
 
   // Cổng skeleton phải phủ MỌI query cấp dữ liệu cho hàng KPI — thiếu một cái là
   // thẻ đó nháy số 0 như thể là số thật trước khi nhảy sang số đúng.
-  const loadingKpi = loadingLich || loadingLichTra || loadingStatsThu || loadingStatsTra;
+  const loadingKpi =
+    loadingLich || loadingLichTra || loadingStatsThu || loadingStatsTra ||
+    loadingQhThu || loadingQhTra;
 
   return (
     <div className="space-y-3">
@@ -2749,9 +2766,10 @@ const CongNoTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
 export default CongNoTab;
 ```
 
-> `statsThu.tongQuaHan` là trường optional trong `CongNoStats`. Mở
-> `fe/src/services/congNoPhaiThuService.ts` xác nhận BE có trả trường này; nếu
-> luôn `undefined`, đổi sang `soKhoanQuaHan` và cho thẻ KPI `format: 'soLuong'`.
+> Đã xác thực: `getStats` của `payable-service` chỉ trả `tongCongNo`, `daThu`,
+> `conLai`, `soKhoanNo`, `soKhoanQuaHan`. Các trường `tongQuaHan`, `soQuaHan`,
+> `conPhaiThu`, `soKhachHang` khai báo optional ở FE nhưng **backend không bao giờ
+> gửi** — đừng dùng chúng.
 
 - [ ] **Step 7: Chạy lint + build + test**
 
