@@ -781,7 +781,7 @@ const getColumnDefinitions = (
 const TOTAL_WIDTH = Object.values(DEFAULT_WIDTHS).reduce((sum, w) => sum + w, 0);
 
 /** Width cột do người dùng kéo — lưu theo CHỈ SỐ cột nên phải đổi key khi cấu trúc cột đổi. */
-const WIDTH_STORAGE_KEY = "table-col-widths-nkc-v4";
+const WIDTH_STORAGE_KEY = "table-col-widths-nkc-v5";
 
 // Chừa dưới đáy trang (padding của Content) + vài px đệm.
 const BOTTOM_GAP = 20;
@@ -877,7 +877,7 @@ export function EntryListTab() {
   const { withColumnFilter } = useNkcColumnFilters();
 
   // Enable column resize via DOM manipulation (no React re-renders)
-  // storageKey bump 'v4': thêm cột số thứ tự dòng → width cũ lưu theo chỉ số đã lệch.
+  // storageKey bump 'v5': gỡ cột số thứ tự dòng → width cũ lưu theo chỉ số đã lệch.
   useTableColumnResize("resizable-table", WIDTH_STORAGE_KEY);
 
   const { t } = useTerm();
@@ -917,26 +917,16 @@ export function EntryListTab() {
     });
   }, [handler]);
 
-  /**
-   * Máng số thứ tự dòng bên trái, dính khi cuộn ngang — giống cột số dòng của Excel.
-   * Đánh số tiếp theo trang đang xem (trang 2 bắt đầu từ 101) chứ không đếm lại từ 1.
-   */
-  const rowNumberStart =
-    ((pagination?.page || 1) - 1) * (pagination?.limit || 100) + 1;
-
   // Memoize columns with widths - now depends on taiKhoanOptions
+  //
+  // ĐÃ THỬ VÀ GỠ: cột số thứ tự dòng ghim trái (kiểu Excel). Trên trình duyệt thật nó
+  // làm hàng tiêu đề lệch hẳn một ô so với thân bảng — bảng này có ô tick chọn dòng,
+  // cuộn cả hai chiều và cột "Thao tác" ghim phải, thêm một cột ghim trái nữa là vỡ.
+  // jsdom KHÔNG tái hiện được (không có thanh cuộn / position: sticky), nên nếu làm lại
+  // thì phải kiểm chứng bằng trình duyệt thật chứ không tin test.
   const columns = useMemo(
-    () => [
-      {
-        title: "#",
-        key: "rowNumber",
-        width: 46,
-        fixed: "left" as const,
-        className: "xl-rownum",
-        render: (_v: unknown, _r: NhatKyChung, index: number) =>
-          rowNumberStart + index,
-      },
-      ...getColumnDefinitions(
+    () =>
+      getColumnDefinitions(
         taiKhoanOptions,
         quyChaunList,
         hoSoChungTuList,
@@ -948,15 +938,7 @@ export function EntryListTab() {
           width: col.width || DEFAULT_WIDTHS[col.key as string] || 100,
         })
       ),
-    ],
-    [
-      taiKhoanOptions,
-      quyChaunList,
-      hoSoChungTuList,
-      handleRefresh,
-      withColumnFilter,
-      rowNumberStart,
-    ]
+    [taiKhoanOptions, quyChaunList, hoSoChungTuList, handleRefresh, withColumnFilter]
   );
 
   // Ẩn/hiện cột. Tiêu đề cột có thể là chuỗi hoặc node <TermText> → lấy nhãn tương ứng.
