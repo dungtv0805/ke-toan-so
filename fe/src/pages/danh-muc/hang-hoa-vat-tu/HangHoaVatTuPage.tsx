@@ -14,7 +14,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
   InputNumber,
   Tag,
 } from "antd";
@@ -24,7 +23,6 @@ import {
   DeleteOutlined,
   ExportOutlined,
   ReloadOutlined,
-  HomeOutlined,
 } from "@ant-design/icons";
 import { HangHoaVatTu, TinhChatVatTu, DonViTinh, NhomVatTu } from "@/types";
 import { hangHoaVatTuService } from "@/services/hangHoaVatTuService";
@@ -399,14 +397,6 @@ const HangHoaVatTuPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Danh mục" },
-          { title: "Hàng hóa vật tư" },
-        ]}
-      />
-
       <Card>
         <FilterBar
           search={{

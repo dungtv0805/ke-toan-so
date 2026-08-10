@@ -16,7 +16,6 @@ import {
   Tag,
   Row,
   Col,
-  Breadcrumb,
 } from "antd";
 import {
   PlusOutlined,
@@ -24,7 +23,6 @@ import {
   DeleteOutlined,
   ExportOutlined,
   ReloadOutlined,
-  HomeOutlined,
   SendOutlined,
   CheckOutlined,
   CloseOutlined,
@@ -435,14 +433,6 @@ const DeXuatMuaPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Bếp ăn" },
-          { title: "Đề xuất mua thực phẩm" },
-        ]}
-      />
-
       <Card>
         <FilterBar
           search={{

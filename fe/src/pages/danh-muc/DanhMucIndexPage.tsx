@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { Breadcrumb, Card, Empty, Typography } from 'antd';
-import { HomeOutlined } from '@ant-design/icons';
+import { Card, Empty, Typography } from 'antd';
+
 import { Link } from 'react-router-dom';
 import { DANH_MUC_GROUPS } from '@/config/danhMucCatalog';
 import { keyMatches } from '@/config/modules';
@@ -33,13 +33,6 @@ const DanhMucIndexPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: '/', title: <><HomeOutlined /> Trang chủ</> },
-          { title: 'Danh mục' },
-        ]}
-      />
-
       <Card className="shadow-sm">
         <Title level={4} className="!mb-5">Danh mục</Title>
 

@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Breadcrumb,
   Button,
   Card,
   DatePicker,
@@ -11,7 +10,6 @@ import {
   message,
 } from 'antd';
 import {
-  HomeOutlined,
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
@@ -241,14 +239,6 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: '/', title: <><HomeOutlined /> Trang chủ</> },
-          { title: 'Kho' },
-          { title: tieuDe },
-        ]}
-      />
-
       <SectionNav items={KHO_NAV} />
 
       <Card className="shadow-sm">

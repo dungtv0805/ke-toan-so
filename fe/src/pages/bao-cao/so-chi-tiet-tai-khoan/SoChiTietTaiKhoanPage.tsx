@@ -4,12 +4,12 @@ import {
   soChiTietTaiKhoanService,
 } from '@/services/soChiTietTaiKhoanService';
 import { taiKhoanService } from '@/services/taiKhoanService';
-import { AccountBookOutlined, ExportOutlined, HomeOutlined } from '@ant-design/icons';
+import { AccountBookOutlined, ExportOutlined } from '@ant-design/icons';
 import {
-  Breadcrumb,
   Button,
   Card,
-  Empty, message,
+  Empty,
+  message,
   Select,
   Space,
 } from 'antd';
@@ -193,14 +193,6 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
       className="sct-compact"
       style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
     >
-      <Breadcrumb
-        style={{ marginBottom: 8 }}
-        items={[
-          { href: '/', title: <HomeOutlined /> },
-          { title: 'Báo cáo' },
-          { title: 'Sổ chi tiết tài khoản' },
-        ]}
-      />
       <FilterBar
         className="mb-2"
         filters={

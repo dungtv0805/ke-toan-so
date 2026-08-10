@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Breadcrumb, Button, Card, Select, Space, Table, Typography, message } from 'antd';
+import { Button, Card, Select, Space, Table, Typography, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { HomeOutlined, ExportOutlined, RiseOutlined } from '@ant-design/icons';
+import { ExportOutlined, RiseOutlined } from '@ant-design/icons';
 import {
   PERIOD_OPTIONS,
   periodDateRange,
@@ -115,11 +115,6 @@ export default function BaoCaoDoanhThuPage() {
 
   return (
     <div className="p-4">
-      <Breadcrumb
-        className="mb-3"
-        items={[{ title: <HomeOutlined /> }, { title: 'Báo cáo' }, { title: 'Báo cáo doanh thu' }]}
-      />
-
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <Title level={4} className="!mb-0">
           <RiseOutlined className="mr-2 text-blue-500" />

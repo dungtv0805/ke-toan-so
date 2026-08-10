@@ -13,7 +13,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
 } from "antd";
 import {
   PlusOutlined,
@@ -21,7 +20,6 @@ import {
   DeleteOutlined,
   ExportOutlined,
   ReloadOutlined,
-  HomeOutlined,
 } from "@ant-design/icons";
 import { lyDoKhongHopLeService, LyDoKhongHopLe } from "@/services/lyDoKhongHopLeService";
 import { z } from "zod";
@@ -298,14 +296,6 @@ const LyDoKhongHopLePage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Danh mục" },
-          { title: "Lý do không hợp lệ" },
-        ]}
-      />
-
       <Card>
         <FilterBar
           search={{

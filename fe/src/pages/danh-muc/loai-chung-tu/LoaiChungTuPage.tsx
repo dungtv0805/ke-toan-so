@@ -13,7 +13,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
   Select,
   Tag,
 } from "antd";
@@ -22,7 +21,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   ExportOutlined,
-  HomeOutlined,
 } from "@ant-design/icons";
 import { FilterBar } from "@/components/common/FilterBar";
 import { loaiChungTuService, LoaiChungTuType, PhanLoaiChungTu } from "@/services/loaiChungTuService";
@@ -295,14 +293,6 @@ const LoaiChungTuPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Danh mục" },
-          { title: "Loại chứng từ" },
-        ]}
-      />
-
       <Card>
         <FilterBar
           search={{

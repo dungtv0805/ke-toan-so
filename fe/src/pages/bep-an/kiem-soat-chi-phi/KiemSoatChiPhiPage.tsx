@@ -12,10 +12,9 @@ import {
   InputNumber,
   message,
   Popconfirm,
-  Breadcrumb,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { HomeOutlined, SearchOutlined, CheckCircleOutlined } from "@ant-design/icons";
+import { SearchOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import type { Dayjs } from "dayjs";
 import { KiemSoatChiPhi, TieuHaoDong } from "@/types";
 import { kiemSoatService } from "@/services/kiemSoatService";
@@ -115,14 +114,6 @@ const KiemSoatChiPhiPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Bếp ăn" },
-          { title: "Bảng kiểm soát chi phí" },
-        ]}
-      />
-
       <Card>
         <Space wrap size="middle">
           <RangePicker

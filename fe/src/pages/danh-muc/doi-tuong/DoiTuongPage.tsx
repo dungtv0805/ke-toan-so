@@ -15,7 +15,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
   Tabs,
   Statistic,
 } from "antd";
@@ -27,7 +26,6 @@ import {
   ExportOutlined,
   ReloadOutlined,
   TeamOutlined,
-  HomeOutlined,
   UserOutlined,
   ShopOutlined,
   ToolOutlined,
@@ -445,22 +443,6 @@ const DoiTuongPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          {
-            href: "/",
-            title: (
-              <>
-                <HomeOutlined /> Trang chủ
-              </>
-            ),
-          },
-          { title: "Danh mục" },
-          { title: "Đối tượng" },
-        ]}
-      />
-
       {/* Page Header */}
       {/* <div className="page-header p-6 text-white">
         <div className="relative z-10">

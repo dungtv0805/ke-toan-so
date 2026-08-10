@@ -16,7 +16,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
 } from "antd";
 import {
   PlusOutlined,
@@ -24,7 +23,6 @@ import {
   DeleteOutlined,
   ExportOutlined,
   BankOutlined,
-  HomeOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { FilterBar } from "@/components/common/FilterBar";
@@ -420,22 +418,6 @@ const TaiKhoanPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          {
-            href: "/",
-            title: (
-              <>
-                <HomeOutlined /> Trang chủ
-              </>
-            ),
-          },
-          { title: "Danh mục" },
-          { title: "Tài khoản kế toán" },
-        ]}
-      />
-
       {/* Page Header */}
       {/* <div className="page-header p-6 text-white">
         <div className="relative z-10">

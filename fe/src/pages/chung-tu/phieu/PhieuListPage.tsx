@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { Card, Tabs, Breadcrumb } from "antd";
-import { HomeOutlined } from "@ant-design/icons";
+import { Card, Tabs } from "antd";
+
 import { PhieuHandlerProvider, usePhieuHandler, usePhieuConfig, usePhieuState } from "./PhieuHandlerContext";
 import { PhieuConfig } from "./phieuConfig";
 import { StatsCards } from "./components/stats/StatsCards";
@@ -30,14 +30,6 @@ function PhieuListPageInner() {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: "/", title: <><HomeOutlined /> Trang chủ</> },
-          { title: "Chứng từ" },
-          { title: config.title },
-        ]}
-      />
-
       <SectionNav items={CHUNG_TU_NAV} />
 
       <StatsCards />

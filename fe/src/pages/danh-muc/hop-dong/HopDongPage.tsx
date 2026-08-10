@@ -13,7 +13,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
   Statistic,
   Select,
   DatePicker,
@@ -26,7 +25,6 @@ import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  HomeOutlined,
   FileTextOutlined,
   CheckCircleOutlined,
   ScanOutlined,
@@ -845,21 +843,6 @@ function HopDongPageInner() {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          {
-            href: "/",
-            title: (
-              <>
-                <HomeOutlined /> Trang chủ
-              </>
-            ),
-          },
-          { title: "Danh mục" },
-          { title: "Hợp đồng" },
-        ]}
-      />
-
       <Row gutter={16}>
         <Col xs={24} sm={12} md={6}>
           <Card className="stat-card" size="small">

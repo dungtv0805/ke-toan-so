@@ -14,12 +14,10 @@ import { printCongNo } from "./congNoPrint";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   ExportOutlined,
-  HomeOutlined,
   PrinterOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
 import {
-  Breadcrumb,
   Button,
   Card,
   DatePicker,
@@ -298,21 +296,6 @@ const BangTongHopCongNoPage: React.FC = () => {
 
   return (
     <div>
-      <Breadcrumb
-        items={[
-          {
-            href: "/",
-            title: (
-              <>
-                <HomeOutlined /> Trang chủ
-              </>
-            ),
-          },
-          { title: "Báo cáo" },
-          { title: "Tổng hợp công nợ" },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
       <Card
         title={
           <div

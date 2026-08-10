@@ -1,5 +1,5 @@
-import { Breadcrumb, Typography } from "antd";
-import { HomeOutlined, AuditOutlined } from "@ant-design/icons";
+import { Typography } from "antd";
+import { AuditOutlined } from "@ant-design/icons";
 import { useIntroAnimation } from "@/hooks/useIntroAnimation";
 
 const { Title, Text } = Typography;
@@ -9,21 +9,6 @@ export function PageHeader() {
 
   return (
     <>
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          {
-            href: "/",
-            title: (
-              <>
-                <HomeOutlined /> Trang chủ
-              </>
-            ),
-          },
-          { title: "Dữ liệu tổng hợp" },
-        ]}
-      />
-
       {/* Page Header - Auto hide after 1.5s with smooth collapse */}
       {/* <div
         className={`page-header text-white overflow-hidden transition-all duration-700 ease-out ${

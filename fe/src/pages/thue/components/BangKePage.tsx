@@ -14,7 +14,6 @@ import {
   Tooltip,
   Popconfirm,
   Typography,
-  Breadcrumb,
   Row,
   Col,
   message,
@@ -23,7 +22,6 @@ import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  HomeOutlined,
   ImportOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -297,14 +295,6 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Thuế" },
-          { title },
-        ]}
-      />
-
       <Card>
         <FilterBar
           search={{
