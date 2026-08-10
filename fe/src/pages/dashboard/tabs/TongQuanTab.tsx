@@ -38,26 +38,30 @@ const TongQuanTab: React.FC<Props> = ({ year, startMonth, endMonth, visibleKeys 
     queryKey: ['dash-kqkd-tong', year, startMonth, endMonth],
     queryFn: () => dashboardService.getKqkdTongHop(year, startMonth, endMonth),
   });
-  const { data: cash = [] } = useQuery({
+  const { data: cash = [], isLoading: loadingCash } = useQuery({
     queryKey: ['dash-cash', year],
     queryFn: () => dashboardService.getCashSeries(year),
   });
-  const { data: statsThu } = useQuery({
+  const { data: statsThu, isLoading: loadingStatsThu } = useQuery({
     queryKey: ['dash-stats-thu'],
     queryFn: () => congNoPhaiThuService.getStats(),
   });
-  const { data: statsTra } = useQuery({
+  const { data: statsTra, isLoading: loadingStatsTra } = useQuery({
     queryKey: ['dash-stats-tra'],
     queryFn: () => congNoPhaiTraService.getStats(),
   });
-  const { data: quaHanThu = [] } = useQuery({
+  const { data: quaHanThu = [], isLoading: loadingQhThu } = useQuery({
     queryKey: ['dash-qh-thu'],
     queryFn: () => dashboardService.getOverdueAr(),
   });
-  const { data: quaHanTra = [] } = useQuery({
+  const { data: quaHanTra = [], isLoading: loadingQhTra } = useQuery({
     queryKey: ['dash-qh-tra'],
     queryFn: () => dashboardService.getOverdueAp(),
   });
+
+  const loadingKpi =
+    loadingTb || loadingKqkd || loadingCash || loadingStatsThu ||
+    loadingStatsTra || loadingQhThu || loadingQhTra;
 
   const dongTienThuan = useMemo(
     () =>
@@ -99,7 +103,7 @@ const TongQuanTab: React.FC<Props> = ({ year, startMonth, endMonth, visibleKeys 
 
   return (
     <div className="space-y-3">
-      <KpiRow items={kpis} loading={loadingTb || loadingKqkd} />
+      <KpiRow items={kpis} loading={loadingKpi} />
 
       {(show('kqkd') || show('dongTien')) && (
         <Row gutter={[12, 12]}>
