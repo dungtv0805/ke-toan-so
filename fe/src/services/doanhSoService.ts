@@ -26,30 +26,24 @@ export interface GetDoanhSoParams {
   dimension: string;
 }
 
-const RONG: DoanhSoTheoResult = { theoThoiGian: [], theoChieu: [], tong: 0, tongCungKy: 0 };
-
 class DoanhSoService extends ServiceBase {
   constructor() {
     super({ endpoint: '/reporting/bao-cao' });
   }
 
   async getDoanhSoTheo(p: GetDoanhSoParams): Promise<DoanhSoTheoResult> {
-    try {
-      const startDate = new Date(p.year, p.startMonth - 1, 1).toISOString();
-      const endDate = new Date(p.year, p.endMonth, 0, 23, 59, 59, 999).toISOString();
-      const res = await this.get<DoanhSoTheoResult>({
-        endpoint: '/doanh-so-theo',
-        params: { startDate, endDate, groupBy: p.groupBy, dimension: p.dimension },
-      });
-      return {
-        theoThoiGian: Array.isArray(res.theoThoiGian) ? res.theoThoiGian : [],
-        theoChieu: Array.isArray(res.theoChieu) ? res.theoChieu : [],
-        tong: res.tong ?? 0,
-        tongCungKy: res.tongCungKy ?? 0,
-      };
-    } catch {
-      return RONG;
-    }
+    const startDate = new Date(p.year, p.startMonth - 1, 1).toISOString();
+    const endDate = new Date(p.year, p.endMonth, 0, 23, 59, 59, 999).toISOString();
+    const res = await this.get<DoanhSoTheoResult>({
+      endpoint: '/doanh-so-theo',
+      params: { startDate, endDate, groupBy: p.groupBy, dimension: p.dimension },
+    });
+    return {
+      theoThoiGian: Array.isArray(res.theoThoiGian) ? res.theoThoiGian : [],
+      theoChieu: Array.isArray(res.theoChieu) ? res.theoChieu : [],
+      tong: res.tong ?? 0,
+      tongCungKy: res.tongCungKy ?? 0,
+    };
   }
 }
 

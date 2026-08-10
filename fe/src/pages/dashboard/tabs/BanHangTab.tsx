@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Result, Button } from 'antd';
 import { RiseOutlined, PercentageOutlined, FileTextOutlined, DollarOutlined } from '@ant-design/icons';
 import KpiRow, { type KpiItem } from '../components/KpiRow';
 import DoanhSoTheoThoiGianChart, { type GroupBy } from '../components/DoanhSoTheoThoiGianChart';
@@ -12,10 +13,25 @@ const BanHangTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
   const [groupBy, setGroupBy] = useState<GroupBy>('thang');
   const [dimension, setDimension] = useState('nhan-vien');
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['dash-doanh-so', year, startMonth, endMonth, groupBy, dimension],
     queryFn: () => doanhSoService.getDoanhSoTheo({ year, startMonth, endMonth, groupBy, dimension }),
   });
+
+  if (isError) {
+    return (
+      <Result
+        status="error"
+        title="Không tải được dữ liệu doanh số"
+        subTitle="Đã có lỗi khi lấy dữ liệu từ máy chủ. Vui lòng thử lại."
+        extra={
+          <Button type="primary" onClick={() => refetch()}>
+            Thử lại
+          </Button>
+        }
+      />
+    );
+  }
 
   const tong = data?.tong ?? 0;
   const tongCungKy = data?.tongCungKy ?? 0;
