@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Table, Segmented, Button, Space } from 'antd';
+import { Card, Table, Segmented, Button, Space, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ReconciliationOutlined, FileExcelOutlined } from '@ant-design/icons';
 import { formatCurrency } from './format';
@@ -24,13 +24,23 @@ const columns: ColumnsType<DoiChieuRow> = [
 
 const DoiChieuCongNoTable: React.FC<Props> = ({ thu, tra, loading, kyLabel }) => {
   const [loai, setLoai] = useState<'thu' | 'tra'>('thu');
+  const [exporting, setExporting] = useState(false);
   const rows = loai === 'thu' ? thu : tra;
 
-  const handleExport = () => {
-    exportReportExcel(
-      `doi-chieu-cong-no-${loai}`,
-      buildDoiChieuSheets(rows, loai, kyLabel),
-    );
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      await exportReportExcel(
+        `doi-chieu-cong-no-${loai}`,
+        buildDoiChieuSheets(rows, loai, kyLabel),
+      );
+      message.success('Đã xuất Excel');
+    } catch (e) {
+      console.error('export excel error', e);
+      message.error('Xuất Excel thất bại');
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -44,7 +54,7 @@ const DoiChieuCongNoTable: React.FC<Props> = ({ thu, tra, loading, kyLabel }) =>
             onChange={(v) => setLoai(v as 'thu' | 'tra')}
             options={[{ label: 'Phải thu', value: 'thu' }, { label: 'Phải trả', value: 'tra' }]}
           />
-          <Button size="small" icon={<FileExcelOutlined />} onClick={handleExport} disabled={!rows.length}>
+          <Button size="small" icon={<FileExcelOutlined />} onClick={handleExport} disabled={!rows.length} loading={exporting}>
             Xuất Excel
           </Button>
         </Space>
