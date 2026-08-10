@@ -50,10 +50,13 @@ describe('tienTheoTaiKhoan', () => {
       tk({
         taiKhoan: '1121',
         tenTaiKhoan: 'Tiền gửi ngân hàng',
+        tenTaiKhoanNH: 'TK 1121 - Vietcombank',
         soDuDauKyNo: 1000,
+        soDuDauKyCo: 100,
         phatSinhNo: 500,
         phatSinhCo: 200,
         soDuCuoiKyNo: 1300,
+        soDuCuoiKyCo: 50,
         doiTuongChiTiet: [
           tk({ taiKhoan: 'VCB', tenTaiKhoan: 'Vietcombank', soDuDauKyNo: 1000, phatSinhNo: 500, phatSinhCo: 200, soDuCuoiKyNo: 1300 }),
         ],
@@ -61,8 +64,11 @@ describe('tienTheoTaiKhoan', () => {
     ];
     const rows = tienTheoTaiKhoan(tb);
     expect(rows.map((r) => r.ma)).toEqual(['1121', 'VCB']);
-    expect(rows[0].duDauKy).toBe(1000);
-    expect(rows[0].duCuoiKy).toBe(1300);
+    // dư = Nợ − Có (quy ước TK dư Nợ), có cả hai vế Nợ/Có khác 0 để pin đúng công thức
+    expect(rows[0].duDauKy).toBe(900); // 1000 - 100
+    expect(rows[0].duCuoiKy).toBe(1250); // 1300 - 50
+    // dòng cha ưu tiên tenTaiKhoanNH khi có, dòng con (quỹ/ngân hàng) không có tenTaiKhoanNH nên dùng tenTaiKhoan
+    expect(rows[0].ten).toBe('TK 1121 - Vietcombank');
     expect(rows[1].ten).toBe('Vietcombank');
   });
 
@@ -110,6 +116,33 @@ describe('doiChieuCongNo', () => {
     const rows = doiChieuCongNo(tb, 'thu');
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ doiTuong: 'A', phatSinhTang: 150, duCuoiKy: 150 });
+  });
+
+  it('hai đối tượng khác mã nhưng trùng tên hiển thị → hai dòng riêng (gộp theo mã, không theo tên)', () => {
+    const tb = [
+      tk({
+        taiKhoan: '131',
+        doiTuongChiTiet: [
+          tk({ taiKhoan: 'KH01', tenTaiKhoan: 'Công ty ABC', phatSinhNo: 100, soDuCuoiKyNo: 100 }),
+          tk({ taiKhoan: 'KH02', tenTaiKhoan: 'Công ty ABC', phatSinhNo: 200, soDuCuoiKyNo: 200 }),
+        ],
+      }),
+    ];
+    const rows = doiChieuCongNo(tb, 'thu');
+    expect(rows).toHaveLength(2);
+    expect(rows.every((r) => r.doiTuong === 'Công ty ABC')).toBe(true);
+    expect(rows.map((r) => r.duCuoiKy).sort((a, b) => a - b)).toEqual([100, 200]);
+  });
+
+  it('cùng một mã nhưng tên ghi lệch giữa hai tài khoản → gộp một dòng, hiển thị tên xuất hiện đầu tiên', () => {
+    const tb = [
+      tk({ taiKhoan: '131', doiTuongChiTiet: [tk({ taiKhoan: 'KH01', tenTaiKhoan: 'Cty A (chi nhánh 1)', phatSinhNo: 100, soDuCuoiKyNo: 100 })] }),
+      tk({ taiKhoan: '138', doiTuongChiTiet: [tk({ taiKhoan: 'KH01', tenTaiKhoan: 'Cty A', phatSinhNo: 50, soDuCuoiKyNo: 50 })] }),
+    ];
+    const rows = doiChieuCongNo(tb, 'thu');
+    expect(rows).toHaveLength(1);
+    // tên hiển thị lấy từ lần xuất hiện đầu tiên của mã 'KH01' trong mảng tb (TK 131 đứng trước 138)
+    expect(rows[0]).toMatchObject({ doiTuong: 'Cty A (chi nhánh 1)', phatSinhTang: 150, duCuoiKy: 150 });
   });
 
   it('TK công nợ không có doiTuongChiTiet → bỏ qua, không ném lỗi', () => {

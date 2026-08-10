@@ -66,7 +66,8 @@ export function tienTheoTaiKhoan(tb: TrialBalance[]): TienTheoTaiKhoanRow[] {
  * Bảng đối chiếu công nợ theo đối tượng.
  * - 'thu': TK phải thu, tăng = phát sinh Nợ, số dư lấy bên Nợ
  * - 'tra': TK phải trả, tăng = phát sinh Có, số dư lấy bên Có
- * Một đối tượng nằm ở nhiều tài khoản được gộp thành một dòng.
+ * Một đối tượng (gộp theo MÃ, không theo tên hiển thị) nằm ở nhiều tài khoản
+ * được gộp thành một dòng — tên hiển thị lấy từ lần xuất hiện đầu tiên.
  */
 export function doiChieuCongNo(tb: TrialBalance[], loai: 'thu' | 'tra'): DoiChieuRow[] {
   const prefixes = loai === 'thu' ? PREFIX_PHAI_THU : PREFIX_PHAI_TRA;
@@ -75,9 +76,9 @@ export function doiChieuCongNo(tb: TrialBalance[], loai: 'thu' | 'tra'): DoiChie
   for (const acc of tb) {
     if (!thuocNhom(acc.taiKhoan, prefixes)) continue;
     for (const dt of acc.doiTuongChiTiet ?? []) {
-      const ten = dt.tenTaiKhoan || dt.taiKhoan;
-      const row = gop.get(ten) ?? {
-        doiTuong: ten,
+      const ma = dt.taiKhoan;
+      const row = gop.get(ma) ?? {
+        doiTuong: dt.tenTaiKhoan || dt.taiKhoan,
         duDauKy: 0,
         phatSinhTang: 0,
         phatSinhGiam: 0,
@@ -94,7 +95,7 @@ export function doiChieuCongNo(tb: TrialBalance[], loai: 'thu' | 'tra'): DoiChie
         row.phatSinhGiam += dt.phatSinhNo || 0;
         row.duCuoiKy += dt.soDuCuoiKyCo || 0;
       }
-      gop.set(ten, row);
+      gop.set(ma, row);
     }
   }
 
