@@ -2,16 +2,12 @@ import React, { useMemo, useState } from 'react';
 import { Select, Space, Typography, Segmented, ConfigProvider, Button, Tooltip, message } from 'antd';
 import { CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
-import RevenueTrendChart from './components/RevenueTrendChart';
-import CashFlowChart from './components/CashFlowChart';
-import RevenueExpenseBreakdownCharts from './components/RevenueExpenseBreakdownCharts';
-import CongNoChart from './components/CongNoChart';
-import BalanceStructureChart from './components/BalanceStructureChart';
-import ExecutionStatusCharts from './components/ExecutionStatusCharts';
-import NghiaVuChinhSachTable from './components/NghiaVuChinhSachTable';
-import MockTabDashboard, { MOCK_TABS } from './components/MockTabDashboard';
+import TongQuanTab from './tabs/TongQuanTab';
+import DongTienTab from './tabs/DongTienTab';
+import KqkdTab from './tabs/KqkdTab';
+import CongNoTab from './tabs/CongNoTab';
+import BanHangTab from './tabs/BanHangTab';
 import DashboardSettingsModal, { ALL_BLOCK_KEYS } from './components/DashboardSettingsModal';
-import { Row, Col } from 'antd';
 import { PERIOD_OPTIONS, resolvePeriod, type DashboardPeriod } from '@/components/shared/period';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { tenantService } from '@/services/tenantService';
@@ -19,10 +15,11 @@ import { tenantService } from '@/services/tenantService';
 const { Text } = Typography;
 
 const TAB_OPTIONS = [
-  { label: 'Tài chính', value: 'tai-chinh' },
-  { label: 'Nhân sự', value: 'nhan-su' },
-  { label: 'Bán hàng', value: 'kinh-doanh' },
-  { label: 'Điều hành', value: 'dieu-hanh' },
+  { label: 'Tổng quan', value: 'tong-quan' },
+  { label: 'Dòng tiền', value: 'dong-tien' },
+  { label: 'Kết quả kinh doanh', value: 'kqkd' },
+  { label: 'Công nợ', value: 'cong-no' },
+  { label: 'Bán hàng', value: 'ban-hang' },
 ];
 
 const now = new Date();
@@ -31,7 +28,7 @@ const CURRENT_YEAR = now.getFullYear();
 const Dashboard: React.FC = () => {
   const [period, setPeriod] = useState<DashboardPeriod>('namNay');
   const { year, startMonth, endMonth } = resolvePeriod(period, CURRENT_YEAR);
-  const [activeTab, setActiveTab] = useState<string>('tai-chinh');
+  const [activeTab, setActiveTab] = useState<string>('tong-quan');
   const isAdmin = useIsAdmin();
 
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -40,12 +37,13 @@ const Dashboard: React.FC = () => {
     queryKey: ['dash-config'],
     queryFn: () => tenantService.getDashboardConfig(),
   });
-  // config null/undefined = chưa cấu hình → hiển thị tất cả khối.
+
+  // config null/undefined = chưa cấu hình → hiện tất cả khối.
+  // Lọc bỏ key lạ để cấu hình cũ còn 'tinhHinhThucHien' không gây lỗi.
   const visibleKeys = useMemo(
-    () => (Array.isArray(config) ? config : ALL_BLOCK_KEYS),
+    () => (Array.isArray(config) ? config.filter((k) => ALL_BLOCK_KEYS.includes(k)) : ALL_BLOCK_KEYS),
     [config],
   );
-  const show = (key: string) => visibleKeys.includes(key);
 
   const handleSaveConfig = async (blocks: string[]) => {
     setSaving(true);
@@ -61,9 +59,10 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const tabProps = { year, startMonth, endMonth };
+
   return (
     <div className="space-y-3">
-      {/* Filter bar — ghim trên cùng khi cuộn */}
       <div
         className="sticky z-20 flex flex-wrap items-center justify-between gap-2"
         style={{
@@ -109,7 +108,7 @@ const Dashboard: React.FC = () => {
             showSearch
             optionFilterProp="label"
           />
-          {isAdmin && activeTab === 'tai-chinh' && (
+          {isAdmin && activeTab === 'tong-quan' && (
             <Tooltip title="Chọn báo cáo hiển thị">
               <Button icon={<SettingOutlined />} onClick={() => setSettingsOpen(true)} />
             </Tooltip>
@@ -117,36 +116,11 @@ const Dashboard: React.FC = () => {
         </Space>
       </div>
 
-      {activeTab === 'tai-chinh' ? (
-        <>
-          {/* Xu hướng: KQKD | Dòng tiền */}
-          {(show('kqkd') || show('dongTien')) && (
-            <Row gutter={[12, 12]}>
-              {show('kqkd') && <Col xs={24} lg={12}><RevenueTrendChart year={year} startMonth={startMonth} endMonth={endMonth} /></Col>}
-              {show('dongTien') && <Col xs={24} lg={12}><CashFlowChart year={year} startMonth={startMonth} endMonth={endMonth} /></Col>}
-            </Row>
-          )}
-
-          {/* Tình hình thực hiện */}
-          {show('tinhHinhThucHien') && <ExecutionStatusCharts />}
-
-          {/* Tỷ trọng doanh thu / chi phí */}
-          {show('tyTrong') && <RevenueExpenseBreakdownCharts year={year} startMonth={startMonth} endMonth={endMonth} />}
-
-          {/* Công nợ | Cân đối tài chính */}
-          {(show('congNo') || show('canDoi')) && (
-            <Row gutter={[12, 12]}>
-              {show('congNo') && <Col xs={24} lg={12}><CongNoChart year={year} startMonth={startMonth} endMonth={endMonth} /></Col>}
-              {show('canDoi') && <Col xs={24} lg={12}><BalanceStructureChart /></Col>}
-            </Row>
-          )}
-
-          {/* Tình hình thực hiện nghĩa vụ chính sách */}
-          {show('nghiaVuChinhSach') && <NghiaVuChinhSachTable year={year} />}
-        </>
-      ) : (
-        <MockTabDashboard config={MOCK_TABS[activeTab]} />
-      )}
+      {activeTab === 'tong-quan' && <TongQuanTab {...tabProps} visibleKeys={visibleKeys} />}
+      {activeTab === 'dong-tien' && <DongTienTab {...tabProps} />}
+      {activeTab === 'kqkd' && <KqkdTab {...tabProps} />}
+      {activeTab === 'cong-no' && <CongNoTab {...tabProps} />}
+      {activeTab === 'ban-hang' && <BanHangTab {...tabProps} />}
 
       <DashboardSettingsModal
         open={settingsOpen}
