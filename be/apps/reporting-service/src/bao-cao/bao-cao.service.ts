@@ -8,7 +8,12 @@ import {
   type LoaiMatcher,
 } from '../shared/doi-tuong-loai.helper';
 import { buildDoanhThuReport, type DoanhThuReport } from './doanh-thu.helper';
-import { tinhEbitda } from './bao-cao.helper';
+import {
+  tinhEbitda,
+  DIMENSION_FIELD_MAP,
+  maChieu,
+  nhanChieu,
+} from './bao-cao.helper';
 
 export interface PnLEntry {
   ma: string;
@@ -408,13 +413,7 @@ export class BaoCaoService {
     authToken?: string,
     tenantId?: string,
   ): Promise<{ ten: string; soTien: number }[]> {
-    const fieldMap: Record<string, string> = {
-      'doi-tuong': 'doiTuong',
-      'du-an': 'duAn',
-      doi: 'doi',
-      'san-pham': 'sanPham',
-    };
-    const field = fieldMap[dimension] || 'doiTuong';
+    const field = DIMENSION_FIELD_MAP[dimension] || 'doiTuong';
     const vRes = await this.serviceClient.getNhatKyChung(
       startDate.toISOString(),
       endDate.toISOString(),
@@ -426,16 +425,17 @@ export class BaoCaoService {
     for (const v of vouchers) {
       const dm = v.danhMuc as unknown as Record<
         string,
-        { ma?: string; ten?: string }
+        { ma?: string; ten?: string; soHopDong?: string }
       >;
       const dim = dm?.[field];
-      if (!dim?.ma) continue;
+      const ma = maChieu(dim);
+      if (!ma) continue;
       const maTKNo = v.danhMuc?.taiKhoanNo?.ma ?? v.taiKhoanNo;
       const maTKCo = v.danhMuc?.taiKhoanCo?.ma ?? v.taiKhoanCo;
-      const e = map.get(dim.ma) || { ten: dim.ten || dim.ma, rev: 0, exp: 0 };
+      const e = map.get(ma) || { ten: nhanChieu(dim), rev: 0, exp: 0 };
       if (maTKCo?.startsWith('5')) e.rev += v.soTien;
       if (maTKNo?.startsWith('6')) e.exp += v.soTien;
-      map.set(dim.ma, e);
+      map.set(ma, e);
     }
     return Array.from(map.values())
       .map((e) => ({ ten: e.ten, soTien: e.rev - e.exp }))
