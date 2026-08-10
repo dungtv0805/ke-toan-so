@@ -2906,9 +2906,45 @@ describe('gomTheoChieu', () => {
     expect(rows).toEqual([{ ten: 'HD-9', soTien: 700 }]);
   });
 
-  it('bút toán thiếu chiều gom vào "Không xác định"', () => {
+  it('bút toán thiếu chiều gom vào "Không xác định", KHÔNG bị loại bỏ', () => {
     const rows = gomTheoChieu([v('2026-01-01', 400)], 'nhanVien');
     expect(rows).toEqual([{ ten: 'Không xác định', soTien: 400 }]);
+  });
+
+  it('tổng các nhóm luôn bằng tổng doanh số — không bản ghi nào bị bỏ rơi', () => {
+    const rows = gomTheoChieu(
+      [
+        v('2026-01-01', 100, '5111', { nhanVien: { ma: 'NV1', ten: 'An' } }),
+        v('2026-01-02', 250, '5111'),
+        v('2026-01-03', 700, '5111', { nhanVien: { ma: 'NV2', ten: 'Bình' } }),
+      ],
+      'nhanVien',
+    );
+    expect(rows.reduce((s, r) => s + r.soTien, 0)).toBe(1050);
+  });
+
+  it('hai đối tượng khác mã nhưng TRÙNG TÊN ra hai dòng riêng', () => {
+    const rows = gomTheoChieu(
+      [
+        v('2026-01-01', 100, '5111', { doiTuong: { ma: 'KH01', ten: 'Khách lẻ' } }),
+        v('2026-01-02', 300, '5111', { doiTuong: { ma: 'KH02', ten: 'Khách lẻ' } }),
+      ],
+      'doiTuong',
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows.map((r) => r.soTien)).toEqual([300, 100]);
+  });
+
+  it('cùng một mã nhưng tên ghi lệch vẫn gộp một dòng', () => {
+    const rows = gomTheoChieu(
+      [
+        v('2026-01-01', 100, '5111', { doiTuong: { ma: 'KH01', ten: 'Cty A' } }),
+        v('2026-01-02', 300, '5111', { doiTuong: { ma: 'KH01', ten: 'Công ty A' } }),
+      ],
+      'doiTuong',
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].soTien).toBe(400);
   });
 });
 ```
@@ -2927,7 +2963,7 @@ Tạo `be/apps/reporting-service/src/bao-cao/doanh-so.helper.ts`:
 
 ```ts
 import type { NhatKyChungEntry } from '@app/dto';
-import { nhanChieu } from './bao-cao.helper';
+import { maChieu, nhanChieu, type GiaTriChieu } from './bao-cao.helper';
 
 export type GroupBy = 'ngay' | 'thang' | 'quy' | 'nam';
 
@@ -2973,23 +3009,31 @@ export function gomTheoThoiGian(
   return out;
 }
 
+/**
+ * Doanh số theo chiều.
+ *
+ * Khoá gom nhóm là MÃ (`maChieu`), nhãn chỉ để hiển thị — gom theo nhãn sẽ trộn hai
+ * đối tượng trùng tên và tách một đối tượng có tên ghi lệch.
+ *
+ * Bút toán không gắn chiều được gom vào một nhóm "Không xác định" (khoá rỗng) chứ
+ * KHÔNG bị loại bỏ: biểu đồ này nằm ngay cạnh thẻ KPI "Doanh số kỳ này", nếu bỏ
+ * bớt bản ghi thì tổng các cột không khớp thẻ KPI và trông như lỗi phần mềm.
+ */
 export function gomTheoChieu(
   vouchers: NhatKyChungEntry[],
   field: string,
 ): DoanhSoChieuRow[] {
-  const out = new Map<string, number>();
+  const out = new Map<string, { ten: string; soTien: number }>();
   for (const v of vouchers) {
     if (!laDoanhThu(v)) continue;
-    const dm = v.danhMuc as unknown as Record<
-      string,
-      { ma?: string; ten?: string; soHopDong?: string } | undefined
-    >;
-    const ten = nhanChieu(dm?.[field]);
-    out.set(ten, (out.get(ten) ?? 0) + v.soTien);
+    const dm = v.danhMuc as unknown as Record<string, GiaTriChieu | undefined>;
+    const dim = dm?.[field];
+    const khoa = maChieu(dim) ?? '';
+    const e = out.get(khoa) ?? { ten: nhanChieu(dim), soTien: 0 };
+    e.soTien += v.soTien;
+    out.set(khoa, e);
   }
-  return Array.from(out.entries())
-    .map(([ten, soTien]) => ({ ten, soTien }))
-    .sort((a, b) => b.soTien - a.soTien);
+  return Array.from(out.values()).sort((a, b) => b.soTien - a.soTien);
 }
 ```
 
