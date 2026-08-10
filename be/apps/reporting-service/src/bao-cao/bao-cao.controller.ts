@@ -152,4 +152,38 @@ export class BaoCaoController {
     const data = await this.baoCaoService.getDoanhThu(start, end, authToken, user.tenantId);
     return { success: true, data };
   }
+
+  @Get('doanh-so-theo')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async getDoanhSoTheo(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Query('groupBy') groupBy: string = 'thang',
+    @Query('dimension') dimension: string = 'doi-tuong',
+    @Headers('authorization') authToken: string,
+    @CurrentUser() user: UserPayload,
+  ) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      throw new BadRequestException('startDate và endDate phải là ngày hợp lệ');
+    }
+
+    const validGroupBy = ['ngay', 'thang', 'quy', 'nam'];
+    if (!validGroupBy.includes(groupBy)) {
+      throw new BadRequestException(
+        `groupBy phải là một trong: ${validGroupBy.join(', ')}`,
+      );
+    }
+
+    const data = await this.baoCaoService.getDoanhSoTheo(
+      start,
+      end,
+      groupBy as 'ngay' | 'thang' | 'quy' | 'nam',
+      dimension,
+      authToken,
+      user.tenantId,
+    );
+    return { success: true, data };
+  }
 }

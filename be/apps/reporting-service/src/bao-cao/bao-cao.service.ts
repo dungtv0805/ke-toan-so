@@ -1,4 +1,9 @@
-import type { NhatKyChungEntry, KqkdChiTieu, KqkdReport } from '@app/dto';
+import type {
+  NhatKyChungEntry,
+  KqkdChiTieu,
+  KqkdReport,
+  DoanhSoTheoResult,
+} from '@app/dto';
 import { ServiceClient } from '@app/service-client';
 import { Injectable } from '@nestjs/common';
 import {
@@ -14,6 +19,7 @@ import {
   maChieu,
   nhanChieu,
 } from './bao-cao.helper';
+import { gomTheoThoiGian, gomTheoChieu, type GroupBy } from './doanh-so.helper';
 
 export interface PnLEntry {
   ma: string;
@@ -440,6 +446,63 @@ export class BaoCaoService {
     return Array.from(map.values())
       .map((e) => ({ ten: e.ten, soTien: e.rev - e.exp }))
       .filter((e) => e.soTien !== 0);
+  }
+
+  /**
+   * Doanh số (phát sinh Có 511) theo thời gian và theo chiều.
+   * Cùng kỳ = đúng khoảng đó lùi lại một năm; hai chuỗi ghép theo thứ tự kỳ,
+   * không theo nhãn — nhãn năm khác nhau nên không khớp trực tiếp được.
+   */
+  async getDoanhSoTheo(
+    startDate: Date,
+    endDate: Date,
+    groupBy: GroupBy,
+    dimension: string,
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<DoanhSoTheoResult> {
+    const lui = (d: Date) => {
+      const x = new Date(d);
+      x.setFullYear(x.getFullYear() - 1);
+      return x;
+    };
+
+    const [nayRes, truocRes] = await Promise.all([
+      this.serviceClient.getNhatKyChung(
+        startDate.toISOString(),
+        endDate.toISOString(),
+        authToken,
+        tenantId,
+      ),
+      this.serviceClient.getNhatKyChung(
+        lui(startDate).toISOString(),
+        lui(endDate).toISOString(),
+        authToken,
+        tenantId,
+      ),
+    ]);
+
+    const vNay = nayRes.success ? nayRes.data || [] : [];
+    const vTruoc = truocRes.success ? truocRes.data || [] : [];
+
+    const mapNay = gomTheoThoiGian(vNay, groupBy);
+    const mapTruoc = gomTheoThoiGian(vTruoc, groupBy);
+    const cungKyValues = Array.from(mapTruoc.values());
+
+    const theoThoiGian = Array.from(mapNay.entries()).map(([ky, kyNay], i) => ({
+      ky,
+      kyNay,
+      cungKy: cungKyValues[i] ?? 0,
+    }));
+
+    const field = DIMENSION_FIELD_MAP[dimension] || 'doiTuong';
+
+    return {
+      theoThoiGian,
+      theoChieu: gomTheoChieu(vNay, field),
+      tong: Array.from(mapNay.values()).reduce((s, v) => s + v, 0),
+      tongCungKy: cungKyValues.reduce((s, v) => s + v, 0),
+    };
   }
 
   /**
