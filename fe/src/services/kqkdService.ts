@@ -29,6 +29,8 @@ export interface KqkdReport {
   chiTieu: KqkdChiTieu[];
   kyHienTai: { startDate: string; endDate: string };
   kyTruoc: { startDate: string; endDate: string };
+  /** Có từ bản BE 2026-08; optional để FE vẫn chạy được với BE chưa deploy. */
+  ebitda?: { kyHienTai: number; kyTruoc: number };
 }
 
 // ============ Helpers ============
