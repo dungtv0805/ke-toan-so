@@ -199,6 +199,25 @@ export const dashboardService = {
     }
   },
 
+  /** Toàn bộ chỉ tiêu KQKD của kỳ, tra theo mã ('01', '11', '20', ...). */
+  async getKqkdChiTieu(
+    year: number,
+    startMonth: number,
+    endMonth: number,
+  ): Promise<Record<string, number>> {
+    try {
+      const startDate = new Date(year, startMonth - 1, 1).toISOString();
+      const endDate = new Date(year, endMonth, 0, 23, 59, 59, 999).toISOString();
+      const report = await kqkdService.getData({ startDate, endDate, periodType: 'tuyChon' });
+      const out: Record<string, number> = {};
+      for (const c of report.chiTieu) out[c.ma] = c.kyHienTai;
+      out.ebitda = report.ebitda?.kyHienTai ?? 0;
+      return out;
+    } catch {
+      return {};
+    }
+  },
+
   /**
    * Số dư công nợ phải thu/phải trả lũy kế đến cuối mỗi kỳ (tháng, hoặc tuần nếu truyền month).
    * Nguồn: số dư Nợ/Có của các TK có gán đối tượng (KH/NCC/nhà thầu/NV).
