@@ -1,7 +1,8 @@
 import React from 'react';
-import { Card, Segmented, Empty } from 'antd';
+import { Card, Segmented, Empty, Space } from 'antd';
 import { BarChartOutlined } from '@ant-design/icons';
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Link } from 'react-router-dom';
 import { formatCurrency, formatShortCurrency, DASH_COLORS } from './format';
 import type { DoanhSoThoiGianPoint } from '@/services/doanhSoService';
 
@@ -24,7 +25,12 @@ interface Props {
 const DoanhSoTheoThoiGianChart: React.FC<Props> = ({ data, groupBy, onGroupByChange, loading }) => (
   <Card
     title={<span className="text-sm sm:text-base"><BarChartOutlined className="text-primary mr-2" />Doanh số theo thời gian</span>}
-    extra={<Segmented size="small" value={groupBy} options={OPTIONS} onChange={(v) => onGroupByChange(v as GroupBy)} />}
+    extra={
+      <Space>
+        <Segmented size="small" value={groupBy} options={OPTIONS} onChange={(v) => onGroupByChange(v as GroupBy)} />
+        <Link to="/bao-cao/doanh-thu" className="text-xs">Xem chi tiết</Link>
+      </Space>
+    }
     loading={loading}
   >
     {data.length === 0 ? (

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, Table, Segmented, Button, Space, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ReconciliationOutlined, FileExcelOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
 import { formatCurrency } from './format';
 import { exportReportExcel } from '@/utils/exportReportExcel';
 import { buildDoiChieuSheets } from '../doiChieuExport';
@@ -57,6 +58,7 @@ const DoiChieuCongNoTable: React.FC<Props> = ({ thu, tra, loading, kyLabel }) =>
           <Button size="small" icon={<FileExcelOutlined />} onClick={handleExport} disabled={!rows.length} loading={exporting}>
             Xuất Excel
           </Button>
+          <Link to="/bao-cao/bang-tong-hop" className="text-xs">Xem chi tiết</Link>
         </Space>
       }
     >

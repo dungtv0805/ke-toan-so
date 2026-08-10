@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { BankOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
 import { formatCurrency } from './format';
 import type { TienTheoTaiKhoanRow } from '../trialBalanceDerive';
 
@@ -30,7 +31,10 @@ const columns: ColumnsType<TienTheoTaiKhoanRow> = [
 ];
 
 const TienTheoTaiKhoanTable: React.FC<Props> = ({ rows, loading }) => (
-  <Card title={<span className="text-sm sm:text-base"><BankOutlined className="text-primary mr-2" />Số dư theo tài khoản / quỹ</span>}>
+  <Card
+    title={<span className="text-sm sm:text-base"><BankOutlined className="text-primary mr-2" />Số dư theo tài khoản / quỹ</span>}
+    extra={<Link to="/so-quy" className="text-xs">Xem chi tiết</Link>}
+  >
     <Table
       size="small"
       rowKey={(r) => r.ma}

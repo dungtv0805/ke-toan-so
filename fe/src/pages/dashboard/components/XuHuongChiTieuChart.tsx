@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Card, Segmented } from 'antd';
+import { Card, Segmented, Space } from 'antd';
 import { LineChartOutlined } from '@ant-design/icons';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { dashboardService } from '@/services/dashboardService';
 import { formatCurrency, formatShortCurrency, DASH_COLORS } from './format';
 
@@ -40,7 +41,12 @@ const XuHuongChiTieuChart: React.FC<Props> = ({ year, startMonth, endMonth }) =>
   return (
     <Card
       title={<span className="text-sm sm:text-base"><LineChartOutlined className="text-primary mr-2" />Xu hướng theo tháng</span>}
-      extra={<Segmented size="small" value={chiTieu} options={OPTIONS} onChange={(v) => setChiTieu(v as ChiTieu)} />}
+      extra={
+        <Space>
+          <Segmented size="small" value={chiTieu} options={OPTIONS} onChange={(v) => setChiTieu(v as ChiTieu)} />
+          <Link to="/bao-cao/tai-chinh" className="text-xs">Xem chi tiết</Link>
+        </Space>
+      }
     >
       <ResponsiveContainer width="100%" height={280}>
         <LineChart data={rows} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
