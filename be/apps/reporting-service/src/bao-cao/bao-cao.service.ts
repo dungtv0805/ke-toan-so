@@ -19,7 +19,13 @@ import {
   maChieu,
   nhanChieu,
 } from './bao-cao.helper';
-import { gomTheoThoiGian, gomTheoChieu, type GroupBy } from './doanh-so.helper';
+import {
+  gomTheoThoiGian,
+  gomTheoChieu,
+  ghepCungKy,
+  luiMotNam,
+  type GroupBy,
+} from './doanh-so.helper';
 
 export interface PnLEntry {
   ma: string;
@@ -461,12 +467,6 @@ export class BaoCaoService {
     authToken?: string,
     tenantId?: string,
   ): Promise<DoanhSoTheoResult> {
-    const lui = (d: Date) => {
-      const x = new Date(d);
-      x.setFullYear(x.getFullYear() - 1);
-      return x;
-    };
-
     const [nayRes, truocRes] = await Promise.all([
       this.serviceClient.getNhatKyChung(
         startDate.toISOString(),
@@ -475,8 +475,8 @@ export class BaoCaoService {
         tenantId,
       ),
       this.serviceClient.getNhatKyChung(
-        lui(startDate).toISOString(),
-        lui(endDate).toISOString(),
+        luiMotNam(startDate).toISOString(),
+        luiMotNam(endDate).toISOString(),
         authToken,
         tenantId,
       ),
@@ -485,23 +485,19 @@ export class BaoCaoService {
     const vNay = nayRes.success ? nayRes.data || [] : [];
     const vTruoc = truocRes.success ? truocRes.data || [] : [];
 
-    const mapNay = gomTheoThoiGian(vNay, groupBy);
-    const mapTruoc = gomTheoThoiGian(vTruoc, groupBy);
-    const cungKyValues = Array.from(mapTruoc.values());
-
-    const theoThoiGian = Array.from(mapNay.entries()).map(([ky, kyNay], i) => ({
-      ky,
-      kyNay,
-      cungKy: cungKyValues[i] ?? 0,
-    }));
+    const kyNay = gomTheoThoiGian(vNay, groupBy);
+    const kyTruoc = gomTheoThoiGian(vTruoc, groupBy);
+    // Ghép theo KHOÁ KỲ, không theo vị trí mảng: năm trước thiếu một kỳ ở giữa
+    // thì mọi cột sau đó ghép nhầm đối tác của nó.
+    const theoThoiGian = ghepCungKy(kyNay, kyTruoc);
 
     const field = DIMENSION_FIELD_MAP[dimension] || 'doiTuong';
 
     return {
       theoThoiGian,
       theoChieu: gomTheoChieu(vNay, field),
-      tong: Array.from(mapNay.values()).reduce((s, v) => s + v, 0),
-      tongCungKy: cungKyValues.reduce((s, v) => s + v, 0),
+      tong: kyNay.reduce((s, r) => s + r.soTien, 0),
+      tongCungKy: kyTruoc.reduce((s, r) => s + r.soTien, 0),
     };
   }
 
