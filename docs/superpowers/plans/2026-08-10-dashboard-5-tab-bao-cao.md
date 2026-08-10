@@ -1644,18 +1644,25 @@ git commit -m "feat(bao-cao): thêm EBITDA vào báo cáo kết quả kinh doanh
 - Produces:
 
 ```ts
+export interface GiaTriChieu { ma?: string; ten?: string; soHopDong?: string }
 export const DIMENSION_FIELD_MAP: Record<string, string>;
-export function nhanChieu(dim: { ma?: string; ten?: string; soHopDong?: string } | undefined): string;
+export function maChieu(dim: GiaTriChieu | undefined): string | null;
+export function nhanChieu(dim: GiaTriChieu | undefined): string;
 ```
 
 Dùng lại ở Task 12.
+
+**Vì sao cần cả `maChieu` lẫn `nhanChieu`:** khoá gom nhóm phải là **mã**, nhãn chỉ để
+hiển thị. Gom theo nhãn sẽ trộn hai đối tượng khác nhau trùng tên và tách một đối tượng
+có tên ghi lệch — đúng lỗi đã phải sửa ở Task 3. Snapshot hợp đồng không có `ma`, mã
+định danh của nó là `soHopDong`, nên `maChieu` phải xét cả hai trường.
 
 - [ ] **Step 1: Viết test trước**
 
 Thêm vào `be/apps/reporting-service/src/bao-cao/bao-cao.helper.spec.ts`:
 
 ```ts
-import { DIMENSION_FIELD_MAP, nhanChieu } from './bao-cao.helper';
+import { DIMENSION_FIELD_MAP, maChieu, nhanChieu } from './bao-cao.helper';
 
 describe('DIMENSION_FIELD_MAP', () => {
   it('phủ đủ 7 chiều', () => {
@@ -1689,6 +1696,28 @@ describe('nhanChieu', () => {
     expect(nhanChieu({})).toBe('Không xác định');
   });
 });
+
+describe('maChieu', () => {
+  it('lấy ma, KHÔNG lấy ten — nhãn không được làm khoá gom nhóm', () => {
+    expect(maChieu({ ma: 'BP01', ten: 'Phòng kinh doanh' })).toBe('BP01');
+  });
+
+  it('hợp đồng không có ma — mã định danh là soHopDong', () => {
+    expect(maChieu({ soHopDong: 'HD-001' })).toBe('HD-001');
+  });
+
+  it('hai đối tượng khác mã nhưng trùng tên cho ra hai mã khác nhau', () => {
+    expect(maChieu({ ma: 'KH01', ten: 'Khách lẻ' })).not.toBe(
+      maChieu({ ma: 'KH02', ten: 'Khách lẻ' }),
+    );
+  });
+
+  it('không có mã định danh nào → null để phía gọi bỏ qua bản ghi', () => {
+    expect(maChieu(undefined)).toBeNull();
+    expect(maChieu({})).toBeNull();
+    expect(maChieu({ ten: 'Chỉ có tên' })).toBeNull();
+  });
+});
 ```
 
 - [ ] **Step 2: Chạy test để chắc chắn nó fail**
@@ -1718,13 +1747,29 @@ export const DIMENSION_FIELD_MAP: Record<string, string> = {
   'hop-dong': 'hopDong',
 };
 
+/** Một giá trị chiều lấy từ `danhMuc` của bút toán. */
+export interface GiaTriChieu {
+  ma?: string;
+  ten?: string;
+  soHopDong?: string;
+}
+
 /**
- * Nhãn hiển thị của một giá trị chiều.
- * Snapshot hợp đồng không có `ma` — chỉ có `soHopDong` — nên phải xét riêng.
+ * Mã định danh của một giá trị chiều — dùng làm KHOÁ gom nhóm.
+ * Không bao giờ lấy `ten`: hai đối tượng khác nhau có thể trùng tên, và một đối tượng
+ * có thể bị ghi tên lệch giữa các kỳ. Snapshot hợp đồng không có `ma`, mã định danh
+ * của nó là `soHopDong`.
+ * Trả `null` khi không có mã nào — phía gọi bỏ qua bản ghi đó.
  */
-export function nhanChieu(
-  dim: { ma?: string; ten?: string; soHopDong?: string } | undefined,
-): string {
+export function maChieu(dim: GiaTriChieu | undefined): string | null {
+  return dim?.ma || dim?.soHopDong || null;
+}
+
+/**
+ * Nhãn HIỂN THỊ của một giá trị chiều. Chỉ để hiện ra màn hình, không được dùng
+ * làm khoá gom nhóm — xem `maChieu`.
+ */
+export function nhanChieu(dim: GiaTriChieu | undefined): string {
   return dim?.ten || dim?.ma || dim?.soHopDong || 'Không xác định';
 }
 ```
@@ -1740,16 +1785,36 @@ Kỳ vọng: PASS.
 - [ ] **Step 5: Dùng helper trong getLoiNhuanByDimension**
 
 Trong `be/apps/reporting-service/src/bao-cao/bao-cao.service.ts`, hàm
-`getLoiNhuanByDimension` (từ dòng ~403): thêm `DIMENSION_FIELD_MAP` và `nhanChieu`
-vào import từ `./bao-cao.helper`, rồi thay khối `fieldMap` cục bộ:
+`getLoiNhuanByDimension` (từ dòng ~403): thêm `DIMENSION_FIELD_MAP`, `maChieu`,
+`nhanChieu` vào import từ `./bao-cao.helper`, rồi thay khối `fieldMap` cục bộ:
 
 ```ts
     const field = DIMENSION_FIELD_MAP[dimension] || 'doiTuong';
 ```
 
-Trong vòng lặp gom nhóm, thay chỗ đang lấy tên hiển thị của `dim` bằng
-`nhanChieu(dim)`, và dùng chính chuỗi nhãn đó làm khoá của `map` (thay cho `dim.ma`)
-— nếu không, mọi hợp đồng sẽ rơi chung một khoá `undefined`.
+Trong vòng lặp gom nhóm, code hiện tại làm hai việc sai với chiều mới:
+
+```ts
+      const dim = dm?.[field];
+      if (!dim?.ma) continue;                                     // ← bỏ sót mọi hợp đồng
+      const e = map.get(dim.ma) || { ten: dim.ten || dim.ma, ... }; // ← nhãn tính tại chỗ
+      map.set(dim.ma, e);
+```
+
+Thay bằng:
+
+```ts
+      const dim = dm?.[field];
+      const ma = maChieu(dim);
+      if (!ma) continue;
+      const e = map.get(ma) || { ten: nhanChieu(dim), rev: 0, exp: 0 };
+      // ... phần cộng rev/exp giữ nguyên ...
+      map.set(ma, e);
+```
+
+**Khoá là `ma`, nhãn là `nhanChieu(dim)`** — không được lấy nhãn làm khoá. Snapshot hợp
+đồng không có `ma` nên điều kiện `!dim?.ma` cũ sẽ loại sạch mọi hợp đồng; `maChieu` xử lý
+đúng cả trường hợp đó.
 
 - [ ] **Step 6: Chạy test BE + kiểm tra type**
 
