@@ -3,6 +3,8 @@ import {
   buildDoiTuongLoaiIndex,
   makeLoaiMatcher,
 } from '../shared/doi-tuong-loai.helper';
+import { tinhEbitda } from './bao-cao.helper';
+import { DIMENSION_FIELD_MAP, maChieu, nhanChieu } from './bao-cao.helper';
 
 describe('openingNetForSide', () => {
   it('undefined opening → 0', () => {
@@ -164,5 +166,78 @@ describe('buildDoiTuongSoTien', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].ma).toBe('DT01');
     expect(rows[0].soTien).toBe(1000);
+  });
+});
+
+describe('tinhEbitda', () => {
+  it('EBITDA = LNTT + lãi vay + khấu hao', () => {
+    expect(tinhEbitda(1000, 200, 300)).toBe(1500);
+  });
+
+  it('công ty chưa dùng TK 214 → khấu hao 0, EBITDA = LNTT + lãi vay', () => {
+    expect(tinhEbitda(1000, 200, 0)).toBe(1200);
+  });
+
+  it('lỗ trước thuế vẫn cộng ngược lãi vay và khấu hao', () => {
+    expect(tinhEbitda(-500, 100, 400)).toBe(0);
+  });
+
+  it('mọi thành phần bằng 0 → 0', () => {
+    expect(tinhEbitda(0, 0, 0)).toBe(0);
+  });
+});
+
+describe('DIMENSION_FIELD_MAP', () => {
+  it('phủ đủ 7 chiều', () => {
+    expect(Object.keys(DIMENSION_FIELD_MAP).sort()).toEqual(
+      ['bo-phan', 'doi', 'doi-tuong', 'du-an', 'hop-dong', 'nhan-vien', 'san-pham'].sort(),
+    );
+  });
+
+  it('ánh xạ đúng sang tên trường trong danhMuc', () => {
+    expect(DIMENSION_FIELD_MAP['bo-phan']).toBe('boPhan');
+    expect(DIMENSION_FIELD_MAP['nhan-vien']).toBe('nhanVien');
+    expect(DIMENSION_FIELD_MAP['hop-dong']).toBe('hopDong');
+  });
+});
+
+describe('nhanChieu', () => {
+  it('ưu tiên ten', () => {
+    expect(nhanChieu({ ma: 'BP01', ten: 'Phòng kinh doanh' })).toBe('Phòng kinh doanh');
+  });
+
+  it('không có ten thì lấy ma', () => {
+    expect(nhanChieu({ ma: 'BP01' })).toBe('BP01');
+  });
+
+  it('hợp đồng không có ma — lấy soHopDong', () => {
+    expect(nhanChieu({ soHopDong: 'HD-001' })).toBe('HD-001');
+  });
+
+  it('undefined hoặc rỗng → "Không xác định"', () => {
+    expect(nhanChieu(undefined)).toBe('Không xác định');
+    expect(nhanChieu({})).toBe('Không xác định');
+  });
+});
+
+describe('maChieu', () => {
+  it('lấy ma, KHÔNG lấy ten — nhãn không được làm khoá gom nhóm', () => {
+    expect(maChieu({ ma: 'BP01', ten: 'Phòng kinh doanh' })).toBe('BP01');
+  });
+
+  it('hợp đồng không có ma — mã định danh là soHopDong', () => {
+    expect(maChieu({ soHopDong: 'HD-001' })).toBe('HD-001');
+  });
+
+  it('hai đối tượng khác mã nhưng trùng tên cho ra hai mã khác nhau', () => {
+    expect(maChieu({ ma: 'KH01', ten: 'Khách lẻ' })).not.toBe(
+      maChieu({ ma: 'KH02', ten: 'Khách lẻ' }),
+    );
+  });
+
+  it('không có mã định danh nào → null để phía gọi bỏ qua bản ghi', () => {
+    expect(maChieu(undefined)).toBeNull();
+    expect(maChieu({})).toBeNull();
+    expect(maChieu({ ten: 'Chỉ có tên' })).toBeNull();
   });
 });

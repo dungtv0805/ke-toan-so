@@ -15,6 +15,11 @@ export interface KqkdChiTieu {
 
 export interface KqkdReport {
   chiTieu: KqkdChiTieu[];
+  /**
+   * EBITDA của kỳ. Để riêng ngoài `chiTieu` vì mảng đó là mẫu B02-DN đang được
+   * render nguyên văn ở tab KQKD của /bao-cao/tai-chinh — chèn dòng lạ vào sẽ làm sai báo cáo chính thức.
+   */
+  ebitda: { kyHienTai: number; kyTruoc: number };
   kyHienTai: { startDate: string; endDate: string };
   kyTruoc: { startDate: string; endDate: string };
 }

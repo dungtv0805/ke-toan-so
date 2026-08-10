@@ -39,13 +39,16 @@ const RevenueTrendChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
   const sum = (k: 'doanhThu' | 'chiPhi' | 'loiNhuan') => data.reduce((s, d) => s + (d[k] || 0), 0);
   const hasData = data.some((d) => d.doanhThu || d.chiPhi || d.loiNhuan);
 
+  // Nguồn là `pnl-series`: doanh thu = tổng mọi TK 5xx, lợi nhuận = 5xx − 6xx
+  // (TRƯỚC thuế). Khác thẻ KPI cùng màn hình (chỉ tiêu KQKD 01 và 60) → nhãn
+  // phải nói rõ công thức, đừng để hai con số "Doanh thu" đứng cạnh nhau.
   return (
-    <Card title={<span className="text-sm sm:text-base font-semibold">KẾT QUẢ KINH DOANH</span>}>
+    <Card title={<span className="text-sm sm:text-base font-semibold">KẾT QUẢ KINH DOANH (theo TK 5xx/6xx)</span>}>
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="grid grid-cols-3 gap-3 flex-1">
-          <Kpi label="Doanh thu" value={sum('doanhThu')} color={TEAL} />
-          <Kpi label="Chi phí" value={sum('chiPhi')} color="hsl(var(--muted-foreground))" />
-          <Kpi label="Lợi nhuận" value={sum('loiNhuan')} color={ORANGE} />
+          <Kpi label="Doanh thu 5xx" value={sum('doanhThu')} color={TEAL} />
+          <Kpi label="Chi phí 6xx" value={sum('chiPhi')} color="hsl(var(--muted-foreground))" />
+          <Kpi label="LN trước thuế" value={sum('loiNhuan')} color={ORANGE} />
         </div>
         <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">Đvt: triệu</span>
       </div>
@@ -61,13 +64,13 @@ const RevenueTrendChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
             <YAxis tickFormatter={(v) => labelTrieu(v)} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={42} />
             <Tooltip formatter={(value: number) => formatCurrency(value)} labelFormatter={(l) => `${isWeekly ? 'Tuần' : 'Tháng'} ${l}`} />
             <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
-            <Bar dataKey="doanhThu" name="Doanh thu" fill={TEAL} maxBarSize={26}>
+            <Bar dataKey="doanhThu" name="Doanh thu 5xx" fill={TEAL} maxBarSize={26}>
               <LabelList dataKey="doanhThu" position="top" formatter={labelTrieu} style={{ fontSize: 10, fill: TEAL }} />
             </Bar>
-            <Bar dataKey="chiPhi" name="Chi phí" fill={GRAY} maxBarSize={26}>
+            <Bar dataKey="chiPhi" name="Chi phí 6xx" fill={GRAY} maxBarSize={26}>
               <LabelList dataKey="chiPhi" position="top" formatter={labelTrieu} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />
             </Bar>
-            <Line type="monotone" dataKey="loiNhuan" name="Lợi nhuận" stroke={ORANGE} strokeWidth={2} dot={{ r: 3, fill: ORANGE }}>
+            <Line type="monotone" dataKey="loiNhuan" name="Lợi nhuận trước thuế" stroke={ORANGE} strokeWidth={2} dot={{ r: 3, fill: ORANGE }}>
               <LabelList dataKey="loiNhuan" position="top" formatter={labelTrieu} style={{ fontSize: 10, fill: ORANGE }} />
             </Line>
           </ComposedChart>

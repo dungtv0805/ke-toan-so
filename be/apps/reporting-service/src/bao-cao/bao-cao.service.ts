@@ -1,4 +1,9 @@
-import type { NhatKyChungEntry, KqkdChiTieu, KqkdReport } from '@app/dto';
+import type {
+  NhatKyChungEntry,
+  KqkdChiTieu,
+  KqkdReport,
+  DoanhSoTheoResult,
+} from '@app/dto';
 import { ServiceClient } from '@app/service-client';
 import { Injectable } from '@nestjs/common';
 import {
@@ -8,6 +13,19 @@ import {
   type LoaiMatcher,
 } from '../shared/doi-tuong-loai.helper';
 import { buildDoanhThuReport, type DoanhThuReport } from './doanh-thu.helper';
+import {
+  tinhEbitda,
+  DIMENSION_FIELD_MAP,
+  maChieu,
+  nhanChieu,
+} from './bao-cao.helper';
+import {
+  gomTheoThoiGian,
+  gomTheoChieu,
+  ghepCungKy,
+  luiMotNam,
+  type GroupBy,
+} from './doanh-so.helper';
 
 export interface PnLEntry {
   ma: string;
@@ -407,13 +425,7 @@ export class BaoCaoService {
     authToken?: string,
     tenantId?: string,
   ): Promise<{ ten: string; soTien: number }[]> {
-    const fieldMap: Record<string, string> = {
-      'doi-tuong': 'doiTuong',
-      'du-an': 'duAn',
-      doi: 'doi',
-      'san-pham': 'sanPham',
-    };
-    const field = fieldMap[dimension] || 'doiTuong';
+    const field = DIMENSION_FIELD_MAP[dimension] || 'doiTuong';
     const vRes = await this.serviceClient.getNhatKyChung(
       startDate.toISOString(),
       endDate.toISOString(),
@@ -425,20 +437,68 @@ export class BaoCaoService {
     for (const v of vouchers) {
       const dm = v.danhMuc as unknown as Record<
         string,
-        { ma?: string; ten?: string }
+        { ma?: string; ten?: string; soHopDong?: string }
       >;
       const dim = dm?.[field];
-      if (!dim?.ma) continue;
+      const ma = maChieu(dim);
+      if (!ma) continue;
       const maTKNo = v.danhMuc?.taiKhoanNo?.ma ?? v.taiKhoanNo;
       const maTKCo = v.danhMuc?.taiKhoanCo?.ma ?? v.taiKhoanCo;
-      const e = map.get(dim.ma) || { ten: dim.ten || dim.ma, rev: 0, exp: 0 };
+      const e = map.get(ma) || { ten: nhanChieu(dim), rev: 0, exp: 0 };
       if (maTKCo?.startsWith('5')) e.rev += v.soTien;
       if (maTKNo?.startsWith('6')) e.exp += v.soTien;
-      map.set(dim.ma, e);
+      map.set(ma, e);
     }
     return Array.from(map.values())
       .map((e) => ({ ten: e.ten, soTien: e.rev - e.exp }))
       .filter((e) => e.soTien !== 0);
+  }
+
+  /**
+   * Doanh số (phát sinh Có 511) theo thời gian và theo chiều.
+   * Cùng kỳ = đúng khoảng đó lùi lại một năm; hai chuỗi ghép theo thứ tự kỳ,
+   * không theo nhãn — nhãn năm khác nhau nên không khớp trực tiếp được.
+   */
+  async getDoanhSoTheo(
+    startDate: Date,
+    endDate: Date,
+    groupBy: GroupBy,
+    dimension: string,
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<DoanhSoTheoResult> {
+    const [nayRes, truocRes] = await Promise.all([
+      this.serviceClient.getNhatKyChung(
+        startDate.toISOString(),
+        endDate.toISOString(),
+        authToken,
+        tenantId,
+      ),
+      this.serviceClient.getNhatKyChung(
+        luiMotNam(startDate).toISOString(),
+        luiMotNam(endDate).toISOString(),
+        authToken,
+        tenantId,
+      ),
+    ]);
+
+    const vNay = nayRes.success ? nayRes.data || [] : [];
+    const vTruoc = truocRes.success ? truocRes.data || [] : [];
+
+    const kyNay = gomTheoThoiGian(vNay, groupBy);
+    const kyTruoc = gomTheoThoiGian(vTruoc, groupBy);
+    // Ghép theo KHOÁ KỲ, không theo vị trí mảng: năm trước thiếu một kỳ ở giữa
+    // thì mọi cột sau đó ghép nhầm đối tác của nó.
+    const theoThoiGian = ghepCungKy(kyNay, kyTruoc);
+
+    const field = DIMENSION_FIELD_MAP[dimension] || 'doiTuong';
+
+    return {
+      theoThoiGian,
+      theoChieu: gomTheoChieu(vNay, field),
+      tong: kyNay.reduce((s, r) => s + r.soTien, 0),
+      tongCungKy: kyTruoc.reduce((s, r) => s + r.soTien, 0),
+    };
   }
 
   /**
@@ -664,6 +724,7 @@ export class BaoCaoService {
     const m51_ht = this.sumByAccountPrefix(vouchersHT, '8211', 'NO');
     const m52_ht = this.sumByAccountPrefix(vouchersHT, '8212', 'NO');
     const m60_ht = m50_ht - m51_ht - m52_ht;
+    const khauHao_ht = this.sumByAccountPrefix(vouchersHT, '214', 'CO');
 
     // Previous period indicators
     const m01_kt = this.sumByAccountPrefix(vouchersKT, '511', 'CO');
@@ -683,6 +744,7 @@ export class BaoCaoService {
     const m51_kt = this.sumByAccountPrefix(vouchersKT, '8211', 'NO');
     const m52_kt = this.sumByAccountPrefix(vouchersKT, '8212', 'NO');
     const m60_kt = m50_kt - m51_kt - m52_kt;
+    const khauHao_kt = this.sumByAccountPrefix(vouchersKT, '214', 'CO');
 
     // Derived column helpers
     const dtThuan_ht = m10_ht;
@@ -743,6 +805,10 @@ export class BaoCaoService {
 
     return {
       chiTieu,
+      ebitda: {
+        kyHienTai: tinhEbitda(m50_ht, m22_ht, khauHao_ht),
+        kyTruoc: tinhEbitda(m50_kt, m22_kt, khauHao_kt),
+      },
       kyHienTai: {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),

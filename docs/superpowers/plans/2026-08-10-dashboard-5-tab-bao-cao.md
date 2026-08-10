@@ -19,6 +19,22 @@
 - Test FE: `vitest`, file `*.test.ts` đặt **cạnh** file được test. Test BE: `jest`, file `*.spec.ts` đặt cạnh, chỉ test helper thuần (không dựng Nest module).
 - Không thêm thư viện mới vào `package.json` ở cả FE lẫn BE.
 - Commit message tiếng Việt, prefix `feat(dashboard):` / `fix(dashboard):` / `refactor(dashboard):` theo lệ repo.
+- **Môi trường:** node cài qua nvm và KHÔNG có sẵn trong PATH của shell không tương tác.
+  Mọi lệnh `npm` / `npx` / `yarn` phải chạy sau:
+  `export PATH="$HOME/.nvm/versions/node/v22.0.0/bin:$PATH"`
+- **Baseline BE có lỗi sẵn, không phải do bạn:** `yarn test` toàn bộ đang fail 13 suite
+  / 34 test ở `auth`, `gateway`, `master-data`, `voucher`, `cash-book`; `npx tsc --noEmit`
+  cũng có lỗi sẵn ở `voucher-service` và `libs/auth`. Chỉ chạy `yarn test reporting-service`
+  (baseline 9 suite / 84 test PASS) và chỉ quan tâm lỗi type thuộc `reporting-service`
+  hoặc `libs/dto`. **Không sửa** các test fail sẵn — ngoài phạm vi.
+- Baseline FE sạch: `npm run test` = 710 test / 99 file PASS. Sau thay đổi phải vẫn PASS
+  toàn bộ, cộng thêm các test mới của task.
+- **Cổng loading của `KpiRow` phải phủ MỌI query cấp dữ liệu cho hàng KPI đó.** Thiếu một
+  query là thẻ tương ứng hiện số 0 như thể là số thật trong lúc chờ, rồi mới nhảy sang số
+  đúng — với số liệu kế toán, cú nháy đó làm người dùng mất tin vào cả trang.
+- FE **không** chạy `tsc` khi build (`npm run build` = `vite build`) và repo có sẵn ~172 lỗi
+  type ở `mock-data`, `c-handler`… không liên quan. Nếu cần kiểm type, chạy
+  `npx tsc -b --noEmit` rồi chỉ lọc lỗi thuộc file mình vừa chạm.
 - **Ngoài phạm vi tuyệt đối:** module kế hoạch/ngân sách/dự báo; danh mục Khu vực-Điểm và Nguồn khách hàng; luồng ký biên bản đối chiếu.
 
 ## File Structure
@@ -906,7 +922,7 @@ describe('tinhCanhBao', () => {
     const out = tinhCanhBao({ ...trong, loiNhuanSauThue: -1000 });
     expect(out).toHaveLength(1);
     expect(out[0].loai).toBe('LOI_NHUAN_AM');
-    expect(out[0].duong).toBe('/bao-cao/kqkd');
+    expect(out[0].duong).toBe('/bao-cao/tai-chinh');
   });
 
   it('lợi nhuận bằng 0 không phải cảnh báo', () => {
@@ -998,7 +1014,7 @@ export function tinhCanhBao(input: CanhBaoInput): CanhBao[] {
     out.push({
       loai: 'LOI_NHUAN_AM',
       moTa: `Lợi nhuận sau thuế kỳ này âm: ${formatShortCurrency(input.loiNhuanSauThue)}`,
-      duong: '/bao-cao/kqkd',
+      duong: '/bao-cao/tai-chinh',
     });
   }
 
@@ -1066,7 +1082,7 @@ Thêm hai method vào object `dashboardService` (đặt ngay sau `getCashSeries`
     try {
       const startDate = new Date(year, startMonth - 1, 1).toISOString();
       const endDate = new Date(year, endMonth, 0, 23, 59, 59, 999).toISOString();
-      const report = await kqkdService.getKqkd({ startDate, endDate, periodType: 'tuyChon' });
+      const report = await kqkdService.getData({ startDate, endDate, periodType: 'tuyChon' });
       const lay = (ma: string) => report.chiTieu.find((c) => c.ma === ma)?.kyHienTai ?? 0;
       return {
         doanhThu: lay('01'),
@@ -1079,10 +1095,10 @@ Thêm hai method vào object `dashboardService` (đặt ngay sau `getCashSeries`
   },
 ```
 
-> `kqkdService.getKqkd` phải nhận `{ startDate, endDate, periodType }`. Mở
-> `fe/src/services/kqkdService.ts` xác nhận chữ ký thật; nếu khác, chỉnh lời gọi cho
-> khớp thay vì đổi service. Trường `ebitda` chỉ có sau Task 7 — tới lúc đó nó là
-> `undefined` và `?? 0` giữ cho code chạy được.
+> Chữ ký thật đã xác thực: `kqkdService.getData(params: KqkdQueryParams): Promise<KqkdReport>`
+> với `KqkdQueryParams = { startDate: string; endDate: string; periodType: 'thang' | 'quy' | 'nam' | 'tuyChon' }`.
+> **Không có method tên `getKqkd` ở FE** — chỉ BE mới đặt tên đó. Trường `ebitda` chỉ có
+> sau Task 7; tới lúc đó nó là `undefined` và `?? 0` giữ cho code chạy được.
 
 - [ ] **Step 2: Viết CanhBaoModal**
 
@@ -1379,7 +1395,7 @@ const DongTienTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
     queryKey: ['dash-tb', year, startMonth, endMonth],
     queryFn: () => dashboardService.getTrialBalance(year, startMonth, endMonth),
   });
-  const { data: cash = [] } = useQuery({
+  const { data: cash = [], isLoading: loadingCash } = useQuery({
     queryKey: ['dash-cash', year],
     queryFn: () => dashboardService.getCashSeries(year),
   });
@@ -1411,9 +1427,13 @@ const DongTienTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
     { key: 'cuoi', label: 'Số dư cuối kỳ', value: soDuDau + tongThu - tongChi, icon: <BankOutlined /> },
   ];
 
+  // Cổng skeleton phải phủ MỌI query cấp dữ liệu cho hàng KPI — thiếu một cái là
+  // thẻ đó nháy số 0 như thể là số thật trước khi nhảy sang số đúng.
+  const loadingKpi = loadingTb || loadingCash;
+
   return (
     <div className="space-y-3">
-      <KpiRow items={kpis} loading={loadingTb} span={5} />
+      <KpiRow items={kpis} loading={loadingKpi} span={5} />
       <CashFlowChart year={year} startMonth={startMonth} endMonth={endMonth} />
       <TienTheoTaiKhoanTable rows={rows} loading={loadingTb} />
       <Row gutter={[12, 12]}>
@@ -1451,9 +1471,12 @@ git commit -m "feat(dashboard): tab Dòng tiền"
 
 **Files:**
 - Modify: `be/libs/dto/src/reporting/kqkd.dto.ts`
-- Modify: `be/apps/reporting-service/src/bao-cao/bao-cao.helper.ts`
-- Test: `be/apps/reporting-service/src/bao-cao/bao-cao.helper.spec.ts`
+- **Create:** `be/apps/reporting-service/src/bao-cao/bao-cao.helper.ts` — file này **chưa tồn tại**
+- Test: `be/apps/reporting-service/src/bao-cao/bao-cao.helper.spec.ts` — file này **đã tồn tại**, hiện test các hàm export từ `bao-cao.service.ts`; chỉ **thêm** describe mới vào cuối, không sửa phần cũ
 - Modify: `be/apps/reporting-service/src/bao-cao/bao-cao.service.ts:622-760`
+
+> Lệ repo: helper thuần nằm ở `*.helper.ts` cạnh `*.helper.spec.ts` — xem cặp
+> `doanh-thu.helper.ts` / `doanh-thu.helper.spec.ts` sẵn có làm mẫu.
 
 **Interfaces:**
 - Produces:
@@ -1497,8 +1520,9 @@ describe('tinhEbitda', () => {
 });
 ```
 
-Nếu file `bao-cao.helper.spec.ts` đã có import từ `./bao-cao.helper`, gộp
-`tinhEbitda` vào import sẵn có thay vì thêm dòng import mới.
+File spec đã tồn tại và hiện chỉ import từ `./bao-cao.service` và
+`../shared/doi-tuong-loai.helper`. Thêm dòng import mới từ `./bao-cao.helper` ở đầu
+file, giữ nguyên mọi thứ có sẵn.
 
 - [ ] **Step 2: Chạy test để chắc chắn nó fail**
 
@@ -1510,7 +1534,7 @@ Kỳ vọng: FAIL — `tinhEbitda is not a function`.
 
 - [ ] **Step 3: Viết hàm helper**
 
-Thêm vào cuối `be/apps/reporting-service/src/bao-cao/bao-cao.helper.ts`:
+**Tạo mới** `be/apps/reporting-service/src/bao-cao/bao-cao.helper.ts` với nội dung:
 
 ```ts
 /**
@@ -1545,7 +1569,7 @@ export interface KqkdReport {
   chiTieu: KqkdChiTieu[];
   /**
    * EBITDA của kỳ. Để riêng ngoài `chiTieu` vì mảng đó là mẫu B02-DN đang được
-   * render nguyên văn ở /bao-cao/kqkd — chèn dòng lạ vào sẽ làm sai báo cáo chính thức.
+   * render nguyên văn ở tab KQKD của /bao-cao/tai-chinh — chèn dòng lạ vào sẽ làm sai báo cáo chính thức.
    */
   ebitda: { kyHienTai: number; kyTruoc: number };
   kyHienTai: { startDate: string; endDate: string };
@@ -1586,20 +1610,19 @@ Trong khối `return` cuối hàm, thêm trường `ebitda` ngay sau `chiTieu`:
 - [ ] **Step 7: Chạy toàn bộ test BE + build**
 
 ```bash
-cd be && yarn test && npx tsc --noEmit -p tsconfig.json
+cd be && yarn test reporting-service && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "reporting-service|libs/dto" || echo "không có lỗi type mới"
 ```
 
 Kỳ vọng: PASS. Nếu `tsc` báo lỗi ở nơi khác dựng `KqkdReport` thiếu `ebitda`, bổ sung trường đó tại chỗ.
 
-- [ ] **Step 8: Thêm ebitda vào type ở FE**
+- [ ] **Step 8: Thêm ebitda vào type ở FE — ĐÃ LÀM Ở TASK 5**
 
-Trong `fe/src/services/kqkdService.ts`, thêm vào interface trả về của `getKqkd`
-(interface chứa `chiTieu`):
+Trường `ebitda?: { kyHienTai: number; kyTruoc: number }` đã được thêm vào interface
+`KqkdReport` trong `fe/src/services/kqkdService.ts` ngay tại Task 5, vì Task 5 là nơi
+đầu tiên đọc trường này (`dashboardService.getKqkdTongHop`) và để lệch hai task sẽ
+tạo lỗi type treo ở giữa.
 
-```ts
-  /** Có từ bản BE 2026-08; optional để FE cũ vẫn chạy được với BE chưa deploy. */
-  ebitda?: { kyHienTai: number; kyTruoc: number };
-```
+Chỉ cần **kiểm tra lại** trường đó còn nguyên; nếu có thì bỏ qua bước này.
 
 - [ ] **Step 9: Commit**
 
@@ -1613,7 +1636,7 @@ git commit -m "feat(bao-cao): thêm EBITDA vào báo cáo kết quả kinh doanh
 ### Task 8: Mở rộng chiều cho báo cáo lợi nhuận (backend)
 
 **Files:**
-- Modify: `be/apps/reporting-service/src/bao-cao/bao-cao.helper.ts`
+- Modify: `be/apps/reporting-service/src/bao-cao/bao-cao.helper.ts` (Task 7 đã tạo file này)
 - Test: `be/apps/reporting-service/src/bao-cao/bao-cao.helper.spec.ts`
 - Modify: `be/apps/reporting-service/src/bao-cao/bao-cao.service.ts:403-420`
 
@@ -1621,18 +1644,25 @@ git commit -m "feat(bao-cao): thêm EBITDA vào báo cáo kết quả kinh doanh
 - Produces:
 
 ```ts
+export interface GiaTriChieu { ma?: string; ten?: string; soHopDong?: string }
 export const DIMENSION_FIELD_MAP: Record<string, string>;
-export function nhanChieu(dim: { ma?: string; ten?: string; soHopDong?: string } | undefined): string;
+export function maChieu(dim: GiaTriChieu | undefined): string | null;
+export function nhanChieu(dim: GiaTriChieu | undefined): string;
 ```
 
 Dùng lại ở Task 12.
+
+**Vì sao cần cả `maChieu` lẫn `nhanChieu`:** khoá gom nhóm phải là **mã**, nhãn chỉ để
+hiển thị. Gom theo nhãn sẽ trộn hai đối tượng khác nhau trùng tên và tách một đối tượng
+có tên ghi lệch — đúng lỗi đã phải sửa ở Task 3. Snapshot hợp đồng không có `ma`, mã
+định danh của nó là `soHopDong`, nên `maChieu` phải xét cả hai trường.
 
 - [ ] **Step 1: Viết test trước**
 
 Thêm vào `be/apps/reporting-service/src/bao-cao/bao-cao.helper.spec.ts`:
 
 ```ts
-import { DIMENSION_FIELD_MAP, nhanChieu } from './bao-cao.helper';
+import { DIMENSION_FIELD_MAP, maChieu, nhanChieu } from './bao-cao.helper';
 
 describe('DIMENSION_FIELD_MAP', () => {
   it('phủ đủ 7 chiều', () => {
@@ -1666,6 +1696,28 @@ describe('nhanChieu', () => {
     expect(nhanChieu({})).toBe('Không xác định');
   });
 });
+
+describe('maChieu', () => {
+  it('lấy ma, KHÔNG lấy ten — nhãn không được làm khoá gom nhóm', () => {
+    expect(maChieu({ ma: 'BP01', ten: 'Phòng kinh doanh' })).toBe('BP01');
+  });
+
+  it('hợp đồng không có ma — mã định danh là soHopDong', () => {
+    expect(maChieu({ soHopDong: 'HD-001' })).toBe('HD-001');
+  });
+
+  it('hai đối tượng khác mã nhưng trùng tên cho ra hai mã khác nhau', () => {
+    expect(maChieu({ ma: 'KH01', ten: 'Khách lẻ' })).not.toBe(
+      maChieu({ ma: 'KH02', ten: 'Khách lẻ' }),
+    );
+  });
+
+  it('không có mã định danh nào → null để phía gọi bỏ qua bản ghi', () => {
+    expect(maChieu(undefined)).toBeNull();
+    expect(maChieu({})).toBeNull();
+    expect(maChieu({ ten: 'Chỉ có tên' })).toBeNull();
+  });
+});
 ```
 
 - [ ] **Step 2: Chạy test để chắc chắn nó fail**
@@ -1695,13 +1747,29 @@ export const DIMENSION_FIELD_MAP: Record<string, string> = {
   'hop-dong': 'hopDong',
 };
 
+/** Một giá trị chiều lấy từ `danhMuc` của bút toán. */
+export interface GiaTriChieu {
+  ma?: string;
+  ten?: string;
+  soHopDong?: string;
+}
+
 /**
- * Nhãn hiển thị của một giá trị chiều.
- * Snapshot hợp đồng không có `ma` — chỉ có `soHopDong` — nên phải xét riêng.
+ * Mã định danh của một giá trị chiều — dùng làm KHOÁ gom nhóm.
+ * Không bao giờ lấy `ten`: hai đối tượng khác nhau có thể trùng tên, và một đối tượng
+ * có thể bị ghi tên lệch giữa các kỳ. Snapshot hợp đồng không có `ma`, mã định danh
+ * của nó là `soHopDong`.
+ * Trả `null` khi không có mã nào — phía gọi bỏ qua bản ghi đó.
  */
-export function nhanChieu(
-  dim: { ma?: string; ten?: string; soHopDong?: string } | undefined,
-): string {
+export function maChieu(dim: GiaTriChieu | undefined): string | null {
+  return dim?.ma || dim?.soHopDong || null;
+}
+
+/**
+ * Nhãn HIỂN THỊ của một giá trị chiều. Chỉ để hiện ra màn hình, không được dùng
+ * làm khoá gom nhóm — xem `maChieu`.
+ */
+export function nhanChieu(dim: GiaTriChieu | undefined): string {
   return dim?.ten || dim?.ma || dim?.soHopDong || 'Không xác định';
 }
 ```
@@ -1717,21 +1785,41 @@ Kỳ vọng: PASS.
 - [ ] **Step 5: Dùng helper trong getLoiNhuanByDimension**
 
 Trong `be/apps/reporting-service/src/bao-cao/bao-cao.service.ts`, hàm
-`getLoiNhuanByDimension` (từ dòng ~403): thêm `DIMENSION_FIELD_MAP` và `nhanChieu`
-vào import từ `./bao-cao.helper`, rồi thay khối `fieldMap` cục bộ:
+`getLoiNhuanByDimension` (từ dòng ~403): thêm `DIMENSION_FIELD_MAP`, `maChieu`,
+`nhanChieu` vào import từ `./bao-cao.helper`, rồi thay khối `fieldMap` cục bộ:
 
 ```ts
     const field = DIMENSION_FIELD_MAP[dimension] || 'doiTuong';
 ```
 
-Trong vòng lặp gom nhóm, thay chỗ đang lấy tên hiển thị của `dim` bằng
-`nhanChieu(dim)`, và dùng chính chuỗi nhãn đó làm khoá của `map` (thay cho `dim.ma`)
-— nếu không, mọi hợp đồng sẽ rơi chung một khoá `undefined`.
+Trong vòng lặp gom nhóm, code hiện tại làm hai việc sai với chiều mới:
+
+```ts
+      const dim = dm?.[field];
+      if (!dim?.ma) continue;                                     // ← bỏ sót mọi hợp đồng
+      const e = map.get(dim.ma) || { ten: dim.ten || dim.ma, ... }; // ← nhãn tính tại chỗ
+      map.set(dim.ma, e);
+```
+
+Thay bằng:
+
+```ts
+      const dim = dm?.[field];
+      const ma = maChieu(dim);
+      if (!ma) continue;
+      const e = map.get(ma) || { ten: nhanChieu(dim), rev: 0, exp: 0 };
+      // ... phần cộng rev/exp giữ nguyên ...
+      map.set(ma, e);
+```
+
+**Khoá là `ma`, nhãn là `nhanChieu(dim)`** — không được lấy nhãn làm khoá. Snapshot hợp
+đồng không có `ma` nên điều kiện `!dim?.ma` cũ sẽ loại sạch mọi hợp đồng; `maChieu` xử lý
+đúng cả trường hợp đó.
 
 - [ ] **Step 6: Chạy test BE + kiểm tra type**
 
 ```bash
-cd be && yarn test && npx tsc --noEmit -p tsconfig.json
+cd be && yarn test reporting-service && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "reporting-service|libs/dto" || echo "không có lỗi type mới"
 ```
 
 Kỳ vọng: PASS.
@@ -1771,7 +1859,7 @@ Trong `fe/src/services/dashboardService.ts`, thêm method sau `getKqkdTongHop`:
     try {
       const startDate = new Date(year, startMonth - 1, 1).toISOString();
       const endDate = new Date(year, endMonth, 0, 23, 59, 59, 999).toISOString();
-      const report = await kqkdService.getKqkd({ startDate, endDate, periodType: 'tuyChon' });
+      const report = await kqkdService.getData({ startDate, endDate, periodType: 'tuyChon' });
       const out: Record<string, number> = {};
       for (const c of report.chiTieu) out[c.ma] = c.kyHienTai;
       out.ebitda = report.ebitda?.kyHienTai ?? 0;
@@ -2350,17 +2438,32 @@ git commit -m "feat(dashboard): lịch thanh toán theo mốc đến hạn"
 - Consumes: `doiChieuCongNo`, `DoiChieuRow` (Task 3); `tinhLichThanhToan` + `LichThanhToanTables` (Task 10); `AgingCharts`, `TopPartnersCharts`, `OverdueTables` (đã có trong repo, không nhận props); `exportReportExcel` từ `@/utils/exportReportExcel`.
 - Produces: `buildDoiChieuSheets(rows: DoiChieuRow[], loai: 'thu' | 'tra', kyLabel: string)`
 
-- [ ] **Step 1: Đọc chữ ký của tiện ích xuất Excel**
+Kiểu dữ liệu của tiện ích xuất Excel (`fe/src/utils/exportReportExcel.ts`) — đã
+xác thực, dùng đúng như sau:
 
-```bash
-sed -n '1,60p' fe/src/utils/exportReportExcel.ts
-sed -n '1,40p' fe/src/pages/bao-cao/kqkd/kqkdExport.ts
+```ts
+export interface ReportCol {
+  key: string;
+  header: string;          // KHÔNG phải 'title'
+  width?: number;
+  align?: 'left' | 'right' | 'center';
+  numFmt?: string;         // dùng NUM_FMT cho cột số
+}
+export interface ReportRow {
+  cells?: Record<string, string | number | null | undefined>;  // optional → truy cập bằng ?.
+  bold?: boolean;
+  indent?: number;
+  fill?: 'total' | 'group' | 'category';
+}
+export interface ReportSheet {
+  name: string; title: string; meta?: string[];
+  columns: ReportCol[]; rows: ReportRow[];
+}
+export const NUM_FMT: string;
+export async function exportReportExcel(fileName: string, sheets: ReportSheet[]): Promise<void>;
 ```
 
-Ghi lại kiểu `ReportSheet` (tên trường `name`, `title`, `columns`, `rows`, và hình
-dạng của `rows[].cells`). Các bước sau dùng đúng kiểu đó.
-
-- [ ] **Step 2: Viết test cho hàm dựng sheet**
+- [ ] **Step 1: Viết test cho hàm dựng sheet**
 
 Tạo `fe/src/pages/dashboard/doiChieuExport.test.ts`:
 
@@ -2394,18 +2497,22 @@ describe('buildDoiChieuSheets', () => {
     const [sheet] = buildDoiChieuSheets(rows, 'thu', 'Năm 2026');
     expect(sheet.rows).toHaveLength(3);
     const tong = sheet.rows[2];
-    expect(tong.cells.doiTuong).toBe('TỔNG CỘNG');
-    expect(tong.cells.duCuoiKy).toBe(500);
-    expect(tong.cells.phatSinhTang).toBe(700);
+    expect(tong.cells?.doiTuong).toBe('TỔNG CỘNG');
+    expect(tong.cells?.duCuoiKy).toBe(500);
+    expect(tong.cells?.phatSinhTang).toBe(700);
     expect(tong.bold).toBe(true);
+  });
+
+  it('cột số dùng header tiếng Việt và định dạng số', () => {
+    const [sheet] = buildDoiChieuSheets(rows, 'thu', 'Năm 2026');
+    expect(sheet.columns[0].header).toBe('Đối tượng');
+    expect(sheet.columns[4].align).toBe('right');
+    expect(sheet.columns[4].numFmt).toBeTruthy();
   });
 });
 ```
 
-Nếu Step 1 cho thấy `rows[].cells` hoặc `bold` có tên khác, sửa test cho khớp
-**trước** khi viết implementation.
-
-- [ ] **Step 3: Chạy test để chắc chắn nó fail**
+- [ ] **Step 2: Chạy test để chắc chắn nó fail**
 
 ```bash
 cd fe && npx vitest run src/pages/dashboard/doiChieuExport.test.ts
@@ -2413,19 +2520,28 @@ cd fe && npx vitest run src/pages/dashboard/doiChieuExport.test.ts
 
 Kỳ vọng: FAIL.
 
-- [ ] **Step 4: Viết implementation**
+- [ ] **Step 3: Viết implementation**
 
-Tạo `fe/src/pages/dashboard/doiChieuExport.ts`, theo đúng kiểu `ReportSheet` đọc được ở Step 1:
+Tạo `fe/src/pages/dashboard/doiChieuExport.ts`:
 
 ```ts
+import { NUM_FMT, type ReportCol, type ReportSheet } from '@/utils/exportReportExcel';
 import type { DoiChieuRow } from './trialBalanceDerive';
 
-const COLUMNS = [
-  { key: 'doiTuong', title: 'Đối tượng', width: 36 },
-  { key: 'duDauKy', title: 'Số dư đầu kỳ', width: 18, numeric: true },
-  { key: 'phatSinhTang', title: 'Phát sinh tăng', width: 18, numeric: true },
-  { key: 'phatSinhGiam', title: 'Phát sinh giảm', width: 18, numeric: true },
-  { key: 'duCuoiKy', title: 'Số dư cuối kỳ', width: 18, numeric: true },
+const soCot = (key: string, header: string): ReportCol => ({
+  key,
+  header,
+  width: 18,
+  align: 'right',
+  numFmt: NUM_FMT,
+});
+
+const COLUMNS: ReportCol[] = [
+  { key: 'doiTuong', header: 'Đối tượng', width: 36 },
+  soCot('duDauKy', 'Số dư đầu kỳ'),
+  soCot('phatSinhTang', 'Phát sinh tăng'),
+  soCot('phatSinhGiam', 'Phát sinh giảm'),
+  soCot('duCuoiKy', 'Số dư cuối kỳ'),
 ];
 
 /** Một sheet "Đối chiếu công nợ", dòng cuối là tổng cộng. */
@@ -2433,7 +2549,7 @@ export function buildDoiChieuSheets(
   rows: DoiChieuRow[],
   loai: 'thu' | 'tra',
   kyLabel: string,
-) {
+): ReportSheet[] {
   if (!rows.length) return [];
 
   const nhan = loai === 'thu' ? 'PHẢI THU' : 'PHẢI TRẢ';
@@ -2463,15 +2579,15 @@ export function buildDoiChieuSheets(
 }
 ```
 
-- [ ] **Step 5: Chạy test để xác nhận PASS**
+- [ ] **Step 4: Chạy test để xác nhận PASS**
 
 ```bash
 cd fe && npx vitest run src/pages/dashboard/doiChieuExport.test.ts
 ```
 
-Kỳ vọng: PASS, 4 test.
+Kỳ vọng: PASS, 5 test.
 
-- [ ] **Step 6: Viết bảng đối chiếu công nợ**
+- [ ] **Step 5: Viết bảng đối chiếu công nợ**
 
 Tạo `fe/src/pages/dashboard/components/DoiChieuCongNoTable.tsx`:
 
@@ -2544,10 +2660,7 @@ const DoiChieuCongNoTable: React.FC<Props> = ({ thu, tra, loading, kyLabel }) =>
 export default DoiChieuCongNoTable;
 ```
 
-> `exportReportExcel` có thể nhận tham số khác thứ tự này. Đối chiếu với cách gọi
-> trong `fe/src/pages/bao-cao/so-cai/SoCaiPage.tsx` và chỉnh cho khớp.
-
-- [ ] **Step 7: Dựng tab Công nợ**
+- [ ] **Step 6: Dựng tab Công nợ**
 
 Thay toàn bộ `fe/src/pages/dashboard/tabs/CongNoTab.tsx`:
 
@@ -2569,11 +2682,11 @@ import { doiChieuCongNo } from '../trialBalanceDerive';
 import type { TabProps } from './TabProps';
 
 const CongNoTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
-  const { data: statsThu } = useQuery({
+  const { data: statsThu, isLoading: loadingStatsThu } = useQuery({
     queryKey: ['dash-stats-thu'],
     queryFn: () => congNoPhaiThuService.getStats(),
   });
-  const { data: statsTra } = useQuery({
+  const { data: statsTra, isLoading: loadingStatsTra } = useQuery({
     queryKey: ['dash-stats-tra'],
     queryFn: () => congNoPhaiTraService.getStats(),
   });
@@ -2581,13 +2694,22 @@ const CongNoTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
     queryKey: ['dash-khoan-thu'],
     queryFn: () => dashboardService.getKhoanPhaiThanhToan('thu'),
   });
-  const { data: khoanTra = [] } = useQuery({
+  const { data: khoanTra = [], isLoading: loadingLichTra } = useQuery({
     queryKey: ['dash-khoan-tra'],
     queryFn: () => dashboardService.getKhoanPhaiThanhToan('tra'),
   });
   const { data: tb = [], isLoading: loadingTb } = useQuery({
     queryKey: ['dash-tb', year, startMonth, endMonth],
     queryFn: () => dashboardService.getTrialBalance(year, startMonth, endMonth),
+  });
+  // Cùng queryKey với tab Tổng quan → React Query dùng chung cache, không gọi lại.
+  const { data: quaHanThu = [], isLoading: loadingQhThu } = useQuery({
+    queryKey: ['dash-qh-thu'],
+    queryFn: () => dashboardService.getOverdueAr(),
+  });
+  const { data: quaHanTra = [], isLoading: loadingQhTra } = useQuery({
+    queryKey: ['dash-qh-tra'],
+    queryFn: () => dashboardService.getOverdueAp(),
   });
 
   const homNay = useMemo(() => new Date(), []);
@@ -2600,7 +2722,13 @@ const CongNoTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
   // "Đến hạn" = tổng hai mốc gần nhất (trong 30 ngày) của cả thu lẫn trả.
   const denHan =
     lichThu[0].soTien + lichThu[1].soTien + lichTra[0].soTien + lichTra[1].soTien;
-  const quaHan = (statsThu?.tongQuaHan ?? 0) + (statsTra?.tongQuaHan ?? 0);
+
+  // "Quá hạn" là SỐ TIỀN, cộng từ danh sách khoản quá hạn.
+  // KHÔNG dùng `stats.tongQuaHan` — backend không bao giờ trả trường đó (chỉ có
+  // `soKhoanQuaHan`, là số khoản), nên thẻ sẽ luôn đứng 0.
+  const quaHan =
+    quaHanThu.reduce((s, r) => s + r.conLai, 0) +
+    quaHanTra.reduce((s, r) => s + r.conLai, 0);
 
   const kpis: KpiItem[] = [
     { key: 'phaiThu', label: 'Tổng phải thu', value: statsThu?.conLai ?? 0, icon: <ArrowDownOutlined /> },
@@ -2611,9 +2739,15 @@ const CongNoTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
 
   const kyLabel = startMonth === endMonth ? `Tháng ${startMonth}/${year}` : `Tháng ${startMonth}-${endMonth}/${year}`;
 
+  // Cổng skeleton phải phủ MỌI query cấp dữ liệu cho hàng KPI — thiếu một cái là
+  // thẻ đó nháy số 0 như thể là số thật trước khi nhảy sang số đúng.
+  const loadingKpi =
+    loadingLich || loadingLichTra || loadingStatsThu || loadingStatsTra ||
+    loadingQhThu || loadingQhTra;
+
   return (
     <div className="space-y-3">
-      <KpiRow items={kpis} loading={loadingLich} />
+      <KpiRow items={kpis} loading={loadingKpi} />
       <AgingCharts />
       <TopPartnersCharts />
       <LichThanhToanTables
@@ -2632,11 +2766,12 @@ const CongNoTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
 export default CongNoTab;
 ```
 
-> `statsThu.tongQuaHan` là trường optional trong `CongNoStats`. Mở
-> `fe/src/services/congNoPhaiThuService.ts` xác nhận BE có trả trường này; nếu
-> luôn `undefined`, đổi sang `soKhoanQuaHan` và cho thẻ KPI `format: 'soLuong'`.
+> Đã xác thực: `getStats` của `payable-service` chỉ trả `tongCongNo`, `daThu`,
+> `conLai`, `soKhoanNo`, `soKhoanQuaHan`. Các trường `tongQuaHan`, `soQuaHan`,
+> `conPhaiThu`, `soKhachHang` khai báo optional ở FE nhưng **backend không bao giờ
+> gửi** — đừng dùng chúng.
 
-- [ ] **Step 8: Chạy lint + build + test**
+- [ ] **Step 7: Chạy lint + build + test**
 
 ```bash
 cd fe && npm run lint && npm run build && npm run test
@@ -2644,7 +2779,7 @@ cd fe && npm run lint && npm run build && npm run test
 
 Kỳ vọng: PASS.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add fe/src/pages/dashboard
@@ -2771,9 +2906,45 @@ describe('gomTheoChieu', () => {
     expect(rows).toEqual([{ ten: 'HD-9', soTien: 700 }]);
   });
 
-  it('bút toán thiếu chiều gom vào "Không xác định"', () => {
+  it('bút toán thiếu chiều gom vào "Không xác định", KHÔNG bị loại bỏ', () => {
     const rows = gomTheoChieu([v('2026-01-01', 400)], 'nhanVien');
     expect(rows).toEqual([{ ten: 'Không xác định', soTien: 400 }]);
+  });
+
+  it('tổng các nhóm luôn bằng tổng doanh số — không bản ghi nào bị bỏ rơi', () => {
+    const rows = gomTheoChieu(
+      [
+        v('2026-01-01', 100, '5111', { nhanVien: { ma: 'NV1', ten: 'An' } }),
+        v('2026-01-02', 250, '5111'),
+        v('2026-01-03', 700, '5111', { nhanVien: { ma: 'NV2', ten: 'Bình' } }),
+      ],
+      'nhanVien',
+    );
+    expect(rows.reduce((s, r) => s + r.soTien, 0)).toBe(1050);
+  });
+
+  it('hai đối tượng khác mã nhưng TRÙNG TÊN ra hai dòng riêng', () => {
+    const rows = gomTheoChieu(
+      [
+        v('2026-01-01', 100, '5111', { doiTuong: { ma: 'KH01', ten: 'Khách lẻ' } }),
+        v('2026-01-02', 300, '5111', { doiTuong: { ma: 'KH02', ten: 'Khách lẻ' } }),
+      ],
+      'doiTuong',
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows.map((r) => r.soTien)).toEqual([300, 100]);
+  });
+
+  it('cùng một mã nhưng tên ghi lệch vẫn gộp một dòng', () => {
+    const rows = gomTheoChieu(
+      [
+        v('2026-01-01', 100, '5111', { doiTuong: { ma: 'KH01', ten: 'Cty A' } }),
+        v('2026-01-02', 300, '5111', { doiTuong: { ma: 'KH01', ten: 'Công ty A' } }),
+      ],
+      'doiTuong',
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].soTien).toBe(400);
   });
 });
 ```
@@ -2792,7 +2963,7 @@ Tạo `be/apps/reporting-service/src/bao-cao/doanh-so.helper.ts`:
 
 ```ts
 import type { NhatKyChungEntry } from '@app/dto';
-import { nhanChieu } from './bao-cao.helper';
+import { maChieu, nhanChieu, type GiaTriChieu } from './bao-cao.helper';
 
 export type GroupBy = 'ngay' | 'thang' | 'quy' | 'nam';
 
@@ -2838,23 +3009,31 @@ export function gomTheoThoiGian(
   return out;
 }
 
+/**
+ * Doanh số theo chiều.
+ *
+ * Khoá gom nhóm là MÃ (`maChieu`), nhãn chỉ để hiển thị — gom theo nhãn sẽ trộn hai
+ * đối tượng trùng tên và tách một đối tượng có tên ghi lệch.
+ *
+ * Bút toán không gắn chiều được gom vào một nhóm "Không xác định" (khoá rỗng) chứ
+ * KHÔNG bị loại bỏ: biểu đồ này nằm ngay cạnh thẻ KPI "Doanh số kỳ này", nếu bỏ
+ * bớt bản ghi thì tổng các cột không khớp thẻ KPI và trông như lỗi phần mềm.
+ */
 export function gomTheoChieu(
   vouchers: NhatKyChungEntry[],
   field: string,
 ): DoanhSoChieuRow[] {
-  const out = new Map<string, number>();
+  const out = new Map<string, { ten: string; soTien: number }>();
   for (const v of vouchers) {
     if (!laDoanhThu(v)) continue;
-    const dm = v.danhMuc as unknown as Record<
-      string,
-      { ma?: string; ten?: string; soHopDong?: string } | undefined
-    >;
-    const ten = nhanChieu(dm?.[field]);
-    out.set(ten, (out.get(ten) ?? 0) + v.soTien);
+    const dm = v.danhMuc as unknown as Record<string, GiaTriChieu | undefined>;
+    const dim = dm?.[field];
+    const khoa = maChieu(dim) ?? '';
+    const e = out.get(khoa) ?? { ten: nhanChieu(dim), soTien: 0 };
+    e.soTien += v.soTien;
+    out.set(khoa, e);
   }
-  return Array.from(out.entries())
-    .map(([ten, soTien]) => ({ ten, soTien }))
-    .sort((a, b) => b.soTien - a.soTien);
+  return Array.from(out.values()).sort((a, b) => b.soTien - a.soTien);
 }
 ```
 
@@ -3010,7 +3189,7 @@ Trong `be/apps/reporting-service/src/bao-cao/bao-cao.controller.ts`, thêm trư�
 - [ ] **Step 8: Chạy test BE + kiểm tra type**
 
 ```bash
-cd be && yarn test && npx tsc --noEmit -p tsconfig.json
+cd be && yarn test reporting-service && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "reporting-service|libs/dto" || echo "không có lỗi type mới"
 ```
 
 Kỳ vọng: PASS.
@@ -3402,7 +3581,7 @@ và thêm vào prop `extra` của `<Card>` một link (nếu `extra` đã có n�
 | Component | Đích |
 |---|---|
 | `TienTheoTaiKhoanTable.tsx` | `/so-quy` |
-| `XuHuongChiTieuChart.tsx` | `/bao-cao/kqkd` |
+| `XuHuongChiTieuChart.tsx` | `/bao-cao/tai-chinh` |
 | `DoiChieuCongNoTable.tsx` | `/bao-cao/bang-tong-hop` |
 | `DoanhSoTheoThoiGianChart.tsx` | `/bao-cao/doanh-thu` |
 
@@ -3425,7 +3604,7 @@ Kỳ vọng: PASS cả ba. Ghi lại số test đã chạy.
 - [ ] **Step 4: Chạy toàn bộ kiểm tra BE**
 
 ```bash
-cd be && yarn test && npx tsc --noEmit -p tsconfig.json
+cd be && yarn test reporting-service && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "reporting-service|libs/dto" || echo "không có lỗi type mới"
 ```
 
 Kỳ vọng: PASS.

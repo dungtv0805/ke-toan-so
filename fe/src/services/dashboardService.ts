@@ -1,9 +1,26 @@
+/**
+ * CHÍNH SÁCH LỖI CỦA FILE NÀY: **nuốt lỗi, trả giá trị mặc định** (0, `[]`,
+ * `{}`). Mọi hàm dưới đây bọc lời gọi API trong `try/catch` rồi trả về giá trị
+ * rỗng — cố ý giữ nguyên, KHÔNG đổi trong đợt sửa này.
+ *
+ * Hệ quả phải biết: API hỏng (mất mạng, 500, hết hạn token) thì bốn tab Tổng
+ * quan · Dòng tiền · Kết quả kinh doanh · Công nợ **lặng lẽ hiện 0** thay vì
+ * báo lỗi — người dùng không phân biệt được "công ty không có số liệu" với
+ * "không tải được số liệu".
+ *
+ * `doanhSoService.ts` (tab Bán hàng) **cố ý làm khác**: ném lỗi ra để tab hiện
+ * trạng thái lỗi thật. Đó không phải nhầm lẫn của một trong hai file — hai
+ * chính sách cùng tồn tại có chủ đích; thống nhất chúng là việc của đợt sau.
+ */
 import { soQuyService } from './soQuyService';
 import { balanceSheetService } from './balanceSheetService';
 import { baoCaoReportService } from './baoCaoReportService';
 import { congNoPhaiThuService } from './congNoPhaiThuService';
 import { congNoPhaiTraService } from './congNoPhaiTraService';
 import { phieuThuService, phieuChiService, type PhieuService } from './phieuService';
+import { soCaiService, type TrialBalance } from './soCaiService';
+import { kqkdService } from './kqkdService';
+import type { KhoanPhaiThanhToan } from '@/pages/dashboard/lichThanhToan';
 
 // ============ Types ============
 
@@ -165,6 +182,60 @@ export const dashboardService = {
     }
   },
 
+  /** Bảng cân đối phát sinh của kỳ — nguồn cho KPI tiền/tồn kho và bảng đối chiếu. */
+  async getTrialBalance(year: number, startMonth: number, endMonth: number): Promise<TrialBalance[]> {
+    try {
+      const start = new Date(year, startMonth - 1, 1).toISOString();
+      const end = new Date(year, endMonth, 0, 23, 59, 59, 999).toISOString();
+      return await soCaiService.getTrialBalance(start, end);
+    } catch {
+      return [];
+    }
+  },
+
+  /** Doanh thu (mã 01) và lợi nhuận sau thuế (mã 60) của kỳ. */
+  async getKqkdTongHop(
+    year: number,
+    startMonth: number,
+    endMonth: number,
+  ): Promise<{ doanhThu: number; loiNhuanSauThue: number; ebitda: number }> {
+    try {
+      const startDate = new Date(year, startMonth - 1, 1).toISOString();
+      const endDate = new Date(year, endMonth, 0, 23, 59, 59, 999).toISOString();
+      const report = await kqkdService.getData({ startDate, endDate, periodType: 'tuyChon' });
+      const lay = (ma: string) => report.chiTieu.find((c) => c.ma === ma)?.kyHienTai ?? 0;
+      return {
+        doanhThu: lay('01'),
+        loiNhuanSauThue: lay('60'),
+        ebitda: report.ebitda?.kyHienTai ?? 0,
+      };
+    } catch {
+      return { doanhThu: 0, loiNhuanSauThue: 0, ebitda: 0 };
+    }
+  },
+
+  /** Toàn bộ chỉ tiêu KQKD của kỳ, tra theo mã ('01', '11', '20', ...). */
+  async getKqkdChiTieu(
+    year: number,
+    startMonth: number,
+    endMonth: number,
+  ): Promise<Record<string, number>> {
+    try {
+      const startDate = new Date(year, startMonth - 1, 1).toISOString();
+      const endDate = new Date(year, endMonth, 0, 23, 59, 59, 999).toISOString();
+      const report = await kqkdService.getData({ startDate, endDate, periodType: 'tuyChon' });
+      const out: Record<string, number> = {};
+      for (const c of report.chiTieu) out[c.ma] = c.kyHienTai;
+      // BE chưa trả `ebitda` (FE lên trước BE) thì KHÔNG đặt khoá — để tab hiện
+      // "—". Gán 0 sẽ ra một số 0 ₫ nằm giữa bảy con số đúng, kèm tooltip tự tin
+      // giải thích công thức: kế toán đọc thành "công ty không có EBITDA".
+      if (report.ebitda) out.ebitda = report.ebitda.kyHienTai;
+      return out;
+    } catch {
+      return {};
+    }
+  },
+
   /**
    * Số dư công nợ phải thu/phải trả lũy kế đến cuối mỗi kỳ (tháng, hoặc tuần nếu truyền month).
    * Nguồn: số dư Nợ/Có của các TK có gán đối tượng (KH/NCC/nhà thầu/NV).
@@ -291,6 +362,23 @@ export const dashboardService = {
           hanThanhToan: d.hanThanhToan,
         }))
         .sort((a, b) => b.soNgayQuaHan - a.soNgayQuaHan);
+    } catch {
+      return [];
+    }
+  },
+
+  /**
+   * Toàn bộ khoản phải thu / phải trả còn dư, kèm hạn thanh toán.
+   * `/payable/phai-thu` và `/payable/phai-tra` gọi findAll() nên trả đủ bản ghi,
+   * không phân trang.
+   */
+  async getKhoanPhaiThanhToan(loai: 'thu' | 'tra'): Promise<KhoanPhaiThanhToan[]> {
+    try {
+      const rows =
+        loai === 'thu'
+          ? await congNoPhaiThuService.getAll()
+          : await congNoPhaiTraService.getAll();
+      return rows.map((r) => ({ hanThanhToan: r.hanThanhToan, conLai: r.conLai }));
     } catch {
       return [];
     }
