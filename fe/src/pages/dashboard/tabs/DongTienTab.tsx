@@ -44,10 +44,6 @@ const DongTienTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
     queryKey: ['dash-tb', year, startMonth, endMonth],
     queryFn: () => dashboardService.getTrialBalance(year, startMonth, endMonth),
   });
-  const { data: cash = [], isLoading: loadingCash } = useQuery({
-    queryKey: ['dash-cash', year],
-    queryFn: () => dashboardService.getCashSeries(year),
-  });
   const { data: thu = [] } = useQuery({
     queryKey: ['dash-comp-thu', year, startMonth, endMonth],
     queryFn: () => dashboardService.getCashCompositionByRange('thu', year, startMonth, endMonth),
@@ -70,26 +66,29 @@ const DongTienTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
   const lichThu = useMemo(() => tinhLichThanhToan(khoanThu, homNay), [khoanThu, homNay]);
   const lichChi = useMemo(() => tinhLichThanhToan(khoanTra, homNay), [khoanTra, homNay]);
 
-  const trongKy = useMemo(
-    () => cash.filter((p) => p.thang >= startMonth && p.thang <= endMonth),
-    [cash, startMonth, endMonth],
-  );
-  const tongThu = trongKy.reduce((s, p) => s + p.thu, 0);
-  const tongChi = trongKy.reduce((s, p) => s + p.chi, 0);
-  // Số dư đầu kỳ lấy từ TK tiền (đã gồm tồn mang sang), không suy ra từ chuỗi thu-chi.
-  const soDuDau = rows.filter((r) => /^\d/.test(r.ma)).reduce((s, r) => s + r.duDauKy, 0);
+  // Cả năm thẻ KPI đều dựng từ CHÍNH các dòng cha mà bảng ngay dưới đang render,
+  // không từ chuỗi cash-flow (đường dữ liệu độc lập: quét regex ^11[12] trên
+  // chứng từ, cửa sổ ngày dựng khác). Nhờ đó Σ duCuoiKy = Σ duDauKy + Σ phatSinhNo
+  // − Σ phatSinhCo đúng theo cấu trúc và KPI khớp dòng "Tổng cộng" của bảng.
+  const cha = useMemo(() => rows.filter((r) => !r.laCon), [rows]);
+  const cong = (f: 'duDauKy' | 'phatSinhNo' | 'phatSinhCo' | 'duCuoiKy') =>
+    cha.reduce((s, r) => s + r[f], 0);
+  const soDuDau = cong('duDauKy');
+  const tongThu = cong('phatSinhNo');
+  const tongChi = cong('phatSinhCo');
 
   const kpis: KpiItem[] = [
     { key: 'dau', label: 'Số dư đầu kỳ', value: soDuDau, icon: <WalletOutlined /> },
     { key: 'thu', label: 'Tổng thu', value: tongThu, icon: <ArrowDownOutlined /> },
     { key: 'chi', label: 'Tổng chi', value: tongChi, icon: <ArrowUpOutlined /> },
     { key: 'thuan', label: 'Dòng tiền thuần', value: tongThu - tongChi, icon: <SwapOutlined /> },
-    { key: 'cuoi', label: 'Số dư cuối kỳ', value: soDuDau + tongThu - tongChi, icon: <BankOutlined /> },
+    // Lấy thẳng Σ duCuoiKy để khớp từng đồng với dòng "Tổng cộng" của bảng.
+    { key: 'cuoi', label: 'Số dư cuối kỳ', value: cong('duCuoiKy'), icon: <BankOutlined /> },
   ];
 
   // Cổng skeleton phải phủ MỌI query cấp dữ liệu cho hàng KPI — thiếu một cái là
   // thẻ đó nháy số 0 như thể là số thật trước khi nhảy sang số đúng.
-  const loadingKpi = loadingTb || loadingCash;
+  const loadingKpi = loadingTb;
 
   return (
     <div className="space-y-3">

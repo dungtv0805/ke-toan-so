@@ -11,15 +11,14 @@ interface Props {
   loading?: boolean;
 }
 
-/** Dòng con (quỹ/ngân hàng) có mã không phải số → thụt vào cho dễ đọc. */
-const laDongCon = (ma: string) => !/^\d/.test(ma);
-
 const columns: ColumnsType<TienTheoTaiKhoanRow> = [
   {
     title: 'Tài khoản',
     dataIndex: 'ma',
+    // Dòng con (quỹ/ngân hàng) thụt vào cho dễ đọc — theo cờ `laCon`, không
+    // đoán từ hình dạng mã (mã ngân hàng/quỹ là trường tự do).
     render: (ma: string, r) => (
-      <span style={{ paddingLeft: laDongCon(ma) ? 20 : 0 }}>
+      <span style={{ paddingLeft: r.laCon ? 20 : 0 }}>
         <b>{ma}</b> — {r.ten}
       </span>
     ),
@@ -37,7 +36,9 @@ const TienTheoTaiKhoanTable: React.FC<Props> = ({ rows, loading }) => (
   >
     <Table
       size="small"
-      rowKey={(r) => r.ma}
+      // Dòng con "chưa xác định đối tượng" được phát ra với `ma: ''` — hai TK
+      // tiền cùng có phần chưa gán sẽ ra hai dòng trùng key nếu chỉ lấy mã.
+      rowKey={(r, i) => `${i}-${r.ma}`}
       columns={columns}
       dataSource={rows}
       loading={loading}
@@ -45,7 +46,7 @@ const TienTheoTaiKhoanTable: React.FC<Props> = ({ rows, loading }) => (
       scroll={{ x: 'max-content' }}
       summary={(data) => {
         // Chỉ cộng dòng cha để không đếm hai lần.
-        const cha = data.filter((r) => !laDongCon(r.ma));
+        const cha = data.filter((r) => !r.laCon);
         const tong = (f: keyof TienTheoTaiKhoanRow) =>
           cha.reduce((s, r) => s + (r[f] as number), 0);
         return (

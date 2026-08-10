@@ -9,6 +9,13 @@ const PREFIX_PHAI_TRA = ['331', '336', '338'];
 export interface TienTheoTaiKhoanRow {
   ma: string;
   ten: string;
+  /**
+   * true = dòng chi tiết quỹ/ngân hàng nằm dưới một TK tiền.
+   * Phải là cờ tường minh, KHÔNG đoán từ hình dạng mã: mã ngân hàng/quỹ là
+   * trường tự do, khách đặt mã `01` hay `1121A` là dòng con bị coi như dòng
+   * cha và cộng trùng tiền ở dòng tổng lẫn thẻ KPI.
+   */
+  laCon: boolean;
   duDauKy: number;
   phatSinhNo: number;
   phatSinhCo: number;
@@ -16,6 +23,8 @@ export interface TienTheoTaiKhoanRow {
 }
 
 export interface DoiChieuRow {
+  /** Mã đối tượng — khoá gom nhóm, cũng là thứ phân biệt hai đối tượng trùng tên. */
+  ma: string;
   doiTuong: string;
   duDauKy: number;
   phatSinhTang: number;
@@ -44,9 +53,10 @@ export function giaTriTonKho(tb: TrialBalance[]): number {
 
 /** TK tiền và chi tiết từng quỹ/ngân hàng, TK cha đứng ngay trước các dòng con. */
 export function tienTheoTaiKhoan(tb: TrialBalance[]): TienTheoTaiKhoanRow[] {
-  const toRow = (r: TrialBalance): TienTheoTaiKhoanRow => ({
+  const toRow = (r: TrialBalance, laCon: boolean): TienTheoTaiKhoanRow => ({
     ma: r.taiKhoan,
     ten: r.tenTaiKhoanNH || r.tenTaiKhoan || r.taiKhoan,
+    laCon,
     duDauKy: (r.soDuDauKyNo || 0) - (r.soDuDauKyCo || 0),
     phatSinhNo: r.phatSinhNo || 0,
     phatSinhCo: r.phatSinhCo || 0,
@@ -56,8 +66,8 @@ export function tienTheoTaiKhoan(tb: TrialBalance[]): TienTheoTaiKhoanRow[] {
   const out: TienTheoTaiKhoanRow[] = [];
   for (const r of tb) {
     if (!thuocNhom(r.taiKhoan, PREFIX_TIEN)) continue;
-    out.push(toRow(r));
-    for (const con of r.doiTuongChiTiet ?? []) out.push(toRow(con));
+    out.push(toRow(r, false));
+    for (const con of r.doiTuongChiTiet ?? []) out.push(toRow(con, true));
   }
   return out;
 }
@@ -78,6 +88,7 @@ export function doiChieuCongNo(tb: TrialBalance[], loai: 'thu' | 'tra'): DoiChie
     for (const dt of acc.doiTuongChiTiet ?? []) {
       const ma = dt.taiKhoan;
       const row = gop.get(ma) ?? {
+        ma,
         doiTuong: dt.tenTaiKhoan || dt.taiKhoan,
         duDauKy: 0,
         phatSinhTang: 0,

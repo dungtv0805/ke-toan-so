@@ -3,8 +3,8 @@ import { buildDoiChieuSheets } from './doiChieuExport';
 import type { DoiChieuRow } from './trialBalanceDerive';
 
 const rows: DoiChieuRow[] = [
-  { doiTuong: 'Công ty A', duDauKy: 100, phatSinhTang: 500, phatSinhGiam: 300, duCuoiKy: 300 },
-  { doiTuong: 'Công ty B', duDauKy: 0, phatSinhTang: 200, phatSinhGiam: 0, duCuoiKy: 200 },
+  { ma: 'KH01', doiTuong: 'Công ty A', duDauKy: 100, phatSinhTang: 500, phatSinhGiam: 300, duCuoiKy: 300 },
+  { ma: 'KH02', doiTuong: 'Công ty B', duDauKy: 0, phatSinhTang: 200, phatSinhGiam: 0, duCuoiKy: 200 },
 ];
 
 describe('buildDoiChieuSheets', () => {
@@ -35,8 +35,24 @@ describe('buildDoiChieuSheets', () => {
 
   it('cột số dùng header tiếng Việt và định dạng số', () => {
     const [sheet] = buildDoiChieuSheets(rows, 'thu', 'Năm 2026');
-    expect(sheet.columns[0].header).toBe('Đối tượng');
-    expect(sheet.columns[4].align).toBe('right');
-    expect(sheet.columns[4].numFmt).toBeTruthy();
+    expect(sheet.columns.map((c) => c.header)).toEqual([
+      'Mã đối tượng',
+      'Đối tượng',
+      'Số dư đầu kỳ',
+      'Phát sinh tăng',
+      'Phát sinh giảm',
+      'Số dư cuối kỳ',
+    ]);
+    expect(sheet.columns[5].align).toBe('right');
+    expect(sheet.columns[5].numFmt).toBeTruthy();
+  });
+
+  it('mỗi dòng mang mã đối tượng — hai đối tượng trùng tên vẫn phân biệt được', () => {
+    const trungTen: DoiChieuRow[] = [
+      { ma: 'KH01', doiTuong: 'Công ty ABC', duDauKy: 0, phatSinhTang: 100, phatSinhGiam: 0, duCuoiKy: 100 },
+      { ma: 'KH02', doiTuong: 'Công ty ABC', duDauKy: 0, phatSinhTang: 200, phatSinhGiam: 0, duCuoiKy: 200 },
+    ];
+    const [sheet] = buildDoiChieuSheets(trungTen, 'thu', 'Năm 2026');
+    expect(sheet.rows.slice(0, 2).map((r) => r.cells?.ma)).toEqual(['KH01', 'KH02']);
   });
 });

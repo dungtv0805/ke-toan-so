@@ -16,6 +16,7 @@ interface Props {
 }
 
 const columns: ColumnsType<DoiChieuRow> = [
+  { title: 'Mã đối tượng', dataIndex: 'ma' },
   { title: 'Đối tượng', dataIndex: 'doiTuong' },
   { title: 'Số dư đầu kỳ', dataIndex: 'duDauKy', align: 'right', render: formatCurrency },
   { title: 'Phát sinh tăng', dataIndex: 'phatSinhTang', align: 'right', render: formatCurrency },
@@ -64,7 +65,9 @@ const DoiChieuCongNoTable: React.FC<Props> = ({ thu, tra, loading, kyLabel }) =>
     >
       <Table
         size="small"
-        rowKey="doiTuong"
+        // Khoá theo MÃ, không theo tên: hai đối tượng khác mã trùng tên là
+        // chuyện xảy ra được, khoá theo tên là hai dòng dùng chung một key.
+        rowKey="ma"
         columns={columns}
         dataSource={rows}
         loading={loading}

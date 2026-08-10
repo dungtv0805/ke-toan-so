@@ -10,6 +10,9 @@ const soCot = (key: string, header: string): ReportCol => ({
 });
 
 const COLUMNS: ReportCol[] = [
+  // Đây là biên bản gửi khách hàng — thiếu mã thì hai đối tượng trùng tên ra
+  // hai dòng không phân biệt nổi.
+  { key: 'ma', header: 'Mã đối tượng', width: 16 },
   { key: 'doiTuong', header: 'Đối tượng', width: 36 },
   soCot('duDauKy', 'Số dư đầu kỳ'),
   soCot('phatSinhTang', 'Phát sinh tăng'),

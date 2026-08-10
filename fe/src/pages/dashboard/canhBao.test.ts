@@ -13,6 +13,7 @@ const qh = (doiTuongTen: string, conLai: number, soNgayQuaHan: number) => ({
 const tkTien = (ma: string, duCuoiKy: number) => ({
   ma,
   ten: ma,
+  laCon: false,
   duDauKy: 0,
   phatSinhNo: 0,
   phatSinhCo: 0,

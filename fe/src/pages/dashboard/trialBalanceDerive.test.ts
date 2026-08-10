@@ -64,6 +64,7 @@ describe('tienTheoTaiKhoan', () => {
     ];
     const rows = tienTheoTaiKhoan(tb);
     expect(rows.map((r) => r.ma)).toEqual(['1121', 'VCB']);
+    expect(rows.map((r) => r.laCon)).toEqual([false, true]);
     // dư = Nợ − Có (quy ước TK dư Nợ), có cả hai vế Nợ/Có khác 0 để pin đúng công thức
     expect(rows[0].duDauKy).toBe(900); // 1000 - 100
     expect(rows[0].duCuoiKy).toBe(1250); // 1300 - 50
@@ -74,6 +75,41 @@ describe('tienTheoTaiKhoan', () => {
 
   it('bỏ qua TK không phải tiền', () => {
     expect(tienTheoTaiKhoan([tk({ taiKhoan: '331', soDuCuoiKyCo: 100 })])).toEqual([]);
+  });
+
+  it('dòng con có mã bắt đầu bằng CHỮ SỐ vẫn là laCon — mã quỹ là trường tự do', () => {
+    // Khách đặt mã quỹ '01' và '1121A': đoán dòng cha/con từ hình dạng mã sẽ
+    // coi cả hai là dòng cha và cộng trùng tiền.
+    const tb = [
+      tk({
+        taiKhoan: '1111',
+        soDuDauKyNo: 300,
+        soDuCuoiKyNo: 300,
+        doiTuongChiTiet: [
+          tk({ taiKhoan: '01', tenTaiKhoan: 'Quỹ chính', soDuDauKyNo: 200, soDuCuoiKyNo: 200 }),
+          tk({ taiKhoan: '1121A', tenTaiKhoan: 'Quỹ phụ', soDuDauKyNo: 100, soDuCuoiKyNo: 100 }),
+        ],
+      }),
+    ];
+    const rows = tienTheoTaiKhoan(tb);
+    expect(rows.map((r) => [r.ma, r.laCon])).toEqual([
+      ['1111', false],
+      ['01', true],
+      ['1121A', true],
+    ]);
+    // tổng chỉ cộng dòng cha → không nhân đôi
+    const tongCha = rows.filter((r) => !r.laCon).reduce((s, r) => s + r.duCuoiKy, 0);
+    expect(tongCha).toBe(300);
+  });
+
+  it('dòng con chưa xác định đối tượng (mã rỗng) vẫn được đánh dấu laCon', () => {
+    const tb = [
+      tk({
+        taiKhoan: '1121',
+        doiTuongChiTiet: [tk({ taiKhoan: '', tenTaiKhoan: 'Chưa xác định', soDuCuoiKyNo: 50 })],
+      }),
+    ];
+    expect(tienTheoTaiKhoan(tb).map((r) => r.laCon)).toEqual([false, true]);
   });
 });
 
@@ -90,7 +126,7 @@ describe('doiChieuCongNo', () => {
     ];
     const rows = doiChieuCongNo(tb, 'thu');
     expect(rows).toEqual([
-      { doiTuong: 'Công ty A', duDauKy: 100, phatSinhTang: 500, phatSinhGiam: 300, duCuoiKy: 300 },
+      { ma: 'KH01', doiTuong: 'Công ty A', duDauKy: 100, phatSinhTang: 500, phatSinhGiam: 300, duCuoiKy: 300 },
     ]);
   });
 
@@ -104,7 +140,7 @@ describe('doiChieuCongNo', () => {
       }),
     ];
     expect(doiChieuCongNo(tb, 'tra')).toEqual([
-      { doiTuong: 'NCC B', duDauKy: 200, phatSinhTang: 600, phatSinhGiam: 100, duCuoiKy: 700 },
+      { ma: 'NCC01', doiTuong: 'NCC B', duDauKy: 200, phatSinhTang: 600, phatSinhGiam: 100, duCuoiKy: 700 },
     ]);
   });
 
@@ -132,6 +168,9 @@ describe('doiChieuCongNo', () => {
     expect(rows).toHaveLength(2);
     expect(rows.every((r) => r.doiTuong === 'Công ty ABC')).toBe(true);
     expect(rows.map((r) => r.duCuoiKy).sort((a, b) => a - b)).toEqual([100, 200]);
+    // mã đi kèm ra tới lớp hiển thị — nếu không thì bảng lẫn file Excel gửi
+    // khách có hai dòng "Công ty ABC" không phân biệt nổi
+    expect(rows.map((r) => r.ma).sort()).toEqual(['KH01', 'KH02']);
   });
 
   it('cùng một mã nhưng tên ghi lệch giữa hai tài khoản → gộp một dòng, hiển thị tên xuất hiện đầu tiên', () => {
