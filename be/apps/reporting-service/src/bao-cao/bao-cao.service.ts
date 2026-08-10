@@ -8,6 +8,7 @@ import {
   type LoaiMatcher,
 } from '../shared/doi-tuong-loai.helper';
 import { buildDoanhThuReport, type DoanhThuReport } from './doanh-thu.helper';
+import { tinhEbitda } from './bao-cao.helper';
 
 export interface PnLEntry {
   ma: string;
@@ -664,6 +665,7 @@ export class BaoCaoService {
     const m51_ht = this.sumByAccountPrefix(vouchersHT, '8211', 'NO');
     const m52_ht = this.sumByAccountPrefix(vouchersHT, '8212', 'NO');
     const m60_ht = m50_ht - m51_ht - m52_ht;
+    const khauHao_ht = this.sumByAccountPrefix(vouchersHT, '214', 'CO');
 
     // Previous period indicators
     const m01_kt = this.sumByAccountPrefix(vouchersKT, '511', 'CO');
@@ -683,6 +685,7 @@ export class BaoCaoService {
     const m51_kt = this.sumByAccountPrefix(vouchersKT, '8211', 'NO');
     const m52_kt = this.sumByAccountPrefix(vouchersKT, '8212', 'NO');
     const m60_kt = m50_kt - m51_kt - m52_kt;
+    const khauHao_kt = this.sumByAccountPrefix(vouchersKT, '214', 'CO');
 
     // Derived column helpers
     const dtThuan_ht = m10_ht;
@@ -743,6 +746,10 @@ export class BaoCaoService {
 
     return {
       chiTieu,
+      ebitda: {
+        kyHienTai: tinhEbitda(m50_ht, m22_ht, khauHao_ht),
+        kyTruoc: tinhEbitda(m50_kt, m22_kt, khauHao_kt),
+      },
       kyHienTai: {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),

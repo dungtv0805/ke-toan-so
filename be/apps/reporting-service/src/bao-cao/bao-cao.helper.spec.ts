@@ -3,6 +3,7 @@ import {
   buildDoiTuongLoaiIndex,
   makeLoaiMatcher,
 } from '../shared/doi-tuong-loai.helper';
+import { tinhEbitda } from './bao-cao.helper';
 
 describe('openingNetForSide', () => {
   it('undefined opening → 0', () => {
@@ -164,5 +165,23 @@ describe('buildDoiTuongSoTien', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].ma).toBe('DT01');
     expect(rows[0].soTien).toBe(1000);
+  });
+});
+
+describe('tinhEbitda', () => {
+  it('EBITDA = LNTT + lãi vay + khấu hao', () => {
+    expect(tinhEbitda(1000, 200, 300)).toBe(1500);
+  });
+
+  it('công ty chưa dùng TK 214 → khấu hao 0, EBITDA = LNTT + lãi vay', () => {
+    expect(tinhEbitda(1000, 200, 0)).toBe(1200);
+  });
+
+  it('lỗ trước thuế vẫn cộng ngược lãi vay và khấu hao', () => {
+    expect(tinhEbitda(-500, 100, 400)).toBe(0);
+  });
+
+  it('mọi thành phần bằng 0 → 0', () => {
+    expect(tinhEbitda(0, 0, 0)).toBe(0);
   });
 });
