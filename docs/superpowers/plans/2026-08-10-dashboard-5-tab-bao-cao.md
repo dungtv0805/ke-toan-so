@@ -1471,9 +1471,12 @@ git commit -m "feat(dashboard): tab Dòng tiền"
 
 **Files:**
 - Modify: `be/libs/dto/src/reporting/kqkd.dto.ts`
-- Modify: `be/apps/reporting-service/src/bao-cao/bao-cao.helper.ts`
-- Test: `be/apps/reporting-service/src/bao-cao/bao-cao.helper.spec.ts`
+- **Create:** `be/apps/reporting-service/src/bao-cao/bao-cao.helper.ts` — file này **chưa tồn tại**
+- Test: `be/apps/reporting-service/src/bao-cao/bao-cao.helper.spec.ts` — file này **đã tồn tại**, hiện test các hàm export từ `bao-cao.service.ts`; chỉ **thêm** describe mới vào cuối, không sửa phần cũ
 - Modify: `be/apps/reporting-service/src/bao-cao/bao-cao.service.ts:622-760`
+
+> Lệ repo: helper thuần nằm ở `*.helper.ts` cạnh `*.helper.spec.ts` — xem cặp
+> `doanh-thu.helper.ts` / `doanh-thu.helper.spec.ts` sẵn có làm mẫu.
 
 **Interfaces:**
 - Produces:
@@ -1517,8 +1520,9 @@ describe('tinhEbitda', () => {
 });
 ```
 
-Nếu file `bao-cao.helper.spec.ts` đã có import từ `./bao-cao.helper`, gộp
-`tinhEbitda` vào import sẵn có thay vì thêm dòng import mới.
+File spec đã tồn tại và hiện chỉ import từ `./bao-cao.service` và
+`../shared/doi-tuong-loai.helper`. Thêm dòng import mới từ `./bao-cao.helper` ở đầu
+file, giữ nguyên mọi thứ có sẵn.
 
 - [ ] **Step 2: Chạy test để chắc chắn nó fail**
 
@@ -1530,7 +1534,7 @@ Kỳ vọng: FAIL — `tinhEbitda is not a function`.
 
 - [ ] **Step 3: Viết hàm helper**
 
-Thêm vào cuối `be/apps/reporting-service/src/bao-cao/bao-cao.helper.ts`:
+**Tạo mới** `be/apps/reporting-service/src/bao-cao/bao-cao.helper.ts` với nội dung:
 
 ```ts
 /**
@@ -1632,7 +1636,7 @@ git commit -m "feat(bao-cao): thêm EBITDA vào báo cáo kết quả kinh doanh
 ### Task 8: Mở rộng chiều cho báo cáo lợi nhuận (backend)
 
 **Files:**
-- Modify: `be/apps/reporting-service/src/bao-cao/bao-cao.helper.ts`
+- Modify: `be/apps/reporting-service/src/bao-cao/bao-cao.helper.ts` (Task 7 đã tạo file này)
 - Test: `be/apps/reporting-service/src/bao-cao/bao-cao.helper.spec.ts`
 - Modify: `be/apps/reporting-service/src/bao-cao/bao-cao.service.ts:403-420`
 
