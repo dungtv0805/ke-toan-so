@@ -189,15 +189,37 @@ Hàm đếm tách riêng thành `dashboard/canhBao.ts` + `canhBao.test.ts`.
 
 ## 8. Backend — reporting-service
 
+### Tái sử dụng endpoint đã có — không viết mới
+
+`GET /reporting/so-cai/trial-balance?startDate&endDate` đã trả về, cho **từng tài
+khoản**: `noDauKy · coDauKy · noPhatSinh · coPhatSinh · noCuoiKy · coCuoiKy`, kèm
+`doiTuongChiTiet[]` cùng cấu trúc cho từng đối tượng. FE đã có
+`soCaiService.getTrialBalance(startDate, endDate)`.
+
+Từ một lần gọi đó dẫn xuất được:
+
+| Cần | Cách lấy |
+|---|---|
+| Bảng số dư theo TK/quỹ (tab Dòng tiền) | Lọc `ma` bắt đầu `111`/`112`, quỹ/ngân hàng nằm trong `doiTuongChiTiet` |
+| Đối chiếu công nợ (tab Công nợ) | Lọc TK 131/136/138 (thu) hoặc 331/336/338 (trả), đọc `doiTuongChiTiet` |
+| KPI Tổng tiền | Σ `noCuoiKy − coCuoiKy` của TK `111`/`112` |
+| KPI Giá trị tồn kho | Σ `noCuoiKy − coCuoiKy` của TK `15*` |
+
+Lịch thu/trả nợ tính ở FE: `/payable/phai-thu` và `/payable/phai-tra` gọi
+`findAll()` **không phân trang**, trả toàn bộ bản ghi kèm `hanThanhToan` và
+`conLai`.
+
+KPI Phải thu / Phải trả **không** lấy từ trial-balance mà dùng
+`congNoPhaiThuService.getStats().conLai` / `congNoPhaiTraService.getStats().conLai`
+— cùng nguồn với tab Công nợ, để hai tab không bao giờ lệch số.
+
+### Endpoint thật sự phải làm
+
 | Endpoint | Trả về |
 |---|---|
-| `GET /bao-cao/tong-quan-kpi?startDate&endDate` | 8 KPI của tab Tổng quan trong một lần gọi, kèm mảng cảnh báo chi tiết |
-| `GET /bao-cao/tien-theo-tai-khoan?startDate&endDate` | Mỗi TK tiền: `{ ma, ten, duDauKy, phatSinhNo, phatSinhCo, duCuoiKy }` |
-| `GET /bao-cao/lich-thanh-toan?loai=thu\|chi` | Gom theo mốc 7/30/60/90 ngày: `{ moc, soKhoan, soTien }` |
-| `GET /bao-cao/doanh-so-theo?dimension&groupBy&startDate&endDate` | `groupBy` ∈ `ngay\|thang\|quy\|nam`; trả doanh số kỳ này + cùng kỳ năm trước |
-| `GET /bao-cao/doi-chieu-cong-no?loai&startDate&endDate` | Theo đối tượng: `{ ten, duDauKy, phatSinhTang, phatSinhGiam, duCuoiKy }` |
+| `GET /bao-cao/doanh-so-theo?startDate&endDate&groupBy&dimension` | `groupBy` ∈ `ngay\|thang\|quy\|nam`; doanh số kỳ này + cùng kỳ năm trước, và doanh số theo chiều |
 | Mở rộng `GET /bao-cao/loi-nhuan-theo` | `fieldMap` thêm `bo-phan`, `nhan-vien`, `hop-dong` |
-| Mở rộng `GET /bao-cao/kqkd` | Trả thêm trường `ebitda` |
+| Mở rộng `GET /bao-cao/kqkd` | Trả thêm trường `ebitda` ở cấp cao nhất |
 
 Tất cả dùng `@Roles` giống các endpoint `bao-cao` hiện có và nhận `tenantId` từ
 `@CurrentUser()`.
@@ -206,6 +228,10 @@ Tất cả dùng `@Roles` giống các endpoint `bao-cao` hiện có và nhận 
 `danhMuc[<chiều>]` — cùng cách `getLoiNhuanByDimension` đang làm. Chiều `hop-dong`
 lấy `danhMuc.hopDong.soHopDong` chứ không phải `.ma` (snapshot hợp đồng không có
 trường `ma`).
+
+EBITDA thêm thành **trường riêng** `ebitda: { kyHienTai, kyTruoc }` của
+`KqkdReport`, **không** thêm dòng vào mảng `chiTieu` — mảng đó là mẫu B02-DN đang
+render nguyên văn ở `/bao-cao/kqkd`, chèn dòng lạ vào sẽ làm sai báo cáo chính thức.
 
 ## 9. Điều hướng sang báo cáo chi tiết
 
