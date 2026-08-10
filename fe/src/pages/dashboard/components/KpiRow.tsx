@@ -7,7 +7,12 @@ const { Text } = Typography;
 export interface KpiItem {
   key: string;
   label: string;
-  value: number;
+  /**
+   * `null` = KHÔNG CÓ DỮ LIỆU, hiện dấu "—". Đừng thay bằng 0: một số 0 nằm
+   * giữa các con số đúng đọc như "chỉ tiêu này bằng không", không phải
+   * "backend chưa trả trường này".
+   */
+  value: number | null;
   /** Kiểu hiển thị. Mặc định 'tien'. */
   format?: 'tien' | 'phanTram' | 'soLuong';
   /** true = giá trị dương là tín hiệu xấu (ví dụ số cảnh báo). */
@@ -26,6 +31,7 @@ interface Props {
 }
 
 const formatValue = (item: KpiItem): string => {
+  if (item.value === null || item.value === undefined) return '—';
   const v = item.value || 0;
   switch (item.format) {
     case 'phanTram':
@@ -37,7 +43,7 @@ const formatValue = (item: KpiItem): string => {
   }
 };
 
-/** Xanh khi tốt, đỏ khi xấu. Giá trị 0 luôn trung tính. */
+/** Xanh khi tốt, đỏ khi xấu. Giá trị 0 và "không có dữ liệu" luôn trung tính. */
 const valueClass = (item: KpiItem): string => {
   const v = item.value || 0;
   if (v === 0) return 'text-muted-foreground';

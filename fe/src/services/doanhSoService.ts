@@ -1,3 +1,12 @@
+/**
+ * CHÍNH SÁCH LỖI CỦA FILE NÀY: **để lỗi ném ra**, không bọc `try/catch`. Nhờ
+ * vậy React Query đưa tab Bán hàng vào trạng thái `isError` và màn hình báo
+ * lỗi thật thay vì hiện 0.
+ *
+ * Khác `dashboardService.ts` — file đó nuốt lỗi và trả 0/`[]` (hành vi có sẵn
+ * từ trước, được giữ lại có chủ đích). Chênh lệch này là cố ý, không phải một
+ * trong hai file viết sai; xem chú thích đầu `dashboardService.ts`.
+ */
 import { ServiceBase } from './base/service-base';
 
 export interface DoanhSoThoiGianPoint {

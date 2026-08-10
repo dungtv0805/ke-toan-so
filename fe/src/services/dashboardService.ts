@@ -1,3 +1,17 @@
+/**
+ * CHÍNH SÁCH LỖI CỦA FILE NÀY: **nuốt lỗi, trả giá trị mặc định** (0, `[]`,
+ * `{}`). Mọi hàm dưới đây bọc lời gọi API trong `try/catch` rồi trả về giá trị
+ * rỗng — cố ý giữ nguyên, KHÔNG đổi trong đợt sửa này.
+ *
+ * Hệ quả phải biết: API hỏng (mất mạng, 500, hết hạn token) thì bốn tab Tổng
+ * quan · Dòng tiền · Kết quả kinh doanh · Công nợ **lặng lẽ hiện 0** thay vì
+ * báo lỗi — người dùng không phân biệt được "công ty không có số liệu" với
+ * "không tải được số liệu".
+ *
+ * `doanhSoService.ts` (tab Bán hàng) **cố ý làm khác**: ném lỗi ra để tab hiện
+ * trạng thái lỗi thật. Đó không phải nhầm lẫn của một trong hai file — hai
+ * chính sách cùng tồn tại có chủ đích; thống nhất chúng là việc của đợt sau.
+ */
 import { soQuyService } from './soQuyService';
 import { balanceSheetService } from './balanceSheetService';
 import { baoCaoReportService } from './baoCaoReportService';
@@ -212,7 +226,10 @@ export const dashboardService = {
       const report = await kqkdService.getData({ startDate, endDate, periodType: 'tuyChon' });
       const out: Record<string, number> = {};
       for (const c of report.chiTieu) out[c.ma] = c.kyHienTai;
-      out.ebitda = report.ebitda?.kyHienTai ?? 0;
+      // BE chưa trả `ebitda` (FE lên trước BE) thì KHÔNG đặt khoá — để tab hiện
+      // "—". Gán 0 sẽ ra một số 0 ₫ nằm giữa bảy con số đúng, kèm tooltip tự tin
+      // giải thích công thức: kế toán đọc thành "công ty không có EBITDA".
+      if (report.ebitda) out.ebitda = report.ebitda.kyHienTai;
       return out;
     } catch {
       return {};
