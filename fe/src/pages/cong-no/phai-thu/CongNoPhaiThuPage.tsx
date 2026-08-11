@@ -12,7 +12,6 @@ import {
   Alert,
   Progress,
   Tooltip,
-  Breadcrumb
 } from 'antd';
 import {
   ReloadOutlined,
@@ -21,8 +20,7 @@ import {
   ExclamationCircleOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  HomeOutlined,
-  DollarOutlined
+  DollarOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { 
@@ -542,14 +540,6 @@ const CongNoPhaiThuPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb style={{ marginBottom: 16 }}>
-        <Breadcrumb.Item href="/">
-          <HomeOutlined />
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>Công nợ</Breadcrumb.Item>
-        <Breadcrumb.Item>Phải thu</Breadcrumb.Item>
-      </Breadcrumb>
-
       <FilterBar
         search={{
           value: searchText,

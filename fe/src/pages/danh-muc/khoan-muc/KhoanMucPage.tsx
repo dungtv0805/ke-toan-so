@@ -15,7 +15,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
   Tabs,
 } from "antd";
 import {
@@ -23,7 +22,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   ExportOutlined,
-  HomeOutlined,
   FallOutlined,
   RiseOutlined,
   TagOutlined,
@@ -402,15 +400,6 @@ const KhoanMucPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Danh mục" },
-          { title: "Khoản mục" },
-        ]}
-      />
-
       {/* Table with Tabs */}
       <Card>
         <Tabs

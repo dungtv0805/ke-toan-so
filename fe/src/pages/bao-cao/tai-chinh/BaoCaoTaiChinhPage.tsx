@@ -8,7 +8,6 @@ import {
   Row,
   Col,
   Tabs,
-  Breadcrumb,
   Tag,
   Alert,
   Typography,
@@ -16,7 +15,6 @@ import {
 } from 'antd';
 import {
   ExportOutlined,
-  HomeOutlined,
   FileTextOutlined,
   CheckCircleOutlined,
   WarningOutlined,
@@ -615,13 +613,6 @@ const BaoCaoTaiChinhPage: React.FC = () => {
     <div className="bctc-compact" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div style={{ flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-          <Breadcrumb
-            items={[
-              { href: '/', title: <><HomeOutlined /> Trang chủ</> },
-              { title: 'Báo cáo' },
-              { title: 'Báo cáo tài chính' },
-            ]}
-          />
           <Tag color="blue">{getPeriodLabel(filterParams)}</Tag>
         </div>
 

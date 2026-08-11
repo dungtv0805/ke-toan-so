@@ -13,7 +13,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
 } from "antd";
 import {
   PlusOutlined,
@@ -21,7 +20,6 @@ import {
   DeleteOutlined,
   ExportOutlined,
   ReloadOutlined,
-  HomeOutlined,
 } from "@ant-design/icons";
 import { DonViTinh } from "@/types";
 import { donViTinhService } from "@/services/donViTinhService";
@@ -299,14 +297,6 @@ const DonViTinhPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Danh mục" },
-          { title: "Đơn vị tính" },
-        ]}
-      />
-
       <Card>
         <FilterBar
           search={{

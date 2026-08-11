@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Space, Button, Breadcrumb } from 'antd';
+import { Space, Button } from 'antd';
 import {
   PlusOutlined,
   ExportOutlined,
-  HomeOutlined,
-  SettingOutlined
+  SettingOutlined,
 } from '@ant-design/icons';
 import { FilterBar } from '@/components/common/FilterBar';
 import { useQuyChaunHandler, useQuyChaunState } from '../../QuyChaunHandlerContext';
@@ -89,14 +88,6 @@ export const QuyChaunHeader: React.FC<QuyChaunHeaderProps> = ({ settingsButton, 
 
   return (
     <>
-      <Breadcrumb style={{ marginBottom: 16 }}>
-        <Breadcrumb.Item href="/">
-          <HomeOutlined />
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>Cấu hình</Breadcrumb.Item>
-        <Breadcrumb.Item>Quy chuẩn hạch toán</Breadcrumb.Item>
-      </Breadcrumb>
-
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
         <Space>
           <SettingOutlined />

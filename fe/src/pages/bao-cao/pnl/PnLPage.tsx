@@ -8,7 +8,6 @@ import {
   Row,
   Col,
   Tabs,
-  Breadcrumb,
   Select,
   Tag,
   message,
@@ -16,7 +15,6 @@ import {
 import {
   ReloadOutlined,
   ExportOutlined,
-  HomeOutlined,
   RiseOutlined,
   FallOutlined,
   LineChartOutlined,
@@ -189,15 +187,6 @@ const PnLPage: React.FC = () => {
 
   return (
     <div>
-      <Breadcrumb
-        items={[
-          { href: '/', title: <><HomeOutlined /> Trang chủ</> },
-          { title: 'Báo cáo' },
-          { title: 'Lãi lỗ (P&L)' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <FilterBar
         className="mb-3"
         filters={

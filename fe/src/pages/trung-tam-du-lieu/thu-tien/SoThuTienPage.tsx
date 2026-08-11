@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Breadcrumb,
   Card,
   Table,
   Button,
@@ -17,7 +16,6 @@ import {
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
-  HomeOutlined,
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
@@ -236,13 +234,6 @@ export default function SoThuTienPage() {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: '/', title: <><HomeOutlined /> Trang chủ</> },
-          { title: 'Trung tâm dữ liệu' },
-          { title: 'Thu tiền hợp đồng' },
-        ]}
-      />
       <Card className="shadow-sm">
         <FilterBar
           search={{ value: search, onChange: setSearch, onSearch: load, placeholder: 'Tìm số HĐ, khách hàng, nội dung...', width: 320 }}

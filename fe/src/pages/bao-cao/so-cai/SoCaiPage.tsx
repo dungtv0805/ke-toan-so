@@ -1,27 +1,25 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Card, 
-  Table, 
-  Button, 
-  Space, 
-  Statistic, 
-  Row, 
-  Col, 
+import {
+  Card,
+  Table,
+  Button,
+  Space,
+  Statistic,
+  Row,
+  Col,
   Tabs,
-  Breadcrumb,
   Select,
   Tag,
   Descriptions,
   Empty,
-  message
+  message,
 } from 'antd';
-import { 
-  ReloadOutlined, 
+import {
+  ReloadOutlined,
   ExportOutlined,
-  HomeOutlined,
   BookOutlined,
   CheckCircleOutlined,
-  WarningOutlined
+  WarningOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { 
@@ -570,14 +568,6 @@ const SoCaiPage: React.FC = () => {
 
   return (
     <div>
-      <Breadcrumb style={{ marginBottom: 16 }}>
-        <Breadcrumb.Item href="/">
-          <HomeOutlined />
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>Báo cáo</Breadcrumb.Item>
-        <Breadcrumb.Item>Sổ cái</Breadcrumb.Item>
-      </Breadcrumb>
-
       <FilterBar
         className="mb-3"
         filters={

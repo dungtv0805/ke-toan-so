@@ -13,7 +13,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
 } from "antd";
 import {
   PlusOutlined,
@@ -21,7 +20,6 @@ import {
   DeleteOutlined,
   ExportOutlined,
   ReloadOutlined,
-  HomeOutlined,
 } from "@ant-design/icons";
 import { Kho } from "@/types";
 import { khoService } from "@/services/khoService";
@@ -310,14 +308,6 @@ const KhoPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Danh mục" },
-          { title: "Kho" },
-        ]}
-      />
-
       <Card>
         <FilterBar
           search={{

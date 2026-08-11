@@ -11,13 +11,11 @@ import {
   Popconfirm,
   Tooltip,
   Typography,
-  Breadcrumb,
 } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  HomeOutlined,
   GiftOutlined,
 } from "@ant-design/icons";
 import { NhomKhuyenMai } from "@/types";
@@ -193,21 +191,6 @@ function NhomKhuyenMaiPageInner() {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          {
-            href: "/",
-            title: (
-              <>
-                <HomeOutlined /> Trang chủ
-              </>
-            ),
-          },
-          { title: "Danh mục" },
-          { title: "Nhóm khuyến mại" },
-        ]}
-      />
-
       {/* <div className="page-header p-6 text-white">
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">

@@ -15,7 +15,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
   Statistic,
   DatePicker,
   Tabs,
@@ -28,7 +27,6 @@ import {
   ExportOutlined,
   ReloadOutlined,
   ProjectOutlined,
-  HomeOutlined,
   PlayCircleOutlined,
   CheckCircleOutlined,
   PauseCircleOutlined,
@@ -506,15 +504,6 @@ const DuAnPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Danh mục" },
-          { title: "Dự án" },
-        ]}
-      />
-
       {/* Stats Cards */}
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={6}>

@@ -15,7 +15,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
   Tabs,
 } from "antd";
 import {
@@ -23,7 +22,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   ExportOutlined,
-  HomeOutlined,
   FallOutlined,
   RiseOutlined,
 } from "@ant-design/icons";
@@ -270,8 +268,6 @@ const NhomKhoanMucPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb items={[{ href: "/", title: <HomeOutlined /> }, { title: "Danh mục" }, { title: "Nhóm khoản mục" }]} />
-
       <Card>
         <Tabs activeKey={activeTab} onChange={handleTabChange} items={tabItems} className="mb-4" />
 

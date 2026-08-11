@@ -13,7 +13,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
 } from "antd";
 import {
   PlusOutlined,
@@ -21,7 +20,6 @@ import {
   DeleteOutlined,
   ExportOutlined,
   ReloadOutlined,
-  HomeOutlined,
 } from "@ant-design/icons";
 import { NhomVatTu } from "@/types";
 import { nhomVatTuService } from "@/services/nhomVatTuService";
@@ -299,14 +297,6 @@ const NhomVatTuPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Danh mục" },
-          { title: "Nhóm vật tư" },
-        ]}
-      />
-
       <Card>
         <FilterBar
           search={{

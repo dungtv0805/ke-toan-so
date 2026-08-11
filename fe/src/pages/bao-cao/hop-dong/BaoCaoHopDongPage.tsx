@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Breadcrumb, Button, Card, Table, Typography, message } from 'antd';
+import { Button, Card, Table, Typography, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { HomeOutlined, FileProtectOutlined, ExportOutlined } from '@ant-design/icons';
+import { FileProtectOutlined, ExportOutlined } from '@ant-design/icons';
 import type { BaoCaoHopDongRow } from '@/types';
 import { theoDoiHopDongService } from '@/services/theoDoiHopDongService';
 import { exportReportExcel } from '@/utils/exportReportExcel';
@@ -122,14 +122,6 @@ export default function BaoCaoHopDongPage() {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: '/', title: <><HomeOutlined /> Trang chủ</> },
-          { title: 'Bán hàng' },
-          { title: 'Báo cáo' },
-        ]}
-      />
-
       <SectionNav items={BAN_HANG_NAV} />
 
       <Card className="shadow-sm">

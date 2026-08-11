@@ -15,14 +15,12 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
 } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   ExportOutlined,
-  HomeOutlined,
 } from "@ant-design/icons";
 import { TaiKhoanNganHang } from "@/types";
 import { FilterBar } from "@/components/common/FilterBar";
@@ -332,15 +330,6 @@ const NganHangPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Danh mục" },
-          { title: "Ngân hàng & Quỹ" },
-        ]}
-      />
-
       {/* Table */}
       <Card>
         <FilterBar

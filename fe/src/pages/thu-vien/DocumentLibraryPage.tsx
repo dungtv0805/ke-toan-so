@@ -6,12 +6,10 @@ import {
   Space,
   Tooltip,
   Typography,
-  Breadcrumb,
   Popconfirm,
   message,
 } from "antd";
 import {
-  HomeOutlined,
   UploadOutlined,
   ReloadOutlined,
   EyeOutlined,
@@ -232,14 +230,6 @@ export const DocumentLibraryPage: React.FC<DocumentLibraryPageProps> = ({
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Thư viện" },
-          { title: label },
-        ]}
-      />
-
       <Card>
         <FilterBar
           search={{

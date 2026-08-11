@@ -16,7 +16,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
 } from "antd";
 import {
   PlusOutlined,
@@ -24,7 +23,6 @@ import {
   DeleteOutlined,
   ExportOutlined,
   ReloadOutlined,
-  HomeOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { DiemDanhAn } from "@/types";
@@ -300,14 +298,6 @@ const DiemDanhAnPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Bếp ăn" },
-          { title: "Điểm danh ăn" },
-        ]}
-      />
-
       <Card>
         <FilterBar
           search={{

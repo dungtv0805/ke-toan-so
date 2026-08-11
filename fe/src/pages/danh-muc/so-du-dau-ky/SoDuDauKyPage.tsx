@@ -4,10 +4,9 @@ import { doiTuongService } from '@/services/doiTuongService';
 import { nganHangService } from '@/services/nganHangService';
 import { soDuDauKyService } from '@/services/soDuDauKyService';
 import { taiKhoanService } from '@/services/taiKhoanService';
-import { DeleteOutlined, HomeOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import {
   Alert,
-  Breadcrumb,
   Button,
   Card,
   DatePicker,
@@ -354,12 +353,6 @@ const SoDuDauKyPage: React.FC = () => {
 
   return (
     <div >
-      <Breadcrumb style={{ marginBottom: 16 }}
-        items={[
-          { href: '/', title: <HomeOutlined /> },
-          { title: 'Danh mục' },
-          { title: 'Số dư đầu kỳ' },
-        ]} />
       <Card
         title="Khai báo số dư đầu kỳ"
         extra={

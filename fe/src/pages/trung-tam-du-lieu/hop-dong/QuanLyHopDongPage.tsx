@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Breadcrumb,
   Card,
   Row,
   Col,
@@ -22,7 +21,6 @@ import {
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
-  HomeOutlined,
   EyeOutlined,
   PlusOutlined,
   DeleteOutlined,
@@ -372,14 +370,6 @@ export default function QuanLyHopDongPage() {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: '/', title: <><HomeOutlined /> Trang chủ</> },
-          { title: 'Trung tâm dữ liệu' },
-          { title: 'Bán hàng' },
-        ]}
-      />
-
       <SectionNav items={BAN_HANG_NAV} />
 
       <Row gutter={16}>

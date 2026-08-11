@@ -11,13 +11,11 @@ import {
   Popconfirm,
   Tooltip,
   Typography,
-  Breadcrumb,
 } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  HomeOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
 import { NhomQuanLy } from "@/types";
@@ -191,21 +189,6 @@ function NhomQuanLyPageInner() {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          {
-            href: "/",
-            title: (
-              <>
-                <HomeOutlined /> Trang chủ
-              </>
-            ),
-          },
-          { title: "Danh mục" },
-          { title: "Nhóm quản lý" },
-        ]}
-      />
-
       {/* <div className="page-header p-6 text-white">
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">

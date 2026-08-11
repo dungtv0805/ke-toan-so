@@ -14,7 +14,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
   InputNumber,
 } from "antd";
 import {
@@ -23,7 +22,6 @@ import {
   DeleteOutlined,
   ExportOutlined,
   ReloadOutlined,
-  HomeOutlined,
   DollarOutlined,
   InboxOutlined,
 } from "@ant-design/icons";
@@ -354,15 +352,6 @@ const SanPhamPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Danh mục" },
-          { title: "Sản phẩm" },
-        ]}
-      />
-
       {/* Table */}
       <Card>
         <FilterBar

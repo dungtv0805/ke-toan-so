@@ -6,11 +6,10 @@ import {
   InputNumber,
   Space,
   Typography,
-  Breadcrumb,
   Tag,
   message,
 } from "antd";
-import { HomeOutlined, SaveOutlined } from "@ant-design/icons";
+import { SaveOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import {
   taxReportService,
@@ -278,14 +277,6 @@ const BaoCaoTNDNPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Thuế" },
-          { title: "Báo cáo nhanh thuế TNDN" },
-        ]}
-      />
-
       <Card>
         <Space className="mb-4" wrap>
           <Title level={5} className="!mb-0">

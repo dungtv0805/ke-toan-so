@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Breadcrumb,
   Card,
   Table,
   Button,
@@ -17,7 +16,7 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { HomeOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { FilterBar } from '@/components/common/FilterBar';
 import type { HoaDonBanRa, TheoDoiHopDongRow } from '@/types';
@@ -272,13 +271,6 @@ export default function SoHoaDonBanRaPage() {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: '/', title: <><HomeOutlined /> Trang chủ</> },
-          { title: 'Trung tâm dữ liệu' },
-          { title: 'Hóa đơn bán ra' },
-        ]}
-      />
       <Card className="shadow-sm">
         <FilterBar
           search={{ value: search, onChange: setSearch, onSearch: load, placeholder: 'Tìm số HĐ, công trình, đơn vị mua...', width: 320 }}

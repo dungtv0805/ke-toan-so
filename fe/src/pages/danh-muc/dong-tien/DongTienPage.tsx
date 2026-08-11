@@ -14,7 +14,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
   Statistic,
   Tag,
 } from "antd";
@@ -24,7 +23,6 @@ import {
   DeleteOutlined,
   ExportOutlined,
   ReloadOutlined,
-  HomeOutlined,
   DollarOutlined,
   BankOutlined,
   LineChartOutlined,
@@ -322,15 +320,6 @@ const DongTienPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Danh mục" },
-          { title: "Dòng tiền" },
-        ]}
-      />
-
       {/* Stats Cards */}
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={6}>

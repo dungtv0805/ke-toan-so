@@ -6,12 +6,11 @@ import {
   InputNumber,
   Space,
   Typography,
-  Breadcrumb,
   Tag,
   message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { HomeOutlined } from "@ant-design/icons";
+
 import dayjs from "dayjs";
 import { taxReportService, TongHopThue } from "@/services/taxService";
 import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
@@ -118,14 +117,6 @@ const TongHopThuePage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Thuế" },
-          { title: "Tổng hợp thuế" },
-        ]}
-      />
-
       <Card>
         <Space className="mb-4" wrap>
           <Text strong>Kỳ:</Text>

@@ -8,14 +8,12 @@ import {
   Row,
   Col,
   Tabs,
-  Breadcrumb,
   Tag,
   message,
 } from 'antd';
 import {
   ReloadOutlined,
   ExportOutlined,
-  HomeOutlined,
   BankOutlined,
   CheckCircleOutlined,
   WarningOutlined,
@@ -215,15 +213,6 @@ const BangCanDoiPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb
-        items={[
-          { href: '/', title: <><HomeOutlined /> Trang chủ</> },
-          { title: 'Báo cáo' },
-          { title: 'Bảng cân đối kế toán' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-
       <Card
         title={
           <Space>

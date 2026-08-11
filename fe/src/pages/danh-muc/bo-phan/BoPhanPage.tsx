@@ -13,7 +13,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
   Empty,
 } from "antd";
 import {
@@ -22,7 +21,6 @@ import {
   DeleteOutlined,
   ExportOutlined,
   ReloadOutlined,
-  HomeOutlined,
   ApartmentOutlined,
 } from "@ant-design/icons";
 import { BoPhan } from "@/types";
@@ -279,15 +277,6 @@ const BoPhanPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Danh mục" },
-          { title: "Bộ phận" },
-        ]}
-      />
-
       {/* Table */}
       <Card>
         <FilterBar

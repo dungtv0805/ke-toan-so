@@ -11,7 +11,6 @@ import {
   Popconfirm,
   Tooltip,
   Typography,
-  Breadcrumb,
   Empty,
   Tag,
   ColorPicker,
@@ -22,7 +21,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   ExportOutlined,
-  HomeOutlined,
   SwapOutlined,
 } from "@ant-design/icons";
 import { FilterBar } from "@/components/common/FilterBar";
@@ -339,15 +337,6 @@ const LoaiGiaoDichPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          { href: "/", title: <HomeOutlined /> },
-          { title: "Danh mục" },
-          { title: "Loại giao dịch" },
-        ]}
-      />
-
       {/* Table */}
       <Card>
         <FilterBar

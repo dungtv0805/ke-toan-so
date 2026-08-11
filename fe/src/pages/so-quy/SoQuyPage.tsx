@@ -7,7 +7,6 @@ import {
   Typography,
   Row,
   Col,
-  Breadcrumb,
   Statistic,
   DatePicker,
   Tabs,
@@ -15,7 +14,6 @@ import {
 } from 'antd';
 import {
   ExportOutlined,
-  HomeOutlined,
   WalletOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
@@ -274,14 +272,6 @@ const SoQuyPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          { href: '/', title: <><HomeOutlined /> Trang chủ</> },
-          { title: 'Sổ quỹ' },
-        ]}
-      />
-
       {/* Page Header - Auto hide after 1.5s */}
       <div 
         className={`page-header text-white overflow-hidden transition-all duration-700 ease-out ${
