@@ -37,6 +37,7 @@ import { doiTuongService } from '@/services/doiTuongService';
 import { sanPhamService } from '@/services/sanPhamService';
 import {
   nhatKyChungService,
+  type DoanhThuKhongDon,
   type TongHopDonHang,
 } from '@/services/nhatKyChungService';
 import { THUE_SUAT_OPTIONS } from '@/services/taxService';
@@ -54,6 +55,8 @@ import { tongHopBaoCaoNhanh } from './baoCaoNhanh';
 import { tinhGhiChuDonHang } from './ghiChuDonHang';
 import ButToanDonHangModal from './ButToanDonHangModal';
 import { TK_CHUA_THUC_HIEN, TK_DOANH_THU } from './ghiNhanDoanhThu';
+import BangTongHopSanPham from './BangTongHopSanPham';
+import { pivotTheoThang, KEY_CHUA_PHAN_LOAI, type DongGopPivot } from './pivotSanPham';
 
 const { Text, Title } = Typography;
 
@@ -125,6 +128,8 @@ const NAM_OPTIONS = Array.from({ length: 16 }, (_, i) => {
 /** Phải thu khách hàng — TK Nợ khi ghi nhận doanh thu chưa thực hiện. */
 const TK_PHAI_THU = '131';
 
+const khoaSanPham = (id?: string) => id || KEY_CHUA_PHAN_LOAI;
+
 const NHOM_COT: Record<string, string[]> = {
   'BÁN HÀNG': ['giaTriSauThue', 'tienThue', 'dtChuaThucHien', 'dtDaThucHien'],
   'THU TIỀN': ['daThu', 'conPhaiThu'],
@@ -164,6 +169,7 @@ export default function QuanLyHopDongPage() {
   const [doiTuongMap, setDoiTuongMap] = useState<Record<string, string>>({});
   const [sanPhamList, setSanPhamList] = useState<SanPham[]>([]);
   const [tongHop, setTongHop] = useState<Record<string, TongHopDonHang>>({});
+  const [khongCoDonHang, setKhongCoDonHang] = useState<DoanhThuKhongDon[]>([]);
 
   const [search, setSearch] = useState('');
   const [loc, setLoc] = useState<BoLocThoiGian>({ nam: NAM_HIEN_TAI, ky: 'CA_NAM' });
@@ -230,6 +236,7 @@ export default function QuanLyHopDongPage() {
         m[t.soHopDong] = t;
       });
       setTongHop(m);
+      setKhongCoDonHang(res.khongCoDonHang);
     } catch {
       message.error('Không tải được số liệu chứng từ theo đơn hàng');
     }
@@ -370,21 +377,30 @@ export default function QuanLyHopDongPage() {
     [rows, tongHop],
   );
 
+  /** 3 bộ lọc không phải thời gian — bảng chính và bảng pivot dùng chung. */
+  const locNgoaiThoiGian = useCallback(
+    (r: DongBang) => {
+      if (khachHang && r.doiTuongId !== khachHang) return false;
+      if (sanPham && (r.sanPhamId || '') !== (sanPham === 'CHUA_CHON' ? '' : sanPham))
+        return false;
+      if (donHang && r.soHopDong !== donHang) return false;
+      return true;
+    },
+    [khachHang, sanPham, donHang],
+  );
+
   const viewRows = useMemo(() => {
     const getValue = cellValue(doiTuongMap, sanPhamMap);
     const tuKhoa = search.trim().toLowerCase();
     return fullRows.filter((r) => {
       if (!matches(r, getValue)) return false;
       if (!trongKy(r, loc)) return false;
-      if (khachHang && r.doiTuongId !== khachHang) return false;
-      if (sanPham && (r.sanPhamId || '') !== (sanPham === 'CHUA_CHON' ? '' : sanPham))
-        return false;
-      if (donHang && r.soHopDong !== donHang) return false;
+      if (!locNgoaiThoiGian(r)) return false;
       if (tuKhoa && !`${r.soHopDong} ${r.tenCongTrinh}`.toLowerCase().includes(tuKhoa))
         return false;
       return true;
     });
-  }, [fullRows, matches, doiTuongMap, sanPhamMap, loc, khachHang, sanPham, donHang, search]);
+  }, [fullRows, matches, doiTuongMap, sanPhamMap, loc, locNgoaiThoiGian, search]);
 
   // Thẻ báo cáo nhanh cộng trên đúng tập dòng đang hiển thị, không phải tổng toàn bộ.
   const baoCao = useMemo(() => tongHopBaoCaoNhanh(viewRows), [viewRows]);
@@ -397,6 +413,65 @@ export default function QuanLyHopDongPage() {
         .map((so) => ({ value: so, label: so })),
     [rows],
   );
+
+  const tenSanPham = useCallback(
+    (id?: string) => sanPhamMap[id || ''] || 'Chưa phân loại',
+    [sanPhamMap],
+  );
+
+  /** DOANH SỐ: giá trị hợp đồng, xếp theo tháng của NGÀY KÝ, trong năm đang chọn. */
+  const pivotDoanhSo = useMemo(() => {
+    const items: DongGopPivot[] = fullRows
+      .filter((r) => locNgoaiThoiGian(r) && trongKy(r, { nam: loc.nam, ky: 'CA_NAM' }))
+      .map((r) => ({
+        key: khoaSanPham(r.sanPhamId),
+        ten: tenSanPham(r.sanPhamId),
+        thang: r.ngayKy ? dayjs(r.ngayKy).month() : null,
+        soTien: Number(r.giaTriSauThue) || 0,
+      }));
+    return pivotTheoThang(items);
+  }, [fullRows, locNgoaiThoiGian, loc.nam, tenSanPham]);
+
+  /**
+   * DOANH THU: Có 511 theo tháng của NGÀY CHỨNG TỪ. Cố ý KHÔNG lọc đơn hàng theo năm ký
+   * — đơn ký 2024 mà ghi nhận doanh thu 2026 vẫn phải lên bảng của năm 2026.
+   */
+  const pivotDoanhThu = useMemo(() => {
+    const items: DongGopPivot[] = [];
+    fullRows.filter(locNgoaiThoiGian).forEach((r) => {
+      const t = tongHop[r.soHopDong];
+      if (!t) return;
+      t.dtTheoThang.forEach((soTien, thang) => {
+        if (soTien) {
+          items.push({
+            key: khoaSanPham(r.sanPhamId),
+            ten: tenSanPham(r.sanPhamId),
+            thang,
+            soTien,
+          });
+        }
+      });
+    });
+
+    // Doanh thu 511 không gắn đơn hàng: khớp lại mã sản phẩm với danh mục, không khớp
+    // thì để "Chưa phân loại" — bảng vẫn khớp tổng sổ cái 511.
+    const theoMa = new Map(sanPhamList.map((sp) => [sp.ma, sp]));
+    khongCoDonHang.forEach((k) => {
+      const sp = theoMa.get(k.sanPhamMa);
+      k.dtTheoThang.forEach((soTien, thang) => {
+        if (soTien) {
+          items.push({
+            key: sp ? sp.id : KEY_CHUA_PHAN_LOAI,
+            ten: sp ? sp.ten : 'Chưa phân loại',
+            thang,
+            soTien,
+          });
+        }
+      });
+    });
+
+    return pivotTheoThang(items);
+  }, [fullRows, locNgoaiThoiGian, tongHop, khongCoDonHang, sanPhamList, tenSanPham]);
 
   const columns: ColumnsType<DongBang> = [
     filterable<DongBang>({
@@ -649,6 +724,12 @@ export default function QuanLyHopDongPage() {
           </Col>
         ))}
       </Row>
+
+      <BangTongHopSanPham
+        doanhSo={pivotDoanhSo}
+        doanhThu={pivotDoanhThu}
+        nam={loc.nam}
+      />
 
       <Card className="shadow-sm">
         <FilterBar
