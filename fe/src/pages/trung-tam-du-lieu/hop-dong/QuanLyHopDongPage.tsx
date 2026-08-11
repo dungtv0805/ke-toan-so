@@ -20,14 +20,7 @@ import {
   Tag,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import {
-  EyeOutlined,
-  PlusOutlined,
-  DeleteOutlined,
-  DollarOutlined,
-  FileDoneOutlined,
-  WalletOutlined,
-} from '@ant-design/icons';
+import { EyeOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { FilterBar } from '@/components/common/FilterBar';
 import type {
@@ -35,14 +28,13 @@ import type {
   ThuTienHopDong,
   HoaDonBanRa,
   DoiTuong,
+  SanPham,
 } from '@/types';
-import {
-  theoDoiHopDongService,
-  type TheoDoiHopDongStats,
-} from '@/services/theoDoiHopDongService';
+import { theoDoiHopDongService } from '@/services/theoDoiHopDongService';
 import { thuTienHopDongService } from '@/services/thuTienHopDongService';
 import { hoaDonBanRaService } from '@/services/hoaDonBanRaService';
 import { doiTuongService } from '@/services/doiTuongService';
+import { sanPhamService } from '@/services/sanPhamService';
 import { THUE_SUAT_OPTIONS } from '@/services/taxService';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
@@ -53,6 +45,8 @@ import ThuTienDonHangModal from './ThuTienDonHangModal';
 import TaoNhanhHopDongModal from './TaoNhanhHopDongModal';
 import { SectionNav } from '@/components/layout/SectionNav';
 import { BAN_HANG_NAV } from '@/config/sectionNavs';
+import { KY_OPTIONS, trongKy, type BoLocThoiGian, type KyLoc } from './boLocThoiGian';
+import { tongHopBaoCaoNhanh } from './baoCaoNhanh';
 
 const { Text, Title } = Typography;
 
@@ -61,7 +55,7 @@ const { Text, Title } = Typography;
  * Cột "Chủ đầu tư" hiển thị TÊN (map từ id) nên lọc cũng phải khớp trên tên.
  */
 const cellValue =
-  (doiTuongMap: Record<string, string>) =>
+  (doiTuongMap: Record<string, string>, sanPhamMap: Record<string, string>) =>
   (r: TheoDoiHopDongRow, key: string): string | undefined => {
     switch (key) {
       case 'soHopDong':
@@ -70,6 +64,8 @@ const cellValue =
         return r.tenCongTrinh;
       case 'doiTuongId':
         return doiTuongMap[r.doiTuongId || ''];
+      case 'sanPhamId':
+        return sanPhamMap[r.sanPhamId || ''];
       default:
         return undefined;
     }
@@ -91,6 +87,7 @@ const moneyProps = {
 const getScrollContainer = (): HTMLElement | Window =>
   document.querySelector<HTMLElement>('.ant-layout-content') || window;
 
+const NAM_HIEN_TAI = dayjs().year();
 const NAM_OPTIONS = Array.from({ length: 16 }, (_, i) => {
   const y = 2022 + i;
   return { value: y, label: `Năm ${y}` };
@@ -126,15 +123,14 @@ export default function QuanLyHopDongPage() {
 
   const [rows, setRows] = useState<TheoDoiHopDongRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [stats, setStats] = useState<TheoDoiHopDongStats>({
-    tongGiaTri: 0,
-    tongDaThanhToan: 0,
-    tongConLai: 0,
-  });
   const [doiTuongMap, setDoiTuongMap] = useState<Record<string, string>>({});
+  const [sanPhamList, setSanPhamList] = useState<SanPham[]>([]);
 
   const [search, setSearch] = useState('');
-  const [nam, setNam] = useState<number | undefined>(undefined);
+  const [loc, setLoc] = useState<BoLocThoiGian>({ nam: NAM_HIEN_TAI, ky: 'CA_NAM' });
+  const [khachHang, setKhachHang] = useState<string | undefined>();
+  const [sanPham, setSanPham] = useState<string | undefined>();
+  const [donHang, setDonHang] = useState<string | undefined>();
 
   // Drawer editor
   const [open, setOpen] = useState(false);
@@ -148,12 +144,7 @@ export default function QuanLyHopDongPage() {
   const loadList = async () => {
     setLoading(true);
     try {
-      const [list, st] = await Promise.all([
-        theoDoiHopDongService.getList({ nam, search: search || undefined }),
-        theoDoiHopDongService.getStats(),
-      ]);
-      setRows(list);
-      setStats(st);
+      setRows(await theoDoiHopDongService.getList());
     } catch {
       message.error('Không tải được dữ liệu theo dõi');
     } finally {
@@ -175,9 +166,21 @@ export default function QuanLyHopDongPage() {
   }, []);
 
   useEffect(() => {
+    sanPhamService.getAll().then(setSanPhamList).catch(() => setSanPhamList([]));
+  }, []);
+
+  const sanPhamMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    sanPhamList.forEach((sp) => {
+      m[sp.id] = sp.ten;
+    });
+    return m;
+  }, [sanPhamList]);
+
+  // Tải một lần; mọi bộ lọc chạy client-side nên không cần gọi lại API.
+  useEffect(() => {
     loadList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nam]);
+  }, []);
 
   const loadReceipts = (hopDongId: string) =>
     thuTienHopDongService.getList({ hopDongId }).then(setReceipts).catch(() => {});
@@ -275,14 +278,39 @@ export default function QuanLyHopDongPage() {
     }
   };
 
-  // Lọc theo cột ở header + cố định cột. Danh sách load hết về client nên lọc client-side;
-  // bảng phẳng, không có dòng tổng (3 thẻ Statistic là số tổng TOÀN BỘ từ backend, không
-  // phải tổng của bảng) → lọc thẳng trên mảng.
+  // Danh sách load hết về client (BE không lọc) nên mọi bộ lọc chạy thẳng trên mảng:
+  // lọc theo cột ở header, theo kỳ thời gian, và 3 bộ lọc trên thanh công cụ.
   const { filterable, matches, hasPinned } = useTableColumnFilters('trung-tam-du-lieu-hop-dong');
   const viewRows = useMemo(() => {
-    const getValue = cellValue(doiTuongMap);
-    return rows.filter((r) => matches(r, getValue));
-  }, [rows, matches, doiTuongMap]);
+    const getValue = cellValue(doiTuongMap, sanPhamMap);
+    const tuKhoa = search.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (!matches(r, getValue)) return false;
+      if (!trongKy(r, loc)) return false;
+      if (khachHang && r.doiTuongId !== khachHang) return false;
+      if (sanPham && (r.sanPhamId || '') !== (sanPham === 'CHUA_CHON' ? '' : sanPham))
+        return false;
+      if (donHang && r.soHopDong !== donHang) return false;
+      if (tuKhoa && !`${r.soHopDong} ${r.tenCongTrinh}`.toLowerCase().includes(tuKhoa))
+        return false;
+      return true;
+    });
+  }, [rows, matches, doiTuongMap, sanPhamMap, loc, khachHang, sanPham, donHang, search]);
+
+  // Thẻ báo cáo nhanh cộng trên đúng tập dòng đang hiển thị, không phải tổng toàn bộ.
+  const baoCao = useMemo(
+    () => tongHopBaoCaoNhanh(viewRows.map((r) => ({ ...r, daThu: r.daThanhToan }))),
+    [viewRows],
+  );
+
+  // Số HĐ có thể trùng giữa các bản ghi cũ — Select không chịu được option trùng value.
+  const donHangOptions = useMemo(
+    () =>
+      [...new Set(rows.map((r) => r.soHopDong).filter(Boolean))]
+        .sort()
+        .map((so) => ({ value: so, label: so })),
+    [rows],
+  );
 
   const columns: ColumnsType<TheoDoiHopDongRow> = [
     filterable<TheoDoiHopDongRow>({
@@ -293,7 +321,14 @@ export default function QuanLyHopDongPage() {
       fixed: 'left',
       render: (v) => <Text strong>{v}</Text>,
     }),
-    { title: 'Năm', dataIndex: 'nam', width: 70, align: 'center', render: (v) => v || '-' },
+    {
+      title: 'Ngày HĐ',
+      dataIndex: 'ngayKy',
+      key: 'ngayKy',
+      width: 110,
+      align: 'center',
+      render: (v: string) => (v ? dayjs(v).format('DD/MM/YYYY') : '-'),
+    },
     filterable<TheoDoiHopDongRow>({
       title: 'Tên công trình',
       dataIndex: 'tenCongTrinh',
@@ -308,6 +343,14 @@ export default function QuanLyHopDongPage() {
       width: 160,
       ellipsis: true,
       render: (v: string) => doiTuongMap[v] || '-',
+    }),
+    filterable<TheoDoiHopDongRow>({
+      title: 'Sản phẩm',
+      dataIndex: 'sanPhamId',
+      key: 'sanPhamId',
+      width: 150,
+      ellipsis: true,
+      render: (v: string) => sanPhamMap[v] || '-',
     }),
     {
       title: 'Thuế suất',
@@ -372,22 +415,28 @@ export default function QuanLyHopDongPage() {
     <div className="space-y-3">
       <SectionNav items={BAN_HANG_NAV} />
 
-      <Row gutter={16}>
-        <Col xs={24} sm={8}>
-          <Card className="stat-card" size="small">
-            <Statistic title="Tổng giá trị HĐ" value={stats.tongGiaTri} formatter={(v) => fmtCur(Number(v))} prefix={<DollarOutlined className="text-blue-500" />} />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card className="stat-card" size="small">
-            <Statistic title="Đã thanh toán" value={stats.tongDaThanhToan} formatter={(v) => fmtCur(Number(v))} prefix={<FileDoneOutlined className="text-green-500" />} />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card className="stat-card" size="small">
-            <Statistic title="Còn lại" value={stats.tongConLai} formatter={(v) => fmtCur(Number(v))} prefix={<WalletOutlined className="text-orange-500" />} />
-          </Card>
-        </Col>
+      <Row gutter={[12, 12]}>
+        {[
+          { title: 'Doanh số', value: baoCao.doanhSo, color: '#1677ff' },
+          { title: 'DT chưa thực hiện', value: baoCao.dtChuaThucHien, color: '#fa8c16' },
+          { title: 'DT đã thực hiện', value: baoCao.dtDaThucHien, color: '#52c41a' },
+          { title: 'Tiền thuế', value: baoCao.tienThue, color: '#722ed1' },
+          { title: 'Tiền đã thu', value: baoCao.daThu, color: '#52c41a' },
+          { title: 'Còn phải thu', value: baoCao.conPhaiThu, color: '#fa8c16' },
+          { title: 'Đã xuất hóa đơn', value: baoCao.daXuatHoaDon, color: '#1677ff' },
+          { title: 'Chưa xuất hóa đơn', value: baoCao.chuaXuatHoaDon, color: '#fa8c16' },
+        ].map((c) => (
+          <Col xs={12} sm={12} md={6} key={c.title}>
+            <Card className="stat-card" size="small">
+              <Statistic
+                title={c.title}
+                value={c.value}
+                formatter={(v) => fmtCur(Number(v))}
+                valueStyle={{ fontSize: 18, color: c.color }}
+              />
+            </Card>
+          </Col>
+        ))}
       </Row>
 
       <Card className="shadow-sm">
@@ -395,24 +444,85 @@ export default function QuanLyHopDongPage() {
           search={{
             value: search,
             onChange: setSearch,
-            onSearch: loadList,
             placeholder: 'Tìm theo số HĐ, tên công trình...',
-            width: 320,
+            width: 260,
           }}
           onReset={() => {
             setSearch('');
-            setNam(undefined);
+            setLoc({ nam: NAM_HIEN_TAI, ky: 'CA_NAM' });
+            setKhachHang(undefined);
+            setSanPham(undefined);
+            setDonHang(undefined);
           }}
-          actions={
+          filters={
             <>
               <Select
                 allowClear
-                placeholder="Lọc theo năm"
-                style={{ width: 140 }}
-                options={NAM_OPTIONS}
-                value={nam}
-                onChange={(v) => setNam(v)}
+                showSearch
+                optionFilterProp="label"
+                placeholder="Khách hàng"
+                style={{ width: 180 }}
+                value={khachHang}
+                onChange={setKhachHang}
+                options={Object.entries(doiTuongMap).map(([id, ten]) => ({
+                  value: id,
+                  label: ten,
+                }))}
               />
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="Sản phẩm"
+                style={{ width: 170 }}
+                value={sanPham}
+                onChange={setSanPham}
+                options={[
+                  { value: 'CHUA_CHON', label: '(Chưa chọn sản phẩm)' },
+                  ...sanPhamList.map((sp) => ({
+                    value: sp.id,
+                    label: `${sp.ma} - ${sp.ten}`,
+                  })),
+                ]}
+              />
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="Đơn hàng"
+                style={{ width: 170 }}
+                value={donHang}
+                onChange={setDonHang}
+                options={donHangOptions}
+              />
+              <Select
+                style={{ width: 120 }}
+                value={loc.nam}
+                onChange={(v) => setLoc((p) => ({ ...p, nam: v }))}
+                options={NAM_OPTIONS}
+              />
+              <Select
+                style={{ width: 180 }}
+                value={loc.ky}
+                onChange={(v: KyLoc) => setLoc((p) => ({ ...p, ky: v }))}
+                options={KY_OPTIONS}
+              />
+              {loc.ky === 'TUY_CHON' && (
+                <DatePicker.RangePicker
+                  format="DD/MM/YYYY"
+                  onChange={(d) =>
+                    setLoc((p) => ({
+                      ...p,
+                      tuNgay: d?.[0]?.format('YYYY-MM-DD'),
+                      denNgay: d?.[1]?.format('YYYY-MM-DD'),
+                    }))
+                  }
+                />
+              )}
+            </>
+          }
+          actions={
+            <>
               {settingsButton}
               {canCreateHopDong && <TaoNhanhHopDongModal onCreated={loadList} />}
             </>

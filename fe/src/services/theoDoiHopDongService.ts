@@ -13,11 +13,13 @@ class TheoDoiHopDongService extends ServiceBase {
     super({ endpoint: '/master-data/theo-doi-hop-dong' });
   }
 
-  /** Danh sách HĐ (join danh mục + tracking + tổng đã tính). */
-  async getList(
-    params: { nam?: number; search?: string } = {},
-  ): Promise<TheoDoiHopDongRow[]> {
-    return this.get<TheoDoiHopDongRow[]>({ params });
+  /**
+   * Danh sách HĐ (join danh mục + tracking + tổng đã tính) — trả toàn bộ, không lọc
+   * ở server. Trang Bán hàng lọc client-side vì báo cáo theo sản phẩm/tháng cần cả
+   * đơn ngoài kỳ đang xem.
+   */
+  async getList(): Promise<TheoDoiHopDongRow[]> {
+    return this.get<TheoDoiHopDongRow[]>({});
   }
 
   /** Bản tracking của 1 HĐ (null nếu chưa có). */

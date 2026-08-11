@@ -25,13 +25,18 @@ export interface BaoCaoNhanh {
   chuaXuatHoaDon: number;
 }
 
+/** Sáu chỉ tiêu cộng trực tiếp; hai chỉ tiêu còn lại suy ra từ chúng. */
+type TongCong = Omit<BaoCaoNhanh, 'conPhaiThu' | 'chuaXuatHoaDon'>;
+
 /**
  * Tám chỉ tiêu của thanh báo cáo nhanh, cộng trên đúng tập dòng đang hiển thị
  * (sau mọi bộ lọc). Hai chỉ tiêu suy ra chứ không cộng: còn phải thu và chưa xuất
  * hóa đơn — cùng gốc là doanh số sau thuế.
  */
 export function tongHopBaoCaoNhanh(rows: DongBaoCao[]): BaoCaoNhanh {
-  const t = rows.reduce(
+  // Bắt buộc chỉ định <TongCong>: không có nó TypeScript bám vào overload
+  // reduce(cb, initial: T) và coi accumulator là DongBaoCao.
+  const t = rows.reduce<TongCong>(
     (acc, r) => {
       acc.doanhSo += num(r.giaTriSauThue);
       acc.tienThue += num(r.tienThue);
