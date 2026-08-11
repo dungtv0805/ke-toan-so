@@ -42,6 +42,8 @@ interface Props {
   /** Số khoản thu đã có — dùng đánh số "lần thu". */
   soLanDaThu: number;
   onCreated: () => void;
+  /** Nút mở modal; mặc định là nút "+ Thu tiền". */
+  renderTrigger?: (open: () => void) => React.ReactNode;
 }
 
 /**
@@ -52,7 +54,12 @@ interface Props {
  * Phiếu thu tạo ra là phiếu thu thật, xem/in/sửa ở Chứng từ → Phiếu thu. Dùng nút
  * này thì KHÔNG nhập lại phiếu thu ở Chứng từ, tránh ghi trùng.
  */
-export default function ThuTienDonHangModal({ hopDong, soLanDaThu, onCreated }: Props) {
+export default function ThuTienDonHangModal({
+  hopDong,
+  soLanDaThu,
+  onCreated,
+  renderTrigger,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [taiKhoanList, setTaiKhoanList] = useState<TaiKhoan[]>([]);
@@ -147,9 +154,13 @@ export default function ThuTienDonHangModal({ hopDong, soLanDaThu, onCreated }: 
 
   return (
     <>
-      <Button size="small" type="primary" icon={<PlusOutlined />} onClick={openModal}>
-        Thu tiền
-      </Button>
+      {renderTrigger ? (
+        renderTrigger(openModal)
+      ) : (
+        <Button size="small" type="primary" icon={<PlusOutlined />} onClick={openModal}>
+          Thu tiền
+        </Button>
+      )}
 
       <Modal
         title={`Thu tiền — ${hopDong.soHopDong}`}

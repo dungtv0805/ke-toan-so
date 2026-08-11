@@ -1,44 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Button,
-  Col,
-  DatePicker,
-  Form,
-  Input,
-  InputNumber,
-  Modal,
-  Row,
-  Select,
-  Table,
-  Typography,
-  message,
-} from 'antd';
+import { Button, Col, Row, Table, Typography, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined } from '@ant-design/icons';
-import dayjs, { type Dayjs } from 'dayjs';
-import type { NhatKyChung, TaiKhoan, TheoDoiHopDongRow } from '@/types';
+import dayjs from 'dayjs';
+import type { NhatKyChung, TheoDoiHopDongRow } from '@/types';
 import { nhatKyChungService } from '@/services/nhatKyChungService';
-import { taiKhoanService } from '@/services/taiKhoanService';
 import {
   TK_CHUA_THUC_HIEN,
   TK_DOANH_THU,
   tinhDoanhThuHopDong,
   tinhMacDinhGhiNhan,
 } from './ghiNhanDoanhThu';
-import { defaultTaiKhoan, loadDonHangSnapshots, taiKhoanSnapshot } from './donHangChungTu';
+import ButToanDonHangModal from './ButToanDonHangModal';
 
 const { Text } = Typography;
 
 const fmtCur = (v?: number) =>
   !v ? '0' : new Intl.NumberFormat('vi-VN').format(Math.round(v));
-
-interface FormValues {
-  ngay: Dayjs;
-  soTien: number;
-  taiKhoanNo: string;
-  taiKhoanCo: string;
-  noiDung: string;
-}
 
 interface Props {
   hopDong: TheoDoiHopDongRow;
@@ -57,10 +35,6 @@ interface Props {
 export default function GhiNhanDoanhThuSection({ hopDong, canEdit, daThanhToan }: Props) {
   const [entries, setEntries] = useState<NhatKyChung[]>([]);
   const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [taiKhoanList, setTaiKhoanList] = useState<TaiKhoan[]>([]);
-  const [form] = Form.useForm<FormValues>();
 
   const { ghiNhan, daGhiNhan, chuaGhiNhan } = useMemo(
     () => tinhDoanhThuHopDong(entries),
@@ -82,57 +56,6 @@ export default function GhiNhanDoanhThuSection({ hopDong, canEdit, daThanhToan }
     load();
   }, [load]);
 
-  useEffect(() => {
-    taiKhoanService
-      .getLeafAccounts()
-      .then(setTaiKhoanList)
-      .catch(() => setTaiKhoanList([]));
-  }, []);
-
-  const openModal = () => {
-    form.setFieldsValue({
-      ngay: dayjs(),
-      soTien: tinhMacDinhGhiNhan(daThanhToan, daGhiNhan),
-      taiKhoanNo: defaultTaiKhoan(taiKhoanList, TK_CHUA_THUC_HIEN),
-      taiKhoanCo: defaultTaiKhoan(taiKhoanList, TK_DOANH_THU),
-      noiDung: `Ghi nhận doanh thu ${hopDong.soHopDong}`,
-    } as FormValues);
-    setOpen(true);
-  };
-
-  const handleSubmit = async () => {
-    const v = await form.validateFields();
-    setSaving(true);
-    try {
-      const snap = await loadDonHangSnapshots(hopDong.hopDongId, hopDong.doiTuongId);
-
-      await nhatKyChungService.create({
-        loai: 'KHAC',
-        ngay: v.ngay.format('YYYY-MM-DD'),
-        ngayGhiSo: v.ngay.format('YYYY-MM-DD'),
-        soTien: v.soTien,
-        noiDung: v.noiDung,
-        danhMuc: {
-          taiKhoanNo: taiKhoanSnapshot(taiKhoanList, v.taiKhoanNo),
-          taiKhoanCo: taiKhoanSnapshot(taiKhoanList, v.taiKhoanCo),
-          hopDong: snap.hopDong,
-          // Cả hai bên đều là công nợ/doanh thu của khách hàng này
-          ...(snap.khachHang
-            ? { doiTuong: snap.khachHang, doiTuong2: snap.khachHang }
-            : {}),
-        },
-      });
-      message.success('Đã ghi nhận doanh thu');
-      setOpen(false);
-      load();
-    } catch (e) {
-      const err = e as { errorFields?: unknown; message?: string };
-      if (!err.errorFields) message.error(err.message || 'Ghi nhận doanh thu thất bại');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const columns: ColumnsType<NhatKyChung> = [
     {
       title: 'Ngày',
@@ -153,11 +76,6 @@ export default function GhiNhanDoanhThuSection({ hopDong, canEdit, daThanhToan }
     { title: 'Diễn giải', dataIndex: 'dienGiai', key: 'dienGiai', ellipsis: true },
   ];
 
-  const taiKhoanOptions = taiKhoanList.map((tk) => ({
-    value: tk.ma,
-    label: `${tk.ma} - ${tk.ten}`,
-  }));
-
   return (
     <>
       <Row gutter={12} align="middle" className="mb-2">
@@ -171,9 +89,20 @@ export default function GhiNhanDoanhThuSection({ hopDong, canEdit, daThanhToan }
         </Col>
         {canEdit && (
           <Col>
-            <Button size="small" type="primary" icon={<PlusOutlined />} onClick={openModal}>
-              Ghi nhận doanh thu
-            </Button>
+            <ButToanDonHangModal
+              hopDong={hopDong}
+              tkNoPrefix={TK_CHUA_THUC_HIEN}
+              tkCoPrefix={TK_DOANH_THU}
+              tieuDe="Ghi nhận doanh thu"
+              soTienMacDinh={tinhMacDinhGhiNhan(daThanhToan, daGhiNhan)}
+              dienGiaiMacDinh={`Ghi nhận doanh thu ${hopDong.soHopDong}`}
+              onCreated={load}
+              renderTrigger={(open) => (
+                <Button size="small" type="primary" icon={<PlusOutlined />} onClick={open}>
+                  Ghi nhận doanh thu
+                </Button>
+              )}
+            />
           </Col>
         )}
       </Row>
@@ -186,80 +115,6 @@ export default function GhiNhanDoanhThuSection({ hopDong, canEdit, daThanhToan }
         pagination={false}
         locale={{ emptyText: 'Chưa ghi nhận doanh thu lần nào' }}
       />
-
-      <Modal
-        title={`Ghi nhận doanh thu — ${hopDong.soHopDong}`}
-        open={open}
-        onCancel={() => setOpen(false)}
-        onOk={handleSubmit}
-        confirmLoading={saving}
-        okText="Ghi nhận"
-        cancelText="Hủy"
-        destroyOnClose
-      >
-        <Form form={form} layout="vertical" size="small" className="mt-3">
-          <Row gutter={12}>
-            <Col span={10}>
-              <Form.Item
-                name="ngay"
-                label="Ngày ghi nhận"
-                rules={[{ required: true, message: 'Chọn ngày ghi nhận' }]}
-                tooltip="Doanh thu lên báo cáo theo tháng của ngày này"
-              >
-                <DatePicker format="DD/MM/YYYY" className="w-full" />
-              </Form.Item>
-            </Col>
-            <Col span={14}>
-              <Form.Item
-                name="soTien"
-                label="Số tiền"
-                rules={[{ required: true, message: 'Nhập số tiền' }]}
-                tooltip="Mặc định = tiền đã thu − đã ghi nhận doanh thu"
-              >
-                <InputNumber<number>
-                  className="w-full"
-                  min={1}
-                  controls={false}
-                  formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(v) => Number(`${v}`.replace(/,/g, ''))}
-                  addonAfter="VNĐ"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={12}>
-            <Col span={12}>
-              <Form.Item
-                name="taiKhoanNo"
-                label="TK Nợ"
-                rules={[{ required: true, message: 'Chọn TK Nợ' }]}
-              >
-                <Select showSearch optionFilterProp="label" options={taiKhoanOptions} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="taiKhoanCo"
-                label="TK Có"
-                rules={[{ required: true, message: 'Chọn TK Có' }]}
-              >
-                <Select showSearch optionFilterProp="label" options={taiKhoanOptions} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Form.Item
-            name="noiDung"
-            label="Diễn giải"
-            rules={[{ required: true, message: 'Nhập diễn giải' }]}
-          >
-            <Input.TextArea autoSize={{ minRows: 2, maxRows: 3 }} />
-          </Form.Item>
-          <Text type="secondary" className="text-xs">
-            Hệ thống tạo một chứng từ Nhật ký chung gắn sẵn đơn hàng này. Sửa hoặc xóa
-            tại Chứng từ → Nhật ký chung.
-          </Text>
-        </Form>
-      </Modal>
     </>
   );
 }
