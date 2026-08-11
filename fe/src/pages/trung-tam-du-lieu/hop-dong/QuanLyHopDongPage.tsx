@@ -112,6 +112,19 @@ const NAM_OPTIONS = Array.from({ length: 16 }, (_, i) => {
   return { value: y, label: `Năm ${y}` };
 });
 
+/**
+ * Cột nào thuộc nhóm nào ở header tầng trên. Cột không có tên ở đây (Số HĐ, Ngày HĐ,
+ * Chủ đầu tư, Sản phẩm, Tên công trình, Phụ trách, nút Theo dõi) đứng một mình.
+ *
+ * "Phụ trách" cố ý đứng ngoài: cột đó không có `key` (thêm key sẽ đưa nó vào "Chọn
+ * cột" và người dùng từng lưu lựa chọn sẽ mất cột này cho tới khi tự tick lại).
+ */
+const NHOM_COT: Record<string, string[]> = {
+  'BÁN HÀNG': ['giaTriSauThue', 'tienThue', 'dtChuaThucHien', 'dtDaThucHien'],
+  'THU TIỀN': ['daThu', 'conPhaiThu'],
+  'CHỨNG TỪ': ['daXuatHoaDon', 'chuaXuatHoaDon', 'quyetToan'],
+};
+
 interface ScalarForm {
   phuTrachHoSo?: string;
   trangThaiHoSo?: string;
@@ -477,6 +490,45 @@ export default function QuanLyHopDongPage() {
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('trungTamDuLieu.hopDong', columns);
 
+  /**
+   * Gom cột thành header 2 tầng. Phải chạy SAU useTableTitleConfig: hook đó đổi tiêu đề
+   * và ẩn/hiện từng cột con, gom trước thì nó chỉ thấy 3 cột cha.
+   */
+  const groupedColumns = useMemo(() => {
+    const key = (c: (typeof cfgColumns)[number]) =>
+      String(
+        (c as { key?: React.Key; dataIndex?: React.Key }).key ??
+          (c as { dataIndex?: React.Key }).dataIndex ??
+          '',
+      );
+    const thuocNhom = new Map<string, string>();
+    Object.entries(NHOM_COT).forEach(([nhom, keys]) =>
+      keys.forEach((k) => thuocNhom.set(k, nhom)),
+    );
+
+    const out: typeof cfgColumns = [];
+    const moc = new Map<string, number>();
+    for (const c of cfgColumns) {
+      const nhom = thuocNhom.get(key(c));
+      if (!nhom) {
+        out.push(c);
+        continue;
+      }
+      let idx = moc.get(nhom);
+      if (idx == null) {
+        idx = out.length;
+        moc.set(nhom, idx);
+        out.push({ title: nhom, align: 'center', children: [] } as (typeof cfgColumns)[number]);
+      }
+      (out[idx] as unknown as { children: unknown[] }).children.push(c);
+    }
+    // Nhóm rỗng (người dùng ẩn hết cột con) thì bỏ đi cho khỏi trơ tiêu đề.
+    return out.filter(
+      (c) =>
+        !('children' in c) || (c as unknown as { children: unknown[] }).children.length > 0,
+    );
+  }, [cfgColumns]);
+
   // Danh sách khoản thu (read-only, từ Sổ thu tiền)
   const receiptCols: ColumnsType<ThuTienHopDong> = [
     { title: 'Ngày', dataIndex: 'ngay', width: 100, render: (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '-') },
@@ -610,7 +662,7 @@ export default function QuanLyHopDongPage() {
         />
 
         <Table<DongBang>
-          columns={cfgColumns}
+          columns={groupedColumns}
           dataSource={viewRows}
           rowKey="hopDongId"
           loading={loading}
