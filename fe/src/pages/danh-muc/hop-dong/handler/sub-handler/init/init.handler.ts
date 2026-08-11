@@ -2,6 +2,7 @@ import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
 import { hopDongService } from "@/services/hopDongService";
 import { doiTuongService } from "@/services/doiTuongService";
+import { sanPhamService } from "@/services/sanPhamService";
 import "./init.event";
 
 @RegisterHandler("hop-dong")
@@ -11,10 +12,11 @@ export class InitHandler extends CSubHanlder {
     this.setState("loading", true);
     try {
       // Fetch hop-dong list and doi-tuong list concurrently
-      const [hopDongResult, doiTuongList, stats] = await Promise.all([
+      const [hopDongResult, doiTuongList, stats, sanPhamList] = await Promise.all([
         hopDongService.getPaginated({ page: 1, limit: 50 }),
         doiTuongService.getByLoai("KHACH_HANG"),
         hopDongService.getStats(),
+        sanPhamService.getAll(),
       ]);
 
       this.setState("data", hopDongResult.data);
@@ -24,6 +26,7 @@ export class InitHandler extends CSubHanlder {
         total: hopDongResult.meta.total,
       });
       this.setState("doiTuongList", doiTuongList);
+      this.setState("sanPhamList", sanPhamList);
       this.setState("stats", stats);
       this.setState("searchKeyword", "");
     } catch (error) {

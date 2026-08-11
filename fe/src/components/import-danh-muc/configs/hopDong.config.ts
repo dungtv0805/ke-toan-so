@@ -1,5 +1,6 @@
 import { hopDongService } from "@/services/hopDongService";
 import { doiTuongService } from "@/services/doiTuongService";
+import { sanPhamService } from "@/services/sanPhamService";
 import type { ImportDanhMucConfig } from "../types";
 
 // Chỉ import các trường phẳng; phụ lục, điều khoản thanh toán, bảo hành,
@@ -25,6 +26,18 @@ export const hopDongImportConfig: ImportDanhMucConfig = {
         label: "Đối tượng",
         displayField: "ten",
         assign: (found) => ({ doiTuongId: found.id }),
+      },
+    },
+    {
+      key: "sanPham",
+      header: "Mã sản phẩm",
+      example: "SP01",
+      ref: {
+        service: sanPhamService,
+        matchBy: "ma",
+        label: "Sản phẩm",
+        displayField: "ten",
+        assign: (found) => ({ sanPhamId: found.id }),
       },
     },
     { key: "nguoiKy", header: "Người ký", example: "Nguyễn Văn A" },

@@ -1,5 +1,5 @@
 import { BaseStates } from "@/common/c-handler/core/actions/c-state.action";
-import { HopDong, DoiTuong } from "@/types";
+import { HopDong, DoiTuong, SanPham } from "@/types";
 
 export interface HopDongPageStates extends BaseStates {
   data: HopDong[];
@@ -19,6 +19,7 @@ export interface HopDongPageStates extends BaseStates {
   modalVisible: boolean;
   editingRecord: HopDong | null;
   doiTuongList: DoiTuong[];
+  sanPhamList: SanPham[];
 }
 
 declare module "./handler/hop-dong.handler" {

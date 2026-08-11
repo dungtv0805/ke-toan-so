@@ -35,7 +35,7 @@ import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import dayjs, { Dayjs } from "dayjs";
-import { HopDong, DoiTuong, TrangThaiHopDong } from "@/types";
+import { HopDong, DoiTuong, SanPham, TrangThaiHopDong } from "@/types";
 import {
   HopDongHandlerProvider,
   useHopDongHandler,
@@ -97,6 +97,7 @@ interface FormValues {
     ngayKy?: Dayjs;
   };
   doiTuongId?: string;
+  sanPhamId?: string;
   nguoiKy?: string;
   chucVu?: string;
   nguoiGiaoDich?: string;
@@ -134,6 +135,7 @@ function HopDongPageInner() {
     chuaCoHd: 0,
   });
   const [doiTuongList] = useHopDongState("doiTuongList", []);
+  const [sanPhamList] = useHopDongState("sanPhamList", []);
 
   const [searchText, setSearchText] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
@@ -199,6 +201,7 @@ function HopDongPageInner() {
           }
         : undefined,
       doiTuongId: record.doiTuongId,
+      sanPhamId: record.sanPhamId,
       nguoiKy: record.nguoiKy,
       chucVu: record.chucVu,
       nguoiGiaoDich: record.nguoiGiaoDich,
@@ -243,6 +246,7 @@ function HopDongPageInner() {
           }
         : undefined,
       doiTuongId: values.doiTuongId,
+      sanPhamId: values.sanPhamId,
       nguoiKy: values.nguoiKy,
       chucVu: values.chucVu,
       nguoiGiaoDich: values.nguoiGiaoDich,
@@ -375,6 +379,15 @@ function HopDongPageInner() {
       width: 180,
       ellipsis: true,
       render: (value: string) => getDoiTuongName(value),
+    },
+    {
+      title: "Sản phẩm",
+      dataIndex: "sanPhamId",
+      key: "sanPhamId",
+      width: 160,
+      ellipsis: true,
+      render: (value: string) =>
+        sanPhamList.find((sp: SanPham) => sp.id === value)?.ten || "-",
     },
     {
       title: "Trạng thái",
@@ -666,6 +679,18 @@ function HopDongPageInner() {
               options={doiTuongList.map((dt: DoiTuong) => ({
                 value: dt.id,
                 label: `${dt.ma} - ${dt.ten}`,
+              }))}
+            />
+          </Form.Item>
+          <Form.Item name="sanPhamId" label={fl('sanPhamId', 'Sản phẩm')}>
+            <Select
+              placeholder="Chọn sản phẩm"
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              options={sanPhamList.map((sp: SanPham) => ({
+                value: sp.id,
+                label: `${sp.ma} - ${sp.ten}`,
               }))}
             />
           </Form.Item>

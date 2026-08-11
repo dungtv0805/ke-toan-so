@@ -166,6 +166,8 @@ export interface HopDong {
   phuLuc1?: PhuLuc;
   phuLuc2?: PhuLuc;
   doiTuongId?: string;
+  /** Sản phẩm của đơn hàng — id danh mục Sản phẩm. */
+  sanPhamId?: string;
   nguoiKy?: string;
   chucVu?: string;
   nguoiGiaoDich?: string;
@@ -277,9 +279,11 @@ export interface TheoDoiHopDongRow {
   nam?: number;
   thueSuat?: string;
   tienThue?: number;
+  giaTriTruocThue?: number;
   giaTriSauThue?: number;
   ngayKy?: string;
   doiTuongId?: string;
+  sanPhamId?: string;
   trangThaiHopDong?: TrangThaiHopDong;
   tracking: TheoDoiHopDong | null;
   daThanhToan: number;

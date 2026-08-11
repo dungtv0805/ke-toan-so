@@ -14,9 +14,10 @@ import {
 } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
-import { TrangThaiHopDong, type DoiTuong } from '@/types';
+import { TrangThaiHopDong, type DoiTuong, type SanPham } from '@/types';
 import { hopDongService } from '@/services/hopDongService';
 import { doiTuongService } from '@/services/doiTuongService';
+import { sanPhamService } from '@/services/sanPhamService';
 import { THUE_SUAT_OPTIONS, tinhTienThue } from '@/services/taxService';
 
 const { Text } = Typography;
@@ -45,6 +46,7 @@ interface FormValues {
   tienThue?: number;
   giaTriSauThue?: number;
   doiTuongId?: string;
+  sanPhamId?: string;
   trangThai?: TrangThaiHopDong;
 }
 
@@ -62,10 +64,12 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [doiTuongList, setDoiTuongList] = useState<DoiTuong[]>([]);
+  const [sanPhamList, setSanPhamList] = useState<SanPham[]>([]);
   const [form] = Form.useForm<FormValues>();
 
   useEffect(() => {
     doiTuongService.getAll().then(setDoiTuongList).catch(() => setDoiTuongList([]));
+    sanPhamService.getAll().then(setSanPhamList).catch(() => setSanPhamList([]));
   }, []);
 
   const openModal = () => {
@@ -110,6 +114,7 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
         tienThue: v.tienThue,
         giaTriSauThue: v.giaTriSauThue,
         doiTuongId: v.doiTuongId,
+        sanPhamId: v.sanPhamId,
         trangThai: v.trangThai,
       });
       message.success('Đã tạo hợp đồng');
@@ -227,15 +232,30 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
             </Col>
           </Row>
 
-          <Form.Item name="doiTuongId" label="Chủ đầu tư">
-            <Select
-              placeholder="Chọn chủ đầu tư"
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              options={doiTuongList.map((dt) => ({ value: dt.id, label: `${dt.ma} - ${dt.ten}` }))}
-            />
-          </Form.Item>
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item name="doiTuongId" label="Chủ đầu tư">
+                <Select
+                  placeholder="Chọn chủ đầu tư"
+                  allowClear
+                  showSearch
+                  optionFilterProp="label"
+                  options={doiTuongList.map((dt) => ({ value: dt.id, label: `${dt.ma} - ${dt.ten}` }))}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="sanPhamId" label="Sản phẩm">
+                <Select
+                  placeholder="Chọn sản phẩm"
+                  allowClear
+                  showSearch
+                  optionFilterProp="label"
+                  options={sanPhamList.map((sp) => ({ value: sp.id, label: `${sp.ma} - ${sp.ten}` }))}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Text type="secondary" className="text-xs">
             Phụ lục, bảo hành, tiến độ thi công… bổ sung sau ở Danh mục → Hợp đồng.
