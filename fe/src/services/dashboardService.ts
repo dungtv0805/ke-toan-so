@@ -193,27 +193,6 @@ export const dashboardService = {
     }
   },
 
-  /** Doanh thu (mã 01) và lợi nhuận sau thuế (mã 60) của kỳ. */
-  async getKqkdTongHop(
-    year: number,
-    startMonth: number,
-    endMonth: number,
-  ): Promise<{ doanhThu: number; loiNhuanSauThue: number; ebitda: number }> {
-    try {
-      const startDate = new Date(year, startMonth - 1, 1).toISOString();
-      const endDate = new Date(year, endMonth, 0, 23, 59, 59, 999).toISOString();
-      const report = await kqkdService.getData({ startDate, endDate, periodType: 'tuyChon' });
-      const lay = (ma: string) => report.chiTieu.find((c) => c.ma === ma)?.kyHienTai ?? 0;
-      return {
-        doanhThu: lay('01'),
-        loiNhuanSauThue: lay('60'),
-        ebitda: report.ebitda?.kyHienTai ?? 0,
-      };
-    } catch {
-      return { doanhThu: 0, loiNhuanSauThue: 0, ebitda: 0 };
-    }
-  },
-
   /** Toàn bộ chỉ tiêu KQKD của kỳ, tra theo mã ('01', '11', '20', ...). */
   async getKqkdChiTieu(
     year: number,

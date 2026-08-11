@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Checkbox, Row, Col } from 'antd';
 import {
   ComposedChart, Bar, Line, PieChart, Pie, Cell, LineChart,
+  RadialBarChart, RadialBar, PolarAngleAxis,
 } from 'recharts';
 
 const TEAL = '#2BC4A8';
@@ -20,6 +21,7 @@ const PH = 84;
 export const DASHBOARD_BLOCKS: { key: string; label: string }[] = [
   { key: 'kqkd', label: 'Kết quả kinh doanh' },
   { key: 'dongTien', label: 'Dòng tiền' },
+  { key: 'tinhHinhThucHien', label: 'Tình hình thực hiện' },
   { key: 'tyTrong', label: 'Tỷ trọng' },
   { key: 'congNo', label: 'Công nợ' },
   { key: 'canDoi', label: 'Cân đối tài chính' },
@@ -98,9 +100,17 @@ const PreviewNvcs: React.FC = () => (
   </div>
 );
 
+const PreviewGauge: React.FC = () => (
+  <RadialBarChart width={PW} height={PH} cy={PH - 6} innerRadius="120%" outerRadius="160%" startAngle={180} endAngle={0} data={[{ value: 65 }]} barSize={9}>
+    <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+    <RadialBar dataKey="value" background fill={TEAL} cornerRadius={6} />
+  </RadialBarChart>
+);
+
 const PREVIEWS: Record<string, React.FC> = {
   kqkd: PreviewKQKD,
   dongTien: PreviewDongTien,
+  tinhHinhThucHien: PreviewGauge,
   tyTrong: PreviewDonut,
   congNo: PreviewCongNo,
   canDoi: PreviewCanDoi,
