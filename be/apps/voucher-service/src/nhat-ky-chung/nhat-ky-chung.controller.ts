@@ -130,6 +130,13 @@ export class NhatKyChungController {
     return this.nhatKyChungService.aggregateNonDeductible(nam, tenantId);
   }
 
+  // Phải đứng TRƯỚC @Get(':id') — nếu không route ':id' nuốt '/tong-hop-don-hang'.
+  @Get('tong-hop-don-hang')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async tongHopDonHang(@Query('nam', ParseIntPipe) nam: number) {
+    return this.nhatKyChungService.tongHopDonHang(nam);
+  }
+
   @Get(':id')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async getById(@Param('id') id: string) {

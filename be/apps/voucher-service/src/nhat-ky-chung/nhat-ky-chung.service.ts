@@ -19,7 +19,16 @@ import {
   SummaryItem,
   SummaryResponse,
 } from './dto';
-import { buildMongoQuery, buildSummaryAggregation, mergeDoiTuongBuckets, DoiTuongBucket } from './helpers';
+import {
+  buildMongoQuery,
+  buildSummaryAggregation,
+  mergeDoiTuongBuckets,
+  DoiTuongBucket,
+  gomTongHopDonHang,
+  DongHachToan,
+  TongHopDonHang,
+  DoanhThuKhongDon,
+} from './helpers';
 import { VoucherNumberService, LoaiResolverService } from '../shared';
 
 @Injectable()
@@ -363,6 +372,48 @@ export class NhatKyChungService {
       soTien: r.soTien || 0,
     }));
     return { success: true, data };
+  }
+
+  /**
+   * Tổng hợp theo đơn hàng cho trang Bán hàng: tiền đã thu, doanh thu chưa/đã thực
+   * hiện, và doanh thu 511 theo tháng của `nam`.
+   *
+   * Chỉ nạp các chứng từ có gắn đơn hàng hoặc có Có 511 — không quét cả sổ. Việc gom
+   * làm ở JS (không phải pipeline Mongo) vì phải khớp prefix tài khoản: công ty dùng
+   * TK con 1121 / 33871 / 5113.
+   */
+  async tongHopDonHang(nam: number): Promise<{
+    success: boolean;
+    data: { theoDonHang: TongHopDonHang[]; khongCoDonHang: DoanhThuKhongDon[] };
+  }> {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    const docs = await this.chungTuRepository
+      .aggregate([
+        {
+          $match: {
+            ...(tenantId ? { tenantId } : {}),
+            $or: [
+              { 'danhMuc.hopDong.soHopDong': { $nin: [null, ''] } },
+              { 'danhMuc.taiKhoanCo.ma': { $regex: '^511' } },
+            ],
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            ngay: 1,
+            soTien: 1,
+            taiKhoanNo: '$danhMuc.taiKhoanNo.ma',
+            taiKhoanCo: '$danhMuc.taiKhoanCo.ma',
+            soHopDong: '$danhMuc.hopDong.soHopDong',
+            sanPhamMa: '$danhMuc.sanPham.ma',
+            sanPhamTen: '$danhMuc.sanPham.ten',
+          },
+        },
+      ])
+      .toArray();
+
+    return { success: true, data: gomTongHopDonHang(docs as DongHachToan[], nam) };
   }
 
   async findById(id: string): Promise<{ success: boolean; data: ChungTu }> {
