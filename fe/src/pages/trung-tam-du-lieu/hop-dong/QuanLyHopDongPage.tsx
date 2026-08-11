@@ -51,6 +51,9 @@ import { SectionNav } from '@/components/layout/SectionNav';
 import { BAN_HANG_NAV } from '@/config/sectionNavs';
 import { KY_OPTIONS, trongKy, type BoLocThoiGian, type KyLoc } from './boLocThoiGian';
 import { tongHopBaoCaoNhanh } from './baoCaoNhanh';
+import { tinhGhiChuDonHang } from './ghiChuDonHang';
+import ButToanDonHangModal from './ButToanDonHangModal';
+import { TK_CHUA_THUC_HIEN, TK_DOANH_THU } from './ghiNhanDoanhThu';
 
 const { Text, Title } = Typography;
 
@@ -119,6 +122,9 @@ const NAM_OPTIONS = Array.from({ length: 16 }, (_, i) => {
  * "Phụ trách" cố ý đứng ngoài: cột đó không có `key` (thêm key sẽ đưa nó vào "Chọn
  * cột" và người dùng từng lưu lựa chọn sẽ mất cột này cho tới khi tự tick lại).
  */
+/** Phải thu khách hàng — TK Nợ khi ghi nhận doanh thu chưa thực hiện. */
+const TK_PHAI_THU = '131';
+
 const NHOM_COT: Record<string, string[]> = {
   'BÁN HÀNG': ['giaTriSauThue', 'tienThue', 'dtChuaThucHien', 'dtDaThucHien'],
   'THU TIỀN': ['daThu', 'conPhaiThu'],
@@ -233,6 +239,17 @@ export default function QuanLyHopDongPage() {
     loadTongHop(loc.nam);
   }, [loc.nam, loadTongHop]);
 
+  /** Sau khi tạo bút toán: chỉ số kế toán đổi, danh sách đơn hàng giữ nguyên. */
+  const refreshTongHop = useCallback(() => {
+    loadTongHop(loc.nam);
+  }, [loadTongHop, loc.nam]);
+
+  /** Thu tiền ghi cả phiếu thu lẫn Sổ thu tiền → nạp lại cả hai nguồn. */
+  const refreshSauThuTien = useCallback(() => {
+    loadList();
+    loadTongHop(loc.nam);
+  }, [loadTongHop, loc.nam]);
+
   const loadReceipts = (hopDongId: string) =>
     thuTienHopDongService.getList({ hopDongId }).then(setReceipts).catch(() => {});
 
@@ -331,7 +348,7 @@ export default function QuanLyHopDongPage() {
 
   // Danh sách load hết về client (BE không lọc) nên mọi bộ lọc chạy thẳng trên mảng:
   // lọc theo cột ở header, theo kỳ thời gian, và 3 bộ lọc trên thanh công cụ.
-  const { filterable, matches, hasPinned } = useTableColumnFilters('trung-tam-du-lieu-hop-dong');
+  const { filterable, matches } = useTableColumnFilters('trung-tam-du-lieu-hop-dong');
 
   const fullRows = useMemo<DongBang[]>(
     () =>
@@ -474,6 +491,68 @@ export default function QuanLyHopDongPage() {
     // Không gắn lọc: cột này vốn không có `key`. Thêm key để lọc sẽ đưa nó vào "Chọn cột",
     // và người dùng từng lưu lựa chọn cột sẽ bị mất cột này cho tới khi tự tick lại.
     { title: 'Phụ trách', width: 130, ellipsis: true, render: (_, r) => r.tracking?.phuTrachHoSo || '-' },
+    {
+      title: 'Ghi chú',
+      key: 'ghiChu',
+      width: 210,
+      fixed: 'right',
+      render: (_, r) => {
+        const { chips, nhanTinh } = tinhGhiChuDonHang(r);
+        if (!canEdit) {
+          return (
+            <Text type="secondary" className="text-xs">
+              {nhanTinh.join(' · ') || '-'}
+            </Text>
+          );
+        }
+        return (
+          <div className="flex flex-col items-start gap-1">
+            {chips.map((c) => {
+              const chip = (openModal: () => void) => (
+                <Button
+                  type="link"
+                  size="small"
+                  className="!px-0 !h-auto"
+                  onClick={openModal}
+                >
+                  {c.nhan}
+                </Button>
+              );
+              if (c.hanhDong === 'THU_TIEN') {
+                return (
+                  <ThuTienDonHangModal
+                    key={c.hanhDong}
+                    hopDong={r}
+                    soLanDaThu={0}
+                    onCreated={refreshSauThuTien}
+                    renderTrigger={chip}
+                  />
+                );
+              }
+              const ketChuyen = c.hanhDong === 'KET_CHUYEN_DOANH_THU';
+              return (
+                <ButToanDonHangModal
+                  key={c.hanhDong}
+                  hopDong={r}
+                  tkNoPrefix={ketChuyen ? TK_CHUA_THUC_HIEN : TK_PHAI_THU}
+                  tkCoPrefix={ketChuyen ? TK_DOANH_THU : TK_CHUA_THUC_HIEN}
+                  tieuDe={c.nhan}
+                  soTienMacDinh={c.soTien}
+                  dienGiaiMacDinh={`${c.nhan} ${r.soHopDong}`}
+                  onCreated={refreshTongHop}
+                  renderTrigger={chip}
+                />
+              );
+            })}
+            {nhanTinh.map((n) => (
+              <Text key={n} type="secondary" className="text-xs">
+                {n}
+              </Text>
+            ))}
+          </div>
+        );
+      },
+    },
     {
       title: '',
       key: 'action',
@@ -667,8 +746,9 @@ export default function QuanLyHopDongPage() {
           rowKey="hopDongId"
           loading={loading}
           size="small"
-          // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được.
-          scroll={{ x: hasPinned ? 'max-content' : 1500 }}
+          // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được. Bảng giờ có 17
+          // cột nên luôn rộng hơn khung — dùng max-content cho mọi trường hợp.
+          scroll={{ x: 'max-content' }}
           // Header dính khi cuộn dọc. Vùng cuộn của app là <Content> trong MainLayout
           // (overflow:auto), KHÔNG phải window → phải trỏ getContainer vào đó.
           sticky={{ offsetHeader: 0, getContainer: getScrollContainer }}
