@@ -90,3 +90,21 @@ Contains 3 tabs, each calls different API:
 - **Fix:** thêm `shared/doi-tuong-loai.helper.ts` (`buildDoiTuongLoaiIndex` + `makeLoaiMatcher`: khớp khi `danhMuc.loai.includes(chiTietTheo)`, fallback snapshot khi đối tượng đã xoá, NGAN_HANG_QUY vẫn theo snapshot). Truyền matcher vào `buildDoiTuongSoTien` (bao-cao), `buildDoiTuongRows` (so-cai + cong-no), `buildSoChiTiet/Multi` (so-chi-tiet). Kèm sửa `getDoiTuong` → `/doi-tuong/all` (trước chỉ lấy 10 bản ghi).
 - **Verified:** YES (2026-07-14, prod: TK 331 hiện Master CEO 15.000.000 = PT155; chỉ còn PT157 orphan vì thật sự chưa gắn đối tượng)
 - **Files:** `be/apps/reporting-service/src/shared/doi-tuong-loai.helper.ts`, `bao-cao/bao-cao.service.ts`, `so-cai/so-cai.service.ts`, `so-chi-tiet/so-chi-tiet.{helper,service}.ts`, `cong-no-tong-hop/cong-no-tong-hop.{helper,service}.ts`, `be/libs/service-client/src/{service-client.ts,services/master-data/doi-tuong.service.ts}`
+
+## Layout chuẩn trang báo cáo (2026-08-11)
+
+- **KHÔNG bọc padding trong page.** `MainLayout` đã cho `<Content>` một `<div style={{padding:12}}>`
+  bọc `<Outlet/>`. Trang nào tự thêm `p-4` là thành 28px và lệch hẳn so với các trang khác.
+  Gốc page phải là `<div>` / `<div className="space-y-3">` / thẳng `<Card>`.
+  Đã vá `BaoCaoDoanhThuPage` (2026-08-11) — nó là trang DUY NHẤT còn `p-4`.
+- **Khuôn trang báo cáo có bộ lọc + xuất Excel** (mẫu: `PnLPage`, nay cả `BaoCaoDoanhThuPage`):
+  ```tsx
+  <div>
+    <FilterBar className="mb-3" filters={<Select .../>} actions={<Button>Xuất Excel</Button>} />
+    <Card title={<Space><Icon /><span>Tên báo cáo</span></Space>}> <Table .../> </Card>
+  </div>
+  ```
+  `FilterBar` ở `@/components/common/FilterBar` — KHÔNG tự dựng hàng flex riêng.
+- **`BaoCaoTaiChinhPage` không còn thẻ kỳ ở góc trái** (2026-08-11): `PeriodFilter` nằm ở
+  `tabBarExtraContent` góc phải thanh tab đã cho thấy kỳ đang xem, thẻ `<Tag>Năm 2026</Tag>` lặp lại
+  chỉ chiếm chỗ. `getPeriodLabel()` GIỮ NGUYÊN — còn dùng đặt tên sheet Excel.
