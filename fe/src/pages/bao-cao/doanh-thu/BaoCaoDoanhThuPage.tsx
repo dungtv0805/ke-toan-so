@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, Select, Space, Table, Typography, message } from 'antd';
+import { FilterBar } from '@/components/common/FilterBar';
 import type { ColumnsType } from 'antd/es/table';
 import { ExportOutlined, RiseOutlined } from '@ant-design/icons';
 import {
@@ -16,7 +17,7 @@ import {
 import { exportReportExcel } from '@/utils/exportReportExcel';
 import { buildDoanhThuSheets } from './doanhThuExport';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -114,13 +115,12 @@ export default function BaoCaoDoanhThuPage() {
   ];
 
   return (
-    <div className="p-4">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <Title level={4} className="!mb-0">
-          <RiseOutlined className="mr-2 text-blue-500" />
-          Báo cáo doanh thu
-        </Title>
-        <Space wrap>
+    // KHÔNG bọc thêm padding: MainLayout đã cho Content padding 12px, thêm p-4 ở đây thành
+    // 28px và trang này lệch hẳn so với mọi trang báo cáo khác.
+    <div>
+      <FilterBar
+        className="mb-3"
+        filters={
           <Select
             value={period}
             onChange={setPeriod}
@@ -129,18 +129,27 @@ export default function BaoCaoDoanhThuPage() {
             showSearch
             optionFilterProp="label"
           />
+        }
+        actions={
           <Button icon={<ExportOutlined />} loading={exporting} onClick={handleExport}>
             Xuất Excel
           </Button>
-        </Space>
-      </div>
+        }
+      />
 
-      <Text type="secondary" className="text-xs">
-        Doanh thu ghi nhận khi hạch toán Có TK 511 và có gắn đơn hàng — tính theo tháng
-        của ngày chứng từ.
-      </Text>
+      <Card
+        title={
+          <Space>
+            <RiseOutlined />
+            <span>Báo cáo doanh thu</span>
+          </Space>
+        }
+      >
+        <Text type="secondary" className="mb-2 block text-xs">
+          Doanh thu ghi nhận khi hạch toán Có TK 511 và có gắn đơn hàng — tính theo tháng
+          của ngày chứng từ.
+        </Text>
 
-      <Card size="small" className="mt-2">
         <Table
           rowKey={(r) => r.soHopDong || r.tenDonHang}
           size="small"
