@@ -23,7 +23,7 @@ interface Props {
 }
 
 const LoiNhuanTheoChieuChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
-  const [chieu, setChieu] = useState('doi-tuong');
+  const [chieu, setChieu] = useState('san-pham');
   const { data = [], isLoading } = useQuery({
     queryKey: ['dash-ln-chieu', year, startMonth, endMonth, chieu],
     queryFn: () => dashboardService.getLoiNhuanBreakdown(year, startMonth, endMonth, chieu),

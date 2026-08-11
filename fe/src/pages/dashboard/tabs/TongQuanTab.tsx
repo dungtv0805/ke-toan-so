@@ -90,7 +90,7 @@ const TongQuanTab: React.FC<Props> = ({ year, startMonth, endMonth, visibleKeys 
     // mọi TK 5x, lợi nhuận = 5x − 6x, tức TRƯỚC thuế), còn hai thẻ này lấy chỉ
     // tiêu KQKD 01 (Có 511) và 60 (LN SAU thuế). Công ty có TK 515/521 hoặc
     // thuế TNDN khác 0 sẽ thấy hai con số khác nhau trong cùng một khung nhìn.
-    { key: 'doanhThu', label: 'Doanh thu bán hàng', value: kqkd?.doanhThu ?? 0, icon: <RiseOutlined /> },
+    { key: 'doanhThu', label: 'Doanh thu', value: kqkd?.doanhThu ?? 0, icon: <RiseOutlined /> },
     { key: 'loiNhuan', label: 'Lợi nhuận sau thuế', value: kqkd?.loiNhuanSauThue ?? 0, icon: <LineChartOutlined /> },
     { key: 'dongTien', label: 'Dòng tiền thuần', value: dongTienThuan, icon: <SwapOutlined /> },
     // `getStats()` không nhận tham số ngày → hai thẻ này tính đến hôm nay,

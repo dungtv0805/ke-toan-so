@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Row, Col, Skeleton, Typography, Tooltip } from 'antd';
+import { Card, Skeleton, Typography, Tooltip } from 'antd';
 import { formatShortCurrency } from './format';
 
 const { Text } = Typography;
@@ -52,12 +52,14 @@ const valueClass = (item: KpiItem): string => {
 };
 
 const KpiRow: React.FC<Props> = ({ items, loading, span = 4 }) => {
-  const lg = span === 5 ? 24 / 5 : 6;
+  // Dùng lưới CSS thay cho Row/Col của antd: `Col span` chỉ nhận số nguyên 0-24,
+  // nên 5 cột (24/5 = 4.8) làm vỡ lưới và các thẻ rơi xuống nhiều hàng.
+  const cot = span === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4';
 
   return (
-    <Row gutter={[12, 12]}>
+    <div className={`grid grid-cols-2 gap-3 ${cot}`}>
       {items.map((item) => (
-        <Col xs={12} lg={lg} key={item.key}>
+        <div key={item.key}>
           <Card
             className="stat-card h-full"
             hoverable={!!item.onClick}
@@ -96,9 +98,9 @@ const KpiRow: React.FC<Props> = ({ items, loading, span = 4 }) => {
               </div>
             </div>
           </Card>
-        </Col>
+        </div>
       ))}
-    </Row>
+    </div>
   );
 };
 

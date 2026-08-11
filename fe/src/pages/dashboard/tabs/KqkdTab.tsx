@@ -23,9 +23,9 @@ const KqkdTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
   const tongChiPhi = (ct['22'] ?? 0) + (ct['25'] ?? 0) + (ct['26'] ?? 0);
 
   const kpis: KpiItem[] = [
-    // "Doanh thu bán hàng" (chỉ tiêu 01 = Có 511), phân biệt với "Doanh thu 5xx"
-    // của biểu đồ xu hướng ngay dưới — hai công thức khác nhau.
-    { key: 'doanhThu', label: 'Doanh thu bán hàng', value: ct['01'] ?? 0, icon: <RiseOutlined /> },
+    // Chỉ tiêu 01 = phát sinh Có TK 511. Biểu đồ bên dưới gộp mọi TK 5xx nên ghi rõ
+    // "Doanh thu 5xx" ở đó để hai con số không bị đọc nhầm là một.
+    { key: 'doanhThu', label: 'Doanh thu', value: ct['01'] ?? 0, icon: <RiseOutlined /> },
     { key: 'giaVon', label: 'Giá vốn', value: ct['11'] ?? 0, icon: <ShoppingOutlined /> },
     { key: 'lnGop', label: 'Lợi nhuận gộp', value: ct['20'] ?? 0, icon: <LineChartOutlined /> },
     { key: 'chiPhi', label: 'Chi phí', value: tongChiPhi, icon: <FallOutlined /> },
