@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
-import { Card, Skeleton, Empty } from 'antd';
+import { Card, Skeleton, Empty, Popover } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import {
   ComposedChart, Bar, Line, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer,
 } from 'recharts';
-import { dashboardService } from '@/services/dashboardService';
+import { dashboardService, type CashAccountSeries } from '@/services/dashboardService';
 import { sliceToRange } from '@/components/shared/period';
 import { formatCurrency, DASH_COLORS } from './format';
 
@@ -24,6 +24,73 @@ const Kpi: React.FC<{ label: string; value: number; color: string }> = ({ label,
   </div>
 );
 
+export interface DongChiTiet { ma: string; ten: string; thu: number; chi: number; ton: number; }
+
+/**
+ * Thu/chi cắt đúng khoảng đang hiển thị, còn TỒN phải luỹ kế từ ĐẦU NĂM tới bucket
+ * cuối (tồn đầu kỳ + mọi phát sinh trước đó) — giống hệt cách đường "Tồn" của biểu
+ * đồ được dựng. Cắt tồn theo khoảng thì tổng dòng chi tiết sẽ lệch với thẻ TỒN.
+ */
+export function tinhChiTiet(
+  taiKhoan: CashAccountSeries[],
+  isWeekly: boolean,
+  startMonth: number,
+  endMonth: number,
+): DongChiTiet[] {
+  return taiKhoan
+    .map((tk) => {
+      const trongKhoang = isWeekly ? tk.points : sliceToRange(tk.points, startMonth, endMonth);
+      const denHetKy = isWeekly ? tk.points : tk.points.filter((p) => p.thang <= endMonth);
+      return {
+        ma: tk.ma,
+        ten: tk.ten,
+        thu: trongKhoang.reduce((s, p) => s + (p.thu || 0), 0),
+        chi: trongKhoang.reduce((s, p) => s + (p.chi || 0), 0),
+        ton: denHetKy.reduce((s, p) => s + (p.thu || 0) - (p.chi || 0), tk.soDuDauKy),
+      };
+    })
+    .filter((r) => r.thu || r.chi || r.ton)
+    .sort((a, b) => b.ton - a.ton || a.ma.localeCompare(b.ma));
+}
+
+const ChiTietTaiKhoan: React.FC<{ rows: DongChiTiet[] }> = ({ rows }) => {
+  const tong = (k: 'thu' | 'chi' | 'ton') => rows.reduce((s, r) => s + r[k], 0);
+  const o = 'px-2 py-1 text-right tabular-nums whitespace-nowrap';
+  return (
+    <div className="max-h-[320px] overflow-auto">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="text-muted-foreground border-b">
+            <th className="px-2 py-1 text-left font-medium">Tài khoản</th>
+            <th className="px-2 py-1 text-right font-medium">Thu</th>
+            <th className="px-2 py-1 text-right font-medium">Chi</th>
+            <th className="px-2 py-1 text-right font-medium">Tồn</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.ma} className="border-b border-border/50">
+              <td className="px-2 py-1 whitespace-nowrap">
+                <span className="font-medium">{r.ma}</span>
+                {r.ten && <span className="text-muted-foreground"> — {r.ten}</span>}
+              </td>
+              <td className={o} style={{ color: TEAL }}>{formatCurrency(r.thu)}</td>
+              <td className={o}>{formatCurrency(r.chi)}</td>
+              <td className={o} style={{ color: ORANGE }}>{formatCurrency(r.ton)}</td>
+            </tr>
+          ))}
+          <tr className="font-semibold">
+            <td className="px-2 py-1">Tổng cộng</td>
+            <td className={o} style={{ color: TEAL }}>{formatCurrency(tong('thu'))}</td>
+            <td className={o}>{formatCurrency(tong('chi'))}</td>
+            <td className={o} style={{ color: ORANGE }}>{formatCurrency(tong('ton'))}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
 const CashFlowChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
   const isWeekly = startMonth === endMonth;
   const month = isWeekly ? startMonth : undefined;
@@ -32,26 +99,44 @@ const CashFlowChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
     queryFn: () => dashboardService.getCashSeries(year, month),
   });
   // chi vẽ âm (dưới trục 0)
-  const data = useMemo(
-    () =>
-      (isWeekly ? full ?? [] : sliceToRange(full ?? [], startMonth, endMonth)).map((d) => ({
-        ...d,
-        chiNeg: -(d.chi || 0),
-      })),
+  const data = useMemo(() => {
+    const points = full?.points ?? [];
+    return (isWeekly ? points : sliceToRange(points, startMonth, endMonth)).map((d) => ({
+      ...d,
+      chiNeg: -(d.chi || 0),
+    }));
+  }, [full, isWeekly, startMonth, endMonth]);
+  const chiTiet = useMemo(
+    () => tinhChiTiet(full?.taiKhoan ?? [], isWeekly, startMonth, endMonth),
     [full, isWeekly, startMonth, endMonth],
   );
   const sum = (k: 'thu' | 'chi') => data.reduce((s, d) => s + (d[k] || 0), 0);
   const ton = data.length ? data[data.length - 1].soDu : 0;
   const hasData = data.some((d) => d.thu || d.chi || d.soDu);
 
+  const kpiRow = (
+    <div className="grid grid-cols-3 gap-3">
+      <Kpi label="Tổng thu" value={sum('thu')} color={TEAL} />
+      <Kpi label="Tổng chi" value={sum('chi')} color="hsl(var(--muted-foreground))" />
+      <Kpi label="Tồn" value={ton} color={ORANGE} />
+    </div>
+  );
+
   return (
     <Card title={<span className="text-sm sm:text-base font-semibold">DÒNG TIỀN</span>}>
       <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="grid grid-cols-3 gap-3 flex-1">
-          <Kpi label="Tổng thu" value={sum('thu')} color={TEAL} />
-          <Kpi label="Tổng chi" value={sum('chi')} color="hsl(var(--muted-foreground))" />
-          <Kpi label="Tồn" value={ton} color={ORANGE} />
-        </div>
+        {chiTiet.length ? (
+          <Popover
+            placement="bottomLeft"
+            title={<span className="text-xs font-semibold">Chi tiết theo tài khoản tiền — Đvt: đồng</span>}
+            content={<ChiTietTaiKhoan rows={chiTiet} />}
+            overlayStyle={{ maxWidth: 560 }}
+          >
+            <div className="flex-1 cursor-help">{kpiRow}</div>
+          </Popover>
+        ) : (
+          <div className="flex-1">{kpiRow}</div>
+        )}
         <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">Đvt: triệu</span>
       </div>
       {isLoading ? (

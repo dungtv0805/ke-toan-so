@@ -158,23 +158,29 @@ export class ChungTuService {
   }
 
   /**
-   * Số dư tiền (111/112, gồm TK con) tại thời điểm ngay TRƯỚC `before`.
+   * Số dư tiền tại thời điểm ngay TRƯỚC `before`, TÁCH THEO TỪNG MÃ TK tiền.
    *
    * = số dư đầu kỳ nhập tay (master-data /so-du-dau-ky) + phát sinh tiền của các
    * chứng từ trước mốc đó. Cùng công thức với `buildSoChiTiet` (reporting-service)
    * và `buildSoQuy` (cash-book-service) để ba báo cáo luôn khớp nhau.
+   *
+   * Trả map thay vì một số tổng để tồn đầu kỳ của từng TK và tổng luôn dựng từ
+   * CÙNG một nguồn — tổng chỉ là Σ map, không có đường tính thứ hai để lệch.
    */
-  private async getCashOpeningBalance(
+  private async getCashOpeningByAccount(
     before: Date,
     tenantId: string | undefined,
     authToken?: string,
-  ): Promise<number> {
+  ): Promise<Map<string, number>> {
+    const opening = new Map<string, number>();
+    const add = (ma: string, v: number) => opening.set(ma, (opening.get(ma) || 0) + v);
+
     const openingRes = await this.serviceClient.getSoDuDauKyRaw(authToken);
-    let opening = 0;
     if (openingRes.success) {
       for (const row of openingRes.data?.items ?? []) {
-        if (!/^11[12]/.test(row.maTaiKhoan || '')) continue;
-        opening += (Number(row.duNo) || 0) - (Number(row.duCo) || 0);
+        const ma = row.maTaiKhoan || '';
+        if (!/^11[12]/.test(ma)) continue;
+        add(ma, (Number(row.duNo) || 0) - (Number(row.duCo) || 0));
       }
     }
 
@@ -188,19 +194,24 @@ export class ChungTuService {
           $facet: {
             thu: [
               { $match: { 'danhMuc.taiKhoanNo.ma': { $regex: '^11[12]' } } },
-              { $group: { _id: null, v: { $sum: '$soTien' } } },
+              { $group: { _id: '$danhMuc.taiKhoanNo.ma', v: { $sum: '$soTien' } } },
             ],
             chi: [
               { $match: { 'danhMuc.taiKhoanCo.ma': { $regex: '^11[12]' } } },
-              { $group: { _id: null, v: { $sum: '$soTien' } } },
+              { $group: { _id: '$danhMuc.taiKhoanCo.ma', v: { $sum: '$soTien' } } },
             ],
           },
         },
       ])
-      .toArray()) as { thu: { v: number }[]; chi: { v: number }[] }[];
+      .toArray()) as {
+      thu: { _id: string; v: number }[];
+      chi: { _id: string; v: number }[];
+    }[];
     const facet = agg[0] || { thu: [], chi: [] };
+    for (const g of facet.thu) add(g._id, g.v || 0);
+    for (const g of facet.chi) add(g._id, -(g.v || 0));
 
-    return opening + (facet.thu[0]?.v || 0) - (facet.chi[0]?.v || 0);
+    return opening;
   }
 
   /**
@@ -210,6 +221,11 @@ export class ChungTuService {
    * Trả kèm `soDuDauKy` — tồn quỹ tại đầu kỳ hiển thị. Thiếu nó thì FE cộng dồn
    * thu−chi từ 0 nên "Tồn" trên dashboard chỉ là chênh lệch thu chi trong kỳ,
    * âm ngay khi công ty tiêu vào số dư mang sang từ kỳ trước.
+   *
+   * Trả kèm `taiKhoan` — cùng thu/chi/tồn đầu kỳ đó tách theo từng mã TK tiền, để
+   * dashboard rê chuột lên thẻ KPI là thấy tiền nằm ở tài khoản nào. `series` và
+   * `soDuDauKy` tổng được DẪN XUẤT từ `taiKhoan` (Σ theo TK), nên hai mức luôn
+   * khớp nhau từng đồng ở mọi bucket.
    */
   async getCashFlowSeries(
     year: number,
@@ -220,6 +236,12 @@ export class ChungTuService {
     data: {
       soDuDauKy: number;
       series: { thang: number; thu: number; chi: number }[];
+      taiKhoan: {
+        ma: string;
+        ten: string;
+        soDuDauKy: number;
+        series: { thang: number; thu: number; chi: number }[];
+      }[];
     };
   }> {
     const tenantId = this.tenantContext.getCurrentTenantId();
@@ -246,40 +268,85 @@ export class ChungTuService {
       ? { $ceil: { $divide: [{ $dayOfMonth: '$ngay' }, 7] } }
       : { $month: '$ngay' };
 
-    const pipeline: object[] = [
-      { $match: match },
+    // Gom theo (mã TK, bucket) chứ không chỉ theo bucket: số tổng vẫn dựng được
+    // bằng cách cộng lại, nên không cần nhánh aggregation thứ hai cho phần tổng.
+    const theoTaiKhoan = (side: 'taiKhoanNo' | 'taiKhoanCo') => [
+      { $match: { [`danhMuc.${side}.ma`]: { $regex: '^11[12]' } } },
       {
-        $facet: {
-          thu: [
-            { $match: { 'danhMuc.taiKhoanNo.ma': { $regex: '^11[12]' } } },
-            { $group: { _id: bucket, v: { $sum: '$soTien' } } },
-          ],
-          chi: [
-            { $match: { 'danhMuc.taiKhoanCo.ma': { $regex: '^11[12]' } } },
-            { $group: { _id: bucket, v: { $sum: '$soTien' } } },
-          ],
+        $group: {
+          _id: { ma: `$danhMuc.${side}.ma`, bucket },
+          ten: { $first: `$danhMuc.${side}.ten` },
+          v: { $sum: '$soTien' },
         },
       },
     ];
+    const pipeline: object[] = [
+      { $match: match },
+      { $facet: { thu: theoTaiKhoan('taiKhoanNo'), chi: theoTaiKhoan('taiKhoanCo') } },
+    ];
+    type NhomTk = { _id: { ma: string; bucket: number }; ten?: string; v: number };
     const agg = (await this.chungTuRepository.aggregate(pipeline).toArray()) as {
-      thu: { _id: number; v: number }[];
-      chi: { _id: number; v: number }[];
+      thu: NhomTk[];
+      chi: NhomTk[];
     }[];
     const facet = agg[0] || { thu: [], chi: [] };
-    const thuBy = new Map(facet.thu.map((g) => [g._id, g.v]));
-    const chiBy = new Map(facet.chi.map((g) => [g._id, g.v]));
     const buckets = weekly ? 5 : 12;
-    const series = Array.from({ length: buckets }, (_, i) => ({
-      thang: i + 1,
-      thu: thuBy.get(i + 1) || 0,
-      chi: chiBy.get(i + 1) || 0,
-    }));
-    const soDuDauKy = await this.getCashOpeningBalance(
+
+    const openingByTk = await this.getCashOpeningByAccount(
       periodStart,
       tenantId,
       authToken,
     );
-    return { success: true, data: { soDuDauKy, series } };
+
+    const rows = new Map<string, { ten: string; thu: number[]; chi: number[] }>();
+    const ensure = (ma: string, ten?: string) => {
+      let row = rows.get(ma);
+      if (!row) {
+        row = {
+          ten: ten || '',
+          thu: new Array<number>(buckets).fill(0),
+          chi: new Array<number>(buckets).fill(0),
+        };
+        rows.set(ma, row);
+      } else if (!row.ten && ten) {
+        row.ten = ten;
+      }
+      return row;
+    };
+    const nap = (nhom: NhomTk[], key: 'thu' | 'chi') => {
+      for (const g of nhom) {
+        const i = (g._id?.bucket || 0) - 1;
+        if (i < 0 || i >= buckets) continue;
+        ensure(g._id.ma, g.ten)[key][i] += g.v || 0;
+      }
+    };
+    nap(facet.thu, 'thu');
+    nap(facet.chi, 'chi');
+    // TK chỉ có tồn mang sang, không phát sinh trong kỳ — vẫn phải hiện, vì tiền
+    // vẫn đang nằm ở đó.
+    for (const ma of openingByTk.keys()) ensure(ma);
+
+    const taiKhoan = Array.from(rows.entries())
+      .map(([ma, r]) => ({
+        ma,
+        ten: r.ten,
+        soDuDauKy: openingByTk.get(ma) || 0,
+        series: Array.from({ length: buckets }, (_, i) => ({
+          thang: i + 1,
+          thu: r.thu[i],
+          chi: r.chi[i],
+        })),
+      }))
+      .sort((a, b) => a.ma.localeCompare(b.ma));
+
+    const series = Array.from({ length: buckets }, (_, i) => ({
+      thang: i + 1,
+      thu: taiKhoan.reduce((s, t) => s + t.series[i].thu, 0),
+      chi: taiKhoan.reduce((s, t) => s + t.series[i].chi, 0),
+    }));
+    const soDuDauKy = taiKhoan.reduce((s, t) => s + t.soDuDauKy, 0);
+
+    return { success: true, data: { soDuDauKy, series, taiKhoan } };
   }
 
   async findAll(loai?: LoaiChungTu): Promise<ChungTu[]> {
