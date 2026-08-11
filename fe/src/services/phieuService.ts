@@ -30,10 +30,20 @@ export interface CashFlowPoint {
   chi: number;
 }
 
+/** Cùng chuỗi thu/chi đó nhưng của riêng một mã TK tiền (1111, 1121...). */
+export interface CashFlowAccount {
+  ma: string;
+  ten: string;
+  soDuDauKy: number;
+  series: CashFlowPoint[];
+}
+
 export interface CashFlowSeries {
   /** Tồn quỹ 111/112 tại đầu kỳ hiển thị (số dư đầu kỳ + phát sinh các kỳ trước). */
   soDuDauKy: number;
   series: CashFlowPoint[];
+  /** Chi tiết theo TK tiền; Σ luôn bằng `series`/`soDuDauKy` vì BE dẫn xuất tổng từ đây. */
+  taiKhoan: CashFlowAccount[];
 }
 
 export interface PhieuQueryParams {
@@ -137,10 +147,12 @@ export class PhieuService extends ServiceBase {
       params: month ? { year, month } : { year },
     });
     // BE cũ trả thẳng mảng (chưa có soDuDauKy) — giữ tương thích khi FE deploy trước.
-    if (Array.isArray(data)) return { soDuDauKy: 0, series: data };
+    if (Array.isArray(data)) return { soDuDauKy: 0, series: data, taiKhoan: [] };
     return {
       soDuDauKy: data?.soDuDauKy || 0,
       series: Array.isArray(data?.series) ? data.series : [],
+      // BE chưa deploy bản có chi tiết TK → mảng rỗng, tooltip tự ẩn.
+      taiKhoan: Array.isArray(data?.taiKhoan) ? data.taiKhoan : [],
     };
   }
 

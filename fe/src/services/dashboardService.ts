@@ -38,6 +38,23 @@ export interface CashSeriesPoint {
   soDu: number;
 }
 
+/**
+ * Chi tiết chuỗi dòng tiền theo từng TK tiền — nguồn cho tooltip "TK nào bao nhiêu
+ * tiền" trên thẻ KPI. Giữ nguyên dạng CHUỖI (không gộp sẵn) vì dashboard cắt theo
+ * khoảng tháng đang chọn; gộp sẵn ở đây là tooltip lệch với KPI ngay khi đổi kỳ.
+ */
+export interface CashAccountSeries {
+  ma: string;
+  ten: string;
+  soDuDauKy: number;
+  points: { thang: number; thu: number; chi: number }[];
+}
+
+export interface CashSeries {
+  points: CashSeriesPoint[];
+  taiKhoan: CashAccountSeries[];
+}
+
 export interface CongNoSeriesPoint {
   thang: number;
   tongPhaiThu: number;
@@ -164,21 +181,39 @@ export const dashboardService = {
    * Số dư luỹ kế bắt đầu từ TỒN ĐẦU KỲ, không phải 0 — nếu không, "Tồn" hiển thị
    * chênh lệch thu chi trong kỳ và ra âm ngay khi công ty tiêu vào số dư mang sang.
    */
-  async getCashSeries(year: number, month?: number): Promise<CashSeriesPoint[]> {
+  async getCashSeries(year: number, month?: number): Promise<CashSeries> {
     const buckets = month ? 5 : 12;
+    const rong = (): CashSeriesPoint[] =>
+      Array.from({ length: buckets }, (_, i) => ({ thang: i + 1, thu: 0, chi: 0, soDu: 0 }));
     try {
-      const { soDuDauKy, series } = await phieuThuService.getCashFlowSeries(year, month);
+      const { soDuDauKy, series, taiKhoan } = await phieuThuService.getCashFlowSeries(year, month);
       const by = new Map(series.map((r) => [r.thang, r]));
       let soDu = soDuDauKy;
-      return Array.from({ length: buckets }, (_, i) => {
+      const points = Array.from({ length: buckets }, (_, i) => {
         const r = by.get(i + 1);
         const thu = r?.thu || 0;
         const chi = r?.chi || 0;
         soDu += thu - chi;
         return { thang: i + 1, thu, chi, soDu };
       });
+      return {
+        points,
+        taiKhoan: taiKhoan.map((tk) => {
+          const byTk = new Map(tk.series.map((r) => [r.thang, r]));
+          return {
+            ma: tk.ma,
+            ten: tk.ten || '',
+            soDuDauKy: tk.soDuDauKy || 0,
+            points: Array.from({ length: buckets }, (_, i) => ({
+              thang: i + 1,
+              thu: byTk.get(i + 1)?.thu || 0,
+              chi: byTk.get(i + 1)?.chi || 0,
+            })),
+          };
+        }),
+      };
     } catch {
-      return Array.from({ length: buckets }, (_, i) => ({ thang: i + 1, thu: 0, chi: 0, soDu: 0 }));
+      return { points: rong(), taiKhoan: [] };
     }
   },
 
