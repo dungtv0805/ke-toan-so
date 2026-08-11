@@ -44,25 +44,22 @@ export interface CashSeriesPoint {
 }
 
 /**
- * Chi tiết chuỗi dòng tiền theo từng TK tiền — nguồn cho tooltip "TK nào bao nhiêu
- * tiền" trên thẻ KPI. Giữ nguyên dạng CHUỖI (không gộp sẵn) vì dashboard cắt theo
- * khoảng tháng đang chọn; gộp sẵn ở đây là tooltip lệch với KPI ngay khi đổi kỳ.
+ * Chuỗi dòng tiền của từng nơi giữ tiền (mỗi tài khoản ngân hàng một dòng, cộng
+ * hai dòng gom tiền mặt / tiền gửi chưa gán) — nguồn cho tooltip "tiền đang nằm
+ * ở đâu" trên thẻ KPI. Giữ nguyên dạng CHUỖI (không gộp sẵn) vì dashboard cắt
+ * theo khoảng tháng đang chọn; gộp sẵn ở đây là tooltip lệch với KPI khi đổi kỳ.
  */
 export interface CashMoneyLine {
+  /** Số tài khoản ngân hàng; rỗng ở dòng gom Tiền mặt / Tiền gửi chưa gán. */
   ma: string;
   ten: string;
   soDuDauKy: number;
   points: { thang: number; thu: number; chi: number }[];
 }
 
-export interface CashAccountSeries extends CashMoneyLine {
-  /** Từng quỹ/ngân hàng trong TK; rỗng khi TK không tách đối tượng. */
-  chiTiet: CashMoneyLine[];
-}
-
 export interface CashSeries {
   points: CashSeriesPoint[];
-  taiKhoan: CashAccountSeries[];
+  nguonTien: CashMoneyLine[];
 }
 
 export interface CongNoSeriesPoint {
@@ -196,7 +193,7 @@ export const dashboardService = {
     const rong = (): CashSeriesPoint[] =>
       Array.from({ length: buckets }, (_, i) => ({ thang: i + 1, thu: 0, chi: 0, soDu: 0 }));
     try {
-      const { soDuDauKy, series, taiKhoan } = await phieuThuService.getCashFlowSeries(year, month);
+      const { soDuDauKy, series, nguonTien } = await phieuThuService.getCashFlowSeries(year, month);
       const by = new Map(series.map((r) => [r.thang, r]));
       let soDu = soDuDauKy;
       const points = Array.from({ length: buckets }, (_, i) => {
@@ -207,7 +204,7 @@ export const dashboardService = {
         return { thang: i + 1, thu, chi, soDu };
       });
       // Bucket có thể thiếu/thừa so với kỳ đang xem — dựng lại đủ `buckets` chỗ để
-      // mọi mức (TK, ngân hàng) cắt theo cùng một trục với chuỗi tổng.
+      // từng nguồn tiền cắt theo cùng một trục với chuỗi tổng.
       const chuan = (line: CashFlowMoneyLine): CashMoneyLine => {
         const byThang = new Map(line.series.map((r) => [r.thang, r]));
         return {
@@ -221,12 +218,9 @@ export const dashboardService = {
           })),
         };
       };
-      return {
-        points,
-        taiKhoan: taiKhoan.map((tk) => ({ ...chuan(tk), chiTiet: tk.chiTiet.map(chuan) })),
-      };
+      return { points, nguonTien: nguonTien.map(chuan) };
     } catch {
-      return { points: rong(), taiKhoan: [] };
+      return { points: rong(), nguonTien: [] };
     }
   },
 

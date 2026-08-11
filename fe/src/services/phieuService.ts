@@ -30,7 +30,11 @@ export interface CashFlowPoint {
   chi: number;
 }
 
-/** Cùng chuỗi thu/chi đó nhưng của riêng một mã tiền (TK 1121, hoặc 1 ngân hàng). */
+/**
+ * Cùng chuỗi thu/chi đó nhưng của riêng một nơi giữ tiền: một tài khoản ngân
+ * hàng, hoặc dòng gom "Tiền mặt" / "Tiền gửi (chưa gán tài khoản)". `ma` rỗng ở
+ * hai dòng gom — đây là báo cáo dòng tiền, không phát số hiệu TK kế toán.
+ */
 export interface CashFlowMoneyLine {
   ma: string;
   ten: string;
@@ -38,17 +42,12 @@ export interface CashFlowMoneyLine {
   series: CashFlowPoint[];
 }
 
-export interface CashFlowAccount extends CashFlowMoneyLine {
-  /** Từng quỹ/ngân hàng trong TK; rỗng khi TK không tách đối tượng. */
-  chiTiet: CashFlowMoneyLine[];
-}
-
 export interface CashFlowSeries {
   /** Tồn quỹ 111/112 tại đầu kỳ hiển thị (số dư đầu kỳ + phát sinh các kỳ trước). */
   soDuDauKy: number;
   series: CashFlowPoint[];
-  /** Chi tiết theo TK tiền; Σ luôn bằng `series`/`soDuDauKy` vì BE dẫn xuất tổng từ đây. */
-  taiKhoan: CashFlowAccount[];
+  /** Chi tiết theo nguồn tiền; Σ luôn bằng `series`/`soDuDauKy` vì BE dẫn xuất tổng từ đây. */
+  nguonTien: CashFlowMoneyLine[];
 }
 
 export interface PhieuQueryParams {
@@ -152,18 +151,12 @@ export class PhieuService extends ServiceBase {
       params: month ? { year, month } : { year },
     });
     // BE cũ trả thẳng mảng (chưa có soDuDauKy) — giữ tương thích khi FE deploy trước.
-    if (Array.isArray(data)) return { soDuDauKy: 0, series: data, taiKhoan: [] };
+    if (Array.isArray(data)) return { soDuDauKy: 0, series: data, nguonTien: [] };
     return {
       soDuDauKy: data?.soDuDauKy || 0,
       series: Array.isArray(data?.series) ? data.series : [],
-      // BE chưa deploy bản có chi tiết TK → mảng rỗng, tooltip tự ẩn. `chiTiet`
-      // cũng chuẩn hoá vì bản BE đầu tiên chưa có chiều ngân hàng.
-      taiKhoan: Array.isArray(data?.taiKhoan)
-        ? data.taiKhoan.map((tk) => ({
-            ...tk,
-            chiTiet: Array.isArray(tk?.chiTiet) ? tk.chiTiet : [],
-          }))
-        : [],
+      // BE chưa deploy bản có chi tiết nguồn tiền → mảng rỗng, tooltip tự ẩn.
+      nguonTien: Array.isArray(data?.nguonTien) ? data.nguonTien : [],
     };
   }
 
