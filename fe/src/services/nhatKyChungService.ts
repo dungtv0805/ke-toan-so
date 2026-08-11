@@ -9,6 +9,21 @@ export interface NhatKyChungStats {
   tongGiaTri: number;
 }
 
+export interface TongHopDonHang {
+  soHopDong: string;
+  daThu: number;
+  dtChuaThucHien: number;
+  dtDaThucHien: number;
+  /** 12 phần tử — doanh thu 511 theo tháng của năm được hỏi. */
+  dtTheoThang: number[];
+}
+
+export interface DoanhThuKhongDon {
+  sanPhamMa: string;
+  sanPhamTen: string;
+  dtTheoThang: number[];
+}
+
 export interface SummaryItem {
   key: string;
   ten?: string;
@@ -219,6 +234,17 @@ class NhatKyChungService extends ServiceBase {
       page += 1;
     }
     return all;
+  }
+
+  /**
+   * Tổng hợp chứng từ theo đơn hàng (tiền đã thu, doanh thu chưa/đã thực hiện).
+   * Ba số đầu là luỹ kế toàn thời gian; `dtTheoThang` chỉ trong `nam`.
+   */
+  async getTongHopDonHang(nam: number): Promise<{
+    theoDonHang: TongHopDonHang[];
+    khongCoDonHang: DoanhThuKhongDon[];
+  }> {
+    return this.get({ endpoint: '/tong-hop-don-hang', params: { nam } });
   }
 
   /**

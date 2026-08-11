@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Card,
   Row,
@@ -35,6 +35,10 @@ import { thuTienHopDongService } from '@/services/thuTienHopDongService';
 import { hoaDonBanRaService } from '@/services/hoaDonBanRaService';
 import { doiTuongService } from '@/services/doiTuongService';
 import { sanPhamService } from '@/services/sanPhamService';
+import {
+  nhatKyChungService,
+  type TongHopDonHang,
+} from '@/services/nhatKyChungService';
 import { THUE_SUAT_OPTIONS } from '@/services/taxService';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
@@ -51,12 +55,27 @@ import { tongHopBaoCaoNhanh } from './baoCaoNhanh';
 const { Text, Title } = Typography;
 
 /**
+ * Dòng bảng = đơn hàng (master-data) + số kế toán ghép từ chứng từ (voucher) + các số
+ * suy ra. Ghép ở FE vì hai nguồn nằm ở hai service khác nhau.
+ */
+type DongBang = TheoDoiHopDongRow & {
+  daThu: number;
+  dtChuaThucHien: number;
+  dtDaThucHien: number;
+  daXuatHoaDon: number;
+  chuaXuatHoaDon: number;
+  conPhaiThu: number;
+  /** Mốc so sánh doanh thu — giá trị trước thuế của đơn hàng. */
+  mocDoanhThu: number;
+};
+
+/**
  * Ô dùng để so khớp bộ lọc cột — key trùng `key` của cột antd.
  * Cột "Chủ đầu tư" hiển thị TÊN (map từ id) nên lọc cũng phải khớp trên tên.
  */
 const cellValue =
   (doiTuongMap: Record<string, string>, sanPhamMap: Record<string, string>) =>
-  (r: TheoDoiHopDongRow, key: string): string | undefined => {
+  (r: DongBang, key: string): string | undefined => {
     switch (key) {
       case 'soHopDong':
         return r.soHopDong;
@@ -125,6 +144,7 @@ export default function QuanLyHopDongPage() {
   const [loading, setLoading] = useState(false);
   const [doiTuongMap, setDoiTuongMap] = useState<Record<string, string>>({});
   const [sanPhamList, setSanPhamList] = useState<SanPham[]>([]);
+  const [tongHop, setTongHop] = useState<Record<string, TongHopDonHang>>({});
 
   const [search, setSearch] = useState('');
   const [loc, setLoc] = useState<BoLocThoiGian>({ nam: NAM_HIEN_TAI, ky: 'CA_NAM' });
@@ -181,6 +201,24 @@ export default function QuanLyHopDongPage() {
   useEffect(() => {
     loadList();
   }, []);
+
+  // Số kế toán phụ thuộc năm đang lọc (cột theo tháng), nên nạp lại khi đổi năm.
+  const loadTongHop = useCallback(async (nam: number) => {
+    try {
+      const res = await nhatKyChungService.getTongHopDonHang(nam);
+      const m: Record<string, TongHopDonHang> = {};
+      res.theoDonHang.forEach((t) => {
+        m[t.soHopDong] = t;
+      });
+      setTongHop(m);
+    } catch {
+      message.error('Không tải được số liệu chứng từ theo đơn hàng');
+    }
+  }, []);
+
+  useEffect(() => {
+    loadTongHop(loc.nam);
+  }, [loc.nam, loadTongHop]);
 
   const loadReceipts = (hopDongId: string) =>
     thuTienHopDongService.getList({ hopDongId }).then(setReceipts).catch(() => {});
@@ -281,10 +319,31 @@ export default function QuanLyHopDongPage() {
   // Danh sách load hết về client (BE không lọc) nên mọi bộ lọc chạy thẳng trên mảng:
   // lọc theo cột ở header, theo kỳ thời gian, và 3 bộ lọc trên thanh công cụ.
   const { filterable, matches, hasPinned } = useTableColumnFilters('trung-tam-du-lieu-hop-dong');
+
+  const fullRows = useMemo<DongBang[]>(
+    () =>
+      rows.map((r) => {
+        const t = tongHop[r.soHopDong];
+        const doanhSo = Number(r.giaTriSauThue) || 0;
+        const daXuatHoaDon = Number(r.daTraHoaDon) || 0;
+        return {
+          ...r,
+          daThu: t?.daThu ?? 0,
+          dtChuaThucHien: t?.dtChuaThucHien ?? 0,
+          dtDaThucHien: t?.dtDaThucHien ?? 0,
+          daXuatHoaDon,
+          chuaXuatHoaDon: doanhSo - daXuatHoaDon,
+          conPhaiThu: doanhSo - (t?.daThu ?? 0),
+          mocDoanhThu: Number(r.giaTriTruocThue) || doanhSo - (Number(r.tienThue) || 0),
+        };
+      }),
+    [rows, tongHop],
+  );
+
   const viewRows = useMemo(() => {
     const getValue = cellValue(doiTuongMap, sanPhamMap);
     const tuKhoa = search.trim().toLowerCase();
-    return rows.filter((r) => {
+    return fullRows.filter((r) => {
       if (!matches(r, getValue)) return false;
       if (!trongKy(r, loc)) return false;
       if (khachHang && r.doiTuongId !== khachHang) return false;
@@ -295,13 +354,10 @@ export default function QuanLyHopDongPage() {
         return false;
       return true;
     });
-  }, [rows, matches, doiTuongMap, sanPhamMap, loc, khachHang, sanPham, donHang, search]);
+  }, [fullRows, matches, doiTuongMap, sanPhamMap, loc, khachHang, sanPham, donHang, search]);
 
   // Thẻ báo cáo nhanh cộng trên đúng tập dòng đang hiển thị, không phải tổng toàn bộ.
-  const baoCao = useMemo(
-    () => tongHopBaoCaoNhanh(viewRows.map((r) => ({ ...r, daThu: r.daThanhToan }))),
-    [viewRows],
-  );
+  const baoCao = useMemo(() => tongHopBaoCaoNhanh(viewRows), [viewRows]);
 
   // Số HĐ có thể trùng giữa các bản ghi cũ — Select không chịu được option trùng value.
   const donHangOptions = useMemo(
@@ -312,8 +368,8 @@ export default function QuanLyHopDongPage() {
     [rows],
   );
 
-  const columns: ColumnsType<TheoDoiHopDongRow> = [
-    filterable<TheoDoiHopDongRow>({
+  const columns: ColumnsType<DongBang> = [
+    filterable<DongBang>({
       title: 'Số HĐ',
       dataIndex: 'soHopDong',
       key: 'soHopDong',
@@ -329,14 +385,14 @@ export default function QuanLyHopDongPage() {
       align: 'center',
       render: (v: string) => (v ? dayjs(v).format('DD/MM/YYYY') : '-'),
     },
-    filterable<TheoDoiHopDongRow>({
+    filterable<DongBang>({
       title: 'Tên công trình',
       dataIndex: 'tenCongTrinh',
       key: 'tenCongTrinh',
       width: 220,
       ellipsis: true,
     }),
-    filterable<TheoDoiHopDongRow>({
+    filterable<DongBang>({
       title: 'Chủ đầu tư',
       dataIndex: 'doiTuongId',
       key: 'doiTuongId',
@@ -344,7 +400,7 @@ export default function QuanLyHopDongPage() {
       ellipsis: true,
       render: (v: string) => doiTuongMap[v] || '-',
     }),
-    filterable<TheoDoiHopDongRow>({
+    filterable<DongBang>({
       title: 'Sản phẩm',
       dataIndex: 'sanPhamId',
       key: 'sanPhamId',
@@ -352,31 +408,55 @@ export default function QuanLyHopDongPage() {
       ellipsis: true,
       render: (v: string) => sanPhamMap[v] || '-',
     }),
+    { title: 'Doanh số', dataIndex: 'giaTriSauThue', key: 'giaTriSauThue', width: 140, align: 'right', render: (v) => fmtCur(v) },
+    { title: 'Tiền thuế', dataIndex: 'tienThue', key: 'tienThue', width: 120, align: 'right', render: (v) => fmtCur(v) },
     {
-      title: 'Thuế suất',
-      dataIndex: 'thueSuat',
-      key: 'thueSuat',
-      width: 100,
-      align: 'center',
-      render: (v: string) =>
-        v ? <Tag>{THUE_SUAT_OPTIONS.find((o) => o.value === v)?.label ?? v}</Tag> : '-',
-    },
-    { title: 'Tiền thuế', dataIndex: 'tienThue', width: 130, align: 'right', render: (v) => fmtCur(v) },
-    { title: 'Giá trị', dataIndex: 'giaTriSauThue', width: 140, align: 'right', render: (v) => fmtCur(v) },
-    {
-      title: 'Quyết toán',
-      width: 140,
+      title: 'DT chưa TH',
+      dataIndex: 'dtChuaThucHien',
+      key: 'dtChuaThucHien',
+      width: 130,
       align: 'right',
-      render: (_, r) => fmtCur(r.tracking?.quyetToan?.giaTri),
+      render: (v: number) => <Text type={v > 0 ? 'warning' : undefined}>{fmtCur(v)}</Text>,
     },
-    { title: 'Đã thanh toán', dataIndex: 'daThanhToan', width: 140, align: 'right', render: (v) => <Text type="success">{fmtCur(v)}</Text> },
-    { title: 'Đã trả hóa đơn', dataIndex: 'daTraHoaDon', width: 140, align: 'right', render: (v) => fmtCur(v) },
     {
-      title: 'Còn lại',
-      dataIndex: 'conLai',
+      title: 'DT đã TH',
+      dataIndex: 'dtDaThucHien',
+      key: 'dtDaThucHien',
+      width: 130,
+      align: 'right',
+      render: (v: number) => <Text type="success">{fmtCur(v)}</Text>,
+    },
+    {
+      title: 'Đã thu',
+      dataIndex: 'daThu',
+      key: 'daThu',
+      width: 130,
+      align: 'right',
+      render: (v: number) => <Text type="success">{fmtCur(v)}</Text>,
+    },
+    {
+      title: 'Còn phải thu',
+      dataIndex: 'conPhaiThu',
+      key: 'conPhaiThu',
       width: 140,
       align: 'right',
       render: (v: number) => <Text type={v > 0 ? 'warning' : undefined}>{fmtCur(v)}</Text>,
+    },
+    { title: 'Đã xuất HĐ', dataIndex: 'daXuatHoaDon', key: 'daXuatHoaDon', width: 140, align: 'right', render: (v) => fmtCur(v) },
+    {
+      title: 'Chưa xuất HĐ',
+      dataIndex: 'chuaXuatHoaDon',
+      key: 'chuaXuatHoaDon',
+      width: 140,
+      align: 'right',
+      render: (v: number) => <Text type={v > 0 ? 'warning' : undefined}>{fmtCur(v)}</Text>,
+    },
+    {
+      title: 'Quyết toán',
+      key: 'quyetToan',
+      width: 140,
+      align: 'right',
+      render: (_, r) => fmtCur(r.tracking?.quyetToan?.giaTri),
     },
     // Không gắn lọc: cột này vốn không có `key`. Thêm key để lọc sẽ đưa nó vào "Chọn cột",
     // và người dùng từng lưu lựa chọn cột sẽ bị mất cột này cho tới khi tự tick lại.
@@ -529,7 +609,7 @@ export default function QuanLyHopDongPage() {
           }
         />
 
-        <Table<TheoDoiHopDongRow>
+        <Table<DongBang>
           columns={cfgColumns}
           dataSource={viewRows}
           rowKey="hopDongId"
