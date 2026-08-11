@@ -43,11 +43,11 @@ describe('ChungTuService.getCashFlowSeries — chi tiết theo tài khoản', ()
     mockAgg(
       {
         thu: [
-          { _id: { ma: '1111', bucket: 1 }, ten: 'Tiền mặt', v: 100 },
-          { _id: { ma: '1121', bucket: 1 }, ten: 'TGNH', v: 300 },
-          { _id: { ma: '1121', bucket: 2 }, ten: 'TGNH', v: 50 },
+          { _id: { ma: '1111', dt: '', bucket: 1 }, ten: 'Tiền mặt', v: 100 },
+          { _id: { ma: '1121', dt: 'VCB', bucket: 1 }, ten: 'TGNH', dtTen: 'Vietcombank', v: 300 },
+          { _id: { ma: '1121', dt: 'VCB', bucket: 2 }, ten: 'TGNH', dtTen: 'Vietcombank', v: 50 },
         ],
-        chi: [{ _id: { ma: '1111', bucket: 1 }, ten: 'Tiền mặt', v: 40 }],
+        chi: [{ _id: { ma: '1111', dt: '', bucket: 1 }, ten: 'Tiền mặt', v: 40 }],
       },
       { thu: [], chi: [] },
     );
@@ -70,6 +70,83 @@ describe('ChungTuService.getCashFlowSeries — chi tiết theo tài khoản', ()
     expect(data.taiKhoan[0].series).toHaveLength(12);
   });
 
+  it('tách tiếp theo ngân hàng/quỹ trong TK; TK = Σ dòng ngân hàng', async () => {
+    getSoDuDauKyRaw.mockResolvedValue({
+      success: true,
+      data: {
+        items: [
+          { maTaiKhoan: '1121', chiTietMa: 'VCB', chiTietTen: 'Vietcombank', duNo: 1000, duCo: 0 },
+          { maTaiKhoan: '1121', chiTietMa: 'TCB', chiTietTen: 'Techcombank', duNo: 400, duCo: 0 },
+        ],
+      },
+    });
+    mockAgg(
+      {
+        thu: [
+          { _id: { ma: '1121', dt: 'VCB', bucket: 1 }, ten: 'TGNH', dtTen: 'Vietcombank', v: 900 },
+          { _id: { ma: '1121', dt: 'TCB', bucket: 1 }, ten: 'TGNH', dtTen: 'Techcombank', v: 100 },
+        ],
+        chi: [
+          { _id: { ma: '1121', dt: 'TCB', bucket: 2 }, ten: 'TGNH', dtTen: 'Techcombank', v: 60 },
+        ],
+      },
+      { thu: [], chi: [] },
+    );
+
+    const { data } = await service.getCashFlowSeries(2026);
+
+    const tk = data.taiKhoan[0];
+    expect(tk.ma).toBe('1121');
+    expect(tk.chiTiet.map((c) => c.ma)).toEqual(['TCB', 'VCB']);
+    expect(tk.chiTiet.find((c) => c.ma === 'VCB')).toMatchObject({
+      ten: 'Vietcombank',
+      soDuDauKy: 1000,
+    });
+    // Bất biến ở mức 2: TK = Σ ngân hàng, mọi bucket + tồn đầu kỳ.
+    expect(tk.soDuDauKy).toBe(tk.chiTiet.reduce((s, c) => s + c.soDuDauKy, 0));
+    expect(tk.soDuDauKy).toBe(1400);
+    for (let i = 0; i < 12; i++) {
+      expect(tk.series[i].thu).toBe(tk.chiTiet.reduce((s, c) => s + c.series[i].thu, 0));
+      expect(tk.series[i].chi).toBe(tk.chiTiet.reduce((s, c) => s + c.series[i].chi, 0));
+    }
+    expect(tk.series[0].thu).toBe(1000);
+    expect(tk.series[1].chi).toBe(60);
+  });
+
+  it('phần chưa gắn đối tượng thành một dòng riêng để Σ vẫn bằng TK', async () => {
+    getSoDuDauKyRaw.mockResolvedValue({ success: true, data: { items: [] } });
+    mockAgg(
+      {
+        thu: [
+          { _id: { ma: '1121', dt: 'VCB', bucket: 1 }, ten: 'TGNH', dtTen: 'Vietcombank', v: 700 },
+          { _id: { ma: '1121', dt: '', bucket: 1 }, ten: 'TGNH', v: 300 },
+        ],
+        chi: [],
+      },
+      { thu: [], chi: [] },
+    );
+
+    const { data } = await service.getCashFlowSeries(2026);
+
+    const tk = data.taiKhoan[0];
+    expect(tk.chiTiet.map((c) => c.ma)).toEqual(['', 'VCB']);
+    expect(tk.series[0].thu).toBe(1000);
+    expect(tk.series[0].thu).toBe(tk.chiTiet.reduce((s, c) => s + c.series[0].thu, 0));
+  });
+
+  it('TK mà mọi phát sinh đều chưa gắn đối tượng thì không đẻ dòng con thừa', async () => {
+    getSoDuDauKyRaw.mockResolvedValue({ success: true, data: { items: [] } });
+    mockAgg(
+      { thu: [{ _id: { ma: '1111', dt: '', bucket: 1 }, ten: 'Tiền mặt', v: 500 }], chi: [] },
+      { thu: [], chi: [] },
+    );
+
+    const { data } = await service.getCashFlowSeries(2026);
+
+    expect(data.taiKhoan[0].chiTiet).toEqual([]);
+    expect(data.taiKhoan[0].series[0].thu).toBe(500);
+  });
+
   it('tồn đầu kỳ tách theo tài khoản, cộng lại bằng soDuDauKy tổng', async () => {
     getSoDuDauKyRaw.mockResolvedValue({
       success: true,
@@ -84,8 +161,8 @@ describe('ChungTuService.getCashFlowSeries — chi tiết theo tài khoản', ()
     mockAgg(
       { thu: [], chi: [] },
       {
-        thu: [{ _id: '1111', v: 200 }],
-        chi: [{ _id: '1121', v: 300 }],
+        thu: [{ _id: { ma: '1111', dt: '' }, v: 200 }],
+        chi: [{ _id: { ma: '1121', dt: '' }, v: 300 }],
       },
     );
 
@@ -115,10 +192,16 @@ describe('ChungTuService.getCashFlowSeries — chi tiết theo tài khoản', ()
     expect(data.taiKhoan[0].series.every((p) => !p.thu && !p.chi)).toBe(true);
   });
 
-  it('chế độ tuần: 5 bucket, chi tiết theo tài khoản cũng 5 bucket', async () => {
+  it('chế độ tuần: 5 bucket, chi tiết theo tài khoản/ngân hàng cũng 5 bucket', async () => {
     getSoDuDauKyRaw.mockResolvedValue({ success: true, data: { items: [] } });
     mockAgg(
-      { thu: [{ _id: { ma: '1111', bucket: 3 }, ten: 'Tiền mặt', v: 80 }], chi: [] },
+      {
+        thu: [
+          { _id: { ma: '1121', dt: 'VCB', bucket: 3 }, ten: 'TGNH', dtTen: 'Vietcombank', v: 80 },
+          { _id: { ma: '1121', dt: 'TCB', bucket: 1 }, ten: 'TGNH', dtTen: 'Techcombank', v: 20 },
+        ],
+        chi: [],
+      },
       { thu: [], chi: [] },
     );
 
@@ -126,13 +209,15 @@ describe('ChungTuService.getCashFlowSeries — chi tiết theo tài khoản', ()
 
     expect(data.series).toHaveLength(5);
     expect(data.taiKhoan[0].series).toHaveLength(5);
+    expect(data.taiKhoan[0].chiTiet[0].series).toHaveLength(5);
     expect(data.series[2].thu).toBe(80);
+    expect(data.series[0].thu).toBe(20);
   });
 
   it('service số dư đầu kỳ lỗi → vẫn trả chi tiết phát sinh, không vỡ', async () => {
     getSoDuDauKyRaw.mockResolvedValue({ success: false, error: {} });
     mockAgg(
-      { thu: [{ _id: { ma: '1111', bucket: 1 }, ten: 'Tiền mặt', v: 10 }], chi: [] },
+      { thu: [{ _id: { ma: '1111', dt: '', bucket: 1 }, ten: 'Tiền mặt', v: 10 }], chi: [] },
       { thu: [], chi: [] },
     );
 

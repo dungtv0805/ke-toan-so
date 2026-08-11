@@ -17,7 +17,12 @@ import { balanceSheetService } from './balanceSheetService';
 import { baoCaoReportService } from './baoCaoReportService';
 import { congNoPhaiThuService } from './congNoPhaiThuService';
 import { congNoPhaiTraService } from './congNoPhaiTraService';
-import { phieuThuService, phieuChiService, type PhieuService } from './phieuService';
+import {
+  phieuThuService,
+  phieuChiService,
+  type PhieuService,
+  type CashFlowMoneyLine,
+} from './phieuService';
 import { soCaiService, type TrialBalance } from './soCaiService';
 import { kqkdService } from './kqkdService';
 import type { KhoanPhaiThanhToan } from '@/pages/dashboard/lichThanhToan';
@@ -43,11 +48,16 @@ export interface CashSeriesPoint {
  * tiền" trên thẻ KPI. Giữ nguyên dạng CHUỖI (không gộp sẵn) vì dashboard cắt theo
  * khoảng tháng đang chọn; gộp sẵn ở đây là tooltip lệch với KPI ngay khi đổi kỳ.
  */
-export interface CashAccountSeries {
+export interface CashMoneyLine {
   ma: string;
   ten: string;
   soDuDauKy: number;
   points: { thang: number; thu: number; chi: number }[];
+}
+
+export interface CashAccountSeries extends CashMoneyLine {
+  /** Từng quỹ/ngân hàng trong TK; rỗng khi TK không tách đối tượng. */
+  chiTiet: CashMoneyLine[];
 }
 
 export interface CashSeries {
@@ -196,21 +206,24 @@ export const dashboardService = {
         soDu += thu - chi;
         return { thang: i + 1, thu, chi, soDu };
       });
+      // Bucket có thể thiếu/thừa so với kỳ đang xem — dựng lại đủ `buckets` chỗ để
+      // mọi mức (TK, ngân hàng) cắt theo cùng một trục với chuỗi tổng.
+      const chuan = (line: CashFlowMoneyLine): CashMoneyLine => {
+        const byThang = new Map(line.series.map((r) => [r.thang, r]));
+        return {
+          ma: line.ma,
+          ten: line.ten || '',
+          soDuDauKy: line.soDuDauKy || 0,
+          points: Array.from({ length: buckets }, (_, i) => ({
+            thang: i + 1,
+            thu: byThang.get(i + 1)?.thu || 0,
+            chi: byThang.get(i + 1)?.chi || 0,
+          })),
+        };
+      };
       return {
         points,
-        taiKhoan: taiKhoan.map((tk) => {
-          const byTk = new Map(tk.series.map((r) => [r.thang, r]));
-          return {
-            ma: tk.ma,
-            ten: tk.ten || '',
-            soDuDauKy: tk.soDuDauKy || 0,
-            points: Array.from({ length: buckets }, (_, i) => ({
-              thang: i + 1,
-              thu: byTk.get(i + 1)?.thu || 0,
-              chi: byTk.get(i + 1)?.chi || 0,
-            })),
-          };
-        }),
+        taiKhoan: taiKhoan.map((tk) => ({ ...chuan(tk), chiTiet: tk.chiTiet.map(chuan) })),
       };
     } catch {
       return { points: rong(), taiKhoan: [] };

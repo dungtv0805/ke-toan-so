@@ -4,7 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import {
   ComposedChart, Bar, Line, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer,
 } from 'recharts';
-import { dashboardService, type CashAccountSeries } from '@/services/dashboardService';
+import {
+  dashboardService,
+  type CashAccountSeries,
+  type CashMoneyLine,
+} from '@/services/dashboardService';
 import { sliceToRange } from '@/components/shared/period';
 import { formatCurrency, DASH_COLORS } from './format';
 
@@ -24,7 +28,22 @@ const Kpi: React.FC<{ label: string; value: number; color: string }> = ({ label,
   </div>
 );
 
-export interface DongChiTiet { ma: string; ten: string; thu: number; chi: number; ton: number; }
+export interface DongChiTiet {
+  ma: string;
+  ten: string;
+  /**
+   * Dòng quỹ/ngân hàng nằm dưới một TK tiền. Phải là cờ tường minh, KHÔNG đoán từ
+   * hình dạng mã: mã ngân hàng là trường tự do, khách đặt mã `1121A` là dòng con
+   * bị tính như dòng cha và cộng trùng tiền ở dòng Tổng cộng.
+   */
+  laCon: boolean;
+  thu: number;
+  chi: number;
+  ton: number;
+}
+
+const congThu = (ps: { thu: number }[]) => ps.reduce((s, p) => s + (p.thu || 0), 0);
+const congChi = (ps: { chi: number }[]) => ps.reduce((s, p) => s + (p.chi || 0), 0);
 
 /**
  * Thu/chi cắt đúng khoảng đang hiển thị, còn TỒN phải luỹ kế từ ĐẦU NĂM tới bucket
@@ -37,42 +56,61 @@ export function tinhChiTiet(
   startMonth: number,
   endMonth: number,
 ): DongChiTiet[] {
+  const gop = (line: CashMoneyLine, laCon: boolean): DongChiTiet => {
+    const trongKhoang = isWeekly ? line.points : sliceToRange(line.points, startMonth, endMonth);
+    const denHetKy = isWeekly ? line.points : line.points.filter((p) => p.thang <= endMonth);
+    return {
+      ma: line.ma,
+      ten: line.ten,
+      laCon,
+      thu: congThu(trongKhoang),
+      chi: congChi(trongKhoang),
+      ton: denHetKy.reduce((s, p) => s + (p.thu || 0) - (p.chi || 0), line.soDuDauKy),
+    };
+  };
+  const coSo = (r: DongChiTiet) => !!(r.thu || r.chi || r.ton);
+  const theoTon = (a: DongChiTiet, b: DongChiTiet) => b.ton - a.ton || a.ma.localeCompare(b.ma);
+
   return taiKhoan
-    .map((tk) => {
-      const trongKhoang = isWeekly ? tk.points : sliceToRange(tk.points, startMonth, endMonth);
-      const denHetKy = isWeekly ? tk.points : tk.points.filter((p) => p.thang <= endMonth);
-      return {
-        ma: tk.ma,
-        ten: tk.ten,
-        thu: trongKhoang.reduce((s, p) => s + (p.thu || 0), 0),
-        chi: trongKhoang.reduce((s, p) => s + (p.chi || 0), 0),
-        ton: denHetKy.reduce((s, p) => s + (p.thu || 0) - (p.chi || 0), tk.soDuDauKy),
-      };
-    })
-    .filter((r) => r.thu || r.chi || r.ton)
-    .sort((a, b) => b.ton - a.ton || a.ma.localeCompare(b.ma));
+    .map((tk) => ({ cha: gop(tk, false), con: tk.chiTiet.map((c) => gop(c, true)) }))
+    .filter((n) => coSo(n.cha))
+    .sort((a, b) => theoTon(a.cha, b.cha))
+    .flatMap((n) => [n.cha, ...n.con.filter(coSo).sort(theoTon)]);
 }
 
 const ChiTietTaiKhoan: React.FC<{ rows: DongChiTiet[] }> = ({ rows }) => {
-  const tong = (k: 'thu' | 'chi' | 'ton') => rows.reduce((s, r) => s + r[k], 0);
+  // Chỉ cộng dòng cha để không đếm hai lần.
+  const tong = (k: 'thu' | 'chi' | 'ton') =>
+    rows.reduce((s, r) => (r.laCon ? s : s + r[k]), 0);
   const o = 'px-2 py-1 text-right tabular-nums whitespace-nowrap';
   return (
     <div className="max-h-[320px] overflow-auto">
       <table className="w-full text-xs">
         <thead>
           <tr className="text-muted-foreground border-b">
-            <th className="px-2 py-1 text-left font-medium">Tài khoản</th>
+            <th className="px-2 py-1 text-left font-medium">Tài khoản / ngân hàng</th>
             <th className="px-2 py-1 text-right font-medium">Thu</th>
             <th className="px-2 py-1 text-right font-medium">Chi</th>
             <th className="px-2 py-1 text-right font-medium">Tồn</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
-            <tr key={r.ma} className="border-b border-border/50">
-              <td className="px-2 py-1 whitespace-nowrap">
-                <span className="font-medium">{r.ma}</span>
-                {r.ten && <span className="text-muted-foreground"> — {r.ten}</span>}
+          {rows.map((r, i) => (
+            // Phần "chưa xác định đối tượng" phát ra với ma rỗng, hai TK cùng có
+            // phần đó sẽ trùng key nếu chỉ lấy mã.
+            <tr key={`${i}-${r.ma}`} className="border-b border-border/50">
+              <td
+                className={`px-2 py-1 whitespace-nowrap ${r.laCon ? 'text-muted-foreground' : 'font-medium'}`}
+                style={{ paddingLeft: r.laCon ? 20 : undefined }}
+              >
+                {r.ma ? (
+                  <>
+                    <span className="font-medium">{r.ma}</span>
+                    {r.ten && <span className="text-muted-foreground"> — {r.ten}</span>}
+                  </>
+                ) : (
+                  <span className="italic">Chưa gán quỹ/ngân hàng</span>
+                )}
               </td>
               <td className={o} style={{ color: TEAL }}>{formatCurrency(r.thu)}</td>
               <td className={o}>{formatCurrency(r.chi)}</td>
@@ -128,7 +166,7 @@ const CashFlowChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
         {chiTiet.length ? (
           <Popover
             placement="bottomLeft"
-            title={<span className="text-xs font-semibold">Chi tiết theo tài khoản tiền — Đvt: đồng</span>}
+            title={<span className="text-xs font-semibold">Chi tiết theo tài khoản / ngân hàng — Đvt: đồng</span>}
             content={<ChiTietTaiKhoan rows={chiTiet} />}
             overlayStyle={{ maxWidth: 560 }}
           >

@@ -30,12 +30,17 @@ export interface CashFlowPoint {
   chi: number;
 }
 
-/** Cùng chuỗi thu/chi đó nhưng của riêng một mã TK tiền (1111, 1121...). */
-export interface CashFlowAccount {
+/** Cùng chuỗi thu/chi đó nhưng của riêng một mã tiền (TK 1121, hoặc 1 ngân hàng). */
+export interface CashFlowMoneyLine {
   ma: string;
   ten: string;
   soDuDauKy: number;
   series: CashFlowPoint[];
+}
+
+export interface CashFlowAccount extends CashFlowMoneyLine {
+  /** Từng quỹ/ngân hàng trong TK; rỗng khi TK không tách đối tượng. */
+  chiTiet: CashFlowMoneyLine[];
 }
 
 export interface CashFlowSeries {
@@ -151,8 +156,14 @@ export class PhieuService extends ServiceBase {
     return {
       soDuDauKy: data?.soDuDauKy || 0,
       series: Array.isArray(data?.series) ? data.series : [],
-      // BE chưa deploy bản có chi tiết TK → mảng rỗng, tooltip tự ẩn.
-      taiKhoan: Array.isArray(data?.taiKhoan) ? data.taiKhoan : [],
+      // BE chưa deploy bản có chi tiết TK → mảng rỗng, tooltip tự ẩn. `chiTiet`
+      // cũng chuẩn hoá vì bản BE đầu tiên chưa có chiều ngân hàng.
+      taiKhoan: Array.isArray(data?.taiKhoan)
+        ? data.taiKhoan.map((tk) => ({
+            ...tk,
+            chiTiet: Array.isArray(tk?.chiTiet) ? tk.chiTiet : [],
+          }))
+        : [],
     };
   }
 

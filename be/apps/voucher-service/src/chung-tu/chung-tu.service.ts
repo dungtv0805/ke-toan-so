@@ -12,6 +12,22 @@ import { buildChungTuMongoQuery } from './helpers';
 import { buildSummaryAggregation } from '../nhat-ky-chung/helpers';
 import { SummaryType, SummaryItem } from '../nhat-ky-chung/dto';
 
+/** Một nhóm phát sinh tiền: (mã TK, mã quỹ/ngân hàng[, bucket thời gian]). */
+type NhomTien = {
+  _id: { ma: string; dt: string; bucket?: number };
+  ten?: string;
+  dtTen?: string;
+  v: number;
+};
+
+/** Thu/chi của một mã tiền theo từng bucket + tồn đầu kỳ của riêng nó. */
+type ChuoiTien = {
+  ma: string;
+  ten: string;
+  soDuDauKy: number;
+  series: { thang: number; thu: number; chi: number }[];
+};
+
 /**
  * TODO: Các API cần thêm lại sau khi refactor:
  *
@@ -158,29 +174,86 @@ export class ChungTuService {
   }
 
   /**
-   * Số dư tiền tại thời điểm ngay TRƯỚC `before`, TÁCH THEO TỪNG MÃ TK tiền.
+   * Nhánh $facet gom phát sinh tiền theo (mã TK, mã đối tượng[, bucket]).
+   *
+   * Đối tượng của vế Nợ nằm ở `doiTuong`, của vế Có ở `doiTuong2` (dữ liệu cũ chỉ
+   * có `doiTuong` → fallback) — ĐÚNG quy ước của `aggregateBalanceByDoiTuong`.
+   * Lệch quy ước này là tooltip và bảng "Số dư theo tài khoản / quỹ" ra hai số
+   * khác nhau cho cùng một quỹ/ngân hàng.
+   *
+   * Chứng từ không gắn đối tượng gom vào khoá rỗng, không bị loại — nhờ vậy
+   * Σ dòng chi tiết luôn đúng bằng số của TK.
+   */
+  private nhanhTienTheoTaiKhoan(
+    side: 'taiKhoanNo' | 'taiKhoanCo',
+    bucket?: object,
+  ): object[] {
+    const doiTuong =
+      side === 'taiKhoanNo'
+        ? '$danhMuc.doiTuong'
+        : { $ifNull: ['$danhMuc.doiTuong2', '$danhMuc.doiTuong'] };
+    return [
+      { $match: { [`danhMuc.${side}.ma`]: { $regex: '^11[12]' } } },
+      { $addFields: { _dt: doiTuong } },
+      {
+        $group: {
+          _id: {
+            ma: `$danhMuc.${side}.ma`,
+            dt: { $ifNull: ['$_dt.ma', ''] },
+            ...(bucket ? { bucket } : {}),
+          },
+          ten: { $first: `$danhMuc.${side}.ten` },
+          dtTen: { $first: '$_dt.ten' },
+          v: { $sum: '$soTien' },
+        },
+      },
+    ];
+  }
+
+  /**
+   * Số dư tiền tại thời điểm ngay TRƯỚC `before`, tách theo TỪNG MÃ TK tiền và
+   * từng quỹ/ngân hàng trong TK đó (khoá rỗng = phần chưa gắn đối tượng).
    *
    * = số dư đầu kỳ nhập tay (master-data /so-du-dau-ky) + phát sinh tiền của các
    * chứng từ trước mốc đó. Cùng công thức với `buildSoChiTiet` (reporting-service)
    * và `buildSoQuy` (cash-book-service) để ba báo cáo luôn khớp nhau.
    *
-   * Trả map thay vì một số tổng để tồn đầu kỳ của từng TK và tổng luôn dựng từ
-   * CÙNG một nguồn — tổng chỉ là Σ map, không có đường tính thứ hai để lệch.
+   * Trả map lồng thay vì một số tổng để tồn đầu kỳ ở cả ba mức (đối tượng → TK →
+   * tổng) đều dựng từ CÙNG một nguồn: mức trên chỉ là Σ mức dưới, không có đường
+   * tính thứ hai để lệch.
    */
   private async getCashOpeningByAccount(
     before: Date,
     tenantId: string | undefined,
     authToken?: string,
-  ): Promise<Map<string, number>> {
-    const opening = new Map<string, number>();
-    const add = (ma: string, v: number) => opening.set(ma, (opening.get(ma) || 0) + v);
+  ): Promise<Map<string, Map<string, { ten: string; soDu: number }>>> {
+    const opening = new Map<string, Map<string, { ten: string; soDu: number }>>();
+    const add = (ma: string, dt: string, ten: string, v: number) => {
+      let theoDoiTuong = opening.get(ma);
+      if (!theoDoiTuong) {
+        theoDoiTuong = new Map();
+        opening.set(ma, theoDoiTuong);
+      }
+      const cu = theoDoiTuong.get(dt);
+      if (cu) {
+        cu.soDu += v;
+        if (!cu.ten && ten) cu.ten = ten;
+      } else {
+        theoDoiTuong.set(dt, { ten: ten || '', soDu: v });
+      }
+    };
 
     const openingRes = await this.serviceClient.getSoDuDauKyRaw(authToken);
     if (openingRes.success) {
       for (const row of openingRes.data?.items ?? []) {
         const ma = row.maTaiKhoan || '';
         if (!/^11[12]/.test(ma)) continue;
-        add(ma, (Number(row.duNo) || 0) - (Number(row.duCo) || 0));
+        add(
+          ma,
+          row.chiTietMa || '',
+          row.chiTietTen || '',
+          (Number(row.duNo) || 0) - (Number(row.duCo) || 0),
+        );
       }
     }
 
@@ -192,24 +265,15 @@ export class ChungTuService {
         { $match: match },
         {
           $facet: {
-            thu: [
-              { $match: { 'danhMuc.taiKhoanNo.ma': { $regex: '^11[12]' } } },
-              { $group: { _id: '$danhMuc.taiKhoanNo.ma', v: { $sum: '$soTien' } } },
-            ],
-            chi: [
-              { $match: { 'danhMuc.taiKhoanCo.ma': { $regex: '^11[12]' } } },
-              { $group: { _id: '$danhMuc.taiKhoanCo.ma', v: { $sum: '$soTien' } } },
-            ],
+            thu: this.nhanhTienTheoTaiKhoan('taiKhoanNo'),
+            chi: this.nhanhTienTheoTaiKhoan('taiKhoanCo'),
           },
         },
       ])
-      .toArray()) as {
-      thu: { _id: string; v: number }[];
-      chi: { _id: string; v: number }[];
-    }[];
+      .toArray()) as { thu: NhomTien[]; chi: NhomTien[] }[];
     const facet = agg[0] || { thu: [], chi: [] };
-    for (const g of facet.thu) add(g._id, g.v || 0);
-    for (const g of facet.chi) add(g._id, -(g.v || 0));
+    for (const g of facet.thu) add(g._id.ma, g._id.dt || '', g.dtTen || '', g.v || 0);
+    for (const g of facet.chi) add(g._id.ma, g._id.dt || '', g.dtTen || '', -(g.v || 0));
 
     return opening;
   }
@@ -222,10 +286,10 @@ export class ChungTuService {
    * thu−chi từ 0 nên "Tồn" trên dashboard chỉ là chênh lệch thu chi trong kỳ,
    * âm ngay khi công ty tiêu vào số dư mang sang từ kỳ trước.
    *
-   * Trả kèm `taiKhoan` — cùng thu/chi/tồn đầu kỳ đó tách theo từng mã TK tiền, để
-   * dashboard rê chuột lên thẻ KPI là thấy tiền nằm ở tài khoản nào. `series` và
-   * `soDuDauKy` tổng được DẪN XUẤT từ `taiKhoan` (Σ theo TK), nên hai mức luôn
-   * khớp nhau từng đồng ở mọi bucket.
+   * Trả kèm `taiKhoan` — cùng thu/chi/tồn đầu kỳ đó tách theo từng mã TK tiền, mỗi
+   * TK lại có `chiTiet` theo quỹ/ngân hàng, để dashboard rê chuột lên thẻ KPI là
+   * thấy tiền nằm ở tài khoản nào, ngân hàng nào. Số mức trên luôn DẪN XUẤT từ mức
+   * dưới (TK = Σ chiTiet, tổng = Σ TK) nên cả ba mức khớp từng đồng ở mọi bucket.
    */
   async getCashFlowSeries(
     year: number,
@@ -236,12 +300,7 @@ export class ChungTuService {
     data: {
       soDuDauKy: number;
       series: { thang: number; thu: number; chi: number }[];
-      taiKhoan: {
-        ma: string;
-        ten: string;
-        soDuDauKy: number;
-        series: { thang: number; thu: number; chi: number }[];
-      }[];
+      taiKhoan: (ChuoiTien & { chiTiet: ChuoiTien[] })[];
     };
   }> {
     const tenantId = this.tenantContext.getCurrentTenantId();
@@ -268,26 +327,18 @@ export class ChungTuService {
       ? { $ceil: { $divide: [{ $dayOfMonth: '$ngay' }, 7] } }
       : { $month: '$ngay' };
 
-    // Gom theo (mã TK, bucket) chứ không chỉ theo bucket: số tổng vẫn dựng được
-    // bằng cách cộng lại, nên không cần nhánh aggregation thứ hai cho phần tổng.
-    const theoTaiKhoan = (side: 'taiKhoanNo' | 'taiKhoanCo') => [
-      { $match: { [`danhMuc.${side}.ma`]: { $regex: '^11[12]' } } },
+    const pipeline: object[] = [
+      { $match: match },
       {
-        $group: {
-          _id: { ma: `$danhMuc.${side}.ma`, bucket },
-          ten: { $first: `$danhMuc.${side}.ten` },
-          v: { $sum: '$soTien' },
+        $facet: {
+          thu: this.nhanhTienTheoTaiKhoan('taiKhoanNo', bucket),
+          chi: this.nhanhTienTheoTaiKhoan('taiKhoanCo', bucket),
         },
       },
     ];
-    const pipeline: object[] = [
-      { $match: match },
-      { $facet: { thu: theoTaiKhoan('taiKhoanNo'), chi: theoTaiKhoan('taiKhoanCo') } },
-    ];
-    type NhomTk = { _id: { ma: string; bucket: number }; ten?: string; v: number };
     const agg = (await this.chungTuRepository.aggregate(pipeline).toArray()) as {
-      thu: NhomTk[];
-      chi: NhomTk[];
+      thu: NhomTien[];
+      chi: NhomTien[];
     }[];
     const facet = agg[0] || { thu: [], chi: [] };
     const buckets = weekly ? 5 : 12;
@@ -298,45 +349,80 @@ export class ChungTuService {
       authToken,
     );
 
-    const rows = new Map<string, { ten: string; thu: number[]; chi: number[] }>();
-    const ensure = (ma: string, ten?: string) => {
-      let row = rows.get(ma);
-      if (!row) {
-        row = {
-          ten: ten || '',
+    type OTien = { ten: string; thu: number[]; chi: number[] };
+    const rows = new Map<string, { ten: string; doiTuong: Map<string, OTien> }>();
+    const ensureTk = (ma: string, ten?: string) => {
+      let tk = rows.get(ma);
+      if (!tk) {
+        tk = { ten: ten || '', doiTuong: new Map() };
+        rows.set(ma, tk);
+      } else if (!tk.ten && ten) {
+        tk.ten = ten;
+      }
+      return tk;
+    };
+    const ensureDt = (maTk: string, tenTk: string | undefined, maDt: string, tenDt?: string) => {
+      const tk = ensureTk(maTk, tenTk);
+      let dt = tk.doiTuong.get(maDt);
+      if (!dt) {
+        dt = {
+          ten: tenDt || '',
           thu: new Array<number>(buckets).fill(0),
           chi: new Array<number>(buckets).fill(0),
         };
-        rows.set(ma, row);
-      } else if (!row.ten && ten) {
-        row.ten = ten;
+        tk.doiTuong.set(maDt, dt);
+      } else if (!dt.ten && tenDt) {
+        dt.ten = tenDt;
       }
-      return row;
+      return dt;
     };
-    const nap = (nhom: NhomTk[], key: 'thu' | 'chi') => {
+    const nap = (nhom: NhomTien[], key: 'thu' | 'chi') => {
       for (const g of nhom) {
         const i = (g._id?.bucket || 0) - 1;
         if (i < 0 || i >= buckets) continue;
-        ensure(g._id.ma, g.ten)[key][i] += g.v || 0;
+        ensureDt(g._id.ma, g.ten, g._id.dt || '', g.dtTen)[key][i] += g.v || 0;
       }
     };
     nap(facet.thu, 'thu');
     nap(facet.chi, 'chi');
-    // TK chỉ có tồn mang sang, không phát sinh trong kỳ — vẫn phải hiện, vì tiền
-    // vẫn đang nằm ở đó.
-    for (const ma of openingByTk.keys()) ensure(ma);
+    // TK/quỹ chỉ có tồn mang sang, không phát sinh trong kỳ — vẫn phải hiện, vì
+    // tiền vẫn đang nằm ở đó.
+    for (const [maTk, theoDoiTuong] of openingByTk) {
+      for (const [maDt, o] of theoDoiTuong) ensureDt(maTk, undefined, maDt, o.ten);
+    }
+
+    const cong = (nguon: ChuoiTien[], i: number, key: 'thu' | 'chi') =>
+      nguon.reduce((s, c) => s + c.series[i][key], 0);
 
     const taiKhoan = Array.from(rows.entries())
-      .map(([ma, r]) => ({
-        ma,
-        ten: r.ten,
-        soDuDauKy: openingByTk.get(ma) || 0,
-        series: Array.from({ length: buckets }, (_, i) => ({
-          thang: i + 1,
-          thu: r.thu[i],
-          chi: r.chi[i],
-        })),
-      }))
+      .map(([ma, tk]) => {
+        const chiTiet: ChuoiTien[] = Array.from(tk.doiTuong.entries())
+          .map(([maDt, dt]) => ({
+            ma: maDt,
+            ten: dt.ten,
+            soDuDauKy: openingByTk.get(ma)?.get(maDt)?.soDu || 0,
+            series: Array.from({ length: buckets }, (_, i) => ({
+              thang: i + 1,
+              thu: dt.thu[i],
+              chi: dt.chi[i],
+            })),
+          }))
+          .sort((a, b) => a.ma.localeCompare(b.ma));
+        return {
+          ma,
+          ten: tk.ten,
+          soDuDauKy: chiTiet.reduce((s, c) => s + c.soDuDauKy, 0),
+          series: Array.from({ length: buckets }, (_, i) => ({
+            thang: i + 1,
+            thu: cong(chiTiet, i, 'thu'),
+            chi: cong(chiTiet, i, 'chi'),
+          })),
+          // TK mà mọi phát sinh đều chưa gắn đối tượng (thường là tiền mặt) chỉ có
+          // đúng dòng khoá rỗng — bản thân TK đã nói hết, đẩy ra thành dòng con chỉ
+          // làm bảng dài thêm mà không thêm thông tin.
+          chiTiet: chiTiet.length === 1 && chiTiet[0].ma === '' ? [] : chiTiet,
+        };
+      })
       .sort((a, b) => a.ma.localeCompare(b.ma));
 
     const series = Array.from({ length: buckets }, (_, i) => ({

@@ -54,5 +54,9 @@ describe("nạp số liệu tổng quan", () => {
       tongButToan: 777,
       tongGiaTri: 6863487528,
     });
-  });
+    // Thời gian ở đây gần như toàn bộ là nạp module (handler kéo theo cả cây
+    // component + antd), không phải chờ logic. Mặc định 5s đủ khi chạy riêng
+    // nhưng vỡ khi cả bộ test chạy song song — thêm một file test bất kỳ vào
+    // repo là đỏ. Nới timeout thay vì để đỏ ngẫu nhiên theo tải máy.
+  }, 20_000);
 });
