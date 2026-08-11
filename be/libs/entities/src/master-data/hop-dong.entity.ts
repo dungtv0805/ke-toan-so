@@ -67,6 +67,10 @@ export class HopDong extends BaseEntity {
   @Column({ nullable: true })
   doiTuongId?: string;
 
+  /** Sản phẩm của đơn hàng — id danh mục Sản phẩm; dùng để gom doanh số/doanh thu. */
+  @Column({ nullable: true })
+  sanPhamId?: string;
+
   @Column({ nullable: true })
   nguoiKy?: string;
 

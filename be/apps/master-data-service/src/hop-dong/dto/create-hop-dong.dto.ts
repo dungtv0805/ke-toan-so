@@ -136,6 +136,11 @@ export class CreateHopDongDto {
   @IsMongoId()
   doiTuongId?: string;
 
+  @Transform(emptyToUndefined)
+  @IsOptional()
+  @IsMongoId()
+  sanPhamId?: string;
+
   @IsOptional()
   @IsString()
   nguoiKy?: string;

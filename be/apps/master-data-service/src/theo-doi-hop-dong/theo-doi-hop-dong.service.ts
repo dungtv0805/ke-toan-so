@@ -9,6 +9,7 @@ import {
   HoaDonBanRa,
 } from '@app/entities';
 import { UpsertTheoDoiHopDongDto } from './dto';
+import { tienHoaDon } from './theo-doi-hop-dong.util';
 
 export interface TheoDoiHopDongRow {
   hopDongId: string;
@@ -17,9 +18,11 @@ export interface TheoDoiHopDongRow {
   nam?: number;
   thueSuat?: string;
   tienThue?: number;
+  giaTriTruocThue?: number;
   giaTriSauThue?: number;
   ngayKy?: Date;
   doiTuongId?: string;
+  sanPhamId?: string;
   trangThaiHopDong?: string;
   tracking: TheoDoiHopDong | null;
   daThanhToan: number;
@@ -92,7 +95,7 @@ export class TheoDoiHopDongService {
     const hoaDonByHd = new Map<string, number>();
     for (const h of hoaDons) {
       if (h.isActive === false) continue;
-      hoaDonByHd.set(h.hopDongId, (hoaDonByHd.get(h.hopDongId) || 0) + num(h.tong));
+      hoaDonByHd.set(h.hopDongId, (hoaDonByHd.get(h.hopDongId) || 0) + tienHoaDon(h));
     }
     return { thuByHd, hoaDonByHd };
   }
@@ -112,9 +115,11 @@ export class TheoDoiHopDongService {
       nam: hd.nam,
       thueSuat: hd.thueSuat,
       tienThue: hd.tienThue,
+      giaTriTruocThue: hd.giaTriTruocThue,
       giaTriSauThue: hd.giaTriSauThue,
       ngayKy: hd.ngayKy,
       doiTuongId: hd.doiTuongId,
+      sanPhamId: hd.sanPhamId,
       trangThaiHopDong: hd.trangThai,
       tracking: t,
       daThanhToan,
