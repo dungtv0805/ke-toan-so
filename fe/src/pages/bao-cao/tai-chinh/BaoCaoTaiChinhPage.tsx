@@ -8,7 +8,6 @@ import {
   Row,
   Col,
   Tabs,
-  Tag,
   Alert,
   Typography,
   message,
@@ -611,11 +610,10 @@ const BaoCaoTaiChinhPage: React.FC = () => {
 
   return (
     <div className="bctc-compact" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      {/* Kỳ báo cáo KHÔNG hiện lại ở đây: PeriodFilter nằm ngay góc phải thanh tab đã cho
+          thấy kỳ đang xem, thẻ lặp lại ở góc trái chỉ chiếm chỗ. getPeriodLabel vẫn dùng cho
+          tên sheet Excel. */}
       <div style={{ flexShrink: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-          <Tag color="blue">{getPeriodLabel(filterParams)}</Tag>
-        </div>
-
         <Row gutter={8} style={{ marginBottom: 4 }}>
         <Col span={6}>
           <Card className="stat-card" size="small" bodyStyle={{ padding: '4px 12px' }}>
