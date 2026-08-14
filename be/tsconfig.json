@@ -34,7 +34,9 @@
       "@app/core": ["libs/core/src"],
       "@app/core/*": ["libs/core/src/*"],
       "@app/database": ["libs/database/src"],
-      "@app/database/*": ["libs/database/src/*"]
+      "@app/database/*": ["libs/database/src/*"],
+      "@app/storage": ["libs/storage/src"],
+      "@app/storage/*": ["libs/storage/src/*"]
     }
   }
 }

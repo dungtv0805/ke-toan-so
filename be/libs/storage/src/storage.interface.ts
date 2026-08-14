@@ -1,5 +1,8 @@
 export const STORAGE_SERVICE = 'STORAGE_SERVICE';
 
+/** Tên bucket GridFS của module dùng storage — mỗi module một bucket riêng. */
+export const STORAGE_BUCKET = 'STORAGE_BUCKET';
+
 export interface StoredFileMeta {
   storageKey: string;
   size: number;

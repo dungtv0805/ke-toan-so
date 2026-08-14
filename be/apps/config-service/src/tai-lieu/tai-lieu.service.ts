@@ -8,8 +8,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ObjectId } from 'mongodb';
 import { TaiLieu, TaiLieuCategory } from '@app/entities';
-import { STORAGE_SERVICE } from './storage/storage.interface';
-import type { StorageService } from './storage/storage.interface';
+import { STORAGE_SERVICE } from '@app/storage';
+import type { StorageService } from '@app/storage';
 import { parseYoutubeId } from './youtube.util';
 
 const ALLOWED = new Set([

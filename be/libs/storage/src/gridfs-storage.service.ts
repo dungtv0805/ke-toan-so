@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   OnModuleDestroy,
   NotFoundException,
@@ -6,11 +7,16 @@ import {
 } from '@nestjs/common';
 import { MongoClient, Db, GridFSBucket, ObjectId } from 'mongodb';
 import { Readable } from 'stream';
-import { StorageService, StoredFileMeta } from './storage.interface';
+import {
+  STORAGE_BUCKET,
+  StorageService,
+  StoredFileMeta,
+} from './storage.interface';
 
 /**
- * Lưu file qua GridFS, dùng MongoClient riêng (từ env MONGODB_URI/MONGODB_DATABASE),
- * bucket `tai_lieu_files`. Mỗi file lưu metadata.tenantId; stream phải khớp tenant.
+ * Lưu file qua GridFS, dùng MongoClient riêng (từ env MONGODB_URI/MONGODB_DATABASE).
+ * Tên bucket do module dùng storage truyền vào (`StorageModule.forBucket`).
+ * Mỗi file lưu metadata.tenantId; stream phải khớp tenant.
  */
 @Injectable()
 export class GridFsStorageService
@@ -19,6 +25,8 @@ export class GridFsStorageService
   private client?: MongoClient;
   private bucket?: GridFSBucket;
 
+  constructor(@Inject(STORAGE_BUCKET) private readonly bucketName: string) {}
+
   private async getBucket(): Promise<GridFSBucket> {
     if (this.bucket) return this.bucket;
     const uri = process.env.MONGODB_URI as string;
@@ -26,7 +34,7 @@ export class GridFsStorageService
     this.client = new MongoClient(uri);
     await this.client.connect();
     const db: Db = this.client.db(dbName);
-    this.bucket = new GridFSBucket(db, { bucketName: 'tai_lieu_files' });
+    this.bucket = new GridFSBucket(db, { bucketName: this.bucketName });
     return this.bucket;
   }
 

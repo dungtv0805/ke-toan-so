@@ -20,6 +20,7 @@ import {
   Tabs,
   Divider,
   Tag,
+  Badge,
 } from "antd";
 import {
   PlusOutlined,
@@ -30,6 +31,7 @@ import {
   ScanOutlined,
   ClockCircleOutlined,
   FileUnknownOutlined,
+  PaperClipOutlined,
 } from "@ant-design/icons";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
@@ -43,6 +45,8 @@ import {
 } from "./HopDongHandlerContext";
 import "./HopDongPage.state";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { hopDongFileService } from "@/services/hopDongFileService";
+import { FileHopDongModal } from "./FileHopDongModal";
 import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { hopDongService } from "@/services/hopDongService";
 import { THUE_SUAT_OPTIONS, tinhTienThue } from "@/services/taxService";
@@ -144,6 +148,22 @@ function HopDongPageInner() {
   const [editingRecord, setEditingRecord] = useState<HopDong | null>(null);
   const [activeTab, setActiveTab] = useState("1");
   const [form] = Form.useForm<FormValues>();
+
+  // Badge số file đính kèm: đếm một lượt cho đúng các dòng đang hiển thị.
+  const [fileCounts, setFileCounts] = useState<Record<string, number>>({});
+  const [fileHopDong, setFileHopDong] = useState<HopDong | null>(null);
+
+  useEffect(() => {
+    const ids = (data as HopDong[]).map((r) => r.id).filter(Boolean);
+    if (!ids.length) {
+      setFileCounts({});
+      return;
+    }
+    hopDongFileService
+      .dem(ids)
+      .then(setFileCounts)
+      .catch(() => setFileCounts({}));
+  }, [data]);
 
   const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<HopDong>({
     enabled: canDelete,
@@ -413,6 +433,24 @@ function HopDongPageInner() {
       width: 80,
       align: "center" as const,
       render: (value: number) => value || "-",
+    },
+    {
+      title: "File",
+      key: "file",
+      width: 70,
+      align: "center" as const,
+      render: (_: unknown, record: HopDong) => (
+        <Tooltip title="File đính kèm">
+          <Badge count={fileCounts[record.id] || 0} size="small" offset={[2, -2]}>
+            <Button
+              type="text"
+              size="small"
+              icon={<PaperClipOutlined />}
+              onClick={() => setFileHopDong(record)}
+            />
+          </Badge>
+        </Tooltip>
+      ),
     },
     {
       title: "Thao tác",
@@ -1007,6 +1045,17 @@ function HopDongPageInner() {
           />
         </Form>
       </Modal>
+
+      <FileHopDongModal
+        hopDong={fileHopDong}
+        open={!!fileHopDong}
+        canUpload={canCreate}
+        canDelete={canDelete}
+        onClose={() => setFileHopDong(null)}
+        onChanged={(hopDongId, soFile) =>
+          setFileCounts((p) => ({ ...p, [hopDongId]: soFile }))
+        }
+      />
     </div>
   );
 }

@@ -162,7 +162,8 @@
       "^@app/database(|/.*)$": "<rootDir>/libs/database/src/$1",
       "^@app/entities(|/.*)$": "<rootDir>/libs/entities/src/$1",
       "^@app/dto(|/.*)$": "<rootDir>/libs/dto/src/$1",
-      "^@app/service-client(|/.*)$": "<rootDir>/libs/service-client/src/$1"
+      "^@app/service-client(|/.*)$": "<rootDir>/libs/service-client/src/$1",
+      "^@app/storage(|/.*)$": "<rootDir>/libs/storage/src/$1"
     }
   }
 }
