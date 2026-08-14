@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Modal,
   Upload,
@@ -49,19 +49,26 @@ export function FileHopDongModal({
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  // onChanged làm trang cha đổi state → hàm mới mỗi lần render. Giữ nó trong ref để
+  // `load` không đổi identity, nếu không useEffect bên dưới sẽ gọi API vô tận.
+  const onChangedRef = useRef(onChanged);
+  onChangedRef.current = onChanged;
+
+  const hopDongId = hopDong?.id;
+
   const load = useCallback(async () => {
-    if (!hopDong) return;
+    if (!hopDongId) return;
     setLoading(true);
     try {
-      const list = await hopDongFileService.list(hopDong.id);
+      const list = await hopDongFileService.list(hopDongId);
       setFiles(list);
-      onChanged(hopDong.id, list.length);
+      onChangedRef.current(hopDongId, list.length);
     } catch {
       message.error("Không tải được danh sách file");
     } finally {
       setLoading(false);
     }
-  }, [hopDong, onChanged]);
+  }, [hopDongId]);
 
   useEffect(() => {
     if (open) load();
