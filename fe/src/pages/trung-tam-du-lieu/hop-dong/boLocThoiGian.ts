@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { resolvePeriod, type DashboardPeriod } from '@/components/shared/period';
 
 /** Kỳ lọc trong một năm. `TUY_CHON` dùng khoảng ngày do người dùng chọn. */
 export type KyLoc =
@@ -58,6 +59,25 @@ export function khoangThang(ky: KyLoc): [number, number] | null {
   }
   const t = Number(ky.slice(1));
   return [t, t];
+}
+
+/**
+ * Bộ lọc thời gian suy từ ô kỳ dùng chung với trang Tổng quan (một dropdown gộp
+ * kỳ + năm), để Bán hàng và Tổng quan hiểu kỳ giống hệt nhau.
+ */
+export function tuPeriod(period: DashboardPeriod, namHienTai: number): BoLocThoiGian {
+  const { year, startMonth, endMonth } = resolvePeriod(period, namHienTai);
+  return { nam: year, ky: kyTuKhoangThang(startMonth, endMonth) };
+}
+
+/** Khoảng tháng [đầu, cuối] → kỳ tương ứng; khoảng lạ thì coi như cả năm. */
+export function kyTuKhoangThang(dau: number, cuoi: number): KyLoc {
+  if (dau === 1 && cuoi === 12) return 'CA_NAM';
+  if (dau === 1 && cuoi === 6) return 'HK1';
+  if (dau === 7 && cuoi === 12) return 'HK2';
+  if (dau === cuoi) return `T${dau}` as KyLoc;
+  if (cuoi - dau === 2 && dau % 3 === 1) return `Q${(dau + 2) / 3}` as KyLoc;
+  return 'CA_NAM';
 }
 
 export interface DongLocThoiGian {

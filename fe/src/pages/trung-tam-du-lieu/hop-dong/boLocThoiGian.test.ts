@@ -1,5 +1,29 @@
 import { describe, it, expect } from 'vitest';
-import { khoangThang, trongKy, KY_OPTIONS } from './boLocThoiGian';
+import { khoangThang, trongKy, tuPeriod, KY_OPTIONS } from './boLocThoiGian';
+import { PERIOD_OPTIONS } from '@/components/shared/period';
+
+describe('tuPeriod', () => {
+  it('năm nay / năm trước đều là cả năm, chỉ khác năm', () => {
+    expect(tuPeriod('namNay', 2026)).toEqual({ nam: 2026, ky: 'CA_NAM' });
+    expect(tuPeriod('namTruoc', 2026)).toEqual({ nam: 2025, ky: 'CA_NAM' });
+  });
+
+  it('tháng, quý, nửa năm khớp kỳ tương ứng', () => {
+    expect(tuPeriod('thang1', 2026)).toEqual({ nam: 2026, ky: 'T1' });
+    expect(tuPeriod('thang12', 2026)).toEqual({ nam: 2026, ky: 'T12' });
+    expect(tuPeriod('quy1', 2026)).toEqual({ nam: 2026, ky: 'Q1' });
+    expect(tuPeriod('quy4', 2026)).toEqual({ nam: 2026, ky: 'Q4' });
+    expect(tuPeriod('nuaDau', 2026)).toEqual({ nam: 2026, ky: 'HK1' });
+    expect(tuPeriod('nuaCuoi', 2026)).toEqual({ nam: 2026, ky: 'HK2' });
+  });
+
+  it('mọi lựa chọn của Tổng quan đều ra kỳ hợp lệ', () => {
+    const hopLe = new Set(KY_OPTIONS.map((o) => o.value));
+    PERIOD_OPTIONS.forEach((o) => {
+      expect(hopLe.has(tuPeriod(o.value, 2026).ky)).toBe(true);
+    });
+  });
+});
 
 describe('khoangThang', () => {
   it('cả năm là tháng 1 đến 12', () => {

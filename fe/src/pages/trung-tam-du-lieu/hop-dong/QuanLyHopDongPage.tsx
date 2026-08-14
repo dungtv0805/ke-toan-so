@@ -34,11 +34,7 @@ import { thuTienHopDongService } from '@/services/thuTienHopDongService';
 import { hoaDonBanRaService } from '@/services/hoaDonBanRaService';
 import { doiTuongService } from '@/services/doiTuongService';
 import { sanPhamService } from '@/services/sanPhamService';
-import {
-  nhatKyChungService,
-  type DoanhThuKhongDon,
-  type TongHopDonHang,
-} from '@/services/nhatKyChungService';
+import { nhatKyChungService, type TongHopDonHang } from '@/services/nhatKyChungService';
 import { THUE_SUAT_OPTIONS } from '@/services/taxService';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
@@ -49,11 +45,10 @@ import ThuTienDonHangModal from './ThuTienDonHangModal';
 import TaoNhanhHopDongModal from './TaoNhanhHopDongModal';
 import { SectionNav } from '@/components/layout/SectionNav';
 import { BAN_HANG_NAV } from '@/config/sectionNavs';
-import { KY_OPTIONS, trongKy, type BoLocThoiGian, type KyLoc } from './boLocThoiGian';
+import { trongKy, tuPeriod } from './boLocThoiGian';
+import { PERIOD_OPTIONS, type DashboardPeriod } from '@/components/shared/period';
 import { tongHopBaoCaoNhanh } from './baoCaoNhanh';
 import MenuThaoTacDonHang from './MenuThaoTacDonHang';
-import BangTongHopSanPham from './BangTongHopSanPham';
-import { pivotTheoThang, KEY_CHUA_PHAN_LOAI, type DongGopPivot } from './pivotSanPham';
 
 const { Text, Title } = Typography;
 
@@ -98,6 +93,10 @@ const fmtCur = (v?: number) =>
     ? '0'
     : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v);
 
+/** Thẻ tổng hợp đứng 1 dòng nên số phải ngắn — quy về triệu đồng. */
+const fmtTrieu = (v?: number) =>
+  new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format((v || 0) / 1_000_000);
+
 const moneyProps = {
   className: 'w-full',
   formatter: (value?: string | number) =>
@@ -110,12 +109,6 @@ const getScrollContainer = (): HTMLElement | Window =>
   document.querySelector<HTMLElement>('.ant-layout-content') || window;
 
 const NAM_HIEN_TAI = dayjs().year();
-const NAM_OPTIONS = Array.from({ length: 16 }, (_, i) => {
-  const y = 2022 + i;
-  return { value: y, label: `Năm ${y}` };
-});
-
-const khoaSanPham = (id?: string) => id || KEY_CHUA_PHAN_LOAI;
 
 /**
  * Cột nào thuộc nhóm nào ở header tầng trên. Cột không có tên ở đây (Số HĐ, Ngày HĐ,
@@ -163,13 +156,11 @@ export default function QuanLyHopDongPage() {
   const [doiTuongMap, setDoiTuongMap] = useState<Record<string, string>>({});
   const [sanPhamList, setSanPhamList] = useState<SanPham[]>([]);
   const [tongHop, setTongHop] = useState<Record<string, TongHopDonHang>>({});
-  const [khongCoDonHang, setKhongCoDonHang] = useState<DoanhThuKhongDon[]>([]);
 
   const [search, setSearch] = useState('');
-  const [loc, setLoc] = useState<BoLocThoiGian>({ nam: NAM_HIEN_TAI, ky: 'CA_NAM' });
-  const [khachHang, setKhachHang] = useState<string | undefined>();
-  const [sanPham, setSanPham] = useState<string | undefined>();
-  const [donHang, setDonHang] = useState<string | undefined>();
+  // Ô kỳ dùng chung một danh sách với trang Tổng quan (gộp kỳ + năm vào 1 dropdown).
+  const [period, setPeriod] = useState<DashboardPeriod>('namNay');
+  const loc = useMemo(() => tuPeriod(period, NAM_HIEN_TAI), [period]);
 
   // Drawer editor
   const [open, setOpen] = useState(false);
@@ -230,7 +221,6 @@ export default function QuanLyHopDongPage() {
         m[t.soHopDong] = t;
       });
       setTongHop(m);
-      setKhongCoDonHang(res.khongCoDonHang);
     } catch {
       message.error('Không tải được số liệu chứng từ theo đơn hàng');
     }
@@ -371,101 +361,20 @@ export default function QuanLyHopDongPage() {
     [rows, tongHop],
   );
 
-  /** 3 bộ lọc không phải thời gian — bảng chính và bảng pivot dùng chung. */
-  const locNgoaiThoiGian = useCallback(
-    (r: DongBang) => {
-      if (khachHang && r.doiTuongId !== khachHang) return false;
-      if (sanPham && (r.sanPhamId || '') !== (sanPham === 'CHUA_CHON' ? '' : sanPham))
-        return false;
-      if (donHang && r.soHopDong !== donHang) return false;
-      return true;
-    },
-    [khachHang, sanPham, donHang],
-  );
-
   const viewRows = useMemo(() => {
     const getValue = cellValue(doiTuongMap, sanPhamMap);
     const tuKhoa = search.trim().toLowerCase();
     return fullRows.filter((r) => {
       if (!matches(r, getValue)) return false;
       if (!trongKy(r, loc)) return false;
-      if (!locNgoaiThoiGian(r)) return false;
       if (tuKhoa && !`${r.soHopDong} ${r.tenCongTrinh}`.toLowerCase().includes(tuKhoa))
         return false;
       return true;
     });
-  }, [fullRows, matches, doiTuongMap, sanPhamMap, loc, locNgoaiThoiGian, search]);
+  }, [fullRows, matches, doiTuongMap, sanPhamMap, loc, search]);
 
   // Thẻ báo cáo nhanh cộng trên đúng tập dòng đang hiển thị, không phải tổng toàn bộ.
   const baoCao = useMemo(() => tongHopBaoCaoNhanh(viewRows), [viewRows]);
-
-  // Số HĐ có thể trùng giữa các bản ghi cũ — Select không chịu được option trùng value.
-  const donHangOptions = useMemo(
-    () =>
-      [...new Set(rows.map((r) => r.soHopDong).filter(Boolean))]
-        .sort()
-        .map((so) => ({ value: so, label: so })),
-    [rows],
-  );
-
-  const tenSanPham = useCallback(
-    (id?: string) => sanPhamMap[id || ''] || 'Chưa phân loại',
-    [sanPhamMap],
-  );
-
-  /** DOANH SỐ: giá trị hợp đồng, xếp theo tháng của NGÀY KÝ, trong năm đang chọn. */
-  const pivotDoanhSo = useMemo(() => {
-    const items: DongGopPivot[] = fullRows
-      .filter((r) => locNgoaiThoiGian(r) && trongKy(r, { nam: loc.nam, ky: 'CA_NAM' }))
-      .map((r) => ({
-        key: khoaSanPham(r.sanPhamId),
-        ten: tenSanPham(r.sanPhamId),
-        thang: r.ngayKy ? dayjs(r.ngayKy).month() : null,
-        soTien: Number(r.giaTriSauThue) || 0,
-      }));
-    return pivotTheoThang(items);
-  }, [fullRows, locNgoaiThoiGian, loc.nam, tenSanPham]);
-
-  /**
-   * DOANH THU: Có 511 theo tháng của NGÀY CHỨNG TỪ. Cố ý KHÔNG lọc đơn hàng theo năm ký
-   * — đơn ký 2024 mà ghi nhận doanh thu 2026 vẫn phải lên bảng của năm 2026.
-   */
-  const pivotDoanhThu = useMemo(() => {
-    const items: DongGopPivot[] = [];
-    fullRows.filter(locNgoaiThoiGian).forEach((r) => {
-      const t = tongHop[r.soHopDong];
-      if (!t) return;
-      t.dtTheoThang.forEach((soTien, thang) => {
-        if (soTien) {
-          items.push({
-            key: khoaSanPham(r.sanPhamId),
-            ten: tenSanPham(r.sanPhamId),
-            thang,
-            soTien,
-          });
-        }
-      });
-    });
-
-    // Doanh thu 511 không gắn đơn hàng: khớp lại mã sản phẩm với danh mục, không khớp
-    // thì để "Chưa phân loại" — bảng vẫn khớp tổng sổ cái 511.
-    const theoMa = new Map(sanPhamList.map((sp) => [sp.ma, sp]));
-    khongCoDonHang.forEach((k) => {
-      const sp = theoMa.get(k.sanPhamMa);
-      k.dtTheoThang.forEach((soTien, thang) => {
-        if (soTien) {
-          items.push({
-            key: sp ? sp.id : KEY_CHUA_PHAN_LOAI,
-            ten: sp ? sp.ten : 'Chưa phân loại',
-            thang,
-            soTien,
-          });
-        }
-      });
-    });
-
-    return pivotTheoThang(items);
-  }, [fullRows, locNgoaiThoiGian, tongHop, khongCoDonHang, sanPhamList, tenSanPham]);
 
   const columns: ColumnsType<DongBang> = [
     filterable<DongBang>({
@@ -649,24 +558,20 @@ export default function QuanLyHopDongPage() {
           { title: 'Đã xuất hóa đơn', value: baoCao.daXuatHoaDon, color: '#1677ff' },
           { title: 'Chưa xuất hóa đơn', value: baoCao.chuaXuatHoaDon, color: '#fa8c16' },
         ].map((c) => (
-          <Col xs={12} sm={12} md={6} key={c.title}>
+          <Col xs={12} sm={8} md={6} lg={3} key={c.title}>
             <Card className="stat-card" size="small">
               <Statistic
-                title={c.title}
+                // 8 thẻ trên 1 dòng nên khung hẹp — chữ nhỏ lại cho khỏi vỡ dòng.
+                title={<span style={{ fontSize: 12 }}>{c.title}</span>}
                 value={c.value}
-                formatter={(v) => fmtCur(Number(v))}
-                valueStyle={{ fontSize: 18, color: c.color }}
+                formatter={(v) => fmtTrieu(Number(v))}
+                suffix={<span style={{ fontSize: 12, color: '#8c8c8c' }}>tr</span>}
+                valueStyle={{ fontSize: 16, color: c.color }}
               />
             </Card>
           </Col>
         ))}
       </Row>
-
-      <BangTongHopSanPham
-        doanhSo={pivotDoanhSo}
-        doanhThu={pivotDoanhThu}
-        nam={loc.nam}
-      />
 
       <Card className="shadow-sm">
         <FilterBar
@@ -678,77 +583,17 @@ export default function QuanLyHopDongPage() {
           }}
           onReset={() => {
             setSearch('');
-            setLoc({ nam: NAM_HIEN_TAI, ky: 'CA_NAM' });
-            setKhachHang(undefined);
-            setSanPham(undefined);
-            setDonHang(undefined);
+            setPeriod('namNay');
           }}
           filters={
-            <>
-              <Select
-                allowClear
-                showSearch
-                optionFilterProp="label"
-                placeholder="Khách hàng"
-                style={{ width: 180 }}
-                value={khachHang}
-                onChange={setKhachHang}
-                options={Object.entries(doiTuongMap).map(([id, ten]) => ({
-                  value: id,
-                  label: ten,
-                }))}
-              />
-              <Select
-                allowClear
-                showSearch
-                optionFilterProp="label"
-                placeholder="Sản phẩm"
-                style={{ width: 170 }}
-                value={sanPham}
-                onChange={setSanPham}
-                options={[
-                  { value: 'CHUA_CHON', label: '(Chưa chọn sản phẩm)' },
-                  ...sanPhamList.map((sp) => ({
-                    value: sp.id,
-                    label: `${sp.ma} - ${sp.ten}`,
-                  })),
-                ]}
-              />
-              <Select
-                allowClear
-                showSearch
-                optionFilterProp="label"
-                placeholder="Đơn hàng"
-                style={{ width: 170 }}
-                value={donHang}
-                onChange={setDonHang}
-                options={donHangOptions}
-              />
-              <Select
-                style={{ width: 120 }}
-                value={loc.nam}
-                onChange={(v) => setLoc((p) => ({ ...p, nam: v }))}
-                options={NAM_OPTIONS}
-              />
-              <Select
-                style={{ width: 180 }}
-                value={loc.ky}
-                onChange={(v: KyLoc) => setLoc((p) => ({ ...p, ky: v }))}
-                options={KY_OPTIONS}
-              />
-              {loc.ky === 'TUY_CHON' && (
-                <DatePicker.RangePicker
-                  format="DD/MM/YYYY"
-                  onChange={(d) =>
-                    setLoc((p) => ({
-                      ...p,
-                      tuNgay: d?.[0]?.format('YYYY-MM-DD'),
-                      denNgay: d?.[1]?.format('YYYY-MM-DD'),
-                    }))
-                  }
-                />
-              )}
-            </>
+            <Select
+              value={period}
+              onChange={setPeriod}
+              options={PERIOD_OPTIONS}
+              style={{ width: 180 }}
+              showSearch
+              optionFilterProp="label"
+            />
           }
           actions={
             <>
