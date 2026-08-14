@@ -135,6 +135,8 @@ function HopDongPageInner() {
     chuaCoHd: 0,
   });
   const [doiTuongList] = useHopDongState("doiTuongList", []);
+  const [doiTuongMap] = useHopDongState("doiTuongMap", {});
+  const [hoaDonMap] = useHopDongState("hoaDonMap", {});
   const [sanPhamList] = useHopDongState("sanPhamList", []);
 
   const [searchText, setSearchText] = useState("");
@@ -326,12 +328,6 @@ function HopDongPageInner() {
     }
   };
 
-  const getDoiTuongName = (doiTuongId?: string) => {
-    if (!doiTuongId) return "-";
-    const doiTuong = doiTuongList.find((dt: DoiTuong) => dt.id === doiTuongId);
-    return doiTuong?.ten || "-";
-  };
-
   const columns = [
     {
       title: "Số HĐ",
@@ -341,12 +337,14 @@ function HopDongPageInner() {
       render: (text: string) => <Text strong>{text}</Text>,
     },
     {
-      title: "Năm",
-      dataIndex: "nam",
-      key: "nam",
-      width: 80,
+      // Thay cột "Năm" cũ — mốc thời gian của hợp đồng đọc theo ngày ký đầy đủ.
+      // Trường `nam` vẫn còn trong form và báo cáo hợp đồng theo năm.
+      title: "Ngày ký",
+      dataIndex: "ngayKy",
+      key: "ngayKy",
+      width: 110,
       align: "center" as const,
-      render: (value: number) => value || "-",
+      render: (value: string) => formatDate(value),
     },
     {
       title: "Tên công trình",
@@ -354,6 +352,33 @@ function HopDongPageInner() {
       key: "tenCongTrinh",
       ellipsis: true,
       width: 250,
+    },
+    {
+      title: "Mã KH",
+      key: "maKhachHang",
+      width: 110,
+      render: (_: unknown, record: HopDong) =>
+        doiTuongMap[record.doiTuongId || ""]?.ma || "-",
+    },
+    {
+      title: "Khách hàng",
+      dataIndex: "doiTuongId",
+      key: "doiTuongId",
+      width: 180,
+      ellipsis: true,
+      render: (value: string) => doiTuongMap[value || ""]?.ten || "-",
+    },
+    {
+      // Hợp đồng không có trường số hóa đơn — đọc từ Sổ hóa đơn bán ra gắn theo hợp đồng.
+      title: "Số hóa đơn",
+      key: "soHoaDon",
+      width: 140,
+      ellipsis: true,
+      render: (_: unknown, record: HopDong) => {
+        const so = (hoaDonMap[record.id] || []).join(", ");
+        if (!so) return "-";
+        return <Tooltip title={so}>{so}</Tooltip>;
+      },
     },
     {
       title: "Giá trị sau thuế",
@@ -364,21 +389,6 @@ function HopDongPageInner() {
       render: (value: number) => (
         <Text type="success">{formatCurrency(value)}</Text>
       ),
-    },
-    {
-      title: "Ngày ký",
-      dataIndex: "ngayKy",
-      key: "ngayKy",
-      width: 110,
-      render: (value: string) => formatDate(value),
-    },
-    {
-      title: "Chủ đầu tư",
-      dataIndex: "doiTuongId",
-      key: "doiTuongId",
-      width: 180,
-      ellipsis: true,
-      render: (value: string) => getDoiTuongName(value),
     },
     {
       title: "Sản phẩm",
@@ -959,7 +969,7 @@ function HopDongPageInner() {
           onChange={(pag) =>
             handleTableChange({ current: pag.current, pageSize: pag.pageSize })
           }
-          scroll={{ x: 1200, y: "calc(100vh - 400px)" }}
+          scroll={{ x: 1600, y: "calc(100vh - 400px)" }}
           size="middle"
         />
       </Card>

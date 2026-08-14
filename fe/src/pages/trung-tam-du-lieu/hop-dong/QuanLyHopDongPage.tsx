@@ -20,7 +20,6 @@ import {
   Tag,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { EyeOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { FilterBar } from '@/components/common/FilterBar';
 import type {
@@ -52,9 +51,7 @@ import { SectionNav } from '@/components/layout/SectionNav';
 import { BAN_HANG_NAV } from '@/config/sectionNavs';
 import { KY_OPTIONS, trongKy, type BoLocThoiGian, type KyLoc } from './boLocThoiGian';
 import { tongHopBaoCaoNhanh } from './baoCaoNhanh';
-import { tinhGhiChuDonHang } from './ghiChuDonHang';
-import ButToanDonHangModal from './ButToanDonHangModal';
-import { TK_CHUA_THUC_HIEN, TK_DOANH_THU } from './ghiNhanDoanhThu';
+import MenuThaoTacDonHang from './MenuThaoTacDonHang';
 import BangTongHopSanPham from './BangTongHopSanPham';
 import { pivotTheoThang, KEY_CHUA_PHAN_LOAI, type DongGopPivot } from './pivotSanPham';
 
@@ -118,18 +115,15 @@ const NAM_OPTIONS = Array.from({ length: 16 }, (_, i) => {
   return { value: y, label: `Năm ${y}` };
 });
 
+const khoaSanPham = (id?: string) => id || KEY_CHUA_PHAN_LOAI;
+
 /**
  * Cột nào thuộc nhóm nào ở header tầng trên. Cột không có tên ở đây (Số HĐ, Ngày HĐ,
- * Chủ đầu tư, Sản phẩm, Tên công trình, Phụ trách, nút Theo dõi) đứng một mình.
+ * Chủ đầu tư, Sản phẩm, Tên công trình, Phụ trách, cột thao tác ⋯) đứng một mình.
  *
  * "Phụ trách" cố ý đứng ngoài: cột đó không có `key` (thêm key sẽ đưa nó vào "Chọn
  * cột" và người dùng từng lưu lựa chọn sẽ mất cột này cho tới khi tự tick lại).
  */
-/** Phải thu khách hàng — TK Nợ khi ghi nhận doanh thu chưa thực hiện. */
-const TK_PHAI_THU = '131';
-
-const khoaSanPham = (id?: string) => id || KEY_CHUA_PHAN_LOAI;
-
 const NHOM_COT: Record<string, string[]> = {
   'BÁN HÀNG': ['giaTriSauThue', 'tienThue', 'dtChuaThucHien', 'dtDaThucHien'],
   'THU TIỀN': ['daThu', 'conPhaiThu'],
@@ -566,78 +560,21 @@ export default function QuanLyHopDongPage() {
     // Không gắn lọc: cột này vốn không có `key`. Thêm key để lọc sẽ đưa nó vào "Chọn cột",
     // và người dùng từng lưu lựa chọn cột sẽ bị mất cột này cho tới khi tự tick lại.
     { title: 'Phụ trách', width: 130, ellipsis: true, render: (_, r) => r.tracking?.phuTrachHoSo || '-' },
-    {
-      title: 'Ghi chú',
-      key: 'ghiChu',
-      width: 210,
-      fixed: 'right',
-      render: (_, r) => {
-        const { chips, nhanTinh } = tinhGhiChuDonHang(r);
-        if (!canEdit) {
-          return (
-            <Text type="secondary" className="text-xs">
-              {nhanTinh.join(' · ') || '-'}
-            </Text>
-          );
-        }
-        return (
-          <div className="flex flex-col items-start gap-1">
-            {chips.map((c) => {
-              const chip = (openModal: () => void) => (
-                <Button
-                  type="link"
-                  size="small"
-                  className="!px-0 !h-auto"
-                  onClick={openModal}
-                >
-                  {c.nhan}
-                </Button>
-              );
-              if (c.hanhDong === 'THU_TIEN') {
-                return (
-                  <ThuTienDonHangModal
-                    key={c.hanhDong}
-                    hopDong={r}
-                    soLanDaThu={0}
-                    onCreated={refreshSauThuTien}
-                    renderTrigger={chip}
-                  />
-                );
-              }
-              const ketChuyen = c.hanhDong === 'KET_CHUYEN_DOANH_THU';
-              return (
-                <ButToanDonHangModal
-                  key={c.hanhDong}
-                  hopDong={r}
-                  tkNoPrefix={ketChuyen ? TK_CHUA_THUC_HIEN : TK_PHAI_THU}
-                  tkCoPrefix={ketChuyen ? TK_DOANH_THU : TK_CHUA_THUC_HIEN}
-                  tieuDe={c.nhan}
-                  soTienMacDinh={c.soTien}
-                  dienGiaiMacDinh={`${c.nhan} ${r.soHopDong}`}
-                  onCreated={refreshTongHop}
-                  renderTrigger={chip}
-                />
-              );
-            })}
-            {nhanTinh.map((n) => (
-              <Text key={n} type="secondary" className="text-xs">
-                {n}
-              </Text>
-            ))}
-          </div>
-        );
-      },
-    },
+    // Tiêu đề để rỗng: cột thao tác không vào "Chọn cột" nên không bị ẩn nhầm.
     {
       title: '',
       key: 'action',
-      width: 90,
+      width: 180,
       fixed: 'right',
-      align: 'center',
+      align: 'right',
       render: (_, r) => (
-        <Button size="small" icon={<EyeOutlined />} onClick={() => openEditor(r)}>
-          Theo dõi
-        </Button>
+        <MenuThaoTacDonHang
+          row={r}
+          canEdit={canEdit}
+          onTheoDoi={() => openEditor(r)}
+          onButToan={refreshTongHop}
+          onThuTien={refreshSauThuTien}
+        />
       ),
     },
   ];
