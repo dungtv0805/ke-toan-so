@@ -1,24 +1,23 @@
 import dayjs, { type Dayjs } from "dayjs";
 import {
+  CUSTOM_PERIOD,
   PERIOD_OPTIONS,
+  PERIOD_OPTIONS_TUY_CHON,
   periodDateRange,
   resolvePeriod,
   type DashboardPeriod,
+  type PeriodKey,
 } from "@/components/shared/period";
 
-/** Kỳ do người dùng tự chọn khoảng ngày. */
-export const CUSTOM_PERIOD = "tuyChon";
+export { CUSTOM_PERIOD };
 
-export type NkcPeriodKey = DashboardPeriod | typeof CUSTOM_PERIOD;
+export type NkcPeriodKey = PeriodKey;
 
 /**
  * Danh sách kỳ của hàng lọc "Dữ liệu tổng hợp" — dùng đúng bộ kỳ của trang Tổng quan
  * để hai nơi giống nhau, thêm "Tùy chọn" cho ai cần chọn từ ngày → đến ngày.
  */
-export const NKC_PERIOD_OPTIONS: { label: string; value: NkcPeriodKey }[] = [
-  ...PERIOD_OPTIONS,
-  { label: "Tùy chọn", value: CUSTOM_PERIOD },
-];
+export const NKC_PERIOD_OPTIONS = PERIOD_OPTIONS_TUY_CHON;
 
 const thisYear = () => new Date().getFullYear();
 

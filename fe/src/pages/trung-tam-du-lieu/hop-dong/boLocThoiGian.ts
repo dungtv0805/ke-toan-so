@@ -70,6 +70,25 @@ export function tuPeriod(period: DashboardPeriod, namHienTai: number): BoLocThoi
   return { nam: year, ky: kyTuKhoangThang(startMonth, endMonth) };
 }
 
+/**
+ * Bộ lọc khi người dùng tự chọn "Từ ngày → Đến ngày".
+ *
+ * `nam` lấy theo ngày bắt đầu vì số kế toán được nạp theo năm; thiếu ngày bắt đầu thì
+ * dùng năm hiện tại (lúc này `trongKy` hiểu như cả năm — xem `trongKy`).
+ */
+export function tuKhoangNgay(
+  tuNgay: string | undefined,
+  denNgay: string | undefined,
+  namHienTai: number,
+): BoLocThoiGian {
+  return {
+    nam: tuNgay ? dayjs(tuNgay).year() : namHienTai,
+    ky: 'TUY_CHON',
+    tuNgay,
+    denNgay,
+  };
+}
+
 /** Khoảng tháng [đầu, cuối] → kỳ tương ứng; khoảng lạ thì coi như cả năm. */
 export function kyTuKhoangThang(dau: number, cuoi: number): KyLoc {
   if (dau === 1 && cuoi === 12) return 'CA_NAM';

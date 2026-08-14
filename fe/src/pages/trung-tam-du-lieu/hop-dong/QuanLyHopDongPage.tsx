@@ -45,8 +45,13 @@ import ThuTienDonHangModal from './ThuTienDonHangModal';
 import TaoNhanhHopDongModal from './TaoNhanhHopDongModal';
 import { SectionNav } from '@/components/layout/SectionNav';
 import { BAN_HANG_NAV } from '@/config/sectionNavs';
-import { trongKy, tuPeriod } from './boLocThoiGian';
-import { PERIOD_OPTIONS, type DashboardPeriod } from '@/components/shared/period';
+import { trongKy, tuPeriod, tuKhoangNgay } from './boLocThoiGian';
+import {
+  CUSTOM_PERIOD,
+  PERIOD_OPTIONS_TUY_CHON,
+  type DashboardPeriod,
+  type PeriodKey,
+} from '@/components/shared/period';
 import { tongHopBaoCaoNhanh } from './baoCaoNhanh';
 import MenuThaoTacDonHang from './MenuThaoTacDonHang';
 
@@ -158,9 +163,22 @@ export default function QuanLyHopDongPage() {
   const [tongHop, setTongHop] = useState<Record<string, TongHopDonHang>>({});
 
   const [search, setSearch] = useState('');
-  // Ô kỳ dùng chung một danh sách với trang Tổng quan (gộp kỳ + năm vào 1 dropdown).
-  const [period, setPeriod] = useState<DashboardPeriod>('namNay');
-  const loc = useMemo(() => tuPeriod(period, NAM_HIEN_TAI), [period]);
+  // Ô kỳ dùng chung một danh sách với "Dữ liệu tổng hợp": kỳ dựng sẵn của trang Tổng
+  // quan + "Tùy chọn" để chọn từ ngày → đến ngày.
+  const [period, setPeriod] = useState<PeriodKey>('namNay');
+  const [tuNgay, setTuNgay] = useState<Dayjs | null>(null);
+  const [denNgay, setDenNgay] = useState<Dayjs | null>(null);
+  const loc = useMemo(
+    () =>
+      period === CUSTOM_PERIOD
+        ? tuKhoangNgay(
+            tuNgay?.format('YYYY-MM-DD'),
+            denNgay?.format('YYYY-MM-DD'),
+            NAM_HIEN_TAI,
+          )
+        : tuPeriod(period as DashboardPeriod, NAM_HIEN_TAI),
+    [period, tuNgay, denNgay],
+  );
 
   // Drawer editor
   const [open, setOpen] = useState(false);
@@ -584,16 +602,38 @@ export default function QuanLyHopDongPage() {
           onReset={() => {
             setSearch('');
             setPeriod('namNay');
+            setTuNgay(null);
+            setDenNgay(null);
           }}
           filters={
-            <Select
-              value={period}
-              onChange={setPeriod}
-              options={PERIOD_OPTIONS}
-              style={{ width: 180 }}
-              showSearch
-              optionFilterProp="label"
-            />
+            <>
+              <Select
+                value={period}
+                onChange={setPeriod}
+                options={PERIOD_OPTIONS_TUY_CHON}
+                style={{ width: 180 }}
+                showSearch
+                optionFilterProp="label"
+              />
+              {period === CUSTOM_PERIOD && (
+                <>
+                  <DatePicker
+                    format="DD/MM/YYYY"
+                    placeholder="Từ ngày"
+                    style={{ width: 140 }}
+                    value={tuNgay}
+                    onChange={setTuNgay}
+                  />
+                  <DatePicker
+                    format="DD/MM/YYYY"
+                    placeholder="Đến ngày"
+                    style={{ width: 140 }}
+                    value={denNgay}
+                    onChange={setDenNgay}
+                  />
+                </>
+              )}
+            </>
           }
           actions={
             <>

@@ -16,6 +16,17 @@ export const PERIOD_OPTIONS: { label: string; value: DashboardPeriod }[] = [
   { label: 'Năm trước', value: 'namTruoc' },
 ];
 
+/** Kỳ do người dùng tự chọn khoảng ngày. */
+export const CUSTOM_PERIOD = 'tuyChon';
+
+export type PeriodKey = DashboardPeriod | typeof CUSTOM_PERIOD;
+
+/** Danh sách kỳ + "Tùy chọn" — cho trang nào cho phép chọn từ ngày → đến ngày. */
+export const PERIOD_OPTIONS_TUY_CHON: { label: string; value: PeriodKey }[] = [
+  ...PERIOD_OPTIONS,
+  { label: 'Tùy chọn', value: CUSTOM_PERIOD },
+];
+
 export function resolvePeriod(
   period: DashboardPeriod,
   currentYear: number,

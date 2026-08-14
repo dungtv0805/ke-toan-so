@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { khoangThang, trongKy, tuPeriod, KY_OPTIONS } from './boLocThoiGian';
+import { khoangThang, trongKy, tuPeriod, tuKhoangNgay, KY_OPTIONS } from './boLocThoiGian';
 import { PERIOD_OPTIONS } from '@/components/shared/period';
 
 describe('tuPeriod', () => {
@@ -15,6 +15,27 @@ describe('tuPeriod', () => {
     expect(tuPeriod('quy4', 2026)).toEqual({ nam: 2026, ky: 'Q4' });
     expect(tuPeriod('nuaDau', 2026)).toEqual({ nam: 2026, ky: 'HK1' });
     expect(tuPeriod('nuaCuoi', 2026)).toEqual({ nam: 2026, ky: 'HK2' });
+  });
+
+  it('khoảng ngày tự chọn giữ nguyên hai đầu, năm lấy theo ngày bắt đầu', () => {
+    expect(tuKhoangNgay('2025-11-20', '2026-02-10', 2026)).toEqual({
+      nam: 2025,
+      ky: 'TUY_CHON',
+      tuNgay: '2025-11-20',
+      denNgay: '2026-02-10',
+    });
+  });
+
+  it('chưa chọn ngày bắt đầu thì dùng năm hiện tại', () => {
+    expect(tuKhoangNgay(undefined, undefined, 2026).nam).toBe(2026);
+  });
+
+  it('lọc tùy chọn chỉ lấy đơn trong khoảng, không phụ thuộc năm', () => {
+    const loc = tuKhoangNgay('2025-11-20', '2026-02-10', 2026);
+    expect(trongKy({ ngayKy: '2025-12-31' }, loc)).toBe(true);
+    expect(trongKy({ ngayKy: '2026-02-10' }, loc)).toBe(true);
+    expect(trongKy({ ngayKy: '2026-02-11' }, loc)).toBe(false);
+    expect(trongKy({ ngayKy: '2025-11-19' }, loc)).toBe(false);
   });
 
   it('mọi lựa chọn của Tổng quan đều ra kỳ hợp lệ', () => {
