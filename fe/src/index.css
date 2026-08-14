@@ -391,8 +391,30 @@
   border-bottom: 1px solid hsl(var(--border)) !important;
 }
 
+/* Màu hover PHẢI đục. Cột ghim (fixed) của antd nằm đè lên các cột cuộn phía sau nó,
+   nền trong suốt sẽ để lộ chữ của cột bên dưới khi cuộn ngang. Pha sẵn 4% primary lên
+   nền thẻ thay vì dùng alpha; hsl(var(--muted)) là dự phòng cho trình duyệt cũ. */
 .ant-table-tbody > tr:hover > td {
-  background-color: hsl(var(--primary) / 0.04) !important;
+  background-color: hsl(var(--muted)) !important;
+  background-color: color-mix(in srgb, hsl(var(--primary)) 4%, hsl(var(--card))) !important;
+}
+
+/* Bảng dùng prop `sticky`: antd vẽ một thanh cuộn ngang GIẢ dính đáy khung cuộn, nằm
+   ĐÈ lên các dòng cuối và để opacity 0.65 → chữ dưới lộ lên trông như bị đè chồng.
+   Cho nó đục hẳn để đọc ra là thanh cuộn, không phải chữ nhòe. */
+.ant-table-sticky-scroll {
+  opacity: 1 !important;
+  background: hsl(var(--card)) !important;
+  border-top: 1px solid hsl(var(--border)) !important;
+}
+
+.ant-table-sticky-scroll-bar {
+  background-color: hsl(var(--muted-foreground) / 0.45) !important;
+}
+
+.ant-table-sticky-scroll-bar:hover,
+.ant-table-sticky-scroll-bar-active {
+  background-color: hsl(var(--muted-foreground) / 0.7) !important;
 }
 
 /* Modals */
