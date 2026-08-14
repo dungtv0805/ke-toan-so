@@ -564,9 +564,9 @@ export default function QuanLyHopDongPage() {
     {
       title: '',
       key: 'action',
-      width: 180,
+      width: 56,
       fixed: 'right',
-      align: 'right',
+      align: 'center',
       render: (_, r) => (
         <MenuThaoTacDonHang
           row={r}

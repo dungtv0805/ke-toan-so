@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Button, Dropdown, Tag, Typography } from 'antd';
+import { Button, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import { EyeOutlined, MoreOutlined } from '@ant-design/icons';
 import type { TheoDoiHopDongRow } from '@/types';
@@ -7,8 +7,6 @@ import ThuTienDonHangModal from './ThuTienDonHangModal';
 import ButToanDonHangModal from './ButToanDonHangModal';
 import { tinhGhiChuDonHang, type HanhDongDonHang, type SoLieuGhiChu } from './ghiChuDonHang';
 import { TK_CHUA_THUC_HIEN, TK_DOANH_THU } from './ghiNhanDoanhThu';
-
-const { Text } = Typography;
 
 /** Phải thu khách hàng — TK Nợ khi ghi nhận doanh thu chưa thực hiện. */
 const TK_PHAI_THU = '131';
@@ -25,9 +23,9 @@ interface Props {
 }
 
 /**
- * Ô cuối mỗi dòng đơn hàng: nhãn tình trạng (đã ghi nhận doanh thu / đã thu tiền) +
- * một menu ⋯ gom "Theo dõi" và các việc còn phải làm (thu tiền, ghi nhận / kết chuyển
- * doanh thu) — thay cho cột "Ghi chú" và nút "Theo dõi" tách rời trước đây.
+ * Ô cuối mỗi dòng đơn hàng: chỉ một menu ⋯ gom "Theo dõi" và các việc còn phải làm
+ * (thu tiền, ghi nhận / kết chuyển doanh thu) — thay cho cột "Ghi chú" và nút "Theo
+ * dõi" tách rời trước đây. Tình trạng đọc ở các cột số, không lặp lại thành nhãn.
  *
  * Modal được vẽ NGOÀI overlay của Dropdown và chỉ đăng ký hàm mở qua `renderTrigger`:
  * đặt trong overlay thì menu đóng lại sẽ tháo luôn modal vừa bấm.
@@ -40,7 +38,7 @@ export default function MenuThaoTacDonHang({
   onThuTien,
 }: Props) {
   const moModal = useRef<Partial<Record<HanhDongDonHang, () => void>>>({});
-  const { chips, nhanTinh } = tinhGhiChuDonHang(row);
+  const { chips } = tinhGhiChuDonHang(row);
   const viecCanLam = canEdit ? chips : [];
 
   const dangKy = (hanhDong: HanhDongDonHang) => (open: () => void) => {
@@ -59,20 +57,7 @@ export default function MenuThaoTacDonHang({
   ];
 
   return (
-    <div className="flex items-center justify-end gap-1">
-      <div className="flex flex-col items-end gap-0.5">
-        {viecCanLam.map((c) => (
-          <Tag key={c.hanhDong} color="orange" className="!mr-0 !text-xs">
-            {c.nhan}
-          </Tag>
-        ))}
-        {nhanTinh.map((n) => (
-          <Text key={n} type="secondary" className="text-xs whitespace-nowrap">
-            {n}
-          </Text>
-        ))}
-      </div>
-
+    <div className="flex items-center justify-center">
       <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
         <Button type="text" size="small" icon={<MoreOutlined />} aria-label="Thao tác" />
       </Dropdown>
