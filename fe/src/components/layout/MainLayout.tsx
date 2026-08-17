@@ -40,7 +40,6 @@ import {
   ContainerOutlined,
   FormOutlined,
   FileProtectOutlined,
-  DatabaseOutlined,
   ScheduleOutlined,
   RiseOutlined,
   InboxOutlined,
@@ -280,19 +279,16 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Báo cáo nhanh thuế TNDN", "/thue/bao-cao-tndn", <BarChartOutlined />),
   ]),
 
-  getItem("Trung tâm dữ liệu", "/trung-tam-du-lieu", <DatabaseOutlined />, [
-    getMenuItem("Kế hoạch", "/trung-tam-du-lieu/ke-hoach", <ScheduleOutlined />),
-    getMenuItem("Dự báo", "/trung-tam-du-lieu/du-bao", <RiseOutlined />),
-    getMenuItem("Dữ liệu tổng hợp", "/chung-tu/nhat-ky-chung", <AuditOutlined />),
-    // Nhóm "Chứng từ" đã gỡ, 2 trang phiếu còn sống về đây (khớp ma trận Phân quyền).
-    getMenuItem("Phiếu thu", "/chung-tu/phieu-thu", <CreditCardOutlined />),
-    getMenuItem("Phiếu chi", "/chung-tu/phieu-chi", <WalletOutlined />),
-    getMenuItem("Quản lý Tài sản", "/trung-tam-du-lieu/tai-san", <CarOutlined />),
-    getMenuItem("Bán hàng", "/trung-tam-du-lieu/hop-dong", <FileProtectOutlined />),
-  ]),
-
-  // Nhóm "Chứng từ" đã gỡ hẳn (toàn bộ mục trong đó là coming-soon). Phiếu thu /
-  // Phiếu chi vẫn sống, đi qua thanh ngang CHUNG_TU_NAV của chính các trang phiếu.
+  // Nhóm "Trung tâm dữ liệu" đã bỏ cấp bọc — các mục con đứng thẳng hàng với
+  // "Thuế" / "Kho". Route vẫn giữ tiền tố /trung-tam-du-lieu để khỏi phải cấp lại quyền.
+  getMenuItem("Kế hoạch", "/trung-tam-du-lieu/ke-hoach", <ScheduleOutlined />),
+  getMenuItem("Dự báo", "/trung-tam-du-lieu/du-bao", <RiseOutlined />),
+  getMenuItem("Dữ liệu tổng hợp", "/chung-tu/nhat-ky-chung", <AuditOutlined />),
+  // Nhóm "Chứng từ" đã gỡ, 2 trang phiếu còn sống về đây (khớp ma trận Phân quyền).
+  getMenuItem("Phiếu thu", "/chung-tu/phieu-thu", <CreditCardOutlined />),
+  getMenuItem("Phiếu chi", "/chung-tu/phieu-chi", <WalletOutlined />),
+  getMenuItem("Quản lý Tài sản", "/trung-tam-du-lieu/tai-san", <CarOutlined />),
+  getMenuItem("Bán hàng", "/trung-tam-du-lieu/hop-dong", <FileProtectOutlined />),
 
   // Nhập / Xuất / Chuyển / Kiểm kê kho nằm trên thanh ngang của các trang kho
   // (xem KHO_NAV); dropdown chỉ giữ 4 nhóm hàng trong kho.

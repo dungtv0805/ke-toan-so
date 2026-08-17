@@ -34,16 +34,15 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/thue/tong-hop', label: 'Tổng hợp thuế', parentLabel: 'Thuế' },
   { key: '/thue/bao-cao-tndn', label: 'Báo cáo nhanh thuế TNDN', parentLabel: 'Thuế' },
 
-  // ===== KẾ TOÁN — Trung tâm dữ liệu =====
-  { key: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch', parentLabel: 'Trung tâm dữ liệu' },
-  { key: '/trung-tam-du-lieu/du-bao', label: 'Dự báo', parentLabel: 'Trung tâm dữ liệu' },
-  { key: '/chung-tu/nhat-ky-chung', label: 'Dữ liệu tổng hợp', parentLabel: 'Trung tâm dữ liệu' },
-  // Nhóm "Chứng từ" đã gỡ; 2 trang phiếu còn sống chuyển về đây (đi qua thanh ngang
-  // của chính trang phiếu, không có mục sidebar riêng).
-  { key: '/chung-tu/phieu-thu', label: 'Phiếu thu', parentLabel: 'Trung tâm dữ liệu' },
-  { key: '/chung-tu/phieu-chi', label: 'Phiếu chi', parentLabel: 'Trung tâm dữ liệu' },
-  { key: '/trung-tam-du-lieu/tai-san', label: 'Quản lý Tài sản', parentLabel: 'Trung tâm dữ liệu' },
-  { key: '/trung-tam-du-lieu/hop-dong', label: 'Bán hàng', parentLabel: 'Trung tâm dữ liệu' },
+  // ===== KẾ TOÁN — mục gốc (đứng ngang hàng "Báo cáo" / "Thuế" / "Kho") =====
+  // Nhóm bọc "Trung tâm dữ liệu" đã bỏ → không còn parentLabel.
+  { key: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch' },
+  { key: '/trung-tam-du-lieu/du-bao', label: 'Dự báo' },
+  { key: '/chung-tu/nhat-ky-chung', label: 'Dữ liệu tổng hợp' },
+  { key: '/chung-tu/phieu-thu', label: 'Phiếu thu' },
+  { key: '/chung-tu/phieu-chi', label: 'Phiếu chi' },
+  { key: '/trung-tam-du-lieu/tai-san', label: 'Quản lý Tài sản' },
+  { key: '/trung-tam-du-lieu/hop-dong', label: 'Bán hàng' },
 
   // ===== KẾ TOÁN — Kho =====
   // 4 nhóm hàng là mục sidebar; Nhập/Xuất/Chuyển/Kiểm kê kho nằm trên thanh ngang.
