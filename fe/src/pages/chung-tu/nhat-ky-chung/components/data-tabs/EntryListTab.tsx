@@ -769,7 +769,9 @@ const getColumnDefinitions = (
     ),
   },
   {
-    title: "",
+    // Cố ý KHÔNG để title là chuỗi: `labelOf` chỉ nhận chuỗi/TermText, trả null thì
+    // cột luôn hiển thị — tránh việc người dùng lỡ ẩn cột này rồi mất hết lệnh dòng.
+    title: <span>Chức năng</span>,
     key: "action",
     width: 120,
     align: "center" as const,

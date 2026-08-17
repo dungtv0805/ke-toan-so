@@ -8,12 +8,8 @@ import {
 import dayjs from "dayjs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
-import type { ChungTu, LoaiChungTu } from "@/types";
-import { phieuTemplateService } from "@/services/phieuTemplateService";
-import { nhatKyChungService } from "@/services/nhatKyChungService";
-import { printPhieu } from "../../../phieu/lib/printPhieu";
-import { getDefaultTemplate } from "../../../phieu/lib/printTemplates";
-import { toPhieuLines, type PhieuLine } from "../../../phieu/lib/phieuLines";
+import type { LoaiChungTu } from "@/types";
+import { printNkcEntry } from "../../print/nkcPhieuPrint";
 import {
   useNhatKyChungState,
   useNhatKyChungHandler,
@@ -46,48 +42,8 @@ export function EntryViewModal() {
   const danhMuc = entry.danhMuc;
 
   // In bút toán theo mẫu config của Phiếu thu / Phiếu chi (chọn loại khi in).
-  const handlePrint = async (loai: LoaiChungTu) => {
-    let template: string;
-    try {
-      const tpl = await phieuTemplateService.getByLoai(loai);
-      template = tpl?.html || getDefaultTemplate(loai);
-    } catch {
-      template = getDefaultTemplate(loai);
-    }
-    const phieu = {
-      soPhieu: entry.soPhieu,
-      ngay: entry.ngay,
-      nguoiGiaoDich: entry.nguoiGiaoDich,
-      diaChi: entry.diaChi,
-      noiDung: entry.dienGiai,
-      soTien: entry.soTien,
-      ghiChu: entry.ghiChu,
-      danhMuc: {
-        taiKhoanNo: { ma: entry.taiKhoanNo ?? danhMuc?.taiKhoanNo?.ma },
-        taiKhoanCo: { ma: entry.taiKhoanCo ?? danhMuc?.taiKhoanCo?.ma },
-      },
-    } as unknown as ChungTu;
-
-    // Modal chỉ giữ 1 dòng, nhưng chứng từ có thể nhiều dòng cùng số phiếu →
-    // nạp đủ để phiếu in ra có bảng chi tiết và số tiền là tổng.
-    let dong: PhieuLine[] | undefined;
-    try {
-      const records = await nhatKyChungService.getBySoPhieu(entry.soPhieu);
-      if (records.length > 0) dong = toPhieuLines(records);
-    } catch (e) {
-      console.error("Error loading voucher lines for print:", e);
-    }
-
-    printPhieu(
-      phieu,
-      template,
-      {
-        tenCongTy: currentTenant?.tenantName ?? "",
-        diaChiCongTy: "",
-      },
-      dong
-    );
-  };
+  const handlePrint = (loai: LoaiChungTu) =>
+    printNkcEntry(entry, loai, currentTenant?.tenantName ?? "");
 
   return (
     <Modal

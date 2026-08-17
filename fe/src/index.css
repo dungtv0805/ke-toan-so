@@ -1263,6 +1263,16 @@
   color: #bfbfbf;
 }
 
+/* Cột "Chức năng" — nút "Xem" + mũi tên mở menu lệnh, ép gọn cho vừa ô hẹp */
+.nkc-action-menu .ant-btn {
+  padding-inline: 4px;
+  font-size: 12px;
+}
+
+.nkc-action-menu .ant-btn .anticon {
+  margin-inline-end: 2px;
+}
+
 /* Excel container */
 .excel-container {
   flex: 1;

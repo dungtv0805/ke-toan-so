@@ -1,72 +1,96 @@
-import { Space, Button, Tooltip, Popconfirm } from "antd";
+import { useState } from "react";
+import { Space, Button, Tooltip, Dropdown, Modal, message } from "antd";
+import type { MenuProps } from "antd";
 import {
   EyeOutlined,
   EditOutlined,
   CopyOutlined,
   DeleteOutlined,
+  PrinterOutlined,
   CheckOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useAuth } from "@/contexts/AuthContext";
 import { NhatKyChung } from "@/types";
 import {
   useNhatKyChungHandler,
   useNhatKyChungState,
 } from "../../NhatKyChungHandlerContext";
+import { printNkcEntry, loaiPhieuCuaButToan } from "../../print/nkcPhieuPrint";
 
 interface EntryActionsProps {
   entry: NhatKyChung;
 }
 
+/**
+ * Cột "Chức năng": một nút chính "Xem" + mũi tên mở các lệnh còn lại
+ * (Sửa / Nhân bản / In / Xóa). Gom vào 1 ô thay vì 4 icon rời cho đỡ chật —
+ * bảng này đã rất nhiều cột.
+ */
 export function EntryActions({ entry }: EntryActionsProps) {
   const navigate = useNavigate();
   const handler = useNhatKyChungHandler();
-  const { canCreate, canEdit, canDelete } = usePagePermission("/chung-tu/nhat-ky-chung");
+  const { currentTenant } = useAuth();
+  const { canCreate, canEdit, canDelete } = usePagePermission(
+    "/chung-tu/nhat-ky-chung"
+  );
+
+  const [printing, setPrinting] = useState(false);
 
   // Row edit state (for inline edit via double-click)
   const [editingRowId] = useNhatKyChungState("editingRowId", null);
   const [savingRow] = useNhatKyChungState("savingRow", false);
 
-  // Check if this row is being edited
   const isThisRowEditing = editingRowId === entry.id;
+  const isOtherRowEditing = !!editingRowId && editingRowId !== entry.id;
 
-  // Check if another row is being edited
-  const isOtherRowEditing = editingRowId && editingRowId !== entry.id;
+  // Bút toán đã duyệt thì không cho sửa/xóa
+  const isApproved =
+    (entry as unknown as { trangThai?: string }).trangThai === "DA_DUYET";
 
-  // Check if entry is approved (cannot edit/delete)
-  const isApproved = (entry as any).trangThai === "DA_DUYET";
+  const handleView = () => handler.executeEvent("openViewModal", { entry });
 
-  const handleView = () => {
-    handler.executeEvent("openViewModal", { entry });
-  };
-
-  // Navigate to edit page (for Edit button)
-  const handleEdit = () => {
+  const handleEdit = () =>
     navigate(`/chung-tu/nhat-ky-chung/${encodeURIComponent(entry.soPhieu)}/sua`);
-  };
 
   // Nhân bản: mở form tạo mới đã điền sẵn dữ liệu của chứng từ này
-  const handleClone = () => {
+  const handleClone = () =>
     navigate(
       `/chung-tu/nhat-ky-chung/${encodeURIComponent(entry.soPhieu)}/nhan-ban`
     );
+
+  const handlePrint = async () => {
+    setPrinting(true);
+    try {
+      await printNkcEntry(
+        entry,
+        loaiPhieuCuaButToan(entry),
+        currentTenant?.tenantName ?? ""
+      );
+    } catch (e) {
+      console.error("Error printing voucher:", e);
+      message.error("Không in được phiếu");
+    } finally {
+      setPrinting(false);
+    }
   };
 
-  // Inline row edit handlers (for double-click)
-  const handleSaveRow = () => {
-    handler.executeEvent("saveEditRow", {});
-  };
-
-  const handleCancelRow = () => {
-    handler.executeEvent("cancelEditRow", {});
-  };
-
+  // Popconfirm không dùng được ở đây: menu đóng ngay khi bấm nên confirm bị gỡ
+  // khỏi DOM trước khi người dùng kịp trả lời → dùng Modal.confirm.
   const handleDelete = () => {
-    handler.executeEvent("deleteEntry", { id: entry.id });
+    Modal.confirm({
+      title: "Xác nhận xóa bút toán này?",
+      content: `Số CT ${entry.soPhieu}`,
+      okText: "Xóa",
+      okButtonProps: { danger: true },
+      cancelText: "Hủy",
+      onOk: () => handler.executeEvent("deleteEntry", { id: entry.id }),
+    });
   };
 
-  // If this row is being edited (via double-click), show Save/Cancel buttons
+  // Đang sửa tại chỗ (double-click) → chỉ còn Lưu / Hủy
   if (isThisRowEditing) {
     return (
       <Space size="small">
@@ -75,7 +99,7 @@ export function EntryActions({ entry }: EntryActionsProps) {
             type="text"
             size="small"
             icon={<CheckOutlined />}
-            onClick={handleSaveRow}
+            onClick={() => handler.executeEvent("saveEditRow", {})}
             loading={savingRow}
             className="!text-green-600 hover:!text-green-700"
           />
@@ -86,7 +110,7 @@ export function EntryActions({ entry }: EntryActionsProps) {
             type="text"
             size="small"
             icon={<CloseOutlined />}
-            onClick={handleCancelRow}
+            onClick={() => handler.executeEvent("cancelEditRow", {})}
             disabled={savingRow}
             className="!text-red-600 hover:!text-red-700"
           />
@@ -95,68 +119,65 @@ export function EntryActions({ entry }: EntryActionsProps) {
     );
   }
 
-  // Normal mode - show View/Edit/Delete buttons
+  const items: MenuProps["items"] = [];
+
+  if (canEdit) {
+    items.push({
+      key: "sua",
+      icon: <EditOutlined />,
+      label: isApproved ? "Sửa (đã duyệt)" : "Sửa",
+      disabled: isApproved || isOtherRowEditing,
+      onClick: handleEdit,
+    });
+  }
+
+  if (canCreate) {
+    items.push({
+      key: "nhan-ban",
+      icon: <CopyOutlined />,
+      label: "Nhân bản",
+      disabled: isOtherRowEditing,
+      onClick: handleClone,
+    });
+  }
+
+  items.push({
+    key: "in",
+    icon: <PrinterOutlined />,
+    label: printing ? "Đang in..." : "In",
+    disabled: printing,
+    onClick: handlePrint,
+  });
+
+  if (canDelete) {
+    items.push({ type: "divider" });
+    items.push({
+      key: "xoa",
+      icon: <DeleteOutlined />,
+      label: "Xóa",
+      danger: true,
+      disabled: isApproved || isOtherRowEditing,
+      onClick: handleDelete,
+    });
+  }
+
   return (
-    <Space size="small">
-      <Tooltip title="Xem">
-        <Button
-          type="text"
-          size="small"
-          icon={<EyeOutlined />}
-          onClick={handleView}
-          disabled={isOtherRowEditing}
-        />
-      </Tooltip>
-
-      {canCreate && (
-        <Tooltip title="Nhân bản chứng từ">
-          <Button
-            type="text"
-            size="small"
-            icon={<CopyOutlined />}
-            onClick={handleClone}
-            disabled={isOtherRowEditing}
-          />
-        </Tooltip>
-      )}
-
-      {canEdit && (isApproved ? (
-        <Tooltip title="Không thể sửa bút toán đã duyệt">
-          <Button
-            type="text"
-            size="small"
-            icon={<EditOutlined />}
-            disabled
-          />
-        </Tooltip>
-      ) : (
-        <Button
-          type="text"
-          size="small"
-          icon={<EditOutlined />}
-onClick={handleEdit}
-          disabled={isOtherRowEditing}
-        />
-      ))}
-
-      {canDelete && (
-        <Popconfirm
-          title="Xác nhận xóa bút toán này?"
-          onConfirm={handleDelete}
-          okText="Xóa"
-          cancelText="Hủy"
-          disabled={isApproved || isOtherRowEditing}
-          okButtonProps={{ danger: true }}
-        >
-          <Button
-            type="text"
-            size="small"
-            icon={<DeleteOutlined />}
-            disabled={isApproved || isOtherRowEditing}
-            className={isApproved || isOtherRowEditing ? "" : "!text-destructive"}
-          />
-        </Popconfirm>
-      )}
-    </Space>
+    <Dropdown.Button
+      size="small"
+      type="link"
+      trigger={["click"]}
+      className="nkc-action-menu"
+      menu={{ items }}
+      onClick={handleView}
+      buttonsRender={([left, right]) => [
+        <Tooltip key="xem" title="Xem chi tiết">
+          {left}
+        </Tooltip>,
+        right,
+      ]}
+      disabled={isOtherRowEditing}
+    >
+      <EyeOutlined /> Xem
+    </Dropdown.Button>
   );
 }
