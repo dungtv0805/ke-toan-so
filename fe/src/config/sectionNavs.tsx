@@ -8,6 +8,7 @@ import {
   ReconciliationOutlined,
   FileProtectOutlined,
   BarChartOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import type { SectionNavItem } from "@/components/layout/SectionNav";
 
@@ -41,7 +42,10 @@ export const KHO_NAV: SectionNavItem[] = [
   },
 ];
 
-/** Bán hàng — trang quản lý hợp đồng + báo cáo hợp đồng. */
+/**
+ * Bán hàng — quản lý đơn hàng + báo cáo + danh mục hợp đồng.
+ * "Hợp đồng" chỉ hiện với ai có quyền `/danh-muc/hop-dong:xem` (SectionNav tự lọc).
+ */
 export const BAN_HANG_NAV: SectionNavItem[] = [
   {
     label: "Bán hàng",
@@ -49,4 +53,5 @@ export const BAN_HANG_NAV: SectionNavItem[] = [
     icon: <FileProtectOutlined />,
   },
   { label: "Báo cáo", path: "/bao-cao/hop-dong", icon: <BarChartOutlined /> },
+  { label: "Hợp đồng", path: "/danh-muc/hop-dong", icon: <FileTextOutlined /> },
 ];
