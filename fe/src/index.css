@@ -1263,14 +1263,20 @@
   color: #bfbfbf;
 }
 
-/* Cột "Chức năng" — nút "Xem" + mũi tên mở menu lệnh, ép gọn cho vừa ô hẹp */
-.nkc-action-menu .ant-btn {
+/* Cột "Chức năng" — nút lệnh chính + mũi tên mở các lệnh còn lại.
+   Dùng chung cho Dữ liệu tổng hợp và Bán hàng; ép gọn cho vừa ô hẹp. */
+.row-action-menu .ant-btn {
   padding-inline: 4px;
   font-size: 12px;
 }
 
-.nkc-action-menu .ant-btn .anticon {
+.row-action-menu .ant-btn .anticon {
   margin-inline-end: 2px;
+}
+
+/* Mũi tên đứng sát nhãn, không cần khoảng đệm của icon đứng trước chữ */
+.row-action-menu .ant-dropdown-trigger .anticon {
+  margin-inline-end: 0;
 }
 
 /* Excel container */

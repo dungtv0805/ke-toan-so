@@ -9,6 +9,7 @@ import {
   PrinterOutlined,
   CheckOutlined,
   CloseOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { usePagePermission } from "@/hooks/usePagePermission";
@@ -166,7 +167,9 @@ export function EntryActions({ entry }: EntryActionsProps) {
       size="small"
       type="link"
       trigger={["click"]}
-      className="nkc-action-menu"
+      className="row-action-menu"
+      // Mặc định của antd là dấu "⋯"; mẫu thiết kế dùng mũi tên xuống.
+      icon={<DownOutlined />}
       menu={{ items }}
       onClick={handleView}
       buttonsRender={([left, right]) => [

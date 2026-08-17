@@ -487,11 +487,12 @@ export default function QuanLyHopDongPage() {
     // Không gắn lọc: cột này vốn không có `key`. Thêm key để lọc sẽ đưa nó vào "Chọn cột",
     // và người dùng từng lưu lựa chọn cột sẽ bị mất cột này cho tới khi tự tick lại.
     { title: 'Phụ trách', width: 130, ellipsis: true, render: (_, r) => r.tracking?.phuTrachHoSo || '-' },
-    // Tiêu đề để rỗng: cột thao tác không vào "Chọn cột" nên không bị ẩn nhầm.
+    // Tiêu đề là node chứ không phải chuỗi: useTableTitleConfig chỉ quản cột có title
+    // kiểu chuỗi, nên cột thao tác vẫn không vào "Chọn cột" và không bị ẩn nhầm.
     {
-      title: '',
+      title: <span>Chức năng</span>,
       key: 'action',
-      width: 56,
+      width: 150,
       fixed: 'right',
       align: 'center',
       render: (_, r) => (

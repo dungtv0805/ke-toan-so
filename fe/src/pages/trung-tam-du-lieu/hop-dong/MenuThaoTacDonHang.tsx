@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Button, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
-import { EyeOutlined, MoreOutlined } from '@ant-design/icons';
+import { EyeOutlined, DownOutlined } from '@ant-design/icons';
 import type { TheoDoiHopDongRow } from '@/types';
 import ThuTienDonHangModal from './ThuTienDonHangModal';
 import ButToanDonHangModal from './ButToanDonHangModal';
@@ -23,9 +23,10 @@ interface Props {
 }
 
 /**
- * Ô cuối mỗi dòng đơn hàng: chỉ một menu ⋯ gom "Theo dõi" và các việc còn phải làm
- * (thu tiền, ghi nhận / kết chuyển doanh thu) — thay cho cột "Ghi chú" và nút "Theo
- * dõi" tách rời trước đây. Tình trạng đọc ở các cột số, không lặp lại thành nhãn.
+ * Ô cuối mỗi dòng đơn hàng: nút lệnh CHÍNH là việc cần làm gần nhất (Thu tiền / Ghi
+ * nhận doanh thu / Kết chuyển doanh thu), mũi tên bên cạnh mở "Theo dõi" và các việc
+ * còn lại. Hết việc thì chỉ còn nút "Theo dõi". Tình trạng đọc ở các cột số, không
+ * lặp lại thành nhãn.
  *
  * Modal được vẽ NGOÀI overlay của Dropdown và chỉ đăng ký hàm mở qua `renderTrigger`:
  * đặt trong overlay thì menu đóng lại sẽ tháo luôn modal vừa bấm.
@@ -46,10 +47,14 @@ export default function MenuThaoTacDonHang({
     return null;
   };
 
+  // Việc cần làm gần nhất lên nút chính; phần còn lại + "Theo dõi" nằm trong menu.
+  const chinh = viecCanLam[0];
+  const conLai = viecCanLam.slice(1);
+
   const items: MenuProps['items'] = [
     { key: 'theo-doi', icon: <EyeOutlined />, label: 'Theo dõi', onClick: onTheoDoi },
-    ...(viecCanLam.length ? [{ type: 'divider' as const }] : []),
-    ...viecCanLam.map((c) => ({
+    ...(conLai.length ? [{ type: 'divider' as const }] : []),
+    ...conLai.map((c) => ({
       key: c.hanhDong,
       label: c.nhan,
       onClick: () => moModal.current[c.hanhDong]?.(),
@@ -58,9 +63,25 @@ export default function MenuThaoTacDonHang({
 
   return (
     <div className="flex items-center justify-center">
-      <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
-        <Button type="text" size="small" icon={<MoreOutlined />} aria-label="Thao tác" />
-      </Dropdown>
+      {chinh ? (
+        <Dropdown.Button
+          size="small"
+          type="link"
+          trigger={['click']}
+          placement="bottomRight"
+          className="row-action-menu"
+          icon={<DownOutlined />}
+          menu={{ items }}
+          onClick={() => moModal.current[chinh.hanhDong]?.()}
+        >
+          {chinh.nhan}
+        </Dropdown.Button>
+      ) : (
+        // Hết việc phải làm → menu chỉ còn đúng "Theo dõi", bày nguyên nút cho gọn.
+        <Button type="link" size="small" icon={<EyeOutlined />} onClick={onTheoDoi}>
+          Theo dõi
+        </Button>
+      )}
 
       {viecCanLam.map((c) => {
         if (c.hanhDong === 'THU_TIEN') {
