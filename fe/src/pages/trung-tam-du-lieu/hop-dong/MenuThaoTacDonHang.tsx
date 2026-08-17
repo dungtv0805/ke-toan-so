@@ -1,7 +1,13 @@
-import { useRef } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { Button, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
-import { EyeOutlined, DownOutlined } from '@ant-design/icons';
+import {
+  EyeOutlined,
+  DownOutlined,
+  DollarOutlined,
+  FileDoneOutlined,
+  SwapOutlined,
+} from '@ant-design/icons';
 import type { TheoDoiHopDongRow } from '@/types';
 import ThuTienDonHangModal from './ThuTienDonHangModal';
 import ButToanDonHangModal from './ButToanDonHangModal';
@@ -10,6 +16,13 @@ import { TK_CHUA_THUC_HIEN, TK_DOANH_THU } from './ghiNhanDoanhThu';
 
 /** Phải thu khách hàng — TK Nợ khi ghi nhận doanh thu chưa thực hiện. */
 const TK_PHAI_THU = '131';
+
+/** Icon của từng việc cần làm — dùng chung cho nút chính lẫn mục trong menu. */
+const ICON_HANH_DONG: Record<HanhDongDonHang, ReactNode> = {
+  THU_TIEN: <DollarOutlined />,
+  GHI_NHAN_DOANH_THU: <FileDoneOutlined />,
+  KET_CHUYEN_DOANH_THU: <SwapOutlined />,
+};
 
 interface Props {
   row: TheoDoiHopDongRow & SoLieuGhiChu;
@@ -24,8 +37,8 @@ interface Props {
 
 /**
  * Ô cuối mỗi dòng đơn hàng: nút lệnh CHÍNH là việc cần làm gần nhất (Thu tiền / Ghi
- * nhận doanh thu / Kết chuyển doanh thu), mũi tên bên cạnh mở "Theo dõi" và các việc
- * còn lại. Hết việc thì chỉ còn nút "Theo dõi". Tình trạng đọc ở các cột số, không
+ * nhận doanh thu / Kết chuyển doanh thu), mũi tên bên cạnh mở "Xem" và các việc
+ * còn lại. Hết việc thì chỉ còn nút "Xem". Tình trạng đọc ở các cột số, không
  * lặp lại thành nhãn.
  *
  * Modal được vẽ NGOÀI overlay của Dropdown và chỉ đăng ký hàm mở qua `renderTrigger`:
@@ -47,15 +60,16 @@ export default function MenuThaoTacDonHang({
     return null;
   };
 
-  // Việc cần làm gần nhất lên nút chính; phần còn lại + "Theo dõi" nằm trong menu.
+  // Việc cần làm gần nhất lên nút chính; phần còn lại + "Xem" nằm trong menu.
   const chinh = viecCanLam[0];
   const conLai = viecCanLam.slice(1);
 
   const items: MenuProps['items'] = [
-    { key: 'theo-doi', icon: <EyeOutlined />, label: 'Theo dõi', onClick: onTheoDoi },
+    { key: 'xem', icon: <EyeOutlined />, label: 'Xem', onClick: onTheoDoi },
     ...(conLai.length ? [{ type: 'divider' as const }] : []),
     ...conLai.map((c) => ({
       key: c.hanhDong,
+      icon: ICON_HANH_DONG[c.hanhDong],
       label: c.nhan,
       onClick: () => moModal.current[c.hanhDong]?.(),
     })),
@@ -74,12 +88,12 @@ export default function MenuThaoTacDonHang({
           menu={{ items }}
           onClick={() => moModal.current[chinh.hanhDong]?.()}
         >
-          {chinh.nhan}
+          {ICON_HANH_DONG[chinh.hanhDong]} {chinh.nhan}
         </Dropdown.Button>
       ) : (
-        // Hết việc phải làm → menu chỉ còn đúng "Theo dõi", bày nguyên nút cho gọn.
+        // Hết việc phải làm → menu chỉ còn đúng "Xem", bày nguyên nút cho gọn.
         <Button type="link" size="small" icon={<EyeOutlined />} onClick={onTheoDoi}>
-          Theo dõi
+          Xem
         </Button>
       )}
 
