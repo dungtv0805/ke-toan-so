@@ -70,6 +70,7 @@ export const routePermissions: Record<string, string> = {
   '/thue/tong-hop': '/thue/tong-hop:xem',
   '/thue/bao-cao-tndn': '/thue/bao-cao-tndn:xem',
 
+  '/quy-trinh': '/quy-trinh:xem',
   '/bieu-mau': '/bieu-mau:xem',
   '/chinh-sach': '/chinh-sach:xem',
   '/huong-dan': '/huong-dan:xem',

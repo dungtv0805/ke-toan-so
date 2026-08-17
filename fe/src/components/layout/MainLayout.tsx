@@ -166,6 +166,7 @@ const existingRoutes = new Set([
   "/thue/tong-hop",
   "/thue/bao-cao-tndn",
 
+  "/quy-trinh",
   "/bieu-mau",
   "/chinh-sach",
   "/huong-dan",

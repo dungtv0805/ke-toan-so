@@ -62,6 +62,7 @@ import {
   BangTongHopCongNoPage,
   BaoCaoTaiChinhPage,
 
+  QuyTrinhPage,
   BieuMauPage,
   ChinhSachPage,
   HuongDanPage,
@@ -581,7 +582,14 @@ const App = () => (
                 </Route>
 
                 {/* Thư viện */}
-                <Route path="quy-trinh" element={<ComingSoonPage />} />
+                <Route
+                  path="quy-trinh"
+                  element={
+                    <ProtectedRoute requiredPermission="/quy-trinh:xem">
+                      <QuyTrinhPage />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="chinh-sach"
                   element={

@@ -1,6 +1,7 @@
 import { IsIn, IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
 
-const CATS = ['bieu-mau', 'chinh-sach', 'huong-dan'] as const;
+/** Mỗi mục Thư viện là một category; quyền suy ra từ đây (`/{category}:{action}`). */
+const CATS = ['quy-trinh', 'bieu-mau', 'chinh-sach', 'huong-dan'] as const;
 
 export class CreateFileDto {
   @IsString()

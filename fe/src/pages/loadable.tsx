@@ -210,6 +210,10 @@ export const KqkdPage = loadable(() => import('./bao-cao/kqkd/KqkdPage'), {
 });
 
 // Thư viện tài liệu
+export const QuyTrinhPage = loadable(() => import('./thu-vien/QuyTrinhPage'), {
+  fallback: <PageLoader />
+});
+
 export const BieuMauPage = loadable(() => import('./thu-vien/BieuMauPage'), {
   fallback: <PageLoader />
 });
