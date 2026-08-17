@@ -8,13 +8,15 @@ import {
   Popconfirm,
   Empty,
   Spin,
+  Tooltip,
   message,
 } from "antd";
 import {
-  UploadOutlined,
+  InboxOutlined,
   DownloadOutlined,
   DeleteOutlined,
-  PaperClipOutlined,
+  EyeOutlined,
+  FilePdfOutlined,
 } from "@ant-design/icons";
 import type { UploadProps } from "antd";
 import dayjs from "dayjs";
@@ -23,7 +25,12 @@ import {
   hopDongFileService,
   type HopDongFile,
 } from "@/services/hopDongFileService";
-import { dinhDangDungLuong, kiemTraTruocKhiTaiLen } from "./fileHopDong";
+import {
+  ACCEPT_PDF,
+  dinhDangDungLuong,
+  kiemTraTruocKhiTaiLen,
+} from "./fileHopDong";
+import { XemPdfModal } from "./XemPdfModal";
 
 const { Text } = Typography;
 
@@ -48,6 +55,7 @@ export function FileHopDongModal({
   const [files, setFiles] = useState<HopDongFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [dangXem, setDangXem] = useState<HopDongFile | null>(null);
 
   // onChanged làm trang cha đổi state → hàm mới mỗi lần render. Giữ nó trong ref để
   // `load` không đổi identity, nếu không useEffect bên dưới sẽ gọi API vô tận.
@@ -74,31 +82,45 @@ export function FileHopDongModal({
     if (open) load();
   }, [open, load]);
 
-  const uploadProps: UploadProps = {
-    showUploadList: false,
-    beforeUpload: (file) => {
-      const loi = kiemTraTruocKhiTaiLen(file as File);
-      if (loi) {
-        message.error(loi);
-        return Upload.LIST_IGNORE;
-      }
-      handleUpload(file as File);
-      return false; // tự gọi API, không để antd tự tải lên
-    },
-  };
-
-  const handleUpload = async (file: File) => {
+  /** Tải lần lượt cho khỏi đua nhau, xong cả mẻ mới nạp lại danh sách một lần. */
+  const uploadBatch = async (danhSach: File[]) => {
     if (!hopDong) return;
+    const hopLe: File[] = [];
+    for (const f of danhSach) {
+      const loi = kiemTraTruocKhiTaiLen(f);
+      if (loi) message.error(loi);
+      else hopLe.push(f);
+    }
+    if (!hopLe.length) return;
+
     setUploading(true);
+    let thanhCong = 0;
     try {
-      await hopDongFileService.upload(hopDong.id, file);
-      message.success("Đã tải file lên");
+      for (const f of hopLe) {
+        try {
+          await hopDongFileService.upload(hopDong.id, f);
+          thanhCong++;
+        } catch {
+          message.error(`${f.name}: tải lên thất bại`);
+        }
+      }
+      if (thanhCong) message.success(`Đã tải lên ${thanhCong} file`);
       await load();
-    } catch {
-      message.error("Tải file lên thất bại");
     } finally {
       setUploading(false);
     }
+  };
+
+  const uploadProps: UploadProps = {
+    multiple: true,
+    accept: ACCEPT_PDF,
+    showUploadList: false,
+    // beforeUpload chạy MỘT LẦN CHO MỖI file; chỉ xử lý ở file đầu để cả mẻ đi
+    // chung một lượt, tránh mỗi file gọi lại danh sách một lần.
+    beforeUpload: (file, fileList) => {
+      if (file === fileList[0]) void uploadBatch(fileList as File[]);
+      return Upload.LIST_IGNORE;
+    },
   };
 
   const handleDownload = async (f: HopDongFile) => {
@@ -126,22 +148,26 @@ export function FileHopDongModal({
 
   return (
     <Modal
-      title={
-        hopDong
-          ? `File đính kèm — ${hopDong.soHopDong}`
-          : "File đính kèm"
-      }
+      title={hopDong ? `File đính kèm — ${hopDong.soHopDong}` : "File đính kèm"}
       open={open}
       onCancel={onClose}
       footer={null}
       width={640}
     >
       {canUpload && (
-        <Upload {...uploadProps}>
-          <Button icon={<UploadOutlined />} loading={uploading}>
-            Tải file lên
-          </Button>
-        </Upload>
+        <Spin spinning={uploading} tip="Đang tải lên...">
+          <Upload.Dragger {...uploadProps}>
+            <p className="ant-upload-drag-icon">
+              <InboxOutlined />
+            </p>
+            <p className="ant-upload-text">
+              Kéo file PDF vào đây, hoặc bấm để chọn
+            </p>
+            <p className="ant-upload-hint">
+              Chỉ nhận PDF, tối đa 25MB mỗi file. Chọn được nhiều file một lúc.
+            </p>
+          </Upload.Dragger>
+        </Spin>
       )}
 
       <Spin spinning={loading}>
@@ -159,13 +185,22 @@ export function FileHopDongModal({
             renderItem={(f) => (
               <List.Item
                 actions={[
-                  <Button
-                    key="tai"
-                    type="text"
-                    size="small"
-                    icon={<DownloadOutlined />}
-                    onClick={() => handleDownload(f)}
-                  />,
+                  <Tooltip key="xem" title="Xem">
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<EyeOutlined />}
+                      onClick={() => setDangXem(f)}
+                    />
+                  </Tooltip>,
+                  <Tooltip key="tai" title="Tải về">
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<DownloadOutlined />}
+                      onClick={() => handleDownload(f)}
+                    />
+                  </Tooltip>,
                   ...(canDelete
                     ? [
                         <Popconfirm
@@ -188,8 +223,14 @@ export function FileHopDongModal({
                 ]}
               >
                 <List.Item.Meta
-                  avatar={<PaperClipOutlined />}
-                  title={f.tenFile}
+                  avatar={
+                    <FilePdfOutlined
+                      style={{ fontSize: 20, color: "#cf1322" }}
+                    />
+                  }
+                  title={
+                    <a onClick={() => setDangXem(f)}>{f.tenFile}</a>
+                  }
                   description={
                     <Text type="secondary" style={{ fontSize: 12 }}>
                       {dinhDangDungLuong(f.size)} ·{" "}
@@ -202,6 +243,8 @@ export function FileHopDongModal({
           />
         )}
       </Spin>
+
+      <XemPdfModal file={dangXem} onClose={() => setDangXem(null)} />
     </Modal>
   );
 }

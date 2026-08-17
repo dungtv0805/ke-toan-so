@@ -29,12 +29,17 @@ describe('kiemTraFile', () => {
   it('định dạng ngoài whitelist thì báo lỗi', () => {
     expect(() =>
       kiemTraFile(file({ mimetype: 'application/x-msdownload' })),
-    ).toThrow(/không hỗ trợ/);
+    ).toThrow(/PDF/);
   });
 
-  it('nhận ảnh, Word và Excel — giấy tờ hay đính kèm nhất', () => {
-    ['image/jpeg', 'image/png', 'application/vnd.ms-excel'].forEach((m) => {
-      expect(() => kiemTraFile(file({ mimetype: m }))).not.toThrow();
+  it('CHỈ nhận PDF — ảnh, Word, Excel đều bị chặn', () => {
+    [
+      'image/jpeg',
+      'image/png',
+      'application/msword',
+      'application/vnd.ms-excel',
+    ].forEach((m) => {
+      expect(() => kiemTraFile(file({ mimetype: m }))).toThrow(/PDF/);
     });
   });
 });

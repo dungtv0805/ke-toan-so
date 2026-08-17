@@ -14,10 +14,10 @@ describe('dinhDangDungLuong', () => {
 });
 
 describe('kiemTraTruocKhiTaiLen', () => {
-  const file = (size: number, type = 'application/pdf') =>
-    ({ size, type, name: 'a.pdf' }) as File;
+  const file = (size: number, type = 'application/pdf', name = 'a.pdf') =>
+    ({ size, type, name }) as File;
 
-  it('file hợp lệ thì không có lỗi', () => {
+  it('file PDF hợp lệ thì không có lỗi', () => {
     expect(kiemTraTruocKhiTaiLen(file(1024))).toBeNull();
   });
 
@@ -25,9 +25,24 @@ describe('kiemTraTruocKhiTaiLen', () => {
     expect(kiemTraTruocKhiTaiLen(file(25 * 1024 * 1024 + 1))).toMatch(/25MB/);
   });
 
-  it('định dạng lạ thì báo lỗi', () => {
-    expect(kiemTraTruocKhiTaiLen(file(1024, 'application/x-msdownload'))).toMatch(
-      /không hỗ trợ/,
+  it('không phải PDF thì báo lỗi, kể cả ảnh và Word', () => {
+    for (const type of [
+      'application/x-msdownload',
+      'image/png',
+      'application/msword',
+    ]) {
+      expect(kiemTraTruocKhiTaiLen(file(1024, type, 'a.doc'))).toMatch(/PDF/);
+    }
+  });
+
+  it('kéo-thả không đoán ra MIME thì xét đuôi .pdf', () => {
+    expect(kiemTraTruocKhiTaiLen(file(1024, '', 'hop-dong.PDF'))).toBeNull();
+    expect(kiemTraTruocKhiTaiLen(file(1024, '', 'hop-dong.docx'))).toMatch(/PDF/);
+  });
+
+  it('báo lỗi có kèm tên file — kéo cả mẻ mới biết file nào hỏng', () => {
+    expect(kiemTraTruocKhiTaiLen(file(1024, 'image/png', 'anh.png'))).toContain(
+      'anh.png',
     );
   });
 });

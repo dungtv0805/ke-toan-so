@@ -1,19 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
 
-/** Cùng bộ định dạng với Thư viện tài liệu — giấy tờ hợp đồng cũng chỉ có bấy nhiêu. */
-export const ALLOWED_MIME = new Set([
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-]);
+/**
+ * CHỈ nhận PDF: giấy tờ hợp đồng cần xem được ngay trên trình duyệt và không đổi
+ * bố cục giữa các máy. File cũ thuộc định dạng khác vẫn giữ nguyên, chỉ chặn tải mới.
+ */
+export const ALLOWED_MIME = new Set(['application/pdf']);
 
 export const MAX_FILE_SIZE = 25 * 1024 * 1024;
 
@@ -24,6 +15,6 @@ export function kiemTraFile(file?: Express.Multer.File): void {
     throw new BadRequestException('File vượt quá 25MB');
   }
   if (!ALLOWED_MIME.has(file.mimetype)) {
-    throw new BadRequestException('Định dạng file không hỗ trợ');
+    throw new BadRequestException('Chỉ nhận file PDF');
   }
 }

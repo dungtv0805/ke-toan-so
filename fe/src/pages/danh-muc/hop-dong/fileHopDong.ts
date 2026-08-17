@@ -1,19 +1,10 @@
-/** Cùng bộ định dạng/giới hạn với BE (`hop-dong-file.rules.ts`). */
+/** Cùng bộ định dạng/giới hạn với BE (`hop-dong-file.rules.ts`) — chỉ nhận PDF. */
 export const MAX_FILE_SIZE = 25 * 1024 * 1024;
 
-const ALLOWED_MIME = new Set([
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-]);
+export const PDF_MIME = 'application/pdf';
+
+/** Giá trị cho thuộc tính `accept` của ô kéo-thả. */
+export const ACCEPT_PDF = '.pdf,application/pdf';
 
 export function dinhDangDungLuong(bytes: number): string {
   const mb = bytes / (1024 * 1024);
@@ -23,7 +14,11 @@ export function dinhDangDungLuong(bytes: number): string {
 
 /** Lỗi hiển thị cho người dùng, `null` là hợp lệ — chặn ngay ở trình duyệt cho nhanh. */
 export function kiemTraTruocKhiTaiLen(file: File): string | null {
-  if (file.size > MAX_FILE_SIZE) return 'File vượt quá 25MB';
-  if (!ALLOWED_MIME.has(file.type)) return 'Định dạng file không hỗ trợ';
+  if (file.size > MAX_FILE_SIZE) return `${file.name}: vượt quá 25MB`;
+  // Vài trình duyệt/OS không đoán ra MIME khi kéo-thả → xét thêm đuôi file.
+  const laPdf =
+    file.type === PDF_MIME ||
+    (!file.type && file.name.toLowerCase().endsWith('.pdf'));
+  if (!laPdf) return `${file.name}: chỉ nhận file PDF`;
   return null;
 }
