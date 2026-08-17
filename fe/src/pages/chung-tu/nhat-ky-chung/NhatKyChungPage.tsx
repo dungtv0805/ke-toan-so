@@ -5,8 +5,6 @@ import { FilterBar } from "./components/filter-bar/FilterBar";
 import { EntryFormModal } from "./components/entry-form-modal/EntryFormModal";
 import { EntryViewModal } from "./components/entry-view-modal/EntryViewModal";
 import { ToolbarSlotProvider } from "./components/toolbar-slot/ToolbarSlot";
-import { SectionNav } from "@/components/layout/SectionNav";
-import { CHUNG_TU_NAV } from "@/config/sectionNavs";
 
 function NhatKyChungPageInner() {
   const handler = useNhatKyChungHandler();
@@ -18,7 +16,8 @@ function NhatKyChungPageInner() {
 
   return (
     <div className="nkc-page">
-      <SectionNav items={CHUNG_TU_NAV} className="mb-2" />
+      {/* Thanh ngang Phiếu thu / Phiếu chi / Phiếu kế toán đã gỡ khỏi trang này để
+          nhường chỗ cho bảng. Các trang phiếu vẫn giữ thanh này (PhieuListPage). */}
       {/* Hàng lọc gom luôn các nút lệnh của bảng (đẩy lên qua ToolbarSlot), nên hàng
           ngay dưới nó chỉ còn 8 thẻ số liệu. */}
       <ToolbarSlotProvider>
