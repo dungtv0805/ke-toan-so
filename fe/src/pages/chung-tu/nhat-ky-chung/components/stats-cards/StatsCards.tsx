@@ -10,19 +10,14 @@ import {
   useNhatKyChungState,
   useNhatKyChungHandler,
 } from "../../NhatKyChungHandlerContext";
+import { EMPTY_STATS } from "../../handler/sub-handler/init/init.state";
 import "./StatsCards.state";
 
 const { Text } = Typography;
 
 export function StatsCards() {
   const handler = useNhatKyChungHandler();
-  const [stats] = useNhatKyChungState("stats", {
-    tongButToan: 0,
-    tongThu: 0,
-    tongChi: 0,
-    soDu: 0,
-    tongGiaTri: 0,
-  });
+  const [stats] = useNhatKyChungState("stats", EMPTY_STATS);
   const [statsCollapsed, setStatsCollapsed] = useNhatKyChungState(
     "statsCollapsed",
     true

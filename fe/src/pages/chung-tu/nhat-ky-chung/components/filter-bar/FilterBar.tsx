@@ -12,6 +12,7 @@ import {
 } from "../../handler/lib/nkcFilters";
 import { useNkcFilterValues } from "../../hooks/useNkcFilterOptions";
 import { PeriodRangeFilter } from "./PeriodRangeFilter";
+import { useToolbarSlotRef } from "../toolbar-slot/ToolbarSlot";
 import "./FilterBar.state";
 
 /**
@@ -25,6 +26,7 @@ export function FilterBar() {
   const navigate = useNavigate();
   const handler = useNhatKyChungHandler();
   const { canCreate } = usePagePermission("/chung-tu/nhat-ky-chung");
+  const setToolbarSlot = useToolbarSlotRef();
 
   const [searchText, setSearchText] = useNhatKyChungState("searchText", "");
   const filterValues = useNkcFilterValues();
@@ -79,6 +81,9 @@ export function FilterBar() {
       </div>
 
       <div className="nkc-filter-bar__actions">
+        {/* Nút lệnh của bảng bút toán (Import / Xuất / In / Làm mới / Chọn cột…) được
+            EntryListTab bắn vào đây để đứng cùng "Thêm mới". */}
+        <div className="nkc-filter-bar__slot" ref={setToolbarSlot} />
         {canCreate && (
           <Button
             type="primary"

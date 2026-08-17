@@ -55,6 +55,7 @@ import {
 import { useNkcColumnFilters } from "../../hooks/useNkcColumnFilters";
 import { EntryActions } from "../entry-actions/EntryActions";
 import { OverviewBar } from "../overview-bar/OverviewBar";
+import { ToolbarSlot } from "../toolbar-slot/ToolbarSlot";
 import { TableTitleSettings } from '@/components/glossary/TableTitleSettings';
 import { NKC_TITLE_TERMS } from './nkcTitleTerms';
 import { DetailPopover } from "./DetailPopover";
@@ -981,11 +982,10 @@ export function EntryListTab() {
 
   return (
     <div className="excel-tab-content">
-      {/* Hàng thao tác — gộp luôn khối số liệu bên trái để cả trang chỉ còn 2 hàng.
-          Nút "Thêm mới" nằm ở góc phải hàng lọc (FilterBar). */}
-      <div className="excel-toolbar">
+      {/* Nút lệnh đứng cùng "Thêm mới" trên hàng lọc (chia nhóm như ribbon Excel:
+          Dữ liệu | In | Hiển thị), nhường cả hàng dưới cho 8 thẻ số liệu. */}
+      <ToolbarSlot>
         <Space size="small">
-          <OverviewBar />
           {canDelete && selectedEntryIds.length > 0 && (
             <Popconfirm
               title={`Xóa ${selectedEntryIds.length} bút toán đã chọn?`}
@@ -1007,9 +1007,6 @@ export function EntryListTab() {
               </Button>
             </Popconfirm>
           )}
-        </Space>
-        {/* Lệnh chia nhóm như ribbon Excel: Dữ liệu | In | Hiển thị */}
-        <Space size="small">
           {canCreate && (
             <Button
               size="small"
@@ -1054,6 +1051,11 @@ export function EntryListTab() {
           {chooserButton}
           <TableTitleSettings terms={NKC_TITLE_TERMS} />
         </Space>
+      </ToolbarSlot>
+
+      {/* Hàng số liệu — 8 thẻ của toàn bộ bút toán khớp bộ lọc. */}
+      <div className="excel-toolbar excel-toolbar--stats">
+        <OverviewBar />
       </div>
 
       {/* Table */}

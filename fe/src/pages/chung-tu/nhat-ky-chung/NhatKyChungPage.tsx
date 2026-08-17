@@ -4,6 +4,7 @@ import { DataTabs } from "./components/data-tabs/DataTabs";
 import { FilterBar } from "./components/filter-bar/FilterBar";
 import { EntryFormModal } from "./components/entry-form-modal/EntryFormModal";
 import { EntryViewModal } from "./components/entry-view-modal/EntryViewModal";
+import { ToolbarSlotProvider } from "./components/toolbar-slot/ToolbarSlot";
 import { SectionNav } from "@/components/layout/SectionNav";
 import { CHUNG_TU_NAV } from "@/config/sectionNavs";
 
@@ -18,9 +19,12 @@ function NhatKyChungPageInner() {
   return (
     <div className="nkc-page">
       <SectionNav items={CHUNG_TU_NAV} className="mb-2" />
-      {/* Khối số liệu nằm trong hàng thao tác của bảng (EntryListTab) — trang chỉ 2 hàng. */}
-      <FilterBar />
-      <DataTabs />
+      {/* Hàng lọc gom luôn các nút lệnh của bảng (đẩy lên qua ToolbarSlot), nên hàng
+          ngay dưới nó chỉ còn 8 thẻ số liệu. */}
+      <ToolbarSlotProvider>
+        <FilterBar />
+        <DataTabs />
+      </ToolbarSlotProvider>
       <EntryFormModal />
       <EntryViewModal />
     </div>

@@ -18,6 +18,14 @@ export interface KhoanMucItem {
   nhom: string;
 }
 
+/** Số lượng bút toán + tổng giá trị của một nhóm trạng thái kiểm soát. */
+export interface KiemSoatBucket {
+  soLuong: number;
+  giaTri: number;
+}
+
+export const EMPTY_BUCKET: KiemSoatBucket = { soLuong: 0, giaTri: 0 };
+
 export interface StatsData {
   tongButToan: number;
   tongThu: number;
@@ -25,7 +33,25 @@ export interface StatsData {
   soDu: number;
   /** Tổng giá trị bút toán khớp bộ lọc — hàng số liệu tổng quan. */
   tongGiaTri: number;
+  /** Bóc tách theo kiểm soát — 4 nhóm cộng lại bằng tongButToan / tongGiaTri. */
+  hopLe: KiemSoatBucket;
+  chuaHopLe: KiemSoatBucket;
+  khongHopLe: KiemSoatBucket;
+  chuaKiemSoat: KiemSoatBucket;
 }
+
+/** State mặc định của hàng số liệu — dùng chung cho init và các component đọc state. */
+export const EMPTY_STATS: StatsData = {
+  tongButToan: 0,
+  tongThu: 0,
+  tongChi: 0,
+  soDu: 0,
+  tongGiaTri: 0,
+  hopLe: EMPTY_BUCKET,
+  chuaHopLe: EMPTY_BUCKET,
+  khongHopLe: EMPTY_BUCKET,
+  chuaKiemSoat: EMPTY_BUCKET,
+};
 
 export interface AccountSummary {
   taiKhoan: string;

@@ -1082,6 +1082,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  /* Hàng này gánh cả bộ lọc lẫn toàn bộ nút lệnh của bảng → màn hẹp thì xuống dòng
+     chứ không được tràn ngang. */
+  flex-wrap: wrap;
   gap: 8px;
   padding: 5px 8px;
   background: var(--xl-bar);
@@ -1100,70 +1103,134 @@
 
 .nkc-filter-bar__actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  flex-shrink: 0;
 }
 
-/* Khối số liệu tổng quan — đứng cùng hàng với các nút thao tác của bảng */
-.nkc-stats {
+/* Nút lệnh của bảng do EntryListTab bắn lên (portal) — giữ dáng phẳng như ribbon. */
+.nkc-filter-bar__slot {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  align-items: center;
+}
+
+.nkc-filter-bar__slot .ant-btn-default {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: #333;
+}
+
+.nkc-filter-bar__slot .ant-btn-default:hover:not(:disabled) {
+  background: #ededeb !important;
+  border-color: var(--xl-bar-border) !important;
+  color: var(--xl-green-dark) !important;
+}
+
+.dark .nkc-filter-bar__slot .ant-btn-default {
+  color: hsl(var(--foreground));
+}
+
+.dark .nkc-filter-bar__slot .ant-btn-default:hover:not(:disabled) {
+  background: hsl(var(--accent)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Hàng số liệu tổng quan — 8 thẻ đứng riêng một hàng ngay trên bảng.
+   Thẻ nào cũng 2 dòng: trên theo SỐ LƯỢNG bút toán, dưới theo GIÁ TRỊ. */
+.nkc-stats {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
   min-width: 0;
 }
 
+/* Hẹp hơn màn laptop thì 8 thẻ một dòng bắt đầu cắt mất nhãn → xuống 2 dòng 4 thẻ. */
+@media (max-width: 1280px) {
+  .nkc-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 780px) {
+  .nkc-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .nkc-stat {
-  min-width: 190px;
-  padding: 5px 12px;
+  min-width: 0;
+  padding: 3px 8px;
   background: #fff;
   border: 1px solid #e8e8e8;
   border-left-width: 3px;
   border-radius: 4px;
 }
 
-.nkc-stat--count {
-  border-left-color: #52c41a;
-}
-
-.nkc-stat--money {
+.nkc-stat--total {
   border-left-color: #1677ff;
 }
 
+.nkc-stat--hopLe {
+  border-left-color: #52c41a;
+}
+
+.nkc-stat--chuaHopLe {
+  border-left-color: #fa8c16;
+}
+
+.nkc-stat--khongHopLe {
+  border-left-color: #ff4d4f;
+}
+
+.nkc-stat--chuaKiemSoat {
+  border-left-color: #8c8c8c;
+}
+
 .nkc-stat__label {
-  font-size: 11px;
+  font-size: 10px;
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   line-height: 1.4;
+  /* 8 thẻ trên 1 dòng → khung hẹp, nhãn dài phải cắt chứ không được đội cao thẻ. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .nkc-stat__value {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
   color: #0f172a;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
-.nkc-stat__icon {
-  font-size: 14px;
+.nkc-stat--hopLe .nkc-stat__value {
+  color: #389e0d;
 }
 
-.nkc-stat--count .nkc-stat__icon {
-  color: #52c41a;
+.nkc-stat--chuaHopLe .nkc-stat__value {
+  color: #d46b08;
 }
 
-.nkc-stat--money .nkc-stat__icon {
-  color: #1677ff;
+.nkc-stat--khongHopLe .nkc-stat__value {
+  color: #cf1322;
 }
 
-.nkc-stat__unit {
-  font-size: 13px;
+.nkc-stat--chuaKiemSoat .nkc-stat__value {
+  color: #595959;
+}
+
+.nkc-stat__sub {
+  font-size: 11px;
   font-weight: 600;
-  text-decoration: underline;
+  color: #64748b;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dark .nkc-filter-bar {
@@ -1178,6 +1245,22 @@
 
 .dark .nkc-stat__value {
   color: #e5e7eb;
+}
+
+.dark .nkc-stat--hopLe .nkc-stat__value {
+  color: #73d13d;
+}
+
+.dark .nkc-stat--chuaHopLe .nkc-stat__value {
+  color: #ffa940;
+}
+
+.dark .nkc-stat--khongHopLe .nkc-stat__value {
+  color: #ff7875;
+}
+
+.dark .nkc-stat--chuaKiemSoat .nkc-stat__value {
+  color: #bfbfbf;
 }
 
 /* Excel container */
@@ -1276,6 +1359,12 @@
   background: var(--xl-bar);
   border-bottom: 1px solid var(--xl-bar-border);
   flex-shrink: 0;
+}
+
+/* Hàng chỉ chứa 8 thẻ số liệu — thẻ tự giãn hết chiều ngang, không cần chia 2 cụm */
+.excel-toolbar--stats {
+  display: block;
+  padding: 4px 6px;
 }
 
 /* Gạch dọc ngăn nhóm lệnh — đúng cách Excel chia nhóm trên ribbon */

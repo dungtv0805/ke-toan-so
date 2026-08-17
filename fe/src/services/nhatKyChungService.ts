@@ -1,12 +1,24 @@
 import { NhatKyChung, ChungTuResponse, LoaiChungTu, LoaiChungTuLuu, DanhMuc, HoSoChungTuItem, KiemSoatChungTu } from '@/types';
 import { ServiceBase, PaginatedResponse } from './base/service-base';
 
+/** Một nhóm trạng thái kiểm soát: số lượng bút toán + tổng giá trị của nhóm đó. */
+export interface KiemSoatBucket {
+  soLuong: number;
+  giaTri: number;
+}
+
 export interface NhatKyChungStats {
   tongSo: number;
   tongPhatSinhNo: number;
   tongPhatSinhCo: number;
   /** Tổng giá trị (cộng soTien) của các bút toán khớp bộ lọc. */
   tongGiaTri: number;
+  /** 4 nhóm dưới đây cộng lại đúng bằng tongSo / tongGiaTri. */
+  hopLe?: KiemSoatBucket;
+  chuaHopLe?: KiemSoatBucket;
+  /** `KHONG_DUOC_TRU` trên chứng từ — hiển thị là "Không hợp lệ". */
+  khongHopLe?: KiemSoatBucket;
+  chuaKiemSoat?: KiemSoatBucket;
 }
 
 export interface TongHopDonHang {

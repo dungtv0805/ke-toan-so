@@ -10,7 +10,6 @@ import { PaginatedResult } from '@app/dto';
 import { TenantContextService } from '@app/core';
 import {
   NhatKyChungQueryDto,
-  NhatKyChungStats,
   NhatKyChungStatsResponse,
   CreateNhatKyChungDto,
   UpdateNhatKyChungDto,
@@ -28,6 +27,8 @@ import {
   DongHachToan,
   TongHopDonHang,
   DoanhThuKhongDon,
+  KIEM_SOAT_BUCKETS,
+  buildStatsResponse,
 } from './helpers';
 import { VoucherNumberService, LoaiResolverService } from '../shared';
 
@@ -101,6 +102,18 @@ export class NhatKyChungService {
             },
           },
           tongGiaTri: { $sum: '$soTien' },
+          // Đếm riêng 3 trạng thái kiểm soát; nhóm "chưa kiểm soát" là phần dư, do
+          // `buildStatsResponse` tính — chứng từ không có `kiemSoat` không khớp $eq nào.
+          ...Object.assign(
+            {},
+            ...KIEM_SOAT_BUCKETS.map((b) => {
+              const khop = { $eq: ['$kiemSoat.trangThai', b.trangThai] };
+              return {
+                [`${b.key}_soLuong`]: { $sum: { $cond: [khop, 1, 0] } },
+                [`${b.key}_giaTri`]: { $sum: { $cond: [khop, '$soTien', 0] } },
+              };
+            }),
+          ),
         },
       },
     ];
@@ -109,21 +122,9 @@ export class NhatKyChungService {
       .aggregate(aggregationPipeline)
       .toArray();
 
-    const stats: NhatKyChungStats = result[0] || {
-      tongSo: 0,
-      tongPhatSinhNo: 0,
-      tongPhatSinhCo: 0,
-      tongGiaTri: 0,
-    };
-
     return {
       success: true,
-      data: {
-        tongSo: stats.tongSo,
-        tongPhatSinhNo: stats.tongPhatSinhNo,
-        tongPhatSinhCo: stats.tongPhatSinhCo,
-        tongGiaTri: stats.tongGiaTri ?? 0,
-      },
+      data: buildStatsResponse(result[0] as Record<string, unknown> | undefined),
     };
   }
 

@@ -8,7 +8,7 @@ import { taiKhoanService } from "@/services/taiKhoanService";
 import { khoanMucService } from "@/services/khoanMucService";
 import dayjs from "dayjs";
 import "./init.event";
-import "./init.state";
+import { EMPTY_BUCKET, EMPTY_STATS } from "./init.state";
 import { NhatKyChungStates } from "../../nhat-ky-chung.handler";
 import { InitEvent } from "./init.event";
 import { restoreFilters, saveFilters } from "../../filterPersistence";
@@ -96,6 +96,11 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
         tongChi: stats.tongPhatSinhCo,
         soDu: stats.tongPhatSinhNo - stats.tongPhatSinhCo,
         tongGiaTri: stats.tongGiaTri ?? 0,
+        // BE cũ chưa trả bóc tách kiểm soát → về 0 thay vì undefined làm vỡ hàng thẻ.
+        hopLe: stats.hopLe ?? EMPTY_BUCKET,
+        chuaHopLe: stats.chuaHopLe ?? EMPTY_BUCKET,
+        khongHopLe: stats.khongHopLe ?? EMPTY_BUCKET,
+        chuaKiemSoat: stats.chuaKiemSoat ?? EMPTY_BUCKET,
       });
     } catch (error) {
       console.error("Error loading stats:", error);
@@ -194,13 +199,7 @@ export class InitHandler extends CSubHanlder<InitEvent, NhatKyChungStates> {
       this.setState("statsCollapsed", true);
     }
     if (!this.hasState("stats")) {
-      this.setState("stats", {
-        tongButToan: 0,
-        tongThu: 0,
-        tongChi: 0,
-        soDu: 0,
-        tongGiaTri: 0,
-      });
+      this.setState("stats", EMPTY_STATS);
     }
     // Initialize empty summaries
     if (!this.hasState("summaryByAccount")) {
