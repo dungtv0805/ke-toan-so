@@ -80,8 +80,6 @@ export const permissionModules: PermissionModule[] = [
           { key: '/trung-tam-du-lieu/hop-dong', label: 'Bán hàng' },
           { key: '/trung-tam-du-lieu/thu-tien-hop-dong', label: 'Thu tiền hợp đồng' },
           { key: '/trung-tam-du-lieu/hd-ban-ra', label: 'Hóa đơn bán ra' },
-          { key: '/trung-tam-du-lieu/nhan-su', label: 'Quản lý nhân sự' },
-          { key: '/trung-tam-du-lieu/luong-bhxh', label: 'Lương & BHXH' },
         ],
       },
       {
@@ -99,16 +97,8 @@ export const permissionModules: PermissionModule[] = [
       },
     ],
   },
-  {
-    key: 'bep-an', label: 'BẾP ĂN', isSection: true,
-    children: [
-      { key: '/bep-an/dinh-muc-tien-an', label: 'Định mức tiền ăn' },
-      { key: '/bep-an/cong-thuc-dinh-luong', label: 'Công thức định lượng' },
-      { key: '/bep-an/diem-danh-an', label: 'Điểm danh ăn' },
-      { key: '/bep-an/de-xuat-mua', label: 'Đề xuất mua thực phẩm' },
-      { key: '/bep-an/kiem-soat-chi-phi', label: 'Bảng kiểm soát chi phí' },
-    ],
-  },
+  // Mục "BẾP ĂN" đã gỡ khỏi menu lẫn ma trận này. Route + routePermissions vẫn còn
+  // nên trang vào được bằng URL (giống Phiếu thu / Phiếu chi trước đây).
   {
     key: 'thu-vien',
     label: 'THƯ VIỆN',

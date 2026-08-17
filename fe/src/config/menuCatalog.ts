@@ -44,8 +44,6 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/chung-tu/phieu-chi', label: 'Phiếu chi', parentLabel: 'Trung tâm dữ liệu' },
   { key: '/trung-tam-du-lieu/tai-san', label: 'Quản lý Tài sản', parentLabel: 'Trung tâm dữ liệu' },
   { key: '/trung-tam-du-lieu/hop-dong', label: 'Bán hàng', parentLabel: 'Trung tâm dữ liệu' },
-  { key: '/trung-tam-du-lieu/nhan-su', label: 'Quản lý nhân sự', parentLabel: 'Trung tâm dữ liệu' },
-  { key: '/trung-tam-du-lieu/luong-bhxh', label: 'Lương & BHXH', parentLabel: 'Trung tâm dữ liệu' },
 
   // ===== KẾ TOÁN — Kho =====
   // 4 nhóm hàng là mục sidebar; Nhập/Xuất/Chuyển/Kiểm kê kho nằm trên thanh ngang.
@@ -58,11 +56,6 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/kho/chuyen-kho', label: 'Chuyển kho', parentLabel: 'Kho' },
 
   // ===== KẾ TOÁN — Bếp ăn =====
-  { key: '/bep-an/dinh-muc-tien-an', label: 'Định mức tiền ăn', parentLabel: 'Bếp ăn' },
-  { key: '/bep-an/cong-thuc-dinh-luong', label: 'Công thức định lượng', parentLabel: 'Bếp ăn' },
-  { key: '/bep-an/diem-danh-an', label: 'Điểm danh ăn', parentLabel: 'Bếp ăn' },
-  { key: '/bep-an/de-xuat-mua', label: 'Đề xuất mua thực phẩm', parentLabel: 'Bếp ăn' },
-  { key: '/bep-an/kiem-soat-chi-phi', label: 'Bảng kiểm soát chi phí', parentLabel: 'Bếp ăn' },
 
   // ===== THƯ VIỆN — Danh mục =====
   { key: '/danh-muc/tai-khoan', label: 'Tài khoản', parentLabel: 'Danh mục' },

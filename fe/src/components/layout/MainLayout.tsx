@@ -14,6 +14,7 @@ import {
   DashboardOutlined,
   BookOutlined,
   WalletOutlined,
+  CreditCardOutlined,
   TeamOutlined,
   BarChartOutlined,
   SettingOutlined,
@@ -37,8 +38,6 @@ import {
   CarOutlined,
   ToolOutlined,
   ContainerOutlined,
-  SolutionOutlined,
-  InsuranceOutlined,
   FormOutlined,
   FileProtectOutlined,
   DatabaseOutlined,
@@ -56,8 +55,6 @@ import {
   NodeIndexOutlined,
   FileAddOutlined,
   CopyOutlined,
-  CoffeeOutlined,
-  ExperimentOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import type { MenuProps } from "antd";
@@ -287,10 +284,11 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Kế hoạch", "/trung-tam-du-lieu/ke-hoach", <ScheduleOutlined />),
     getMenuItem("Dự báo", "/trung-tam-du-lieu/du-bao", <RiseOutlined />),
     getMenuItem("Dữ liệu tổng hợp", "/chung-tu/nhat-ky-chung", <AuditOutlined />),
+    // Nhóm "Chứng từ" đã gỡ, 2 trang phiếu còn sống về đây (khớp ma trận Phân quyền).
+    getMenuItem("Phiếu thu", "/chung-tu/phieu-thu", <CreditCardOutlined />),
+    getMenuItem("Phiếu chi", "/chung-tu/phieu-chi", <WalletOutlined />),
     getMenuItem("Quản lý Tài sản", "/trung-tam-du-lieu/tai-san", <CarOutlined />),
     getMenuItem("Bán hàng", "/trung-tam-du-lieu/hop-dong", <FileProtectOutlined />),
-    getMenuItem("Quản lý nhân sự", "/trung-tam-du-lieu/nhan-su", <SolutionOutlined />),
-    getMenuItem("Lương & BHXH", "/trung-tam-du-lieu/luong-bhxh", <InsuranceOutlined />),
   ]),
 
   // Nhóm "Chứng từ" đã gỡ hẳn (toàn bộ mục trong đó là coming-soon). Phiếu thu /
@@ -305,13 +303,8 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Văn phòng phẩm", "/trung-tam-du-lieu/van-phong-pham", <SnippetsOutlined />),
   ]),
 
-  getItem("Bếp ăn", "/bep-an", <CoffeeOutlined />, [
-    getMenuItem("Định mức tiền ăn", "/bep-an/dinh-muc-tien-an", <ProfileOutlined />),
-    getMenuItem("Công thức định lượng", "/bep-an/cong-thuc-dinh-luong", <ExperimentOutlined />),
-    getMenuItem("Điểm danh ăn", "/bep-an/diem-danh-an", <TeamOutlined />),
-    getMenuItem("Đề xuất mua thực phẩm", "/bep-an/de-xuat-mua", <ShoppingCartOutlined />),
-    getMenuItem("Bảng kiểm soát chi phí", "/bep-an/kiem-soat-chi-phi", <BarChartOutlined />),
-  ]),
+  // Nhóm "Bếp ăn" đã gỡ khỏi sidebar. Route + quyền vẫn còn nên 5 trang vẫn vào
+  // được bằng URL trực tiếp.
 ];
 
 // ===== THƯ VIỆN - Library menu =====
