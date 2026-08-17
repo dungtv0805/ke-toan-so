@@ -13,7 +13,6 @@ import {
 import {
   DashboardOutlined,
   BookOutlined,
-  FileTextOutlined,
   WalletOutlined,
   TeamOutlined,
   BarChartOutlined,
@@ -50,9 +49,6 @@ import {
   ProfileOutlined,
   FileDoneOutlined,
   TableOutlined,
-  ClockCircleOutlined,
-  FieldTimeOutlined,
-  PartitionOutlined,
   FileSearchOutlined,
   AccountBookOutlined,
   PieChartOutlined,
@@ -297,18 +293,8 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Lương & BHXH", "/trung-tam-du-lieu/luong-bhxh", <InsuranceOutlined />),
   ]),
 
-  // Phiếu thu / Phiếu chi / Phiếu kế toán đã chuyển lên thanh ngang của trang
-  // "Dữ liệu tổng hợp" (xem CHUNG_TU_NAV) nên không còn nằm trong dropdown này.
-  getItem("Chứng từ", "/chung-tu", <FileTextOutlined />, [
-    getMenuItem("Phiếu nhập", "/chung-tu/phieu-nhap", <FileAddOutlined />),
-    getMenuItem("Phiếu xuất", "/chung-tu/phieu-xuat", <FileDoneOutlined />),
-    getMenuItem("Phiếu lương", "/chung-tu/phieu-luong", <SnippetsOutlined />),
-    getMenuItem("Bảng tính lương", "/chung-tu/bang-tinh-luong", <CalculatorOutlined />),
-    getMenuItem("Bảng chấm công", "/chung-tu/bang-cham-cong", <ClockCircleOutlined />),
-    getMenuItem("Bảng chấm công làm thêm giờ", "/chung-tu/cham-cong-lam-them", <FieldTimeOutlined />),
-    getMenuItem("Bảng phân bổ khấu hao TSCĐ", "/chung-tu/phan-bo-khau-hao", <PartitionOutlined />),
-    getMenuItem("Đề nghị thanh toán", "/chung-tu/de-nghi-thanh-toan", <FormOutlined />),
-  ]),
+  // Nhóm "Chứng từ" đã gỡ hẳn (toàn bộ mục trong đó là coming-soon). Phiếu thu /
+  // Phiếu chi vẫn sống, đi qua thanh ngang CHUNG_TU_NAV của chính các trang phiếu.
 
   // Nhập / Xuất / Chuyển / Kiểm kê kho nằm trên thanh ngang của các trang kho
   // (xem KHO_NAV); dropdown chỉ giữ 4 nhóm hàng trong kho.

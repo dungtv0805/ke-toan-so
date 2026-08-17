@@ -72,29 +72,16 @@ export const permissionModules: PermissionModule[] = [
           { key: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch' },
           { key: '/trung-tam-du-lieu/du-bao', label: 'Dự báo' },
           { key: '/chung-tu/nhat-ky-chung', label: 'Dữ liệu tổng hợp' },
+          // Nhóm "Chứng từ" đã gỡ khỏi sidebar lẫn ma trận này; 2 trang phiếu còn
+          // sống nên quyền của chúng chuyển về đây, KHÔNG được xóa theo.
+          { key: '/chung-tu/phieu-thu', label: 'Phiếu thu' },
+          { key: '/chung-tu/phieu-chi', label: 'Phiếu chi' },
           { key: '/trung-tam-du-lieu/tai-san', label: 'Quản lý Tài sản' },
           { key: '/trung-tam-du-lieu/hop-dong', label: 'Bán hàng' },
           { key: '/trung-tam-du-lieu/thu-tien-hop-dong', label: 'Thu tiền hợp đồng' },
           { key: '/trung-tam-du-lieu/hd-ban-ra', label: 'Hóa đơn bán ra' },
           { key: '/trung-tam-du-lieu/nhan-su', label: 'Quản lý nhân sự' },
           { key: '/trung-tam-du-lieu/luong-bhxh', label: 'Lương & BHXH' },
-        ],
-      },
-      {
-        key: '/chung-tu',
-        label: 'Chứng từ',
-        children: [
-          { key: '/chung-tu/phieu-thu', label: 'Phiếu thu' },
-          { key: '/chung-tu/phieu-chi', label: 'Phiếu chi' },
-          { key: '/chung-tu/phieu-nhap', label: 'Phiếu nhập' },
-          { key: '/chung-tu/phieu-xuat', label: 'Phiếu xuất' },
-          { key: '/chung-tu/phieu-luong', label: 'Phiếu lương' },
-          { key: '/chung-tu/bang-tinh-luong', label: 'Bảng tính lương' },
-          { key: '/chung-tu/bang-cham-cong', label: 'Bảng chấm công' },
-          { key: '/chung-tu/cham-cong-lam-them', label: 'Chấm công làm thêm giờ' },
-          { key: '/chung-tu/phan-bo-khau-hao', label: 'Phân bổ khấu hao TSCĐ' },
-          { key: '/chung-tu/phieu-ke-toan', label: 'Phiếu kế toán' },
-          { key: '/chung-tu/de-nghi-thanh-toan', label: 'Đề nghị thanh toán' },
         ],
       },
       {

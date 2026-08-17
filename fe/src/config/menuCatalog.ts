@@ -38,23 +38,14 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch', parentLabel: 'Trung tâm dữ liệu' },
   { key: '/trung-tam-du-lieu/du-bao', label: 'Dự báo', parentLabel: 'Trung tâm dữ liệu' },
   { key: '/chung-tu/nhat-ky-chung', label: 'Dữ liệu tổng hợp', parentLabel: 'Trung tâm dữ liệu' },
+  // Nhóm "Chứng từ" đã gỡ; 2 trang phiếu còn sống chuyển về đây (đi qua thanh ngang
+  // của chính trang phiếu, không có mục sidebar riêng).
+  { key: '/chung-tu/phieu-thu', label: 'Phiếu thu', parentLabel: 'Trung tâm dữ liệu' },
+  { key: '/chung-tu/phieu-chi', label: 'Phiếu chi', parentLabel: 'Trung tâm dữ liệu' },
   { key: '/trung-tam-du-lieu/tai-san', label: 'Quản lý Tài sản', parentLabel: 'Trung tâm dữ liệu' },
   { key: '/trung-tam-du-lieu/hop-dong', label: 'Bán hàng', parentLabel: 'Trung tâm dữ liệu' },
   { key: '/trung-tam-du-lieu/nhan-su', label: 'Quản lý nhân sự', parentLabel: 'Trung tâm dữ liệu' },
   { key: '/trung-tam-du-lieu/luong-bhxh', label: 'Lương & BHXH', parentLabel: 'Trung tâm dữ liệu' },
-
-  // ===== KẾ TOÁN — Chứng từ =====
-  { key: '/chung-tu/phieu-thu', label: 'Phiếu thu', parentLabel: 'Chứng từ' },
-  { key: '/chung-tu/phieu-chi', label: 'Phiếu chi', parentLabel: 'Chứng từ' },
-  { key: '/chung-tu/phieu-nhap', label: 'Phiếu nhập', parentLabel: 'Chứng từ' },
-  { key: '/chung-tu/phieu-xuat', label: 'Phiếu xuất', parentLabel: 'Chứng từ' },
-  { key: '/chung-tu/phieu-luong', label: 'Phiếu lương', parentLabel: 'Chứng từ' },
-  { key: '/chung-tu/bang-tinh-luong', label: 'Bảng tính lương', parentLabel: 'Chứng từ' },
-  { key: '/chung-tu/bang-cham-cong', label: 'Bảng chấm công', parentLabel: 'Chứng từ' },
-  { key: '/chung-tu/cham-cong-lam-them', label: 'Bảng chấm công làm thêm giờ', parentLabel: 'Chứng từ' },
-  { key: '/chung-tu/phan-bo-khau-hao', label: 'Bảng phân bổ khấu hao TSCĐ', parentLabel: 'Chứng từ' },
-  { key: '/chung-tu/phieu-ke-toan', label: 'Phiếu kế toán', parentLabel: 'Chứng từ' },
-  { key: '/chung-tu/de-nghi-thanh-toan', label: 'Đề nghị thanh toán', parentLabel: 'Chứng từ' },
 
   // ===== KẾ TOÁN — Kho =====
   // 4 nhóm hàng là mục sidebar; Nhập/Xuất/Chuyển/Kiểm kê kho nằm trên thanh ngang.
