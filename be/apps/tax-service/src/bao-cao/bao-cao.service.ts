@@ -219,8 +219,8 @@ export class BaoCaoService {
       const banRa = banRaAll.filter(
         (i) => i.isActive !== false && inDateRange(i.ngayHoaDon, range),
       );
-      const vatDauVao = tongVatTheoKy(muaVao);
-      const vatDauRa = tongVatTheoKy(banRa);
+      const vatDauVao = tongVatTheoKy(boDongChoBoSung(muaVao));
+      const vatDauRa = tongVatTheoKy(boDongChoBoSung(banRa));
       return {
         vatDauVao,
         vatDauRa,
