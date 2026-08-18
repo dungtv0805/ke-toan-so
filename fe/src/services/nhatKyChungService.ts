@@ -397,12 +397,24 @@ class NhatKyChungService extends ServiceBase {
   }
 
   /**
-   * Get all entries by soPhieu (voucher number)
+   * Toàn bộ dòng hạch toán mang một số phiếu. Lặp hết trang như `getByHopDong`:
+   * backend search là regex `$or` trên nhiều trường (nội dung, đối tượng, soPhieu),
+   * nên số phiếu có thể trùng nội dung của nhiều bút toán khác — nếu chỉ lấy trang
+   * đầu (limit 100), các dòng thật mang số phiếu này có thể bị đẩy ra ngoài trang 1
+   * và bị hiểu nhầm là "hết bút toán" (dùng để quyết định gỡ liên kết hóa đơn).
+   * Trần 50 trang (~5000 bản ghi) để không lặp vô hạn nếu backend trả meta lạ.
    */
   async getBySoPhieu(soPhieu: string): Promise<NhatKyChung[]> {
-    const response = await this.getEntries({ search: soPhieu, limit: 100 });
+    const all: NhatKyChung[] = [];
+    let page = 1;
+    const MAX_PAGES = 50;
+    for (; page <= MAX_PAGES; page++) {
+      const res = await this.getEntries({ search: soPhieu, page, limit: 100 });
+      all.push(...res.data);
+      if (page >= (res.meta?.totalPages ?? 1) || res.data.length === 0) break;
+    }
     // Filter to ensure exact match on soPhieu
-    return response.data.filter((item) => item.soPhieu === soPhieu);
+    return all.filter((item) => item.soPhieu === soPhieu);
   }
 
   /**

@@ -17,23 +17,25 @@ export class DeleteHandler extends CSubHanlder<NhatKyChungEvents, NhatKyChungSta
 
       // Hóa đơn đã kê khai KHÔNG được biến mất theo chứng từ — chỉ gỡ liên kết,
       // và chỉ khi bút toán cuối cùng của số phiếu này đã bị xóa.
-      try {
-        const conLai = await nhatKyChungService.getBySoPhieu(params.soPhieu);
-        if (conLai.length === 0) {
-          const [mua, ban] = await Promise.all([
-            bangKeMuaVaoService.layTheoSoChungTu([params.soPhieu]),
-            bangKeBanRaService.layTheoSoChungTu([params.soPhieu]),
-          ]);
-          await Promise.all([
-            ...(mua[params.soPhieu] || []).map((i) => bangKeMuaVaoService.goLienKet(i.id)),
-            ...(ban[params.soPhieu] || []).map((i) => bangKeBanRaService.goLienKet(i.id)),
-          ]);
+      if (params.soPhieu) {
+        try {
+          const conLai = await nhatKyChungService.getBySoPhieu(params.soPhieu);
+          if (conLai.length === 0) {
+            const [mua, ban] = await Promise.all([
+              bangKeMuaVaoService.layTheoSoChungTu([params.soPhieu]),
+              bangKeBanRaService.layTheoSoChungTu([params.soPhieu]),
+            ]);
+            await Promise.all([
+              ...(mua[params.soPhieu] || []).map((i) => bangKeMuaVaoService.goLienKet(i.id)),
+              ...(ban[params.soPhieu] || []).map((i) => bangKeBanRaService.goLienKet(i.id)),
+            ]);
+          }
+        } catch (e) {
+          console.error("go lien ket hoa don that bai", e);
+          message.warning(
+            `Đã xóa bút toán nhưng chưa gỡ được liên kết hóa đơn của chứng từ ${params.soPhieu}. Vào Bảng kê gỡ tay.`,
+          );
         }
-      } catch (e) {
-        console.error("go lien ket hoa don that bai", e);
-        message.warning(
-          `Đã xóa bút toán nhưng chưa gỡ được liên kết hóa đơn của chứng từ ${params.soPhieu}. Vào Bảng kê gỡ tay.`,
-        );
       }
 
       await this.executeEvent("refresh", {});
