@@ -2,6 +2,7 @@ import { BaseStates } from "@/common/c-handler/core/actions/c-state.action";
 import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, QuyChuan, NhomKhuyenMai, NhomQuanLy, LoaiGiaoDich, HopDong, TaiKhoanNganHang } from "@/types";
 import { LoaiChungTuType } from "@/services/loaiChungTuService";
 import { Dayjs } from "dayjs";
+import { HoaDonGan } from "../../../hoaDonLienKet";
 
 export interface TaiKhoanItem {
   ma: string;
@@ -32,6 +33,8 @@ export interface ChungTuHeader {
   nguoiGiaoDich?: string;
   diaChi?: string;
   ghiChu?: string;
+  /** Hóa đơn gắn với chứng từ. Chỉ có số HĐ + loại; chi tiết nằm ở bảng kê. */
+  hoaDon?: HoaDonGan[];
 }
 
 // Chi tiết từng dòng

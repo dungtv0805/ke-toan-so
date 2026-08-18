@@ -1,12 +1,14 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
 import { nhatKyChungService } from "@/services/nhatKyChungService";
+import { bangKeMuaVaoService, bangKeBanRaService } from "@/services/taxService";
 import dayjs from "dayjs";
 import "./load-data.event";
 import { NhatKyChungFormStates, NhatKyChungFormEvents } from "../../nhat-ky-chung-form.handler";
 import { ChungTuHeader, ChungTuChiTiet } from "../init/init.state";
 import { NhatKyChung, DoiTuong, DuAn, BoPhan, SanPham, DongTien, NhomKhuyenMai, NhomQuanLy, QuyChuan, HopDong, TaiKhoanNganHang } from "@/types";
 import { KhoanMucItem } from "../init/init.state";
+import { HoaDonGan } from "../../../hoaDonLienKet";
 
 @RegisterHandler("nhat-ky-chung-form")
 export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyChungFormStates> {
@@ -43,6 +45,27 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
           ghiChu: first.ghiChu,
         };
         this.setState("header", header);
+
+        // Hóa đơn đã gắn nằm ở tax-service, không nằm trong chứng từ.
+        const [muaVao, banRa] = await Promise.all([
+          bangKeMuaVaoService.layTheoSoChungTu([params.soPhieu]),
+          bangKeBanRaService.layTheoSoChungTu([params.soPhieu]),
+        ]);
+        const hoaDon: HoaDonGan[] = [
+          ...(muaVao[params.soPhieu] || []).map((i) => ({
+            id: i.id,
+            soHoaDon: i.soHoaDon,
+            loai: "mua" as const,
+            tongThanhToan: i.tongThanhToan,
+          })),
+          ...(banRa[params.soPhieu] || []).map((i) => ({
+            id: i.id,
+            soHoaDon: i.soHoaDon,
+            loai: "ban" as const,
+            tongThanhToan: i.tongThanhToan,
+          })),
+        ];
+        this.setState("header", { ...header, hoaDon });
 
         // Lọc nghiệp vụ theo loại giao dịch để hiển thị đúng trong dropdown
         if (loaiGiaoDich) {

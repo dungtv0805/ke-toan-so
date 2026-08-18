@@ -11,6 +11,7 @@ import {
 } from "../../NhatKyChungFormHandlerContext";
 import { ChungTuHeader } from "../../form-handler/sub-handler/init/init.state";
 import { LoaiGiaoDich } from "@/types";
+import { HoaDonField } from "./HoaDonField";
 
 export function FormHeader() {
   const handler = useNhatKyChungFormHandler();
@@ -18,6 +19,11 @@ export function FormHeader() {
   const [isEditing] = useNhatKyChungFormState("isEditing", false);
   const [cloneFromSoPhieu] = useNhatKyChungFormState("cloneFromSoPhieu", null);
   const [loaiGiaoDichList] = useNhatKyChungFormState("loaiGiaoDichList", [] as LoaiGiaoDich[]);
+  const [chiTietList] = useNhatKyChungFormState("chiTietList", []);
+  const tongTienChiTiet = (chiTietList as { soTien?: number }[]).reduce(
+    (s, ct) => s + (Number(ct.soTien) || 0),
+    0,
+  );
 
   // Convert loaiGiaoDichList to options format
   const loaiGiaoDichOptions = loaiGiaoDichList.map((lgd: LoaiGiaoDich) => ({
@@ -121,6 +127,12 @@ export function FormHeader() {
           className="nkc-textarea"
         />
       </div>
+      <HoaDonField
+        loaiGiaoDich={header?.loaiGiaoDich}
+        soTienChungTu={tongTienChiTiet}
+        value={header?.hoaDon || []}
+        onChange={(v) => handleFieldChange("hoaDon", v)}
+      />
     </div>
   );
 }
