@@ -119,14 +119,37 @@ class BangKeService extends ServiceBase {
     return res.data;
   }
 
-  /** Hóa đơn của nhiều chứng từ trong một request — cho cột "HĐ" của bảng TH. */
+  /** Hóa đơn của nhiều chứng từ trong một request — cho cột "HĐ" của bảng TH.
+   *
+   * PHẢI map qua `this.map`: `BaseEntity.id` phía BE là getter trên prototype nên
+   * JSON.stringify KHÔNG serialize — response chỉ có `_id`. Bỏ bước map thì mọi
+   * bản ghi có `id === undefined`, kéo theo gỡ liên kết gọi `PUT /.../undefined`
+   * và luồng lưu chứng từ tạo lại dòng bảng kê trùng.
+   */
   async layTheoSoChungTu(list: string[]): Promise<Record<string, BangKeRecord[]>> {
     if (!list.length) return {};
     const res = await this.get<Record<string, BangKeRecord[]>>({
       endpoint: '/theo-chung-tu',
       params: { soChungTu: [...new Set(list)].join(',') },
     });
-    return res;
+    return Object.fromEntries(
+      Object.entries(res || {}).map(([k, list]) => [k, (list || []).map(this.map)]),
+    );
+  }
+
+  /**
+   * Hóa đơn đã có trong bảng kê TRÙNG số hóa đơn (khớp tuyệt đối, không phân biệt
+   * hoa thường). Dùng trước khi tạo dòng nháp từ màn chứng từ: gõ tay đúng số của
+   * một hóa đơn đã nhập (không kịp chọn gợi ý) thì phải gắn vào dòng cũ chứ không
+   * được đẻ thêm dòng trùng. `search` phía BE là "chứa" nên phải lọc lại ở đây.
+   */
+  async timTheoSoHoaDon(soHoaDon: string): Promise<BangKeRecord[]> {
+    const so = (soHoaDon || '').trim();
+    if (!so) return [];
+    const res = await this.getPaginated({ search: so, limit: 100 });
+    return res.data.filter(
+      (r) => (r.soHoaDon || '').trim().toLowerCase() === so.toLowerCase(),
+    );
   }
 
   async ganChungTu(id: string, soChungTu: string): Promise<BangKeRecord> {
