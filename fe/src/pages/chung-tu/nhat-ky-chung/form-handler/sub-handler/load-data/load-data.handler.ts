@@ -46,26 +46,32 @@ export class LoadDataFormHandler extends CSubHanlder<NhatKyChungFormEvents, Nhat
         };
         this.setState("header", header);
 
-        // Hóa đơn đã gắn nằm ở tax-service, không nằm trong chứng từ.
-        const [muaVao, banRa] = await Promise.all([
-          bangKeMuaVaoService.layTheoSoChungTu([params.soPhieu]),
-          bangKeBanRaService.layTheoSoChungTu([params.soPhieu]),
-        ]);
-        const hoaDon: HoaDonGan[] = [
-          ...(muaVao[params.soPhieu] || []).map((i) => ({
-            id: i.id,
-            soHoaDon: i.soHoaDon,
-            loai: "mua" as const,
-            tongThanhToan: i.tongThanhToan,
-          })),
-          ...(banRa[params.soPhieu] || []).map((i) => ({
-            id: i.id,
-            soHoaDon: i.soHoaDon,
-            loai: "ban" as const,
-            tongThanhToan: i.tongThanhToan,
-          })),
-        ];
-        this.setState("header", { ...header, hoaDon });
+        // Hóa đơn đã gắn nằm ở tax-service, không nằm trong chứng từ. Lỗi ở đây
+        // KHÔNG được làm hỏng việc mở chứng từ — cô lập try/catch riêng, tax-service
+        // chết thì chứng từ vẫn mở bình thường, chỉ mất phần hiển thị hóa đơn đã gắn.
+        try {
+          const [muaVao, banRa] = await Promise.all([
+            bangKeMuaVaoService.layTheoSoChungTu([params.soPhieu]),
+            bangKeBanRaService.layTheoSoChungTu([params.soPhieu]),
+          ]);
+          const hoaDon: HoaDonGan[] = [
+            ...(muaVao[params.soPhieu] || []).map((i) => ({
+              id: i.id,
+              soHoaDon: i.soHoaDon,
+              loai: "mua" as const,
+              tongThanhToan: i.tongThanhToan,
+            })),
+            ...(banRa[params.soPhieu] || []).map((i) => ({
+              id: i.id,
+              soHoaDon: i.soHoaDon,
+              loai: "ban" as const,
+              tongThanhToan: i.tongThanhToan,
+            })),
+          ];
+          this.setState("header", { ...header, hoaDon });
+        } catch (error) {
+          console.error("Error loading hoa don by soChungTu:", error);
+        }
 
         // Lọc nghiệp vụ theo loại giao dịch để hiển thị đúng trong dropdown
         if (loaiGiaoDich) {

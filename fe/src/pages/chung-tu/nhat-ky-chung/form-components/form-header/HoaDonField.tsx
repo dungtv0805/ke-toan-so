@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Select, Radio, Tag, Typography } from "antd";
 import {
   bangKeMuaVaoService,
@@ -14,6 +14,9 @@ import {
 
 const { Text } = Typography;
 const fmt = (n: number) => n.toLocaleString("vi-VN");
+
+/** Chờ người dùng ngừng gõ trước khi gọi API gợi ý. */
+const DEBOUNCE_MS = 300;
 
 interface Props {
   loaiGiaoDich?: string;
@@ -33,14 +36,56 @@ export function HoaDonField({ loaiGiaoDich, soTienChungTu, value, onChange }: Pr
 
   const service = loai === "mua" ? bangKeMuaVaoService : bangKeBanRaService;
 
-  const handleSearch = async (text: string) => {
-    if (!text.trim()) return setGoiY([]);
-    setDangTim(true);
-    try {
-      setGoiY(await service.timChuaLienKet(text.trim()));
-    } finally {
+  // Debounce gõ phím + chống race: mỗi lần bấm gõ tăng requestSeqRef, response
+  // của request nào không còn là request mới nhất thì bị bỏ qua — tránh trả lời
+  // chậm của lần gõ trước ghi đè gợi ý mới hơn khiến người dùng chọn nhầm hóa đơn.
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestSeqRef = useRef(0);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const runSearch = useCallback(
+    (text: string) => {
+      const seq = ++requestSeqRef.current;
+      setDangTim(true);
+      service
+        .timChuaLienKet(text)
+        .then((res) => {
+          if (!mountedRef.current || seq !== requestSeqRef.current) return;
+          setGoiY(res);
+        })
+        .catch(() => {
+          if (!mountedRef.current || seq !== requestSeqRef.current) return;
+          setGoiY([]);
+        })
+        .finally(() => {
+          if (!mountedRef.current || seq !== requestSeqRef.current) return;
+          setDangTim(false);
+        });
+    },
+    [service],
+  );
+
+  const handleSearch = (text: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    const trimmed = text.trim();
+    if (!trimmed) {
+      // Xoá ô tìm → hủy mọi request đang bay (tăng seq để response cũ bị bỏ qua).
+      requestSeqRef.current++;
       setDangTim(false);
+      setGoiY([]);
+      return;
     }
+
+    debounceRef.current = setTimeout(() => runSearch(trimmed), DEBOUNCE_MS);
   };
 
   // Chọn từ gợi ý → gắn hóa đơn có sẵn. Gõ số lạ → hóa đơn mới, lưu chứng từ
