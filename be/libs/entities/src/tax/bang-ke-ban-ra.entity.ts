@@ -14,8 +14,11 @@ export class BangKeBanRa extends BaseEntity {
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 }) tienThue: number;
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 }) tongThanhToan: number;
   @Column({ nullable: true }) ghiChu: string;
-  @Column({ nullable: true }) chungTuId: string; // liên kết chứng từ (phase sau)
+  @Column({ nullable: true }) chungTuId: string; // không dùng — liên kết đi theo soChungTu (số phiếu)
   @Column({ nullable: true }) soChungTu: string;
+  // Dòng nháp sinh từ màn chứng từ: mới có số hóa đơn, chưa có số tiền.
+  // KHÔNG được cộng vào Tổng hợp thuế cho tới khi kế toán thuế điền đủ.
+  @Column({ default: false }) choBoSung?: boolean;
   @Column({ default: true }) isActive: boolean;
 }
 

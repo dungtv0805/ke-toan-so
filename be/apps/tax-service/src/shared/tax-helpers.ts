@@ -74,3 +74,49 @@ export function inDateRange(
   if (range.end && d >= range.end) return false;
   return true;
 }
+
+/** Bộ lọc trạng thái liên kết của một dòng bảng kê. */
+export type LienKetFilter = 'da' | 'chua' | 'cho-bo-sung';
+
+const daLienKet = (soChungTu?: string): boolean => Boolean(soChungTu?.trim());
+
+/** Lọc bảng kê theo trạng thái liên kết chứng từ. Không truyền → giữ nguyên. */
+export function locTheoLienKet<
+  T extends { soChungTu?: string; choBoSung?: boolean },
+>(items: T[], loc?: LienKetFilter): T[] {
+  if (!loc) return items;
+  if (loc === 'da') return items.filter((i) => daLienKet(i.soChungTu));
+  if (loc === 'chua') return items.filter((i) => !daLienKet(i.soChungTu));
+  return items.filter((i) => i.choBoSung === true);
+}
+
+/**
+ * Dòng nháp sinh từ màn chứng từ mang số tiền 0. Khi kế toán thuế điền số vào
+ * thì cờ chờ bổ sung phải tự tắt — bắt họ bấm thêm một nút nữa thì sẽ có dòng
+ * đủ số nhưng vẫn nằm ngoài báo cáo.
+ */
+export function nenTatChoBoSung(v: {
+  giaTriChuaThue?: number;
+  tienThue?: number;
+}): boolean {
+  return (Number(v.giaTriChuaThue) || 0) > 0 || (Number(v.tienThue) || 0) > 0;
+}
+
+/** Gom hóa đơn theo số chứng từ. Dòng chưa liên kết bị bỏ qua. */
+export function gomTheoSoChungTu<T extends { soChungTu?: string }>(
+  items: T[],
+): Record<string, T[]> {
+  const map: Record<string, T[]> = {};
+  for (const item of items) {
+    const key = item.soChungTu?.trim();
+    if (!key) continue;
+    (map[key] ??= []).push(item);
+  }
+  return map;
+}
+
+/** "PC0001, PC0002" → ['PC0001','PC0002']. Bỏ trùng và phần tử rỗng. */
+export function tachDanhSachSoChungTu(q?: string): string[] {
+  if (!q) return [];
+  return [...new Set(q.split(',').map((s) => s.trim()).filter(Boolean))];
+}
