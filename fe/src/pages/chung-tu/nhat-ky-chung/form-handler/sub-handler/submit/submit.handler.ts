@@ -19,6 +19,7 @@ import {
   type HoaDonDangGan,
   type HoaDonGan,
 } from "../../../hoaDonLienKet";
+import { resolveCreateBatchOutcome } from "./createBatchOutcome";
 
 @RegisterHandler("nhat-ky-chung-form")
 export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyChungFormStates> {
@@ -145,15 +146,21 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
 
         // Create batch
         const created = await nhatKyChungService.createBatch(items);
-        const soPhieuMoi = created[0]?.soPhieu;
-        if (soPhieuMoi) {
-          // Xem ghi chú ở nhánh cập nhật: hỏng bước hóa đơn thì ở lại form.
-          if (!(await this.ghiHoaDonAnToan(soPhieuMoi, header))) return;
-        } else if ((header.hoaDon || []).length > 0) {
+        const outcome = resolveCreateBatchOutcome(created, header);
+
+        if (outcome.kind === "editMode") {
+          // Chứng từ ĐÃ được tạo — chuyển form sang chế độ sửa của đúng chứng
+          // từ này NGAY, trước khi thử ghi hóa đơn. Nếu ghi hóa đơn hỏng và
+          // ghiHoaDonAnToan trả false, ta return để giữ người dùng ở lại form
+          // (đúng ý), nhưng lần bấm "Lưu" kế tiếp giờ sẽ đi vào nhánh
+          // updateBatch của header.soPhieu này — không lặp lại createBatch và
+          // sinh chứng từ trùng (bug hồi quy đã sửa).
+          this.setState("header", outcome.header);
+          this.setState("isEditing", outcome.isEditing);
+          if (!(await this.ghiHoaDonAnToan(outcome.soPhieu, header))) return;
+        } else if (outcome.kind === "hoaDonKhongXacDinhDuocSoPhieu") {
           console.error("tao chung tu khong tra ve so phieu, khong the gan hoa don", created);
-          message.error(
-            "Chứng từ đã tạo, nhưng không xác định được số phiếu nên chưa gắn được hóa đơn. Mở lại chứng từ và lưu lần nữa.",
-          );
+          message.error(outcome.message);
           return;
         }
         message.success("Tạo chứng từ thành công");
