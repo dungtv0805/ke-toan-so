@@ -3,6 +3,7 @@ import {
   tongVatTheoKy,
   tinhTNDNQuy,
   tinhTNDNLuyKe,
+  boDongChoBoSung,
 } from './tax-calc';
 
 describe('tinhThueSuatTNDN — bậc thang theo doanh thu lũy kế', () => {
@@ -124,5 +125,20 @@ describe('tinhTNDNLuyKe — quyết toán năm', () => {
     });
     expect(r.thueTNDN).toBe(0);
     expect(r.lnSauThue).toBe(-500);
+  });
+});
+
+describe('boDongChoBoSung', () => {
+  it('loại dòng chưa đủ thông tin ra khỏi tính thuế', () => {
+    const items = [
+      { tienThue: 100, choBoSung: false },
+      { tienThue: 0, choBoSung: true },
+      { tienThue: 50 },
+    ];
+    expect(boDongChoBoSung(items)).toHaveLength(2);
+  });
+
+  it('danh sách rỗng thì trả rỗng', () => {
+    expect(boDongChoBoSung([])).toEqual([]);
   });
 });

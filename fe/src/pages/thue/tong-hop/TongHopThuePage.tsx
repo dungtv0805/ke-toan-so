@@ -8,8 +8,10 @@ import {
   Typography,
   Tag,
   message,
+  Alert,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { Link } from "react-router-dom";
 
 import dayjs from "dayjs";
 import { taxReportService, TongHopThue } from "@/services/taxService";
@@ -143,6 +145,16 @@ const TongHopThuePage: React.FC = () => {
             {quy ? `Quý ${quy}/${nam}` : `Năm ${nam}`}
           </Tag>
         </Space>
+
+        {(data?.soHoaDonChoBoSung ?? 0) > 0 && (
+          <Alert
+            type="warning"
+            showIcon
+            className="mb-3"
+            message={`Còn ${data?.soHoaDonChoBoSung} hóa đơn chưa đủ thông tin trong kỳ — chưa được tính vào số thuế`}
+            action={<Link to="/thue/bang-ke-mua-vao">Mở bảng kê</Link>}
+          />
+        )}
 
         <Title level={5}>Thuế giá trị gia tăng</Title>
         <Table<ChiTieuRow>

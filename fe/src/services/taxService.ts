@@ -130,6 +130,7 @@ export interface TongHopThue {
   vatDauRa: number;
   vatPhaiNop: number;
   vatConKhauTru: number;
+  soHoaDonChoBoSung?: number;
   nghiaVuNganSach: {
     thueTNDN: number;
     vatPhaiNop: number;

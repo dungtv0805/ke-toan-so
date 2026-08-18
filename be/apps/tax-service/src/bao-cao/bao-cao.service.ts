@@ -11,6 +11,7 @@ import {
   tinhTNDNQuy,
   tinhTNDNLuyKe,
   TNDNQuyResult,
+  boDongChoBoSung,
 } from './tax-calc';
 import { quyToRange, inDateRange } from '../shared/tax-helpers';
 import { buildCpKhongTru } from './chi-phi-khong-tru.util';
@@ -257,8 +258,13 @@ export class BaoCaoService {
       (i) => i.isActive !== false && inDateRange(i.ngayHoaDon, range),
     );
 
-    const vatDauVao = tongVatTheoKy(muaVao);
-    const vatDauRa = tongVatTheoKy(banRa);
+    const muaVaoDayDu = boDongChoBoSung(muaVao);
+    const banRaDayDu = boDongChoBoSung(banRa);
+    const soHoaDonChoBoSung =
+      muaVao.length - muaVaoDayDu.length + (banRa.length - banRaDayDu.length);
+
+    const vatDauVao = tongVatTheoKy(muaVaoDayDu);
+    const vatDauRa = tongVatTheoKy(banRaDayDu);
     const vatPhaiNop = Math.max(0, vatDauRa - vatDauVao);
     const vatConKhauTru = Math.max(0, vatDauVao - vatDauRa);
 
@@ -280,6 +286,7 @@ export class BaoCaoService {
       vatDauRa,
       vatPhaiNop,
       vatConKhauTru,
+      soHoaDonChoBoSung,
       nghiaVuNganSach: {
         thueTNDN: tndnTamTinh,
         vatPhaiNop,

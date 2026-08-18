@@ -51,6 +51,16 @@ export function tinhTNDNLuyKe(i: {
   return { thueTNDN, lnSauThue: i.lnTruocThue - thueTNDN };
 }
 
+/**
+ * Bỏ dòng bảng kê chưa đủ thông tin (sinh từ màn chứng từ, số tiền còn 0).
+ * Cộng vào thì báo cáo thiếu thuế mà nhìn vẫn bình thường.
+ */
+export function boDongChoBoSung<T extends { choBoSung?: boolean }>(
+  items: T[],
+): T[] {
+  return items.filter((i) => i.choBoSung !== true);
+}
+
 /** Tính các chỉ tiêu TNDN cho một quý. */
 export function tinhTNDNQuy(i: TNDNQuyInput): TNDNQuyResult {
   const tongChiPhi = i.cp632 + i.cp641 + i.cp642 + i.cp811;
