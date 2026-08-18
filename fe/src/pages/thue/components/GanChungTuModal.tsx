@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { Modal, Input, Table, message } from "antd";
+import { Modal, Input, Table, Typography, message } from "antd";
 import { nhatKyChungService } from "@/services/nhatKyChungService";
+import { ChungTuGom, gomChungTuTheoSoPhieu } from "./gomChungTu";
+
+const { Text } = Typography;
 
 interface Props {
   open: boolean;
@@ -11,7 +14,7 @@ interface Props {
 /** Tìm chứng từ theo số phiếu / diễn giải để gắn tay vào một dòng bảng kê. */
 export function GanChungTuModal({ open, onCancel, onChon }: Props) {
   const [tuKhoa, setTuKhoa] = useState("");
-  const [rows, setRows] = useState<{ soPhieu: string; ngay: string; dienGiai: string; soTien: number }[]>([]);
+  const [rows, setRows] = useState<ChungTuGom[]>([]);
   const [loading, setLoading] = useState(false);
 
   const timKiem = async (kw: string) => {
@@ -20,12 +23,14 @@ export function GanChungTuModal({ open, onCancel, onChon }: Props) {
     try {
       const res = await nhatKyChungService.getEntries({ search: kw.trim(), limit: 20 });
       setRows(
-        res.data.map((d) => ({
-          soPhieu: d.soPhieu,
-          ngay: String(d.ngay).slice(0, 10),
-          dienGiai: d.dienGiai || "",
-          soTien: d.soTien || 0,
-        })),
+        gomChungTuTheoSoPhieu(
+          res.data.map((d) => ({
+            soPhieu: d.soPhieu,
+            ngay: String(d.ngay).slice(0, 10),
+            dienGiai: d.dienGiai || "",
+            soTien: d.soTien || 0,
+          })),
+        ),
       );
     } catch {
       message.error("Không tìm được chứng từ");
@@ -46,7 +51,7 @@ export function GanChungTuModal({ open, onCancel, onChon }: Props) {
       <Table
         className="mt-3"
         size="small"
-        rowKey={(r) => r.soPhieu + r.dienGiai}
+        rowKey="soPhieu"
         loading={loading}
         dataSource={rows}
         pagination={false}
@@ -55,7 +60,21 @@ export function GanChungTuModal({ open, onCancel, onChon }: Props) {
         columns={[
           { title: "Số CT", dataIndex: "soPhieu", width: 120 },
           { title: "Ngày", dataIndex: "ngay", width: 110 },
-          { title: "Diễn giải", dataIndex: "dienGiai", ellipsis: true },
+          {
+            title: "Diễn giải",
+            dataIndex: "dienGiai",
+            ellipsis: true,
+            render: (v: string, r: ChungTuGom) => (
+              <span>
+                {v}
+                {r.soButToan > 1 && (
+                  <Text type="secondary" style={{ marginLeft: 6 }}>
+                    ({r.soButToan} bút toán)
+                  </Text>
+                )}
+              </span>
+            ),
+          },
           {
             title: "Số tiền",
             dataIndex: "soTien",
