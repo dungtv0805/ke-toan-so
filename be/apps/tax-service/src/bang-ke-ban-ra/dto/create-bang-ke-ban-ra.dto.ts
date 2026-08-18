@@ -5,6 +5,7 @@ import {
   IsNumber,
   IsIn,
   IsDateString,
+  IsBoolean,
   Min,
 } from 'class-validator';
 
@@ -64,4 +65,9 @@ export class CreateBangKeBanRaDto {
   @IsString()
   @IsOptional()
   soChungTu?: string;
+
+  // Dòng nháp gắn từ màn chứng từ. FE đặt true khi tạo, service tự tắt khi có số.
+  @IsBoolean()
+  @IsOptional()
+  choBoSung?: boolean;
 }

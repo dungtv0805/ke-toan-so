@@ -1,4 +1,12 @@
-import { IsOptional, IsInt, Min, Max, IsDateString } from 'class-validator';
+import {
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+  IsDateString,
+  IsString,
+  IsIn,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaginationQueryDto } from '@app/dto';
 
@@ -22,4 +30,12 @@ export class BangKeMuaVaoQueryDto extends PaginationQueryDto {
   @Type(() => Number)
   @IsInt()
   nam?: number;
+
+  @IsOptional()
+  @IsString()
+  soChungTu?: string;
+
+  @IsOptional()
+  @IsIn(['da', 'chua', 'cho-bo-sung'])
+  lienKet?: 'da' | 'chua' | 'cho-bo-sung';
 }
