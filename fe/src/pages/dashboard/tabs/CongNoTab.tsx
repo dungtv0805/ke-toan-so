@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowDownOutlined, ArrowUpOutlined, CalendarOutlined, WarningOutlined } from '@ant-design/icons';
 import KpiRow, { type KpiItem } from '../components/KpiRow';
 import AgingCharts from '../components/AgingCharts';
-import TopPartnersCharts from '../components/TopPartnersCharts';
 import OverdueTables from '../components/OverdueTables';
 import LichThanhToanTables from '../components/LichThanhToanTables';
 import DoiChieuCongNoTable from '../components/DoiChieuCongNoTable';
@@ -90,7 +89,6 @@ const CongNoTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
     <div className="space-y-3">
       <KpiRow items={kpis} loading={loadingKpi} />
       <AgingCharts />
-      <TopPartnersCharts />
       <LichThanhToanTables
         thu={lichThu}
         tra={lichTra}
