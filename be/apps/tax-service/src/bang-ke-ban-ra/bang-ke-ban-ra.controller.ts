@@ -19,6 +19,7 @@ import {
 } from './dto';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
 import { DeleteBatchDto } from '@app/dto';
+import { tachDanhSachSoChungTu } from '../shared/tax-helpers';
 
 const KE_TOAN_ROLES = [
   'ADMIN',
@@ -40,6 +41,15 @@ export class BangKeBanRaController {
   async findAll(@Query() query: BangKeBanRaQueryDto) {
     const result = await this.service.findAllPaginated(query);
     return { success: true, ...result };
+  }
+
+  @Get('theo-chung-tu')
+  @Roles(...KE_TOAN_ROLES)
+  async theoChungTu(@Query('soChungTu') soChungTu?: string) {
+    const data = await this.service.findBySoChungTu(
+      tachDanhSachSoChungTu(soChungTu),
+    );
+    return { success: true, data };
   }
 
   @Get(':id')

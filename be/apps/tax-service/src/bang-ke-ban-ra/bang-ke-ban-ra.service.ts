@@ -20,6 +20,9 @@ import {
   resolveDateRange,
   inDateRange,
   buildHoaDonKey,
+  locTheoLienKet,
+  nenTatChoBoSung,
+  gomTheoSoChungTu,
 } from '../shared/tax-helpers';
 
 @Injectable()
@@ -85,6 +88,11 @@ export class BangKeBanRaService {
       );
     }
 
+    if (query.soChungTu) {
+      items = items.filter((i) => i.soChungTu === query.soChungTu);
+    }
+    items = locTheoLienKet(items, query.lienKet);
+
     items.sort(
       (a, b) =>
         new Date(b.ngayHoaDon).getTime() - new Date(a.ngayHoaDon).getTime(),
@@ -96,6 +104,22 @@ export class BangKeBanRaService {
       data,
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
+  }
+
+  /**
+   * Hóa đơn của nhiều chứng từ trong một lần gọi — bảng Dữ liệu tổng hợp cần
+   * đếm hóa đơn cho cả trang, hỏi từng dòng thì 20 dòng là 20 request.
+   */
+  async findBySoChungTu(
+    list: string[],
+  ): Promise<Record<string, BangKeBanRa[]>> {
+    if (!list?.length) return {};
+    const all = await this.repo.find({ where: this.getTenantFilter() as any });
+    const can = new Set(list);
+    const items = all.filter(
+      (i) => i.isActive !== false && i.soChungTu && can.has(i.soChungTu),
+    );
+    return gomTheoSoChungTu(items);
   }
 
   async findOne(id: string): Promise<BangKeBanRa> {
@@ -162,6 +186,8 @@ export class BangKeBanRaService {
     Object.assign(item, clean);
     if (updateDto.ngayHoaDon) item.ngayHoaDon = new Date(updateDto.ngayHoaDon);
     this.applyTotals(item, updateDto);
+    // Dòng nháp đã được điền số thì hết "chờ bổ sung" — xem nenTatChoBoSung.
+    if (item.choBoSung && nenTatChoBoSung(item)) item.choBoSung = false;
     return this.repo.save(item);
   }
 
