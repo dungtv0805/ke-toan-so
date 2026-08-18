@@ -49,6 +49,8 @@ export interface BangKeRecord {
   // Bán ra
   tenNguoiMua?: string;
   mstNguoiMua?: string;
+  soChungTu?: string;
+  choBoSung?: boolean;
 }
 
 export interface BangKeQuery extends PaginationParams {
@@ -56,6 +58,8 @@ export interface BangKeQuery extends PaginationParams {
   denNgay?: string;
   quy?: number;
   nam?: number;
+  soChungTu?: string;
+  lienKet?: 'da' | 'chua' | 'cho-bo-sung';
 }
 
 class BangKeService extends ServiceBase {
@@ -107,6 +111,31 @@ class BangKeService extends ServiceBase {
   /** Trả về các khóa hóa đơn đã tồn tại trên hệ thống (số HĐ|ký hiệu|MST). */
   async checkDuplicates(keys: DuplicateKey[]): Promise<string[]> {
     return this.post<string[]>({ keys }, { endpoint: '/check-duplicates' });
+  }
+
+  /** Hóa đơn chưa gắn chứng từ nào, dùng cho ô gợi ý ở form chứng từ. */
+  async timChuaLienKet(search: string, limit = 20): Promise<BangKeRecord[]> {
+    const res = await this.getPaginated({ search, lienKet: 'chua', limit });
+    return res.data;
+  }
+
+  /** Hóa đơn của nhiều chứng từ trong một request — cho cột "HĐ" của bảng TH. */
+  async layTheoSoChungTu(list: string[]): Promise<Record<string, BangKeRecord[]>> {
+    if (!list.length) return {};
+    const res = await this.get<Record<string, BangKeRecord[]>>({
+      endpoint: '/theo-chung-tu',
+      params: { soChungTu: [...new Set(list)].join(',') },
+    });
+    return res;
+  }
+
+  async ganChungTu(id: string, soChungTu: string): Promise<BangKeRecord> {
+    return this.update(id, { soChungTu });
+  }
+
+  /** Gỡ liên kết — dòng bảng kê VẪN CÒN, chỉ mất số chứng từ. */
+  async goLienKet(id: string): Promise<BangKeRecord> {
+    return this.update(id, { soChungTu: '' });
   }
 }
 
