@@ -18,6 +18,11 @@ interface QuyChaunTableProps {
   rowSelection?: TableProps<QuyChuan>["rowSelection"];
 }
 
+const NHAN_LOAI_CHI_PHI: Record<NonNullable<QuyChuan["loaiChiPhi"]>, string> = {
+  CO_DINH: "Chi phí cố định",
+  BIEN_DOI: "Chi phí biến đổi",
+};
+
 const DEFAULT_PAGINATION: PaginationMeta = {
   total: 0,
   page: 1,
@@ -125,6 +130,34 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton, 
           <Tag color="green">Có {record.taiKhoanCo}</Tag>
         </Space>
       ),
+    },
+    {
+      title: "Nhóm khoản mục",
+      dataIndex: "nhomKhoanMuc",
+      key: "nhomKhoanMuc",
+      width: 150,
+      render: (v) => v || "-",
+    },
+    {
+      title: "Khoản mục",
+      dataIndex: "khoanMuc",
+      key: "khoanMuc",
+      width: 130,
+      render: (v) => v || "-",
+    },
+    {
+      title: "Dòng tiền",
+      dataIndex: "dongTien",
+      key: "dongTien",
+      width: 120,
+      render: (v) => v || "-",
+    },
+    {
+      title: "Loại chi phí",
+      dataIndex: "loaiChiPhi",
+      key: "loaiChiPhi",
+      width: 130,
+      render: (v?: QuyChuan["loaiChiPhi"]) => (v ? NHAN_LOAI_CHI_PHI[v] : "-"),
     },
     {
       title: "Mô tả",
@@ -245,7 +278,7 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton, 
           pagination={paginationConfig}
           onChange={handleTableChange}
           size="middle"
-          scroll={{ x: 1100, y: "calc(100vh - 250px)" }}
+          scroll={{ x: 1650, y: "calc(100vh - 250px)" }}
         />
       ),
     },
@@ -269,7 +302,7 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton, 
           pagination={paginationConfig}
           onChange={handleTableChange}
           size="middle"
-          scroll={{ x: 1000, y: "calc(100vh - 285px)" }}
+          scroll={{ x: 1550, y: "calc(100vh - 285px)" }}
         />
       ),
     })),

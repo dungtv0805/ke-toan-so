@@ -54,3 +54,42 @@ describe('CreateQuyChuan_Dto — hoSoChungTu (Fix 9: validate từng phần tử
     expect(errors.length).toBeGreaterThan(0);
   });
 });
+
+describe('CreateQuyChuan_Dto — 4 trường phân bổ (khoản mục, nhóm khoản mục, dòng tiền, loại chi phí)', () => {
+  it('không khai trường nào cũng hợp lệ — bắt buộc hay không là do fieldRules của tài khoản', async () => {
+    const dto = plainToInstance(CreateQuyChuan_Dto, { ...validBase });
+    expect(await validate(dto)).toHaveLength(0);
+  });
+
+  it('khai đủ 4 trường đúng kiểu thì hợp lệ', async () => {
+    const dto = plainToInstance(CreateQuyChuan_Dto, {
+      ...validBase,
+      nhomKhoanMuc: 'NKM01',
+      khoanMuc: 'KM01',
+      dongTien: 'DT01',
+      loaiChiPhi: 'CO_DINH',
+    });
+    expect(await validate(dto)).toHaveLength(0);
+  });
+
+  it('loaiChiPhi ngoài hai giá trị CO_DINH / BIEN_DOI thì báo lỗi', async () => {
+    const dto = plainToInstance(CreateQuyChuan_Dto, { ...validBase, loaiChiPhi: 'KHAC' });
+    const errors = await validate(dto);
+    expect(errors.some((e) => e.property === 'loaiChiPhi')).toBe(true);
+  });
+
+  it('chuỗi rỗng được coi như bỏ trống, không báo lỗi', async () => {
+    const dto = plainToInstance(CreateQuyChuan_Dto, {
+      ...validBase,
+      khoanMuc: '',
+      loaiChiPhi: '',
+    });
+    expect(await validate(dto)).toHaveLength(0);
+  });
+
+  it('khoanMuc sai kiểu (số) thì báo lỗi', async () => {
+    const dto = plainToInstance(CreateQuyChuan_Dto, { ...validBase, khoanMuc: 123 });
+    const errors = await validate(dto);
+    expect(errors.some((e) => e.property === 'khoanMuc')).toBe(true);
+  });
+});

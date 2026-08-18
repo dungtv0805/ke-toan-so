@@ -1,7 +1,9 @@
 import { quyChauanService } from "@/services/quyChaunService";
 import { loaiGiaoDichService } from "@/services/loaiGiaoDichService";
 import { hoSoChungTuService } from "@/services/hoSoChungTuService";
-import { taiKhoanCompleteSource } from "./completeSetSources";
+import { dongTienService } from "@/services/dongTienService";
+import { nhomKhoanMucService } from "@/services/nhomKhoanMucService";
+import { khoanMucCompleteSource, taiKhoanCompleteSource } from "./completeSetSources";
 import type { ImportDanhMucConfig } from "../types";
 
 export const quyChuanImportConfig: ImportDanhMucConfig = {
@@ -73,6 +75,56 @@ export const quyChuanImportConfig: ImportDanhMucConfig = {
           })),
         }),
       },
+    },
+    // Bốn trường phân bổ. File import KHÔNG áp luật "bắt buộc theo fieldRules của
+    // tài khoản" (luật đó chỉ chạy ở form nhập tay) — nhập hàng loạt mà chặn giữa
+    // chừng thì không dùng được; ở đây chỉ kiểm mã có tồn tại hay không.
+    {
+      key: "nhomKhoanMuc",
+      header: "Mã nhóm khoản mục",
+      example: "NKM01",
+      ref: {
+        service: nhomKhoanMucService,
+        matchBy: "ma",
+        label: "Nhóm khoản mục",
+        displayField: "ten",
+        assign: (found) => ({ nhomKhoanMuc: String(found.ma ?? "") }),
+      },
+    },
+    {
+      key: "khoanMuc",
+      header: "Mã khoản mục",
+      example: "KM01",
+      ref: {
+        // Cùng lý do như TK: khoanMucService.getAll() chỉ trả 100 dòng.
+        service: khoanMucCompleteSource,
+        matchBy: "ma",
+        label: "Khoản mục",
+        displayField: "ten",
+        assign: (found) => ({ khoanMuc: String(found.ma ?? "") }),
+      },
+    },
+    {
+      key: "dongTien",
+      header: "Mã dòng tiền",
+      example: "DT01",
+      ref: {
+        service: dongTienService,
+        matchBy: "ma",
+        label: "Dòng tiền",
+        displayField: "ten",
+        assign: (found) => ({ dongTien: String(found.ma ?? "") }),
+      },
+    },
+    {
+      key: "loaiChiPhi",
+      header: "Loại chi phí",
+      type: "enum",
+      enumValues: [
+        { label: "Chi phí cố định", value: "CO_DINH" },
+        { label: "Chi phí biến đổi", value: "BIEN_DOI" },
+      ],
+      example: "Chi phí cố định",
     },
     { key: "moTa", header: "Mô tả", example: "" },
   ],

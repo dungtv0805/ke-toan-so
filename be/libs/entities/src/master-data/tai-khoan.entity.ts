@@ -39,6 +39,8 @@ export const FIELD_RULE_KEYS = [
   'sanPham',
   'dongTien',
   'khoanMuc',
+  'nhomKhoanMuc',
+  'loaiChiPhi',
   'hopDong',
   'soTaiKhoanNganHang',
 ] as const;

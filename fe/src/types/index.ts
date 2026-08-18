@@ -24,7 +24,7 @@ export interface TaiKhoan {
   chiTietTheo?: 'KHACH_HANG' | 'NHA_CUNG_CAP' | 'NHAN_VIEN' | 'NHA_THAU' | 'NGAN_HANG_QUY';
   fieldRules?: Partial<Record<
     | 'doiTuong' | 'duAn' | 'boPhan' | 'doi' | 'nhanVien' | 'sanPham' | 'dongTien'
-    | 'khoanMuc' | 'hopDong' | 'soTaiKhoanNganHang',
+    | 'khoanMuc' | 'nhomKhoanMuc' | 'loaiChiPhi' | 'hopDong' | 'soTaiKhoanNganHang',
     'BAT_BUOC' | 'CANH_BAO'
   >> | null;
 }
@@ -693,6 +693,9 @@ export interface CongNo {
 
 export interface HoSoChungTuRef { id: string; ma: string; ten: string; }
 
+/** Chi phí cố định (định phí) hay biến đổi (biến phí) — khai ngay trên quy chuẩn. */
+export type LoaiChiPhi = 'CO_DINH' | 'BIEN_DOI';
+
 export interface QuyChuan {
   id: string;
   loaiGiaoDich: string;
@@ -701,6 +704,12 @@ export interface QuyChuan {
   taiKhoanCo: string;
   moTa?: string;
   hoSoChungTu?: HoSoChungTuRef[];
+  // Bốn trường phân bổ. Bắt buộc hay không là do `fieldRules` của TK Nợ/TK Có
+  // quyết định (xem `pages/danh-muc/quy-chuan/rangBuoc.ts`), nên ở đây đều optional.
+  nhomKhoanMuc?: string;
+  khoanMuc?: string;
+  dongTien?: string;
+  loaiChiPhi?: LoaiChiPhi;
 }
 
 // ===== BÁO CÁO =====

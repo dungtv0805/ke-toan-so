@@ -81,6 +81,8 @@ const FIELD_RULE_FIELDS: Array<{ key: string; label: string }> = [
   { key: "sanPham", label: "Sản phẩm" },
   { key: "dongTien", label: "Dòng tiền" },
   { key: "khoanMuc", label: "Khoản mục" },
+  { key: "nhomKhoanMuc", label: "Nhóm khoản mục" },
+  { key: "loaiChiPhi", label: "Loại chi phí" },
   { key: "hopDong", label: "Hợp đồng" },
   { key: "soTaiKhoanNganHang", label: "Số tài khoản ngân hàng" },
 ];

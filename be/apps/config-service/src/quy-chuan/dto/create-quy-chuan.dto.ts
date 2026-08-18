@@ -3,9 +3,20 @@ import {
   IsNotEmpty,
   IsOptional,
   IsArray,
+  IsEnum,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+import { LoaiChiPhi } from '@app/entities';
+
+/**
+ * Ô để trống trên form gửi lên là chuỗi rỗng, mà `@IsOptional()` chỉ bỏ qua
+ * `undefined`/`null` — không có bước này thì "" rơi vào @IsEnum và báo lỗi.
+ */
+const BoTrongThanhUndefined = () =>
+  Transform(({ value }) =>
+    typeof value === 'string' && !value.trim() ? undefined : value,
+  );
 
 /**
  * Một hồ sơ chứng từ được tham chiếu trong `hoSoChungTu`. Trước đây trường này chỉ có
@@ -52,4 +63,27 @@ export class CreateQuyChuan_Dto {
   @ValidateNested({ each: true })
   @Type(() => HoSoChungTuRef_Dto)
   hoSoChungTu?: HoSoChungTuRef_Dto[];
+
+  // Bốn trường phân bổ — lưu MÃ. BE chỉ kiểm kiểu dữ liệu; luật "bắt buộc theo
+  // fieldRules của TK Nợ/TK Có" kiểm ở màn nhập liệu (FE), vì TaiKhoan nằm ở
+  // master-data-service, kiểm tại đây sẽ phải gọi chéo service mỗi lần lưu.
+  @IsString()
+  @IsOptional()
+  @BoTrongThanhUndefined()
+  nhomKhoanMuc?: string;
+
+  @IsString()
+  @IsOptional()
+  @BoTrongThanhUndefined()
+  khoanMuc?: string;
+
+  @IsString()
+  @IsOptional()
+  @BoTrongThanhUndefined()
+  dongTien?: string;
+
+  @IsEnum(LoaiChiPhi)
+  @IsOptional()
+  @BoTrongThanhUndefined()
+  loaiChiPhi?: LoaiChiPhi;
 }
