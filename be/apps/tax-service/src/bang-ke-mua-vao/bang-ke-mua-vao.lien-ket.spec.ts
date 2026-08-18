@@ -82,3 +82,47 @@ describe('update — cờ chờ bổ sung', () => {
     expect(saved.choBoSung).toBe(true);
   });
 });
+
+describe('update — cập nhật từng phần không được ghi đè tiền đã nhập tay', () => {
+  // Hóa đơn NCC tính thuế trên từng dòng hàng rồi cộng nên hay LỆCH công thức.
+  // Số dưới đây cố tình lệch: 1.000.000 × 10% = 100.000 nhưng người dùng lưu 99.999.
+  const lech = () =>
+    row({ giaTriChuaThue: 1_000_000, thueSuat: '10', tienThue: 99_999, tongThanhToan: 1_099_999 });
+
+  it('gắn chứng từ (chỉ gửi soChungTu) giữ nguyên tiền thuế lệch công thức', async () => {
+    const { service } = makeService([lech()]);
+    const saved = await service.update(ID_HEX, { soChungTu: 'PC0001' } as never);
+    expect(saved.tienThue).toBe(99_999);
+    expect(saved.tongThanhToan).toBe(1_099_999);
+    expect(saved.soChungTu).toBe('PC0001');
+  });
+
+  it('gỡ liên kết (soChungTu rỗng) cũng giữ nguyên tiền thuế', async () => {
+    const { service } = makeService([lech()]);
+    const saved = await service.update(ID_HEX, { soChungTu: '' } as never);
+    expect(saved.tienThue).toBe(99_999);
+    expect(saved.tongThanhToan).toBe(1_099_999);
+  });
+
+  it('sửa ghi chú cũng không đụng tới tiền', async () => {
+    const { service } = makeService([lech()]);
+    const saved = await service.update(ID_HEX, { ghiChu: 'ghi chú' } as never);
+    expect(saved.tienThue).toBe(99_999);
+  });
+
+  it('gửi giá trị chưa thuế thì VẪN tính lại theo công thức', async () => {
+    const { service } = makeService([lech()]);
+    const saved = await service.update(ID_HEX, { giaTriChuaThue: 2_000_000 } as never);
+    expect(saved.tienThue).toBe(200_000);
+    expect(saved.tongThanhToan).toBe(2_200_000);
+  });
+
+  it('gửi thẳng tiền thuế tay thì giữ đúng số gửi lên', async () => {
+    const { service } = makeService([lech()]);
+    const saved = await service.update(ID_HEX, {
+      giaTriChuaThue: 2_000_000,
+      tienThue: 199_998,
+    } as never);
+    expect(saved.tienThue).toBe(199_998);
+  });
+});

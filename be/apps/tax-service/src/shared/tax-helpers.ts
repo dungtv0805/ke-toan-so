@@ -120,3 +120,26 @@ export function tachDanhSachSoChungTu(q?: string): string[] {
   if (!q) return [];
   return [...new Set(q.split(',').map((s) => s.trim()).filter(Boolean))];
 }
+
+/**
+ * DTO cập nhật có động tới số tiền hay không.
+ *
+ * `applyTotals` tính lại tiền thuế/tổng thanh toán theo công thức, nên chỉ được
+ * chạy khi người dùng thật sự gửi lên số. Cập nhật từng phần (gắn/gỡ liên kết
+ * chứng từ chỉ gửi `soChungTu`) mà vẫn chạy sẽ GHI ĐÈ số thuế nhập tay — hóa đơn
+ * NCC hay lệch vài đồng so với công thức nên đây là mất dữ liệu thật.
+ */
+export function dtoCoSoTien(dto: {
+  giaTriChuaThue?: number;
+  thueSuat?: string;
+  tienThue?: number;
+  tongThanhToan?: number;
+}): boolean {
+  if (!dto) return false;
+  return (
+    dto.giaTriChuaThue !== undefined ||
+    dto.thueSuat !== undefined ||
+    dto.tienThue !== undefined ||
+    dto.tongThanhToan !== undefined
+  );
+}

@@ -22,6 +22,7 @@ import {
   buildHoaDonKey,
   locTheoLienKet,
   nenTatChoBoSung,
+  dtoCoSoTien,
   gomTheoSoChungTu,
 } from '../shared/tax-helpers';
 
@@ -188,7 +189,9 @@ export class BangKeMuaVaoService {
     const clean = sanitizeUpdateDto(updateDto);
     Object.assign(item, clean);
     if (updateDto.ngayHoaDon) item.ngayHoaDon = new Date(updateDto.ngayHoaDon);
-    this.applyTotals(item, updateDto);
+    // CHỈ tính lại tiền khi DTO có gửi số. Cập nhật từng phần (gắn/gỡ liên kết
+    // chứng từ chỉ gửi `soChungTu`) không được đụng vào số thuế đã nhập tay.
+    if (dtoCoSoTien(updateDto)) this.applyTotals(item, updateDto);
     // Dòng nháp đã được điền số thì hết "chờ bổ sung" — xem nenTatChoBoSung.
     if (item.choBoSung && nenTatChoBoSung(item)) item.choBoSung = false;
     return this.repo.save(item);
