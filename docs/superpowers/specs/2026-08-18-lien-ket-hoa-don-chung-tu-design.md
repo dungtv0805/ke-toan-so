@@ -45,8 +45,8 @@ từ chứng từ đều làm mất số này, nên bị loại từ đầu.
 ## 3. Nguyên tắc cốt lõi: không nhân bản dữ liệu
 
 Hóa đơn **chỉ lưu ở một chỗ duy nhất**: `bang_ke_mua_vao` / `bang_ke_ban_ra`.
-Chứng từ **không giữ bản sao** nào của thông tin hóa đơn — quan hệ nằm ở cột `chungTuId`
-phía bảng kê.
+Chứng từ **không giữ bản sao** nào của thông tin hóa đơn — quan hệ nằm ở cột `soChungTu`
+phía bảng kê (xem 4.1: khóa là số phiếu).
 
 Lý do: `voucher-service` (3003) và `tax-service` (3009) là hai service, hai kết nối Mongo,
 không có transaction chung. Nếu mỗi bên giữ một bản thì mọi lần sửa đều là bài toán đồng bộ
@@ -60,11 +60,20 @@ Hệ quả có chủ ý: chứng từ không biết số tiền hóa đơn. Mu�
 
 Không thêm collection, không đổi schema chứng từ.
 
-`BangKeMuaVao` / `BangKeBanRa` — dùng lại 2 cột đã có, bỏ chú thích "phase sau":
+### 4.1 Khóa liên kết là SỐ PHIẾU, không phải id
+
+Một "chứng từ" ở Dữ liệu tổng hợp **không phải một bản ghi**: mỗi dòng chi tiết là một
+document `chung_tu` riêng, cả nhóm dùng chung `soPhieu`
+(`nhatKyChungService.updateBatch(soPhieu, items)` sửa cả nhóm theo số phiếu).
+Vì vậy không có một id đơn nào đại diện cho chứng từ — khóa liên kết đúng là **`soPhieu`**.
+
+Số phiếu là bất biến: ô Số phiếu trong form ở trạng thái `disabled` khi sửa, và số do
+sequence sinh ra. Nên đây là khóa ổn định, không phải "ảnh chụp".
+
+`BangKeMuaVao` / `BangKeBanRa` — dùng lại cột đã có, bỏ chú thích "phase sau":
 
 ```
-chungTuId?: string   // id chứng từ đang gắn; rỗng = chưa liên kết
-soChungTu?: string   // số phiếu, lưu để hiển thị mà không phải gọi chéo service
+soChungTu?: string   // SỐ PHIẾU chứng từ đang gắn; rỗng = chưa liên kết
 ```
 
 Thêm một cột duy nhất:
@@ -73,10 +82,8 @@ Thêm một cột duy nhất:
 choBoSung?: boolean  // dòng nháp sinh ra từ màn chứng từ, chưa đủ thông tin kê khai
 ```
 
-`soChungTu` là **ảnh chụp tại thời điểm gắn**, chấp nhận cũ nếu chứng từ đổi số phiếu.
-Đổi số phiếu là việc hiếm, còn gọi chéo service chỉ để hiển thị một chuỗi thì đắt hơn nhiều.
-Số phiếu hiển thị ở bảng kê vì vậy là *tham chiếu*, còn nguồn sự thật để mở chứng từ là
-`chungTuId`.
+Cột `chungTuId` có sẵn trong entity **để nguyên, không dùng** — xóa cột đi phải sửa cả DTO
+lẫn import spec đang xanh, mà không được gì. Mọi chỗ đọc/ghi liên kết đều dùng `soChungTu`.
 
 Một dòng bảng kê thuộc **tối đa một** chứng từ. Một chứng từ có **0..n** dòng bảng kê,
 thuộc cả hai bảng (một phiếu vừa gắn hóa đơn mua vào vừa bán ra là hợp lệ, không chặn).
@@ -89,7 +96,8 @@ thuộc cả hai bảng (một phiếu vừa gắn hóa đơn mua vào vừa bá
 2. Gõ số HĐ → ô gợi ý các dòng bảng kê **chưa liên kết**, ưu tiên dòng có MST trùng đối
    tượng của chứng từ. Mỗi gợi ý hiện: số HĐ — ngày — tên người bán/mua — tổng thanh toán.
 3. Chọn → chip hiện số HĐ. Chọn được nhiều.
-4. Lưu chứng từ → các dòng được set `chungTuId` + `soChungTu`.
+4. Lưu chứng từ → các dòng được set `soChungTu` = số phiếu. Chứng từ tạo mới thì số phiếu
+   lấy từ kết quả trả về của `createBatch` (`result[0].soPhieu`).
 
 ### 5.2 Gán số HĐ chưa có bên bảng kê (dòng nháp)
 
@@ -102,7 +110,11 @@ thuộc cả hai bảng (một phiếu vừa gắn hóa đơn mua vào vừa bá
    - `tenNguoiBan`/`tenNguoiMua`, `mstNguoiBan`/`mstNguoiMua` = từ `danhMuc.doiTuong` của
      chứng từ (`maSoThue` đã có sẵn trong snapshot đối tượng)
    - `giaTriChuaThue` = 0, `tienThue` = 0, `tongThanhToan` = 0
-   - `choBoSung` = true, `chungTuId`, `soChungTu`
+   - `choBoSung` = true, `soChungTu` = số phiếu
+
+Nếu chứng từ chưa có đối tượng (không có tên/MST) thì gửi `tenNguoiBan`/`tenNguoiMua` =
+`"(Chưa xác định)"` — DTO đang bắt buộc trường này, và dòng đó vẫn mang cờ `choBoSung`
+nên kế toán thuế buộc phải sửa lại khi bổ sung.
 4. Kế toán thuế vào bảng kê, lọc **"Chưa đủ thông tin"**, bổ sung ký hiệu / giá trị / thuế suất,
    lưu → `choBoSung` tự về false.
 
@@ -112,11 +124,11 @@ cộng vào là sai số. Xem 6.3.
 ### 5.3 Gắn từ phía bảng kê
 
 Nút **"Gắn với chứng từ"** trên từng dòng chưa liên kết → modal tìm chứng từ theo số phiếu /
-khoảng ngày / số tiền → chọn → set `chungTuId` + `soChungTu`.
+khoảng ngày / số tiền → chọn → set `soChungTu`.
 
 ### 5.4 Gỡ liên kết
 
-- Bỏ chip ở form chứng từ → dòng bảng kê về `chungTuId` rỗng, **dòng vẫn còn**.
+- Bỏ chip ở form chứng từ → dòng bảng kê về `soChungTu` rỗng, **dòng vẫn còn**.
 - Nút "Gỡ liên kết" ở bảng kê → tương tự.
 - Dòng `choBoSung` bị gỡ link vẫn giữ nhãn "Chưa đủ thông tin" — nó vẫn là hóa đơn cần khai.
 
@@ -134,9 +146,9 @@ dòng bảng kê trỏ tới chứng từ không còn — xem 7.2.
 
 | Việc | Chi tiết |
 |---|---|
-| Lọc theo liên kết | `BangKeMuaVaoQueryDto` / `BangKeBanRaQueryDto` thêm `chungTuId?: string` và `lienKet?: 'da' \| 'chua' \| 'cho-bo-sung'` |
-| Lấy theo nhiều chứng từ | `GET /tax/bang-ke/theo-chung-tu?ids=a,b,c` → `{ [chungTuId]: { muaVao: BangKe[], banRa: BangKe[] } }`. Cần cho cột "HĐ" ở bảng Dữ liệu tổng hợp — gọi từng dòng thì 20 dòng là 20 request |
-| Gắn / gỡ | Dùng `PUT /tax/bang-ke-*/:id` sẵn có (DTO đã nhận `chungTuId`, `soChungTu`); thêm `choBoSung` vào DTO |
+| Lọc theo liên kết | `BangKeMuaVaoQueryDto` / `BangKeBanRaQueryDto` thêm `soChungTu?: string` và `lienKet?: 'da' \| 'chua' \| 'cho-bo-sung'` |
+| Lấy theo nhiều chứng từ | `GET /tax/bang-ke-mua-vao/theo-chung-tu?soChungTu=A,B,C` (và route tương tự bên bán ra) → `{ [soChungTu]: BangKe[] }`. Cần cho cột "HĐ" ở bảng Dữ liệu tổng hợp — gọi từng dòng thì 20 dòng là 20 request |
+| Gắn / gỡ | Dùng `PUT /tax/bang-ke-*/:id` sẵn có (DTO đã nhận `soChungTu`); thêm `choBoSung` vào DTO |
 | Cờ chờ bổ sung | Service tự đặt `choBoSung = false` khi bản ghi được cập nhật có đủ `giaTriChuaThue > 0` hoặc `tienThue > 0` |
 | Tạo dòng nháp | Dùng `POST` sẵn có; DTO nới `giaTriChuaThue` cho phép 0 và `choBoSung` |
 
@@ -148,7 +160,7 @@ dòng bảng kê trỏ tới chứng từ không còn — xem 7.2.
 | Ghi hóa đơn khi lưu chứng từ | `form-handler/sub-handler/submit/submit.handler.ts` — sau khi lưu chứng từ thành công mới gọi tax-service (xem 7.1) |
 | Bảng Dữ liệu tổng hợp (`components/data-tabs/EntryListTab.tsx`) | **Một cột nhỏ "HĐ"** hiện số lượng hóa đơn đã gắn, hover xem danh sách số HĐ. Không thêm cột nào khác — khách yêu cầu rõ không để bảng TH quá nhiều cột |
 | Bảng kê (`pages/thue/components/BangKePage.tsx`) | Cột "Chứng từ" (số phiếu, bấm mở chứng từ / "Nhập tay"); nhãn "Chưa đủ thông tin"; bộ lọc **Tất cả / Đã liên kết / Chưa liên kết / Chưa đủ thông tin**; nút "Gắn với chứng từ" + "Gỡ liên kết" |
-| `services/taxService.ts` | Hàm tìm hóa đơn chưa liên kết, lấy theo nhiều `chungTuId`, gắn/gỡ |
+| `services/taxService.ts` | Hàm tìm hóa đơn chưa liên kết, lấy theo nhiều `soChungTu`, gắn/gỡ |
 
 ### 6.3 Báo cáo thuế
 
@@ -158,8 +170,8 @@ không nhắc thì số thuế thiếu mà báo cáo trông vẫn bình thườn
 
 ### 6.4 Migration
 
-Không có. Mongo, hai cột `chungTuId`/`soChungTu` đã tồn tại; `choBoSung` thiếu thì hiểu là
-`false`. 1.189 dòng cũ rơi vào nhóm "Chưa liên kết".
+Không có. Mongo, cột `soChungTu` đã tồn tại; `choBoSung` thiếu thì hiểu là `false`.
+1.189 dòng cũ rơi vào nhóm "Chưa liên kết".
 
 ## 7. Trường hợp biên và xử lý lỗi
 
@@ -177,11 +189,13 @@ nên hỏng sẽ im lặng, còn FE thì báo thẳng cho người đang nhập.
 
 ### 7.2 Dòng bảng kê trỏ tới chứng từ không còn
 
-Cột "Chứng từ" hiện *"Chứng từ đã xóa"* thay vì số phiếu, kèm nút gỡ link. Không tự xóa dòng.
+Cột "Chứng từ" hiện số phiếu như bình thường; bấm vào mà không tìm thấy chứng từ nào mang số
+phiếu đó thì báo *"Không tìm thấy chứng từ {số phiếu}"* kèm nút gỡ link. Không tự xóa dòng,
+và không quét đối chiếu định kỳ — quét toàn bộ bảng kê chỉ để tô một nhãn thì đắt hơn giá trị.
 
 ### 7.3 Một hóa đơn bị gắn vào hai chứng từ
 
-Không xảy ra: `chungTuId` là một trường đơn, gắn vào chứng từ B thì mất khỏi chứng từ A.
+Không xảy ra: `soChungTu` là một trường đơn, gắn vào chứng từ B thì mất khỏi chứng từ A.
 Ô gợi ý chỉ liệt kê dòng **chưa liên kết**, nên không có đường gắn trùng qua giao diện.
 
 ### 7.4 Số hóa đơn trùng nhau
@@ -213,7 +227,7 @@ Hàm thuần, test trước:
 - Gom kết quả `theo-chung-tu` thành map để bảng TH đếm.
 - Lọc dòng `choBoSung` khỏi tổng hợp thuế.
 
-Ở BE: test DTO nhận `chungTuId`/`choBoSung`, test filter `lienKet`.
+Ở BE: test DTO nhận `soChungTu`/`choBoSung`, test filter `lienKet`, test gom `theo-chung-tu`.
 
 Kiểm bằng tay trước khi giao khách: tạo chứng từ gắn 2 hóa đơn (1 có sẵn, 1 gõ mới) → bảng kê
 có đủ 2 dòng, 1 dòng "Chưa đủ thông tin" → bổ sung → nhãn mất → xóa chứng từ → cả 2 dòng còn
