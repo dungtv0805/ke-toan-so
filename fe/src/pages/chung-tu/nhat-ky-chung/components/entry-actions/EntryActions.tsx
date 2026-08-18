@@ -87,7 +87,11 @@ export function EntryActions({ entry }: EntryActionsProps) {
       okText: "Xóa",
       okButtonProps: { danger: true },
       cancelText: "Hủy",
-      onOk: () => handler.executeEvent("deleteEntry", { id: entry.id }),
+      onOk: () =>
+        handler.executeEvent("deleteEntry", {
+          id: entry.id,
+          soPhieu: entry.soPhieu,
+        }),
     });
   };
 

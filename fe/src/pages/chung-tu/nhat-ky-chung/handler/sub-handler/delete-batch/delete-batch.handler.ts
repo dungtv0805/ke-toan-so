@@ -16,6 +16,9 @@ export class DeleteBatchHandler extends CSubHanlder<
 > {
   @HandlerDecorator("deleteBatch")
   async deleteBatch(params: { ids: string[] }): Promise<void> {
+    // Xóa hàng loạt KHÔNG tự gỡ liên kết hóa đơn: event chỉ có mảng id, không có
+    // số phiếu. Gỡ tay ở Bảng kê (nút "Gỡ liên kết"). Hóa đơn không bao giờ bị xóa
+    // theo chứng từ nên đây là lệch nhãn, không phải mất dữ liệu.
     if (!params.ids || params.ids.length === 0) return;
 
     this.setState("deletingBatch", true);
