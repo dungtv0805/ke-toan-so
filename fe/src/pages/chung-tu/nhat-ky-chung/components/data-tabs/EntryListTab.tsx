@@ -1,6 +1,7 @@
 import {
   isValidElement,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -10,7 +11,7 @@ import { TermText } from "@/components/glossary/TermText";
 import { useTerm } from "@/contexts/TermContext";
 import { useColumnVisibility } from "@/components/table/useColumnVisibility";
 import type { Key } from "react";
-import { Table, Button, Space, Popconfirm } from "antd";
+import { Table, Button, Space, Popconfirm, Tag, Tooltip } from "antd";
 import {
   ReloadOutlined,
   FileExcelOutlined,
@@ -18,6 +19,7 @@ import {
   PrinterOutlined,
 } from "@ant-design/icons";
 import { NhatKyChung, QuyChuan, HoSoChungTu } from "@/types";
+import { bangKeMuaVaoService, bangKeBanRaService } from "@/services/taxService";
 import { useTableColumnResize } from "@/hooks/useTableColumnResize";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import {
@@ -93,6 +95,7 @@ const DEFAULT_WIDTHS: Record<string, number> = {
   ngay: 120,
   ngayGhiSo: 100,
   soPhieu: 90,
+  hoaDon: 60,
   loaiGiaoDich: 120,
   nghiepVu: 150,
   dienGiai: 150,
@@ -784,7 +787,8 @@ const getColumnDefinitions = (
 const TOTAL_WIDTH = Object.values(DEFAULT_WIDTHS).reduce((sum, w) => sum + w, 0);
 
 /** Width cột do người dùng kéo — lưu theo CHỈ SỐ cột nên phải đổi key khi cấu trúc cột đổi. */
-const WIDTH_STORAGE_KEY = "table-col-widths-nkc-v5";
+// v6: thêm cột "HĐ" ngay sau "Số CT" → chỉ số các cột sau đó lệch đi một.
+const WIDTH_STORAGE_KEY = "table-col-widths-nkc-v6";
 
 // Chừa dưới đáy trang (padding của Content) + vài px đệm.
 const BOTTOM_GAP = 20;
@@ -856,6 +860,37 @@ export function EntryListTab() {
   const handler = useNhatKyChungHandler();
   const [data] = useNhatKyChungState("data", []);
   const [loading] = useNhatKyChungState("loading", false);
+  // Số hóa đơn đã gắn theo SỐ PHIẾU, cho cột "HĐ" bên dưới — chỉ tải cho trang đang hiện.
+  // Lỗi gọi tax-service không được làm hỏng bảng: catch về map rỗng, cột chỉ hiện "—".
+  const [hoaDonMap, setHoaDonMap] = useState<Record<string, string[]>>({});
+  useEffect(() => {
+    const soPhieuList = [
+      ...new Set((data || []).map((d) => d.soPhieu).filter(Boolean)),
+    ];
+    if (!soPhieuList.length) {
+      setHoaDonMap({});
+      return;
+    }
+    let huy = false;
+    Promise.all([
+      bangKeMuaVaoService.layTheoSoChungTu(soPhieuList),
+      bangKeBanRaService.layTheoSoChungTu(soPhieuList),
+    ])
+      .then(([mua, ban]) => {
+        if (huy) return;
+        const map: Record<string, string[]> = {};
+        for (const nguon of [mua, ban]) {
+          for (const [soPhieu, list] of Object.entries(nguon)) {
+            map[soPhieu] = [...(map[soPhieu] || []), ...list.map((i) => i.soHoaDon)];
+          }
+        }
+        setHoaDonMap(map);
+      })
+      .catch(() => setHoaDonMap({}));
+    return () => {
+      huy = true;
+    };
+  }, [data]);
   const [pagination] = useNhatKyChungState("pagination", {
     total: 0,
     page: 1,
@@ -880,7 +915,7 @@ export function EntryListTab() {
   const { withColumnFilter } = useNkcColumnFilters();
 
   // Enable column resize via DOM manipulation (no React re-renders)
-  // storageKey bump 'v5': gỡ cột số thứ tự dòng → width cũ lưu theo chỉ số đã lệch.
+  // storageKey bump 'v6': thêm cột "HĐ" → width cũ lưu theo chỉ số đã lệch.
   useTableColumnResize("resizable-table", WIDTH_STORAGE_KEY);
 
   const { t } = useTerm();
@@ -927,22 +962,53 @@ export function EntryListTab() {
   // cuộn cả hai chiều và cột "Thao tác" ghim phải, thêm một cột ghim trái nữa là vỡ.
   // jsdom KHÔNG tái hiện được (không có thanh cuộn / position: sticky), nên nếu làm lại
   // thì phải kiểm chứng bằng trình duyệt thật chứ không tin test.
-  const columns = useMemo(
-    () =>
-      getColumnDefinitions(
-        taiKhoanOptions,
-        quyChaunList,
-        hoSoChungTuList,
-        handleRefresh
-      ).map((col) =>
-        // Lọc gắn ngay ở header cột → hàng lọc trên cùng không phải bày 14 dropdown nữa.
-        withColumnFilter({
-          ...col,
-          width: col.width || DEFAULT_WIDTHS[col.key as string] || 100,
-        })
-      ),
-    [taiKhoanOptions, quyChaunList, hoSoChungTuList, handleRefresh, withColumnFilter]
-  );
+  const columns = useMemo(() => {
+    const base = getColumnDefinitions(
+      taiKhoanOptions,
+      quyChaunList,
+      hoSoChungTuList,
+      handleRefresh
+    );
+    // Đúng MỘT cột "HĐ" — hiện số hóa đơn đã gắn cho chứng từ của dòng này (khóa theo
+    // số phiếu, mọi dòng cùng số phiếu hiện cùng một số). Chèn ngay sau "Số CT".
+    const hoaDonCol: Omit<ColumnType<NhatKyChung>, "width"> = {
+      title: "HĐ",
+      key: "hoaDon",
+      align: "center" as const,
+      render: (_: unknown, record: NhatKyChung) => {
+        const list = hoaDonMap[record.soPhieu || ""] || [];
+        if (!list.length) return <span className="text-gray-300">—</span>;
+        return (
+          <Tooltip title={list.join(", ")}>
+            <Tag color="blue">{list.length}</Tag>
+          </Tooltip>
+        );
+      },
+    };
+    const soPhieuIdx = base.findIndex((col) => col.key === "soPhieu");
+    const withHoaDon =
+      soPhieuIdx >= 0
+        ? [
+            ...base.slice(0, soPhieuIdx + 1),
+            hoaDonCol,
+            ...base.slice(soPhieuIdx + 1),
+          ]
+        : [...base, hoaDonCol];
+    // Lọc gắn ngay ở header cột → hàng lọc trên cùng không phải bày 14 dropdown nữa.
+    return withHoaDon.map((col) =>
+      withColumnFilter({
+        ...col,
+        width: col.width || DEFAULT_WIDTHS[col.key as string] || 100,
+      })
+    );
+  }, [
+    taiKhoanOptions,
+    quyChaunList,
+    hoSoChungTuList,
+    handleRefresh,
+    withColumnFilter,
+    hoaDonMap,
+  ]);
 
   // Ẩn/hiện cột. Tiêu đề cột có thể là chuỗi hoặc node <TermText> → lấy nhãn tương ứng.
   const labelOf = useCallback(
