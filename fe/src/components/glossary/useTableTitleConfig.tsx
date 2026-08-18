@@ -18,7 +18,16 @@ import type { TitleTermSpec } from '@/config/titleConfig';
  * khác nhau trên cùng trang — override + lựa chọn cột lưu theo (pageKey, colKey) nên 2
  * bảng trùng pageKey sẽ chia sẻ trạng thái theo colKey trùng.
  */
-export function useTableTitleConfig<T>(pageKey: string, columns: ColumnType<T>[]) {
+export function useTableTitleConfig<T>(
+  pageKey: string,
+  columns: ColumnType<T>[],
+  opts?: { visibilityVersion?: string },
+) {
+  // Khóa lưu ẩn/hiện cột tách riêng khỏi `pageKey` để BUMP được khi bảng thêm cột
+  // mới: lựa chọn cũ chỉ liệt kê key ĐƯỢC HIỆN nên ai đã từng mở bộ chọn cột sẽ
+  // không bao giờ thấy cột mới. Đổi thẳng `pageKey` thì mất luôn override tiêu đề
+  // (lưu theo pageKey + colKey) nên phải là tham số riêng.
+  const visKey = opts?.visibilityVersion ? `${pageKey}.${opts.visibilityVersion}` : pageKey;
   const { user, currentTenant, currentLinhVuc } = useAuth();
   const tenantG = currentTenant?.glossary;
   const linhVucG = currentLinhVuc?.glossary;
@@ -41,7 +50,7 @@ export function useTableTitleConfig<T>(pageKey: string, columns: ColumnType<T>[]
 
   // --- Ẩn/hiện cột ---
   // `savedKeys === null` nghĩa là CHƯA chọn → hiện tất cả (kể cả cột mới/cột tải động).
-  const [savedKeys, setSavedKeys] = useState<string[] | null>(() => readSavedKeys(pageKey));
+  const [savedKeys, setSavedKeys] = useState<string[] | null>(() => readSavedKeys(visKey));
   const showAll = savedKeys === null;
   const visibleSet = useMemo(() => new Set(savedKeys ?? eligibleKeys), [savedKeys, eligibleKeys]);
   const visibleKeys = useMemo(
@@ -50,7 +59,7 @@ export function useTableTitleConfig<T>(pageKey: string, columns: ColumnType<T>[]
   );
   const onVisibleChange = (keys: string[]) => {
     setSavedKeys(keys);
-    saveVisibleKeys(pageKey, keys);
+    saveVisibleKeys(visKey, keys);
   };
 
   // --- Đổi tên + lọc cột ---

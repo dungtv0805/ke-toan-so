@@ -151,8 +151,13 @@ const TongHopThuePage: React.FC = () => {
             type="warning"
             showIcon
             className="mb-3"
-            message={`Còn ${data?.soHoaDonChoBoSung} hóa đơn chưa đủ thông tin trong kỳ — chưa được tính vào số thuế`}
-            action={<Link to="/thue/bang-ke-mua-vao">Mở bảng kê</Link>}
+            message={`Còn ${data?.soHoaDonChoBoSung} hóa đơn chưa đủ thông tin trong kỳ (cả mua vào lẫn bán ra) — chưa được tính vào số thuế`}
+            action={
+              <Space size={8}>
+                <Link to="/thue/bang-ke-mua-vao">Bảng kê mua vào</Link>
+                <Link to="/thue/bang-ke-ban-ra">Bảng kê bán ra</Link>
+              </Space>
+            }
           />
         )}
 

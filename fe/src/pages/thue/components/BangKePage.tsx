@@ -369,7 +369,11 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
     },
   ];
 
-  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('thue.bangKe', columns);
+  // visibilityVersion 'v2': bảng kê thêm cột "Chứng từ" — không bump thì ai đã từng
+  // mở bộ chọn cột sẽ không bao giờ thấy cột mới (lựa chọn cũ chỉ có key cột cũ).
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('thue.bangKe', columns, {
+    visibilityVersion: 'v2',
+  });
 
   return (
     <div className="space-y-3">
@@ -464,29 +468,36 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
             fetchData(pag.current || 1, pag.pageSize || 50, searchText, nam, quy);
           }}
           summary={(pageData) => {
-            const tGia = pageData.reduce((s, r) => s + (r.giaTriChuaThue || 0), 0);
-            const tThue = pageData.reduce((s, r) => s + (r.tienThue || 0), 0);
-            const tTong = pageData.reduce((s, r) => s + (r.tongThanhToan || 0), 0);
-            // Cột checkbox (khi có quyền xóa) chiếm 1 ô ở đầu → dòng tổng phải dịch theo, nếu không lệch cột.
+            // Dựng dòng tổng THEO cfgColumns: bảng có 12 cột và người dùng còn ẩn/hiện
+            // được từng cột, đếm tay là lệch ngay khi thêm/bớt cột.
+            const tong: Record<string, number> = {
+              giaTriChuaThue: pageData.reduce((s, r) => s + (r.giaTriChuaThue || 0), 0),
+              tienThue: pageData.reduce((s, r) => s + (r.tienThue || 0), 0),
+              tongThanhToan: pageData.reduce((s, r) => s + (r.tongThanhToan || 0), 0),
+            };
+            // Cột checkbox (khi có quyền xóa) chiếm 1 ô ở đầu → dòng tổng phải dịch theo.
             const off = rowSelection ? 1 : 0;
             return (
               <Table.Summary fixed>
                 <Table.Summary.Row>
                   {rowSelection && <Table.Summary.Cell index={0} />}
-                  <Table.Summary.Cell index={off} colSpan={6}>
-                    <Text strong>Tổng trang</Text>
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={off + 6} align="right">
-                    <Text strong>{fmt(tGia)}</Text>
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={off + 7} />
-                  <Table.Summary.Cell index={off + 8} align="right">
-                    <Text strong>{fmt(tThue)}</Text>
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={off + 9} align="right">
-                    <Text strong>{fmt(tTong)}</Text>
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={off + 10} />
+                  {cfgColumns.map((col, i) => {
+                    const key = String(col.key ?? (col as { dataIndex?: string }).dataIndex ?? i);
+                    const so = tong[key];
+                    return (
+                      <Table.Summary.Cell
+                        key={key}
+                        index={off + i}
+                        align={so === undefined ? undefined : 'right'}
+                      >
+                        {i === 0 ? (
+                          <Text strong>Tổng trang</Text>
+                        ) : so === undefined ? null : (
+                          <Text strong>{fmt(so)}</Text>
+                        )}
+                      </Table.Summary.Cell>
+                    );
+                  })}
                 </Table.Summary.Row>
               </Table.Summary>
             );
