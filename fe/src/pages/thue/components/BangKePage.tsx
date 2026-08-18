@@ -23,6 +23,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   ImportOutlined,
+  DisconnectOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { FilterBar } from "@/components/common/FilterBar";
@@ -37,6 +38,7 @@ import {
 } from "@/services/taxService";
 import type { ServiceBase } from "@/services/base/service-base";
 import { ImportBangKeModal, type ImportService } from "./import/ImportBangKeModal";
+import { GanChungTuModal } from "./GanChungTuModal";
 
 const { Text } = Typography;
 
@@ -49,10 +51,13 @@ export interface BangKeService extends ServiceBase, ImportService {
     search?: string;
     quy?: number;
     nam?: number;
+    lienKet?: "da" | "chua" | "cho-bo-sung";
   }) => Promise<{ data: BangKeRecord[]; meta: { total: number; page: number; limit: number; totalPages: number } }>;
   create: (payload: Partial<BangKeRecord>) => Promise<BangKeRecord>;
   update: (id: string, payload: Partial<BangKeRecord>) => Promise<BangKeRecord>;
   remove: (id: string) => Promise<void>;
+  ganChungTu: (id: string, soChungTu: string) => Promise<BangKeRecord>;
+  goLienKet: (id: string) => Promise<BangKeRecord>;
 }
 
 interface Props {
@@ -81,8 +86,11 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
   const [searchText, setSearchText] = useState("");
   const [nam, setNam] = useState<number>(dayjs().year());
   const [quy, setQuy] = useState<number>(0);
+  const [lienKet, setLienKet] = useState<"" | "da" | "chua" | "cho-bo-sung">("");
   const [modalVisible, setModalVisible] = useState(false);
   const [importVisible, setImportVisible] = useState(false);
+  const [ganVisible, setGanVisible] = useState(false);
+  const [ganRecord, setGanRecord] = useState<BangKeRecord | null>(null);
   const [editingRecord, setEditingRecord] = useState<BangKeRecord | null>(null);
   const [form] = Form.useForm();
   const [pagination, setPagination] = useState({ current: 1, pageSize: 50, total: 0 });
@@ -123,6 +131,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
     search = searchText,
     namArg = nam,
     quyArg = quy,
+    lienKetArg = lienKet,
   ) => {
     setLoading(true);
     try {
@@ -132,6 +141,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
         search: search || undefined,
         nam: namArg,
         quy: quyArg || undefined,
+        lienKet: lienKetArg || undefined,
       });
       setData(result.data);
       setPagination({
@@ -213,6 +223,29 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
     }
   };
 
+  const handleGan = async (soPhieu: string) => {
+    if (!ganRecord) return;
+    try {
+      await service.ganChungTu(ganRecord.id, soPhieu);
+      message.success(`Đã gắn hóa đơn ${ganRecord.soHoaDon} với chứng từ ${soPhieu}`);
+      setGanVisible(false);
+      setGanRecord(null);
+      fetchData(pagination.current, pagination.pageSize, searchText, nam, quy);
+    } catch {
+      message.error("Gắn chứng từ thất bại");
+    }
+  };
+
+  const handleGoLienKet = async (r: BangKeRecord) => {
+    try {
+      await service.goLienKet(r.id);
+      message.success("Đã gỡ liên kết");
+      fetchData(pagination.current, pagination.pageSize, searchText, nam, quy);
+    } catch {
+      message.error("Gỡ liên kết thất bại");
+    }
+  };
+
   const columns = [
     {
       title: "Ngày HĐ",
@@ -223,7 +256,18 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
       sorter: (a: BangKeRecord, b: BangKeRecord) =>
         dayjs(a.ngayHoaDon).valueOf() - dayjs(b.ngayHoaDon).valueOf(),
     },
-    { title: "Số HĐ", dataIndex: "soHoaDon", key: "soHoaDon", width: 110 },
+    {
+      title: "Số HĐ",
+      dataIndex: "soHoaDon",
+      key: "soHoaDon",
+      width: 110,
+      render: (v: string, r: BangKeRecord) => (
+        <Space size={4}>
+          <span>{v}</span>
+          {r.choBoSung && <Tag color="orange">Chưa đủ thông tin</Tag>}
+        </Space>
+      ),
+    },
     { title: "Ký hiệu", dataIndex: "kyHieuHoaDon", key: "kyHieuHoaDon", width: 100 },
     { title: partnerLabel, dataIndex: tenField, key: tenField, ellipsis: true },
     { title: "MST", dataIndex: mstField, key: mstField, width: 130 },
@@ -259,6 +303,40 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
       width: 140,
       align: "right" as const,
       render: (v: number) => <Text strong>{fmt(v)}</Text>,
+    },
+    {
+      title: "Chứng từ",
+      key: "soChungTu",
+      width: 150,
+      render: (_: unknown, r: BangKeRecord) =>
+        r.soChungTu ? (
+          <Space size={4}>
+            <Tooltip title={`Số phiếu: ${r.soChungTu} — mở Dữ liệu tổng hợp rồi tìm số này`}>
+              <a onClick={() => window.open("/chung-tu/nhat-ky-chung", "_blank")}>{r.soChungTu}</a>
+            </Tooltip>
+            {canEdit && (
+              <Tooltip title="Gỡ liên kết — dòng hóa đơn vẫn còn">
+                <Button type="text" size="small" icon={<DisconnectOutlined />} onClick={() => handleGoLienKet(r)} />
+              </Tooltip>
+            )}
+          </Space>
+        ) : (
+          <Space size={4}>
+            <Text type="secondary">Nhập tay</Text>
+            {canEdit && (
+              <Button
+                type="link"
+                size="small"
+                onClick={() => {
+                  setGanRecord(r);
+                  setGanVisible(true);
+                }}
+              >
+                Gắn
+              </Button>
+            )}
+          </Space>
+        ),
     },
     {
       title: "Thao tác",
@@ -323,6 +401,22 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
                 }}
                 options={QUY_OPTIONS}
                 style={{ width: 110 }}
+              />
+              <Select
+                size="small"
+                style={{ width: 190 }}
+                value={lienKet}
+                onChange={(v) => {
+                  clearSelection();
+                  setLienKet(v);
+                  fetchData(1, pagination.pageSize, searchText, nam, quy, v);
+                }}
+                options={[
+                  { value: "", label: "Tất cả" },
+                  { value: "da", label: "Đã liên kết" },
+                  { value: "chua", label: "Chưa liên kết" },
+                  { value: "cho-bo-sung", label: "Chưa đủ thông tin" },
+                ]}
               />
               <InputNumber
                 value={nam}
@@ -519,6 +613,15 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
         }}
         variant={variant}
         service={service}
+      />
+
+      <GanChungTuModal
+        open={ganVisible}
+        onCancel={() => {
+          setGanVisible(false);
+          setGanRecord(null);
+        }}
+        onChon={handleGan}
       />
     </div>
   );
