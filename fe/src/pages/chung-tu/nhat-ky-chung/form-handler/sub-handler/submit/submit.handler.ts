@@ -1,6 +1,7 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
 import { nhatKyChungService, CreateEntryDto, BatchItemDto } from "@/services/nhatKyChungService";
+import { bangKeMuaVaoService, bangKeBanRaService } from "@/services/taxService";
 import { message, Modal } from "antd";
 import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
@@ -9,6 +10,7 @@ import { NhatKyChungFormStates, NhatKyChungFormEvents } from "../../nhat-ky-chun
 import { ChungTuHeader, ChungTuChiTiet, TaiKhoanItem } from "../init/init.state";
 import { DanhMuc, LoaiChungTu, LoaiGiaoDich } from "@/types";
 import { validateFieldRules, formatViolation } from "../../../fieldRulesValidation";
+import { dungDongNhap } from "../../../hoaDonLienKet";
 
 @RegisterHandler("nhat-ky-chung-form")
 export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyChungFormStates> {
@@ -113,6 +115,7 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
 
         // Update batch
         await nhatKyChungService.updateBatch(header.soPhieu, items);
+        await this.ghiHoaDonAnToan(header.soPhieu, header);
         message.success("Cập nhật chứng từ thành công");
       } else {
         // Build items for batch create (no id needed)
@@ -130,7 +133,9 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
         }));
 
         // Create batch
-        await nhatKyChungService.createBatch(items);
+        const created = await nhatKyChungService.createBatch(items);
+        const soPhieuMoi = created[0]?.soPhieu;
+        if (soPhieuMoi) await this.ghiHoaDonAnToan(soPhieuMoi, header);
         message.success("Tạo chứng từ thành công");
       }
 
@@ -141,6 +146,51 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
       message.error(err.message || "Có lỗi xảy ra");
     } finally {
       this.setState("submitting", false);
+    }
+  }
+
+  /**
+   * Ghi liên kết hóa đơn SAU KHI chứng từ đã lưu — chứng từ mới chưa có số phiếu
+   * trước đó. Hai lần ghi vào hai service khác nhau, không có transaction chung:
+   * hỏng bước này thì KHÔNG rollback chứng từ, báo để người nhập bấm lưu lại.
+   */
+  private async ghiHoaDon(soPhieu: string, header: ChungTuHeader): Promise<void> {
+    const hoaDon = header.hoaDon || [];
+    if (!hoaDon.length) return;
+
+    const doiTuong = (this.getState("chiTietList") as ChungTuChiTiet[])?.find(
+      (ct) => ct.doiTuongSnapshot,
+    );
+    const doiTuongTen = doiTuong?.doiTuongSnapshot?.ten as string | undefined;
+    const doiTuongMst = doiTuong?.doiTuongSnapshot?.maSoThue as string | undefined;
+
+    await Promise.all(
+      hoaDon.map((hd) => {
+        const service = hd.loai === "mua" ? bangKeMuaVaoService : bangKeBanRaService;
+        if (hd.id) return service.ganChungTu(hd.id, soPhieu);
+        return service.create(
+          dungDongNhap({
+            soHoaDon: hd.soHoaDon,
+            loai: hd.loai,
+            ngayChungTu: header.ngay.format("YYYY-MM-DD"),
+            soChungTu: soPhieu,
+            doiTuongTen,
+            doiTuongMst,
+          }),
+        );
+      }),
+    );
+  }
+
+  /** Bọc ghiHoaDon: hỏng thì báo rõ chứng từ ĐÃ lưu, không ném tiếp. */
+  private async ghiHoaDonAnToan(soPhieu: string, header: ChungTuHeader): Promise<void> {
+    try {
+      await this.ghiHoaDon(soPhieu, header);
+    } catch (e) {
+      console.error("gan hoa don that bai", e);
+      message.error(
+        `Chứng từ ${soPhieu} đã lưu, nhưng chưa gắn được hóa đơn. Mở lại chứng từ và lưu lần nữa.`,
+      );
     }
   }
 
