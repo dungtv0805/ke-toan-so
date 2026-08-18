@@ -4,6 +4,9 @@ import {
   tongThanhToanHoaDon,
   dungDongNhap,
   timHoaDonCanGoLienKet,
+  khoaHoaDon,
+  chonDoiTuongHoaDon,
+  chonHanhDongHoaDonMoi,
   type HoaDonGan,
   type HoaDonDangGan,
 } from './hoaDonLienKet';
@@ -129,5 +132,122 @@ describe('timHoaDonCanGoLienKet', () => {
     const danhSachHienTai = [hienTai({ id: 'A' }), hienTai({ id: undefined, soHoaDon: 'HD0009' })];
 
     expect(timHoaDonCanGoLienKet(dangGanOServer, danhSachHienTai)).toEqual([]);
+  });
+});
+
+describe('khoaHoaDon', () => {
+  it('có id thì khóa là id', () => {
+    expect(khoaHoaDon({ id: 'x1', soHoaDon: 'HD001', loai: 'mua' })).toBe('x1');
+  });
+
+  it('hai hóa đơn TRÙNG SỐ khác nhà cung cấp cho ra hai khóa khác nhau', () => {
+    const a = khoaHoaDon({ id: 'ncc-a', soHoaDon: '000123', loai: 'mua' });
+    const b = khoaHoaDon({ id: 'ncc-b', soHoaDon: '000123', loai: 'mua' });
+    expect(a).not.toBe(b);
+  });
+
+  it('hóa đơn chưa có id: khóa gồm loại + số, mua và bán không đụng nhau', () => {
+    expect(khoaHoaDon({ soHoaDon: ' 000123 ', loai: 'mua' })).toBe('moi:mua:000123');
+    expect(khoaHoaDon({ soHoaDon: '000123', loai: 'ban' })).toBe('moi:ban:000123');
+  });
+});
+
+describe('chonDoiTuongHoaDon', () => {
+  const nganHang = { ten: 'Ngân hàng ACB' };
+  const khachHang = { ten: 'Khách hàng X', maSoThue: '0101010101' };
+  const nhaCungCap = { ten: 'NCC Y', maSoThue: '0202020202' };
+
+  it('phiếu thu (Nợ 111 ngân hàng / Có 131 khách) → hóa đơn bán ra lấy vế CÓ', () => {
+    const rows = [{ doiTuongSnapshot: nganHang, doiTuong2Snapshot: khachHang }];
+    expect(chonDoiTuongHoaDon(rows, 'ban')).toEqual({
+      ten: 'Khách hàng X',
+      mst: '0101010101',
+    });
+  });
+
+  it('phiếu chi (Nợ 331 NCC / Có 111) → hóa đơn mua vào lấy vế NỢ', () => {
+    const rows = [{ doiTuongSnapshot: nhaCungCap, doiTuong2Snapshot: nganHang }];
+    expect(chonDoiTuongHoaDon(rows, 'mua')).toEqual({
+      ten: 'NCC Y',
+      mst: '0202020202',
+    });
+  });
+
+  it('bên ưu tiên trống thì lùi về bên còn lại', () => {
+    expect(chonDoiTuongHoaDon([{ doiTuongSnapshot: nhaCungCap }], 'ban')).toEqual({
+      ten: 'NCC Y',
+      mst: '0202020202',
+    });
+    expect(chonDoiTuongHoaDon([{ doiTuong2Snapshot: khachHang }], 'mua')).toEqual({
+      ten: 'Khách hàng X',
+      mst: '0101010101',
+    });
+  });
+
+  it('quét mọi dòng chi tiết, không chỉ dòng đầu', () => {
+    const rows = [{}, { doiTuong2Snapshot: khachHang }];
+    expect(chonDoiTuongHoaDon(rows, 'ban').ten).toBe('Khách hàng X');
+  });
+
+  it('snapshot rỗng / không có dòng nào → trả rỗng, không ném', () => {
+    expect(chonDoiTuongHoaDon([], 'mua')).toEqual({});
+    expect(chonDoiTuongHoaDon([{ doiTuongSnapshot: {} }], 'mua')).toEqual({});
+    expect(chonDoiTuongHoaDon([{ doiTuongSnapshot: { ten: '   ' } }], 'mua')).toEqual({});
+  });
+
+  it('chỉ có MST, chưa có tên vẫn dùng được', () => {
+    expect(chonDoiTuongHoaDon([{ doiTuongSnapshot: { maSoThue: '999' } }], 'mua')).toEqual({
+      mst: '999',
+    });
+  });
+});
+
+describe('chonHanhDongHoaDonMoi', () => {
+  it('bảng kê chưa có số đó → tạo dòng nháp', () => {
+    expect(chonHanhDongHoaDonMoi('HD001', [], 'PC0001')).toEqual({ kieu: 'tao' });
+    expect(chonHanhDongHoaDonMoi('HD001', [{ id: 'a', soHoaDon: 'HD002' }], 'PC0001')).toEqual({
+      kieu: 'tao',
+    });
+  });
+
+  it('đã có dòng chưa gắn chứng từ → gắn vào dòng cũ, KHÔNG tạo trùng', () => {
+    const res = chonHanhDongHoaDonMoi('HD001', [{ id: 'a', soHoaDon: 'HD001' }], 'PC0001');
+    expect(res).toEqual({ kieu: 'gan', id: 'a' });
+  });
+
+  it('so số không phân biệt hoa thường và khoảng trắng', () => {
+    const res = chonHanhDongHoaDonMoi(' hd001 ', [{ id: 'a', soHoaDon: 'HD001' }], 'PC0001');
+    expect(res).toEqual({ kieu: 'gan', id: 'a' });
+  });
+
+  it('dòng đã gắn ĐÚNG chứng từ này → vẫn gắn lại (idempotent)', () => {
+    const res = chonHanhDongHoaDonMoi(
+      'HD001',
+      [{ id: 'a', soHoaDon: 'HD001', soChungTu: 'PC0001' }],
+      'PC0001',
+    );
+    expect(res).toEqual({ kieu: 'gan', id: 'a' });
+  });
+
+  it('số đó đang gắn chứng từ KHÁC → báo lỗi, không tạo và không cướp liên kết', () => {
+    const res = chonHanhDongHoaDonMoi(
+      'HD001',
+      [{ id: 'a', soHoaDon: 'HD001', soChungTu: 'PC9999' }],
+      'PC0001',
+    );
+    expect(res.kieu).toBe('loi');
+    expect((res as { lyDo: string }).lyDo).toContain('PC9999');
+  });
+
+  it('nhiều dòng cùng số đều rảnh → nhập nhằng, bắt chọn từ gợi ý', () => {
+    const res = chonHanhDongHoaDonMoi(
+      'HD001',
+      [
+        { id: 'a', soHoaDon: 'HD001' },
+        { id: 'b', soHoaDon: 'HD001' },
+      ],
+      'PC0001',
+    );
+    expect(res.kieu).toBe('loi');
   });
 });

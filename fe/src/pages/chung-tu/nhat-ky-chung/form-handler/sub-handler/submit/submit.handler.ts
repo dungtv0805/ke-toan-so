@@ -10,7 +10,15 @@ import { NhatKyChungFormStates, NhatKyChungFormEvents } from "../../nhat-ky-chun
 import { ChungTuHeader, ChungTuChiTiet, TaiKhoanItem } from "../init/init.state";
 import { DanhMuc, LoaiChungTu, LoaiGiaoDich } from "@/types";
 import { validateFieldRules, formatViolation } from "../../../fieldRulesValidation";
-import { dungDongNhap, timHoaDonCanGoLienKet, HoaDonDangGan } from "../../../hoaDonLienKet";
+import {
+  dungDongNhap,
+  timHoaDonCanGoLienKet,
+  chonDoiTuongHoaDon,
+  chonHanhDongHoaDonMoi,
+  type HanhDongHoaDonMoi,
+  type HoaDonDangGan,
+  type HoaDonGan,
+} from "../../../hoaDonLienKet";
 
 @RegisterHandler("nhat-ky-chung-form")
 export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyChungFormStates> {
@@ -115,7 +123,10 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
 
         // Update batch
         await nhatKyChungService.updateBatch(header.soPhieu, items);
-        await this.ghiHoaDonAnToan(header.soPhieu, header);
+        // Ghi hóa đơn hỏng thì KHÔNG báo thành công và KHÔNG rời màn — toast
+        // "Thành công" che mất lỗi là kế toán tin đã xong (spec §7.1). Chứng từ đã
+        // lưu vẫn giữ, người dùng chỉ cần bấm Lưu lại.
+        if (!(await this.ghiHoaDonAnToan(header.soPhieu, header))) return;
         message.success("Cập nhật chứng từ thành công");
       } else {
         // Build items for batch create (no id needed)
@@ -136,12 +147,14 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
         const created = await nhatKyChungService.createBatch(items);
         const soPhieuMoi = created[0]?.soPhieu;
         if (soPhieuMoi) {
-          await this.ghiHoaDonAnToan(soPhieuMoi, header);
+          // Xem ghi chú ở nhánh cập nhật: hỏng bước hóa đơn thì ở lại form.
+          if (!(await this.ghiHoaDonAnToan(soPhieuMoi, header))) return;
         } else if ((header.hoaDon || []).length > 0) {
           console.error("tao chung tu khong tra ve so phieu, khong the gan hoa don", created);
           message.error(
             "Chứng từ đã tạo, nhưng không xác định được số phiếu nên chưa gắn được hóa đơn. Mở lại chứng từ và lưu lần nữa.",
           );
+          return;
         }
         message.success("Tạo chứng từ thành công");
       }
@@ -168,6 +181,9 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
    */
   private async ghiHoaDon(soPhieu: string, header: ChungTuHeader): Promise<void> {
     const hoaDon = header.hoaDon || [];
+    const chiTietList = (this.getState("chiTietList") as ChungTuChiTiet[]) || [];
+    const svc = (loai: "mua" | "ban") =>
+      loai === "mua" ? bangKeMuaVaoService : bangKeBanRaService;
 
     const [muaMap, banMap] = await Promise.all([
       bangKeMuaVaoService.layTheoSoChungTu([soPhieu]),
@@ -177,64 +193,101 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
       ...(muaMap[soPhieu] || []).map((r) => ({ id: r.id, soHoaDon: r.soHoaDon, loai: "mua" as const })),
       ...(banMap[soPhieu] || []).map((r) => ({ id: r.id, soHoaDon: r.soHoaDon, loai: "ban" as const })),
     ];
-    const canGoLienKet = timHoaDonCanGoLienKet(dangGanOServer, hoaDon);
 
-    const doiTuong = (this.getState("chiTietList") as ChungTuChiTiet[])?.find(
-      (ct) => ct.doiTuongSnapshot,
+    // BƯỚC 1 — quyết định việc cho từng hóa đơn trên form TRƯỚC khi động vào server.
+    // Hóa đơn gõ tay (chưa có id) phải đối chiếu bảng kê: gõ đúng số của hóa đơn đã
+    // nhập (nhanh hơn debounce, hoặc gợi ý lỗi) mà cứ tạo mới là đẻ dòng trùng.
+    type KeHoach = { hd: HoaDonGan; hanhDong: HanhDongHoaDonMoi };
+    const traCuu = await Promise.allSettled(
+      hoaDon.map(async (hd): Promise<KeHoach> => {
+        if (hd.id) return { hd, hanhDong: { kieu: "gan", id: hd.id } };
+        const daCo = await svc(hd.loai).timTheoSoHoaDon(hd.soHoaDon);
+        return { hd, hanhDong: chonHanhDongHoaDonMoi(hd.soHoaDon, daCo, soPhieu) };
+      }),
     );
-    const doiTuongTen = doiTuong?.doiTuongSnapshot?.ten as string | undefined;
-    const doiTuongMst = doiTuong?.doiTuongSnapshot?.maSoThue as string | undefined;
 
+    const loi: string[] = [];
+    const keHoach: KeHoach[] = [];
+    traCuu.forEach((k, i) => {
+      if (k.status === "rejected") {
+        console.error("tra bang ke theo so hoa don that bai", k.reason);
+        loi.push(`${hoaDon[i].soHoaDon} (không tra được bảng kê)`);
+        return;
+      }
+      if (k.value.hanhDong.kieu === "loi") {
+        loi.push(`${hoaDon[i].soHoaDon}: ${k.value.hanhDong.lyDo}`);
+        return;
+      }
+      keHoach.push(k.value);
+    });
+
+    // Hóa đơn ở server chỉ cần gỡ khi KHÔNG nằm trong kế hoạch gắn lần này —
+    // tính sau bước 1 để dòng vừa được nhận diện lại không bị gỡ rồi gắn song song.
+    const sauKhiGan: HoaDonGan[] = keHoach.map((k) => ({
+      ...k.hd,
+      id: k.hanhDong.kieu === "gan" ? k.hanhDong.id : undefined,
+    }));
+    const canGoLienKet = timHoaDonCanGoLienKet(dangGanOServer, sauKhiGan);
+
+    // BƯỚC 2 — ghi.
     type ThaoTac = { soHoaDon: string; chay: () => Promise<unknown> };
 
-    const thaoTacGan: ThaoTac[] = hoaDon.map((hd) => {
-      const service = hd.loai === "mua" ? bangKeMuaVaoService : bangKeBanRaService;
+    const thaoTacGan: ThaoTac[] = keHoach.map(({ hd, hanhDong }) => {
+      const service = svc(hd.loai);
       return {
         soHoaDon: hd.soHoaDon,
-        chay: () =>
-          hd.id
-            ? service.ganChungTu(hd.id, soPhieu)
-            : service.create(
-                dungDongNhap({
-                  soHoaDon: hd.soHoaDon,
-                  loai: hd.loai,
-                  ngayChungTu: header.ngay.format("YYYY-MM-DD"),
-                  soChungTu: soPhieu,
-                  doiTuongTen,
-                  doiTuongMst,
-                }),
-              ),
+        chay: () => {
+          if (hanhDong.kieu === "gan") return service.ganChungTu(hanhDong.id, soPhieu);
+          // Đối tác của dòng nháp lấy theo BÊN của hóa đơn: mua vào → vế Nợ,
+          // bán ra → vế Có (phiếu thu Nợ 111 ngân hàng / Có 131 khách hàng).
+          const dt = chonDoiTuongHoaDon(chiTietList, hd.loai);
+          return service.create(
+            dungDongNhap({
+              soHoaDon: hd.soHoaDon,
+              loai: hd.loai,
+              ngayChungTu: header.ngay.format("YYYY-MM-DD"),
+              soChungTu: soPhieu,
+              doiTuongTen: dt.ten,
+              doiTuongMst: dt.mst,
+            }),
+          );
+        },
       };
     });
 
     const thaoTacGo: ThaoTac[] = canGoLienKet.map((hd) => ({
       soHoaDon: hd.soHoaDon,
-      chay: () => (hd.loai === "mua" ? bangKeMuaVaoService : bangKeBanRaService).goLienKet(hd.id),
+      chay: () => svc(hd.loai).goLienKet(hd.id),
     }));
 
     const tatCa = [...thaoTacGan, ...thaoTacGo];
-    if (!tatCa.length) return;
-
-    const ketQua = await Promise.allSettled(tatCa.map((t) => t.chay()));
-    const loi = ketQua
-      .map((k, i) => (k.status === "rejected" ? tatCa[i].soHoaDon : null))
-      .filter((s): s is string => s !== null);
+    if (tatCa.length) {
+      const ketQua = await Promise.allSettled(tatCa.map((t) => t.chay()));
+      ketQua.forEach((k, i) => {
+        if (k.status === "rejected") {
+          console.error("ghi hoa don that bai", tatCa[i].soHoaDon, k.reason);
+          loi.push(tatCa[i].soHoaDon);
+        }
+      });
+    }
 
     if (loi.length) {
-      throw new Error(`hóa đơn ${loi.join(", ")}`);
+      throw new Error(`hóa đơn ${loi.join("; ")}`);
     }
   }
 
   /** Bọc ghiHoaDon: hỏng thì báo rõ chứng từ ĐÃ lưu, không ném tiếp. */
-  private async ghiHoaDonAnToan(soPhieu: string, header: ChungTuHeader): Promise<void> {
+  private async ghiHoaDonAnToan(soPhieu: string, header: ChungTuHeader): Promise<boolean> {
     try {
       await this.ghiHoaDon(soPhieu, header);
+      return true;
     } catch (e) {
       console.error("gan hoa don that bai", e);
       const chiTiet = e instanceof Error && e.message ? ` (${e.message})` : "";
       message.error(
-        `Chứng từ ${soPhieu} đã lưu, nhưng chưa gắn được hóa đơn${chiTiet}. Mở lại chứng từ và lưu lần nữa.`,
+        `Chứng từ ${soPhieu} đã lưu, nhưng chưa gắn được hóa đơn${chiTiet}. Sửa lại ô Hóa đơn rồi bấm Lưu lần nữa.`,
       );
+      return false;
     }
   }
 
