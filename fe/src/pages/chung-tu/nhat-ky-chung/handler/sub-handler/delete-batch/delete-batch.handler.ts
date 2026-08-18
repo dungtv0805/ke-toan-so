@@ -4,10 +4,12 @@ import { nhatKyChungService } from "@/services/nhatKyChungService";
 import { message } from "antd";
 import "./delete-batch.event";
 import "./delete-batch.state";
+import type { DeleteBatchParams } from "./delete-batch.event";
 import {
   NhatKyChungStates,
   NhatKyChungEvents,
 } from "../../nhat-ky-chung.handler";
+import { goLienKetChoCacSoPhieu, loiGoLienKetMessage } from "../../goLienKetHoaDon";
 
 @RegisterHandler("nhat-ky-chung")
 export class DeleteBatchHandler extends CSubHanlder<
@@ -15,10 +17,7 @@ export class DeleteBatchHandler extends CSubHanlder<
   NhatKyChungStates
 > {
   @HandlerDecorator("deleteBatch")
-  async deleteBatch(params: { ids: string[] }): Promise<void> {
-    // Xóa hàng loạt KHÔNG tự gỡ liên kết hóa đơn: event chỉ có mảng id, không có
-    // số phiếu. Gỡ tay ở Bảng kê (nút "Gỡ liên kết"). Hóa đơn không bao giờ bị xóa
-    // theo chứng từ nên đây là lệch nhãn, không phải mất dữ liệu.
+  async deleteBatch(params: DeleteBatchParams): Promise<void> {
     if (!params.ids || params.ids.length === 0) return;
 
     this.setState("deletingBatch", true);
@@ -28,6 +27,15 @@ export class DeleteBatchHandler extends CSubHanlder<
         res.skipped > 0 ? `, bỏ qua ${res.skipped} bút toán đã duyệt` : "";
       message.success(`Đã xóa ${res.deleted} bút toán${skippedMsg}`);
       this.setState("selectedEntryIds", []);
+
+      // Xóa nhóm là thao tác thường hơn xóa từng dòng: bỏ bước gỡ ở đây thì phần
+      // lớn chứng từ bị xóa để lại liên kết treo. Hóa đơn KHÔNG bị xóa theo chứng
+      // từ — chỉ gỡ, và chỉ với số phiếu đã hết sạch bút toán (bút toán đã duyệt
+      // bị bỏ qua nên số phiếu đó vẫn còn dòng, hàm dùng chung tự kiểm).
+      const hong = await goLienKetChoCacSoPhieu(params.soPhieuList || []);
+      const canhBao = loiGoLienKetMessage(hong);
+      if (canhBao) message.warning(canhBao);
+
       await this.executeEvent("refresh", {});
     } catch (error) {
       const err = error as { message?: string };

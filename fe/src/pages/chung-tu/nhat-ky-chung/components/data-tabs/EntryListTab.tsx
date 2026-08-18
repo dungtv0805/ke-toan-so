@@ -1024,8 +1024,10 @@ export function EntryListTab() {
     [t]
   );
 
+  // pageKey bump '.v2': thêm cột "HĐ". Lựa chọn cột lưu theo danh sách key ĐƯỢC
+  // HIỆN, nên ai đã từng mở bộ chọn cột sẽ không bao giờ thấy cột mới nếu giữ key cũ.
   const { columns: visibleColumns, chooserButton } = useColumnVisibility(
-    "nkc.entryList",
+    "nkc.entryList.v2",
     columns,
     labelOf,
     {
@@ -1062,7 +1064,15 @@ export function EntryListTab() {
               okButtonProps={{ danger: true }}
               cancelText="Hủy"
               onConfirm={() =>
-                handler.executeEvent("deleteBatch", { ids: selectedEntryIds })
+                handler.executeEvent("deleteBatch", {
+                  ids: selectedEntryIds,
+                  // Số phiếu của các dòng đã chọn — handler cần để gỡ liên kết hóa
+                  // đơn của chứng từ đã hết sạch bút toán.
+                  soPhieuList: (data || [])
+                    .filter((d) => selectedEntryIds.includes(d.id))
+                    .map((d) => d.soPhieu)
+                    .filter(Boolean),
+                })
               }
             >
               <Button
