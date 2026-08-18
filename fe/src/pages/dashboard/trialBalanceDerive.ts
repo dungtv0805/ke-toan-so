@@ -110,5 +110,10 @@ export function doiChieuCongNo(tb: TrialBalance[], loai: 'thu' | 'tra'): DoiChie
     }
   }
 
-  return Array.from(gop.values()).sort((a, b) => b.duCuoiKy - a.duCuoiKy);
+  // Đối tượng đã tất toán (số dư cuối kỳ 0) không có gì để đối chiếu — giữ lại chỉ
+  // làm dài bảng. Làm tròn về đồng trước khi so 0 vì số dư là tổng của nhiều số
+  // thực, phần lẻ 1e-9 sẽ khiến dòng đã sạch nợ vẫn hiện.
+  return Array.from(gop.values())
+    .filter((r) => Math.round(r.duCuoiKy) !== 0)
+    .sort((a, b) => b.duCuoiKy - a.duCuoiKy);
 }

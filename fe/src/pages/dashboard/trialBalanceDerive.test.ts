@@ -188,6 +188,39 @@ describe('doiChieuCongNo', () => {
     expect(doiChieuCongNo([tk({ taiKhoan: '131', soDuCuoiKyNo: 500 })], 'thu')).toEqual([]);
   });
 
+  it('bỏ đối tượng có số dư cuối kỳ bằng 0 — đã tất toán trong kỳ thì không cần đối chiếu', () => {
+    const tb = [
+      tk({
+        taiKhoan: '131',
+        doiTuongChiTiet: [
+          tk({ taiKhoan: 'KH01', tenTaiKhoan: 'Đã trả hết', phatSinhNo: 500, phatSinhCo: 500, soDuCuoiKyNo: 0 }),
+          tk({ taiKhoan: 'KH02', tenTaiKhoan: 'Còn nợ', phatSinhNo: 300, soDuCuoiKyNo: 300 }),
+        ],
+      }),
+    ];
+    expect(doiChieuCongNo(tb, 'thu').map((r) => r.ma)).toEqual(['KH02']);
+  });
+
+  it('giữ dòng có số dư cuối kỳ ÂM — trả thừa vẫn là số dư cần đối chiếu', () => {
+    const tb = [
+      tk({
+        taiKhoan: '131',
+        doiTuongChiTiet: [tk({ taiKhoan: 'KH01', tenTaiKhoan: 'Trả thừa', soDuCuoiKyNo: -200 })],
+      }),
+    ];
+    expect(doiChieuCongNo(tb, 'thu')).toHaveLength(1);
+  });
+
+  it('bỏ dòng chỉ còn lẻ dưới 1 đồng do cộng dồn số thực', () => {
+    const tb = [
+      tk({
+        taiKhoan: '131',
+        doiTuongChiTiet: [tk({ taiKhoan: 'KH01', tenTaiKhoan: 'Lẻ', soDuCuoiKyNo: 0.0000001 })],
+      }),
+    ];
+    expect(doiChieuCongNo(tb, 'thu')).toEqual([]);
+  });
+
   it('sắp xếp giảm dần theo số dư cuối kỳ', () => {
     const tb = [
       tk({
