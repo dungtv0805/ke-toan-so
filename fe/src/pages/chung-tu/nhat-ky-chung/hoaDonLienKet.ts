@@ -23,6 +23,27 @@ export function tongThanhToanHoaDon(list: HoaDonGan[]): number {
   return list.reduce((s, h) => s + (Number(h.tongThanhToan) || 0), 0);
 }
 
+/** Một hóa đơn đang THẬT SỰ gắn với chứng từ ở server (từ `layTheoSoChungTu`). */
+export interface HoaDonDangGan {
+  id: string;
+  soHoaDon: string;
+  loai: LoaiHoaDon;
+}
+
+/**
+ * Hóa đơn cần gỡ liên kết khi lưu chứng từ: đang gắn ở server (nguồn sự thật)
+ * nhưng không còn nằm trong danh sách hiện tại trên form — người dùng đã bỏ
+ * chip ra khỏi ô. Hóa đơn mới gõ trên form (chưa có `id`) không nằm trong
+ * `dangGanOServer` nên không bao giờ bị tính nhầm vào đây.
+ */
+export function timHoaDonCanGoLienKet(
+  dangGanOServer: HoaDonDangGan[],
+  danhSachHienTai: HoaDonGan[],
+): HoaDonDangGan[] {
+  const idHienTai = new Set(danhSachHienTai.filter((h) => h.id).map((h) => h.id));
+  return dangGanOServer.filter((hd) => !idHienTai.has(hd.id));
+}
+
 /**
  * Dòng bảng kê nháp sinh từ màn chứng từ: mới có số hóa đơn, chưa có số tiền.
  * `tenNguoiBan`/`tenNguoiMua` là trường BẮT BUỘC của DTO nên phải có giá trị —

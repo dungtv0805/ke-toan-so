@@ -3,7 +3,9 @@ import {
   suyLoaiHoaDon,
   tongThanhToanHoaDon,
   dungDongNhap,
+  timHoaDonCanGoLienKet,
   type HoaDonGan,
+  type HoaDonDangGan,
 } from './hoaDonLienKet';
 
 describe('suyLoaiHoaDon', () => {
@@ -83,5 +85,49 @@ describe('dungDongNhap', () => {
 
   it('luôn đặt thuế suất mặc định 10 để BE không rớt @IsIn', () => {
     expect(dungDongNhap({ ...args, loai: 'mua' }).thueSuat).toBe('10');
+  });
+});
+
+describe('timHoaDonCanGoLienKet', () => {
+  const ganServer = (over: Partial<HoaDonDangGan>): HoaDonDangGan => ({
+    id: 'A',
+    soHoaDon: 'HD0001',
+    loai: 'mua',
+    ...over,
+  });
+  const hienTai = (over: Partial<HoaDonGan>): HoaDonGan => ({
+    id: 'A',
+    soHoaDon: 'HD0001',
+    loai: 'mua',
+    ...over,
+  });
+
+  it('bỏ 1 trong 2 chip → chỉ hóa đơn bị bỏ cần gỡ liên kết', () => {
+    const dangGanOServer = [ganServer({ id: 'A' }), ganServer({ id: 'B', soHoaDon: 'HD0002' })];
+    const danhSachHienTai = [hienTai({ id: 'A' })]; // đã bỏ B khỏi ô
+
+    expect(timHoaDonCanGoLienKet(dangGanOServer, danhSachHienTai)).toEqual([
+      ganServer({ id: 'B', soHoaDon: 'HD0002' }),
+    ]);
+  });
+
+  it('không bỏ gì → không có hóa đơn nào cần gỡ liên kết', () => {
+    const dangGanOServer = [ganServer({ id: 'A' }), ganServer({ id: 'B', soHoaDon: 'HD0002' })];
+    const danhSachHienTai = [hienTai({ id: 'A' }), hienTai({ id: 'B', soHoaDon: 'HD0002' })];
+
+    expect(timHoaDonCanGoLienKet(dangGanOServer, danhSachHienTai)).toEqual([]);
+  });
+
+  it('bỏ hết chip → tất cả hóa đơn đang gắn ở server đều cần gỡ liên kết', () => {
+    const dangGanOServer = [ganServer({ id: 'A' }), ganServer({ id: 'B', soHoaDon: 'HD0002' })];
+
+    expect(timHoaDonCanGoLienKet(dangGanOServer, [])).toEqual(dangGanOServer);
+  });
+
+  it('hóa đơn mới gõ trên form (chưa có id) không bị tính nhầm vào danh sách cần gỡ', () => {
+    const dangGanOServer = [ganServer({ id: 'A' })];
+    const danhSachHienTai = [hienTai({ id: 'A' }), hienTai({ id: undefined, soHoaDon: 'HD0009' })];
+
+    expect(timHoaDonCanGoLienKet(dangGanOServer, danhSachHienTai)).toEqual([]);
   });
 });

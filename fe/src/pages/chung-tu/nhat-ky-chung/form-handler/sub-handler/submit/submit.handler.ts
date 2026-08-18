@@ -10,7 +10,7 @@ import { NhatKyChungFormStates, NhatKyChungFormEvents } from "../../nhat-ky-chun
 import { ChungTuHeader, ChungTuChiTiet, TaiKhoanItem } from "../init/init.state";
 import { DanhMuc, LoaiChungTu, LoaiGiaoDich } from "@/types";
 import { validateFieldRules, formatViolation } from "../../../fieldRulesValidation";
-import { dungDongNhap } from "../../../hoaDonLienKet";
+import { dungDongNhap, timHoaDonCanGoLienKet, HoaDonDangGan } from "../../../hoaDonLienKet";
 
 @RegisterHandler("nhat-ky-chung-form")
 export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyChungFormStates> {
@@ -135,7 +135,14 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
         // Create batch
         const created = await nhatKyChungService.createBatch(items);
         const soPhieuMoi = created[0]?.soPhieu;
-        if (soPhieuMoi) await this.ghiHoaDonAnToan(soPhieuMoi, header);
+        if (soPhieuMoi) {
+          await this.ghiHoaDonAnToan(soPhieuMoi, header);
+        } else if ((header.hoaDon || []).length > 0) {
+          console.error("tao chung tu khong tra ve so phieu, khong the gan hoa don", created);
+          message.error(
+            "Chứng từ đã tạo, nhưng không xác định được số phiếu nên chưa gắn được hóa đơn. Mở lại chứng từ và lưu lần nữa.",
+          );
+        }
         message.success("Tạo chứng từ thành công");
       }
 
@@ -153,10 +160,24 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
    * Ghi liên kết hóa đơn SAU KHI chứng từ đã lưu — chứng từ mới chưa có số phiếu
    * trước đó. Hai lần ghi vào hai service khác nhau, không có transaction chung:
    * hỏng bước này thì KHÔNG rollback chứng từ, báo để người nhập bấm lưu lại.
+   *
+   * Trước khi gắn/tạo, đọc lại từ SERVER (nguồn sự thật) những hóa đơn đang
+   * thật sự gắn với số phiếu này. Hóa đơn nào đã bị bỏ chip khỏi ô trên form
+   * (không còn trong `header.hoaDon`) thì gỡ liên kết — spec §5.4: bỏ chip →
+   * dòng bảng kê về `soChungTu` rỗng, dòng vẫn còn.
    */
   private async ghiHoaDon(soPhieu: string, header: ChungTuHeader): Promise<void> {
     const hoaDon = header.hoaDon || [];
-    if (!hoaDon.length) return;
+
+    const [muaMap, banMap] = await Promise.all([
+      bangKeMuaVaoService.layTheoSoChungTu([soPhieu]),
+      bangKeBanRaService.layTheoSoChungTu([soPhieu]),
+    ]);
+    const dangGanOServer: HoaDonDangGan[] = [
+      ...(muaMap[soPhieu] || []).map((r) => ({ id: r.id, soHoaDon: r.soHoaDon, loai: "mua" as const })),
+      ...(banMap[soPhieu] || []).map((r) => ({ id: r.id, soHoaDon: r.soHoaDon, loai: "ban" as const })),
+    ];
+    const canGoLienKet = timHoaDonCanGoLienKet(dangGanOServer, hoaDon);
 
     const doiTuong = (this.getState("chiTietList") as ChungTuChiTiet[])?.find(
       (ct) => ct.doiTuongSnapshot,
@@ -164,22 +185,44 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
     const doiTuongTen = doiTuong?.doiTuongSnapshot?.ten as string | undefined;
     const doiTuongMst = doiTuong?.doiTuongSnapshot?.maSoThue as string | undefined;
 
-    await Promise.all(
-      hoaDon.map((hd) => {
-        const service = hd.loai === "mua" ? bangKeMuaVaoService : bangKeBanRaService;
-        if (hd.id) return service.ganChungTu(hd.id, soPhieu);
-        return service.create(
-          dungDongNhap({
-            soHoaDon: hd.soHoaDon,
-            loai: hd.loai,
-            ngayChungTu: header.ngay.format("YYYY-MM-DD"),
-            soChungTu: soPhieu,
-            doiTuongTen,
-            doiTuongMst,
-          }),
-        );
-      }),
-    );
+    type ThaoTac = { soHoaDon: string; chay: () => Promise<unknown> };
+
+    const thaoTacGan: ThaoTac[] = hoaDon.map((hd) => {
+      const service = hd.loai === "mua" ? bangKeMuaVaoService : bangKeBanRaService;
+      return {
+        soHoaDon: hd.soHoaDon,
+        chay: () =>
+          hd.id
+            ? service.ganChungTu(hd.id, soPhieu)
+            : service.create(
+                dungDongNhap({
+                  soHoaDon: hd.soHoaDon,
+                  loai: hd.loai,
+                  ngayChungTu: header.ngay.format("YYYY-MM-DD"),
+                  soChungTu: soPhieu,
+                  doiTuongTen,
+                  doiTuongMst,
+                }),
+              ),
+      };
+    });
+
+    const thaoTacGo: ThaoTac[] = canGoLienKet.map((hd) => ({
+      soHoaDon: hd.soHoaDon,
+      chay: () => (hd.loai === "mua" ? bangKeMuaVaoService : bangKeBanRaService).goLienKet(hd.id),
+    }));
+
+    const tatCa = [...thaoTacGan, ...thaoTacGo];
+    if (!tatCa.length) return;
+
+    const ketQua = await Promise.allSettled(tatCa.map((t) => t.chay()));
+    const loi = ketQua
+      .map((k, i) => (k.status === "rejected" ? tatCa[i].soHoaDon : null))
+      .filter((s): s is string => s !== null);
+
+    if (loi.length) {
+      throw new Error(`hóa đơn ${loi.join(", ")}`);
+    }
   }
 
   /** Bọc ghiHoaDon: hỏng thì báo rõ chứng từ ĐÃ lưu, không ném tiếp. */
@@ -188,8 +231,9 @@ export class SubmitFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
       await this.ghiHoaDon(soPhieu, header);
     } catch (e) {
       console.error("gan hoa don that bai", e);
+      const chiTiet = e instanceof Error && e.message ? ` (${e.message})` : "";
       message.error(
-        `Chứng từ ${soPhieu} đã lưu, nhưng chưa gắn được hóa đơn. Mở lại chứng từ và lưu lần nữa.`,
+        `Chứng từ ${soPhieu} đã lưu, nhưng chưa gắn được hóa đơn${chiTiet}. Mở lại chứng từ và lưu lần nữa.`,
       );
     }
   }
