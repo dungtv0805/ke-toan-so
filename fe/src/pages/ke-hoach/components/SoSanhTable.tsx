@@ -65,18 +65,22 @@ export const SoSanhTable: React.FC = () => {
 
   if (!loading && (!ketQua || ketQua.rows.length === 0)) {
     return (
-      <Empty
-        className="py-16"
-        description={`Chưa có số liệu cho "${tieuDe}" trong kỳ đang lọc`}
-      />
+      <div className="excel-tab-content">
+        <Empty
+          className="py-16"
+          description={`Chưa có số liệu cho "${tieuDe}" trong kỳ đang lọc`}
+        />
+      </div>
     );
   }
 
   return (
+    <div className="excel-tab-content">
     <Table<SoSanhRow>
       rowKey="key"
       size="small"
       bordered
+      className="excel-table"
       loading={loading as boolean}
       columns={columns}
       dataSource={ketQua?.rows ?? []}
@@ -106,5 +110,6 @@ export const SoSanhTable: React.FC = () => {
         ) : null
       }
     />
+    </div>
   );
 };

@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
-import { Card } from "antd";
 import type { LoaiKeHoach } from "@/services/keHoachService";
 import { KeHoachHandlerProvider, useKeHoachHandler, useKeHoachState } from "./KeHoachHandlerContext";
 import { FilterBar } from "./components/FilterBar";
+import { ToolbarSlotProvider } from "./components/toolbar-slot/ToolbarSlot";
 import { KeHoachTable } from "./components/KeHoachTable";
 import { SoSanhTable } from "./components/SoSanhTable";
 
@@ -21,11 +21,12 @@ const KeHoachPageInner: React.FC<Props> = ({ loaiKeHoach }) => {
   }, [loaiKeHoach]);
 
   return (
-    <div className="p-2">
-      <FilterBar />
-      <Card size="small" styles={{ body: { padding: 0 } }}>
+    // Bố cục bám đúng NhatKyChungPage: hàng lọc + vùng bảng chiếm hết chiều cao.
+    <div className="nkc-page">
+      <ToolbarSlotProvider>
+        <FilterBar />
         {view === "list" ? <KeHoachTable /> : <SoSanhTable />}
-      </Card>
+      </ToolbarSlotProvider>
     </div>
   );
 };

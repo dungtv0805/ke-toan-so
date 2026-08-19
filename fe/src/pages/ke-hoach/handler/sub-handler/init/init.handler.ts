@@ -14,7 +14,10 @@ import { chuDauTuService } from "@/services/chuDauTuService";
 import { nhomKhoanMucService } from "@/services/nhomKhoanMucService";
 import { quyChauanService } from "@/services/quyChaunService";
 import type { KeHoachEvents, KeHoachStates } from "../../ke-hoach.handler";
-import { buildFilters } from "../../../lib/keHoachFilters";
+import {
+  buildFilters,
+  KE_HOACH_FILTER_STATE_KEYS,
+} from "../../../lib/keHoachFilters";
 import "./init.event";
 import "./init.state";
 
@@ -165,6 +168,10 @@ export class KeHoachInitHandler extends CSubHanlder<KeHoachEvents, KeHoachStates
     ];
     for (const [key, value] of mac) {
       if (!this.hasState(key)) this.setState(key, value);
+    }
+    // Tiêu chí lọc theo cột — khởi tạo rỗng để popover header cột có state để đọc.
+    for (const key of KE_HOACH_FILTER_STATE_KEYS) {
+      if (!this.hasState(key)) this.setState(key, undefined);
     }
   }
 }

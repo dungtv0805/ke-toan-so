@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   Table,
   Select,
@@ -16,22 +16,62 @@ import {
   SaveOutlined,
   CloseOutlined,
   CopyOutlined,
+  ReloadOutlined,
+  FileExcelOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
-import type { ColumnsType } from "antd/es/table";
-import type { KeHoachDong } from "@/services/keHoachService";
+import type { ColumnType, ColumnsType } from "antd/es/table";
+import { useColumnVisibility } from "@/components/table/useColumnVisibility";
+import { useTableColumnResize } from "@/hooks/useTableColumnResize";
+import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
+import { usePagePermission } from "@/hooks/usePagePermission";
+import type { KeHoachDong, LoaiKeHoach } from "@/services/keHoachService";
 import { useKeHoachHandler, useKeHoachState } from "../KeHoachHandlerContext";
+import { useKeHoachColumnFilters } from "../hooks/useKeHoachColumnFilters";
 import { DONG_MOI_ID } from "../handler/sub-handler/row-edit/row-edit.state";
 import { ngayLuu, nhomKhoanMucCua, type MucDanhMuc, type RowValues } from "../lib/keHoachRow";
+import { ToolbarSlot } from "./toolbar-slot/ToolbarSlot";
+import { ImportKeHoachModal } from "../import/ImportKeHoachModal";
+
+const WIDTH_STORAGE_KEY = "table-col-widths-ke-hoach-v1";
 
 const tien = (v?: number) => new Intl.NumberFormat("vi-VN").format(v ?? 0);
 
-const trong = <span className="text-gray-400">-</span>;
+/** Chữ trong ô: hiện đủ, dài thì xuống dòng — cùng cách render với bảng bút toán. */
+const renderEllipsisText = (text: string | undefined | null) => {
+  if (!text) return <span className="text-gray-400">-</span>;
+  return <span className="excel-cell-text">{text}</span>;
+};
 
 const toOptions = (list: MucDanhMuc[] = []) =>
   list.map((m) => ({ value: m.ma, label: `${m.ma} - ${m.ten}` }));
 
-/** Lưới 17 cột của Kế hoạch / Dự báo — cấu trúc bám đúng "Dữ liệu tổng hợp". */
+/** Bề rộng mặc định từng cột (người dùng kéo tay được, lưu ở localStorage). */
+const DEFAULT_WIDTHS: Record<string, number> = {
+  ngay: 120,
+  nghiepVu: 150,
+  noiDung: 200,
+  taiKhoanNo: 80,
+  taiKhoanCo: 80,
+  soTien: 120,
+  doiTuong: 130,
+  doiTuong2: 130,
+  chuDauTu: 130,
+  duAn: 130,
+  sanPham: 130,
+  boPhan: 120,
+  doi: 110,
+  nhanVien: 120,
+  dongTien: 110,
+  khoanMuc: 120,
+  nhomKhoanMuc: 130,
+  nhomQuanLy: 120,
+  action: 96,
+};
+
+const TOTAL_WIDTH = Object.values(DEFAULT_WIDTHS).reduce((s, w) => s + w, 0);
+
+/** Lưới 17 cột của Kế hoạch / Dự báo — giao diện bám đúng bảng bút toán. */
 export const KeHoachTable: React.FC = () => {
   const handler = useKeHoachHandler();
   const [data] = useKeHoachState("data", []);
@@ -41,6 +81,7 @@ export const KeHoachTable: React.FC = () => {
   const [editingValues] = useKeHoachState("editingValues", {});
   const [savingRow] = useKeHoachState("savingRow", false);
   const [selectedRowKeys] = useKeHoachState("selectedRowKeys", []);
+  const [loaiKeHoach] = useKeHoachState("loaiKeHoach", "KE_HOACH");
 
   const [taiKhoanList] = useKeHoachState("taiKhoanList", []);
   const [doiTuongList] = useKeHoachState("doiTuongList", []);
@@ -54,10 +95,25 @@ export const KeHoachTable: React.FC = () => {
   const [nhomKhoanMucList] = useKeHoachState("nhomKhoanMucList", []);
   const [quyChuanList] = useKeHoachState("quyChuanList", []);
 
+  const [importOpen, setImportOpen] = useState(false);
+  const { withColumnFilter } = useKeHoachColumnFilters();
+  const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
+  useTableColumnResize("resizable-table", WIDTH_STORAGE_KEY);
+
+  const duongDan =
+    (loaiKeHoach as LoaiKeHoach) === "DU_BAO"
+      ? "/trung-tam-du-lieu/du-bao"
+      : "/trung-tam-du-lieu/ke-hoach";
+  const { canCreate, canDelete } = usePagePermission(duongDan);
+
   const values = (editingValues ?? {}) as RowValues;
   const dangSua = (record: KeHoachDong) => record.id === editingRowId;
   const doi = (field: keyof RowValues, value: unknown) =>
     handler.executeEvent("doiGiaTri", { field, value });
+  const lamMoi = useCallback(
+    () => handler.executeEvent("refresh", {}),
+    [handler],
+  );
 
   const opts = useMemo(
     () => ({
@@ -70,9 +126,7 @@ export const KeHoachTable: React.FC = () => {
         ),
       ),
       doi: toOptions(
-        (boPhanList as MucDanhMuc[]).filter((b) =>
-          b.ten?.toLowerCase().includes("đội"),
-        ),
+        (boPhanList as MucDanhMuc[]).filter((b) => b.ten?.toLowerCase().includes("đội")),
       ),
       boPhan: toOptions(boPhanList as MucDanhMuc[]),
       duAn: toOptions(duAnList as MucDanhMuc[]),
@@ -101,7 +155,7 @@ export const KeHoachTable: React.FC = () => {
     ],
   );
 
-  /** Ô chọn danh mục: đang sửa thì thành Select, không thì hiện tên đã chốt. */
+  /** Ô danh mục: đang sửa dòng thì thành Select, không thì hiện tên đã chốt. */
   const oChon = (
     record: KeHoachDong,
     field: keyof RowValues,
@@ -114,7 +168,7 @@ export const KeHoachTable: React.FC = () => {
         showSearch
         allowClear
         variant="borderless"
-        className="w-full"
+        className="w-full excel-cell-input"
         optionFilterProp="label"
         placeholder="Chọn"
         popupMatchSelectWidth={280}
@@ -127,267 +181,264 @@ export const KeHoachTable: React.FC = () => {
     );
 
   const ten = (v?: { ma?: string; ten?: string }) =>
-    v?.ten ? <Tooltip title={v.ma}>{v.ten}</Tooltip> : trong;
+    v?.ten ? <Tooltip title={v.ma}>{renderEllipsisText(v.ten)}</Tooltip> : renderEllipsisText(null);
 
-  const columns: ColumnsType<KeHoachDong> = [
-    {
-      title: "Ngày phát sinh",
-      key: "ngay",
-      width: 130,
-      fixed: "left",
-      render: (_, record) =>
-        dangSua(record) ? (
-          <DatePicker
-            size="small"
-            variant="borderless"
-            format="DD/MM/YYYY"
-            allowClear={false}
-            value={values.ngay ? dayjs(values.ngay) : undefined}
-            onChange={(d) => doi("ngay", d ? ngayLuu(d) : undefined)}
-          />
-        ) : (
-          dayjs(record.ngay).format("DD/MM/YYYY")
-        ),
-    },
-    {
-      title: "Nghiệp vụ",
-      key: "nghiepVu",
-      width: 170,
-      render: (_, record) =>
-        oChon(record, "nghiepVu", opts.nghiepVu, record.danhMuc?.nghiepVu?.ten ?? trong),
-    },
-    {
-      title: "Diễn giải",
-      key: "noiDung",
-      width: 220,
-      render: (_, record) =>
-        dangSua(record) ? (
-          <Input
-            size="small"
-            variant="borderless"
-            value={values.noiDung ?? ""}
-            onChange={(e) => doi("noiDung", e.target.value)}
-          />
-        ) : (
-          record.noiDung || trong
-        ),
-    },
-    {
-      title: "TK Nợ",
-      key: "taiKhoanNo",
-      width: 110,
-      render: (_, record) =>
-        oChon(
-          record,
-          "taiKhoanNo",
-          opts.taiKhoan,
-          record.danhMuc?.taiKhoanNo?.ma ? (
-            <Tooltip title={record.danhMuc.taiKhoanNo.ten}>
-              {record.danhMuc.taiKhoanNo.ma}
-            </Tooltip>
+  const baseColumns: ColumnsType<KeHoachDong> = useMemo(
+    () => [
+      {
+        title: "Ngày phát sinh",
+        key: "ngay",
+        fixed: "left",
+        render: (_, record) =>
+          dangSua(record) ? (
+            <DatePicker
+              size="small"
+              variant="borderless"
+              format="DD/MM/YYYY"
+              allowClear={false}
+              className="excel-cell-input"
+              value={values.ngay ? dayjs(values.ngay) : undefined}
+              onChange={(d) => doi("ngay", d ? ngayLuu(d) : undefined)}
+            />
           ) : (
-            trong
+            dayjs(record.ngay).format("DD/MM/YY")
           ),
-        ),
-    },
-    {
-      title: "TK Có",
-      key: "taiKhoanCo",
-      width: 110,
-      render: (_, record) =>
-        oChon(
-          record,
-          "taiKhoanCo",
-          opts.taiKhoan,
-          record.danhMuc?.taiKhoanCo?.ma ? (
-            <Tooltip title={record.danhMuc.taiKhoanCo.ten}>
-              {record.danhMuc.taiKhoanCo.ma}
-            </Tooltip>
+      },
+      {
+        title: "Nghiệp vụ",
+        key: "nghiepVu",
+        render: (_, record) =>
+          oChon(
+            record,
+            "nghiepVu",
+            opts.nghiepVu,
+            renderEllipsisText(record.danhMuc?.nghiepVu?.ten),
+          ),
+      },
+      {
+        title: "Diễn giải",
+        key: "noiDung",
+        render: (_, record) =>
+          dangSua(record) ? (
+            <Input
+              size="small"
+              variant="borderless"
+              className="excel-cell-input"
+              value={values.noiDung ?? ""}
+              onChange={(e) => doi("noiDung", e.target.value)}
+            />
           ) : (
-            trong
+            renderEllipsisText(record.noiDung)
           ),
-        ),
-    },
-    {
-      title: "Số tiền",
-      key: "soTien",
-      width: 140,
-      align: "right",
-      render: (_, record) =>
-        dangSua(record) ? (
-          <InputNumber
-            size="small"
-            variant="borderless"
-            className="w-full"
-            min={0}
-            formatter={(v) => tien(Number(v))}
-            parser={(v) => Number((v ?? "").replace(/\D/g, ""))}
-            value={values.soTien ?? 0}
-            onChange={(v) => doi("soTien", v ?? 0)}
-          />
-        ) : (
-          <span className="font-medium">{tien(record.soTien)}</span>
-        ),
-    },
-    {
-      title: "ĐT Nợ",
-      key: "doiTuong",
-      width: 160,
-      render: (_, record) =>
-        oChon(record, "doiTuong", opts.doiTuong, ten(record.danhMuc?.doiTuong)),
-    },
-    {
-      title: "ĐT Có",
-      key: "doiTuong2",
-      width: 160,
-      render: (_, record) =>
-        oChon(record, "doiTuong2", opts.doiTuong, ten(record.danhMuc?.doiTuong2)),
-    },
-    {
-      title: "Chủ đầu tư",
-      key: "chuDauTu",
-      width: 160,
-      render: (_, record) =>
-        oChon(
-          record,
-          "chuDauTu",
-          opts.chuDauTu,
-          // Chủ đầu tư có thể đi kèm dự án nếu không chọn riêng.
-          ten(
-            record.danhMuc?.chuDauTu ??
-              (record.danhMuc?.duAn?.chuDauTuTen
-                ? {
-                    ma: record.danhMuc.duAn.chuDauTuMa,
-                    ten: record.danhMuc.duAn.chuDauTuTen,
-                  }
-                : undefined),
+      },
+      {
+        title: "TK Nợ",
+        key: "taiKhoanNo",
+        render: (_, record) =>
+          oChon(
+            record,
+            "taiKhoanNo",
+            opts.taiKhoan,
+            record.danhMuc?.taiKhoanNo?.ma ? (
+              <Tooltip title={record.danhMuc.taiKhoanNo.ten}>
+                <span className="text-blue-600">{record.danhMuc.taiKhoanNo.ma}</span>
+              </Tooltip>
+            ) : (
+              renderEllipsisText(null)
+            ),
           ),
-        ),
-    },
+      },
+      {
+        title: "TK Có",
+        key: "taiKhoanCo",
+        render: (_, record) =>
+          oChon(
+            record,
+            "taiKhoanCo",
+            opts.taiKhoan,
+            record.danhMuc?.taiKhoanCo?.ma ? (
+              <Tooltip title={record.danhMuc.taiKhoanCo.ten}>
+                <span className="text-blue-600">{record.danhMuc.taiKhoanCo.ma}</span>
+              </Tooltip>
+            ) : (
+              renderEllipsisText(null)
+            ),
+          ),
+      },
+      {
+        title: "Số tiền",
+        key: "soTien",
+        align: "right",
+        render: (_, record) =>
+          dangSua(record) ? (
+            <InputNumber
+              size="small"
+              variant="borderless"
+              className="w-full excel-cell-input"
+              min={0}
+              formatter={(v) => tien(Number(v))}
+              parser={(v) => Number((v ?? "").replace(/\D/g, ""))}
+              value={values.soTien ?? 0}
+              onChange={(v) => doi("soTien", v ?? 0)}
+            />
+          ) : (
+            <span className="font-medium">{tien(record.soTien)}</span>
+          ),
+      },
+      {
+        title: "ĐT Nợ",
+        key: "doiTuong",
+        render: (_, r) => oChon(r, "doiTuong", opts.doiTuong, ten(r.danhMuc?.doiTuong)),
+      },
+      {
+        title: "ĐT Có",
+        key: "doiTuong2",
+        render: (_, r) => oChon(r, "doiTuong2", opts.doiTuong, ten(r.danhMuc?.doiTuong2)),
+      },
+      {
+        title: "Chủ đầu tư",
+        key: "chuDauTu",
+        render: (_, r) =>
+          oChon(
+            r,
+            "chuDauTu",
+            opts.chuDauTu,
+            // Chủ đầu tư có thể đi kèm dự án nếu không chọn riêng.
+            ten(
+              r.danhMuc?.chuDauTu ??
+                (r.danhMuc?.duAn?.chuDauTuTen
+                  ? { ma: r.danhMuc.duAn.chuDauTuMa, ten: r.danhMuc.duAn.chuDauTuTen }
+                  : undefined),
+            ),
+          ),
+      },
+      { title: "Dự án", key: "duAn", render: (_, r) => oChon(r, "duAn", opts.duAn, ten(r.danhMuc?.duAn)) },
+      { title: "Sản phẩm", key: "sanPham", render: (_, r) => oChon(r, "sanPham", opts.sanPham, ten(r.danhMuc?.sanPham)) },
+      { title: "Bộ phận", key: "boPhan", render: (_, r) => oChon(r, "boPhan", opts.boPhan, ten(r.danhMuc?.boPhan)) },
+      { title: "Đội", key: "doi", render: (_, r) => oChon(r, "doi", opts.doi, ten(r.danhMuc?.doi)) },
+      { title: "Nhân viên", key: "nhanVien", render: (_, r) => oChon(r, "nhanVien", opts.nhanVien, ten(r.danhMuc?.nhanVien)) },
+      { title: "Dòng tiền", key: "dongTien", render: (_, r) => oChon(r, "dongTien", opts.dongTien, ten(r.danhMuc?.dongTien)) },
+      { title: "Khoản mục", key: "khoanMuc", render: (_, r) => oChon(r, "khoanMuc", opts.khoanMuc, ten(r.danhMuc?.khoanMuc)) },
+      {
+        // Nhóm khoản mục đi theo khoản mục đã chọn — không nhập tay, giống chứng từ.
+        title: "Nhóm khoản mục",
+        key: "nhomKhoanMuc",
+        render: (_, record) => {
+          const nhom = dangSua(record)
+            ? nhomKhoanMucCua(
+                {
+                  khoanMuc: (khoanMucList as MucDanhMuc[]).find(
+                    (k) => k.ma === values.khoanMuc,
+                  ) as never,
+                },
+                nhomKhoanMucList as MucDanhMuc[],
+              )
+            : nhomKhoanMucCua(record.danhMuc, nhomKhoanMucList as MucDanhMuc[]);
+          return renderEllipsisText(nhom);
+        },
+      },
+      {
+        title: "Nhóm quản lý",
+        key: "nhomQuanLy",
+        render: (_, r) => oChon(r, "nhomQuanLy", opts.nhomQuanLy, ten(r.danhMuc?.nhomQuanLy)),
+      },
+      {
+        title: <span>Chức năng</span>,
+        key: "action",
+        fixed: "right",
+        align: "center",
+        render: (_, record) =>
+          dangSua(record) ? (
+            <Space size={2}>
+              <Tooltip title="Lưu dòng">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<SaveOutlined />}
+                  loading={savingRow as boolean}
+                  onClick={() => handler.executeEvent("luuDong", {})}
+                />
+              </Tooltip>
+              <Tooltip title="Hủy">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<CloseOutlined />}
+                  onClick={() => handler.executeEvent("huySuaDong", {})}
+                />
+              </Tooltip>
+            </Space>
+          ) : (
+            <Space size={2}>
+              <Tooltip title="Sửa dòng">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() => handler.executeEvent("suaDong", { record })}
+                />
+              </Tooltip>
+              <Tooltip title="Nhân bản dòng">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<CopyOutlined />}
+                  onClick={() => handler.executeEvent("nhanBanDong", { record })}
+                />
+              </Tooltip>
+              {canDelete && (
+                <Popconfirm
+                  title="Xóa dòng kế hoạch này?"
+                  okText="Xóa"
+                  okButtonProps={{ danger: true }}
+                  cancelText="Hủy"
+                  onConfirm={() => handler.executeEvent("xoaDong", { id: record.id })}
+                >
+                  <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+                </Popconfirm>
+              )}
+            </Space>
+          ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [opts, values, editingRowId, savingRow, khoanMucList, nhomKhoanMucList, canDelete],
+  );
+
+  // Gắn nút lọc (kính lúp / phễu) vào header cột + bề rộng mặc định.
+  const columns = useMemo(
+    () =>
+      baseColumns.map((col) =>
+        withColumnFilter({
+          ...col,
+          width: DEFAULT_WIDTHS[col.key as string] || 120,
+        } as ColumnType<KeHoachDong>),
+      ),
+    [baseColumns, withColumnFilter],
+  );
+
+  const labelOf = useCallback((col: ColumnType<KeHoachDong>): string | null => {
+    const title = col.title as unknown;
+    return typeof title === "string" ? title.trim() || null : null;
+  }, []);
+
+  const { columns: visibleColumns, chooserButton } = useColumnVisibility(
+    "keHoach.list.v1",
+    columns,
+    labelOf,
     {
-      title: "Dự án",
-      key: "duAn",
-      width: 160,
-      render: (_, record) => oChon(record, "duAn", opts.duAn, ten(record.danhMuc?.duAn)),
-    },
-    {
-      title: "Sản phẩm",
-      key: "sanPham",
-      width: 160,
-      render: (_, record) =>
-        oChon(record, "sanPham", opts.sanPham, ten(record.danhMuc?.sanPham)),
-    },
-    {
-      title: "Bộ phận",
-      key: "boPhan",
-      width: 150,
-      render: (_, record) =>
-        oChon(record, "boPhan", opts.boPhan, ten(record.danhMuc?.boPhan)),
-    },
-    {
-      title: "Đội",
-      key: "doi",
-      width: 140,
-      render: (_, record) => oChon(record, "doi", opts.doi, ten(record.danhMuc?.doi)),
-    },
-    {
-      title: "Nhân viên",
-      key: "nhanVien",
-      width: 160,
-      render: (_, record) =>
-        oChon(record, "nhanVien", opts.nhanVien, ten(record.danhMuc?.nhanVien)),
-    },
-    {
-      title: "Dòng tiền",
-      key: "dongTien",
-      width: 150,
-      render: (_, record) =>
-        oChon(record, "dongTien", opts.dongTien, ten(record.danhMuc?.dongTien)),
-    },
-    {
-      title: "Khoản mục",
-      key: "khoanMuc",
-      width: 160,
-      render: (_, record) =>
-        oChon(record, "khoanMuc", opts.khoanMuc, ten(record.danhMuc?.khoanMuc)),
-    },
-    {
-      // Nhóm khoản mục đi theo khoản mục (không nhập tay) — xem spec Kế hoạch & Dự báo.
-      title: "Nhóm khoản mục",
-      key: "nhomKhoanMuc",
-      width: 160,
-      render: (_, record) => {
-        const nhom = dangSua(record)
-          ? nhomKhoanMucCua(
-              {
-                khoanMuc: (khoanMucList as MucDanhMuc[]).find(
-                  (k) => k.ma === values.khoanMuc,
-                ) as never,
-              },
-              nhomKhoanMucList as MucDanhMuc[],
-            )
-          : nhomKhoanMucCua(record.danhMuc, nhomKhoanMucList as MucDanhMuc[]);
-        return nhom ? <span className="text-gray-600">{nhom}</span> : trong;
+      // Width resize lưu theo CHỈ SỐ cột → ẩn/hiện làm lệch. Xoá để cột về mặc định.
+      onChange: () => {
+        try {
+          localStorage.removeItem(WIDTH_STORAGE_KEY);
+        } catch {
+          /* ignore */
+        }
       },
     },
-    {
-      title: "Nhóm quản lý",
-      key: "nhomQuanLy",
-      width: 160,
-      render: (_, record) =>
-        oChon(record, "nhomQuanLy", opts.nhomQuanLy, ten(record.danhMuc?.nhomQuanLy)),
-    },
-    {
-      title: "",
-      key: "action",
-      width: 96,
-      fixed: "right",
-      align: "center",
-      render: (_, record) =>
-        dangSua(record) ? (
-          <Space size={2}>
-            <Button
-              type="text"
-              size="small"
-              icon={<SaveOutlined />}
-              loading={savingRow as boolean}
-              onClick={() => handler.executeEvent("luuDong", {})}
-            />
-            <Button
-              type="text"
-              size="small"
-              icon={<CloseOutlined />}
-              onClick={() => handler.executeEvent("huySuaDong", {})}
-            />
-          </Space>
-        ) : (
-          <Space size={2}>
-            <Button
-              type="text"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => handler.executeEvent("suaDong", { record })}
-            />
-            <Button
-              type="text"
-              size="small"
-              icon={<CopyOutlined />}
-              onClick={() => handler.executeEvent("nhanBanDong", { record })}
-            />
-            <Popconfirm
-              title="Xóa dòng kế hoạch này?"
-              okText="Xóa"
-              cancelText="Hủy"
-              onConfirm={() => handler.executeEvent("xoaDong", { id: record.id })}
-            >
-              <Button type="text" size="small" danger icon={<DeleteOutlined />} />
-            </Popconfirm>
-          </Space>
-        ),
-    },
-  ];
+  );
 
-  // Dòng đang thêm mới nằm trên đầu bảng, chưa có trong dữ liệu trả về từ BE.
+  // Dòng đang thêm mới (từ nhân bản) nằm trên đầu bảng, chưa có ở dữ liệu từ BE.
   const dongMoi: KeHoachDong[] =
     editingRowId === DONG_MOI_ID
       ? [{ id: DONG_MOI_ID, ngay: values.ngay ?? "", soTien: 0, noiDung: "" } as KeHoachDong]
@@ -398,30 +449,90 @@ export const KeHoachTable: React.FC = () => {
     page: number;
     limit: number;
   };
+  const dsChon = (selectedRowKeys ?? []) as string[];
 
   return (
-    <Table<KeHoachDong>
-      rowKey="id"
-      size="small"
-      bordered
-      loading={loading as boolean}
-      columns={columns}
-      dataSource={[...dongMoi, ...((data ?? []) as KeHoachDong[])]}
-      scroll={{ x: "max-content", y: "calc(100vh - 320px)" }}
-      rowSelection={{
-        selectedRowKeys: selectedRowKeys as string[],
-        onChange: (keys) => handler.setState("selectedRowKeys", keys as string[]),
-        getCheckboxProps: (record) => ({ disabled: record.id === DONG_MOI_ID }),
-      }}
-      pagination={{
-        current: meta.page,
-        pageSize: meta.limit,
-        total: meta.total,
-        showSizeChanger: true,
-        pageSizeOptions: [50, 100, 200, 500],
-        showTotal: (t) => `${t} dòng kế hoạch`,
-        onChange: (page, limit) => handler.executeEvent("loadPage", { page, limit }),
-      }}
-    />
+    <div className="excel-tab-content">
+      <ToolbarSlot>
+        <Space size="small">
+          {canDelete && dsChon.length > 0 && (
+            <Popconfirm
+              title={`Xóa ${dsChon.length} dòng kế hoạch đã chọn?`}
+              okText="Xóa"
+              okButtonProps={{ danger: true }}
+              cancelText="Hủy"
+              onConfirm={() => handler.executeEvent("xoaNhieuDong", {})}
+            >
+              <Button danger size="small" icon={<DeleteOutlined />}>
+                Xóa đã chọn ({dsChon.length})
+              </Button>
+            </Popconfirm>
+          )}
+          {canCreate && (
+            <Button
+              size="small"
+              icon={<FileExcelOutlined />}
+              onClick={() => setImportOpen(true)}
+            >
+              Import Excel
+            </Button>
+          )}
+          <Button
+            size="small"
+            icon={<FileExcelOutlined />}
+            onClick={() => handler.executeEvent("xuatExcel", {})}
+          >
+            Xuất Excel
+          </Button>
+
+          <span className="xl-cmd-sep" />
+
+          <Button
+            size="small"
+            icon={<ReloadOutlined />}
+            title="Làm mới dữ liệu"
+            onClick={lamMoi}
+          />
+          {chooserButton}
+        </Space>
+      </ToolbarSlot>
+
+      <div ref={tableWrapRef} className="flex flex-col flex-1 min-h-0">
+        <Table<KeHoachDong>
+          rowKey="id"
+          size="small"
+          bordered
+          className="excel-table resizable-table"
+          loading={loading as boolean}
+          columns={visibleColumns}
+          dataSource={[...dongMoi, ...((data ?? []) as KeHoachDong[])]}
+          rowClassName={(record) => (record.id === editingRowId ? "editing-row" : "")}
+          rowSelection={{
+            selectedRowKeys: dsChon,
+            onChange: (keys) => handler.setState("selectedRowKeys", keys as string[]),
+            getCheckboxProps: (record) => ({ disabled: record.id === DONG_MOI_ID }),
+          }}
+          pagination={{
+            current: meta.page,
+            pageSize: meta.limit,
+            total: meta.total,
+            showSizeChanger: false,
+            showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+            size: "small",
+            onChange: (page) => handler.executeEvent("loadPage", { page }),
+          }}
+          scroll={{
+            x:
+              visibleColumns.reduce(
+                (sum, c) => sum + (typeof c.width === "number" ? c.width : 120),
+                0,
+              ) || TOTAL_WIDTH,
+            y: tableBodyHeight,
+          }}
+        />
+      </div>
+
+      <ImportKeHoachModal open={importOpen} onClose={() => setImportOpen(false)} />
+    </div>
   );
 };
