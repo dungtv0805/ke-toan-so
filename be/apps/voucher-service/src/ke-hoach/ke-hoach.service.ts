@@ -158,8 +158,10 @@ export class KeHoachService {
   }
 
   async findById(id: string): Promise<{ success: boolean; data: KeHoachDong }> {
+    // Có tenantId thì phải khoá theo tenant: nếu không, biết id là sửa/xóa được
+    // dòng kế hoạch của công ty khác.
     const dong = await this.keHoachRepository.findOne({
-      where: { _id: new ObjectId(id) } as never,
+      where: this.theoTenant({ _id: new ObjectId(id) }) as never,
     });
     if (!dong) throw new NotFoundException(`Không tìm thấy dòng kế hoạch ${id}`);
     return { success: true, data: dong };
