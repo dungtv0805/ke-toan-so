@@ -171,6 +171,11 @@ export const KeHoachPage = loadable(() => import('./ke-hoach/KeHoachPage'), {
   fallback: <PageLoader />
 });
 
+// Form nhập lô kế hoạch — cùng khuôn với form chứng từ của Dữ liệu tổng hợp
+export const KeHoachFormPage = loadable(() => import('./ke-hoach/form/KeHoachFormPage'), {
+  fallback: <PageLoader />
+});
+
 // Sổ quỹ
 export const SoQuyPage = loadable(() => import('./so-quy/SoQuyPage'), {
   fallback: <PageLoader />

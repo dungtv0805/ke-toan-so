@@ -1,12 +1,10 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
 import { message } from "antd";
-import dayjs from "dayjs";
 import { keHoachService, type KeHoachDong, type LoaiKeHoach } from "@/services/keHoachService";
 import type { KeHoachEvents, KeHoachStates } from "../../ke-hoach.handler";
 import {
   loiCuaDong,
-  ngayLuu,
   toPayload,
   toRowValues,
   type DanhMucLists,
@@ -18,21 +16,6 @@ import "./row-edit.state";
 
 @RegisterHandler("ke-hoach")
 export class KeHoachRowEditHandler extends CSubHanlder<KeHoachEvents, KeHoachStates> {
-  @HandlerDecorator("themDong")
-  async themDong(): Promise<void> {
-    const range = this.getState("dateRange") as [dayjs.Dayjs, dayjs.Dayjs] | undefined;
-    // Ngày mặc định: hôm nay nếu nằm trong kỳ đang lọc, ngược lại là đầu kỳ.
-    const homNay = dayjs();
-    const trongKy =
-      !range || (homNay.isAfter(range[0]) && homNay.isBefore(range[1]));
-    this.setState("editingRowId", DONG_MOI_ID);
-    this.setState("editingValues", {
-      ngay: ngayLuu(trongKy ? homNay : range?.[0] ?? homNay),
-      soTien: 0,
-      noiDung: "",
-    });
-  }
-
   @HandlerDecorator("suaDong")
   async suaDong(params: { record: KeHoachDong }): Promise<void> {
     this.setState("editingRowId", params.record.id);

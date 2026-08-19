@@ -42,6 +42,8 @@ Một số mục đã được gỡ khỏi dropdown sidebar và chuyển lên th
 | Du bao | `/trung-tam-du-lieu/du-bao` | ACTIVE | voucher:3003 (cung page, `loaiKeHoach=DU_BAO`) |
 | Cac muc con lai | `/trung-tam-du-lieu/*` | COMING SOON | — |
 
+> Nhập liệu qua trang form nhiều dòng `/trung-tam-du-lieu/{ke-hoach,du-bao}/tao-moi`
+> (`fe/src/pages/ke-hoach/form/`), dùng đúng khuôn + style form chứng từ của Dữ liệu tổng hợp.
 > Kế hoạch & Dự báo dùng chung `fe/src/pages/ke-hoach/KeHoachPage.tsx` (prop `loaiKeHoach`).
 > Lưới 17 cột giống "Dữ liệu tổng hợp"; dropdown view chuyển sang báo cáo so sánh
 > Kế hoạch vs Thực hiện theo 12 chiều. 3 gauge "Tình hình thực hiện" ở Tổng quan lấy

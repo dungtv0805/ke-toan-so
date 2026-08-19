@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, DatePicker, Input, Select, Button, Space, Popconfirm } from "antd";
 import {
   PlusOutlined,
@@ -26,6 +27,12 @@ export const FilterBar: React.FC = () => {
   const [chiTieu] = useKeHoachState("chiTieu", "tong");
   const [selectedRowKeys] = useKeHoachState("selectedRowKeys", []);
   const [moImport, setMoImport] = useState(false);
+  const navigate = useNavigate();
+  const [loaiKeHoach] = useKeHoachState("loaiKeHoach", "KE_HOACH");
+  const duongDanForm =
+    loaiKeHoach === "DU_BAO"
+      ? "/trung-tam-du-lieu/du-bao/tao-moi"
+      : "/trung-tam-du-lieu/ke-hoach/tao-moi";
 
   const dat = (key: string, value: unknown) => {
     handler.setState(key, value);
@@ -82,12 +89,14 @@ export const FilterBar: React.FC = () => {
         <Space className="ml-auto">
           {view === "list" && (
             <>
+              {/* Nhập liệu đi qua trang form nhiều dòng, giống Dữ liệu tổng hợp.
+                  Sửa nhanh một dòng thì vẫn bấm sửa ngay trên lưới. */}
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                onClick={() => handler.executeEvent("themDong", {})}
+                onClick={() => navigate(duongDanForm)}
               >
-                Thêm dòng
+                Thêm mới
               </Button>
               <Button icon={<FileExcelOutlined />} onClick={() => setMoImport(true)}>
                 Import Excel

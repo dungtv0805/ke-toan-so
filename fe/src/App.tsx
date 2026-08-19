@@ -52,6 +52,7 @@ import {
   PhieuChiPage,
   NhatKyChungPage,
   KeHoachPage,
+  KeHoachFormPage,
   NhatKyChungFormPage,
   SoQuyPage,
   CongNoPhaiThuPage,
@@ -564,10 +565,26 @@ const App = () => (
                     }
                   />
                   <Route
+                    path="ke-hoach/tao-moi"
+                    element={
+                      <ProtectedRoute requiredPermission="/trung-tam-du-lieu/ke-hoach:xem">
+                        <KeHoachFormPage loaiKeHoach="KE_HOACH" />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="du-bao"
                     element={
                       <ProtectedRoute requiredPermission="/trung-tam-du-lieu/du-bao:xem">
                         <KeHoachPage loaiKeHoach="DU_BAO" />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="du-bao/tao-moi"
+                    element={
+                      <ProtectedRoute requiredPermission="/trung-tam-du-lieu/du-bao:xem">
+                        <KeHoachFormPage loaiKeHoach="DU_BAO" />
                       </ProtectedRoute>
                     }
                   />

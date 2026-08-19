@@ -76,8 +76,16 @@ thêm `loaiKeHoach` và `phienBan`.
   `NhatKyChung` của trang đó nên KHÔNG tái sử dụng được; lưới kế hoạch tự render ô nhập
   ngay trong cột (chỉ một dòng ở chế độ sửa tại một thời điểm). Gộp chung về sau vẫn mở.
 - Thanh lọc: khoảng ngày, Phiên bản, và các chiều như NKC
-- Thêm dòng / nhân bản / xóa hàng loạt / Import Excel (đọc cột theo VỊ TRÍ như file mẫu,
-  các chiều nhập theo mã danh mục, xem trước lỗi từng dòng rồi mới ghi)
+- **Nhập liệu đi qua trang form nhiều dòng, dùng đúng khuôn form chứng từ của Dữ liệu
+  tổng hợp**: `Thêm mới` → `/trung-tam-du-lieu/{ke-hoach,du-bao}/tao-moi`, gồm khối
+  *Thông tin kế hoạch* (loại, phiên bản, ngày mặc định, diễn giải chung, tổng tiền) +
+  bảng *Chi tiết dòng kế hoạch* (mở sẵn 5 dòng, Thêm dòng / Thêm 10 dòng / Nhân bản /
+  Xóa, chọn nghiệp vụ tự điền TK Nợ–Có theo Quy chuẩn) + *Lưu* / *Lưu & Nhập tiếp*.
+  Mỗi dòng có ngày riêng (ngày ở header chỉ để điền sẵn) nên nhập được cả năm một lần;
+  lưu = một `POST /ke-hoach/batch`. Dòng để trống hoàn toàn bị bỏ qua, không báo lỗi.
+- Lưới danh sách giữ sửa/nhân bản/xóa tại chỗ để chỉnh nhanh một dòng
+- Import Excel (đọc cột theo VỊ TRÍ như file mẫu, các chiều nhập theo mã danh mục,
+  xem trước lỗi từng dòng rồi mới ghi)
 - Ngày phát sinh luôn lưu 00:00 UTC của đúng ngày (`ngayLuu`) — lưu nửa đêm giờ VN sẽ
   đẩy dòng ngày 01 sang tháng trước khi BE gom series
 - Dropdown view: *Dòng kế hoạch* → *So sánh theo TK / Khoản mục / Dự án / Đội / Nhân viên /
@@ -106,6 +114,29 @@ Sau deploy: `$addToSet` quyền mới cho role Admin của từng tenant.
 - FE: map dòng ↔ danh mục (`keHoachRow`), đọc sheet import (`parseKeHoachSheet`),
   và map dữ liệu gauge (% đạt, chênh lệch, KH = 0)
 - Repo có test đỏ sẵn từ trước → chạy hẹp theo đường dẫn `ke-hoach`
+
+## Nhóm khoản mục ở Dữ liệu tổng hợp (bổ sung 2026-08-19)
+
+Trang Dữ liệu tổng hợp trước đó không có Nhóm khoản mục ở đâu cả (cột "Nhóm KM" đang có
+là *Nhóm khuyến mại*). Đã thêm, vẫn theo nguyên tắc **suy từ Khoản mục**:
+
+- Lưới Bút toán: 2 cột `Nhóm KM mã` + `Nhóm khoản mục` (pageKey ẩn/hiện cột bump `.v3`,
+  nếu không người đã từng mở bộ chọn cột sẽ không thấy cột mới)
+- Bảng Chi tiết hạch toán của form nhập: 1 cột chỉ hiển thị, tự hiện khi chọn Khoản mục
+- Xuất Excel: thêm cột `Nhóm khoản mục`
+- Hàm dùng chung `fe/src/utils/nhomKhoanMuc.ts` (tra tên theo mã **hoặc id** vì dữ liệu cũ
+  có thể lưu id)
+
+### Ràng buộc `fieldRules` của tài khoản
+
+`nhomKhoanMuc` và `loaiChiPhi` khai báo được ở danh mục Tài khoản nhưng **không có ô nhập
+tương ứng trên dòng chứng từ**, nên bật `BAT_BUOC` là chứng từ không tài nào lưu được và
+thông báo lỗi còn in ra tên field thô. Đã sửa:
+
+- `nhomKhoanMuc`: coi là đã nhập khi khoản mục đã chọn có nhóm (`khoanMuc.nhom`)
+- `loaiChiPhi`: không kiểm ở dòng — nó là thuộc tính của Quy chuẩn hạch toán, ràng buộc
+  thật nằm ở form Quy chuẩn
+- Bảng nhãn ở **cả BE lẫn FE** phải phủ đủ 12 trường của `fieldRules`
 
 ## Không làm ở giai đoạn này
 
