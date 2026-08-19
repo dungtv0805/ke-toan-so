@@ -1,0 +1,113 @@
+import React from "react";
+import { Card, DatePicker, Input, Select, Button, Space, Popconfirm } from "antd";
+import {
+  PlusOutlined,
+  ReloadOutlined,
+  DeleteOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
+import type { Dayjs } from "dayjs";
+import type { ChiTieu } from "@/services/keHoachService";
+import { useKeHoachHandler, useKeHoachState } from "../KeHoachHandlerContext";
+import { CHI_TIEU_OPTIONS, KE_HOACH_VIEWS } from "./keHoachViews";
+
+const { RangePicker } = DatePicker;
+
+/** Hàng lọc + các nút lệnh của màn hình Kế hoạch / Dự báo. */
+export const FilterBar: React.FC = () => {
+  const handler = useKeHoachHandler();
+  const [dateRange] = useKeHoachState("dateRange");
+  const [searchText] = useKeHoachState("searchText", "");
+  const [phienBan] = useKeHoachState("phienBan");
+  const [phienBanList] = useKeHoachState("phienBanList", []);
+  const [view] = useKeHoachState("view", "list");
+  const [chiTieu] = useKeHoachState("chiTieu", "tong");
+  const [selectedRowKeys] = useKeHoachState("selectedRowKeys", []);
+
+  const dat = (key: string, value: unknown) => {
+    handler.setState(key, value);
+    handler.executeEvent("refresh", {});
+  };
+
+  return (
+    <Card size="small" className="mb-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <RangePicker
+          value={dateRange as [Dayjs, Dayjs] | undefined}
+          format="DD/MM/YYYY"
+          allowClear={false}
+          onChange={(v) => dat("dateRange", v)}
+        />
+
+        <Select
+          allowClear
+          placeholder="Phiên bản"
+          style={{ minWidth: 180 }}
+          value={phienBan}
+          options={(phienBanList ?? []).map((p: string) => ({ value: p, label: p }))}
+          onChange={(v) => dat("phienBan", v)}
+        />
+
+        <Input
+          allowClear
+          prefix={<SearchOutlined />}
+          placeholder="Tìm diễn giải, nghiệp vụ, đối tượng"
+          style={{ width: 260 }}
+          defaultValue={searchText as string}
+          onPressEnter={(e) => dat("searchText", (e.target as HTMLInputElement).value)}
+          onChange={(e) => {
+            if (!e.target.value) dat("searchText", "");
+          }}
+        />
+
+        <Select
+          style={{ minWidth: 230 }}
+          value={view}
+          options={KE_HOACH_VIEWS}
+          onChange={(v) => handler.executeEvent("doiView", { view: v })}
+        />
+
+        {view !== "list" && (
+          <Select
+            style={{ minWidth: 190 }}
+            value={chiTieu}
+            options={CHI_TIEU_OPTIONS}
+            onChange={(v) => handler.executeEvent("doiChiTieu", { chiTieu: v as ChiTieu })}
+          />
+        )}
+
+        <Space className="ml-auto">
+          {view === "list" && (
+            <>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => handler.executeEvent("themDong", {})}
+              >
+                Thêm dòng
+              </Button>
+              {!!(selectedRowKeys as string[])?.length && (
+                <Popconfirm
+                  title={`Xóa ${(selectedRowKeys as string[]).length} dòng đã chọn?`}
+                  okText="Xóa"
+                  cancelText="Hủy"
+                  onConfirm={() => handler.executeEvent("xoaNhieuDong", {})}
+                >
+                  <Button danger icon={<DeleteOutlined />}>
+                    Xóa đã chọn
+                  </Button>
+                </Popconfirm>
+              )}
+            </>
+          )}
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => handler.executeEvent("refresh", {})}
+          >
+            Tải lại
+          </Button>
+        </Space>
+      </div>
+    </Card>
+  );
+};

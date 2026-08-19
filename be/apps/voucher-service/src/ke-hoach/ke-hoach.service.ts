@@ -171,7 +171,7 @@ export class KeHoachService {
       phienBan: dto.phienBan?.trim() || PHIEN_BAN_MAC_DINH,
       ngay: new Date(dto.ngay),
       soTien: dto.soTien,
-      noiDung: dto.noiDung,
+      noiDung: dto.noiDung ?? '',
       danhMuc: dto.danhMuc,
       ghiChu: dto.ghiChu,
       nguoiTaoId,

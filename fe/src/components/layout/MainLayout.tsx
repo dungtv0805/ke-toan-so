@@ -135,6 +135,8 @@ const existingRoutes = new Set([
   "/danh-muc/ly-do-khong-hop-le",
   "/danh-muc/nhom-vat-tu",
   "/danh-muc/hang-hoa-vat-tu",
+  "/trung-tam-du-lieu/ke-hoach",
+  "/trung-tam-du-lieu/du-bao",
   "/kho/nhap-kho",
   "/kho/xuat-kho",
   "/kho/chuyen-kho",

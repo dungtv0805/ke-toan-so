@@ -40,7 +40,9 @@ const TongQuanTab: React.FC<Props> = ({ year, startMonth, endMonth, visibleKeys 
       )}
 
       {/* Tình hình thực hiện */}
-      {show('tinhHinhThucHien') && <ExecutionStatusCharts />}
+      {show('tinhHinhThucHien') && (
+        <ExecutionStatusCharts year={year} startMonth={startMonth} endMonth={endMonth} />
+      )}
 
       {/* Tỷ trọng doanh thu / chi phí */}
       {show('tyTrong') && (

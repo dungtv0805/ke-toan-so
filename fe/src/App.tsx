@@ -51,6 +51,7 @@ import {
   PhieuThuPage,
   PhieuChiPage,
   NhatKyChungPage,
+  KeHoachPage,
   NhatKyChungFormPage,
   SoQuyPage,
   CongNoPhaiThuPage,
@@ -554,8 +555,22 @@ const App = () => (
 
                 {/* Trung tâm dữ liệu - Coming Soon */}
                 <Route path="trung-tam-du-lieu">
-                  <Route path="ke-hoach" element={<ComingSoonPage />} />
-                  <Route path="du-bao" element={<ComingSoonPage />} />
+                  <Route
+                    path="ke-hoach"
+                    element={
+                      <ProtectedRoute requiredPermission="/trung-tam-du-lieu/ke-hoach:xem">
+                        <KeHoachPage loaiKeHoach="KE_HOACH" />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="du-bao"
+                    element={
+                      <ProtectedRoute requiredPermission="/trung-tam-du-lieu/du-bao:xem">
+                        <KeHoachPage loaiKeHoach="DU_BAO" />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route path="tai-san" element={<ComingSoonPage />} />
                   {/* 4 nhóm hàng hiện nằm dưới menu Kho — kèm thanh ngang phiếu kho */}
                   <Route path="hang-hoa" element={<KhoNhomHangPage />} />

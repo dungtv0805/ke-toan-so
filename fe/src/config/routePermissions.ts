@@ -44,6 +44,8 @@ export const routePermissions: Record<string, string> = {
   '/bep-an/de-xuat-mua': '/bep-an/de-xuat-mua:xem',
   '/bep-an/kiem-soat-chi-phi': '/bep-an/kiem-soat-chi-phi:xem',
 
+  '/trung-tam-du-lieu/ke-hoach': '/trung-tam-du-lieu/ke-hoach:xem',
+  '/trung-tam-du-lieu/du-bao': '/trung-tam-du-lieu/du-bao:xem',
   '/trung-tam-du-lieu/hop-dong': '/trung-tam-du-lieu/hop-dong:xem',
   '/trung-tam-du-lieu/thu-tien-hop-dong': '/trung-tam-du-lieu/thu-tien-hop-dong:xem',
   '/trung-tam-du-lieu/hd-ban-ra': '/trung-tam-du-lieu/hd-ban-ra:xem',

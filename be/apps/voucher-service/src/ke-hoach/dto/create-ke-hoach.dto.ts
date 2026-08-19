@@ -29,9 +29,10 @@ export class CreateKeHoachDto {
   @Min(1, { message: 'Số tiền phải lớn hơn 0' })
   soTien: number;
 
-  @IsNotEmpty()
+  // Diễn giải có thể bỏ trống — dòng kế hoạch thường chỉ cần TK + chiều + số tiền.
+  @IsOptional()
   @IsString()
-  noiDung: string;
+  noiDung?: string;
 
   @IsOptional()
   @IsObject()
