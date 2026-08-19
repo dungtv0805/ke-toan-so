@@ -1,4 +1,5 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
+import { nhomKhoanMucTen, type NhomKhoanMucItem } from "@/utils/nhomKhoanMuc";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
 import { NhatKyChung } from "@/types";
 import { buildFilterParams, fetchAllEntries } from "../../lib/filteredEntries";
@@ -40,6 +41,7 @@ const EXCEL_COLUMNS: ExcelColumn[] = [
   { header: "Dòng tiền", dataKey: "dongTienTen", width: 15 },
   { header: "Mã KM", dataKey: "khoanMucMa", width: 10 },
   { header: "Khoản mục", dataKey: "khoanMucTen", width: 15 },
+  { header: "Nhóm khoản mục", dataKey: "nhomKhoanMucTen", width: 18 },
   { header: "Mã NKM", dataKey: "nhomKhuyenMaiMa", width: 10 },
   { header: "Nhóm KM", dataKey: "nhomKhuyenMaiTen", width: 15 },
   { header: "Mã NQL", dataKey: "nhomQuanLyMa", width: 10 },
@@ -96,6 +98,11 @@ export class ExportExcelHandler extends CSubHanlder<ExportExcelEvent, NhatKyChun
         dongTienTen: entry.danhMuc?.dongTien?.ten ?? "",
         khoanMucMa: entry.danhMuc?.khoanMuc?.ma ?? "",
         khoanMucTen: entry.danhMuc?.khoanMuc?.ten ?? "",
+        // Nhóm khoản mục đi theo khoản mục; tra tên qua danh mục đã nạp sẵn ở state.
+        nhomKhoanMucTen: nhomKhoanMucTen(
+          entry.danhMuc?.khoanMuc?.nhom,
+          (this.getState("nhomKhoanMucList") ?? []) as NhomKhoanMucItem[],
+        ),
         nhomKhuyenMaiMa: entry.danhMuc?.nhomKhuyenMai?.ma ?? "",
         nhomKhuyenMaiTen: entry.danhMuc?.nhomKhuyenMai?.ten ?? "",
         nhomQuanLyMa: entry.danhMuc?.nhomQuanLy?.ma ?? "",

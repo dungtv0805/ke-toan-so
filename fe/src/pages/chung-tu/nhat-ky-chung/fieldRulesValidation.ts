@@ -10,6 +10,8 @@ export interface FieldRuleViolation {
   taiKhoanMa: string;
 }
 
+// Phải phủ hết fieldRules khai báo ở danh mục Tài khoản (FIELD_RULE_FIELDS trong
+// TaiKhoanPage) — thiếu nhãn thì thông báo lỗi rơi về tên field thô.
 export const FIELD_RULE_LABELS: Record<string, string> = {
   doiTuong: "Đối tượng",
   duAn: "Dự án",
@@ -19,6 +21,8 @@ export const FIELD_RULE_LABELS: Record<string, string> = {
   sanPham: "Sản phẩm",
   dongTien: "Dòng tiền",
   khoanMuc: "Khoản mục",
+  nhomKhoanMuc: "Nhóm khoản mục",
+  loaiChiPhi: "Loại chi phí",
   hopDong: "Hợp đồng",
   soTaiKhoanNganHang: "Số tài khoản ngân hàng",
 };
@@ -94,6 +98,26 @@ export function validateFieldRules(
     };
     checkSoTaiKhoanNganHang(tkNo, line.doiTuongSnapshot);
     checkSoTaiKhoanNganHang(tkCo, line.doiTuong2Snapshot);
+
+    // Nhóm khoản mục: không có ô nhập riêng — coi là đã nhập khi khoản mục đã chọn
+    // có nhóm. (Loại chi phí là thuộc tính của Quy chuẩn hạch toán nên không kiểm ở dòng.)
+    const nhomKhoanMucLevel = heavier(
+      tkNo?.fieldRules?.nhomKhoanMuc as FieldRuleLevel | undefined,
+      tkCo?.fieldRules?.nhomKhoanMuc as FieldRuleLevel | undefined,
+    );
+    if (nhomKhoanMucLevel && !line.khoanMucSnapshot?.nhom) {
+      const sourceTk =
+        (tkNo?.fieldRules?.nhomKhoanMuc as FieldRuleLevel | undefined) === nhomKhoanMucLevel
+          ? tkNo
+          : tkCo;
+      violations.push({
+        lineIndex,
+        field: "nhomKhoanMuc",
+        fieldLabel: FIELD_RULE_LABELS.nhomKhoanMuc,
+        level: nhomKhoanMucLevel,
+        taiKhoanMa: sourceTk?.ma ?? "",
+      });
+    }
 
     // Trường cấp dòng: gộp mức 2 TK
     for (const [field, lineKey] of Object.entries(FIELD_TO_LINE_KEY)) {

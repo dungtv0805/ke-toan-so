@@ -161,3 +161,66 @@ describe('FieldRulesValidationService', () => {
     await expect(service.validateItems([{}] as never, 'Bearer x')).resolves.toBeUndefined();
   });
 });
+
+describe('FieldRulesValidationService — nhóm khoản mục & loại chi phí', () => {
+  const makeService = (accounts: unknown) => {
+    const serviceClient = {
+      get: jest.fn().mockResolvedValue({ success: true, data: accounts }),
+    } as unknown as ServiceClient;
+    return new FieldRulesValidationService(serviceClient);
+  };
+
+  const accounts = [
+    { ma: '334', fieldRules: { nhomKhoanMuc: 'BAT_BUOC', loaiChiPhi: 'BAT_BUOC' } },
+    { ma: '111' },
+  ];
+
+  it('khoản mục có nhóm → coi như đã nhập nhóm khoản mục', async () => {
+    const service = makeService(accounts);
+    await expect(
+      service.validateItems(
+        [
+          {
+            danhMuc: {
+              taiKhoanNo: { ma: '334' },
+              taiKhoanCo: { ma: '111' },
+              khoanMuc: { ma: 'KM01', nhom: 'NKM1' },
+            },
+          },
+        ] as never,
+        'Bearer x',
+      ),
+    ).resolves.toBeUndefined();
+  });
+
+  it('thiếu nhóm khoản mục thì báo lỗi bằng NHÃN tiếng Việt, không phải tên field', async () => {
+    const service = makeService(accounts);
+    await expect(
+      service.validateItems(
+        [{ danhMuc: { taiKhoanNo: { ma: '334' }, taiKhoanCo: { ma: '111' } } }] as never,
+        'Bearer x',
+      ),
+    ).rejects.toThrow(/Nhóm khoản mục/);
+  });
+
+  it('không bao giờ ném ra tên field thô trong thông báo', async () => {
+    const service = makeService(accounts);
+    const loi = await service
+      .validateItems(
+        [{ danhMuc: { taiKhoanNo: { ma: '334' }, taiKhoanCo: { ma: '111' } } }] as never,
+        'Bearer x',
+      )
+      .catch((e: Error) => e.message);
+    expect(loi).not.toMatch(/nhomKhoanMuc|loaiChiPhi/);
+  });
+
+  it('loaiChiPhi không chặn lưu vì dòng chứng từ không có trường này', async () => {
+    const service = makeService([{ ma: '334', fieldRules: { loaiChiPhi: 'BAT_BUOC' } }]);
+    await expect(
+      service.validateItems(
+        [{ danhMuc: { taiKhoanNo: { ma: '334' } } }] as never,
+        'Bearer x',
+      ),
+    ).resolves.toBeUndefined();
+  });
+});

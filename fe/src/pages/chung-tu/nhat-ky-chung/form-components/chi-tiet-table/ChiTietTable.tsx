@@ -27,6 +27,7 @@ import {
   buildHopDongSnapshot,
 } from "@/utils/snapshotBuilder";
 import { useTableColumnResize } from "@/hooks/useTableColumnResize";
+import { nhomKhoanMucTen, type NhomKhoanMucItem } from "@/utils/nhomKhoanMuc";
 import { getDoiTuongSelectConfig, getSelectedDoiTuongLoai } from "../../doiTuongConfig";
 import { SelectWithQuickAdd } from "../../quick-add/SelectWithQuickAdd";
 import { QuickAddDoiTuongModal } from "../../quick-add/QuickAddDoiTuongModal";
@@ -44,6 +45,7 @@ export function ChiTietTable() {
   const [sanPhamList] = useNhatKyChungFormState("sanPhamList", []);
   const [dongTienList] = useNhatKyChungFormState("dongTienList", []);
   const [khoanMucList] = useNhatKyChungFormState("khoanMucList", []);
+  const [nhomKhoanMucList] = useNhatKyChungFormState("nhomKhoanMucList", []);
   const [nhomKhuyenMaiList] = useNhatKyChungFormState("nhomKhuyenMaiList", []);
   const [nhomQuanLyList] = useNhatKyChungFormState("nhomQuanLyList", []);
   const [hopDongList] = useNhatKyChungFormState("hopDongList", []);
@@ -783,6 +785,24 @@ export function ChiTietTable() {
           popupMatchSelectWidth={250}
         />
       ),
+    },
+    {
+      // Nhóm khoản mục KHÔNG nhập tay: đi theo khoản mục đã chọn (`khoanMucSnapshot.nhom`).
+      title: "Nhóm khoản mục",
+      dataIndex: "khoanMucId",
+      key: "nhomKhoanMuc",
+      width: 130,
+      render: (_: unknown, record: ChungTuChiTiet) => {
+        const nhom = nhomKhoanMucTen(
+          record.khoanMucSnapshot?.nhom as string | undefined,
+          nhomKhoanMucList as NhomKhoanMucItem[],
+        );
+        return nhom ? (
+          <span className="text-gray-600 text-xs">{nhom}</span>
+        ) : (
+          <span className="text-gray-300 text-xs">—</span>
+        );
+      },
     },
     {
       title: "Nhóm KM",

@@ -1,4 +1,5 @@
 import { BaseStates } from "@/common/c-handler/core/actions/c-state.action";
+import type { NhomKhoanMucItem } from "@/utils/nhomKhoanMuc";
 import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, QuyChuan, NhomKhuyenMai, NhomQuanLy, LoaiGiaoDich, HopDong, TaiKhoanNganHang } from "@/types";
 import { LoaiChungTuType } from "@/services/loaiChungTuService";
 import { Dayjs } from "dayjs";
@@ -103,6 +104,8 @@ export interface InitFormStates extends BaseStates {
   nhomQuanLyList: NhomQuanLy[];
   hopDongList: HopDong[];
   nganHangList: TaiKhoanNganHang[];
+  // Nhóm khoản mục chỉ dùng để TRA TÊN cho `khoanMuc.nhom` — không phải trường nhập.
+  nhomKhoanMucList: NhomKhoanMucItem[];
 
   // Filtered list - nghiệp vụ theo loại giao dịch
   filteredNghiepVuList: Array<{ value: string; label: string }>;

@@ -50,6 +50,8 @@ import {
   getNkcHopDongSo,
   getNkcHopDongTen,
 } from "@/utils/snapshotDisplay";
+import { nhomKhoanMucMa, nhomKhoanMucTen } from "@/utils/nhomKhoanMuc";
+import type { NhomKhoanMuc } from "@/services/nhomKhoanMucService";
 import {
   useNhatKyChungState,
   useNhatKyChungHandler,
@@ -122,6 +124,8 @@ const DEFAULT_WIDTHS: Record<string, number> = {
   dongTien: 100,
   khoanMucMa: 78,
   khoanMuc: 100,
+  nhomKhoanMucMa: 78,
+  nhomKhoanMuc: 120,
   nhomKhuyenMaiMa: 78,
   nhomKhuyenMai: 100,
   nhomQuanLyMa: 55,
@@ -159,6 +163,7 @@ const getColumnDefinitions = (
   taiKhoanOptions: SelectOption[],
   quyChaunList: QuyChuan[],
   hoSoChungTuList: HoSoChungTu[],
+  nhomKhoanMucList: NhomKhoanMuc[],
   onRefresh: () => void
 ): Omit<ColumnType<NhatKyChung>, "width">[] => [
   {
@@ -631,6 +636,25 @@ const getColumnDefinitions = (
     },
   },
   {
+    // Nhóm khoản mục KHÔNG nhập riêng — đi theo khoản mục đã chọn (`khoanMuc.nhom`).
+    title: "Nhóm KM mã",
+    key: "nhomKhoanMucMa",
+    render: (_: unknown, record: NhatKyChung) => {
+      const ma = nhomKhoanMucMa(record);
+      return ma ? (
+        <span className="text-gray-700">{ma}</span>
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
+    },
+  },
+  {
+    title: "Nhóm khoản mục",
+    key: "nhomKhoanMuc",
+    render: (_: unknown, record: NhatKyChung) =>
+      renderEllipsisText(nhomKhoanMucTen(nhomKhoanMucMa(record), nhomKhoanMucList)),
+  },
+  {
     title: <TermText tk="nhomKhuyenMai" surface="nkc.colMa" />,
     key: "nhomKhuyenMaiMa",
     render: (_: unknown, record: NhatKyChung) => {
@@ -900,6 +924,7 @@ export function EntryListTab() {
   const [taiKhoanList] = useNhatKyChungState("taiKhoanList", []);
   const [quyChaunList] = useNhatKyChungState("quyChaunList", []);
   const [hoSoChungTuList] = useNhatKyChungState("hoSoChungTuList", []);
+  const [nhomKhoanMucList] = useNhatKyChungState("nhomKhoanMucList", []);
   const [editingRowId] = useNhatKyChungState("editingRowId", null);
   const [exportingExcel] = useNhatKyChungState("exportingExcel", false);
   const [printingList] = useNhatKyChungState("printingList", false);
@@ -967,6 +992,7 @@ export function EntryListTab() {
       taiKhoanOptions,
       quyChaunList,
       hoSoChungTuList,
+      nhomKhoanMucList as NhomKhoanMuc[],
       handleRefresh
     );
     // Đúng MỘT cột "HĐ" — hiện số hóa đơn đã gắn cho chứng từ của dòng này (khóa theo
@@ -1005,6 +1031,7 @@ export function EntryListTab() {
     taiKhoanOptions,
     quyChaunList,
     hoSoChungTuList,
+    nhomKhoanMucList,
     handleRefresh,
     withColumnFilter,
     hoaDonMap,
@@ -1024,10 +1051,10 @@ export function EntryListTab() {
     [t]
   );
 
-  // pageKey bump '.v2': thêm cột "HĐ". Lựa chọn cột lưu theo danh sách key ĐƯỢC
-  // HIỆN, nên ai đã từng mở bộ chọn cột sẽ không bao giờ thấy cột mới nếu giữ key cũ.
+  // pageKey bump '.v3': thêm 2 cột "Nhóm khoản mục". Lựa chọn cột lưu theo danh sách key
+  // ĐƯỢC HIỆN, nên ai đã từng mở bộ chọn cột sẽ không bao giờ thấy cột mới nếu giữ key cũ.
   const { columns: visibleColumns, chooserButton } = useColumnVisibility(
-    "nkc.entryList.v2",
+    "nkc.entryList.v3",
     columns,
     labelOf,
     {

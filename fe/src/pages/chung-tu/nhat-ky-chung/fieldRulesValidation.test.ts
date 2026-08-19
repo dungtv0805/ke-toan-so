@@ -130,3 +130,37 @@ describe("formatViolation", () => {
     ).toBe("Dòng 2: TK 112 yêu cầu bắt buộc nhập Dự án");
   });
 });
+
+describe("fieldRules — nhóm khoản mục", () => {
+  const taiKhoanList = [
+    { ma: "334", ten: "Phải trả NLĐ", fieldRules: { nhomKhoanMuc: "BAT_BUOC" } },
+    { ma: "111", ten: "Tiền mặt" },
+  ] as never;
+
+  const dong = (khoanMucSnapshot?: Record<string, unknown>) =>
+    [
+      {
+        key: "1",
+        taiKhoanNo: "334",
+        taiKhoanCo: "111",
+        soTien: 100,
+        khoanMucId: khoanMucSnapshot ? "km-1" : undefined,
+        khoanMucSnapshot,
+      },
+    ] as never;
+
+  it("khoản mục đã chọn có nhóm → không vi phạm", () => {
+    expect(validateFieldRules(dong({ ma: "KM01", nhom: "NKM1" }), taiKhoanList)).toEqual([]);
+  });
+
+  it("chưa chọn khoản mục → vi phạm, hiện NHÃN chứ không phải tên field", () => {
+    const v = validateFieldRules(dong(), taiKhoanList);
+    expect(v).toHaveLength(1);
+    expect(v[0].fieldLabel).toBe("Nhóm khoản mục");
+    expect(formatViolation(v[0])).toBe("Dòng 1: TK 334 yêu cầu bắt buộc nhập Nhóm khoản mục");
+  });
+
+  it("khoản mục không thuộc nhóm nào → vẫn vi phạm", () => {
+    expect(validateFieldRules(dong({ ma: "KM09" }), taiKhoanList)).toHaveLength(1);
+  });
+});

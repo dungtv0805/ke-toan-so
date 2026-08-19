@@ -1,6 +1,7 @@
 import { BaseStates } from "@/common/c-handler/core/actions/c-state.action";
 import { DoiTuong, DuAn, BoPhan, SanPham, DongTien, QuyChuan, NhomKhuyenMai, NhomQuanLy, HopDong, LoaiGiaoDich, TaiKhoanNganHang, HoSoChungTu } from "@/types";
 import { LoaiChungTuType } from "@/services/loaiChungTuService";
+import { NhomKhoanMuc } from "@/services/nhomKhoanMucService";
 
 export interface MasterDataStates extends BaseStates {
   doiTuongList: DoiTuong[];
@@ -10,6 +11,8 @@ export interface MasterDataStates extends BaseStates {
   dongTienList: DongTien[];
   nhomKhuyenMaiList: NhomKhuyenMai[];
   nhomQuanLyList: NhomQuanLy[];
+  // Nhóm khoản mục chỉ để TRA TÊN cho `khoanMuc.nhom` (mã/id) — không phải trường nhập.
+  nhomKhoanMucList: NhomKhoanMuc[];
   hopDongList: HopDong[];
   quyChaunList: QuyChuan[];
   loaiChungTuList: LoaiChungTuType[];
