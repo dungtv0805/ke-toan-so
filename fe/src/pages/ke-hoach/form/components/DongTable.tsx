@@ -111,7 +111,8 @@ export const DongTable: React.FC = () => {
       ),
       key: "ngay",
       width: 130,
-      fixed: "left",
+      // Chỉ ghim trái đúng MỘT cột (STT) như ChiTietTable của chứng từ — ghim thêm là
+      // dễ lệch tiêu đề khi bảng cuộn cả hai chiều.
       render: (_, record) => (
         <DatePicker
           size="small"

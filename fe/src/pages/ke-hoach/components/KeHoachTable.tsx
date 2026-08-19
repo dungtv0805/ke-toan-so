@@ -186,9 +186,11 @@ export const KeHoachTable: React.FC = () => {
   const baseColumns: ColumnsType<KeHoachDong> = useMemo(
     () => [
       {
+        // KHÔNG ghim trái cột nào: bảng này có ô tick chọn dòng + cột "Chức năng" ghim
+        // phải, thêm cột ghim trái là hàng tiêu đề lệch hẳn một ô trên trình duyệt thật
+        // (đúng vết xe đổ đã ghi ở EntryListTab; jsdom không tái hiện được).
         title: "Ngày phát sinh",
         key: "ngay",
-        fixed: "left",
         render: (_, record) =>
           dangSua(record) ? (
             <DatePicker
