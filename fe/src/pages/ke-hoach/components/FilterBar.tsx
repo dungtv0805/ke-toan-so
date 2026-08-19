@@ -1,15 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, DatePicker, Input, Select, Button, Space, Popconfirm } from "antd";
 import {
   PlusOutlined,
   ReloadOutlined,
   DeleteOutlined,
   SearchOutlined,
+  FileExcelOutlined,
 } from "@ant-design/icons";
 import type { Dayjs } from "dayjs";
 import type { ChiTieu } from "@/services/keHoachService";
 import { useKeHoachHandler, useKeHoachState } from "../KeHoachHandlerContext";
 import { CHI_TIEU_OPTIONS, KE_HOACH_VIEWS } from "./keHoachViews";
+import { ImportKeHoachModal } from "../import/ImportKeHoachModal";
 
 const { RangePicker } = DatePicker;
 
@@ -23,6 +25,7 @@ export const FilterBar: React.FC = () => {
   const [view] = useKeHoachState("view", "list");
   const [chiTieu] = useKeHoachState("chiTieu", "tong");
   const [selectedRowKeys] = useKeHoachState("selectedRowKeys", []);
+  const [moImport, setMoImport] = useState(false);
 
   const dat = (key: string, value: unknown) => {
     handler.setState(key, value);
@@ -86,6 +89,9 @@ export const FilterBar: React.FC = () => {
               >
                 Thêm dòng
               </Button>
+              <Button icon={<FileExcelOutlined />} onClick={() => setMoImport(true)}>
+                Import Excel
+              </Button>
               {!!(selectedRowKeys as string[])?.length && (
                 <Popconfirm
                   title={`Xóa ${(selectedRowKeys as string[]).length} dòng đã chọn?`}
@@ -108,6 +114,8 @@ export const FilterBar: React.FC = () => {
           </Button>
         </Space>
       </div>
+
+      <ImportKeHoachModal open={moImport} onClose={() => setMoImport(false)} />
     </Card>
   );
 };

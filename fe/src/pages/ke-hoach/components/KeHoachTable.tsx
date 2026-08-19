@@ -22,7 +22,7 @@ import type { ColumnsType } from "antd/es/table";
 import type { KeHoachDong } from "@/services/keHoachService";
 import { useKeHoachHandler, useKeHoachState } from "../KeHoachHandlerContext";
 import { DONG_MOI_ID } from "../handler/sub-handler/row-edit/row-edit.state";
-import { nhomKhoanMucCua, type MucDanhMuc, type RowValues } from "../lib/keHoachRow";
+import { ngayLuu, nhomKhoanMucCua, type MucDanhMuc, type RowValues } from "../lib/keHoachRow";
 
 const tien = (v?: number) => new Intl.NumberFormat("vi-VN").format(v ?? 0);
 
@@ -143,7 +143,7 @@ export const KeHoachTable: React.FC = () => {
             format="DD/MM/YYYY"
             allowClear={false}
             value={values.ngay ? dayjs(values.ngay) : undefined}
-            onChange={(d) => doi("ngay", d?.toISOString())}
+            onChange={(d) => doi("ngay", d ? ngayLuu(d) : undefined)}
           />
         ) : (
           dayjs(record.ngay).format("DD/MM/YYYY")

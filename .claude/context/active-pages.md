@@ -36,9 +36,16 @@ Một số mục đã được gỡ khỏi dropdown sidebar và chuyển lên th
 | Bao cao hop dong | `/bao-cao/hop-dong` | ACTIVE (thanh ngang Bán hàng) | reporting:3006 |
 
 ### KE TOAN — Trung Tam Du Lieu (Data Center)
-| Menu Item | Route | Status |
-|-----------|-------|--------|
-| All 9 items | `/trung-tam-du-lieu/*` | COMING SOON |
+| Menu Item | Route | Status | API |
+|-----------|-------|--------|-----|
+| Ke hoach | `/trung-tam-du-lieu/ke-hoach` | ACTIVE | voucher:3003 (`/voucher/ke-hoach`) |
+| Du bao | `/trung-tam-du-lieu/du-bao` | ACTIVE | voucher:3003 (cung page, `loaiKeHoach=DU_BAO`) |
+| Cac muc con lai | `/trung-tam-du-lieu/*` | COMING SOON | — |
+
+> Kế hoạch & Dự báo dùng chung `fe/src/pages/ke-hoach/KeHoachPage.tsx` (prop `loaiKeHoach`).
+> Lưới 17 cột giống "Dữ liệu tổng hợp"; dropdown view chuyển sang báo cáo so sánh
+> Kế hoạch vs Thực hiện theo 12 chiều. 3 gauge "Tình hình thực hiện" ở Tổng quan lấy
+> Kế hoạch từ `/voucher/ke-hoach/series`, Thực hiện từ `pnl-series` của reporting.
 
 ### KE TOAN — Chung Tu (Documents)
 | Menu Item | Route | Status | API |

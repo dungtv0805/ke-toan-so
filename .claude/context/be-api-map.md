@@ -183,6 +183,26 @@ Response: `{ success: true, data: { created: number, failed: [{ index: number, m
 | PATCH | /nhat-ky-chung/batch | Batch update |
 | DELETE | /nhat-ky-chung/:id | Delete |
 
+### /ke-hoach (Kế hoạch & Dự báo — collection `ke_hoach`)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /ke-hoach | List dòng kế hoạch (lọc `loaiKeHoach`, `phienBan`, kỳ, các chiều) |
+| GET | /ke-hoach/phien-ban | Danh sách phiên bản đã dùng |
+| GET | /ke-hoach/series | Chuỗi DT/CP/LN kế hoạch theo tháng (hoặc tuần khi có `month`) — shape giống `pnl-series` |
+| GET | /ke-hoach/so-sanh | So sánh Kế hoạch vs Thực hiện theo chiều (`type`, `chiTieu`) |
+| GET | /ke-hoach/summary/:type | Tổng hợp riêng số kế hoạch theo chiều |
+| GET | /ke-hoach/:id | By ID |
+| POST | /ke-hoach | Create |
+| POST | /ke-hoach/batch | Batch create |
+| POST | /ke-hoach/import | Import Excel (cùng payload với batch) |
+| POST | /ke-hoach/delete-batch | Xóa hàng loạt theo ids |
+| PATCH | /ke-hoach/:id | Update |
+| PATCH | /ke-hoach/batch | Batch update theo id từng dòng |
+| DELETE | /ke-hoach/:id | Delete |
+
+> `so-sanh` đọc THẲNG collection `chung_tu` cho số thực hiện (cùng DB, cùng pipeline gom)
+> nên không cần gọi HTTP sang service khác và hai bên không thể lệch cách tính.
+
 ### /phieu-thu, /phieu-chi (Vouchers)
 | Method | Path | Description |
 |--------|------|-------------|

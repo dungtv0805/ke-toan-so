@@ -72,10 +72,14 @@ thêm `loaiKeHoach` và `phienBan`.
 
 `fe/src/pages/ke-hoach/` theo pattern CHanlder, một component cho cả 2 route (prop `loai`).
 
-- Lưới 17 cột, sửa tại chỗ bằng `EditableCell` — chuyển component này lên
-  `fe/src/components/editable-cell/`, để lại re-export ở đường dẫn cũ để không đụng NKC
+- Lưới 17 cột, sửa tại chỗ. `EditableCell` của NKC gắn chặt vào handler-context và kiểu
+  `NhatKyChung` của trang đó nên KHÔNG tái sử dụng được; lưới kế hoạch tự render ô nhập
+  ngay trong cột (chỉ một dòng ở chế độ sửa tại một thời điểm). Gộp chung về sau vẫn mở.
 - Thanh lọc: khoảng ngày, Phiên bản, và các chiều như NKC
-- Thêm dòng / nhân bản / xóa hàng loạt / Import Excel
+- Thêm dòng / nhân bản / xóa hàng loạt / Import Excel (đọc cột theo VỊ TRÍ như file mẫu,
+  các chiều nhập theo mã danh mục, xem trước lỗi từng dòng rồi mới ghi)
+- Ngày phát sinh luôn lưu 00:00 UTC của đúng ngày (`ngayLuu`) — lưu nửa đêm giờ VN sẽ
+  đẩy dòng ngày 01 sang tháng trước khi BE gom series
 - Dropdown view: *Dòng kế hoạch* → *So sánh theo TK / Khoản mục / Dự án / Đội / Nhân viên /
   Sản phẩm / Chủ đầu tư / Dòng tiền / Nhóm quản lý*, mỗi view 4 cột
   **Kế hoạch – Thực hiện – Chênh lệch – % đạt**
@@ -99,7 +103,8 @@ Sau deploy: `$addToSet` quyền mới cho role Admin của từng tenant.
 
 - voucher-service: unit test cho hàm gom so sánh (khớp mã, mã có ở KH mà không có ở TH và
   ngược lại, trùng tên khác mã, chia 0) và hàm dựng series theo tháng
-- FE: test hàm map dữ liệu gauge (% đạt, chênh lệch, KH = 0)
+- FE: map dòng ↔ danh mục (`keHoachRow`), đọc sheet import (`parseKeHoachSheet`),
+  và map dữ liệu gauge (% đạt, chênh lệch, KH = 0)
 - Repo có test đỏ sẵn từ trước → chạy hẹp theo đường dẫn `ke-hoach`
 
 ## Không làm ở giai đoạn này

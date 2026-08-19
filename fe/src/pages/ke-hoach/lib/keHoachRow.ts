@@ -60,6 +60,15 @@ export interface DanhMucLists {
   nhomKhoanMucList: MucDanhMuc[];
 }
 
+/**
+ * Ngày phát sinh là dữ liệu NGÀY, không phải mốc thời gian: luôn lưu 00:00 UTC của
+ * đúng ngày đó. Nếu lưu nửa đêm giờ VN (UTC+7) thì ngày 01/03 thành 28/02 UTC và
+ * BE gom series sẽ nhét dòng đó sang tháng trước.
+ */
+export function ngayLuu(d: { format: (f: string) => string }): string {
+  return `${d.format("YYYY-MM-DD")}T00:00:00.000Z`;
+}
+
 const tim = (list: MucDanhMuc[] | undefined, ma?: string) =>
   ma ? list?.find((m) => m.ma === ma) : undefined;
 

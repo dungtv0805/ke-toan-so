@@ -6,6 +6,7 @@ import { keHoachService, type KeHoachDong, type LoaiKeHoach } from "@/services/k
 import type { KeHoachEvents, KeHoachStates } from "../../ke-hoach.handler";
 import {
   loiCuaDong,
+  ngayLuu,
   toPayload,
   toRowValues,
   type DanhMucLists,
@@ -26,7 +27,7 @@ export class KeHoachRowEditHandler extends CSubHanlder<KeHoachEvents, KeHoachSta
       !range || (homNay.isAfter(range[0]) && homNay.isBefore(range[1]));
     this.setState("editingRowId", DONG_MOI_ID);
     this.setState("editingValues", {
-      ngay: (trongKy ? homNay : range?.[0] ?? homNay).toISOString(),
+      ngay: ngayLuu(trongKy ? homNay : range?.[0] ?? homNay),
       soTien: 0,
       noiDung: "",
     });
