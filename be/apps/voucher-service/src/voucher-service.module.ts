@@ -6,6 +6,7 @@ import { DatabaseModule } from '@app/database';
 import { ServiceClientModule } from '@app/service-client';
 import { ChungTuModule } from './chung-tu/chung-tu.module';
 import { NhatKyChungModule } from './nhat-ky-chung/nhat-ky-chung.module';
+import { KeHoachModule } from './ke-hoach/ke-hoach.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { NhatKyChungModule } from './nhat-ky-chung/nhat-ky-chung.module';
     ServiceClientModule.forRoot(),
     ChungTuModule,
     NhatKyChungModule,
+    KeHoachModule,
   ],
 })
 export class VoucherServiceModule implements NestModule {
