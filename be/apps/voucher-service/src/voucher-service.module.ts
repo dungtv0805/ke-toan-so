@@ -7,6 +7,7 @@ import { ServiceClientModule } from '@app/service-client';
 import { ChungTuModule } from './chung-tu/chung-tu.module';
 import { NhatKyChungModule } from './nhat-ky-chung/nhat-ky-chung.module';
 import { KeHoachModule } from './ke-hoach/ke-hoach.module';
+import { KeHoachBangModule } from './ke-hoach-bang/ke-hoach-bang.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { KeHoachModule } from './ke-hoach/ke-hoach.module';
     ChungTuModule,
     NhatKyChungModule,
     KeHoachModule,
+    KeHoachBangModule,
   ],
 })
 export class VoucherServiceModule implements NestModule {
