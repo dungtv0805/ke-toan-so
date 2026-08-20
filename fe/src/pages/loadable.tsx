@@ -175,6 +175,11 @@ export const KeHoachPage = loadable(() => import('./ke-hoach/KeHoachPage'), {
   fallback: <PageLoader />
 });
 
+// Trang Kế hoạch nhiều tab — 6 sheet của file thiết kế + tab "Chi tiết" bọc KeHoachPage
+export const KeHoachTabsPage = loadable(() => import('./ke-hoach/tabs/KeHoachTabsPage'), {
+  fallback: <PageLoader />
+});
+
 // Form nhập lô kế hoạch — cùng khuôn với form chứng từ của Dữ liệu tổng hợp
 export const KeHoachFormPage = loadable(() => import('./ke-hoach/form/KeHoachFormPage'), {
   fallback: <PageLoader />

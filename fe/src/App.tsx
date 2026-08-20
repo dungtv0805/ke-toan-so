@@ -53,6 +53,7 @@ import {
   PhieuChiPage,
   NhatKyChungPage,
   KeHoachPage,
+  KeHoachTabsPage,
   KeHoachFormPage,
   NhatKyChungFormPage,
   SoQuyPage,
@@ -569,7 +570,7 @@ const App = () => (
                     path="ke-hoach"
                     element={
                       <ProtectedRoute requiredPermission="/trung-tam-du-lieu/ke-hoach:xem">
-                        <KeHoachPage loaiKeHoach="KE_HOACH" />
+                        <KeHoachTabsPage />
                       </ProtectedRoute>
                     }
                   />

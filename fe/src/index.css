@@ -2630,3 +2630,15 @@ body.col-resizing .ant-table * {
   font-weight: 600 !important;
   background: #fafafa !important;
 }
+
+/* ===== Bảng kế hoạch hai cấp (Bán hàng / Nhân sự) ===== */
+/* Hàng TỔNG CỘNG ghim đầu bảng — nền đậm hơn hàng nhóm để phân biệt hai mức. */
+.kh-hang-tong > td {
+  background: hsl(var(--primary) / 0.1) !important;
+  font-weight: 600;
+}
+
+.kh-hang-nhom > td {
+  background: hsl(var(--muted)) !important;
+  font-weight: 600;
+}
