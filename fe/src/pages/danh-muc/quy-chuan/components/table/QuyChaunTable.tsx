@@ -1,6 +1,12 @@
 import React, { useMemo, useCallback, useEffect, useState } from "react";
-import { Table, Tag, Space, Button, Popconfirm, Tabs, Tooltip } from "antd";
-import { EditOutlined, DeleteOutlined, SwapOutlined } from "@ant-design/icons";
+import { Table, Tag, Space, Button, Popconfirm, Tabs, Tooltip, Segmented } from "antd";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  SwapOutlined,
+  ApartmentOutlined,
+  UnorderedListOutlined,
+} from "@ant-design/icons";
 import type { ColumnsType, TablePaginationConfig, TableProps } from "antd/es/table";
 import { QuyChuan, LoaiGiaoDich, HoSoChungTuRef } from "@/types";
 import {
@@ -9,6 +15,7 @@ import {
   laKhoaNhom,
   type QuyChuanRow,
 } from "../../lib/gomNhom";
+import { dungCotCay } from "../../lib/cotCay";
 import {
   useQuyChaunHandler,
   useQuyChaunState,
@@ -17,11 +24,18 @@ import { usePagePermission } from "@/hooks/usePagePermission";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 import "./QuyChaunTable.state";
 import { PaginationMeta } from "./QuyChaunTable.state";
+import type { CheDoXem } from "../../lib/cheDoXem";
 
 interface QuyChaunTableProps {
   onSettingsButton?: (btn: React.ReactNode) => void;
-  /** Checkbox chọn dòng — state do trang cha giữ (useBulkDelete). */
+  /**
+   * Checkbox chọn dòng — state do trang cha giữ (useBulkDelete).
+   * Ở chế độ cây trang cha KHÔNG truyền: cột checkbox làm dòng nhóm lệch hẳn
+   * một ô, cây mất luôn cái đẹp vốn là lý do dùng nó.
+   */
   rowSelection?: TableProps<QuyChuan>["rowSelection"];
+  cheDo: CheDoXem;
+  onDoiCheDo: (v: CheDoXem) => void;
 }
 
 const NHAN_LOAI_CHI_PHI: Record<NonNullable<QuyChuan["loaiChiPhi"]>, string> = {
@@ -36,7 +50,12 @@ const DEFAULT_PAGINATION: PaginationMeta = {
   totalPages: 0,
 };
 
-export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton, rowSelection }) => {
+export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
+  onSettingsButton,
+  rowSelection,
+  cheDo,
+  onDoiCheDo,
+}) => {
   const handler = useQuyChaunHandler();
   const { canEdit, canDelete } = usePagePermission("/danh-muc/quy-chuan");
   const [quyChaunList] = useQuyChaunState("quyChaunList", []);
@@ -239,33 +258,13 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton, 
     setExpandedKeys(nhomKeys);
   }, [nhomKeys]);
 
-  // Dòng nhóm chỉ hiện nhãn ở cột đầu, các cột còn lại để trống.
-  const treeColumns = useMemo(
-    () =>
-      columnsWithoutLoai.map((col, i) => ({
-        ...col,
-        render: (value: unknown, record: QuyChuanRow, index: number) => {
-          if (laDongNhom(record)) {
-            if (i > 0) return null;
-            return (
-              <Space>
-                <Tag color={record.color}>{record.ten}</Tag>
-                <span className="text-xs text-muted-foreground">
-                  {record.soLuong} quy chuẩn
-                </span>
-              </Space>
-            );
-          }
-          const goc = col.render as
-            | ((v: unknown, r: QuyChuan, i: number) => React.ReactNode)
-            | undefined;
-          return goc ? goc(value, record as QuyChuan, index) : (value as React.ReactNode);
-        },
-      })) as ColumnsType<QuyChuanRow>,
-    [columnsWithoutLoai],
-  );
+  const treeColumns = useMemo(() => dungCotCay(columnsWithoutLoai), [columnsWithoutLoai]);
 
-  // Khoá dòng nhóm KHÔNG được lọt vào danh sách xóa lô — nó không phải bản ghi.
+  /**
+   * Chế độ cây không có checkbox (trang cha không truyền rowSelection). Vẫn giữ
+   * lớp lọc khoá dòng nhóm phòng khi bật lại: khoá `lgd:` không phải bản ghi,
+   * lọt vào là xóa lô gọi API với id không tồn tại.
+   */
   const treeRowSelection = useMemo<TableProps<QuyChuanRow>["rowSelection"]>(() => {
     if (!rowSelection) return undefined;
     const { onChange, ...rest } = rowSelection as NonNullable<
@@ -282,6 +281,53 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton, 
         ),
     } as TableProps<QuyChuanRow>["rowSelection"];
   }, [rowSelection]);
+
+  const laCay = cheDo === "cay";
+
+  const chuyenCheDo = (
+    <Segmented
+      size="small"
+      value={cheDo}
+      onChange={(v) => onDoiCheDo(v as CheDoXem)}
+      options={[
+        { value: "cay", label: "Cây", icon: <ApartmentOutlined /> },
+        { value: "danhSach", label: "Danh sách", icon: <UnorderedListOutlined /> },
+      ]}
+    />
+  );
+
+  /** Một bảng cho cả hai chế độ — khác nhau đúng ở cột, dữ liệu và checkbox. */
+  const renderBang = (columnsDanhSach: ColumnsType<QuyChuan>, scrollX: number) =>
+    laCay ? (
+      <Table<QuyChuanRow>
+        columns={treeColumns}
+        dataSource={treeData}
+        rowKey="id"
+        loading={loading}
+        rowSelection={treeRowSelection}
+        expandable={{
+          expandedRowKeys: expandedKeys,
+          onExpandedRowsChange: (k) => setExpandedKeys([...k]),
+        }}
+        rowClassName={(r) => (laDongNhom(r) ? "bg-muted/40" : "")}
+        pagination={paginationConfig}
+        onChange={handleTableChange}
+        size="middle"
+        scroll={{ x: 1550, y: "calc(100vh - 250px)" }}
+      />
+    ) : (
+      <Table<QuyChuan>
+        columns={columnsDanhSach}
+        dataSource={quyChaunList}
+        rowKey="id"
+        loading={loading}
+        rowSelection={rowSelection}
+        pagination={paginationConfig}
+        onChange={handleTableChange}
+        size="middle"
+        scroll={{ x: scrollX, y: "calc(100vh - 250px)" }}
+      />
+    );
 
   // Calculate counts for tabs from stats (stats is updated with search keyword)
   const [stats] = useQuyChaunState("stats", null);
@@ -335,20 +381,7 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton, 
     {
       key: "all",
       label: `Tất cả (${tabCounts.all})`,
-      children: (
-        <Table<QuyChuanRow>
-          columns={treeColumns}
-          dataSource={treeData}
-          rowKey="id"
-          loading={loading}
-          rowSelection={treeRowSelection}
-          expandable={{ expandedRowKeys: expandedKeys, onExpandedRowsChange: (k) => setExpandedKeys([...k]) }}
-          pagination={paginationConfig}
-          onChange={handleTableChange}
-          size="middle"
-          scroll={{ x: 1550, y: "calc(100vh - 250px)" }}
-        />
-      ),
+      children: renderBang(cfgColumns, 1650),
     },
     ...loaiGiaoDichOptions.map((option) => ({
       key: option.value,
@@ -360,24 +393,16 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton, 
           {option.label}
         </Space>
       ),
-      children: (
-        <Table<QuyChuanRow>
-          columns={treeColumns}
-          dataSource={treeData}
-          rowKey="id"
-          loading={loading}
-          rowSelection={treeRowSelection}
-          expandable={{ expandedRowKeys: expandedKeys, onExpandedRowsChange: (k) => setExpandedKeys([...k]) }}
-          pagination={paginationConfig}
-          onChange={handleTableChange}
-          size="middle"
-          scroll={{ x: 1550, y: "calc(100vh - 285px)" }}
-        />
-      ),
+      children: renderBang(columnsWithoutLoai, 1550),
     })),
   ];
 
   return (
-    <Tabs items={tabItems} activeKey={activeTab} onChange={handleTabChange} />
+    <Tabs
+      items={tabItems}
+      activeKey={activeTab}
+      onChange={handleTabChange}
+      tabBarExtraContent={chuyenCheDo}
+    />
   );
 };

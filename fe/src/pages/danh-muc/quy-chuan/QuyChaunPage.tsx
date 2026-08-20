@@ -11,6 +11,7 @@ import { usePagePermission } from '@/hooks/usePagePermission';
 import { useBulkDelete } from '@/components/table/useBulkDelete';
 import { quyChauanService } from '@/services/quyChaunService';
 import { QuyChuan } from '@/types';
+import { docCheDoXem, luuCheDoXem, type CheDoXem } from './lib/cheDoXem';
 
 const DEFAULT_PAGINATION: PaginationMeta = {
   total: 0,
@@ -23,6 +24,7 @@ const QuyChaunPageInner: React.FC = () => {
   const handler = useQuyChaunHandler();
   const { canDelete } = usePagePermission('/danh-muc/quy-chuan');
   const [settingsButton, setSettingsButton] = useState<React.ReactNode>(null);
+  const [cheDo, setCheDo] = useState<CheDoXem>(docCheDoXem);
   const handleSettingsButton = useCallback((btn: React.ReactNode) => {
     setSettingsButton(btn);
   }, []);
@@ -43,6 +45,17 @@ const QuyChaunPageInner: React.FC = () => {
       });
     },
   });
+
+  // Đổi chế độ cũng phải bỏ chọn: sang dạng cây là mất luôn cột checkbox, giữ lại
+  // lựa chọn cũ thì nút "Xóa đã chọn (N)" còn đứng đó mà không cách nào bỏ tick.
+  const doiCheDo = useCallback(
+    (v: CheDoXem) => {
+      setCheDo(v);
+      luuCheDoXem(v);
+      clearSelection();
+    },
+    [clearSelection],
+  );
 
   // Danh sách đổi (đổi trang / đổi tab / tìm kiếm / tải lại) → bỏ chọn, vì lựa chọn chỉ có
   // hiệu lực trong trang đang xem. Các thao tác đó nằm rải rác ở header và bảng con.
@@ -76,7 +89,12 @@ const QuyChaunPageInner: React.FC = () => {
           </Space>
         </div>
 
-        <QuyChaunTable onSettingsButton={handleSettingsButton} rowSelection={rowSelection} />
+        <QuyChaunTable
+          onSettingsButton={handleSettingsButton}
+          rowSelection={cheDo === 'cay' ? undefined : rowSelection}
+          cheDo={cheDo}
+          onDoiCheDo={doiCheDo}
+        />
       </Card>
 
       <QuyChaunForm />
