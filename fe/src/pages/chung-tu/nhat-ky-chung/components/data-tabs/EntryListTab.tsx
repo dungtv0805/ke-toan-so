@@ -9,6 +9,7 @@ import {
 import { TermText } from "@/components/glossary/TermText";
 import { useTerm } from "@/contexts/TermContext";
 import { useColumnVisibility } from "@/components/table/useColumnVisibility";
+import { NKC_COT_PAGE_KEY } from "../../truongTheoCot";
 import type { Key } from "react";
 import { Table, Button, Space, Popconfirm, Tag, Tooltip } from "antd";
 import {
@@ -903,6 +904,8 @@ export function EntryListTab() {
         selectedRowKeys: selectedEntryIds,
         onChange: (keys: Key[]) => setSelectedEntryIds(keys.map(String)),
         columnWidth: 32,
+        // Ghim cùng 2 cột đầu — xem chú thích ở `columnsGhim`.
+        fixed: true as const,
       }
     : undefined;
 
@@ -989,7 +992,7 @@ export function EntryListTab() {
   // pageKey bump '.v3': thêm 2 cột "Nhóm khoản mục". Lựa chọn cột lưu theo danh sách key
   // ĐƯỢC HIỆN, nên ai đã từng mở bộ chọn cột sẽ không bao giờ thấy cột mới nếu giữ key cũ.
   const { columns: visibleColumns, chooserButton } = useColumnVisibility(
-    "nkc.entryList.v3",
+    NKC_COT_PAGE_KEY,
     columns,
     labelOf,
     {
@@ -1002,6 +1005,17 @@ export function EntryListTab() {
         }
       },
     }
+  );
+
+  /**
+   * Ghim 2 cột đầu (theo yêu cầu) — luôn là 2 cột ĐANG HIỆN đầu tiên, nên tắt
+   * bớt cột ở "Chọn cột" thì phần ghim trôi theo chứ không ghim vào chỗ trống.
+   * Ô tick chọn dòng phải ghim cùng, nếu không antd để nó cuộn ra khỏi màn còn
+   * hai cột ghim thì đứng yên — hàng tiêu đề lệch hẳn một ô so với thân bảng.
+   */
+  const columnsGhim = useMemo(
+    () => visibleColumns.map((col, i) => (i < 2 ? { ...col, fixed: "left" as const } : col)),
+    [visibleColumns]
   );
 
   // Row class name for highlighting editing row
@@ -1102,7 +1116,7 @@ export function EntryListTab() {
       {/* flex-col để `.excel-table { flex: 1 }` vẫn ăn như khi Table là con trực tiếp */}
       <div ref={tableWrapRef} className="flex flex-col flex-1 min-h-0">
         <Table
-          columns={visibleColumns}
+          columns={columnsGhim}
           dataSource={data || []}
           rowKey="id"
           rowSelection={rowSelection}

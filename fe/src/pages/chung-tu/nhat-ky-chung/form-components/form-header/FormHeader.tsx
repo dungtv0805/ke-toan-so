@@ -12,6 +12,7 @@ import {
 import { ChungTuHeader } from "../../form-handler/sub-handler/init/init.state";
 import { LoaiGiaoDich } from "@/types";
 import { HoaDonField } from "./HoaDonField";
+import { useCotHienThi } from "../../hooks/useCotHienThi";
 
 export function FormHeader() {
   const handler = useNhatKyChungFormHandler();
@@ -20,6 +21,8 @@ export function FormHeader() {
   const [cloneFromSoPhieu] = useNhatKyChungFormState("cloneFromSoPhieu", null);
   const [loaiGiaoDichList] = useNhatKyChungFormState("loaiGiaoDichList", [] as LoaiGiaoDich[]);
   const [chiTietList] = useNhatKyChungFormState("chiTietList", []);
+  // Ô nào ngoài bảng "Dữ liệu tổng hợp" đã tắt cột thì ở đây cũng ẩn.
+  const hienTruong = useCotHienThi();
   const tongTienChiTiet = (chiTietList as { soTien?: number }[]).reduce(
     (s, ct) => s + (Number(ct.soTien) || 0),
     0,
@@ -70,17 +73,19 @@ export function FormHeader() {
             size="small"
           />
         </div>
-        <div className="nkc-field flex-1" style={{ minWidth: 100 }}>
-          <label className="nkc-label">Ngày ghi sổ</label>
-          <DatePicker
-            format="DD/MM/YYYY"
-            className="w-full"
-            value={header?.ngayGhiSo}
-            onChange={(date) => handleFieldChange("ngayGhiSo", date)}
-            placeholder="Mặc định = ngày phát sinh"
-            size="small"
-          />
-        </div>
+        {hienTruong("ngayGhiSo") && (
+          <div className="nkc-field flex-1" style={{ minWidth: 100 }}>
+            <label className="nkc-label">Ngày ghi sổ</label>
+            <DatePicker
+              format="DD/MM/YYYY"
+              className="w-full"
+              value={header?.ngayGhiSo}
+              onChange={(date) => handleFieldChange("ngayGhiSo", date)}
+              placeholder="Mặc định = ngày phát sinh"
+              size="small"
+            />
+          </div>
+        )}
         <div className="nkc-field flex-1" style={{ minWidth: 120 }}>
           <label className="nkc-label">
             Loại GD <span className="text-red-500">*</span>
@@ -95,26 +100,30 @@ export function FormHeader() {
             className="w-full"
           />
         </div>
-        <div className="nkc-field flex-[2]" style={{ minWidth: 150 }}>
-          <label className="nkc-label">Người GD</label>
-          <Input
-            placeholder="Người giao dịch"
-            value={header?.nguoiGiaoDich || ""}
-            onChange={(e) => handleFieldChange("nguoiGiaoDich", e.target.value)}
-            size="small"
-            className="w-full"
-          />
-        </div>
-        <div className="nkc-field flex-[2]" style={{ minWidth: 150 }}>
-          <label className="nkc-label">Địa chỉ</label>
-          <Input
-            placeholder="Địa chỉ"
-            value={header?.diaChi || ""}
-            onChange={(e) => handleFieldChange("diaChi", e.target.value)}
-            size="small"
-            className="w-full"
-          />
-        </div>
+        {hienTruong("nguoiGiaoDich") && (
+          <div className="nkc-field flex-[2]" style={{ minWidth: 150 }}>
+            <label className="nkc-label">Người GD</label>
+            <Input
+              placeholder="Người giao dịch"
+              value={header?.nguoiGiaoDich || ""}
+              onChange={(e) => handleFieldChange("nguoiGiaoDich", e.target.value)}
+              size="small"
+              className="w-full"
+            />
+          </div>
+        )}
+        {hienTruong("diaChi") && (
+          <div className="nkc-field flex-[2]" style={{ minWidth: 150 }}>
+            <label className="nkc-label">Địa chỉ</label>
+            <Input
+              placeholder="Địa chỉ"
+              value={header?.diaChi || ""}
+              onChange={(e) => handleFieldChange("diaChi", e.target.value)}
+              size="small"
+              className="w-full"
+            />
+          </div>
+        )}
       </div>
       {/* Row 2: Diễn giải chung - full width */}
       <div className="nkc-field w-full">

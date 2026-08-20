@@ -34,6 +34,7 @@ import { QuickAddDoiTuongModal } from "../../quick-add/QuickAddDoiTuongModal";
 import { QuickAddSanPhamModal } from "../../quick-add/QuickAddSanPhamModal";
 import { toast } from "sonner";
 import { sapXepTheoNhan } from "@/lib/sapXep";
+import { useCotHienThi } from "../../hooks/useCotHienThi";
 
 export function ChiTietTable() {
   const handler = useNhatKyChungFormHandler();
@@ -103,6 +104,7 @@ export function ChiTietTable() {
 
   // Enable column resize
   useTableColumnResize("chi-tiet-excel-table");
+  const hienTruong = useCotHienThi();
 
   // Track active row for keyboard navigation
   const tableRef = useRef<HTMLDivElement>(null);
@@ -953,6 +955,23 @@ export function ChiTietTable() {
     },
   ];
 
+  /**
+   * Chỉ giữ những cột mà bảng "Dữ liệu tổng hợp" ngoài kia đang hiện — người
+   * dùng đã tắt chiều phân bổ nào thì không phải kéo ngang qua nó khi nhập.
+   * Cột không có key/dataIndex (STT, nút thao tác) luôn giữ.
+   */
+  const columnsHienThi = columns.filter((col) => {
+    const c = col as { key?: unknown; dataIndex?: unknown };
+    return hienTruong(String(c.key ?? c.dataIndex ?? ""));
+  });
+  // Bề ngang cuộn tính theo đúng cột còn lại, không để lại vùng trắng lê thê.
+  const scrollX = columnsHienThi.reduce(
+    (sum, col) => sum + (typeof (col as { width?: unknown }).width === "number"
+      ? ((col as { width: number }).width)
+      : 150),
+    0
+  );
+
   const total = (chiTietList as ChungTuChiTiet[]).reduce(
     (sum, item) => sum + (item.soTien || 0),
     0
@@ -968,12 +987,12 @@ export function ChiTietTable() {
   return (
     <div ref={tableRef} className="excel-editable-table">
       <Table
-        columns={columns}
+        columns={columnsHienThi}
         dataSource={paginatedData}
         rowKey="key"
         pagination={false}
         size="small"
-        scroll={{ x: 2400, y: 'calc(100vh - 380px)' }}
+        scroll={{ x: scrollX, y: 'calc(100vh - 380px)' }}
         bordered
         className="resizable-table chi-tiet-excel-table"
         rowClassName={(_, index) =>
