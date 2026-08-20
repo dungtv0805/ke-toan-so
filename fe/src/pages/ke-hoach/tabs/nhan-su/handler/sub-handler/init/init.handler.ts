@@ -15,9 +15,9 @@ export class NhanSuInitHandler extends CSubHanlder<NhanSuEvents, NhanSuStates> {
   async init(params: { nam: number }): Promise<void> {
     this.khoiTaoMacDinh();
     this.setState("nam", params.nam);
-    // Đổi năm là đổi hẳn bản kế hoạch — bỏ dở dòng đang sửa.
-    this.setState("editingKey", null);
-    this.setState("formValues", null);
+    // Đổi năm là đổi hẳn bản kế hoạch — bỏ mọi thứ đang gõ dở.
+    this.setState("nhap", {});
+    this.setState("dongMoi", []);
     await Promise.all([this.napDong(params.nam), this.napDanhMuc()]);
   }
 
@@ -54,8 +54,8 @@ export class NhanSuInitHandler extends CSubHanlder<NhanSuEvents, NhanSuStates> {
       ["loading", false],
       ["boPhanList", []],
       ["masterDataLoaded", false],
-      ["editingKey", null],
-      ["formValues", null],
+      ["nhap", {}],
+      ["dongMoi", []],
       ["saving", false],
     ];
     for (const [key, value] of mac) {

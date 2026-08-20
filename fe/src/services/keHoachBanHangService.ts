@@ -32,6 +32,18 @@ export type KeHoachBanHangPatch = Partial<
   Omit<KeHoachBanHangPayload, 'nam' | 'sanPham'>
 >;
 
+/** Một lần bấm Lưu gửi hết dòng mới và dòng đã sửa. */
+export interface KeHoachBanHangBatch {
+  nam: number;
+  them: Omit<KeHoachBanHangPayload, 'nam'>[];
+  sua: (KeHoachBanHangPatch & { id: string })[];
+}
+
+export interface KeHoachBanHangBatchKetQua {
+  daThem: number;
+  daSua: number;
+}
+
 interface DongResponse extends Omit<KeHoachBanHangDong, 'id' | 'thang'> {
   _id?: string;
   id?: string;
@@ -67,6 +79,12 @@ class KeHoachBanHangService extends ServiceBase {
     return this.map(
       await this.patch<DongResponse>(payload, { endpoint: `/${id}` }),
     );
+  }
+
+  async luuHangLoat(
+    batch: KeHoachBanHangBatch,
+  ): Promise<KeHoachBanHangBatchKetQua> {
+    return this.post<KeHoachBanHangBatchKetQua>(batch, { endpoint: '/batch' });
   }
 
   async xoa(id: string): Promise<void> {

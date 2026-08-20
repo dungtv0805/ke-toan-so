@@ -4,18 +4,25 @@ import type {
   ChiPhiNhanSu,
   KeHoachNhanSuDong,
 } from "@/services/keHoachNhanSuService";
+import type { DongNhap } from "../../../../lib/nhapBang";
 
-/** Khoá của dòng đang thêm mới — không trùng id thật của MongoDB. */
-export const DONG_MOI_KEY = "__moi__";
-
-/** Giá trị đang gõ trên dòng được sửa. */
-export interface NhanSuForm {
-  boPhanId?: string;
+/** Giá trị gõ được của một dòng nhân sự. */
+export interface NhanSuVal {
+  boPhanId: string;
   maViTri: string;
   tenChucVu: string;
   chiPhi: ChiPhiNhanSu;
   thang: number[];
 }
+
+/** Giá trị gõ được, rút từ một dòng đã lưu. */
+export const valTuDong = (d: KeHoachNhanSuDong): NhanSuVal => ({
+  boPhanId: d.boPhan.id,
+  maViTri: d.maViTri,
+  tenChucVu: d.tenChucVu ?? "",
+  chiPhi: { ...d.chiPhi },
+  thang: [...d.thang],
+});
 
 export interface NhanSuInitStates extends BaseStates {
   nam: number;
@@ -23,9 +30,10 @@ export interface NhanSuInitStates extends BaseStates {
   loading: boolean;
   boPhanList: BoPhan[];
   masterDataLoaded: boolean;
-  /** null = không sửa gì; DONG_MOI_KEY = đang thêm dòng mới. */
-  editingKey: string | null;
-  formValues: NhanSuForm | null;
+  /** Sửa đổi chưa lưu của các dòng ĐÃ LƯU, khoá theo id dòng. */
+  nhap: Record<string, NhanSuVal>;
+  /** Dòng mới chưa lưu, thêm bao nhiêu cũng được. */
+  dongMoi: DongNhap<NhanSuVal>[];
   saving: boolean;
 }
 

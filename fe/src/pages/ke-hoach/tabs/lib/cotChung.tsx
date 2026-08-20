@@ -8,36 +8,32 @@ export const tien = (v?: number) =>
 
 export const phanTramText = (v: number) => `${(v * 100).toFixed(2)}%`;
 
-/** Hàng tổng và hàng nhóm không sửa được, chỉ hiển thị số cộng dồn. */
+/** Hàng tổng và hàng nhóm chỉ hiển thị số cộng dồn, không gõ được. */
 export const laHangGop = (loai: LoaiHang) => loai !== "chiTiet";
 
-export const rowClassName = (row: { loai: LoaiHang }) =>
-  row.loai === "tong"
-    ? "kh-hang-tong"
-    : row.loai === "nhom"
-      ? "kh-hang-nhom"
-      : "";
-
-/** Chữ số bên phải, hàng gộp in đậm. */
-const soCell = (loai: LoaiHang, noiDung: React.ReactNode) => (
-  <span className={laHangGop(loai) ? "font-semibold" : undefined}>{noiDung}</span>
-);
-
+/** Ô nhập trong bảng — phẳng, không viền, hoà vào lưới như ô Excel. */
 export const numberInputProps = {
   size: "small" as const,
   variant: "borderless" as const,
-  className: "w-full excel-cell-input",
+  className: "w-full excel-cell-input text-right",
   min: 0,
-  formatter: (v: string | number | undefined) => tien(Number(v)),
+  controls: false,
+  formatter: (v: string | number | undefined) =>
+    v === undefined || v === null || v === "" ? "" : tien(Number(v)),
   parser: (v: string | undefined) => Number((v ?? "").replace(/\D/g, "")),
 };
 
+/** Chữ số bên phải, hàng gộp in đậm. */
+const soCell = (loai: LoaiHang, noiDung: React.ReactNode) => (
+  <span className={laHangGop(loai) ? "font-semibold" : undefined}>
+    {noiDung}
+  </span>
+);
+
 interface CotSoThoiGianOptions<T> {
-  /** Dòng này đang được sửa hay không. */
-  dangSua: (row: T) => boolean;
-  /** Mảng 12 tháng đang gõ trên form. */
-  thangDangGo: () => number[];
-  doiThang: (chiSo: number, giaTri: number) => void;
+  /** Dòng này có gõ được không (hàng gộp thì không). */
+  suaDuoc: (row: T) => boolean;
+  doiThang: (row: T, chiSo: number, giaTri: number) => void;
 }
 
 /**
@@ -50,7 +46,7 @@ export function cotQuyVaThang<T extends HangBang<unknown>>(
   const cotQuy = [0, 1, 2, 3].map((i) => ({
     title: `Q${i + 1}`,
     key: `q${i + 1}`,
-    width: 120,
+    width: 110,
     align: "right" as const,
     render: (_: unknown, row: T) => soCell(row.loai, tien(row.quy[i])),
   }));
@@ -58,20 +54,18 @@ export function cotQuyVaThang<T extends HangBang<unknown>>(
   const cotThang = Array.from({ length: 12 }, (_, i) => ({
     title: `T${i + 1}`,
     key: `t${i + 1}`,
-    width: 120,
+    width: 110,
     align: "right" as const,
-    render: (_: unknown, row: T) => {
-      if (opts.dangSua(row)) {
-        return (
-          <InputNumber
-            {...numberInputProps}
-            value={opts.thangDangGo()[i] ?? 0}
-            onChange={(v) => opts.doiThang(i, Number(v) || 0)}
-          />
-        );
-      }
-      return soCell(row.loai, tien(row.thang[i]));
-    },
+    render: (_: unknown, row: T) =>
+      opts.suaDuoc(row) ? (
+        <InputNumber
+          {...numberInputProps}
+          value={row.thang[i] ?? 0}
+          onChange={(v) => opts.doiThang(row, i, Number(v) || 0)}
+        />
+      ) : (
+        soCell(row.loai, tien(row.thang[i]))
+      ),
   }));
 
   return [
@@ -84,9 +78,11 @@ export function cotQuyVaThang<T extends HangBang<unknown>>(
  * Ô số năm (Doanh thu / CỘNG). Tô đỏ kèm chú thích khi tổng 12 tháng lệch —
  * chỉ cảnh báo, không chặn lưu.
  */
-export function oSoNam<T extends HangBang<unknown>>(row: T, tenChiTieu: string) {
-  const noiDung = soCell(row.loai, tien(row.namKhaiBao));
-  if (!row.lech) return noiDung;
+export function oSoNam<T extends HangBang<unknown>>(
+  row: T,
+  tenChiTieu: string,
+) {
+  if (!row.lech) return soCell(row.loai, tien(row.namKhaiBao));
   return (
     <Tooltip
       title={`Tổng 12 tháng (${tien(row.namTheoThang)}) khác ${tenChiTieu} (${tien(
@@ -104,3 +100,13 @@ export const onCellNhan = (row: { loai: LoaiHang }) =>
 
 export const onCellNhanPhu = (row: { loai: LoaiHang }) =>
   laHangGop(row.loai) ? { colSpan: 0 } : {};
+
+/** Nền phân biệt: hàng tổng, hàng nhóm, và hàng đang có sửa đổi chưa lưu. */
+export const rowClassName = (row: {
+  loai: LoaiHang;
+  chuaLuu?: boolean;
+}): string => {
+  if (row.loai === "tong") return "kh-hang-tong";
+  if (row.loai === "nhom") return "kh-hang-nhom";
+  return row.chuaLuu ? "kh-hang-nhap" : "";
+};

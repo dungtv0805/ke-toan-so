@@ -10,11 +10,12 @@ import {
 } from "@/services/keHoachNhanSuService";
 import type { BoPhan } from "@/types";
 import type { NhanSuEvents, NhanSuStates } from "../../nhan-su.handler";
-import { DONG_MOI_KEY, type NhanSuForm } from "../init/init.state";
+import { laKhacNhau, tamId, type DongNhap } from "../../../../lib/nhapBang";
+import { valTuDong, type NhanSuVal } from "../init/init.state";
 import "./row-edit.event";
 
-const formRong = (): NhanSuForm => ({
-  boPhanId: undefined,
+const valRong = (boPhanId = ""): NhanSuVal => ({
+  boPhanId,
   maViTri: "",
   tenChucVu: "",
   chiPhi: chiPhiRong(),
@@ -27,107 +28,57 @@ export class NhanSuRowEditHandler extends CSubHanlder<
   NhanSuStates
 > {
   @HandlerDecorator("themDong")
-  themDong(): void {
-    this.setState("editingKey", DONG_MOI_KEY);
-    this.setState("formValues", formRong());
+  themDong(params: { boPhanId?: string }): void {
+    const dongMoi = this.getState("dongMoi") as DongNhap<NhanSuVal>[];
+    this.setState("dongMoi", [
+      ...dongMoi,
+      { id: tamId(), val: valRong(params.boPhanId ?? "") },
+    ]);
   }
 
-  @HandlerDecorator("batDauSua")
-  batDauSua(params: { key: string }): void {
-    const dong = (this.getState("data") as KeHoachNhanSuDong[]).find(
-      (d) => d.id === params.key,
-    );
-    if (!dong) return;
-    this.setState("editingKey", params.key);
-    this.setState("formValues", {
-      boPhanId: dong.boPhan.id,
-      maViTri: dong.maViTri,
-      tenChucVu: dong.tenChucVu ?? "",
-      chiPhi: { ...dong.chiPhi },
-      thang: [...dong.thang],
+  @HandlerDecorator("suaO")
+  suaO(params: { id: string; patch: Partial<NhanSuVal> }): void {
+    this.capNhatVal(params.id, (cu) => ({ ...cu, ...params.patch }));
+  }
+
+  @HandlerDecorator("suaChiPhi")
+  suaChiPhi(params: {
+    id: string;
+    khoa: keyof ChiPhiNhanSu;
+    giaTri: number;
+  }): void {
+    this.capNhatVal(params.id, (cu) => ({
+      ...cu,
+      chiPhi: { ...cu.chiPhi, [params.khoa]: params.giaTri },
+    }));
+  }
+
+  @HandlerDecorator("suaThang")
+  suaThang(params: { id: string; chiSo: number; giaTri: number }): void {
+    this.capNhatVal(params.id, (cu) => {
+      const thang = [...cu.thang];
+      thang[params.chiSo] = params.giaTri;
+      return { ...cu, thang };
     });
   }
 
-  @HandlerDecorator("huySua")
-  huySua(): void {
-    this.setState("editingKey", null);
-    this.setState("formValues", null);
-  }
-
-  @HandlerDecorator("datForm")
-  datForm(params: { patch: Partial<NhanSuForm> }): void {
-    const hienTai = (this.getState("formValues") as NhanSuForm) ?? formRong();
-    this.setState("formValues", { ...hienTai, ...params.patch });
-  }
-
-  @HandlerDecorator("datChiPhi")
-  datChiPhi(params: { khoa: keyof ChiPhiNhanSu; giaTri: number }): void {
-    const hienTai = (this.getState("formValues") as NhanSuForm) ?? formRong();
-    this.setState("formValues", {
-      ...hienTai,
-      chiPhi: { ...hienTai.chiPhi, [params.khoa]: params.giaTri },
-    });
-  }
-
-  @HandlerDecorator("datThang")
-  datThang(params: { chiSo: number; giaTri: number }): void {
-    const hienTai = (this.getState("formValues") as NhanSuForm) ?? formRong();
-    const thang = [...hienTai.thang];
-    thang[params.chiSo] = params.giaTri;
-    this.setState("formValues", { ...hienTai, thang });
-  }
-
-  @HandlerDecorator("luuDong")
-  async luuDong(): Promise<void> {
-    const form = this.getState("formValues") as NhanSuForm | null;
-    const editingKey = this.getState("editingKey") as string | null;
-    if (!form || !editingKey) return;
-
-    if (!form.boPhanId) {
-      message.warning("Chọn bộ phận trước khi lưu");
-      return;
-    }
-    if (!form.maViTri.trim()) {
-      message.warning("Nhập mã vị trí trước khi lưu");
+  @HandlerDecorator("boDong")
+  async boDong(params: { id: string }): Promise<void> {
+    const dongMoi = this.getState("dongMoi") as DongNhap<NhanSuVal>[];
+    if (dongMoi.some((d) => d.id === params.id)) {
+      this.setState(
+        "dongMoi",
+        dongMoi.filter((d) => d.id !== params.id),
+      );
       return;
     }
 
-    const boPhan = this.mucBoPhan(form.boPhanId);
-    if (!boPhan) {
-      message.error("Không tìm thấy bộ phận trong danh mục");
-      return;
-    }
-
-    this.setState("saving", true);
-    try {
-      const chung = {
-        boPhan,
-        maViTri: form.maViTri.trim(),
-        tenChucVu: form.tenChucVu.trim() || undefined,
-        chiPhi: form.chiPhi,
-        thang: form.thang,
-      };
-      if (editingKey === DONG_MOI_KEY) {
-        await keHoachNhanSuService.taoMoi({
-          nam: this.getState("nam") as number,
-          ...chung,
-        });
-      } else {
-        await keHoachNhanSuService.capNhat(editingKey, chung);
-      }
-      await this.executeEvent("huySua", {});
-      await this.executeEvent("refresh", {});
-    } catch (error) {
-      message.error(this.loiCuaApi(error, "Lưu dòng kế hoạch nhân sự thất bại"));
-    } finally {
-      this.setState("saving", false);
-    }
-  }
-
-  @HandlerDecorator("xoaDong")
-  async xoaDong(params: { id: string }): Promise<void> {
     try {
       await keHoachNhanSuService.xoa(params.id);
+      // Bỏ luôn phần gõ dở của dòng vừa xoá, tránh gửi lên khi Lưu.
+      const nhap = { ...(this.getState("nhap") as Record<string, NhanSuVal>) };
+      delete nhap[params.id];
+      this.setState("nhap", nhap);
       message.success("Đã xoá dòng kế hoạch");
       await this.executeEvent("refresh", {});
     } catch (error) {
@@ -135,11 +86,92 @@ export class NhanSuRowEditHandler extends CSubHanlder<
     }
   }
 
-  private mucBoPhan(id: string) {
-    const bp = (this.getState("boPhanList") as BoPhan[]).find(
-      (b) => b.id === id,
+  @HandlerDecorator("huyThayDoi")
+  huyThayDoi(): void {
+    this.setState("nhap", {});
+    this.setState("dongMoi", []);
+  }
+
+  @HandlerDecorator("luuTatCa")
+  async luuTatCa(): Promise<void> {
+    const data = this.getState("data") as KeHoachNhanSuDong[];
+    const nhap = this.getState("nhap") as Record<string, NhanSuVal>;
+    const dongMoi = this.getState("dongMoi") as DongNhap<NhanSuVal>[];
+
+    const thieu = dongMoi.filter(
+      (d) => !d.val.boPhanId || !d.val.maViTri.trim(),
     );
-    return bp ? { id: bp.id, ma: bp.ma, ten: bp.ten } : undefined;
+    if (thieu.length > 0) {
+      message.warning(
+        `Còn ${thieu.length} dòng mới chưa chọn bộ phận hoặc chưa nhập mã vị trí`,
+      );
+      return;
+    }
+
+    const them = dongMoi.map((d) => this.dungPayload(d.val));
+    const sua = data
+      .filter((d) => nhap[d.id] && laKhacNhau(nhap[d.id], valTuDong(d)))
+      .map((d) => ({ id: d.id, ...this.dungPayload(nhap[d.id]) }));
+
+    if (them.length === 0 && sua.length === 0) {
+      message.info("Không có thay đổi nào để lưu");
+      return;
+    }
+
+    if ([...them, ...sua].some((x) => !x.boPhan)) {
+      message.error("Không tìm thấy bộ phận trong danh mục");
+      return;
+    }
+
+    this.setState("saving", true);
+    try {
+      const kq = await keHoachNhanSuService.luuHangLoat({
+        nam: this.getState("nam") as number,
+        them: them as never,
+        sua: sua as never,
+      });
+      message.success(`Đã lưu ${kq.daThem} dòng mới, ${kq.daSua} dòng sửa`);
+      this.setState("nhap", {});
+      this.setState("dongMoi", []);
+      await this.executeEvent("refresh", {});
+    } catch (error) {
+      message.error(this.loiCuaApi(error, "Lưu kế hoạch nhân sự thất bại"));
+    } finally {
+      this.setState("saving", false);
+    }
+  }
+
+  /** Ghi giá trị mới cho một dòng, dù là dòng đã lưu hay dòng mới. */
+  private capNhatVal(id: string, doi: (cu: NhanSuVal) => NhanSuVal): void {
+    const dongMoi = this.getState("dongMoi") as DongNhap<NhanSuVal>[];
+    const viTri = dongMoi.findIndex((d) => d.id === id);
+    if (viTri >= 0) {
+      const banSao = [...dongMoi];
+      banSao[viTri] = { id, val: doi(dongMoi[viTri].val) };
+      this.setState("dongMoi", banSao);
+      return;
+    }
+
+    const nhap = this.getState("nhap") as Record<string, NhanSuVal>;
+    const goc = (this.getState("data") as KeHoachNhanSuDong[]).find(
+      (d) => d.id === id,
+    );
+    if (!goc) return;
+    const cu = nhap[id] ?? valTuDong(goc);
+    this.setState("nhap", { ...nhap, [id]: doi(cu) });
+  }
+
+  private dungPayload(val: NhanSuVal) {
+    const bp = (this.getState("boPhanList") as BoPhan[]).find(
+      (b) => b.id === val.boPhanId,
+    );
+    return {
+      boPhan: bp ? { id: bp.id, ma: bp.ma, ten: bp.ten } : undefined,
+      maViTri: val.maViTri.trim(),
+      tenChucVu: val.tenChucVu.trim() || undefined,
+      chiPhi: val.chiPhi,
+      thang: val.thang,
+    };
   }
 
   private loiCuaApi(error: unknown, macDinh: string): string {

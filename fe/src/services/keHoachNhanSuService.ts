@@ -63,6 +63,18 @@ export type KeHoachNhanSuPayload = Omit<KeHoachNhanSuDong, 'id'>;
 /** Sửa được cả bộ phận lẫn mã vị trí — chỉ khoá năm. */
 export type KeHoachNhanSuPatch = Partial<Omit<KeHoachNhanSuPayload, 'nam'>>;
 
+/** Một lần bấm Lưu gửi hết dòng mới và dòng đã sửa. */
+export interface KeHoachNhanSuBatch {
+  nam: number;
+  them: Omit<KeHoachNhanSuPayload, 'nam'>[];
+  sua: (KeHoachNhanSuPatch & { id: string })[];
+}
+
+export interface KeHoachNhanSuBatchKetQua {
+  daThem: number;
+  daSua: number;
+}
+
 interface DongResponse
   extends Omit<KeHoachNhanSuDong, 'id' | 'thang' | 'chiPhi'> {
   _id?: string;
@@ -101,6 +113,12 @@ class KeHoachNhanSuService extends ServiceBase {
     return this.map(
       await this.patch<DongResponse>(payload, { endpoint: `/${id}` }),
     );
+  }
+
+  async luuHangLoat(
+    batch: KeHoachNhanSuBatch,
+  ): Promise<KeHoachNhanSuBatchKetQua> {
+    return this.post<KeHoachNhanSuBatchKetQua>(batch, { endpoint: '/batch' });
   }
 
   async xoa(id: string): Promise<void> {

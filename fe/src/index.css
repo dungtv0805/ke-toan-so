@@ -2642,3 +2642,34 @@ body.col-resizing .ant-table * {
   background: hsl(var(--muted)) !important;
   font-weight: 600;
 }
+
+/* Dòng đang gõ dở hoặc mới thêm — vàng nhạt để thấy ngay cái gì chưa lưu. */
+.kh-hang-nhap > td {
+  background: #fffbe6 !important;
+}
+
+.excel-table .kh-hang-nhap:hover > td {
+  background: #fff3bf !important;
+}
+
+/* Ô nhập trong bảng: hoà vào lưới, chỉ hiện viền khi đang gõ. */
+.excel-cell-input.ant-input-number,
+.excel-cell-input.ant-input {
+  padding: 0 !important;
+  background: transparent;
+}
+
+.excel-cell-input.ant-input-number .ant-input-number-input {
+  padding: 0 !important;
+  height: 20px;
+  font-size: 12px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.excel-cell-input.ant-input-number:focus-within,
+.excel-cell-input.ant-input:focus {
+  outline: 2px solid var(--xl-green);
+  outline-offset: -2px;
+  background: #fff;
+}

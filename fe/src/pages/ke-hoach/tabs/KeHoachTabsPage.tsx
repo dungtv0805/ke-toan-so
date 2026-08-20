@@ -32,12 +32,12 @@ const KeHoachTabsPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="space-y-3">
+    // nkc-page: cao hết khung, chỉ thân bảng cuộn — giống Dữ liệu tổng hợp.
+    <div className="nkc-page">
       {/* Thanh tab bám đúng bố cục thanh tab của Tổng quan. */}
       <div
-        className="sticky z-20 flex flex-wrap items-center justify-between gap-2"
+        className="flex flex-wrap items-center justify-between gap-2"
         style={{
-          top: 0,
           marginInline: -12,
           padding: "10px 12px",
           background: "hsl(var(--background))",
@@ -85,15 +85,21 @@ const KeHoachTabsPage: React.FC = () => {
         </Space>
       </div>
 
-      {activeTab === "ban-hang" && <BanHangTab nam={nam} />}
-      {activeTab === "nhan-su" && <NhanSuTab nam={nam} />}
-      {activeTab === "kqkd" && (
-        <TabComingSoon tieuDe="Kế hoạch kết quả kinh doanh" />
-      )}
-      {activeTab === "dong-tien" && <TabComingSoon tieuDe="Kế hoạch dòng tiền" />}
-      {activeTab === "tai-san" && <TabComingSoon tieuDe="Kế hoạch tài sản" />}
-      {activeTab === "nguon-von" && <TabComingSoon tieuDe="Kế hoạch nguồn vốn" />}
-      {activeTab === "chi-tiet" && <KeHoachPage loaiKeHoach="KE_HOACH" />}
+      <div className="flex flex-col flex-1 min-h-0 pt-2">
+        {activeTab === "ban-hang" && <BanHangTab nam={nam} />}
+        {activeTab === "nhan-su" && <NhanSuTab nam={nam} />}
+        {activeTab === "kqkd" && (
+          <TabComingSoon tieuDe="Kế hoạch kết quả kinh doanh" />
+        )}
+        {activeTab === "dong-tien" && (
+          <TabComingSoon tieuDe="Kế hoạch dòng tiền" />
+        )}
+        {activeTab === "tai-san" && <TabComingSoon tieuDe="Kế hoạch tài sản" />}
+        {activeTab === "nguon-von" && (
+          <TabComingSoon tieuDe="Kế hoạch nguồn vốn" />
+        )}
+        {activeTab === "chi-tiet" && <KeHoachPage loaiKeHoach="KE_HOACH" />}
+      </div>
     </div>
   );
 };

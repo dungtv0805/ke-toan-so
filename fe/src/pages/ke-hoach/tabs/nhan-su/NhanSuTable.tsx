@@ -11,23 +11,28 @@ import {
   Tooltip,
 } from "antd";
 import {
-  CloseOutlined,
   DeleteOutlined,
-  EditOutlined,
   PlusOutlined,
   ReloadOutlined,
   SaveOutlined,
+  UndoOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
+import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
 import {
   CHI_PHI_NHAN_SU_COLS,
   chiPhiRong,
   tongChiPhi,
   type ChiPhiNhanSu,
-  type KeHoachNhanSuDong,
 } from "@/services/keHoachNhanSuService";
 import { sapXepTheoNhan } from "@/lib/sapXep";
-import { KEY_TONG, dungCayBang, type HangBang, type MoTaHang } from "../lib/tongHop";
+import {
+  KEY_TONG,
+  dungCayBang,
+  type HangBang,
+  type MoTaHang,
+} from "../lib/tongHop";
+import { demThayDoi, gopNhap, type DongHienThi } from "../lib/nhapBang";
 import {
   cotQuyVaThang,
   laHangGop,
@@ -40,18 +45,16 @@ import {
   tien,
 } from "../lib/cotChung";
 import { useNhanSuHandler, useNhanSuState } from "./NhanSuHandlerContext";
-import { DONG_MOI_KEY, type NhanSuForm } from "./handler/sub-handler/init/init.state";
+import {
+  valTuDong,
+  type NhanSuVal,
+} from "./handler/sub-handler/init/init.state";
 
-type Hang = HangBang<KeHoachNhanSuDong> & { moi?: boolean };
+/** Nhóm ảo gom các dòng mới chưa chọn bộ phận. */
+const CHUA_CHON = "";
 
-const doc = (d: KeHoachNhanSuDong): MoTaHang => ({
-  key: d.id,
-  nhomKey: d.boPhan.id,
-  nhomNhan: `${d.boPhan.ma} - ${d.boPhan.ten}`,
-  nhan: d.maViTri,
-  thang: d.thang,
-  namKhaiBao: tongChiPhi(d.chiPhi),
-});
+type Dong = DongHienThi<NhanSuVal>;
+type Hang = HangBang<Dong> & { chuaLuu?: boolean };
 
 const congChiPhi = (a: ChiPhiNhanSu, b: ChiPhiNhanSu): ChiPhiNhanSu => {
   const kq = chiPhiRong();
@@ -64,56 +67,74 @@ export const NhanSuTable: React.FC = () => {
   const [data] = useNhanSuState("data", []);
   const [loading] = useNhanSuState("loading", false);
   const [boPhanList] = useNhanSuState("boPhanList", []);
-  const [editingKey] = useNhanSuState("editingKey", null);
-  const [formValues] = useNhanSuState("formValues", null);
+  const [nhap] = useNhanSuState("nhap", {});
+  const [dongMoi] = useNhanSuState("dongMoi", []);
   const [saving] = useNhanSuState("saving", false);
+  const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
 
-  const form = (formValues ?? null) as NhanSuForm | null;
-  const themMoi = editingKey === DONG_MOI_KEY;
+  const daLuu = useMemo(
+    () => data.map((d) => ({ id: d.id, val: valTuDong(d) })),
+    [data],
+  );
+
+  const soThayDoi = useMemo(
+    () => demThayDoi(daLuu, nhap, dongMoi),
+    [daLuu, nhap, dongMoi],
+  );
+
+  const tenBoPhan = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const b of boPhanList) m.set(b.id, `${b.ma} - ${b.ten}`);
+    return m;
+  }, [boPhanList]);
+
+  const hienThi = useMemo(
+    () => gopNhap(daLuu, nhap, dongMoi),
+    [daLuu, nhap, dongMoi],
+  );
 
   const rows = useMemo<Hang[]>(() => {
-    const cay = dungCayBang(data, doc) as Hang[];
-    if (!themMoi) return cay;
-    return [
-      ...cay,
-      {
-        key: DONG_MOI_KEY,
-        loai: "chiTiet",
-        nhan: "",
-        thang: Array(12).fill(0),
-        quy: [0, 0, 0, 0],
-        namTheoThang: 0,
-        namKhaiBao: 0,
-        phanTram: 0,
-        lech: false,
-        moi: true,
-      },
-    ];
-  }, [data, themMoi]);
+    const doc = (d: Dong): MoTaHang => ({
+      key: d.id,
+      nhomKey: d.val.boPhanId || CHUA_CHON,
+      nhomNhan: tenBoPhan.get(d.val.boPhanId) ?? "(Chưa chọn bộ phận)",
+      nhan: d.val.maViTri,
+      thang: d.val.thang,
+      // CỘNG của một dòng = tổng 6 loại chi phí.
+      namKhaiBao: tongChiPhi(d.val.chiPhi),
+    });
+    // Chưa có dòng nào thì trả rỗng để bảng hiện lời nhắc, thay vì một hàng
+    // TỔNG CỘNG toàn số 0 chẳng nói lên điều gì.
+    if (hienThi.length === 0) return [];
+    return (dungCayBang(hienThi, doc) as Hang[]).map((r) => ({
+      ...r,
+      chuaLuu: r.dong ? r.dong.tam || r.dong.doi : false,
+    }));
+  }, [hienThi, tenBoPhan]);
 
   /**
    * Khác bảng Bán hàng: sáu cột chi phí cộng được nên hàng bộ phận và hàng tổng
-   * phải có số. Cộng sẵn ở đây rồi tra theo khoá hàng khi render.
+   * phải có số. Cộng trên dữ liệu ĐÃ TRỘN NHÁP để tổng nhảy ngay khi gõ.
    */
   const chiPhiGop = useMemo(() => {
     const map = new Map<string, ChiPhiNhanSu>();
     let tong = chiPhiRong();
-    for (const d of data) {
-      const cu = map.get(d.boPhan.id) ?? chiPhiRong();
-      map.set(d.boPhan.id, congChiPhi(cu, d.chiPhi));
-      tong = congChiPhi(tong, d.chiPhi);
+    for (const d of hienThi) {
+      const khoa = d.val.boPhanId || CHUA_CHON;
+      map.set(khoa, congChiPhi(map.get(khoa) ?? chiPhiRong(), d.val.chiPhi));
+      tong = congChiPhi(tong, d.val.chiPhi);
     }
     map.set(KEY_TONG, tong);
     return map;
-  }, [data]);
+  }, [hienThi]);
 
-  const chiPhiCuaHang = (row: Hang): ChiPhiNhanSu | undefined => {
-    if (row.loai === "tong") return chiPhiGop.get(KEY_TONG);
-    if (row.loai === "nhom") return chiPhiGop.get(row.nhomKey ?? "");
-    return row.dong?.chiPhi;
+  const chiPhiCuaHang = (row: Hang): ChiPhiNhanSu => {
+    if (row.loai === "tong") return chiPhiGop.get(KEY_TONG) ?? chiPhiRong();
+    if (row.loai === "nhom") {
+      return chiPhiGop.get(row.nhomKey ?? CHUA_CHON) ?? chiPhiRong();
+    }
+    return row.dong!.val.chiPhi;
   };
-
-  const dangSua = (row: Hang) => editingKey === row.key;
 
   const boPhanOptions = useMemo(
     () =>
@@ -123,31 +144,33 @@ export const NhanSuTable: React.FC = () => {
     [boPhanList],
   );
 
+  const suaDuoc = (row: Hang) => !laHangGop(row.loai);
+
   const cotChiPhi: ColumnsType<Hang> = CHI_PHI_NHAN_SU_COLS.map((col) => ({
     title: col.nhan,
     key: col.key,
-    width: 150,
+    width: 140,
     align: "right" as const,
     render: (_: unknown, row: Hang) => {
-      if (dangSua(row)) {
+      if (laHangGop(row.loai)) {
         return (
-          <InputNumber
-            {...numberInputProps}
-            value={form?.chiPhi[col.key] ?? 0}
-            onChange={(v) =>
-              handler.executeEvent("datChiPhi", {
-                khoa: col.key,
-                giaTri: Number(v) || 0,
-              })
-            }
-          />
+          <span className="font-semibold">
+            {tien(chiPhiCuaHang(row)[col.key])}
+          </span>
         );
       }
-      const giaTri = chiPhiCuaHang(row)?.[col.key] ?? 0;
       return (
-        <span className={laHangGop(row.loai) ? "font-semibold" : undefined}>
-          {tien(giaTri)}
-        </span>
+        <InputNumber
+          {...numberInputProps}
+          value={row.dong!.val.chiPhi[col.key]}
+          onChange={(v) =>
+            handler.executeEvent("suaChiPhi", {
+              id: row.dong!.id,
+              khoa: col.key,
+              giaTri: Number(v) || 0,
+            })
+          }
+        />
       );
     },
   }));
@@ -156,202 +179,218 @@ export const NhanSuTable: React.FC = () => {
     {
       title: "Mã vị trí",
       key: "maViTri",
-      width: 170,
+      width: 200,
       onCell: onCellNhan,
       render: (_: unknown, row: Hang) => {
-        if (laHangGop(row.loai)) {
+        if (row.loai === "tong") {
           return <span className="font-semibold">{row.nhan}</span>;
         }
-        if (dangSua(row)) {
+        if (row.loai === "nhom") {
           return (
-            <Space.Compact className="w-full">
-              <Select
-                size="small"
-                style={{ width: "50%" }}
-                placeholder="Bộ phận"
-                showSearch
-                optionFilterProp="label"
-                options={boPhanOptions}
-                value={form?.boPhanId}
-                onChange={(v) =>
-                  handler.executeEvent("datForm", { patch: { boPhanId: v } })
-                }
-              />
-              <Input
-                size="small"
-                style={{ width: "50%" }}
-                placeholder="Mã vị trí"
-                value={form?.maViTri ?? ""}
-                onChange={(e) =>
-                  handler.executeEvent("datForm", {
-                    patch: { maViTri: e.target.value },
-                  })
-                }
-              />
-            </Space.Compact>
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-semibold">{row.nhan}</span>
+              {row.nhomKey !== CHUA_CHON && (
+                <Tooltip title="Thêm chức vụ vào bộ phận này">
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<PlusOutlined />}
+                    onClick={() =>
+                      handler.executeEvent("themDong", {
+                        boPhanId: row.nhomKey,
+                      })
+                    }
+                  />
+                </Tooltip>
+              )}
+            </div>
           );
         }
-        return <span>{row.dong?.maViTri}</span>;
+        return (
+          <Space.Compact className="w-full">
+            <Select
+              size="small"
+              style={{ width: "52%" }}
+              placeholder="Bộ phận"
+              showSearch
+              optionFilterProp="label"
+              options={boPhanOptions}
+              value={row.dong!.val.boPhanId || undefined}
+              onChange={(v) =>
+                handler.executeEvent("suaO", {
+                  id: row.dong!.id,
+                  patch: { boPhanId: v },
+                })
+              }
+            />
+            <Input
+              size="small"
+              style={{ width: "48%" }}
+              placeholder="Mã vị trí"
+              value={row.dong!.val.maViTri}
+              onChange={(e) =>
+                handler.executeEvent("suaO", {
+                  id: row.dong!.id,
+                  patch: { maViTri: e.target.value },
+                })
+              }
+            />
+          </Space.Compact>
+        );
       },
     },
     {
       title: "Tên chức vụ",
       key: "tenChucVu",
-      width: 200,
+      width: 190,
       onCell: onCellNhanPhu,
       render: (_: unknown, row: Hang) => {
         if (laHangGop(row.loai)) return null;
-        if (dangSua(row)) {
-          return (
-            <Input
-              size="small"
-              placeholder="Tên chức vụ"
-              value={form?.tenChucVu ?? ""}
-              onChange={(e) =>
-                handler.executeEvent("datForm", {
-                  patch: { tenChucVu: e.target.value },
-                })
-              }
-            />
-          );
-        }
         return (
-          <span className="excel-cell-text">{row.dong?.tenChucVu || "-"}</span>
+          <Input
+            size="small"
+            variant="borderless"
+            className="excel-cell-input"
+            placeholder="Tên chức vụ"
+            value={row.dong!.val.tenChucVu}
+            onChange={(e) =>
+              handler.executeEvent("suaO", {
+                id: row.dong!.id,
+                patch: { tenChucVu: e.target.value },
+              })
+            }
+          />
         );
       },
     },
     {
       title: "CỘNG",
       key: "cong",
-      width: 170,
+      width: 160,
       align: "right",
-      render: (_: unknown, row: Hang) => {
-        // Đang sửa thì cộng ngay theo số đang gõ để người dùng thấy kết quả.
-        if (dangSua(row)) {
-          return (
-            <span className="text-gray-500">
-              {tien(tongChiPhi(form?.chiPhi ?? chiPhiRong()))}
-            </span>
-          );
-        }
-        return oSoNam(row, "CỘNG");
-      },
+      render: (_: unknown, row: Hang) => oSoNam(row, "CỘNG"),
     },
     {
       title: "%",
       key: "phanTram",
-      width: 90,
+      width: 80,
       align: "right",
-      render: (_: unknown, row: Hang) =>
-        row.moi ? null : (
-          <span className={laHangGop(row.loai) ? "font-semibold" : undefined}>
-            {phanTramText(row.phanTram)}
-          </span>
-        ),
+      render: (_: unknown, row: Hang) => (
+        <span className={laHangGop(row.loai) ? "font-semibold" : undefined}>
+          {phanTramText(row.phanTram)}
+        </span>
+      ),
     },
     ...cotChiPhi,
     ...cotQuyVaThang<Hang>({
-      dangSua,
-      thangDangGo: () => form?.thang ?? [],
-      doiThang: (chiSo, giaTri) =>
-        handler.executeEvent("datThang", { chiSo, giaTri }),
+      suaDuoc,
+      doiThang: (row, chiSo, giaTri) =>
+        handler.executeEvent("suaThang", { id: row.dong!.id, chiSo, giaTri }),
     }),
     {
-      title: "Thao tác",
+      title: "",
       key: "thaoTac",
-      width: 110,
+      width: 50,
       align: "center",
       render: (_: unknown, row: Hang) => {
         if (laHangGop(row.loai)) return null;
-        if (dangSua(row)) {
+        if (row.dong!.tam) {
           return (
-            <Space size={4}>
-              <Tooltip title="Lưu">
-                <Button
-                  type="text"
-                  size="small"
-                  loading={saving}
-                  icon={<SaveOutlined className="text-green-600" />}
-                  onClick={() => handler.executeEvent("luuDong", {})}
-                />
-              </Tooltip>
-              <Tooltip title="Huỷ">
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<CloseOutlined />}
-                  onClick={() => handler.executeEvent("huySua", {})}
-                />
-              </Tooltip>
-            </Space>
-          );
-        }
-        return (
-          <Space size={4}>
-            <Tooltip title="Sửa">
-              <Button
-                type="text"
-                size="small"
-                disabled={!!editingKey}
-                icon={<EditOutlined />}
-                onClick={() =>
-                  handler.executeEvent("batDauSua", { key: row.key })
-                }
-              />
-            </Tooltip>
-            <Popconfirm
-              title="Xoá dòng kế hoạch này?"
-              okText="Xoá"
-              cancelText="Huỷ"
-              onConfirm={() => handler.executeEvent("xoaDong", { id: row.key })}
-            >
+            <Tooltip title="Bỏ dòng này">
               <Button
                 type="text"
                 size="small"
                 danger
-                disabled={!!editingKey}
                 icon={<DeleteOutlined />}
+                onClick={() =>
+                  handler.executeEvent("boDong", { id: row.dong!.id })
+                }
               />
-            </Popconfirm>
-          </Space>
+            </Tooltip>
+          );
+        }
+        return (
+          <Popconfirm
+            title="Xoá dòng kế hoạch này?"
+            okText="Xoá"
+            cancelText="Huỷ"
+            onConfirm={() =>
+              handler.executeEvent("boDong", { id: row.dong!.id })
+            }
+          >
+            <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
         );
       },
     },
   ];
 
   return (
-    <div className="space-y-2">
-      <Space>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          disabled={!!editingKey}
-          onClick={() => handler.executeEvent("themDong", {})}
-        >
-          Thêm chức vụ
-        </Button>
-        <Button
-          icon={<ReloadOutlined />}
-          onClick={() => handler.executeEvent("refresh", {})}
-        >
-          Tải lại
-        </Button>
-      </Space>
+    <div className="excel-container">
+      <div className="excel-toolbar">
+        <Space size={4}>
+          <Button
+            type="primary"
+            size="small"
+            icon={<SaveOutlined />}
+            loading={saving}
+            disabled={soThayDoi === 0}
+            onClick={() => handler.executeEvent("luuTatCa", {})}
+          >
+            {soThayDoi > 0 ? `Lưu (${soThayDoi})` : "Lưu"}
+          </Button>
+          <Button
+            size="small"
+            icon={<UndoOutlined />}
+            disabled={soThayDoi === 0}
+            onClick={() => handler.executeEvent("huyThayDoi", {})}
+          >
+            Huỷ thay đổi
+          </Button>
 
-      <Table<Hang>
-        rowKey="key"
-        size="small"
-        bordered
-        loading={loading}
-        columns={columns}
-        dataSource={rows}
-        pagination={false}
-        rowClassName={rowClassName}
-        scroll={{ x: "max-content" }}
-        locale={{
-          emptyText: <Empty description="Chưa có dòng kế hoạch nhân sự nào" />,
-        }}
-      />
+          <span className="xl-cmd-sep" />
+
+          <Button
+            size="small"
+            icon={<PlusOutlined />}
+            onClick={() => handler.executeEvent("themDong", {})}
+          >
+            Thêm dòng
+          </Button>
+
+          <span className="xl-cmd-sep" />
+
+          <Button
+            size="small"
+            icon={<ReloadOutlined />}
+            title="Tải lại"
+            onClick={() => handler.executeEvent("refresh", {})}
+          />
+        </Space>
+        <span className="text-xs text-gray-500">
+          {soThayDoi > 0 ? `${soThayDoi} dòng chưa lưu` : "Đã lưu mọi thay đổi"}
+        </span>
+      </div>
+
+      <div ref={tableWrapRef} className="flex flex-col flex-1 min-h-0">
+        <Table<Hang>
+          rowKey="key"
+          size="small"
+          bordered
+          loading={loading}
+          columns={columns}
+          dataSource={rows}
+          pagination={false}
+          className="excel-table"
+          rowClassName={rowClassName}
+          scroll={{ x: "max-content", y: tableBodyHeight }}
+          locale={{
+            emptyText: (
+              <Empty description="Chưa có dòng nào — bấm Thêm dòng để bắt đầu" />
+            ),
+          }}
+        />
+      </div>
     </div>
   );
 };

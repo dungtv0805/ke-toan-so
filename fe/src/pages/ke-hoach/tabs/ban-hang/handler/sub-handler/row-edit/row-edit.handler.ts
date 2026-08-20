@@ -8,12 +8,17 @@ import {
 } from "@/services/keHoachBanHangService";
 import type { NhomSanPham, SanPham } from "@/types";
 import type { BanHangEvents, BanHangStates } from "../../ban-hang.handler";
-import { DONG_MOI_KEY, type BanHangForm } from "../init/init.state";
+import {
+  laKhacNhau,
+  tamId,
+  type DongNhap,
+} from "../../../../lib/nhapBang";
+import { valTuDong, type BanHangVal } from "../init/init.state";
 import "./row-edit.event";
 
-const formRong = (): BanHangForm => ({
-  nhomMa: undefined,
-  sanPhamId: undefined,
+const valRong = (nhomMa = ""): BanHangVal => ({
+  nhomMa,
+  sanPhamId: "",
   luong: 0,
   giaBinhQuan: 0,
   thang: Array(SO_THANG).fill(0),
@@ -25,105 +30,52 @@ export class BanHangRowEditHandler extends CSubHanlder<
   BanHangStates
 > {
   @HandlerDecorator("themDong")
-  themDong(): void {
-    this.setState("editingKey", DONG_MOI_KEY);
-    this.setState("formValues", formRong());
+  themDong(params: { nhomMa?: string }): void {
+    const dongMoi = this.getState("dongMoi") as DongNhap<BanHangVal>[];
+    this.setState("dongMoi", [
+      ...dongMoi,
+      { id: tamId(), val: valRong(params.nhomMa ?? "") },
+    ]);
   }
 
-  @HandlerDecorator("batDauSua")
-  batDauSua(params: { key: string }): void {
-    const dong = (this.getState("data") as KeHoachBanHangDong[]).find(
-      (d) => d.id === params.key,
-    );
-    if (!dong) return;
-    // Nhóm lưu theo mã vì `SanPham.nhom` là mã, không phải id.
-    this.setState("editingKey", params.key);
-    this.setState("formValues", {
-      nhomMa: dong.nhomSanPham.ma,
-      sanPhamId: dong.sanPham.id,
-      luong: dong.luong,
-      giaBinhQuan: dong.giaBinhQuan,
-      thang: [...dong.thang],
+  @HandlerDecorator("suaO")
+  suaO(params: { id: string; patch: Partial<BanHangVal> }): void {
+    this.capNhatVal(params.id, (cu) => {
+      const moi = { ...cu, ...params.patch };
+      // Đổi nhóm thì sản phẩm cũ có thể không còn thuộc nhóm → bỏ chọn.
+      if (params.patch.nhomMa !== undefined && params.patch.nhomMa !== cu.nhomMa) {
+        moi.sanPhamId = "";
+      }
+      return moi;
     });
   }
 
-  @HandlerDecorator("huySua")
-  huySua(): void {
-    this.setState("editingKey", null);
-    this.setState("formValues", null);
+  @HandlerDecorator("suaThang")
+  suaThang(params: { id: string; chiSo: number; giaTri: number }): void {
+    this.capNhatVal(params.id, (cu) => {
+      const thang = [...cu.thang];
+      thang[params.chiSo] = params.giaTri;
+      return { ...cu, thang };
+    });
   }
 
-  @HandlerDecorator("datForm")
-  datForm(params: { patch: Partial<BanHangForm> }): void {
-    const hienTai = (this.getState("formValues") as BanHangForm) ?? formRong();
-    const moi = { ...hienTai, ...params.patch };
-    // Đổi nhóm thì sản phẩm cũ có thể không còn thuộc nhóm → bỏ chọn.
-    if (params.patch.nhomMa !== undefined && params.patch.nhomMa !== hienTai.nhomMa) {
-      moi.sanPhamId = undefined;
-    }
-    this.setState("formValues", moi);
-  }
-
-  @HandlerDecorator("datThang")
-  datThang(params: { chiSo: number; giaTri: number }): void {
-    const hienTai = (this.getState("formValues") as BanHangForm) ?? formRong();
-    const thang = [...hienTai.thang];
-    thang[params.chiSo] = params.giaTri;
-    this.setState("formValues", { ...hienTai, thang });
-  }
-
-  @HandlerDecorator("luuDong")
-  async luuDong(): Promise<void> {
-    const form = this.getState("formValues") as BanHangForm | null;
-    const editingKey = this.getState("editingKey") as string | null;
-    if (!form || !editingKey) return;
-
-    const themMoi = editingKey === DONG_MOI_KEY;
-    if (themMoi && (!form.nhomMa || !form.sanPhamId)) {
-      message.warning("Chọn nhóm sản phẩm và sản phẩm trước khi lưu");
+  @HandlerDecorator("boDong")
+  async boDong(params: { id: string }): Promise<void> {
+    const dongMoi = this.getState("dongMoi") as DongNhap<BanHangVal>[];
+    if (dongMoi.some((d) => d.id === params.id)) {
+      this.setState(
+        "dongMoi",
+        dongMoi.filter((d) => d.id !== params.id),
+      );
       return;
     }
 
-    this.setState("saving", true);
-    try {
-      if (themMoi) {
-        const nhomSanPham = this.mucNhom(form.nhomMa!);
-        const sanPham = this.mucSanPham(form.sanPhamId!);
-        if (!nhomSanPham || !sanPham) {
-          message.error("Không tìm thấy nhóm hoặc sản phẩm trong danh mục");
-          return;
-        }
-        await keHoachBanHangService.taoMoi({
-          nam: this.getState("nam") as number,
-          nhomSanPham,
-          sanPham,
-          luong: form.luong,
-          giaBinhQuan: form.giaBinhQuan,
-          thang: form.thang,
-        });
-      } else {
-        // Sản phẩm không đổi được khi sửa; nhóm thì có (sản phẩm được chuyển nhóm).
-        const nhomSanPham = form.nhomMa ? this.mucNhom(form.nhomMa) : undefined;
-        await keHoachBanHangService.capNhat(editingKey, {
-          ...(nhomSanPham ? { nhomSanPham } : {}),
-          luong: form.luong,
-          giaBinhQuan: form.giaBinhQuan,
-          thang: form.thang,
-        });
-      }
-      await this.executeEvent("huySua", {});
-      await this.executeEvent("refresh", {});
-    } catch (error) {
-      message.error(this.loiCuaApi(error, "Lưu dòng kế hoạch bán hàng thất bại"));
-    } finally {
-      this.setState("saving", false);
-    }
-  }
-
-  @HandlerDecorator("xoaDong")
-  async xoaDong(params: { id: string }): Promise<void> {
     try {
       await keHoachBanHangService.xoa(params.id);
+      // Bỏ luôn phần gõ dở của dòng vừa xoá, tránh gửi lên khi Lưu.
+      const nhap = { ...(this.getState("nhap") as Record<string, BanHangVal>) };
+      delete nhap[params.id];
+      this.setState("nhap", nhap);
       message.success("Đã xoá dòng kế hoạch");
       await this.executeEvent("refresh", {});
     } catch (error) {
@@ -131,18 +83,102 @@ export class BanHangRowEditHandler extends CSubHanlder<
     }
   }
 
-  private mucNhom(ma: string) {
-    const nhom = (this.getState("nhomSanPhamList") as NhomSanPham[]).find(
-      (n) => n.ma === ma,
-    );
-    return nhom ? { id: nhom.id, ma: nhom.ma, ten: nhom.ten } : undefined;
+  @HandlerDecorator("huyThayDoi")
+  huyThayDoi(): void {
+    this.setState("nhap", {});
+    this.setState("dongMoi", []);
   }
 
-  private mucSanPham(id: string) {
-    const sp = (this.getState("sanPhamList") as SanPham[]).find(
-      (s) => s.id === id,
+  @HandlerDecorator("luuTatCa")
+  async luuTatCa(): Promise<void> {
+    const data = this.getState("data") as KeHoachBanHangDong[];
+    const nhap = this.getState("nhap") as Record<string, BanHangVal>;
+    const dongMoi = this.getState("dongMoi") as DongNhap<BanHangVal>[];
+
+    const thieu = dongMoi.filter((d) => !d.val.nhomMa || !d.val.sanPhamId);
+    if (thieu.length > 0) {
+      message.warning(
+        `Còn ${thieu.length} dòng mới chưa chọn nhóm hoặc sản phẩm`,
+      );
+      return;
+    }
+
+    const them = dongMoi.map((d) => this.dungPayload(d.val));
+    const sua = data
+      .filter((d) => nhap[d.id] && laKhacNhau(nhap[d.id], valTuDong(d)))
+      .map((d) => ({ id: d.id, ...this.dungPayload(nhap[d.id]) }));
+
+    if (them.length === 0 && sua.length === 0) {
+      message.info("Không có thay đổi nào để lưu");
+      return;
+    }
+
+    if (them.some((t) => !t.nhomSanPham || !t.sanPham)) {
+      message.error("Không tìm thấy nhóm hoặc sản phẩm trong danh mục");
+      return;
+    }
+
+    this.setState("saving", true);
+    try {
+      const kq = await keHoachBanHangService.luuHangLoat({
+        nam: this.getState("nam") as number,
+        them: them as never,
+        // Sửa không đổi được sản phẩm — chỉ gửi phần server cho phép sửa.
+        sua: sua.map(({ id, nhomSanPham, luong, giaBinhQuan, thang }) => ({
+          id,
+          nhomSanPham: nhomSanPham!,
+          luong,
+          giaBinhQuan,
+          thang,
+        })),
+      });
+      message.success(`Đã lưu ${kq.daThem} dòng mới, ${kq.daSua} dòng sửa`);
+      this.setState("nhap", {});
+      this.setState("dongMoi", []);
+      await this.executeEvent("refresh", {});
+    } catch (error) {
+      message.error(this.loiCuaApi(error, "Lưu kế hoạch bán hàng thất bại"));
+    } finally {
+      this.setState("saving", false);
+    }
+  }
+
+  /** Ghi giá trị mới cho một dòng, dù là dòng đã lưu hay dòng mới. */
+  private capNhatVal(id: string, doi: (cu: BanHangVal) => BanHangVal): void {
+    const dongMoi = this.getState("dongMoi") as DongNhap<BanHangVal>[];
+    const viTri = dongMoi.findIndex((d) => d.id === id);
+    if (viTri >= 0) {
+      const banSao = [...dongMoi];
+      banSao[viTri] = { id, val: doi(dongMoi[viTri].val) };
+      this.setState("dongMoi", banSao);
+      return;
+    }
+
+    const nhap = this.getState("nhap") as Record<string, BanHangVal>;
+    const goc = (this.getState("data") as KeHoachBanHangDong[]).find(
+      (d) => d.id === id,
     );
-    return sp ? { id: sp.id, ma: sp.ma, ten: sp.ten } : undefined;
+    if (!goc) return;
+    const cu = nhap[id] ?? valTuDong(goc);
+    this.setState("nhap", { ...nhap, [id]: doi(cu) });
+  }
+
+  private dungPayload(val: BanHangVal) {
+    const nhom = (this.getState("nhomSanPhamList") as NhomSanPham[]).find(
+      (n) => n.ma === val.nhomMa,
+    );
+    const sp = (this.getState("sanPhamList") as SanPham[]).find(
+      (s) => s.id === val.sanPhamId,
+    );
+    return {
+      nhomSanPham: nhom
+        ? { id: nhom.id, ma: nhom.ma, ten: nhom.ten }
+        : undefined,
+      sanPham: sp ? { id: sp.id, ma: sp.ma, ten: sp.ten } : undefined,
+      luong: val.luong,
+      giaBinhQuan: val.giaBinhQuan,
+      thang: val.thang,
+    };
   }
 
   private loiCuaApi(error: unknown, macDinh: string): string {
