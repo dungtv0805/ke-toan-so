@@ -386,7 +386,7 @@ const KhoanMucPage: React.FC = () => {
 
   // Cây 2 cấp: Nhóm khoản mục → khoản mục. Nhóm lấy tên từ danh mục Nhóm khoản
   // mục; bản ghi gắn nhóm không còn trong danh mục vẫn hiện, không bị nuốt.
-  const { laCay, chuyenCheDo, duLieuCay, cotCay, expandable } = useBangCay<KhoanMuc>({
+  const { laCay, chuyenCheDo, duLieuCay, cotCay, rowClassName, expandable } = useBangCay<KhoanMuc>({
     khoaLuu: "khoanMuc.cheDoXem",
     danhSach: data,
     danhMuc: nhomKhoanMucList,
@@ -501,6 +501,7 @@ const KhoanMucPage: React.FC = () => {
           dataSource={(laCay ? duLieuCay : data) as never}
           rowKey="id"
           expandable={laCay ? expandable : undefined}
+          rowClassName={laCay ? rowClassName : undefined}
           rowSelection={laCay ? undefined : rowSelection}
           loading={loading}
           scroll={{ x: 800, y: "calc(100vh - 285px)" }}

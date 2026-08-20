@@ -1077,6 +1077,20 @@
   background: #111d2c !important;
 }
 
+/* Bảng cây danh mục — dòng NHÓM (thu gọn được). Cùng nền trắng và cùng cỡ chữ
+   với dòng con thì tiêu đề nhóm chìm nghỉm, người dùng không nhìn ra chỗ nào
+   bấm thu/mở. Chọn thẳng `> td` chứ không phải `tr`: nền của antd nằm ở ô, tô
+   lên hàng sẽ bị ô che mất. Đặt SAU luật hover (cùng độ ưu tiên, thắng nhờ
+   đứng sau) để rê chuột qua vẫn giữ nền nhóm, không nhấp nháy sang xám. */
+.ant-table-tbody > tr.hang-nhom-cay > td {
+  background: #e6f7ff !important;
+  font-weight: 600;
+}
+
+.dark .ant-table-tbody > tr.hang-nhom-cay > td {
+  background: #111d2c !important;
+}
+
 /* Hàng lọc trên cùng của "Dữ liệu tổng hợp" */
 .nkc-filter-bar {
   display: flex;

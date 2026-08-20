@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Segmented } from "antd";
 import { ApartmentOutlined, UnorderedListOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
-import { gomTheoNhom, type HangCay, type MucNhom } from "./gomNhom";
+import { gomTheoNhom, laDongNhom, type HangCay, type MucNhom } from "./gomNhom";
 import { dungCotCay } from "./cotCay";
 import { docCheDoXem, luuCheDoXem, type CheDoXem } from "./cheDoXem";
 
@@ -82,6 +82,17 @@ export function useBangCay<T>({
     setExpandedKeys(nhomKeysStr ? nhomKeysStr.split("|") : []);
   }, [nhomKeysStr]);
 
+  /**
+   * Dòng nhóm phải đọc ra là TIÊU ĐỀ chứ không phải một bản ghi nữa — nền xanh
+   * nhạt + chữ đậm. Tô qua `rowClassName` chứ không qua `onCell`: ô chứa icon
+   * thu gọn do antd tự chèn, không đi qua cột nào nên tô kiểu kia sẽ để lại một
+   * mảng trắng lỗ chỗ bên trái.
+   */
+  const rowClassName = useCallback(
+    (record: HangCay<T>) => (laDongNhom(record) ? "hang-nhom-cay" : ""),
+    []
+  );
+
   const chuyenCheDo = (
     <Segmented
       size="small"
@@ -102,6 +113,8 @@ export function useBangCay<T>({
     chuyenCheDo,
     duLieuCay,
     cotCay,
+    /** Đổ vào `rowClassName` của Table để dòng nhóm có nền xanh nhạt. */
+    rowClassName,
     expandable: {
       expandedRowKeys: expandedKeys,
       onExpandedRowsChange: (k: readonly React.Key[]) => setExpandedKeys([...k]),

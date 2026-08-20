@@ -327,7 +327,7 @@ const DongTienPage: React.FC = () => {
 
   // Cây 2 cấp theo chính trường Loại (Kinh doanh / Đầu tư / Tài chính) — chuẩn
   // báo cáo lưu chuyển tiền tệ, không đẻ thêm danh mục nhóm nữa.
-  const { laCay, chuyenCheDo, duLieuCay, cotCay, expandable } = useBangCay<DongTien>({
+  const { laCay, chuyenCheDo, duLieuCay, cotCay, rowClassName, expandable } = useBangCay<DongTien>({
     khoaLuu: "dongTien.cheDoXem",
     danhSach: data,
     danhMuc: NHOM_LOAI_DONG_TIEN,
@@ -435,6 +435,7 @@ const DongTienPage: React.FC = () => {
           dataSource={(laCay ? duLieuCay : data) as never}
           rowKey="id"
           expandable={laCay ? expandable : undefined}
+          rowClassName={laCay ? rowClassName : undefined}
           rowSelection={laCay ? undefined : rowSelection}
           loading={loading}
           scroll={{ x: 800, y: "calc(100vh - 285px)" }}

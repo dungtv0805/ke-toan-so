@@ -92,6 +92,15 @@ describe("useBangCay", () => {
     expect(result.current.expandable.expandedRowKeys).toEqual(["nhom:VP"]);
   });
 
+  it("chỉ gắn class tô nền cho dòng NHÓM, dòng con để trơn", () => {
+    const { result } = dungHook();
+    const nhom = result.current.duLieuCay[0];
+    const con = (nhom as { children?: BanGhi[] }).children![0];
+
+    expect(result.current.rowClassName(nhom)).toBe("hang-nhom-cay");
+    expect(result.current.rowClassName(con as never)).toBe("");
+  });
+
   it("mặc định là dạng cây, đổi chế độ thì nhớ lại", () => {
     const { result } = dungHook();
     expect(result.current.laCay).toBe(true);

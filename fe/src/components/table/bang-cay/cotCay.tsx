@@ -44,7 +44,7 @@ export function dungCotCay<T>(
       if (laDongNhom(record)) {
         if (i > 0) return null;
         return (
-          <span className="inline-flex items-center gap-2 whitespace-nowrap font-medium">
+          <span className="inline-flex items-center gap-2 whitespace-nowrap font-semibold">
             <Tag color={record.color} className="!mr-0">
               {record.ten}
             </Tag>

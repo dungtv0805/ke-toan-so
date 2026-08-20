@@ -371,7 +371,7 @@ const SanPhamPage: React.FC = () => {
 
   // Cây 2 cấp: Nhóm sản phẩm → sản phẩm. Nhóm cũ gõ tay (không có trong danh
   // mục) vẫn hiện thành nhóm riêng, không bị nuốt mất.
-  const { laCay, chuyenCheDo, duLieuCay, cotCay, expandable } = useBangCay<SanPham>({
+  const { laCay, chuyenCheDo, duLieuCay, cotCay, rowClassName, expandable } = useBangCay<SanPham>({
     khoaLuu: "sanPham.cheDoXem",
     danhSach: data,
     danhMuc: nhomList,
@@ -430,6 +430,7 @@ const SanPhamPage: React.FC = () => {
           dataSource={(laCay ? duLieuCay : data) as never}
           rowKey="id"
           expandable={laCay ? expandable : undefined}
+          rowClassName={laCay ? rowClassName : undefined}
           rowSelection={laCay ? undefined : rowSelection}
           loading={loading}
           scroll={{ x: 900, y: "calc(100vh - 285px)" }}

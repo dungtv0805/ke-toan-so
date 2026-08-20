@@ -293,6 +293,16 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
     } as TableProps<HangCay<QuyChuan>>["rowSelection"];
   }, [rowSelection]);
 
+  /**
+   * Dòng nhóm dùng đúng lớp của cây Sản phẩm / Khoản mục: nền xanh nhạt + chữ
+   * đậm. `bg-muted/40` cũ tô lên <tr>, mà nền của antd nằm ở <td> nên bị ô che
+   * gần hết — dòng nhóm trông y hệt dòng con, không thấy chỗ nào bấm thu/mở.
+   */
+  const hangCayClassName = useCallback(
+    (r: HangCay<QuyChuan>) => (laDongNhom(r) ? "hang-nhom-cay" : ""),
+    [],
+  );
+
   const laCay = cheDo === "cay";
 
   const chuyenCheDo = (
@@ -325,7 +335,7 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
           expandedRowKeys: expandedKeys,
           onExpandedRowsChange: (k) => setExpandedKeys([...k]),
         }}
-        rowClassName={(r) => (laDongNhom(r) ? "bg-muted/40" : "")}
+        rowClassName={hangCayClassName}
         pagination={paginationConfig}
         onChange={handleTableChange}
         size="middle"
