@@ -3,6 +3,8 @@ import { ServiceBase } from './base/service-base';
 
 export interface QuyChaunStats {
   tongQuyChuan: number;
+  /** Số quy chuẩn theo TỪNG mã loại giao dịch có thật của công ty. */
+  theoLoai: Record<string, number>;
   phieuThu: number;
   phieuChi: number;
   baoCo: number;

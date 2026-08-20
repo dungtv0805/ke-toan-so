@@ -125,7 +125,7 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
       title: "Nghiệp vụ",
       dataIndex: "nghiepVu",
       key: "nghiepVu",
-      width: 220,
+      width: 280,
       // Dòng nhóm không có nghiệp vụ — so sánh thẳng là nổ khi bấm sắp xếp.
       sorter: (a, b) => (a.nghiepVu || "").localeCompare(b.nghiepVu || ""),
     },
@@ -288,7 +288,12 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
     <Segmented
       size="small"
       value={cheDo}
-      onChange={(v) => onDoiCheDo(v as CheDoXem)}
+      onChange={(v) => {
+        // Sang cây mà còn kẹt bộ lọc của tab cũ thì cây chỉ có đúng một nhóm,
+        // trông như mất dữ liệu — mà tab để bỏ lọc thì vừa bị ẩn đi.
+        if (v === "cay" && activeTab !== "all") handleTabChange("all");
+        onDoiCheDo(v as CheDoXem);
+      }}
       options={[
         { value: "cay", label: "Cây", icon: <ApartmentOutlined /> },
         { value: "danhSach", label: "Danh sách", icon: <UnorderedListOutlined /> },
@@ -332,39 +337,18 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
   // Calculate counts for tabs from stats (stats is updated with search keyword)
   const [stats] = useQuyChaunState("stats", null);
 
+  /**
+   * Số trên từng tab lấy theo mã loại giao dịch THẬT (stats.theoLoai). Bản cũ
+   * đọc bốn ô cứng phieuThu/phieuChi/baoCo/baoNo nên công ty đặt loại giao dịch
+   * riêng thì mọi tab đứng trơ số 0.
+   *
+   * Khi đang lọc một tab, API chỉ trả về đúng nhóm đó — số của tab đang mở lấy
+   * từ pagination.total cho khớp bảng bên dưới.
+   */
   const tabCounts = useMemo(() => {
-    if (!stats) {
-      return {
-        all: pagination.total,
-        PHIEU_THU: 0,
-        PHIEU_CHI: 0,
-        BAO_CO: 0,
-        BAO_NO: 0,
-      };
-    }
-
-    // Stats is already filtered by keyword from API
-    // When filtering by tab, show pagination.total for active tab
-    if (activeTab !== "all") {
-      return {
-        all: stats.tongQuyChuan,
-        PHIEU_THU:
-          activeTab === "PHIEU_THU" ? pagination.total : stats.phieuThu,
-        PHIEU_CHI:
-          activeTab === "PHIEU_CHI" ? pagination.total : stats.phieuChi,
-        BAO_CO: activeTab === "BAO_CO" ? pagination.total : stats.baoCo,
-        BAO_NO: activeTab === "BAO_NO" ? pagination.total : stats.baoNo,
-      };
-    }
-
-    // Default: show stats counts (already filtered by keyword)
-    return {
-      all: stats.tongQuyChuan,
-      PHIEU_THU: stats.phieuThu,
-      PHIEU_CHI: stats.phieuChi,
-      BAO_CO: stats.baoCo,
-      BAO_NO: stats.baoNo,
-    };
+    const theoLoai = { ...(stats?.theoLoai ?? {}) };
+    if (activeTab !== "all") theoLoai[activeTab] = pagination.total;
+    return { all: stats?.tongQuyChuan ?? pagination.total, theoLoai };
   }, [stats, pagination.total, activeTab]);
 
   const paginationConfig: TablePaginationConfig = {
@@ -387,15 +371,24 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
       key: option.value,
       label: (
         <Space>
-          <Tag color={option.color}>
-            {tabCounts[option.value as keyof typeof tabCounts] || 0}
-          </Tag>
+          <Tag color={option.color}>{tabCounts.theoLoai[option.value] || 0}</Tag>
           {option.label}
         </Space>
       ),
       children: renderBang(columnsWithoutLoai, 1550),
     })),
   ];
+
+  // Dạng cây đã gom sẵn theo loại giao dịch → hơn mười tab lọc vừa thừa vừa
+  // chật, đẩy nút chuyển chế độ ra khỏi màn. Chỉ Danh sách mới cần tab.
+  if (laCay) {
+    return (
+      <div className="space-y-2">
+        <div className="flex justify-end">{chuyenCheDo}</div>
+        {renderBang(columnsWithoutLoai, 1550)}
+      </div>
+    );
+  }
 
   return (
     <Tabs

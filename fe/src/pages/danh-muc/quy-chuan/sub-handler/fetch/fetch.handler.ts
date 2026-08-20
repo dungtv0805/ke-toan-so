@@ -64,6 +64,7 @@ export class FetchHandler extends CSubHanlder {
       message.error(errorMessage);
       const emptyStats: QuyChaunStats = {
         tongQuyChuan: 0,
+        theoLoai: {},
         phieuThu: 0,
         phieuChi: 0,
         baoCo: 0,

@@ -41,8 +41,10 @@ describe("dungCotCay", () => {
     expect(cell(1, qc)).toEqual({});
   });
 
-  it("mọi cột cắt gọn để mỗi hàng đọc trên một dòng", () => {
-    expect(dungCotCay(COT).every((c) => c.ellipsis === true)).toBe(true);
+  it("cột Nghiệp vụ cho xuống dòng để đọc đủ chữ, cột còn lại cắt gọn", () => {
+    const cot = dungCotCay(COT);
+    expect(cot[0].ellipsis).toBe(false);
+    expect(cot.slice(1).every((c) => c.ellipsis === true)).toBe(true);
   });
 
   it("dòng nhóm chỉ vẽ nội dung ở cột đầu", () => {

@@ -11,13 +11,17 @@ import { laDongNhom, type QuyChuanRow } from "./gomNhom";
  *  - Dòng nhóm chiếm trọn chiều ngang (colSpan hết bảng). Nhét dòng nhóm vào ô
  *    "Nghiệp vụ" rộng 220px thì icon thu gọn, thẻ tên và số lượng rơi xuống ba
  *    dòng chồng nhau.
- *  - Mọi ô cắt gọn (`ellipsis`) nên tên nghiệp vụ dài không đẩy hàng cao gấp đôi
- *    hàng bên cạnh.
+ *  - Các ô cắt gọn (`ellipsis`) nên nội dung dài không đẩy hàng cao gấp đôi hàng
+ *    bên cạnh — TRỪ cột Nghiệp vụ: đó là thứ người dùng đọc để nhận ra dòng,
+ *    cắt mất đuôi thì "Thu hoàn ứng của nhân…" với "Thu hoàn ứng của nhà…" nhìn
+ *    y hệt nhau. Cột này cho xuống dòng, hiện đủ chữ.
  */
+const COT_CHO_XUONG_DONG = new Set(['nghiepVu']);
+
 export function dungCotCay(cot: ColumnsType<QuyChuan>): ColumnsType<QuyChuanRow> {
   return cot.map((col, i) => ({
     ...col,
-    ellipsis: true,
+    ellipsis: !COT_CHO_XUONG_DONG.has(String(col.key ?? '')),
     onCell: (record: QuyChuanRow) =>
       laDongNhom(record) ? { colSpan: i === 0 ? cot.length : 0 } : {},
     render: (value: unknown, record: QuyChuanRow, index: number) => {

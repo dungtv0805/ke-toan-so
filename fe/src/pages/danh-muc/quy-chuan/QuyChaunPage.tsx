@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Card, Space } from 'antd';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { Card } from 'antd';
 import { QuyChaunHandlerProvider, useQuyChaunHandler, useQuyChaunState } from './QuyChaunHandlerContext';
 import { QuyChaunHeader } from './components/header/QuyChaunHeader';
 import { QuyChaunStats } from './components/stats/QuyChaunStats';
@@ -73,21 +72,6 @@ const QuyChaunPageInner: React.FC = () => {
 
       <Card style={{ marginTop: 16 }}>
         <QuyChaunStats />
-
-        <div style={{
-          marginBottom: 16,
-          padding: '12px 16px',
-          backgroundColor: '#e6f7ff',
-          borderRadius: 6,
-          border: '1px solid #91d5ff'
-        }}>
-          <Space>
-            <InfoCircleOutlined style={{ color: '#1890ff' }} />
-            <span>
-              Quy chuẩn hạch toán giúp tự động đề xuất tài khoản Nợ/Có khi tạo chứng từ dựa trên loại giao dịch và nghiệp vụ.
-            </span>
-          </Space>
-        </div>
 
         <QuyChaunTable
           onSettingsButton={handleSettingsButton}

@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Space, Button } from 'antd';
+import { Button } from 'antd';
 import {
   PlusOutlined,
   ExportOutlined,
-  SettingOutlined,
 } from '@ant-design/icons';
 import { FilterBar } from '@/components/common/FilterBar';
 import { useQuyChaunHandler, useQuyChaunState } from '../../QuyChaunHandlerContext';
@@ -88,13 +87,6 @@ export const QuyChaunHeader: React.FC<QuyChaunHeaderProps> = ({ settingsButton, 
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-        <Space>
-          <SettingOutlined />
-          <span style={{ fontSize: 16, fontWeight: 500 }}>Quy chuẩn hạch toán tự động</span>
-        </Space>
-      </div>
-
       <FilterBar
         search={{
           value: localSearchText,

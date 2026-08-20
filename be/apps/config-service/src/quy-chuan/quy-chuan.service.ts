@@ -10,6 +10,15 @@ import { softDeleteBatch, type SoftDeleteBatchResult } from '@app/core';
 
 export interface QuyChaunStats {
   tongQuyChuan: number;
+  /**
+   * Số quy chuẩn theo TỪNG mã loại giao dịch có thật trong dữ liệu.
+   *
+   * Bản cũ trả bốn ô cứng phieuThu/phieuChi/baoCo/baoNo — công ty nào đặt loại
+   * giao dịch riêng ("Tăng tiền gửi ngân hàng", "Mua hàng"…) thì mọi thẻ thống
+   * kê và mọi tab đều hiện 0 trong khi tổng là 46.
+   */
+  theoLoai: Record<string, number>;
+  /** Bốn ô cũ — giữ cho bản FE chưa cập nhật, dựng lại từ `theoLoai`. */
   phieuThu: number;
   phieuChi: number;
   baoCo: number;
@@ -141,12 +150,21 @@ export class QuyChuan_Service {
       );
     }
 
+    // Bản ghi chưa gán loại giao dịch vẫn phải nằm trong một khoá, nếu không
+    // tổng các nhóm không bằng tổng quy chuẩn và người dùng đi tìm số thất lạc.
+    const theoLoai = data.reduce<Record<string, number>>((acc, qc) => {
+      const ma = qc.loaiGiaoDich || '';
+      acc[ma] = (acc[ma] || 0) + 1;
+      return acc;
+    }, {});
+
     return {
       tongQuyChuan: data.length,
-      phieuThu: data.filter((qc) => qc.loaiGiaoDich === 'PHIEU_THU').length,
-      phieuChi: data.filter((qc) => qc.loaiGiaoDich === 'PHIEU_CHI').length,
-      baoCo: data.filter((qc) => qc.loaiGiaoDich === 'BAO_CO').length,
-      baoNo: data.filter((qc) => qc.loaiGiaoDich === 'BAO_NO').length,
+      theoLoai,
+      phieuThu: theoLoai['PHIEU_THU'] || 0,
+      phieuChi: theoLoai['PHIEU_CHI'] || 0,
+      baoCo: theoLoai['BAO_CO'] || 0,
+      baoNo: theoLoai['BAO_NO'] || 0,
     };
   }
 
