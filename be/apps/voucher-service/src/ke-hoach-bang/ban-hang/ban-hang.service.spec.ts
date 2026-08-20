@@ -74,4 +74,88 @@ describe('KeHoachBanHangService', () => {
       BadRequestException,
     );
   });
+
+  describe('luuHangLoat', () => {
+    const dongCu = {
+      id: 'r1',
+      sanPham: { id: 's1', ma: 'SP1', ten: 'Sản phẩm 1' },
+      nhomSanPham: { id: 'n1', ma: 'N1', ten: 'Nhóm 1' },
+      luong: 1,
+      giaBinhQuan: 1,
+      thang: Array(12).fill(0),
+    };
+
+    const themItem = (id: string, ma: string) => ({
+      nhomSanPham: { id: 'n1', ma: 'N1', ten: 'Nhóm 1' },
+      sanPham: { id, ma, ten: ma },
+      luong: 1,
+      giaBinhQuan: 1000,
+      thang: Array(12).fill(0) as number[],
+    });
+
+    it('payload rỗng thì không đụng tới kho', async () => {
+      const kq = await service.luuHangLoat({ nam: 2026 }, 'u1');
+      expect(kq).toEqual({ daThem: 0, daSua: 0 });
+      expect(repo.find).not.toHaveBeenCalled();
+      expect(repo.save).not.toHaveBeenCalled();
+    });
+
+    it('thêm nhiều dòng trong một lần lưu', async () => {
+      repo.find.mockResolvedValue([dongCu]);
+      const kq = await service.luuHangLoat(
+        { nam: 2026, them: [themItem('s2', 'SP2'), themItem('s3', 'SP3')] },
+        'u1',
+      );
+      expect(kq).toEqual({ daThem: 2, daSua: 0 });
+      expect(repo.save).toHaveBeenCalledTimes(1);
+      expect(repo.save.mock.calls[0][0]).toHaveLength(2);
+    });
+
+    it('chặn hai dòng mới cùng sản phẩm trong CÙNG payload', async () => {
+      repo.find.mockResolvedValue([dongCu]);
+      await expect(
+        service.luuHangLoat(
+          { nam: 2026, them: [themItem('s2', 'SP2'), themItem('s2', 'SP2')] },
+          'u1',
+        ),
+      ).rejects.toThrow(/SP2/);
+      expect(repo.save).not.toHaveBeenCalled();
+    });
+
+    it('chặn dòng mới trùng sản phẩm đã có trong kho', async () => {
+      repo.find.mockResolvedValue([dongCu]);
+      await expect(
+        service.luuHangLoat({ nam: 2026, them: [themItem('s1', 'SP1')] }, 'u1'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('sửa dòng có sẵn thì áp thay đổi lên đúng dòng đó', async () => {
+      repo.find.mockResolvedValue([dongCu]);
+      const kq = await service.luuHangLoat(
+        { nam: 2026, sua: [{ id: 'r1', luong: 99 }] },
+        'u1',
+      );
+      expect(kq).toEqual({ daThem: 0, daSua: 1 });
+      expect(repo.save.mock.calls[0][0][0]).toEqual(
+        expect.objectContaining({ id: 'r1', luong: 99 }),
+      );
+    });
+
+    it('thêm và sửa lẫn lộn trong một lần lưu', async () => {
+      repo.find.mockResolvedValue([dongCu]);
+      const kq = await service.luuHangLoat(
+        { nam: 2026, them: [themItem('s2', 'SP2')], sua: [{ id: 'r1', luong: 5 }] },
+        'u1',
+      );
+      expect(kq).toEqual({ daThem: 1, daSua: 1 });
+      expect(repo.save.mock.calls[0][0]).toHaveLength(2);
+    });
+
+    it('sửa id không tồn tại thì 404', async () => {
+      repo.find.mockResolvedValue([dongCu]);
+      await expect(
+        service.luuHangLoat({ nam: 2026, sua: [{ id: 'khong-co', luong: 1 }] }, 'u1'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
 });

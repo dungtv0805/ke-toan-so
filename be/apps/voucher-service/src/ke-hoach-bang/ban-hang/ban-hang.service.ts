@@ -8,7 +8,12 @@ import { MongoRepository } from 'typeorm';
 import { ObjectId } from 'mongodb';
 import { KeHoachBanHang } from '@app/entities';
 import { TenantContextService } from '@app/core';
-import { CreateKeHoachBanHangDto, UpdateKeHoachBanHangDto } from './dto';
+import {
+  BatchKeHoachBanHangDto,
+  CreateKeHoachBanHangDto,
+  UpdateKeHoachBanHangDto,
+} from './dto';
+import { kiemTraTrungKhoa } from '../helpers';
 
 /**
  * CRUD bảng kế hoạch bán hàng. Mỗi dòng là một sản phẩm trong một năm.
@@ -56,6 +61,66 @@ export class KeHoachBanHangService {
       tenantId: this.tenantContext.getCurrentTenantId(),
     });
     return this.repo.save(dong);
+  }
+
+  /**
+   * Lưu một thể: thêm và sửa trong cùng một lần bấm Lưu của bảng.
+   *
+   * Soi trùng trên trạng thái SAU KHI LƯU, không soi từng dòng — nếu không sẽ lọt
+   * hai dòng mới cùng sản phẩm trong cùng payload.
+   */
+  async luuHangLoat(
+    dto: BatchKeHoachBanHangDto,
+    nguoiTaoId: string,
+  ): Promise<{ daThem: number; daSua: number }> {
+    const them = dto.them ?? [];
+    const sua = dto.sua ?? [];
+    if (them.length === 0 && sua.length === 0) {
+      return { daThem: 0, daSua: 0 };
+    }
+
+    const hienCo = await this.repo.find({
+      where: this.theoTenant({ nam: dto.nam }),
+    });
+
+    const kiemTra = kiemTraTrungKhoa({
+      hienCo: hienCo.map((d) => ({ id: d.id, khoa: d.sanPham.id })),
+      them: them.map((t) => t.sanPham.id),
+      // Sửa không đổi được sản phẩm nên khoá của dòng sửa luôn giữ nguyên.
+      sua: sua.map((s) => ({ id: s.id })),
+    });
+
+    if (kiemTra.idKhongTonTai.length > 0) {
+      throw new NotFoundException(
+        `Không tìm thấy dòng kế hoạch bán hàng: ${kiemTra.idKhongTonTai.join(', ')}`,
+      );
+    }
+
+    if (kiemTra.trung.length > 0) {
+      const tenTheoId = new Map<string, string>();
+      for (const d of hienCo) tenTheoId.set(d.sanPham.id, d.sanPham.ma);
+      for (const t of them) tenTheoId.set(t.sanPham.id, t.sanPham.ma);
+      const ma = kiemTra.trung.map((id) => tenTheoId.get(id) ?? id);
+      throw new BadRequestException(
+        `Sản phẩm bị lặp trong kế hoạch năm ${dto.nam}: ${ma.join(', ')}`,
+      );
+    }
+
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    const dongThem = them.map((t) =>
+      this.repo.create({ ...t, nam: dto.nam, nguoiTaoId, tenantId }),
+    );
+
+    const theoId = new Map(hienCo.map((d) => [d.id, d]));
+    const dongSua = sua.map((s) => {
+      const { id: _id, ...thayDoi } = s;
+      return Object.assign(theoId.get(s.id)!, thayDoi);
+    });
+
+    const tatCa = [...dongThem, ...dongSua];
+    if (tatCa.length > 0) await this.repo.save(tatCa);
+
+    return { daThem: dongThem.length, daSua: dongSua.length };
   }
 
   async capNhat(

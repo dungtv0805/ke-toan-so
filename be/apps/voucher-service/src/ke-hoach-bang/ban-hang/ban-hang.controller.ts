@@ -18,6 +18,7 @@ import {
 } from '@app/auth';
 import { KeHoachBanHangService } from './ban-hang.service';
 import {
+  BatchKeHoachBanHangDto,
   CreateKeHoachBanHangDto,
   KeHoachBanHangQueryDto,
   UpdateKeHoachBanHangDto,
@@ -52,6 +53,19 @@ export class KeHoachBanHangController {
     @CurrentUser() user: UserPayload,
   ) {
     return { success: true, data: await this.service.taoMoi(dto, user.id) };
+  }
+
+  // Phải đứng TRƯỚC @Patch(':id') / @Delete(':id') để 'batch' không bị ':id' nuốt.
+  @Post('batch')
+  @Roles(...SUA)
+  async luuHangLoat(
+    @Body() dto: BatchKeHoachBanHangDto,
+    @CurrentUser() user: UserPayload,
+  ) {
+    return {
+      success: true,
+      data: await this.service.luuHangLoat(dto, user.id),
+    };
   }
 
   @Patch(':id')
