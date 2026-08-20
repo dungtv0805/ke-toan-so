@@ -904,8 +904,6 @@ export function EntryListTab() {
         selectedRowKeys: selectedEntryIds,
         onChange: (keys: Key[]) => setSelectedEntryIds(keys.map(String)),
         columnWidth: 32,
-        // Ghim cùng 2 cột đầu — xem chú thích ở `columnsGhim`.
-        fixed: true as const,
       }
     : undefined;
 
@@ -925,6 +923,12 @@ export function EntryListTab() {
   // cuộn cả hai chiều và cột "Thao tác" ghim phải, thêm một cột ghim trái nữa là vỡ.
   // jsdom KHÔNG tái hiện được (không có thanh cuộn / position: sticky), nên nếu làm lại
   // thì phải kiểm chứng bằng trình duyệt thật chứ không tin test.
+  //
+  // THỬ LẦN 2 (2026-08-20) VÀ GỠ: ghim `fixed: "left"` cho 2 cột đang hiện đầu tiên,
+  // kèm `rowSelection.fixed`. Vẫn vỡ đúng kiểu cũ trên trình duyệt thật: ô tiêu đề
+  // "Biên tập hồ sơ" trườn sang chỗ khác, "Ngày PS CT" và "Kiểm soát" đứng lệch hẳn
+  // so với cột dữ liệu bên dưới. Kết luận: bảng này (ô tick chọn dòng + cột co giãn
+  // được + cuộn cả hai chiều + "Thao tác" ghim phải) KHÔNG chịu thêm cột ghim trái.
   const columns = useMemo(() => {
     const base = getColumnDefinitions(
       taiKhoanOptions,
@@ -1005,17 +1009,6 @@ export function EntryListTab() {
         }
       },
     }
-  );
-
-  /**
-   * Ghim 2 cột đầu (theo yêu cầu) — luôn là 2 cột ĐANG HIỆN đầu tiên, nên tắt
-   * bớt cột ở "Chọn cột" thì phần ghim trôi theo chứ không ghim vào chỗ trống.
-   * Ô tick chọn dòng phải ghim cùng, nếu không antd để nó cuộn ra khỏi màn còn
-   * hai cột ghim thì đứng yên — hàng tiêu đề lệch hẳn một ô so với thân bảng.
-   */
-  const columnsGhim = useMemo(
-    () => visibleColumns.map((col, i) => (i < 2 ? { ...col, fixed: "left" as const } : col)),
-    [visibleColumns]
   );
 
   // Row class name for highlighting editing row
@@ -1116,7 +1109,7 @@ export function EntryListTab() {
       {/* flex-col để `.excel-table { flex: 1 }` vẫn ăn như khi Table là con trực tiếp */}
       <div ref={tableWrapRef} className="flex flex-col flex-1 min-h-0">
         <Table
-          columns={columnsGhim}
+          columns={visibleColumns}
           dataSource={data || []}
           rowKey="id"
           rowSelection={rowSelection}
