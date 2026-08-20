@@ -4,7 +4,7 @@ import { PieChartOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { dashboardService, type BreakdownSlice } from '@/services/dashboardService';
-import { formatCurrency } from './format';
+import { formatCurrency, nhanLatCat } from './format';
 
 const PALETTE = ['#1F3864', '#C9A227', '#2F5597', '#E0C158', '#8497B0', '#BFA15F'];
 
@@ -34,13 +34,10 @@ const Donut: React.FC<{ data: BreakdownSlice[] }> = ({ data }) => {
           nameKey="ten"
           cx="50%"
           cy="50%"
-          innerRadius={55}
-          outerRadius={88}
+          innerRadius={44}
+          outerRadius={70}
           paddingAngle={2}
-          label={(entry) => {
-            const pct = total > 0 ? ((Math.abs(entry.soTien) / total) * 100).toFixed(0) : '0';
-            return `${pct}%`;
-          }}
+          label={(entry) => nhanLatCat(entry.soTien, total)}
           labelLine={false}
         >
           {data.map((_, i) => (

@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { dashboardService, type CashMoneyLine } from '@/services/dashboardService';
 import { sliceToRange } from '@/components/shared/period';
-import { formatCurrency, DASH_COLORS } from './format';
+import { formatCurrency, DASH_COLORS, nhanTrieu, nhanTrieuAbs } from './format';
 
 interface Props { year: number; startMonth: number; endMonth: number; }
 const TEAL = DASH_COLORS.revenue;
@@ -14,8 +14,6 @@ const GRAY = 'hsl(var(--muted-foreground) / 0.35)';
 const ORANGE = '#F2994A';
 
 const kpiTrieu = (v: number) => Math.round((v || 0) / 1e6).toLocaleString('vi-VN');
-const labelTrieu = (v: number) => (v ? Math.round(v / 1e6).toLocaleString('vi-VN') : '');
-const labelTrieuAbs = (v: number) => (v ? Math.round(Math.abs(v) / 1e6).toLocaleString('vi-VN') : '');
 
 const Kpi: React.FC<{ label: string; value: number; color: string }> = ({ label, value, color }) => (
   <div className="min-w-0">
@@ -156,7 +154,7 @@ const CashFlowChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
           <ComposedChart data={data} margin={{ left: -10, right: 8, top: 16, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="thang" tickFormatter={(v) => `${isWeekly ? 'Tuần' : 'Th'} ${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
-            <YAxis tickFormatter={(v) => labelTrieu(v)} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={42} />
+            <YAxis tickFormatter={nhanTrieu} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={42} />
             <ReferenceLine y={0} stroke="hsl(var(--border))" />
             <Tooltip
               formatter={(value: number, name: string) => [formatCurrency(Math.abs(value)), name]}
@@ -164,13 +162,13 @@ const CashFlowChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
             />
             <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
             <Bar dataKey="thu" name="Thu" fill={TEAL} maxBarSize={22}>
-              <LabelList dataKey="thu" position="top" formatter={labelTrieu} style={{ fontSize: 10, fill: TEAL }} />
+              <LabelList dataKey="thu" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: TEAL }} />
             </Bar>
             <Bar dataKey="chiNeg" name="Chi" fill={GRAY} maxBarSize={22}>
-              <LabelList dataKey="chiNeg" position="bottom" formatter={labelTrieuAbs} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />
+              <LabelList dataKey="chiNeg" position="bottom" formatter={nhanTrieuAbs} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />
             </Bar>
             <Line type="monotone" dataKey="soDu" name="Tồn" stroke={ORANGE} strokeWidth={2} dot={{ r: 3, fill: ORANGE }}>
-              <LabelList dataKey="soDu" position="top" formatter={labelTrieu} style={{ fontSize: 10, fill: ORANGE }} />
+              <LabelList dataKey="soDu" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: ORANGE }} />
             </Line>
           </ComposedChart>
         </ResponsiveContainer>

@@ -4,7 +4,7 @@ import { ClockCircleOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { dashboardService, type AgingBuckets } from '@/services/dashboardService';
-import { formatCurrency } from './format';
+import { formatCurrency, nhanLatCat } from './format';
 
 // chưa đến hạn = navy; quá hạn đậm dần vàng -> cam -> đỏ
 const AGING_COLORS = [
@@ -41,14 +41,10 @@ const Donut: React.FC<{ data: Slice[] }> = ({ data }) => {
           nameKey="ten"
           cx="50%"
           cy="50%"
-          innerRadius={60}
-          outerRadius={95}
+          innerRadius={48}
+          outerRadius={76}
           paddingAngle={2}
-          label={(entry) => {
-            if (!entry.soTien) return '';
-            const pct = total > 0 ? ((Math.abs(entry.soTien) / total) * 100).toFixed(0) : '0';
-            return `${pct}%`;
-          }}
+          label={(entry) => nhanLatCat(entry.soTien, total)}
           labelLine={false}
         >
           {data.map((_, i) => (

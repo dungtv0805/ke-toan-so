@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Card, Segmented, Space } from 'antd';
 import { LineChartOutlined } from '@ant-design/icons';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { dashboardService } from '@/services/dashboardService';
-import { formatCurrency, formatShortCurrency, DASH_COLORS } from './format';
+import { formatCurrency, DASH_COLORS, nhanTrieu } from './format';
 
 type ChiTieu = 'doanhThu' | 'chiPhi' | 'loiNhuan';
 
@@ -55,9 +55,11 @@ const XuHuongChiTieuChart: React.FC<Props> = ({ year, startMonth, endMonth }) =>
         <LineChart data={rows} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
           <XAxis dataKey="thang" tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} tickFormatter={formatShortCurrency} />
+          <YAxis tick={{ fontSize: 11 }} tickFormatter={nhanTrieu} />
           <Tooltip formatter={(v: number) => formatCurrency(v)} />
-          <Line type="monotone" dataKey="value" name={OPTIONS.find((o) => o.value === chiTieu)?.label} stroke={MAU[chiTieu]} strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="value" name={OPTIONS.find((o) => o.value === chiTieu)?.label} stroke={MAU[chiTieu]} strokeWidth={2} dot={{ r: 2 }}>
+            <LabelList dataKey="value" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: MAU[chiTieu] }} />
+          </Line>
         </LineChart>
       </ResponsiveContainer>
     </Card>

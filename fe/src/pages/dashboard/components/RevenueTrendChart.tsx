@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { dashboardService } from '@/services/dashboardService';
 import { sliceToRange } from '@/components/shared/period';
-import { formatCurrency, DASH_COLORS } from './format';
+import { formatCurrency, DASH_COLORS, nhanTrieu } from './format';
 
 interface Props { year: number; startMonth: number; endMonth: number; }
 
@@ -16,7 +16,6 @@ const ORANGE = '#F2994A';
 
 /** Số tiền → triệu (làm tròn), KPI luôn có số; nhãn trên cây bỏ qua giá trị 0. */
 const kpiTrieu = (v: number) => Math.round((v || 0) / 1e6).toLocaleString('vi-VN');
-const labelTrieu = (v: number) => (v ? Math.round(v / 1e6).toLocaleString('vi-VN') : '');
 
 const Kpi: React.FC<{ label: string; value: number; color: string }> = ({ label, value, color }) => (
   <div className="min-w-0">
@@ -58,17 +57,17 @@ const RevenueTrendChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
           <ComposedChart data={data} margin={{ left: -10, right: 8, top: 18 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="thang" tickFormatter={(v) => `${isWeekly ? 'Tuần' : 'Th'} ${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
-            <YAxis tickFormatter={(v) => labelTrieu(v)} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={42} />
+            <YAxis tickFormatter={nhanTrieu} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={42} />
             <Tooltip formatter={(value: number) => formatCurrency(value)} labelFormatter={(l) => `${isWeekly ? 'Tuần' : 'Tháng'} ${l}`} />
             <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
             <Bar dataKey="doanhThu" name="Doanh thu" fill={TEAL} maxBarSize={26}>
-              <LabelList dataKey="doanhThu" position="top" formatter={labelTrieu} style={{ fontSize: 10, fill: TEAL }} />
+              <LabelList dataKey="doanhThu" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: TEAL }} />
             </Bar>
             <Bar dataKey="chiPhi" name="Chi phí" fill={GRAY} maxBarSize={26}>
-              <LabelList dataKey="chiPhi" position="top" formatter={labelTrieu} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />
+              <LabelList dataKey="chiPhi" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />
             </Bar>
             <Line type="monotone" dataKey="loiNhuan" name="Lợi nhuận" stroke={ORANGE} strokeWidth={2} dot={{ r: 3, fill: ORANGE }}>
-              <LabelList dataKey="loiNhuan" position="top" formatter={labelTrieu} style={{ fontSize: 10, fill: ORANGE }} />
+              <LabelList dataKey="loiNhuan" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: ORANGE }} />
             </Line>
           </ComposedChart>
         </ResponsiveContainer>

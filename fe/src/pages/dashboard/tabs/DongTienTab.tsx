@@ -12,7 +12,7 @@ import LichThanhToanTables from '../components/LichThanhToanTables';
 import { dashboardService } from '@/services/dashboardService';
 import { tienTheoTaiKhoan } from '../trialBalanceDerive';
 import { tinhLichThanhToan } from '../lichThanhToan';
-import { formatCurrency } from '../components/format';
+import { formatCurrency, nhanLatCat } from '../components/format';
 import type { TabProps } from './TabProps';
 
 const PIE_PALETTE = [
@@ -23,11 +23,24 @@ const PIE_PALETTE = [
   'hsl(var(--muted-foreground))',
 ];
 
-const Donut: React.FC<{ title: string; data: { ten: string; soTien: number }[] }> = ({ title, data }) => (
+const Donut: React.FC<{ title: string; data: { ten: string; soTien: number }[] }> = ({ title, data }) => {
+  const tong = data.reduce((s, d) => s + Math.abs(d.soTien || 0), 0);
+  return (
   <Card title={<span className="text-sm sm:text-base"><PieChartOutlined className="text-primary mr-2" />{title}</span>}>
     <ResponsiveContainer width="100%" height={280}>
       <PieChart>
-        <Pie data={data} dataKey="soTien" nameKey="ten" cx="50%" cy="50%" innerRadius={60} outerRadius={95} paddingAngle={2}>
+        <Pie
+          data={data}
+          dataKey="soTien"
+          nameKey="ten"
+          cx="50%"
+          cy="50%"
+          innerRadius={52}
+          outerRadius={82}
+          paddingAngle={2}
+          label={(entry) => nhanLatCat(entry.soTien, tong)}
+          labelLine={false}
+        >
           {data.map((_, i) => (
             <Cell key={i} fill={PIE_PALETTE[i % PIE_PALETTE.length]} />
           ))}
@@ -37,7 +50,8 @@ const Donut: React.FC<{ title: string; data: { ten: string; soTien: number }[] }
       </PieChart>
     </ResponsiveContainer>
   </Card>
-);
+  );
+};
 
 const DongTienTab: React.FC<TabProps> = ({ year, startMonth, endMonth }) => {
   const { data: tb = [], isLoading: loadingTb } = useQuery({

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Card, Select, Empty } from 'antd';
 import { TeamOutlined } from '@ant-design/icons';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { formatCurrency, formatShortCurrency, DASH_COLORS } from './format';
+import { BarChart, Bar, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { formatCurrency, DASH_COLORS, nhanTrieu } from './format';
 import type { DoanhSoChieuRow } from '@/services/doanhSoService';
 
 /** Sáu chiều đặc tả yêu cầu cho tab Bán hàng. */
@@ -35,12 +35,14 @@ const DoanhSoTheoChieuChart: React.FC<Props> = ({ data, dimension, onDimensionCh
         <Empty description="Chưa có dữ liệu" />
       ) : (
         <ResponsiveContainer width="100%" height={320}>
-          <BarChart data={rows} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
+          <BarChart data={rows} layout="vertical" margin={{ top: 8, right: 56, left: 8, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-            <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={formatShortCurrency} />
+            <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={nhanTrieu} />
             <YAxis type="category" dataKey="ten" width={150} tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: number) => formatCurrency(v)} />
-            <Bar dataKey="soTien" name="Doanh số" fill={DASH_COLORS.revenue} radius={[0, 3, 3, 0]} barSize={14} />
+            <Bar dataKey="soTien" name="Doanh số" fill={DASH_COLORS.revenue} radius={[0, 3, 3, 0]} barSize={14}>
+              <LabelList dataKey="soTien" position="right" formatter={nhanTrieu} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       )}

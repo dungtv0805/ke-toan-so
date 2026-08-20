@@ -41,6 +41,7 @@ import { useTableColumnFilters } from '@/components/table/useTableColumnFilters'
 import { exportReportExcel } from '@/utils/exportReportExcel';
 import { buildBangCanDoiSheets } from './bangCanDoiExport';
 import { filterBangCanDoi } from './bangCanDoiFilter';
+import { nhanTrieu, NGUONG_NHAN_LAT_CAT } from '@/pages/dashboard/components/format';
 
 const COLORS = ['#1890ff', '#52c41a', '#faad14', '#ff4d4f', '#722ed1', '#13c2c2'];
 
@@ -381,9 +382,13 @@ const BangCanDoiPage: React.FC = () => {
                             cx="50%"
                             cy="50%"
                             innerRadius={60}
-                            outerRadius={100}
+                            outerRadius={82}
                             dataKey="value"
-                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                            label={({ name, value, percent }) =>
+                              percent < NGUONG_NHAN_LAT_CAT
+                                ? ''
+                                : `${name}: ${(percent * 100).toFixed(0)}% · ${nhanTrieu(value)} tr`
+                            }
                           >
                             {assetPieData.map((_, index) => (
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -404,9 +409,13 @@ const BangCanDoiPage: React.FC = () => {
                             cx="50%"
                             cy="50%"
                             innerRadius={60}
-                            outerRadius={100}
+                            outerRadius={82}
                             dataKey="value"
-                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                            label={({ name, value, percent }) =>
+                              percent < NGUONG_NHAN_LAT_CAT
+                                ? ''
+                                : `${name}: ${(percent * 100).toFixed(0)}% · ${nhanTrieu(value)} tr`
+                            }
                           >
                             {liabilityPieData.map((_, index) => (
                               <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />

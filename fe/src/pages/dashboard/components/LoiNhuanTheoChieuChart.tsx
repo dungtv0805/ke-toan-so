@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Card, Select, Empty } from 'antd';
 import { BarChartOutlined } from '@ant-design/icons';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { dashboardService } from '@/services/dashboardService';
-import { formatCurrency, formatShortCurrency, DASH_COLORS } from './format';
+import { formatCurrency, DASH_COLORS, nhanTrieu } from './format';
 
 export const CHIEU_OPTIONS = [
   { label: 'Đối tượng', value: 'doi-tuong' },
@@ -41,12 +41,14 @@ const LoiNhuanTheoChieuChart: React.FC<Props> = ({ year, startMonth, endMonth })
         <Empty description="Chưa có dữ liệu" />
       ) : (
         <ResponsiveContainer width="100%" height={320}>
-          <BarChart data={rows} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
+          <BarChart data={rows} layout="vertical" margin={{ top: 8, right: 56, left: 8, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-            <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={formatShortCurrency} />
+            <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={nhanTrieu} />
             <YAxis type="category" dataKey="ten" width={140} tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: number) => formatCurrency(v)} />
-            <Bar dataKey="soTien" name="Lợi nhuận" fill={DASH_COLORS.balance} radius={[0, 3, 3, 0]} barSize={14} />
+            <Bar dataKey="soTien" name="Lợi nhuận" fill={DASH_COLORS.balance} radius={[0, 3, 3, 0]} barSize={14}>
+              <LabelList dataKey="soTien" position="right" formatter={nhanTrieu} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       )}
