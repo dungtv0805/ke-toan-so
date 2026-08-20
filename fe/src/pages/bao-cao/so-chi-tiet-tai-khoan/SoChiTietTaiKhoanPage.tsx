@@ -28,6 +28,7 @@ import { exportReportExcel } from '@/utils/exportReportExcel';
 import { buildSoChiTietSheets } from './soChiTietExport';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
 import { filterSoChiTietReports, withColumnFilters } from './soChiTietFilter';
+import { sapXepTheoNhan } from '@/lib/sapXep';
 
 const SoChiTietTaiKhoanPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -64,7 +65,7 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
           doiTuongService.getAll(),
         ]);
         setAccountOptions(accs.map((a) => ({ value: a.ma, label: `${a.ma} - ${a.ten}` })));
-        setDoiTuongOptions(dts.map((d) => ({ value: d.ma, label: `${d.ma} - ${d.ten}` })));
+        setDoiTuongOptions(sapXepTheoNhan(dts.map((d) => ({ value: d.ma, label: `${d.ma} - ${d.ten}` }))));
       } catch (error) {
         console.error('Error loading danh mục:', error);
         message.error('Không tải được danh mục tài khoản / đối tượng');

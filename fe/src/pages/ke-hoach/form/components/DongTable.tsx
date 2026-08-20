@@ -6,9 +6,10 @@ import type { ColumnsType } from "antd/es/table";
 import { ngayLuu, nhomKhoanMucCua, type MucDanhMuc } from "../../lib/keHoachRow";
 import { useKeHoachFormHandler, useKeHoachFormState } from "../KeHoachFormHandlerContext";
 import type { DongKeHoach, QuyChuanGoiY } from "../lib/keHoachFormRows";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 const toOptions = (list: MucDanhMuc[] = []) =>
-  list.map((m) => ({ value: m.ma, label: `${m.ma} - ${m.ten}` }));
+  sapXepTheoNhan(list.map((m) => ({ value: m.ma, label: `${m.ma} - ${m.ten}` })));
 
 /**
  * Bảng chi tiết của form Kế hoạch — cùng kiểu nhập với "Chi tiết hạch toán" của
@@ -51,11 +52,13 @@ export const DongTable: React.FC = () => {
       khoanMuc: toOptions(khoanMucList as MucDanhMuc[]),
       nhomQuanLy: toOptions(nhomQuanLyList as MucDanhMuc[]),
       chuDauTu: toOptions(chuDauTuList as MucDanhMuc[]),
-      nghiepVu: [
-        ...new Set(
-          (quyChuanList as QuyChuanGoiY[]).map((q) => q.nghiepVu).filter(Boolean),
-        ),
-      ].map((n) => ({ value: n, label: n })),
+      nghiepVu: sapXepTheoNhan(
+        [
+          ...new Set(
+            (quyChuanList as QuyChuanGoiY[]).map((q) => q.nghiepVu).filter(Boolean),
+          ),
+        ].map((n) => ({ value: n, label: n })),
+      ),
     }),
     [
       taiKhoanList,

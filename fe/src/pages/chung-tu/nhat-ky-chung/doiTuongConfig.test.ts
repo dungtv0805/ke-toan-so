@@ -26,20 +26,22 @@ describe("getDoiTuongSelectConfig", () => {
     expect(cfg.options).toEqual([]);
   });
 
-  it("chiTietTheo=KHACH_HANG → đối tượng có loại KHACH_HANG (gồm cả đa loại)", () => {
+  // Thứ tự dưới đây là A-Z theo nhãn, KHÔNG phải thứ tự danh mục trả về:
+  // mọi select chọn danh mục đều sắp theo nhãn (xem @/lib/sapXep).
+  it("chiTietTheo=KHACH_HANG → đối tượng có loại KHACH_HANG (gồm cả đa loại), sắp A-Z", () => {
     const cfg = getDoiTuongSelectConfig("KHACH_HANG", doiTuongList, nganHangList);
     expect(cfg.disabled).toBe(false);
     expect(cfg.options).toEqual([
-      { value: "kh1", label: "KH001 - Cty A" },
       { value: "both1", label: "DT001 - Cty AB" },
+      { value: "kh1", label: "KH001 - Cty A" },
     ]);
   });
 
   it("đối tượng đa loại xuất hiện ở cả dropdown NHA_CUNG_CAP", () => {
     const cfg = getDoiTuongSelectConfig("NHA_CUNG_CAP", doiTuongList, nganHangList);
     expect(cfg.options).toEqual([
-      { value: "ncc1", label: "NCC001 - Cty B" },
       { value: "both1", label: "DT001 - Cty AB" },
+      { value: "ncc1", label: "NCC001 - Cty B" },
     ]);
   });
 
@@ -47,8 +49,8 @@ describe("getDoiTuongSelectConfig", () => {
     const cfg = getDoiTuongSelectConfig("NGAN_HANG_QUY", doiTuongList, nganHangList);
     expect(cfg.disabled).toBe(false);
     expect(cfg.options).toEqual([
-      { value: "nh1", label: "VCB01 - Vietcombank CN1" },
       { value: "tm1", label: "TM01 - Quỹ tiền mặt" },
+      { value: "nh1", label: "VCB01 - Vietcombank CN1" },
     ]);
   });
 

@@ -22,6 +22,7 @@ import { usePhieuKhoForm } from './usePhieuKhoForm';
 import { ChiTietTable } from './ChiTietTable';
 import { formatCurrency } from '@/pages/chung-tu/phieu/lib/format';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
+import { sapXepTheoNhan } from '@/lib/sapXep';
 
 const { Text } = Typography;
 
@@ -98,8 +99,8 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editingId, loaiPhieu]);
 
-  const khoOptions = khoList.map((k) => ({ value: k.ma, label: `${k.ma} - ${k.ten}` }));
-  const doiTuongOptions = doiTuongList.map((d) => ({ value: d.ma, label: `${d.ma} - ${d.ten}` }));
+  const khoOptions = sapXepTheoNhan(khoList.map((k) => ({ value: k.ma, label: `${k.ma} - ${k.ten}` })));
+  const doiTuongOptions = sapXepTheoNhan(doiTuongList.map((d) => ({ value: d.ma, label: `${d.ma} - ${d.ten}` })));
 
   const handleDoiTuongChange = (ma: string) => {
     const dt = doiTuongList.find((d) => d.ma === ma);

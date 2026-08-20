@@ -1,5 +1,6 @@
 // fe/src/pages/chung-tu/nhat-ky-chung/doiTuongConfig.ts
 import { DoiTuong, TaiKhoanNganHang } from "@/types";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 export interface DoiTuongSelectConfig {
   disabled: boolean;
@@ -23,17 +24,21 @@ export function getDoiTuongSelectConfig(
   if (chiTietTheo === "NGAN_HANG_QUY") {
     return {
       disabled: false,
-      options: nganHangList.map((nh) => ({
-        value: nh.id,
-        label: `${nh.ma} - ${nh.ten}`,
-      })),
+      options: sapXepTheoNhan(
+        nganHangList.map((nh) => ({
+          value: nh.id,
+          label: `${nh.ma} - ${nh.ten}`,
+        })),
+      ),
     };
   }
   return {
     disabled: false,
-    options: doiTuongList
-      .filter((d) => d.loai.includes(chiTietTheo as DoiTuong["loai"][number]))
-      .map((d) => ({ value: d.id, label: `${d.ma} - ${d.ten}` })),
+    options: sapXepTheoNhan(
+      doiTuongList
+        .filter((d) => d.loai.includes(chiTietTheo as DoiTuong["loai"][number]))
+        .map((d) => ({ value: d.id, label: `${d.ma} - ${d.ten}` })),
+    ),
   };
 }
 

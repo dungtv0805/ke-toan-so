@@ -9,6 +9,7 @@ import type { Dayjs } from "dayjs";
 import { FilterBar as SharedFilterBar } from "@/components/common/FilterBar";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { usePhieuState, usePhieuHandler } from "../../PhieuHandlerContext";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 const { RangePicker } = DatePicker;
 
@@ -73,7 +74,7 @@ export function FilterBar({ settingsButton }: { settingsButton?: ReactNode }) {
             allowClear
             value={filterDoiTuong}
             onChange={(v) => handleSelect("filterDoiTuong", v)}
-            options={doiTuongList.map((dt) => ({ value: dt.ma, label: dt.ten }))}
+            options={sapXepTheoNhan(doiTuongList.map((dt) => ({ value: dt.ma, label: dt.ten })))}
           />
           <Select
             placeholder="Dự án"
@@ -81,7 +82,7 @@ export function FilterBar({ settingsButton }: { settingsButton?: ReactNode }) {
             allowClear
             value={filterDuAn}
             onChange={(v) => handleSelect("filterDuAn", v)}
-            options={duAnList.map((da) => ({ value: da.ma, label: da.ten }))}
+            options={sapXepTheoNhan(duAnList.map((da) => ({ value: da.ma, label: da.ten })))}
           />
           <Select
             placeholder="Bộ phận"
@@ -89,7 +90,7 @@ export function FilterBar({ settingsButton }: { settingsButton?: ReactNode }) {
             allowClear
             value={filterBoPhan}
             onChange={(v) => handleSelect("filterBoPhan", v)}
-            options={boPhanList.map((bp) => ({ value: bp.ma, label: bp.ten }))}
+            options={sapXepTheoNhan(boPhanList.map((bp) => ({ value: bp.ma, label: bp.ten })))}
           />
           <Select
             placeholder="TK Nợ"

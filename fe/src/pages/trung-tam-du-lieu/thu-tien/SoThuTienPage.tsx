@@ -31,6 +31,7 @@ import { useBulkDelete } from '@/components/table/useBulkDelete';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
+import { sapXepTheoNhan } from '@/lib/sapXep';
 
 /** Ô dùng để so khớp bộ lọc cột — key trùng `key` của cột antd. */
 const cellValue = (r: ThuTienHopDong, key: string): string | undefined => {
@@ -226,11 +227,13 @@ export default function SoThuTienPage() {
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('trungTamDuLieu.soThuTien', columns);
   const fl = useFieldLabels('trungTamDuLieu.soThuTien');
 
-  const hdOptions = hdList.map((h) => ({
-    value: h.hopDongId,
-    label: `${h.soHopDong}${h.tenCongTrinh ? ' — ' + h.tenCongTrinh : ''}`,
-  }));
-  const dtOptions = dtList.map((d) => ({ value: d.id, label: `${d.ma} - ${d.ten}` }));
+  const hdOptions = sapXepTheoNhan(
+    hdList.map((h) => ({
+      value: h.hopDongId,
+      label: `${h.soHopDong}${h.tenCongTrinh ? ' — ' + h.tenCongTrinh : ''}`,
+    })),
+  );
+  const dtOptions = sapXepTheoNhan(dtList.map((d) => ({ value: d.id, label: `${d.ma} - ${d.ten}` })));
 
   return (
     <div className="space-y-3">

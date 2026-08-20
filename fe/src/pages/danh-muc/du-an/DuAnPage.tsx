@@ -47,6 +47,7 @@ import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { duAnImportConfig } from "@/components/import-danh-muc/configs";
 import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -689,10 +690,12 @@ const DuAnPage: React.FC = () => {
               allowClear
               placeholder="Chọn chủ đầu tư"
               optionFilterProp="label"
-              options={chuDauTuList.map((cdt) => ({
-                value: cdt.id,
-                label: `${cdt.ma} - ${cdt.ten}`,
-              }))}
+              options={sapXepTheoNhan(
+                chuDauTuList.map((cdt) => ({
+                  value: cdt.id,
+                  label: `${cdt.ma} - ${cdt.ten}`,
+                })),
+              )}
             />
           </Form.Item>
 

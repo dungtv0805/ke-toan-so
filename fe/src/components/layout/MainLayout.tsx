@@ -45,14 +45,12 @@ import {
   InboxOutlined,
   ReconciliationOutlined,
   ProfileOutlined,
-  FileDoneOutlined,
   TableOutlined,
   FileSearchOutlined,
   AccountBookOutlined,
   PieChartOutlined,
   SnippetsOutlined,
   NodeIndexOutlined,
-  FileAddOutlined,
   CopyOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
@@ -64,6 +62,7 @@ import { AppSwitcher } from "./AppSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { keyMatches } from "@/config/modules";
 import { DANH_MUC_ROUTES } from "@/config/danhMucCatalog";
+import { THUE_NAV } from "@/config/sectionNavs";
 import { useEffectiveMenuKeys } from "@/hooks/useEffectiveMenuKeys";
 
 const { Header, Sider, Content } = Layout;
@@ -81,6 +80,8 @@ const IS_MOBILE_OR_TABLET =
 // Mục menu gộp nhiều trang con vào 1 trang tổng hợp: hiển thị/mở khóa theo tập route con.
 const AGGREGATE_MENU_ROUTES: Record<string, string[]> = {
   "/danh-muc": DANH_MUC_ROUTES,
+  // 4 trang thuế đã chuyển lên thanh ngang (THUE_NAV) — sidebar giữ đúng 1 mục.
+  "/thue": THUE_NAV.map((i) => i.path),
 };
 
 // Như keyMatches nhưng hiểu cả mục gộp (Danh mục).
@@ -163,6 +164,7 @@ const existingRoutes = new Set([
   "/bao-cao/hop-dong",
   "/bao-cao/doanh-thu",
 
+  "/thue",
   "/thue/bang-ke-mua-vao",
   "/thue/bang-ke-ban-ra",
   "/thue/tong-hop",
@@ -275,12 +277,9 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Báo cáo doanh thu", "/bao-cao/doanh-thu", <RiseOutlined />),
   ]),
 
-  getItem("Thuế", "/thue", <CalculatorOutlined />, [
-    getMenuItem("Bảng kê mua vào", "/thue/bang-ke-mua-vao", <FileAddOutlined />),
-    getMenuItem("Bảng kê bán ra", "/thue/bang-ke-ban-ra", <FileDoneOutlined />),
-    getMenuItem("Tổng hợp thuế", "/thue/tong-hop", <TableOutlined />),
-    getMenuItem("Báo cáo nhanh thuế TNDN", "/thue/bao-cao-tndn", <BarChartOutlined />),
-  ]),
+  // 4 trang thuế nằm trên thanh ngang của chính các trang thuế (xem THUE_NAV);
+  // sidebar chỉ còn một mục, bấm vào là vào trang thuế đầu tiên user có quyền.
+  getMenuItem("Thuế", "/thue", <CalculatorOutlined />),
 
   // Nhóm "Trung tâm dữ liệu" đã bỏ cấp bọc — các mục con đứng thẳng hàng với
   // "Thuế" / "Kho". Route vẫn giữ tiền tố /trung-tam-du-lieu để khỏi phải cấp lại quyền.
@@ -576,7 +575,12 @@ const MainLayout: React.FC = () => {
   const getSelectedKeys = () => {
     const path = location.pathname;
     if (path === "/") return ["/"];
-    return [path];
+    // Trang con của mục gộp (Danh mục, Thuế) không đứng trong sidebar — không quy
+    // về mục cha thì đang ở trang thuế mà sidebar trắng trơn, không biết mình ở đâu.
+    const goc = Object.entries(AGGREGATE_MENU_ROUTES).find(([, routes]) =>
+      routes.includes(path)
+    );
+    return [goc ? goc[0] : path];
   };
 
   const getOpenKeys = () => {

@@ -8,6 +8,7 @@ import type {
   HoSoChungTuItem,
 } from "@/types";
 import { nhatKyChungService } from "@/services/nhatKyChungService";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 interface BienTapHoSoCellProps {
   entry: NhatKyChung;
@@ -113,9 +114,11 @@ export function BienTapHoSoCell({
 
   const availableToAdd = useMemo(
     () =>
-      hoSoChungTuList
-        .filter((h) => !items.some((i) => i.id === h.id))
-        .map((h) => ({ value: h.id, label: `${h.ma} - ${h.ten}` })),
+      sapXepTheoNhan(
+        hoSoChungTuList
+          .filter((h) => !items.some((i) => i.id === h.id))
+          .map((h) => ({ value: h.id, label: `${h.ma} - ${h.ten}` })),
+      ),
     [hoSoChungTuList, items]
   );
 

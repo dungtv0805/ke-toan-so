@@ -20,6 +20,8 @@ import {
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
 import { filterTndnRows } from "./tndnFilter";
+import SectionNav from "@/components/layout/SectionNav";
+import { THUE_NAV } from "@/config/sectionNavs";
 
 const { Text, Title } = Typography;
 
@@ -277,6 +279,7 @@ const BaoCaoTNDNPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
+      <SectionNav items={THUE_NAV} />
       <Card>
         <Space className="mb-4" wrap>
           <Title level={5} className="!mb-0">

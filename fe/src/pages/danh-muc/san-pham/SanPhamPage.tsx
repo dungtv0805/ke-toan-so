@@ -37,6 +37,7 @@ import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { sanPhamImportConfig } from "@/components/import-danh-muc/configs";
 import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -462,7 +463,7 @@ const SanPhamPage: React.FC = () => {
                   allowClear
                   showSearch
                   optionFilterProp="label"
-                  options={donViOptions}
+                  options={sapXepTheoNhan(donViOptions)}
                 />
               </Form.Item>
             </Col>

@@ -6,6 +6,7 @@ import type { ChiTietPhieuKho, HangHoaVatTu, Kho, LoaiPhieuKho } from '@/types';
 import { hangHoaVatTuService } from '@/services/hangHoaVatTuService';
 import { khoService } from '@/services/khoService';
 import { formatCurrency } from '@/pages/chung-tu/phieu/lib/format';
+import { sapXepTheoNhan } from '@/lib/sapXep';
 
 const CONTROL_HEIGHT = 28;
 
@@ -92,15 +93,15 @@ export function ChiTietTable({ value, onChange, loaiPhieu }: Props) {
 
   const tongTien = value.reduce((sum, row) => sum + (row.thanhTien || 0), 0);
 
-  const hangHoaOptions = hangHoaList.map((h) => ({
+  const hangHoaOptions = sapXepTheoNhan(hangHoaList.map((h) => ({
     value: h.ma,
     label: `${h.ma} - ${h.ten}`,
-  }));
+  })));
 
-  const khoOptions = khoList.map((k) => ({
+  const khoOptions = sapXepTheoNhan(khoList.map((k) => ({
     value: k.ma,
     label: `${k.ma} - ${k.ten}`,
-  }));
+  })));
 
   const columns: ColumnsType<ChiTietPhieuKho> = [
     {

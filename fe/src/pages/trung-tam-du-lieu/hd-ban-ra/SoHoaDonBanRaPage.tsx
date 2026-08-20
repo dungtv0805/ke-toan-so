@@ -28,6 +28,7 @@ import { useBulkDelete } from '@/components/table/useBulkDelete';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
+import { sapXepTheoNhan } from '@/lib/sapXep';
 
 const { Text } = Typography;
 
@@ -264,10 +265,12 @@ export default function SoHoaDonBanRaPage() {
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('trungTamDuLieu.soHoaDonBanRa', columns);
   const fl = useFieldLabels('trungTamDuLieu.soHoaDonBanRa');
 
-  const hdOptions = hdList.map((h) => ({
-    value: h.hopDongId,
-    label: `${h.soHopDong}${h.tenCongTrinh ? ' — ' + h.tenCongTrinh : ''}`,
-  }));
+  const hdOptions = sapXepTheoNhan(
+    hdList.map((h) => ({
+      value: h.hopDongId,
+      label: `${h.soHopDong}${h.tenCongTrinh ? ' — ' + h.tenCongTrinh : ''}`,
+    })),
+  );
 
   return (
     <div className="space-y-3">

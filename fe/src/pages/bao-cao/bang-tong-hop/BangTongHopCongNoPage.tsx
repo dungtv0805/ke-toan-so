@@ -29,6 +29,7 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import dayjs, { Dayjs } from "dayjs";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 const { RangePicker } = DatePicker;
 
@@ -74,7 +75,7 @@ const BangTongHopCongNoPage: React.FC = () => {
             .map((t) => ({ value: t.ma, label: `${t.ma} - ${t.ten}` })),
         );
         setDtOptions(
-          dts.map((d) => ({ value: d.ma, label: `${d.ma} - ${d.ten}` })),
+          sapXepTheoNhan(dts.map((d) => ({ value: d.ma, label: `${d.ma} - ${d.ten}` }))),
         );
       })
       .catch((e) => console.error("load options error", e));

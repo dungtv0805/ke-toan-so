@@ -32,6 +32,7 @@ import { DONG_MOI_ID } from "../handler/sub-handler/row-edit/row-edit.state";
 import { ngayLuu, nhomKhoanMucCua, type MucDanhMuc, type RowValues } from "../lib/keHoachRow";
 import { ToolbarSlot } from "./toolbar-slot/ToolbarSlot";
 import { ImportKeHoachModal } from "../import/ImportKeHoachModal";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 const WIDTH_STORAGE_KEY = "table-col-widths-ke-hoach-v1";
 
@@ -44,7 +45,7 @@ const renderEllipsisText = (text: string | undefined | null) => {
 };
 
 const toOptions = (list: MucDanhMuc[] = []) =>
-  list.map((m) => ({ value: m.ma, label: `${m.ma} - ${m.ten}` }));
+  sapXepTheoNhan(list.map((m) => ({ value: m.ma, label: `${m.ma} - ${m.ten}` })));
 
 /** Bề rộng mặc định từng cột (người dùng kéo tay được, lưu ở localStorage). */
 const DEFAULT_WIDTHS: Record<string, number> = {
@@ -135,11 +136,13 @@ export const KeHoachTable: React.FC = () => {
       khoanMuc: toOptions(khoanMucList as MucDanhMuc[]),
       nhomQuanLy: toOptions(nhomQuanLyList as MucDanhMuc[]),
       chuDauTu: toOptions(chuDauTuList as MucDanhMuc[]),
-      nghiepVu: [
-        ...new Set(
-          (quyChuanList as { nghiepVu: string }[]).map((q) => q.nghiepVu).filter(Boolean),
-        ),
-      ].map((n) => ({ value: n, label: n })),
+      nghiepVu: sapXepTheoNhan(
+        [
+          ...new Set(
+            (quyChuanList as { nghiepVu: string }[]).map((q) => q.nghiepVu).filter(Boolean),
+          ),
+        ].map((n) => ({ value: n, label: n })),
+      ),
     }),
     [
       taiKhoanList,

@@ -22,6 +22,7 @@ import {
 } from '@/services/tenantService';
 import { vaiTroService, VaiTroResponse } from '@/services/vaiTroService';
 import { apiErrorMessage } from '@/config/api';
+import { sapXepTheoNhan } from '@/lib/sapXep';
 
 const DEFAULT_PASSWORD = '123456';
 
@@ -267,11 +268,13 @@ const TenantMembersModal = ({ tenant, open, onClose }: Props) => {
                   (option?.label ?? '').toLowerCase().includes(input.toLowerCase()) ||
                   (option?.email ?? '').toLowerCase().includes(input.toLowerCase())
                 }
-                options={availableUsers.map((u) => ({
-                  value: u.id,
-                  label: u.hoTen,
-                  email: u.email,
-                }))}
+                options={sapXepTheoNhan(
+                  availableUsers.map((u) => ({
+                    value: u.id,
+                    label: u.hoTen,
+                    email: u.email,
+                  })),
+                )}
                 optionRender={(option) => (
                   <div className="flex flex-col">
                     <span>{option.data.label}</span>

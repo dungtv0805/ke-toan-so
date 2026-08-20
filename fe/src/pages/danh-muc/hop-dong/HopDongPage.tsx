@@ -54,6 +54,7 @@ import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { hopDongImportConfig } from "@/components/import-danh-muc/configs";
 import { SectionNav } from "@/components/layout/SectionNav";
 import { BAN_HANG_NAV } from "@/config/sectionNavs";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 const { Title, Text } = Typography;
 
@@ -726,10 +727,12 @@ function HopDongPageInner() {
               allowClear
               showSearch
               optionFilterProp="label"
-              options={doiTuongList.map((dt: DoiTuong) => ({
-                value: dt.id,
-                label: `${dt.ma} - ${dt.ten}`,
-              }))}
+              options={sapXepTheoNhan(
+                doiTuongList.map((dt: DoiTuong) => ({
+                  value: dt.id,
+                  label: `${dt.ma} - ${dt.ten}`,
+                })),
+              )}
             />
           </Form.Item>
           <Form.Item name="sanPhamId" label={fl('sanPhamId', 'Sản phẩm')}>
@@ -738,10 +741,12 @@ function HopDongPageInner() {
               allowClear
               showSearch
               optionFilterProp="label"
-              options={sanPhamList.map((sp: SanPham) => ({
-                value: sp.id,
-                label: `${sp.ma} - ${sp.ten}`,
-              }))}
+              options={sapXepTheoNhan(
+                sanPhamList.map((sp: SanPham) => ({
+                  value: sp.id,
+                  label: `${sp.ma} - ${sp.ten}`,
+                })),
+              )}
             />
           </Form.Item>
           <Row gutter={16}>

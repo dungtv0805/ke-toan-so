@@ -3,6 +3,7 @@ import { QuyChuan } from "@/types";
 import { LoaiChungTuType } from "@/services/loaiChungTuService";
 import { useNhatKyChungState } from "../../NhatKyChungHandlerContext";
 import { CollapsibleSection } from "./CollapsibleSection";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 interface AccountingFieldsProps {
   form: ReturnType<typeof Form.useForm>[0];
@@ -41,10 +42,12 @@ export function AccountingFields({ form }: AccountingFieldsProps) {
                 placeholder="Chọn loại giao dịch"
                 optionFilterProp="label"
                 onChange={handleQuyChaunChange}
-                options={quyChaunList?.map((q: QuyChuan) => ({
-                  value: q.nghiepVu,
-                  label: q.nghiepVu,
-                }))}
+                options={sapXepTheoNhan(
+                  quyChaunList?.map((q: QuyChuan) => ({
+                    value: q.nghiepVu,
+                    label: q.nghiepVu,
+                  })) ?? [],
+                )}
               />
             </Form.Item>
           </Col>

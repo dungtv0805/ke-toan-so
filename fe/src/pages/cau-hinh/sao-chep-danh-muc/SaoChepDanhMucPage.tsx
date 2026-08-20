@@ -4,6 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { Card, Select, Checkbox, Button, Table, Alert, Space, Typography, message } from 'antd';
 import { useAuth } from '@/contexts/AuthContext';
 import { tenantService, type Tenant } from '@/services/tenantService';
+import { sapXepTheoNhan } from '@/lib/sapXep';
 import {
   cloneMasterDataService, type CloneCategoryOption, type PreviewRow, type ResultRow,
 } from '@/services/cloneMasterDataService';
@@ -53,7 +54,7 @@ export default function SaoChepDanhMucPage() {
     finally { setLoading(false); }
   };
 
-  const tenantOpts = tenants.map((t) => ({ value: t.id, label: t.name }));
+  const tenantOpts = sapXepTheoNhan(tenants.map((t) => ({ value: t.id, label: t.name })));
 
   return (
     <div style={{ padding: 24 }}>

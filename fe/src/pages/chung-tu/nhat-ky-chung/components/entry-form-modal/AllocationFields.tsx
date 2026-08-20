@@ -23,6 +23,7 @@ import { MasterDataChanges } from "../../handler/sub-handler/master-data-compare
 import { CollapsibleSection } from "./CollapsibleSection";
 import { KhoanMucItem } from "../../handler/sub-handler/init/init.state";
 import { getDoiTuongSelectConfig } from "../../doiTuongConfig";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 interface AllocationFieldsProps {
   form: ReturnType<typeof Form.useForm>[0];
@@ -334,10 +335,12 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
                 placeholder="Chọn dự án"
                 optionFilterProp="label"
                 onChange={handleDuAnChange}
-                options={duAnList?.map((da: DuAn) => ({
-                  value: da.id,
-                  label: `${da.ma} - ${da.ten}`,
-                }))}
+                options={sapXepTheoNhan(
+                  duAnList?.map((da: DuAn) => ({
+                    value: da.id,
+                    label: `${da.ma} - ${da.ten}`,
+                  })) ?? [],
+                )}
               />
             </Form.Item>
           </Col>
@@ -353,10 +356,12 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
                 placeholder="Chọn bộ phận"
                 optionFilterProp="label"
                 onChange={handleBoPhanChange}
-                options={boPhanList?.map((bp: BoPhan) => ({
-                  value: bp.id,
-                  label: `${bp.ma} - ${bp.ten}`,
-                }))}
+                options={sapXepTheoNhan(
+                  boPhanList?.map((bp: BoPhan) => ({
+                    value: bp.id,
+                    label: `${bp.ma} - ${bp.ten}`,
+                  })) ?? [],
+                )}
               />
             </Form.Item>
           </Col>
@@ -384,12 +389,14 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
                 placeholder="Chọn đội thi công"
                 optionFilterProp="label"
                 onChange={handleDoiChange}
-                options={boPhanList
-                  ?.filter((bp: BoPhan) => bp.ten.toLowerCase().includes("đội"))
-                  .map((bp: BoPhan) => ({
-                    value: bp.id,
-                    label: `${bp.ma} - ${bp.ten}`,
-                  }))}
+                options={sapXepTheoNhan(
+                  boPhanList
+                    ?.filter((bp: BoPhan) => bp.ten.toLowerCase().includes("đội"))
+                    .map((bp: BoPhan) => ({
+                      value: bp.id,
+                      label: `${bp.ma} - ${bp.ten}`,
+                    })) ?? [],
+                )}
               />
             </Form.Item>
           </Col>
@@ -407,12 +414,14 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
                 placeholder="Chọn nhân viên"
                 optionFilterProp="label"
                 onChange={handleNhanVienChange}
-                options={doiTuongList
-                  ?.filter((dt: DoiTuong) => dt.loai.includes("NHAN_VIEN"))
-                  .map((nv: DoiTuong) => ({
-                    value: nv.id,
-                    label: `${nv.ma} - ${nv.ten}`,
-                  }))}
+                options={sapXepTheoNhan(
+                  doiTuongList
+                    ?.filter((dt: DoiTuong) => dt.loai.includes("NHAN_VIEN"))
+                    .map((nv: DoiTuong) => ({
+                      value: nv.id,
+                      label: `${nv.ma} - ${nv.ten}`,
+                    })) ?? [],
+                )}
               />
             </Form.Item>
           </Col>
@@ -428,10 +437,12 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
                 placeholder="Chọn sản phẩm"
                 optionFilterProp="label"
                 onChange={handleSanPhamChange}
-                options={sanPhamList?.map((sp: SanPham) => ({
-                  value: sp.id,
-                  label: `${sp.ma} - ${sp.ten}`,
-                }))}
+                options={sapXepTheoNhan(
+                  sanPhamList?.map((sp: SanPham) => ({
+                    value: sp.id,
+                    label: `${sp.ma} - ${sp.ten}`,
+                  })) ?? [],
+                )}
               />
             </Form.Item>
           </Col>
@@ -449,10 +460,12 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
                 placeholder="Chọn dòng tiền"
                 optionFilterProp="label"
                 onChange={handleDongTienChange}
-                options={dongTienList?.map((dt: DongTien) => ({
-                  value: dt.id,
-                  label: `${dt.ma} - ${dt.ten}`,
-                }))}
+                options={sapXepTheoNhan(
+                  dongTienList?.map((dt: DongTien) => ({
+                    value: dt.id,
+                    label: `${dt.ma} - ${dt.ten}`,
+                  })) ?? [],
+                )}
               />
             </Form.Item>
           </Col>
@@ -468,10 +481,12 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
                 placeholder="Chọn khoản mục"
                 optionFilterProp="label"
                 onChange={handleKhoanMucChange}
-                options={khoanMucList?.map((km: KhoanMucItem) => ({
-                  value: km.id,
-                  label: `${km.ma} - ${km.ten}`,
-                }))}
+                options={sapXepTheoNhan(
+                  khoanMucList?.map((km: KhoanMucItem) => ({
+                    value: km.id,
+                    label: `${km.ma} - ${km.ten}`,
+                  })) ?? [],
+                )}
               />
             </Form.Item>
           </Col>
@@ -487,10 +502,12 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
                 placeholder="Chọn nhóm khuyến mại"
                 optionFilterProp="label"
                 onChange={handleNhomKhuyenMaiChange}
-                options={nhomKhuyenMaiList?.map((nkm: NhomKhuyenMai) => ({
-                  value: nkm.id,
-                  label: `${nkm.ma} - ${nkm.ten}`,
-                }))}
+                options={sapXepTheoNhan(
+                  nhomKhuyenMaiList?.map((nkm: NhomKhuyenMai) => ({
+                    value: nkm.id,
+                    label: `${nkm.ma} - ${nkm.ten}`,
+                  })) ?? [],
+                )}
               />
             </Form.Item>
           </Col>
@@ -508,10 +525,12 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
                 placeholder="Chọn nhóm quản lý"
                 optionFilterProp="label"
                 onChange={handleNhomQuanLyChange}
-                options={nhomQuanLyList?.map((nql: NhomQuanLy) => ({
-                  value: nql.id,
-                  label: `${nql.ma} - ${nql.ten}`,
-                }))}
+                options={sapXepTheoNhan(
+                  nhomQuanLyList?.map((nql: NhomQuanLy) => ({
+                    value: nql.id,
+                    label: `${nql.ma} - ${nql.ten}`,
+                  })) ?? [],
+                )}
               />
             </Form.Item>
           </Col>
@@ -527,10 +546,12 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
                 placeholder="Chọn hợp đồng"
                 optionFilterProp="label"
                 onChange={handleHopDongChange}
-                options={hopDongList?.map((hd: HopDong) => ({
-                  value: hd.id,
-                  label: `${hd.soHopDong} - ${hd.tenCongTrinh}`,
-                }))}
+                options={sapXepTheoNhan(
+                  hopDongList?.map((hd: HopDong) => ({
+                    value: hd.id,
+                    label: `${hd.soHopDong} - ${hd.tenCongTrinh}`,
+                  })) ?? [],
+                )}
               />
             </Form.Item>
           </Col>

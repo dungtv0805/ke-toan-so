@@ -140,6 +140,10 @@ export class ChungTuService {
    * - thu: có dòng Nợ 111/112 (gồm TK con)
    * - chi: có dòng Có 111/112
    * Chỉ tính giao dịch có mã dòng tiền (bỏ qua nếu thiếu).
+   *
+   * Bút toán luân chuyển nội bộ (111 đối ứng 112) bị loại: nó thoả CẢ hai bộ lọc
+   * nên vào luôn cả hai biểu đồ, phình lên chiếm phần lớn vòng tròn dù không có
+   * đồng nào thu/chi ra ngoài doanh nghiệp.
    */
   async getCashFlowComposition(
     which: 'thu' | 'chi',
@@ -166,6 +170,10 @@ export class ChungTuService {
     // thu: tài khoản tiền (111/112) ghi Nợ; chi: ghi Có. Khớp cả TK con (^11[12]).
     const cashField = which === 'thu' ? 'danhMuc.taiKhoanNo.ma' : 'danhMuc.taiKhoanCo.ma';
     match[cashField] = { $regex: '^11[12]' };
+    // Vế đối ứng cũng là TK tiền → luân chuyển nội bộ, bỏ. So 3 KÝ TỰ ĐẦU chứ
+    // không so bằng: so bằng thì tiểu khoản 1111 / 1121 lọt lưới.
+    const counterField = which === 'thu' ? 'danhMuc.taiKhoanCo.ma' : 'danhMuc.taiKhoanNo.ma';
+    match[counterField] = { $not: /^(111|112)/ };
     match['danhMuc.dongTien.ma'] = { $exists: true, $ne: null };
 
     const pipeline: object[] = [

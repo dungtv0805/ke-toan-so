@@ -9,6 +9,7 @@ import TenantMembersModal from './TenantMembersModal';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
+import { sapXepTheoNhan } from '@/lib/sapXep';
 
 const DEFAULT_PASSWORD = '123456';
 
@@ -487,11 +488,13 @@ const TenantPage = () => {
                         (option?.label ?? '').toLowerCase().includes(input.toLowerCase()) ||
                         (option?.email ?? '').toLowerCase().includes(input.toLowerCase())
                       }
-                      options={users.map((u) => ({
-                        value: u.id,
-                        label: u.hoTen,
-                        email: u.email,
-                      }))}
+                      options={sapXepTheoNhan(
+                        users.map((u) => ({
+                          value: u.id,
+                          label: u.hoTen,
+                          email: u.email,
+                        })),
+                      )}
                       optionRender={(option) => (
                         <div className="flex flex-col">
                           <span>{option.data.label}</span>

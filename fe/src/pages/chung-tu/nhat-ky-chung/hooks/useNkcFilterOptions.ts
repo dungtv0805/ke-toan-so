@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useNhatKyChungState } from "../NhatKyChungHandlerContext";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 import {
   KIEM_SOAT_OPTIONS,
   NKC_FILTER_STATE_KEYS,
@@ -9,9 +10,12 @@ import {
 export type FilterOption = { value: string; label: string };
 
 const byMa = (items: { ma?: string; ten?: string }[] = []): FilterOption[] =>
-  items
-    .filter((x): x is { ma: string; ten?: string } => !!x?.ma)
-    .map((x) => ({ value: x.ma, label: x.ten ? `${x.ma} - ${x.ten}` : x.ma }));
+  // Sắp theo nhãn hiển thị — danh mục ra A-Z, tài khoản ra đúng thứ tự mã.
+  sapXepTheoNhan(
+    items
+      .filter((x): x is { ma: string; ten?: string } => !!x?.ma)
+      .map((x) => ({ value: x.ma, label: x.ten ? `${x.ma} - ${x.ten}` : x.ma })),
+  );
 
 /**
  * Danh sách chọn của từng tiêu chí lọc, dựng từ các danh mục đã nạp.
@@ -43,29 +47,31 @@ export function useNkcFilterOptions(): Record<NkcFilterStateKey, FilterOption[]>
     const nghiepVu = Array.from(
       new Set((quyChaunList ?? []).map((qc) => qc.nghiepVu).filter(Boolean)),
     ).map((nv) => ({ value: nv, label: nv }));
+    const nghiepVuSapXep = sapXepTheoNhan(nghiepVu);
 
     return {
       filterKiemSoat: KIEM_SOAT_OPTIONS,
       filterLoaiChungTu: byMa(loaiGiaoDichList),
-      filterNghiepVu: nghiepVu,
+      filterNghiepVu: nghiepVuSapXep,
       filterTaiKhoan: byMa(taiKhoanList),
       filterDoiTuong: byMa(doiTuongList),
       filterKhoanMuc: byMa(khoanMucList),
       filterNhanVien: byMa(nhanVien),
       filterDuAn: byMa(duAnList),
       filterSanPham: byMa(sanPhamList),
-      filterHopDong: (hopDongList ?? [])
-        .filter((hd) => !!hd.soHopDong)
-        .map((hd) => ({
-          value: hd.soHopDong,
-          label: hd.tenCongTrinh
-            ? `${hd.soHopDong} - ${hd.tenCongTrinh}`
-            : hd.soHopDong,
-        })),
-      filterNguoiGiaoDich: (nguoiGiaoDichList ?? []).map((v) => ({
-        value: v,
-        label: v,
-      })),
+      filterHopDong: sapXepTheoNhan(
+        (hopDongList ?? [])
+          .filter((hd) => !!hd.soHopDong)
+          .map((hd) => ({
+            value: hd.soHopDong,
+            label: hd.tenCongTrinh
+              ? `${hd.soHopDong} - ${hd.tenCongTrinh}`
+              : hd.soHopDong,
+          })),
+      ),
+      filterNguoiGiaoDich: sapXepTheoNhan(
+        (nguoiGiaoDichList ?? []).map((v) => ({ value: v, label: v })),
+      ),
       filterDoi: byMa(doi),
       filterBoPhan: byMa(boPhanList),
       filterNhomKhuyenMai: byMa(nhomKhuyenMaiList),

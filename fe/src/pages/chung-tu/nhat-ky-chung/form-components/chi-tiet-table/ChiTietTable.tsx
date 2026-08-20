@@ -33,6 +33,7 @@ import { SelectWithQuickAdd } from "../../quick-add/SelectWithQuickAdd";
 import { QuickAddDoiTuongModal } from "../../quick-add/QuickAddDoiTuongModal";
 import { QuickAddSanPhamModal } from "../../quick-add/QuickAddSanPhamModal";
 import { toast } from "sonner";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 export function ChiTietTable() {
   const handler = useNhatKyChungFormHandler();
@@ -70,12 +71,14 @@ export function ChiTietTable() {
 
   // Lọc nghiệp vụ theo loại giao dịch từ header
   const typedHeader = header as ChungTuHeader | null;
-  const nghiepVuOptions = (quyChaunList as QuyChuan[])
-    .filter((qc) => !typedHeader?.loaiGiaoDich || qc.loaiGiaoDich === typedHeader.loaiGiaoDich)
-    .map((qc) => ({
-      value: qc.nghiepVu,
-      label: qc.nghiepVu,
-    }));
+  const nghiepVuOptions = sapXepTheoNhan(
+    (quyChaunList as QuyChuan[])
+      .filter((qc) => !typedHeader?.loaiGiaoDich || qc.loaiGiaoDich === typedHeader.loaiGiaoDich)
+      .map((qc) => ({
+        value: qc.nghiepVu,
+        label: qc.nghiepVu,
+      })),
+  );
 
   // Tính toán data cho trang hiện tại
   const paginatedData = useMemo(() => {
@@ -485,10 +488,12 @@ export function ChiTietTable() {
           value={value || undefined}
           onChange={(v) => handleSanPhamChange(record.key, v)}
           onFocus={() => { activeRowRef.current = index; }}
-          options={(sanPhamList as SanPham[]).map((sp) => ({
-            value: sp.id,
-            label: `${sp.ma} - ${sp.ten}`,
-          }))}
+          options={sapXepTheoNhan(
+            (sanPhamList as SanPham[]).map((sp) => ({
+              value: sp.id,
+              label: `${sp.ma} - ${sp.ten}`,
+            })),
+          )}
           className="w-full excel-cell-input"
           variant="borderless"
           popupMatchSelectWidth={250}
@@ -650,10 +655,12 @@ export function ChiTietTable() {
           value={value || undefined}
           onChange={(v) => handleDuAnChange(record.key, v)}
           onFocus={() => { activeRowRef.current = index; }}
-          options={(duAnList as DuAn[]).map((da) => ({
-            value: da.id,
-            label: `${da.ma} - ${da.ten}`,
-          }))}
+          options={sapXepTheoNhan(
+            (duAnList as DuAn[]).map((da) => ({
+              value: da.id,
+              label: `${da.ma} - ${da.ten}`,
+            })),
+          )}
           className="w-full excel-cell-input"
           variant="borderless"
           popupMatchSelectWidth={280}

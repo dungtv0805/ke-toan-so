@@ -88,6 +88,7 @@ import {
   BaoCaoTNDNPage,
   NotFound
 } from "./pages/loadable";
+import ThueIndexRoute from "./pages/thue/ThueIndexRoute";
 
 const queryClient = new QueryClient();
 
@@ -509,6 +510,8 @@ const App = () => (
 
                 {/* Thuế */}
                 <Route path="thue">
+                  {/* Sidebar chỉ còn 1 mục "Thuế" → /thue tự đưa vào trang con. */}
+                  <Route index element={<ThueIndexRoute />} />
                   <Route
                     path="bang-ke-mua-vao"
                     element={

@@ -4,6 +4,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ChiTietCongThuc, CachXuatCongThuc, HangHoaVatTu } from '@/types';
 import { hangHoaVatTuService } from '@/services/hangHoaVatTuService';
+import { sapXepTheoNhan } from '@/lib/sapXep';
 
 const CONTROL_HEIGHT = 28;
 
@@ -62,10 +63,10 @@ export function CongThucChiTietTable({ value, onChange }: Props) {
     });
   };
 
-  const hangHoaOptions = hangHoaList.map((h) => ({
+  const hangHoaOptions = sapXepTheoNhan(hangHoaList.map((h) => ({
     value: h.ma,
     label: `${h.ma} - ${h.ten}`,
-  }));
+  })));
 
   const columns: ColumnsType<ChiTietCongThuc> = [
     {

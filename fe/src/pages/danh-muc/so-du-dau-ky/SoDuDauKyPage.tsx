@@ -25,6 +25,7 @@ import { useTableColumnFilters } from '@/components/table/useTableColumnFilters'
 import type { ColumnsType } from 'antd/es/table';
 import { buildSoDuTree, collectExpandKeys, type SoDuTreeNode } from './buildSoDuTree';
 import { collectVisibleRows, filterSoDuTree } from './soDuFilter';
+import { sapXepTheoNhan } from '@/lib/sapXep';
 import {
   CHI_TIET_LABEL, DOI_TUONG_LOAI, validateRows,
   type ChiTietLoai, type SoDuRow,
@@ -92,6 +93,7 @@ const SoDuDauKyPage: React.FC = () => {
           value: d.id, label: `${d.ma} - ${d.ten}`, ma: d.ma, ten: d.ten,
         }));
       }
+      opts = sapXepTheoNhan(opts);
       setOptCache((p) => ({ ...p, [loai]: opts }));
       return opts;
     },

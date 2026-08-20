@@ -9,6 +9,7 @@ import {
   FileProtectOutlined,
   BarChartOutlined,
   FileTextOutlined,
+  TableOutlined,
 } from "@ant-design/icons";
 import type { SectionNavItem } from "@/components/layout/SectionNav";
 
@@ -40,6 +41,17 @@ export const KHO_NAV: SectionNavItem[] = [
     icon: <ReconciliationOutlined />,
     comingSoon: true,
   },
+];
+
+/**
+ * Thuế — 4 trang thuế đứng ngang trên đầu trang, sidebar chỉ còn một mục "Thuế".
+ * Thứ tự ở đây cũng là thứ tự ưu tiên khi vào thẳng /thue (xem ThueIndexRoute).
+ */
+export const THUE_NAV: SectionNavItem[] = [
+  { label: "Bảng kê mua vào", path: "/thue/bang-ke-mua-vao", icon: <FileAddOutlined /> },
+  { label: "Bảng kê bán ra", path: "/thue/bang-ke-ban-ra", icon: <FileDoneOutlined /> },
+  { label: "Tổng hợp thuế", path: "/thue/tong-hop", icon: <TableOutlined /> },
+  { label: "Báo cáo nhanh thuế TNDN", path: "/thue/bao-cao-tndn", icon: <BarChartOutlined /> },
 ];
 
 /**

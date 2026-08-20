@@ -1,8 +1,14 @@
-import React, { useMemo, useCallback, useEffect } from "react";
+import React, { useMemo, useCallback, useEffect, useState } from "react";
 import { Table, Tag, Space, Button, Popconfirm, Tabs, Tooltip } from "antd";
 import { EditOutlined, DeleteOutlined, SwapOutlined } from "@ant-design/icons";
 import type { ColumnsType, TablePaginationConfig, TableProps } from "antd/es/table";
 import { QuyChuan, LoaiGiaoDich, HoSoChungTuRef } from "@/types";
+import {
+  gomTheoLoaiGiaoDich,
+  laDongNhom,
+  laKhoaNhom,
+  type QuyChuanRow,
+} from "../../lib/gomNhom";
 import {
   useQuyChaunHandler,
   useQuyChaunState,
@@ -101,7 +107,8 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton, 
       dataIndex: "nghiepVu",
       key: "nghiepVu",
       width: 220,
-      sorter: (a, b) => a.nghiepVu.localeCompare(b.nghiepVu),
+      // Dòng nhóm không có nghiệp vụ — so sánh thẳng là nổ khi bấm sắp xếp.
+      sorter: (a, b) => (a.nghiepVu || "").localeCompare(b.nghiepVu || ""),
     },
     {
       title: "TK Nợ",
@@ -210,11 +217,71 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton, 
     "danhMuc.quyChuan",
     columns,
   );
+  // Cột "Loại giao dịch" bỏ hẳn: nó đã là dòng nhóm cấp 1, để lại là lặp mỗi dòng.
   const columnsWithoutLoai = cfgColumns.filter((c) => c.key !== "loaiGiaoDich");
 
   useEffect(() => {
     onSettingsButton?.(settingsButton);
   }, [settingsButton, onSettingsButton]);
+
+  // ===== Cây 2 cấp: loại giao dịch → quy chuẩn =====
+  // Chỉ gom trong phạm vi trang đang xem (bảng vẫn phân trang phía server).
+  const treeData = useMemo(
+    () => gomTheoLoaiGiaoDich(quyChaunList, loaiGiaoDichList),
+    [quyChaunList, loaiGiaoDichList],
+  );
+
+  const nhomKeys = useMemo(() => treeData.map((r) => r.id), [treeData]);
+  const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
+  // Mở sẵn mọi nhóm sau mỗi lần đổi trang/lọc — mặc định đóng thì người dùng
+  // mở bảng ra chỉ thấy 4 dòng tiêu đề, tưởng mất dữ liệu.
+  useEffect(() => {
+    setExpandedKeys(nhomKeys);
+  }, [nhomKeys]);
+
+  // Dòng nhóm chỉ hiện nhãn ở cột đầu, các cột còn lại để trống.
+  const treeColumns = useMemo(
+    () =>
+      columnsWithoutLoai.map((col, i) => ({
+        ...col,
+        render: (value: unknown, record: QuyChuanRow, index: number) => {
+          if (laDongNhom(record)) {
+            if (i > 0) return null;
+            return (
+              <Space>
+                <Tag color={record.color}>{record.ten}</Tag>
+                <span className="text-xs text-muted-foreground">
+                  {record.soLuong} quy chuẩn
+                </span>
+              </Space>
+            );
+          }
+          const goc = col.render as
+            | ((v: unknown, r: QuyChuan, i: number) => React.ReactNode)
+            | undefined;
+          return goc ? goc(value, record as QuyChuan, index) : (value as React.ReactNode);
+        },
+      })) as ColumnsType<QuyChuanRow>,
+    [columnsWithoutLoai],
+  );
+
+  // Khoá dòng nhóm KHÔNG được lọt vào danh sách xóa lô — nó không phải bản ghi.
+  const treeRowSelection = useMemo<TableProps<QuyChuanRow>["rowSelection"]>(() => {
+    if (!rowSelection) return undefined;
+    const { onChange, ...rest } = rowSelection as NonNullable<
+      TableProps<QuyChuan>["rowSelection"]
+    >;
+    return {
+      ...rest,
+      checkStrictly: false,
+      onChange: (keys, rows, info) =>
+        onChange?.(
+          keys.filter((k) => !laKhoaNhom(k)),
+          (rows as QuyChuanRow[]).filter((r) => !laDongNhom(r)) as QuyChuan[],
+          info,
+        ),
+    } as TableProps<QuyChuanRow>["rowSelection"];
+  }, [rowSelection]);
 
   // Calculate counts for tabs from stats (stats is updated with search keyword)
   const [stats] = useQuyChaunState("stats", null);
@@ -269,16 +336,17 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton, 
       key: "all",
       label: `Tất cả (${tabCounts.all})`,
       children: (
-        <Table
-          columns={cfgColumns}
-          dataSource={quyChaunList}
+        <Table<QuyChuanRow>
+          columns={treeColumns}
+          dataSource={treeData}
           rowKey="id"
           loading={loading}
-          rowSelection={rowSelection}
+          rowSelection={treeRowSelection}
+          expandable={{ expandedRowKeys: expandedKeys, onExpandedRowsChange: (k) => setExpandedKeys([...k]) }}
           pagination={paginationConfig}
           onChange={handleTableChange}
           size="middle"
-          scroll={{ x: 1650, y: "calc(100vh - 250px)" }}
+          scroll={{ x: 1550, y: "calc(100vh - 250px)" }}
         />
       ),
     },
@@ -293,12 +361,13 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({ onSettingsButton, 
         </Space>
       ),
       children: (
-        <Table
-          columns={columnsWithoutLoai}
-          dataSource={quyChaunList}
+        <Table<QuyChuanRow>
+          columns={treeColumns}
+          dataSource={treeData}
           rowKey="id"
           loading={loading}
-          rowSelection={rowSelection}
+          rowSelection={treeRowSelection}
+          expandable={{ expandedRowKeys: expandedKeys, onExpandedRowsChange: (k) => setExpandedKeys([...k]) }}
           pagination={paginationConfig}
           onChange={handleTableChange}
           size="middle"

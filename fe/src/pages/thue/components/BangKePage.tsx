@@ -39,6 +39,8 @@ import {
 import type { ServiceBase } from "@/services/base/service-base";
 import { ImportBangKeModal, type ImportService } from "./import/ImportBangKeModal";
 import { GanChungTuModal } from "./GanChungTuModal";
+import SectionNav from "@/components/layout/SectionNav";
+import { THUE_NAV } from "@/config/sectionNavs";
 
 const { Text } = Typography;
 
@@ -377,6 +379,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
 
   return (
     <div className="space-y-3">
+      <SectionNav items={THUE_NAV} />
       <Card>
         <FilterBar
           search={{

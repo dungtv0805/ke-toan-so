@@ -34,6 +34,7 @@ import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { useBulkDelete } from '@/components/table/useBulkDelete';
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -116,7 +117,7 @@ const DiemDanhAnPage: React.FC = () => {
   const fetchCongThucOptions = async () => {
     try {
       const list = await congThucDinhLuongService.getAll();
-      setCongThucOptions(list.map((c) => ({ value: c.code, label: c.ten })));
+      setCongThucOptions(sapXepTheoNhan(list.map((c) => ({ value: c.code, label: c.ten }))));
     } catch {
       // silent — công thức là tuỳ chọn
     }

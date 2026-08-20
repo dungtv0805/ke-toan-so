@@ -37,6 +37,7 @@ import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { hangHoaVatTuImportConfig } from "@/components/import-danh-muc/configs";
 import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -516,10 +517,12 @@ const HangHoaVatTuPage: React.FC = () => {
                   allowClear
                   showSearch
                   optionFilterProp="label"
-                  options={donViTinhList.map((dvt) => ({
-                    value: dvt.ma,
-                    label: dvt.ten,
-                  }))}
+                  options={sapXepTheoNhan(
+                    donViTinhList.map((dvt) => ({
+                      value: dvt.ma,
+                      label: dvt.ten,
+                    })),
+                  )}
                   onChange={(value) => {
                     const selected = donViTinhList.find((dvt) => dvt.ma === value);
                     form.setFieldValue("donViTinhTen", selected?.ten ?? null);
@@ -534,10 +537,12 @@ const HangHoaVatTuPage: React.FC = () => {
                   allowClear
                   showSearch
                   optionFilterProp="label"
-                  options={nhomVatTuList.map((nvt) => ({
-                    value: nvt.ma,
-                    label: nvt.ten,
-                  }))}
+                  options={sapXepTheoNhan(
+                    nhomVatTuList.map((nvt) => ({
+                      value: nvt.ma,
+                      label: nvt.ten,
+                    })),
+                  )}
                   onChange={(value) => {
                     const selected = nhomVatTuList.find((nvt) => nvt.ma === value);
                     form.setFieldValue("nhomVatTuTen", selected?.ten ?? null);

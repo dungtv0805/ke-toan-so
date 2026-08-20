@@ -5,6 +5,7 @@ import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ChiTietDeXuat, HangHoaVatTu } from '@/types';
 import { hangHoaVatTuService } from '@/services/hangHoaVatTuService';
 import { formatCurrency } from '@/pages/chung-tu/phieu/lib/format';
+import { sapXepTheoNhan } from '@/lib/sapXep';
 
 interface Props {
   value: ChiTietDeXuat[];
@@ -74,10 +75,10 @@ export function DeXuatChiTietTable({ value, onChange, disabled }: Props) {
 
   const tongTien = value.reduce((sum, row) => sum + (row.thanhTien || 0), 0);
 
-  const hangHoaOptions = hangHoaList.map((h) => ({
+  const hangHoaOptions = sapXepTheoNhan(hangHoaList.map((h) => ({
     value: h.ma,
     label: `${h.ma} - ${h.ten}`,
-  }));
+  })));
 
   const columns: ColumnsType<ChiTietDeXuat> = [
     {

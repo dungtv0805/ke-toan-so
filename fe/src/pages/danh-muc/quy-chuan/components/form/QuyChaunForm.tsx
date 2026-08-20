@@ -16,6 +16,7 @@ import {
   type GiaTriPhanBo,
 } from '../../rangBuoc';
 import './QuyChaunForm.state';
+import { sapXepTheoNhan } from '@/lib/sapXep';
 
 const quyChaunSchema = z.object({
   loaiGiaoDich: z.string().min(1, 'Vui lòng chọn loại giao dịch'),
@@ -99,7 +100,7 @@ export const QuyChaunForm: React.FC = () => {
     rangBuoc[truong] === 'BAT_BUOC';
 
   const nhomKhoanMucOptions = useMemo(
-    () => nhomKhoanMucList.map((n) => ({ value: n.ma, label: `${n.ma} - ${n.ten}` })),
+    () => sapXepTheoNhan(nhomKhoanMucList.map((n) => ({ value: n.ma, label: `${n.ma} - ${n.ten}` }))),
     [nhomKhoanMucList],
   );
 
@@ -111,11 +112,11 @@ export const QuyChaunForm: React.FC = () => {
     const danhSach = nhomDangChon
       ? khoanMucList.filter((km) => km.nhom === nhomDangChon || (nhom && km.nhom === nhom.id))
       : khoanMucList;
-    return danhSach.map((km) => ({ value: km.ma, label: `${km.ma} - ${km.ten}` }));
+    return sapXepTheoNhan(danhSach.map((km) => ({ value: km.ma, label: `${km.ma} - ${km.ten}` })));
   }, [khoanMucList, nhomKhoanMucList, nhomDangChon]);
 
   const dongTienOptions = useMemo(
-    () => dongTienList.map((dt) => ({ value: dt.ma, label: `${dt.ma} - ${dt.ten}` })),
+    () => sapXepTheoNhan(dongTienList.map((dt) => ({ value: dt.ma, label: `${dt.ma} - ${dt.ten}` }))),
     [dongTienList],
   );
 
@@ -300,7 +301,7 @@ export const QuyChaunForm: React.FC = () => {
             mode="multiple"
             showSearch
             placeholder="Chọn hồ sơ chứng từ..."
-            options={hoSoChungTuList.map((h) => ({ value: h.ma, label: h.ten }))}
+            options={sapXepTheoNhan(hoSoChungTuList.map((h) => ({ value: h.ma, label: h.ten })))}
             optionFilterProp="label"
           />
         </Form.Item>

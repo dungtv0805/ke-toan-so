@@ -15,6 +15,7 @@ import { nhatKyChungService } from "@/services/nhatKyChungService";
 import { lyDoKhongHopLeService } from "@/services/lyDoKhongHopLeService";
 import { useAuth } from "@/contexts/AuthContext";
 import { suggestNhomChiPhi, type NhomChiPhi } from "../nhomChiPhi";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 interface KiemSoatCellProps {
   entry: NhatKyChung;
@@ -78,7 +79,7 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
     setLyDoLoaded(true);
     try {
       const data = await lyDoKhongHopLeService.getAll();
-      setLyDoOptions(data.map((x) => ({ value: x.ten, label: x.ten })));
+      setLyDoOptions(sapXepTheoNhan(data.map((x) => ({ value: x.ten, label: x.ten }))));
     } catch {
       setLyDoOptions([]);
     }

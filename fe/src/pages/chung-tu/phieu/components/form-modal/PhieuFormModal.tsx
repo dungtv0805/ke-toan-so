@@ -27,6 +27,7 @@ import {
 } from "@/utils/snapshotBuilder";
 import { DoiTuong, DuAn, BoPhan, SanPham, DongTien } from "@/types";
 import { TaiKhoanItem } from "../../handler/sub-handler/init/init.state";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 interface FormValues {
   ngay: Dayjs | null;
@@ -238,10 +239,10 @@ export function PhieuFormModal() {
                 showSearch
                 optionFilterProp="label"
                 placeholder="-- Chọn đối tượng --"
-                options={doiTuongList.map((d) => ({
+                options={sapXepTheoNhan(doiTuongList.map((d) => ({
                   value: d.ma,
                   label: `${d.ma} - ${d.ten}`,
-                }))}
+                })))}
               />
             </Form.Item>
           </Col>
@@ -274,10 +275,10 @@ export function PhieuFormModal() {
                 showSearch
                 optionFilterProp="label"
                 placeholder="-- Chọn dự án --"
-                options={duAnList.map((d) => ({
+                options={sapXepTheoNhan(duAnList.map((d) => ({
                   value: d.ma,
                   label: `${d.ma} - ${d.ten}`,
-                }))}
+                })))}
               />
             </Form.Item>
           </Col>
@@ -288,10 +289,10 @@ export function PhieuFormModal() {
                 showSearch
                 optionFilterProp="label"
                 placeholder="-- Chọn bộ phận --"
-                options={boPhanList.map((b) => ({
+                options={sapXepTheoNhan(boPhanList.map((b) => ({
                   value: b.ma,
                   label: `${b.ma} - ${b.ten}`,
-                }))}
+                })))}
               />
             </Form.Item>
           </Col>
@@ -302,10 +303,10 @@ export function PhieuFormModal() {
                 showSearch
                 optionFilterProp="label"
                 placeholder="-- Chọn sản phẩm --"
-                options={sanPhamList.map((s) => ({
+                options={sapXepTheoNhan(sanPhamList.map((s) => ({
                   value: s.ma,
                   label: `${s.ma} - ${s.ten}`,
-                }))}
+                })))}
               />
             </Form.Item>
           </Col>
@@ -316,10 +317,10 @@ export function PhieuFormModal() {
                 showSearch
                 optionFilterProp="label"
                 placeholder="-- Chọn dòng tiền --"
-                options={dongTienList.map((d) => ({
+                options={sapXepTheoNhan(dongTienList.map((d) => ({
                   value: d.ma,
                   label: `${d.ma} - ${d.ten}`,
-                }))}
+                })))}
               />
             </Form.Item>
           </Col>

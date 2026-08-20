@@ -22,6 +22,7 @@ import { thuTienHopDongService } from '@/services/thuTienHopDongService';
 import { buildNganHangSnapshot } from '@/utils/snapshotBuilder';
 import { TK_CHUA_THUC_HIEN } from './ghiNhanDoanhThu';
 import { defaultTaiKhoan, loadDonHangSnapshots, taiKhoanSnapshot } from './donHangChungTu';
+import { sapXepTheoNhan } from '@/lib/sapXep';
 
 const { Text } = Typography;
 
@@ -226,10 +227,12 @@ export default function ThuTienDonHangModal({
               showSearch
               optionFilterProp="label"
               placeholder="— Không chọn —"
-              options={nganHangList.map((n) => ({
-                value: n.id,
-                label: `${n.ma} - ${n.ten}`,
-              }))}
+              options={sapXepTheoNhan(
+                nganHangList.map((n) => ({
+                  value: n.id,
+                  label: `${n.ma} - ${n.ten}`,
+                })),
+              )}
             />
           </Form.Item>
           <Form.Item

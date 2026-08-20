@@ -41,6 +41,7 @@ import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { useBulkDelete } from '@/components/table/useBulkDelete';
 import { DeXuatChiTietTable } from "./DeXuatChiTietTable";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 
 const { Text } = Typography;
 
@@ -137,7 +138,9 @@ const DeXuatMuaPage: React.FC = () => {
       .getAll("NHA_CUNG_CAP")
       .then((list) =>
         setDoiTuongOptions(
-          list.map((d) => ({ value: d.ma, label: `${d.ma} - ${d.ten}`, ten: d.ten }))
+          sapXepTheoNhan(
+            list.map((d) => ({ value: d.ma, label: `${d.ma} - ${d.ten}`, ten: d.ten }))
+          )
         )
       )
       .catch(() => setDoiTuongOptions([]));

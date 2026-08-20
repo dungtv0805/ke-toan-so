@@ -19,6 +19,7 @@ import { hopDongService } from '@/services/hopDongService';
 import { doiTuongService } from '@/services/doiTuongService';
 import { sanPhamService } from '@/services/sanPhamService';
 import { THUE_SUAT_OPTIONS, tinhTienThue } from '@/services/taxService';
+import { sapXepTheoNhan } from '@/lib/sapXep';
 
 const { Text } = Typography;
 
@@ -240,7 +241,7 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
                   allowClear
                   showSearch
                   optionFilterProp="label"
-                  options={doiTuongList.map((dt) => ({ value: dt.id, label: `${dt.ma} - ${dt.ten}` }))}
+                  options={sapXepTheoNhan(doiTuongList.map((dt) => ({ value: dt.id, label: `${dt.ma} - ${dt.ten}` })))}
                 />
               </Form.Item>
             </Col>
@@ -251,7 +252,7 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
                   allowClear
                   showSearch
                   optionFilterProp="label"
-                  options={sanPhamList.map((sp) => ({ value: sp.id, label: `${sp.ma} - ${sp.ten}` }))}
+                  options={sapXepTheoNhan(sanPhamList.map((sp) => ({ value: sp.id, label: `${sp.ma} - ${sp.ten}` })))}
                 />
               </Form.Item>
             </Col>
