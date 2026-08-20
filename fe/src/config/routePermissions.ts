@@ -7,6 +7,7 @@ export const routePermissions: Record<string, string> = {
   '/danh-muc/doi-tuong': '/danh-muc/doi-tuong:xem',
   '/danh-muc/du-an': '/danh-muc/du-an:xem',
   '/danh-muc/san-pham': '/danh-muc/san-pham:xem',
+  '/danh-muc/nhom-san-pham': '/danh-muc/nhom-san-pham:xem',
   '/danh-muc/bo-phan': '/danh-muc/bo-phan:xem',
   '/danh-muc/khoan-muc': '/danh-muc/khoan-muc:xem',
   '/danh-muc/so-du-dau-ky': '/danh-muc/so-du-dau-ky:xem',

@@ -15,6 +15,7 @@ import { HangHoaVatTuModule } from '../hang-hoa-vat-tu/hang-hoa-vat-tu.module';
 import { DonViTinhModule } from '../don-vi-tinh/don-vi-tinh.module';
 import { LyDoKhongHopLeModule } from '../ly-do-khong-hop-le/ly-do-khong-hop-le.module';
 import { NhomVatTuModule } from '../nhom-vat-tu/nhom-vat-tu.module';
+import { NhomSanPhamModule } from '../nhom-san-pham/nhom-san-pham.module';
 import { ChuDauTuModule } from '../chu-dau-tu/chu-dau-tu.module';
 import { NhomKhoanMucModule } from '../nhom-khoan-muc/nhom-khoan-muc.module';
 import { NganHangModule } from '../ngan-hang/ngan-hang.module';
@@ -39,6 +40,7 @@ import { HoSoChungTuModule } from '../ho-so-chung-tu/ho-so-chung-tu.module';
     DonViTinhModule,
     LyDoKhongHopLeModule,
     NhomVatTuModule,
+    NhomSanPhamModule,
     ChuDauTuModule,
     NhomKhoanMucModule,
     NganHangModule,

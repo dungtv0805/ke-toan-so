@@ -1,5 +1,6 @@
 import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '../base.entity';
+import { LoaiChiPhi } from '../config/quy-chuan.entity';
 
 export enum KhoanMucLoai {
   CHI_PHI = 'CHI_PHI',
@@ -19,6 +20,13 @@ export class KhoanMuc extends BaseEntity {
 
   @Column({ nullable: true })
   nhom: string;
+
+  /**
+   * Định phí hay biến phí. Dùng chung enum với Quy chuẩn hạch toán — quy chuẩn
+   * tự điền theo khoản mục đã chọn, hai chỗ lệch kiểu là số liệu lệch theo.
+   */
+  @Column({ type: 'enum', enum: LoaiChiPhi, nullable: true })
+  loaiChiPhi?: LoaiChiPhi;
 
   @Column({ nullable: true })
   moTa: string;

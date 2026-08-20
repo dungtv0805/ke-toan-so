@@ -10,12 +10,12 @@ import {
 import type { ColumnsType, TablePaginationConfig, TableProps } from "antd/es/table";
 import { QuyChuan, LoaiGiaoDich, HoSoChungTuRef } from "@/types";
 import {
-  gomTheoLoaiGiaoDich,
+  gomTheoNhom,
   laDongNhom,
   laKhoaNhom,
-  type QuyChuanRow,
-} from "../../lib/gomNhom";
-import { dungCotCay } from "../../lib/cotCay";
+  dungCotCay,
+  type HangCay,
+} from "@/components/table/bang-cay";
 import {
   useQuyChaunHandler,
   useQuyChaunState,
@@ -27,7 +27,7 @@ import "./QuyChaunTable.state";
 // sách — khai báo kiểu phải được nạp từ đây, không thì mất theo component cũ.
 import "../stats/QuyChaunStats.state";
 import { PaginationMeta } from "./QuyChaunTable.state";
-import type { CheDoXem } from "../../lib/cheDoXem";
+import type { CheDoXem } from "@/components/table/bang-cay";
 
 interface QuyChaunTableProps {
   onSettingsButton?: (btn: React.ReactNode) => void;
@@ -249,7 +249,12 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
   // ===== Cây 2 cấp: loại giao dịch → quy chuẩn =====
   // Chỉ gom trong phạm vi trang đang xem (bảng vẫn phân trang phía server).
   const treeData = useMemo(
-    () => gomTheoLoaiGiaoDich(quyChaunList, loaiGiaoDichList),
+    () =>
+      gomTheoNhom(quyChaunList as QuyChuan[], {
+        layMa: (qc) => qc.loaiGiaoDich,
+        danhMuc: loaiGiaoDichList,
+        nhanTrong: "(Chưa gán loại giao dịch)",
+      }),
     [quyChaunList, loaiGiaoDichList],
   );
 
@@ -261,14 +266,17 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
     setExpandedKeys(nhomKeys);
   }, [nhomKeys]);
 
-  const treeColumns = useMemo(() => dungCotCay(columnsWithoutLoai), [columnsWithoutLoai]);
+  const treeColumns = useMemo(
+    () => dungCotCay(columnsWithoutLoai, { donVi: "quy chuẩn", cotChoXuongDong: ["nghiepVu"] }),
+    [columnsWithoutLoai],
+  );
 
   /**
    * Chế độ cây không có checkbox (trang cha không truyền rowSelection). Vẫn giữ
    * lớp lọc khoá dòng nhóm phòng khi bật lại: khoá `lgd:` không phải bản ghi,
    * lọt vào là xóa lô gọi API với id không tồn tại.
    */
-  const treeRowSelection = useMemo<TableProps<QuyChuanRow>["rowSelection"]>(() => {
+  const treeRowSelection = useMemo<TableProps<HangCay<QuyChuan>>["rowSelection"]>(() => {
     if (!rowSelection) return undefined;
     const { onChange, ...rest } = rowSelection as NonNullable<
       TableProps<QuyChuan>["rowSelection"]
@@ -279,10 +287,10 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
       onChange: (keys, rows, info) =>
         onChange?.(
           keys.filter((k) => !laKhoaNhom(k)),
-          (rows as QuyChuanRow[]).filter((r) => !laDongNhom(r)) as QuyChuan[],
+          (rows as HangCay<QuyChuan>[]).filter((r) => !laDongNhom(r)) as QuyChuan[],
           info,
         ),
-    } as TableProps<QuyChuanRow>["rowSelection"];
+    } as TableProps<HangCay<QuyChuan>>["rowSelection"];
   }, [rowSelection]);
 
   const laCay = cheDo === "cay";
@@ -307,7 +315,7 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
   /** Một bảng cho cả hai chế độ — khác nhau đúng ở cột, dữ liệu và checkbox. */
   const renderBang = (columnsDanhSach: ColumnsType<QuyChuan>, scrollX: number) =>
     laCay ? (
-      <Table<QuyChuanRow>
+      <Table<HangCay<QuyChuan>>
         columns={treeColumns}
         dataSource={treeData}
         rowKey="id"

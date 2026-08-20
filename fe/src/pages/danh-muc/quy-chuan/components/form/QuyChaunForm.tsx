@@ -120,6 +120,19 @@ export const QuyChaunForm: React.FC = () => {
     [dongTienList],
   );
 
+  /**
+   * Chọn khoản mục thì Loại chi phí nhảy theo khoản mục đó — khai một chỗ, dùng
+   * hai nơi. VẪN sửa tay được sau đó: một nghiệp vụ cá biệt có thể là định phí
+   * dù khoản mục nói chung là biến phí.
+   *
+   * Chỉ ghi đè khi khoản mục có khai loại chi phí; khoản mục bỏ trống thì giữ
+   * nguyên thứ người dùng đã chọn, không xoá trắng công của họ.
+   */
+  const chonKhoanMuc = (ma?: string) => {
+    const km = khoanMucList.find((k) => k.ma === ma);
+    if (km?.loaiChiPhi) form.setFieldValue('loaiChiPhi', km.loaiChiPhi);
+  };
+
   const handleCancel = () => {
     handler.executeEvent('closeModal', {});
     form.resetFields();
@@ -263,6 +276,7 @@ export const QuyChaunForm: React.FC = () => {
                 placeholder={nhomDangChon ? 'Chọn khoản mục trong nhóm' : 'Chọn khoản mục'}
                 options={khoanMucOptions}
                 optionFilterProp="label"
+                onChange={chonKhoanMuc}
               />
             </Form.Item>
           </Col>

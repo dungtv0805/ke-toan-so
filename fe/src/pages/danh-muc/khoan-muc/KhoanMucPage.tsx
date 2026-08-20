@@ -31,6 +31,8 @@ import { KhoanMuc } from "@/types";
 import { khoanMucService, KhoanMucStats } from "@/services/khoanMucService";
 import { nhomKhoanMucService, NhomKhoanMuc } from "@/services/nhomKhoanMucService";
 import { loaiKhoanMucOptions } from "@/mock-data/khoan-muc";
+import { useBangCay } from "@/components/table/bang-cay";
+import type { LoaiChiPhi } from "@/types";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useBulkDelete } from "@/components/table/useBulkDelete";
@@ -56,7 +58,18 @@ const khoanMucSchema = z.object({
     .max(200, "Tên tối đa 200 ký tự"),
   loai: z.enum(["CHI_PHI", "DOANH_THU"]),
   nhom: z.string().min(1, "Vui lòng chọn nhóm khoản mục"),
+  loaiChiPhi: z.enum(["CO_DINH", "BIEN_DOI"]).optional().nullable(),
 });
+
+const NHAN_LOAI_CHI_PHI: Record<LoaiChiPhi, string> = {
+  CO_DINH: "Chi phí cố định",
+  BIEN_DOI: "Chi phí biến đổi",
+};
+
+const LOAI_CHI_PHI_OPTIONS = [
+  { value: "CO_DINH", label: "Chi phí cố định" },
+  { value: "BIEN_DOI", label: "Chi phí biến đổi" },
+];
 
 const KhoanMucPage: React.FC = () => {
   const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/khoan-muc");
@@ -107,6 +120,7 @@ const KhoanMucPage: React.FC = () => {
       { header: "Tên khoản mục", dataKey: "ten", width: 35 },
       { header: "Loại", dataKey: "loai", width: 15 },
       { header: "Nhóm khoản mục", dataKey: "nhom", width: 25 },
+      { header: "Loại chi phí", dataKey: "loaiChiPhi", width: 18 },
     ],
     fetchData: async () => {
       const result = await khoanMucService.getPaginated({ limit: 10000 });
@@ -115,6 +129,7 @@ const KhoanMucPage: React.FC = () => {
         ten: item.ten,
         loai: item.loai === "CHI_PHI" ? "Chi phí" : item.loai === "DOANH_THU" ? "Doanh thu" : item.loai,
         nhom: item.nhom || "",
+        loaiChiPhi: item.loaiChiPhi ? NHAN_LOAI_CHI_PHI[item.loaiChiPhi] : "",
       }));
     },
   }), []);
@@ -329,6 +344,13 @@ const KhoanMucPage: React.FC = () => {
       ),
     },
     {
+      title: "Loại chi phí",
+      dataIndex: "loaiChiPhi",
+      key: "loaiChiPhi",
+      width: 140,
+      render: (v?: LoaiChiPhi) => (v ? NHAN_LOAI_CHI_PHI[v] : "-"),
+    },
+    {
       title: "Thao tác",
       key: "actions",
       width: 100,
@@ -361,6 +383,20 @@ const KhoanMucPage: React.FC = () => {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.khoanMuc', columns);
+
+  // Cây 2 cấp: Nhóm khoản mục → khoản mục. Nhóm lấy tên từ danh mục Nhóm khoản
+  // mục; bản ghi gắn nhóm không còn trong danh mục vẫn hiện, không bị nuốt.
+  const { laCay, chuyenCheDo, duLieuCay, cotCay, expandable } = useBangCay<KhoanMuc>({
+    khoaLuu: "khoanMuc.cheDoXem",
+    danhSach: data,
+    danhMuc: nhomKhoanMucList,
+    layMa: (km) => km.nhom,
+    cot: cfgColumns as never,
+    donVi: "khoản mục",
+    cotChoXuongDong: ["ten"],
+    nhanTrong: "(Chưa gán nhóm)",
+    onDoiCheDo: () => clearSelection(),
+  });
   const fl = useFieldLabels('danhMuc.khoanMuc');
 
   const tabItems = [
@@ -407,6 +443,7 @@ const KhoanMucPage: React.FC = () => {
           onChange={handleTabChange}
           items={tabItems}
           className="mb-4"
+          tabBarExtraContent={chuyenCheDo}
         />
 
         <FilterBar
@@ -460,10 +497,11 @@ const KhoanMucPage: React.FC = () => {
         />
 
         <Table
-          columns={cfgColumns}
-          dataSource={data}
+          columns={(laCay ? cotCay : cfgColumns) as never}
+          dataSource={(laCay ? duLieuCay : data) as never}
           rowKey="id"
-          rowSelection={rowSelection}
+          expandable={laCay ? expandable : undefined}
+          rowSelection={laCay ? undefined : rowSelection}
           loading={loading}
           scroll={{ x: 800, y: "calc(100vh - 285px)" }}
           pagination={{
@@ -561,6 +599,18 @@ const KhoanMucPage: React.FC = () => {
                 value: o.ma,
                 label: o.ten,
               }))}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="loaiChiPhi"
+            label={fl('loaiChiPhi', 'Loại chi phí')}
+            className="mb-0 mt-3"
+          >
+            <Select
+              placeholder="Chọn loại chi phí"
+              allowClear
+              options={LOAI_CHI_PHI_OPTIONS}
             />
           </Form.Item>
         </Form>

@@ -50,6 +50,7 @@ export * from './so-du-dau-ky.entity';
 export * from './kho.entity';
 export * from './don-vi-tinh.entity';
 export * from './nhom-vat-tu.entity';
+export * from './nhom-san-pham.entity';
 export * from './hang-hoa-vat-tu.entity';
 export * from './ho-so-chung-tu.entity';
 export * from './ly-do-khong-hop-le.entity';

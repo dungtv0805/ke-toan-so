@@ -107,6 +107,10 @@ export const NhomVatTuPage = loadable(() => import('./danh-muc/nhom-vat-tu/NhomV
   fallback: <PageLoader />
 });
 
+export const NhomSanPhamPage = loadable(() => import('./danh-muc/nhom-san-pham/NhomSanPhamPage'), {
+  fallback: <PageLoader />
+});
+
 export const HangHoaVatTuPage = loadable(() => import('./danh-muc/hang-hoa-vat-tu/HangHoaVatTuPage'), {
   fallback: <PageLoader />
 });

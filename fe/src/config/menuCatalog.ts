@@ -70,6 +70,7 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/danh-muc/don-vi-tinh', label: 'Đơn vị tính', parentLabel: 'Danh mục' },
   { key: '/danh-muc/ly-do-khong-hop-le', label: 'Lý do không hợp lệ', parentLabel: 'Danh mục' },
   { key: '/danh-muc/nhom-vat-tu', label: 'Nhóm vật tư', parentLabel: 'Danh mục' },
+  { key: '/danh-muc/nhom-san-pham', label: 'Nhóm sản phẩm', parentLabel: 'Danh mục' },
 
   // ===== THƯ VIỆN — Danh mục › Khác =====
   { key: '/danh-muc/chu-dau-tu', label: 'Chủ đầu tư', parentLabel: 'Danh mục › Khác' },

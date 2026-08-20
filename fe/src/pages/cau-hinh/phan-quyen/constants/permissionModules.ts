@@ -112,6 +112,7 @@ export const permissionModules: PermissionModule[] = [
           { key: '/danh-muc/doi-tuong', label: 'Đối tượng' },
           { key: '/danh-muc/du-an', label: 'Dự án' },
           { key: '/danh-muc/san-pham', label: 'Sản phẩm' },
+          { key: '/danh-muc/nhom-san-pham', label: 'Nhóm sản phẩm' },
           { key: '/danh-muc/hop-dong', label: 'Hợp đồng' },
           { key: '/danh-muc/bo-phan', label: 'Bộ phận' },
           { key: '/danh-muc/khoan-muc', label: 'Khoản mục' },

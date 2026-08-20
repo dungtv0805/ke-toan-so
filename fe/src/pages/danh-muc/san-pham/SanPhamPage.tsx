@@ -38,6 +38,9 @@ import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { sanPhamImportConfig } from "@/components/import-danh-muc/configs";
 import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
 import { sapXepTheoNhan } from "@/lib/sapXep";
+import { nhomSanPhamService } from "@/services/nhomSanPhamService";
+import { useBangCay } from "@/components/table/bang-cay";
+import type { NhomSanPham } from "@/types";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -55,6 +58,7 @@ const sanPhamSchema = z.object({
     .min(1, "Tên không được để trống")
     .max(200, "Tên tối đa 200 ký tự"),
   donVi: z.string().optional().nullable(),
+  nhom: z.string().optional().nullable(),
   giaBan: z.number().min(0, "Giá bán không được âm").optional().nullable(),
   moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").optional().nullable(),
 });
@@ -62,6 +66,7 @@ const sanPhamSchema = z.object({
 const SanPhamPage: React.FC = () => {
   const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/san-pham");
   const [data, setData] = useState<SanPham[]>([]);
+  const [nhomList, setNhomList] = useState<NhomSanPham[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
@@ -158,6 +163,12 @@ const SanPhamPage: React.FC = () => {
 
   useEffect(() => {
     fetchData(1, pagination.pageSize, "");
+    // Danh mục nhóm nuôi cả ô chọn trong form lẫn tên nhóm trên cây; hỏng thì
+    // vẫn cho dùng trang, chỉ là nhóm hiện bằng mã thay vì tên.
+    nhomSanPhamService
+      .getAll()
+      .then((list) => setNhomList(list as NhomSanPham[]))
+      .catch(() => setNhomList([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -279,6 +290,13 @@ const SanPhamPage: React.FC = () => {
       sorter: (a: SanPham, b: SanPham) => a.ten.localeCompare(b.ten),
     },
     {
+      title: "Nhóm",
+      dataIndex: "nhom",
+      key: "nhom",
+      width: 160,
+      render: (ma: string) => nhomList.find((n) => n.ma === ma)?.ten || ma || "-",
+    },
+    {
       title: "Đơn vị",
       dataIndex: "donVi",
       key: "donVi",
@@ -351,6 +369,20 @@ const SanPhamPage: React.FC = () => {
   const fl = useFieldLabels('danhMuc.sanPham');
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.sanPham', columns);
 
+  // Cây 2 cấp: Nhóm sản phẩm → sản phẩm. Nhóm cũ gõ tay (không có trong danh
+  // mục) vẫn hiện thành nhóm riêng, không bị nuốt mất.
+  const { laCay, chuyenCheDo, duLieuCay, cotCay, expandable } = useBangCay<SanPham>({
+    khoaLuu: "sanPham.cheDoXem",
+    danhSach: data,
+    danhMuc: nhomList,
+    layMa: (sp) => sp.nhom,
+    cot: cfgColumns as never,
+    donVi: "sản phẩm",
+    cotChoXuongDong: ["ten"],
+    nhanTrong: "(Chưa gán nhóm)",
+    onDoiCheDo: () => clearSelection(),
+  });
+
   return (
     <div className="space-y-3">
       {/* Table */}
@@ -391,11 +423,14 @@ const SanPhamPage: React.FC = () => {
           }
         />
 
+        <div className="mb-2 flex justify-end">{chuyenCheDo}</div>
+
         <Table
-          columns={cfgColumns}
-          dataSource={data}
+          columns={(laCay ? cotCay : cfgColumns) as never}
+          dataSource={(laCay ? duLieuCay : data) as never}
           rowKey="id"
-          rowSelection={rowSelection}
+          expandable={laCay ? expandable : undefined}
+          rowSelection={laCay ? undefined : rowSelection}
           loading={loading}
           scroll={{ x: 900, y: "calc(100vh - 285px)" }}
           pagination={{
@@ -456,6 +491,19 @@ const SanPhamPage: React.FC = () => {
           </Row>
 
           <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item name="nhom" label={fl('nhom', 'Nhóm sản phẩm')} className="mb-3">
+                <Select
+                  placeholder="Chọn nhóm sản phẩm"
+                  allowClear
+                  showSearch
+                  optionFilterProp="label"
+                  options={sapXepTheoNhan(
+                    nhomList.map((n) => ({ value: n.ma, label: `${n.ma} - ${n.ten}` })),
+                  )}
+                />
+              </Form.Item>
+            </Col>
             <Col span={12}>
               <Form.Item name="donVi" label={fl('donVi', 'Đơn vị tính')} className="mb-3">
                 <Select

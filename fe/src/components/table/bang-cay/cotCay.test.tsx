@@ -1,16 +1,25 @@
 import { describe, it, expect, vi } from "vitest";
 import type { ColumnsType } from "antd/es/table";
-import type { QuyChuan } from "@/types";
 import { dungCotCay } from "./cotCay";
-import { gomTheoLoaiGiaoDich, type NhomRow } from "./gomNhom";
+import { gomTheoNhom, type NhomRow } from "./gomNhom";
 
-const COT: ColumnsType<QuyChuan> = [
+const TUY_CHON = { donVi: "quy chuẩn", cotChoXuongDong: ["nghiepVu"] };
+
+interface BanGhi {
+  id: string;
+  loaiGiaoDich: string;
+  nghiepVu: string;
+  taiKhoanNo: string;
+  taiKhoanCo: string;
+}
+
+const COT: ColumnsType<BanGhi> = [
   { title: "Nghiệp vụ", dataIndex: "nghiepVu", key: "nghiepVu", width: 220 },
   { title: "TK Nợ", dataIndex: "taiKhoanNo", key: "taiKhoanNo" },
   { title: "TK Có", dataIndex: "taiKhoanCo", key: "taiKhoanCo" },
 ];
 
-const qc: QuyChuan = {
+const qc: BanGhi = {
   id: "a",
   loaiGiaoDich: "PHIEU_THU",
   nghiepVu: "Thu tiền bán hàng",
@@ -18,13 +27,14 @@ const qc: QuyChuan = {
   taiKhoanCo: "511",
 };
 
-const nhom = gomTheoLoaiGiaoDich([qc], [
-  { id: "1", ma: "PHIEU_THU", ten: "Phiếu thu", color: "green" },
-])[0] as NhomRow;
+const nhom = gomTheoNhom([qc], {
+  layMa: (x) => x.loaiGiaoDich,
+  danhMuc: [{ ma: "PHIEU_THU", ten: "Phiếu thu", color: "green" }],
+})[0] as NhomRow<BanGhi>;
 
 /** onCell của cột thứ i khi gặp record. */
 const cell = (i: number, record: Parameters<NonNullable<ReturnType<typeof dungCotCay>[number]["onCell"]>>[0]) => {
-  const cot = dungCotCay(COT);
+  const cot = dungCotCay(COT, TUY_CHON);
   const onCell = cot[i].onCell as (r: typeof record) => { colSpan?: number };
   return onCell(record);
 };
@@ -42,13 +52,13 @@ describe("dungCotCay", () => {
   });
 
   it("cột Nghiệp vụ cho xuống dòng để đọc đủ chữ, cột còn lại cắt gọn", () => {
-    const cot = dungCotCay(COT);
+    const cot = dungCotCay(COT, TUY_CHON);
     expect(cot[0].ellipsis).toBe(false);
     expect(cot.slice(1).every((c) => c.ellipsis === true)).toBe(true);
   });
 
   it("dòng nhóm chỉ vẽ nội dung ở cột đầu", () => {
-    const cot = dungCotCay(COT);
+    const cot = dungCotCay(COT, TUY_CHON);
     const ve = (i: number) =>
       (cot[i].render as (v: unknown, r: unknown, idx: number) => unknown)(undefined, nhom, 0);
     expect(ve(0)).not.toBeNull();
@@ -58,14 +68,14 @@ describe("dungCotCay", () => {
 
   it("dòng con vẫn dùng render gốc của cột", () => {
     const goc = vi.fn(() => "đã vẽ");
-    const cot = dungCotCay([{ ...COT[0], render: goc }]);
+    const cot = dungCotCay([{ ...COT[0], render: goc }], TUY_CHON);
     const ra = (cot[0].render as (v: unknown, r: unknown, i: number) => unknown)("x", qc, 3);
     expect(ra).toBe("đã vẽ");
     expect(goc).toHaveBeenCalledWith("x", qc, 3);
   });
 
   it("cột không có render thì dòng con hiện thẳng giá trị", () => {
-    const cot = dungCotCay(COT);
+    const cot = dungCotCay(COT, TUY_CHON);
     const ra = (cot[0].render as (v: unknown, r: unknown, i: number) => unknown)("Thu tiền", qc, 0);
     expect(ra).toBe("Thu tiền");
   });

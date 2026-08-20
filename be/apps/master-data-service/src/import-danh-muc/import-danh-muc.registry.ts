@@ -13,6 +13,7 @@ import { HangHoaVatTuService } from '../hang-hoa-vat-tu/hang-hoa-vat-tu.service'
 import { DonViTinhService } from '../don-vi-tinh/don-vi-tinh.service';
 import { LyDoKhongHopLeService } from '../ly-do-khong-hop-le/ly-do-khong-hop-le.service';
 import { NhomVatTuService } from '../nhom-vat-tu/nhom-vat-tu.service';
+import { NhomSanPhamService } from '../nhom-san-pham/nhom-san-pham.service';
 import { ChuDauTuService } from '../chu-dau-tu/chu-dau-tu.service';
 import { NhomKhoanMucService } from '../nhom-khoan-muc/nhom-khoan-muc.service';
 import { NganHangService } from '../ngan-hang/ngan-hang.service';
@@ -35,6 +36,7 @@ import { CreateHangHoaVatTuDto } from '../hang-hoa-vat-tu/dto';
 import { CreateDonViTinhDto } from '../don-vi-tinh/dto';
 import { CreateLyDoKhongHopLeDto } from '../ly-do-khong-hop-le/dto';
 import { CreateNhomVatTuDto } from '../nhom-vat-tu/dto';
+import { CreateNhomSanPhamDto } from '../nhom-san-pham/dto';
 import { CreateChuDauTuDto } from '../chu-dau-tu/dto';
 import { CreateNhomKhoanMucDto } from '../nhom-khoan-muc/dto';
 import { CreateNganHangDto } from '../ngan-hang/dto';
@@ -62,6 +64,7 @@ export class ImportDanhMucRegistry {
     donViTinh: DonViTinhService,
     lyDoKhongHopLe: LyDoKhongHopLeService,
     nhomVatTu: NhomVatTuService,
+    nhomSanPham: NhomSanPhamService,
     chuDauTu: ChuDauTuService,
     nhomKhoanMuc: NhomKhoanMucService,
     nganHang: NganHangService,
@@ -129,6 +132,14 @@ export class ImportDanhMucRegistry {
           service: nhomVatTu,
           dtoClass: CreateNhomVatTuDto,
           label: 'Nhóm vật tư',
+        },
+      ],
+      [
+        'nhom-san-pham',
+        {
+          service: nhomSanPham,
+          dtoClass: CreateNhomSanPhamDto,
+          label: 'Nhóm sản phẩm',
         },
       ],
       [

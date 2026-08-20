@@ -4,6 +4,7 @@ export type TinhChatVatTu = 'TAI_SAN' | 'HANG_HOA' | 'NGUYEN_LIEU';
 export interface Kho { id: string; ma: string; ten: string; diaChi?: string; thuKho?: string; moTa?: string; isActive?: boolean; }
 export interface DonViTinh { id: string; ma: string; ten: string; moTa?: string; isActive?: boolean; }
 export interface NhomVatTu { id: string; ma: string; ten: string; moTa?: string; isActive?: boolean; }
+export interface NhomSanPham { id: string; ma: string; ten: string; moTa?: string; isActive?: boolean; }
 export interface HangHoaVatTu {
   id: string; ma: string; ten: string; tinhChat?: TinhChatVatTu;
   donViTinhMa?: string; donViTinhTen?: string; nhomVatTuMa?: string; nhomVatTuTen?: string;
@@ -76,6 +77,8 @@ export interface KhoanMuc {
   ten: string;
   loai: 'CHI_PHI' | 'DOANH_THU';
   nhom: string;
+  /** Định phí hay biến phí — dùng chung enum với Quy chuẩn hạch toán. */
+  loaiChiPhi?: LoaiChiPhi;
 }
 
 export interface TaiKhoanNganHang {

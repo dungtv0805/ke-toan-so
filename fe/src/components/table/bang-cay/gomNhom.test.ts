@@ -1,24 +1,30 @@
 import { describe, it, expect } from "vitest";
-import type { QuyChuan, LoaiGiaoDich } from "@/types";
-import { gomTheoLoaiGiaoDich, laDongNhom, laKhoaNhom, NHOM_KEY_PREFIX } from "./gomNhom";
 
-const qc = (id: string, loaiGiaoDich: string, nghiepVu = "n" + id): QuyChuan => ({
-  id,
-  loaiGiaoDich,
-  nghiepVu,
-  taiKhoanNo: "111",
-  taiKhoanCo: "511",
-});
+import { gomTheoNhom, laDongNhom, laKhoaNhom, NHOM_KEY_PREFIX, type MucNhom } from "./gomNhom";
 
-const DANH_MUC: LoaiGiaoDich[] = [
-  { id: "1", ma: "PHIEU_THU", ten: "Phiếu thu", color: "green" },
-  { id: "2", ma: "PHIEU_CHI", ten: "Phiếu chi", color: "red" },
-  { id: "3", ma: "BAO_CO", ten: "Báo có" },
+interface BanGhi {
+  id: string;
+  loaiGiaoDich: string;
+}
+
+const qc = (id: string, loaiGiaoDich: string): BanGhi => ({ id, loaiGiaoDich });
+
+const gom = (list: BanGhi[], danhMuc: MucNhom[]) =>
+  gomTheoNhom(list, {
+    layMa: (x) => x.loaiGiaoDich,
+    danhMuc,
+    nhanTrong: "(Chưa gán loại giao dịch)",
+  });
+
+const DANH_MUC: MucNhom[] = [
+  { ma: "PHIEU_THU", ten: "Phiếu thu", color: "green" },
+  { ma: "PHIEU_CHI", ten: "Phiếu chi", color: "red" },
+  { ma: "BAO_CO", ten: "Báo có" },
 ];
 
-describe("gomTheoLoaiGiaoDich", () => {
+describe("gomTheoNhom", () => {
   it("gom đúng cấp 1 loại giao dịch, cấp 2 quy chuẩn", () => {
-    const rows = gomTheoLoaiGiaoDich(
+    const rows = gom(
       [qc("a", "PHIEU_THU"), qc("b", "PHIEU_CHI"), qc("c", "PHIEU_THU")],
       DANH_MUC
     );
@@ -37,14 +43,14 @@ describe("gomTheoLoaiGiaoDich", () => {
   });
 
   it("KHÔNG đẻ nhóm rỗng cho loại giao dịch không có dữ liệu trong trang", () => {
-    const rows = gomTheoLoaiGiaoDich([qc("a", "PHIEU_THU")], DANH_MUC);
+    const rows = gom([qc("a", "PHIEU_THU")], DANH_MUC);
 
     expect(rows).toHaveLength(1);
     expect(laDongNhom(rows[0]) && rows[0].ma).toBe("PHIEU_THU");
   });
 
   it("giữ thứ tự danh mục, không sắp theo lượng hay A-Z", () => {
-    const rows = gomTheoLoaiGiaoDich(
+    const rows = gom(
       [qc("a", "BAO_CO"), qc("b", "PHIEU_CHI"), qc("c", "PHIEU_THU")],
       DANH_MUC
     );
@@ -57,7 +63,7 @@ describe("gomTheoLoaiGiaoDich", () => {
   });
 
   it("loại giao dịch lạ (không có trong danh mục) vẫn hiện, xếp cuối", () => {
-    const rows = gomTheoLoaiGiaoDich([qc("a", "LA_HOAC"), qc("b", "PHIEU_THU")], DANH_MUC);
+    const rows = gom([qc("a", "LA_HOAC"), qc("b", "PHIEU_THU")], DANH_MUC);
 
     expect(rows.map((r) => (laDongNhom(r) ? r.ma : ""))).toEqual(["PHIEU_THU", "LA_HOAC"]);
     // Không có nhãn thì lấy chính mã, không được để trống.
@@ -65,7 +71,7 @@ describe("gomTheoLoaiGiaoDich", () => {
   });
 
   it("bản ghi chưa gán loại giao dịch vẫn xuất hiện", () => {
-    const rows = gomTheoLoaiGiaoDich([qc("a", "")], DANH_MUC);
+    const rows = gom([qc("a", "")], DANH_MUC);
 
     expect(rows).toHaveLength(1);
     expect(laDongNhom(rows[0]) && rows[0].ten).toBe("(Chưa gán loại giao dịch)");
@@ -73,18 +79,18 @@ describe("gomTheoLoaiGiaoDich", () => {
   });
 
   it("danh sách rỗng → không dòng nào", () => {
-    expect(gomTheoLoaiGiaoDich([], DANH_MUC)).toEqual([]);
+    expect(gom([], DANH_MUC)).toEqual([]);
   });
 
   it("danh mục chưa tải xong vẫn gom được theo mã", () => {
-    const rows = gomTheoLoaiGiaoDich([qc("a", "PHIEU_THU"), qc("b", "PHIEU_THU")], []);
+    const rows = gom([qc("a", "PHIEU_THU"), qc("b", "PHIEU_THU")], []);
 
     expect(rows).toHaveLength(1);
     expect(laDongNhom(rows[0]) && rows[0].ten).toBe("PHIEU_THU");
   });
 
   it("khoá dòng nhóm phân biệt được với id quy chuẩn", () => {
-    const rows = gomTheoLoaiGiaoDich([qc("a", "PHIEU_THU")], DANH_MUC);
+    const rows = gom([qc("a", "PHIEU_THU")], DANH_MUC);
 
     expect(rows[0].id).toBe(`${NHOM_KEY_PREFIX}PHIEU_THU`);
     expect(laKhoaNhom(rows[0].id)).toBe(true);

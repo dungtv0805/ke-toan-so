@@ -1,5 +1,5 @@
 import { IsString, IsNotEmpty, IsOptional, IsEnum } from 'class-validator';
-import { KhoanMucLoai } from '@app/entities';
+import { KhoanMucLoai, LoaiChiPhi } from '@app/entities';
 
 export class CreateKhoanMucDto {
   @IsString()
@@ -16,6 +16,10 @@ export class CreateKhoanMucDto {
   @IsString()
   @IsOptional()
   nhom?: string;
+
+  @IsEnum(LoaiChiPhi)
+  @IsOptional()
+  loaiChiPhi?: LoaiChiPhi;
 
   @IsString()
   @IsOptional()

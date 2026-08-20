@@ -24,6 +24,7 @@ const KNOWN_RESOURCES = [
   "don-vi-tinh",
   "ly-do-khong-hop-le",
   "nhom-vat-tu",
+  "nhom-san-pham",
   "chu-dau-tu",
   "nhom-khoan-muc",
   "ngan-hang",

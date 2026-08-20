@@ -28,6 +28,7 @@ import { NganhModule } from './nganh/nganh.module';
 import { KhoModule } from './kho/kho.module';
 import { DonViTinhModule } from './don-vi-tinh/don-vi-tinh.module';
 import { NhomVatTuModule } from './nhom-vat-tu/nhom-vat-tu.module';
+import { NhomSanPhamModule } from './nhom-san-pham/nhom-san-pham.module';
 import { HangHoaVatTuModule } from './hang-hoa-vat-tu/hang-hoa-vat-tu.module';
 import { HoSoChungTuModule } from './ho-so-chung-tu/ho-so-chung-tu.module';
 import { LyDoKhongHopLeModule } from './ly-do-khong-hop-le/ly-do-khong-hop-le.module';
@@ -118,6 +119,7 @@ import {
     KhoModule,
     DonViTinhModule,
     NhomVatTuModule,
+    NhomSanPhamModule,
     HangHoaVatTuModule,
     HoSoChungTuModule,
     LyDoKhongHopLeModule,

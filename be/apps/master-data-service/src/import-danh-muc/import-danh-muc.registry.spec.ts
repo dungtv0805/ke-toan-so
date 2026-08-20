@@ -12,6 +12,7 @@ import { CreateHangHoaVatTuDto } from '../hang-hoa-vat-tu/dto';
 import { CreateDonViTinhDto } from '../don-vi-tinh/dto';
 import { CreateLyDoKhongHopLeDto } from '../ly-do-khong-hop-le/dto';
 import { CreateNhomVatTuDto } from '../nhom-vat-tu/dto';
+import { CreateNhomSanPhamDto } from '../nhom-san-pham/dto';
 import { CreateChuDauTuDto } from '../chu-dau-tu/dto';
 import { CreateNhomKhoanMucDto } from '../nhom-khoan-muc/dto';
 import { CreateNganHangDto } from '../ngan-hang/dto';
@@ -23,8 +24,8 @@ import { CreateLoaiGiaoDichDto } from '../loai-giao-dich/dto';
 import { CreateHoSoChungTuDto } from '../ho-so-chung-tu/dto';
 
 describe('ImportDanhMucRegistry', () => {
-  /** 21 service giả, chỉ cần có create() vì registry không gọi gì khác. */
-  const fakes = Array.from({ length: 21 }, () => ({ create: jest.fn() }));
+  /** 22 service giả, chỉ cần có create() vì registry không gọi gì khác. */
+  const fakes = Array.from({ length: 22 }, () => ({ create: jest.fn() }));
   const registry = new ImportDanhMucRegistry(
     ...(fakes as unknown as ConstructorParameters<
       typeof ImportDanhMucRegistry
@@ -64,36 +65,41 @@ describe('ImportDanhMucRegistry', () => {
       dtoClass: CreateLyDoKhongHopLeDto,
     },
     { resource: 'nhom-vat-tu', position: 11, dtoClass: CreateNhomVatTuDto },
-    { resource: 'chu-dau-tu', position: 12, dtoClass: CreateChuDauTuDto },
+    {
+      resource: 'nhom-san-pham',
+      position: 12,
+      dtoClass: CreateNhomSanPhamDto,
+    },
+    { resource: 'chu-dau-tu', position: 13, dtoClass: CreateChuDauTuDto },
     {
       resource: 'nhom-khoan-muc',
-      position: 13,
+      position: 14,
       dtoClass: CreateNhomKhoanMucDto,
     },
-    { resource: 'ngan-hang', position: 14, dtoClass: CreateNganHangDto },
-    { resource: 'dong-tien', position: 15, dtoClass: CreateDongTienDto },
+    { resource: 'ngan-hang', position: 15, dtoClass: CreateNganHangDto },
+    { resource: 'dong-tien', position: 16, dtoClass: CreateDongTienDto },
     {
       resource: 'nhom-khuyen-mai',
-      position: 16,
+      position: 17,
       dtoClass: CreateNhomKhuyenMaiDto,
     },
-    { resource: 'nhom-quan-ly', position: 17, dtoClass: CreateNhomQuanLyDto },
-    { resource: 'loai-chung-tu', position: 18, dtoClass: CreateLoaiChungTuDto },
+    { resource: 'nhom-quan-ly', position: 18, dtoClass: CreateNhomQuanLyDto },
+    { resource: 'loai-chung-tu', position: 19, dtoClass: CreateLoaiChungTuDto },
     {
       resource: 'loai-giao-dich',
-      position: 19,
+      position: 20,
       dtoClass: CreateLoaiGiaoDichDto,
     },
     {
       resource: 'ho-so-chung-tu',
-      position: 20,
+      position: 21,
       dtoClass: CreateHoSoChungTuDto,
     },
   ];
 
-  it('đăng ký đủ 21 danh mục', () => {
-    expect(registry.resources()).toHaveLength(21);
-    expect(expected).toHaveLength(21);
+  it('đăng ký đủ 22 danh mục', () => {
+    expect(registry.resources()).toHaveLength(22);
+    expect(expected).toHaveLength(22);
   });
 
   it('mỗi entry có đủ service, dtoClass và label', () => {

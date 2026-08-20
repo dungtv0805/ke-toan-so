@@ -40,6 +40,7 @@ import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { dongTienImportConfig } from "@/components/import-danh-muc/configs";
 import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-danh-muc";
+import { useBangCay } from "@/components/table/bang-cay";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -61,6 +62,13 @@ const dongTienSchema = z.object({
   }),
   moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").optional().nullable(),
 });
+
+/** Ba loại chuẩn của báo cáo lưu chuyển tiền tệ — cũng là ba nhóm trên cây. */
+const NHOM_LOAI_DONG_TIEN = [
+  { ma: "KINH_DOANH", ten: "Hoạt động kinh doanh", color: "green" },
+  { ma: "DAU_TU", ten: "Hoạt động đầu tư", color: "blue" },
+  { ma: "TAI_CHINH", ten: "Hoạt động tài chính", color: "orange" },
+];
 
 const DongTienPage: React.FC = () => {
   const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/dong-tien");
@@ -316,6 +324,20 @@ const DongTienPage: React.FC = () => {
   ];
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.dongTien', columns);
+
+  // Cây 2 cấp theo chính trường Loại (Kinh doanh / Đầu tư / Tài chính) — chuẩn
+  // báo cáo lưu chuyển tiền tệ, không đẻ thêm danh mục nhóm nữa.
+  const { laCay, chuyenCheDo, duLieuCay, cotCay, expandable } = useBangCay<DongTien>({
+    khoaLuu: "dongTien.cheDoXem",
+    danhSach: data,
+    danhMuc: NHOM_LOAI_DONG_TIEN,
+    layMa: (dt) => dt.loai,
+    cot: cfgColumns as never,
+    donVi: "dòng tiền",
+    cotChoXuongDong: ["ten"],
+    nhanTrong: "(Chưa gán loại)",
+    onDoiCheDo: () => clearSelection(),
+  });
   const fl = useFieldLabels('danhMuc.dongTien');
 
   return (
@@ -406,11 +428,14 @@ const DongTienPage: React.FC = () => {
           }
         />
 
+        <div className="mb-2 flex justify-end">{chuyenCheDo}</div>
+
         <Table
-          columns={cfgColumns}
-          dataSource={data}
+          columns={(laCay ? cotCay : cfgColumns) as never}
+          dataSource={(laCay ? duLieuCay : data) as never}
           rowKey="id"
-          rowSelection={rowSelection}
+          expandable={laCay ? expandable : undefined}
+          rowSelection={laCay ? undefined : rowSelection}
           loading={loading}
           scroll={{ x: 800, y: "calc(100vh - 285px)" }}
           pagination={{

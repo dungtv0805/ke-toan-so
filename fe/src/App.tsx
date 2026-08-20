@@ -47,6 +47,7 @@ import {
   DonViTinhPage,
   LyDoKhongHopLePage,
   NhomVatTuPage,
+  NhomSanPhamPage,
   HangHoaVatTuPage,
   PhieuThuPage,
   PhieuChiPage,
@@ -262,6 +263,11 @@ const App = () => (
                   <Route path="nhom-vat-tu" element={
                     <ProtectedRoute requiredPermission="/danh-muc/nhom-vat-tu:xem">
                       <NhomVatTuPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="nhom-san-pham" element={
+                    <ProtectedRoute requiredPermission="/danh-muc/nhom-san-pham:xem">
+                      <NhomSanPhamPage />
                     </ProtectedRoute>
                   } />
                   <Route path="hang-hoa-vat-tu" element={

@@ -2,6 +2,7 @@ export { donViTinhImportConfig } from "./donViTinh.config";
 export { boPhanImportConfig } from "./boPhan.config";
 export { lyDoKhongHopLeImportConfig } from "./lyDoKhongHopLe.config";
 export { nhomVatTuImportConfig } from "./nhomVatTu.config";
+export { nhomSanPhamImportConfig } from "./nhomSanPham.config";
 export { chuDauTuImportConfig } from "./chuDauTu.config";
 export { nhomKhuyenMaiImportConfig } from "./nhomKhuyenMai.config";
 export { nhomQuanLyImportConfig } from "./nhomQuanLy.config";

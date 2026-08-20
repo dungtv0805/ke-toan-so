@@ -9,7 +9,9 @@ import { usePagePermission } from '@/hooks/usePagePermission';
 import { useBulkDelete } from '@/components/table/useBulkDelete';
 import { quyChauanService } from '@/services/quyChaunService';
 import { QuyChuan } from '@/types';
-import { docCheDoXem, luuCheDoXem, type CheDoXem } from './lib/cheDoXem';
+import { docCheDoXem, luuCheDoXem, type CheDoXem } from '@/components/table/bang-cay';
+
+const KHOA_CHE_DO = 'quyChuan.cheDoXem';
 
 const DEFAULT_PAGINATION: PaginationMeta = {
   total: 0,
@@ -22,7 +24,7 @@ const QuyChaunPageInner: React.FC = () => {
   const handler = useQuyChaunHandler();
   const { canDelete } = usePagePermission('/danh-muc/quy-chuan');
   const [settingsButton, setSettingsButton] = useState<React.ReactNode>(null);
-  const [cheDo, setCheDo] = useState<CheDoXem>(docCheDoXem);
+  const [cheDo, setCheDo] = useState<CheDoXem>(() => docCheDoXem(KHOA_CHE_DO));
   const handleSettingsButton = useCallback((btn: React.ReactNode) => {
     setSettingsButton(btn);
   }, []);
@@ -49,7 +51,7 @@ const QuyChaunPageInner: React.FC = () => {
   const doiCheDo = useCallback(
     (v: CheDoXem) => {
       setCheDo(v);
-      luuCheDoXem(v);
+      luuCheDoXem(KHOA_CHE_DO, v);
       clearSelection();
     },
     [clearSelection],
