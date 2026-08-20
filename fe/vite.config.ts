@@ -42,6 +42,18 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
+        /**
+         * Đổi giá trị này để VỨT toàn bộ precache cũ của mọi trình duyệt.
+         *
+         * 2026-08-20: deploy ghi đè trực tiếp lên thư mục nginx đang phục vụ,
+         * nên suốt vài phút copy, các URL `.js` chưa kịp lên bị SPA fallback trả
+         * về `index.html` kèm status 200. Workbox thấy 200 là coi như hợp lệ và
+         * lưu luôn HTML đó dưới tên file .js — máy nào cài SW đúng lúc đó thì
+         * hỏng vĩnh viễn, deploy lại bao nhiêu lần cũng vô ích vì tên file không
+         * đổi thì workbox dùng lại bản trong cache, không hỏi server nữa.
+         * cacheId mới ⇒ tên cache mới ⇒ SW buộc phải tải lại tất cả từ mạng.
+         */
+        cacheId: "masterceo-2026-08-20",
         // App shell precache + SPA fallback; KHÔNG cache API (dữ liệu tài chính phải mới).
         globPatterns: ["**/*.{js,css,html,ico,png,jpg,svg,woff,woff2}"],
         navigateFallback: "/index.html",

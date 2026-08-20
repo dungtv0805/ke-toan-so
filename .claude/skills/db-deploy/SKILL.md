@@ -132,25 +132,69 @@ ssh kt "curl -s -o /dev/null -w '%{http_code}\n' 'http://localhost:3000/api/<pre
 - **Port**: main.ts của service đọc `<SVC>_SERVICE_PORT || <port>`; PM2 set `PORT` (không phải `<SVC>_SERVICE_PORT`) nên service chạy theo default trong main.ts — đảm bảo default đúng port.
 - `docker-compose.yml` mount `./dist` và `./pm2/ecosystem.config.js` làm volume → sửa trên host là container thấy ngay sau restart. KHÔNG cần rebuild image cho service mới.
 
-## Deploy Frontend
+## Deploy Frontend — PHẢI ĐỔI CHỖ NGUYÊN TỬ (đừng scp đè thẳng)
 
 FE served by container `digital-book-nginx` (volume mount: host `/root/chimseo/nginx/build4/` → container `/usr/share/nginx/html/build4`)
 
+> ⚠️ **KHÔNG `scp -r dist/* kt:.../build4/`.** Copy đè thẳng lên thư mục nginx đang phục vụ
+> mất 1–6 phút. Trong khoảng đó, URL `.js` chưa kịp lên sẽ rơi vào SPA fallback
+> `try_files ... /index.html` → nginx trả **HTML kèm status 200** cho file `.js`. Hậu quả
+> (sự cố 2026-08-20): trình duyệt báo `Failed to load module script ... MIME type "text/html"`,
+> và tệ hơn — **service worker cache luôn HTML đó dưới tên file .js**, workbox thấy 200 là coi
+> như hợp lệ. Máy nào cài SW đúng lúc đó thì **hỏng vĩnh viễn**: deploy lại bao nhiêu lần cũng
+> vô ích vì tên file không đổi thì workbox lấy bản trong cache, không hỏi server nữa.
+
 ```bash
-# 1. Build
-cd /Users/chimseo/code/digital-books/fe
-npm run build
+# 1. Build (npm không có trong PATH của shell non-login)
+export PATH="$HOME/.nvm/versions/node/v22.0.0/bin:$PATH"
+cd <repo>/fe && npm run build
 
-# 2. Upload to host (volume-mounted into nginx container)
-scp -r dist/* kt:/root/chimseo/nginx/build4/
+# 2. Đẩy lên THƯ MỤC TẠM, chưa đụng bản đang chạy
+ssh kt "rm -rf /root/chimseo/nginx/build4_stage && mkdir -p /root/chimseo/nginx/build4_stage"
+scp -q -r dist/* kt:/root/chimseo/nginx/build4_stage/
 
-# 3. Reload nginx inside container (pick up new files)
-ssh kt "docker exec digital-book-nginx nginx -s reload"
+# 3. Đổi chỗ: index.html SAU CÙNG (rename nguyên tử) → user luôn thấy trọn bộ cũ hoặc trọn bộ mới
+ssh kt 'bash -s' <<'''SH'''
+set -e
+cd /root/chimseo/nginx
+mv -f build4_stage/assets/* build4/assets/          # tên có hash nội dung, vào trước vô hại
+for f in build4_stage/*; do
+  b=$(basename "$f")
+  [ "$b" = "index.html" ] && continue
+  [ "$b" = "assets" ] && continue
+  mv -f "$f" "build4/$b"                            # icon, manifest, sw.js, workbox
+done
+mv -f build4_stage/index.html build4/index.html     # SAU CÙNG
+rm -rf build4_stage
+docker exec digital-book-nginx nginx -s reload
+SH
 ```
+
+**KHÔNG `mv` cả thư mục `build4`** — nó là bind mount, đổi thư mục là container mất luôn mount.
+Chỉ được chuyển *nội dung* vào trong nó.
+
+### Verify sau khi deploy FE (so khớp toàn bộ, không kiểm mẫu)
+```bash
+cd fe/dist/assets && find . -type f -printf '%s %f
+' | sort -k2 > /tmp/l.txt
+ssh kt "cd /root/chimseo/nginx/build4/assets && ls -la --time-style=+ | awk 'NR>1{print \$5, \$NF}'" | sort -k2 > /tmp/s.txt
+join -j2 /tmp/l.txt /tmp/s.txt | awk '$2!=$3{print "LECH:",$1,$2,$3}'   # phải rỗng
+comm -23 <(awk '{print $2}' /tmp/l.txt|sort) <(awk '{print $2}' /tmp/s.txt|sort)  # phải rỗng
+curl -s -o /dev/null -w '%{http_code} %{content_type}\n' https://ketoan.masterceo.com.vn/assets/khong-co-that.js  # phải 404
+```
+
+### Chữa service worker đã nhiễm (cho NGƯỜI DÙNG KHÁC, từ xa)
+Đổi `workbox.cacheId` trong `fe/vite.config.ts` (vd `masterceo-<ngày>`) rồi build + deploy: cache name
+đổi ⇒ SW buộc tải lại tất cả từ mạng. Tên file không đổi thì deploy thường KHÔNG chữa được.
+Người dùng tự chữa: DevTools → Application → Storage → **Clear site data**.
+
+### Chặn tận gốc (đã áp dụng 2026-08-20)
+`/root/chimseo/nginx/conf.d/default.conf` có `location /assets/ { try_files $uri =404; }` đặt TRƯỚC
+`location /` — file thiếu thì báo 404 thật, workbox từ chối cache thay vì nuốt HTML vào.
+(Backup: `default.conf.truoc-fix-assets-20260820`. `conf.d` mount từ host, sửa host là container thấy.)
 
 **Note:** Nếu volume mount bị mất sync, dùng docker cp trực tiếp vào container:
 ```bash
-# Alternative: copy directly into container
 ssh kt "docker cp /root/chimseo/nginx/build4/. digital-book-nginx:/usr/share/nginx/html/build4/"
 ssh kt "docker exec digital-book-nginx nginx -s reload"
 ```
