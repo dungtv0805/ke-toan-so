@@ -42,6 +42,22 @@ Một số mục đã được gỡ khỏi dropdown sidebar và chuyển lên th
 | Du bao | `/trung-tam-du-lieu/du-bao` | ACTIVE | voucher:3003 (cung page, `loaiKeHoach=DU_BAO`) |
 | Cac muc con lai | `/trung-tam-du-lieu/*` | COMING SOON | — |
 
+> **`/trung-tam-du-lieu/ke-hoach` giờ là trang 7 TAB** (`fe/src/pages/ke-hoach/tabs/KeHoachTabsPage.tsx`),
+> thanh `Segmented` sticky giống Tổng quan + ô chọn Năm. Sáu tab đầu là sáu sheet của
+> `docs/THIẾT KẾ KẾ HOẠCH.xlsx`:
+>
+> | Tab | Trạng thái | API |
+> |-----|-----------|-----|
+> | Bán hàng | ACTIVE — bảng 2 cấp nhóm SP → sản phẩm | `/voucher/ke-hoach-ban-hang` |
+> | Nhân sự | ACTIVE — bảng 2 cấp bộ phận → chức vụ (free text) | `/voucher/ke-hoach-nhan-su` |
+> | KQKD, Dòng tiền, Tài sản, Nguồn vốn | Khung "Sắp có" trong tab | — |
+> | Chi tiết | ACTIVE — lưới 17 cột cũ, bọc `KeHoachPage` | `/voucher/ke-hoach` |
+>
+> Hai bảng mới: một bản/năm, chưa phân quyền riêng (dùng vai trò của Kế hoạch).
+> Quý = 3 tháng cộng lại, năm = 12 tháng; hàng nhóm và hàng TỔNG CỘNG tự cộng, không lưu
+> (`fe/src/pages/ke-hoach/tabs/lib/tongHop.ts`). Lệch giữa tổng 12 tháng và Doanh thu/CỘNG
+> chỉ tô đỏ cảnh báo, KHÔNG chặn lưu. Không ghim cột — xem commit `db51ad9`.
+>
 > Nhập liệu qua trang form nhiều dòng `/trung-tam-du-lieu/{ke-hoach,du-bao}/tao-moi`
 > (`fe/src/pages/ke-hoach/form/`), dùng đúng khuôn + style form chứng từ của Dữ liệu tổng hợp.
 > Kế hoạch & Dự báo dùng chung `fe/src/pages/ke-hoach/KeHoachPage.tsx` (prop `loaiKeHoach`).

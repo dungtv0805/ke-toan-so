@@ -203,6 +203,27 @@ Response: `{ success: true, data: { created: number, failed: [{ index: number, m
 > `so-sanh` đọc THẲNG collection `chung_tu` cho số thực hiện (cùng DB, cùng pipeline gom)
 > nên không cần gọi HTTP sang service khác và hai bên không thể lệch cách tính.
 
+### /ke-hoach-ban-hang (Bảng kế hoạch bán hàng — collection `ke_hoach_ban_hang`)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /ke-hoach-ban-hang?nam= | Toàn bộ dòng của năm, KHÔNG phân trang |
+| POST | /ke-hoach-ban-hang | Thêm dòng (chặn trùng `nam` + `sanPham.id`) |
+| PATCH | /ke-hoach-ban-hang/:id | Sửa dòng (không đổi được `nam`, `sanPham`) |
+| DELETE | /ke-hoach-ban-hang/:id | Xoá dòng |
+
+### /ke-hoach-nhan-su (Bảng kế hoạch nhân sự — collection `ke_hoach_nhan_su`)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /ke-hoach-nhan-su?nam= | Toàn bộ dòng của năm, KHÔNG phân trang |
+| POST | /ke-hoach-nhan-su | Thêm dòng (chặn trùng `nam` + `boPhan.id` + `maViTri`) |
+| PATCH | /ke-hoach-nhan-su/:id | Sửa dòng (không đổi được `nam`) |
+| DELETE | /ke-hoach-nhan-su/:id | Xoá dòng |
+
+> Mỗi dòng là CẤP 2 (sản phẩm / chức vụ) kèm khoá cấp 1 và mảng `thang` 12 phần tử.
+> Cấp 1 (nhóm sản phẩm / bộ phận) KHÔNG có bản ghi riêng — suy ra từ dòng con.
+> Giá trị suy ra (Doanh thu, CỘNG, quý, %, hàng nhóm, hàng tổng) KHÔNG lưu, FE tính
+> bằng `fe/src/pages/ke-hoach/tabs/lib/tongHop.ts`.
+
 ### /phieu-thu, /phieu-chi (Vouchers)
 | Method | Path | Description |
 |--------|------|-------------|
