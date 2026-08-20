@@ -32,9 +32,11 @@ const quyChaunSchema = z.object({
   loaiChiPhi: z.enum(['CO_DINH', 'BIEN_DOI']).optional().nullable(),
 });
 
+// Nhãn không lặp lại chữ "Chi phí" — ô đã có nhãn "LOẠI CHI PHÍ" ngay trên.
+// (Mẫu Excel import vẫn nhận "Chi phí cố định"/"Chi phí biến đổi" như cũ.)
 const LOAI_CHI_PHI_OPTIONS = [
-  { value: 'CO_DINH', label: 'Chi phí cố định' },
-  { value: 'BIEN_DOI', label: 'Chi phí biến đổi' },
+  { value: 'CO_DINH', label: 'Cố định' },
+  { value: 'BIEN_DOI', label: 'Biến đổi' },
 ];
 
 // Khoản mục không có route '/all' như các danh mục khác và getAll() chỉ trả 100 dòng —

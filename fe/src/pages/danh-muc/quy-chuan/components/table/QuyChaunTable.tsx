@@ -41,9 +41,10 @@ interface QuyChaunTableProps {
   onDoiCheDo: (v: CheDoXem) => void;
 }
 
+// Cùng nhãn với ô chọn trong form: cột đã tên "Loại chi phí" nên không lặp lại.
 const NHAN_LOAI_CHI_PHI: Record<NonNullable<QuyChuan["loaiChiPhi"]>, string> = {
-  CO_DINH: "Chi phí cố định",
-  BIEN_DOI: "Chi phí biến đổi",
+  CO_DINH: "Cố định",
+  BIEN_DOI: "Biến đổi",
 };
 
 const DEFAULT_PAGINATION: PaginationMeta = {
