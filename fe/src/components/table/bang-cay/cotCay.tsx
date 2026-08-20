@@ -3,6 +3,9 @@ import { Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { laDongNhom, type HangCay } from "./gomNhom";
 
+/** Chỗ cho icon thu gọn + thụt lề một cấp, đo trên bảng antd size="middle". */
+const RONG_THEM_COT_DAU = 48;
+
 interface TuyChonCot {
   /** Nhãn đơn vị đếm trên dòng nhóm, vd "sản phẩm" → "12 sản phẩm". */
   donVi: string;
@@ -28,7 +31,13 @@ export function dungCotCay<T>(
   const choXuongDong = new Set(cotChoXuongDong);
   return cot.map((col, i) => ({
     ...col,
-    ellipsis: !choXuongDong.has(String(col.key ?? "")),
+    // Cột ĐẦU còn phải chứa icon thu gọn + phần thụt lề của cấp con. Cắt gọn nó
+    // thì mã "CP001" hiện thành "C…" — bảng không đọc được thì tra vào đâu.
+    ellipsis: i === 0 ? false : !choXuongDong.has(String(col.key ?? "")),
+    width:
+      i === 0 && typeof col.width === "number"
+        ? col.width + RONG_THEM_COT_DAU
+        : col.width,
     onCell: (record: HangCay<T>) =>
       laDongNhom(record) ? { colSpan: i === 0 ? cot.length : 0 } : {},
     render: (value: unknown, record: HangCay<T>, index: number) => {

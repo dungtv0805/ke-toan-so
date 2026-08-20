@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Segmented } from "antd";
 import { ApartmentOutlined, UnorderedListOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
@@ -50,9 +50,17 @@ export function useBangCay<T>({
     [khoaLuu, onDoiCheDo]
   );
 
+  /**
+   * `layMa` thường viết thẳng trong JSX nên là hàm MỚI sau mỗi lần render. Lấy
+   * nó làm dependency thì cây dựng lại liên tục, effect "mở sẵn mọi nhóm" chạy
+   * theo và bung nhóm ngay sau khi người dùng vừa thu — thu nhóm bấm không ăn.
+   */
+  const layMaRef = useRef(layMa);
+  layMaRef.current = layMa;
+
   const duLieuCay = useMemo<HangCay<T>[]>(
-    () => gomTheoNhom(danhSach, { layMa, danhMuc, nhanTrong }),
-    [danhSach, danhMuc, layMa, nhanTrong]
+    () => gomTheoNhom(danhSach, { layMa: (x) => layMaRef.current(x), danhMuc, nhanTrong }),
+    [danhSach, danhMuc, nhanTrong]
   );
 
   const cotCay = useMemo(
@@ -61,12 +69,18 @@ export function useBangCay<T>({
   );
 
   const nhomKeys = useMemo(() => duLieuCay.map((r) => (r as { id: string }).id), [duLieuCay]);
-  const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
-  // Mở sẵn mọi nhóm sau mỗi lần dữ liệu đổi — mặc định đóng thì người dùng mở
-  // bảng ra chỉ thấy vài dòng tiêu đề, tưởng mất dữ liệu.
+  // Khoá so sánh theo NỘI DUNG: `cot` cũng hay là mảng mới mỗi render, đủ để
+  // duLieuCay đổi identity dù tập nhóm y nguyên.
+  const nhomKeysStr = nhomKeys.join("|");
+  const [expandedKeys, setExpandedKeys] = useState<React.Key[]>(() => nhomKeys);
+  // Mở sẵn mọi nhóm khi TẬP NHÓM đổi — mặc định đóng thì người dùng mở bảng ra
+  // chỉ thấy vài dòng tiêu đề, tưởng mất dữ liệu.
+  const nhomKeysStrTruoc = useRef(nhomKeysStr);
   useEffect(() => {
-    setExpandedKeys(nhomKeys);
-  }, [nhomKeys]);
+    if (nhomKeysStrTruoc.current === nhomKeysStr) return;
+    nhomKeysStrTruoc.current = nhomKeysStr;
+    setExpandedKeys(nhomKeysStr ? nhomKeysStr.split("|") : []);
+  }, [nhomKeysStr]);
 
   const chuyenCheDo = (
     <Segmented

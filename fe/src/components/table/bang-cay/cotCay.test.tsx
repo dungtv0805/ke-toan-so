@@ -80,3 +80,29 @@ describe("dungCotCay", () => {
     expect(ra).toBe("Thu tiền");
   });
 });
+
+describe("cột đầu của bảng cây", () => {
+  it("KHÔNG cắt gọn — nó còn phải chứa icon thu gọn và phần thụt lề", () => {
+    // "C…" thay cho mã "CP001" là bảng vô dụng: không đọc được mã thì tra vào đâu.
+    const cot = dungCotCay(COT, { donVi: "khoản mục" });
+    expect(cot[0].ellipsis).toBe(false);
+    expect(cot[1].ellipsis).toBe(true);
+  });
+
+  it("được nới thêm chỗ cho icon thu gọn, cột sau giữ nguyên bề rộng", () => {
+    const cot = dungCotCay(
+      [
+        { title: "Mã", key: "ma", width: 100 },
+        { title: "Tên", key: "ten", width: 200 },
+      ],
+      { donVi: "khoản mục" }
+    );
+    expect(cot[0].width).toBeGreaterThan(100);
+    expect(cot[1].width).toBe(200);
+  });
+
+  it("cột đầu không khai bề rộng thì để nguyên, không tự bịa số", () => {
+    const cot = dungCotCay([{ title: "Tên", key: "ten" }], { donVi: "x" });
+    expect(cot[0].width).toBeUndefined();
+  });
+});
