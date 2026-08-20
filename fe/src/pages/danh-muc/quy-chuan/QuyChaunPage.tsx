@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Card } from 'antd';
 import { QuyChaunHandlerProvider, useQuyChaunHandler, useQuyChaunState } from './QuyChaunHandlerContext';
 import { QuyChaunHeader } from './components/header/QuyChaunHeader';
-import { QuyChaunStats } from './components/stats/QuyChaunStats';
 import { QuyChaunTable } from './components/table/QuyChaunTable';
 import { QuyChaunForm } from './components/form/QuyChaunForm';
 import { PaginationMeta } from './components/table/QuyChaunTable.state';
@@ -71,8 +70,6 @@ const QuyChaunPageInner: React.FC = () => {
       <QuyChaunHeader settingsButton={settingsButton} bulkDeleteButton={bulkDeleteButton} />
 
       <Card style={{ marginTop: 16 }}>
-        <QuyChaunStats />
-
         <QuyChaunTable
           onSettingsButton={handleSettingsButton}
           rowSelection={cheDo === 'cay' ? undefined : rowSelection}

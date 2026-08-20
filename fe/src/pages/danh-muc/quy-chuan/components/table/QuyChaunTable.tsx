@@ -23,6 +23,9 @@ import {
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 import "./QuyChaunTable.state";
+// Hàng thẻ thống kê đã gỡ, nhưng state `stats` vẫn nuôi số đếm trên tab Danh
+// sách — khai báo kiểu phải được nạp từ đây, không thì mất theo component cũ.
+import "../stats/QuyChaunStats.state";
 import { PaginationMeta } from "./QuyChaunTable.state";
 import type { CheDoXem } from "../../lib/cheDoXem";
 
