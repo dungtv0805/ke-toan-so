@@ -1,6 +1,6 @@
 import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '../base.entity';
-import type { MucDanhMucKeHoach } from './ke-hoach-ban-hang.entity';
+import { SO_THANG, type MucDanhMucKeHoach } from './ke-hoach-ban-hang.entity';
 
 /** Sáu loại chi phí nhân sự — cố định, khớp cột LCHINH…THUONGCN của sheet thiết kế. */
 export interface ChiPhiNhanSu {
@@ -46,7 +46,7 @@ export class KeHoachNhanSu extends BaseEntity {
   chiPhi: ChiPhiNhanSu;
 
   /** Đúng 12 phần tử, chỉ số 0 là T1. */
-  @Column({ type: 'simple-array' })
+  @Column({ type: 'json', default: Array(SO_THANG).fill(0) })
   thang: number[];
 
   @Column({ nullable: true })

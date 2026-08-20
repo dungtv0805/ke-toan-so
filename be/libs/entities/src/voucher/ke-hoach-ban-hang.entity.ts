@@ -38,7 +38,7 @@ export class KeHoachBanHang extends BaseEntity {
   giaBinhQuan: number;
 
   /** Đúng 12 phần tử, chỉ số 0 là T1. */
-  @Column({ type: 'simple-array' })
+  @Column({ type: 'json', default: Array(SO_THANG).fill(0) })
   thang: number[];
 
   @Column({ nullable: true })
