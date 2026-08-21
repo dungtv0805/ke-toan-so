@@ -177,6 +177,48 @@ export class ServiceClient extends BaseServiceClient {
     });
   }
 
+  /**
+   * Ba phương thức dưới đây gọi vào route `/all` chứ không phải route gốc: route gốc
+   * phân trang, lấy nhầm thì chỉ nhận trang đầu và báo cáo âm thầm gom sai. Cả ba
+   * đều truyền `x-tenant-id` — thiếu nó là lấy danh mục của tenant khác.
+   */
+  private headerDanhMuc(
+    authToken?: string,
+    tenantId?: string,
+  ): Record<string, string> | undefined {
+    const headers: Record<string, string> = {};
+    if (authToken) headers['Authorization'] = authToken;
+    if (tenantId) headers['x-tenant-id'] = tenantId;
+    return Object.keys(headers).length ? headers : undefined;
+  }
+
+  async getSanPham(
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<ServiceResponse<SanPhamRefResponse[]>> {
+    return this.get<SanPhamRefResponse[]>('master-data', '/san-pham/all', {
+      headers: this.headerDanhMuc(authToken, tenantId),
+    });
+  }
+
+  async getNhomSanPham(
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<ServiceResponse<NhomRefResponse[]>> {
+    return this.get<NhomRefResponse[]>('master-data', '/nhom-san-pham/all', {
+      headers: this.headerDanhMuc(authToken, tenantId),
+    });
+  }
+
+  async getNhomKhoanMuc(
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<ServiceResponse<NhomRefResponse[]>> {
+    return this.get<NhomRefResponse[]>('master-data', '/nhom-khoan-muc/all', {
+      headers: this.headerDanhMuc(authToken, tenantId),
+    });
+  }
+
   async getSoDuDauKy(
     authToken?: string,
     tenantId?: string,
@@ -353,4 +395,19 @@ export class ServiceClient extends BaseServiceClient {
       query: { nam },
     });
   }
+}
+
+/** Sản phẩm rút gọn — `nhom` lưu MÃ của nhóm sản phẩm, không phải id. */
+export interface SanPhamRefResponse {
+  id?: string;
+  ma: string;
+  ten: string;
+  nhom?: string;
+}
+
+/** Nhóm sản phẩm / nhóm khoản mục rút gọn. */
+export interface NhomRefResponse {
+  id?: string;
+  ma: string;
+  ten: string;
 }
