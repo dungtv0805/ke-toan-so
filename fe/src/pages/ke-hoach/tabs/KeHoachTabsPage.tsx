@@ -10,6 +10,9 @@ import { keHoachService } from "@/services/keHoachService";
 
 const { Text } = Typography;
 
+/** Chuỗi rỗng = không lọc phiên bản. Không dùng undefined: antd hiện ô trống, mất nhãn. */
+const TAT_CA_PHIEN_BAN = "";
+
 /** Sáu tab đầu là sáu sheet của file thiết kế; "Chi tiết" là lưới bút toán cũ. */
 const TAB_OPTIONS = [
   { label: "Bán hàng", value: "ban-hang" },
@@ -25,7 +28,7 @@ const KeHoachTabsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("ban-hang");
   const [nam, setNam] = useState(() => new Date().getFullYear());
   // Gộp nhiều phiên bản kế hoạch vào một bảng KQKD là cộng trùng — cho chọn được.
-  const [phienBan, setPhienBan] = useState<string | undefined>(undefined);
+  const [phienBan, setPhienBan] = useState<string>(TAT_CA_PHIEN_BAN);
   const [phienBanList, setPhienBanList] = useState<string[]>([]);
 
   useEffect(() => {
@@ -91,7 +94,7 @@ const KeHoachTabsPage: React.FC = () => {
               onChange={setPhienBan}
               style={{ width: 200 }}
               options={[
-                { label: "Tất cả phiên bản", value: undefined as unknown as string },
+                { label: "Tất cả phiên bản", value: TAT_CA_PHIEN_BAN },
                 ...phienBanList.map((p) => ({ label: p, value: p })),
               ]}
             />
@@ -111,7 +114,9 @@ const KeHoachTabsPage: React.FC = () => {
       <div className="flex flex-col flex-1 min-h-0 pt-2">
         {activeTab === "ban-hang" && <BanHangTab nam={nam} />}
         {activeTab === "nhan-su" && <NhanSuTab nam={nam} />}
-        {activeTab === "kqkd" && <KqkdTab nam={nam} phienBan={phienBan} />}
+        {activeTab === "kqkd" && (
+          <KqkdTab nam={nam} phienBan={phienBan || undefined} />
+        )}
         {activeTab === "dong-tien" && (
           <TabComingSoon tieuDe="Kế hoạch dòng tiền" />
         )}
