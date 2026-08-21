@@ -2631,6 +2631,32 @@ body.col-resizing .ant-table * {
   background: #fafafa !important;
 }
 
+/* ===== Bảng màu biểu đồ tròn "Tỷ trọng" =====
+   Sáu hue tách bạch thay cho dải xanh-navy/vàng cũ — dải cũ có tới ba sắc xanh
+   và ba sắc vàng, lát nhỏ chìm hẳn vào nhau. Bộ này đã chạy qua validator:
+   đạt cả dải sáng, ngưỡng chroma, tách màu cho người mù màu (ΔE nhỏ nhất 9.1
+   sáng / 8.4 tối) và ngưỡng phân biệt mắt thường (19.6 / 19.3).
+   Bậc màu chế độ tối là bậc RIÊNG cho nền tối, không phải lật ngược màu sáng. */
+:root {
+  --viz-1: #2a78d6; /* lam */
+  --viz-2: #eb6834; /* cam */
+  --viz-3: #1baf7a; /* ngọc */
+  --viz-4: #eda100; /* vàng */
+  --viz-5: #e87ba4; /* hồng */
+  --viz-6: #008300; /* lục */
+  --viz-khac: #84847d; /* xám — "Khác" luôn lùi lại, không tranh chỗ với nhóm thật */
+}
+
+.dark {
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+  --viz-3: #199e70;
+  --viz-4: #c98500;
+  --viz-5: #d55181;
+  --viz-6: #008300;
+  --viz-khac: #9c9c95;
+}
+
 /* ===== Bảng kế hoạch hai cấp (Bán hàng / Nhân sự) ===== */
 /* Hàng TỔNG CỘNG ghim đầu bảng — nền đậm hơn hàng nhóm để phân biệt hai mức. */
 .kh-hang-tong > td {

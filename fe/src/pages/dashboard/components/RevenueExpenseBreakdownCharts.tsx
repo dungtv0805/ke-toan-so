@@ -6,7 +6,19 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 import { dashboardService, type BreakdownSlice } from '@/services/dashboardService';
 import { formatCurrency, nhanLatCat } from './format';
 
-const PALETTE = ['#1F3864', '#C9A227', '#2F5597', '#E0C158', '#8497B0', '#BFA15F'];
+/** Sáu hue tách bạch, khai báo ở `index.css` để chế độ tối có bậc màu riêng. */
+const PALETTE = [
+  'var(--viz-1)',
+  'var(--viz-2)',
+  'var(--viz-3)',
+  'var(--viz-4)',
+  'var(--viz-5)',
+  'var(--viz-6)',
+];
+
+/** "Khác" là rổ gom, không phải một nhóm — luôn xám để lùi lại phía sau. */
+const MAU_KHAC = 'var(--viz-khac)';
+const TEN_KHAC = 'Khác';
 
 const TOP_N = 6;
 
@@ -20,11 +32,39 @@ function groupTopN(data: BreakdownSlice[]): BreakdownSlice[] {
   const top = sorted.slice(0, TOP_N);
   const rest = sorted.slice(TOP_N);
   const otherTotal = rest.reduce((s, d) => s + d.soTien, 0);
-  return [...top, { ten: 'Khác', soTien: otherTotal }];
+  return [...top, { ten: TEN_KHAC, soTien: otherTotal }];
 }
 
 const Donut: React.FC<{ data: BreakdownSlice[] }> = ({ data }) => {
   const total = data.reduce((s, d) => s + Math.abs(d.soTien), 0);
+
+  /**
+   * Mặc định recharts tô nhãn bằng chính màu lát cắt — chữ vàng/hồng trên nền
+   * trắng thì đọc không nổi. Trả về `<text>` để ép nhãn mang màu chữ; lát cắt
+   * bên cạnh mới là thứ mang danh tính màu.
+   */
+  const nhanQuanhVanh = (p: {
+    x: number;
+    y: number;
+    textAnchor: string;
+    soTien: number;
+  }) => {
+    const chu = nhanLatCat(p.soTien, total);
+    if (!chu) return null;
+    return (
+      <text
+        x={p.x}
+        y={p.y}
+        textAnchor={p.textAnchor}
+        dominantBaseline="central"
+        fontSize={12}
+        fill="hsl(var(--foreground))"
+      >
+        {chu}
+      </text>
+    );
+  };
+
   return (
     <ResponsiveContainer width="100%" height={260}>
       <PieChart>
@@ -37,11 +77,11 @@ const Donut: React.FC<{ data: BreakdownSlice[] }> = ({ data }) => {
           innerRadius={44}
           outerRadius={70}
           paddingAngle={2}
-          label={(entry) => nhanLatCat(entry.soTien, total)}
+          label={nhanQuanhVanh}
           labelLine={false}
         >
-          {data.map((_, i) => (
-            <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
+          {data.map((d, i) => (
+            <Cell key={i} fill={d.ten === TEN_KHAC ? MAU_KHAC : PALETTE[i]} />
           ))}
         </Pie>
         <Tooltip formatter={(value: number) => formatCurrency(value)} />
