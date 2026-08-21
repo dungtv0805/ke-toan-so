@@ -299,4 +299,51 @@ describe('buildKqkdKeHoach — danh mục hỏng', () => {
     expect(timDong(r, '01')!.thang[0]).toBe(1000);
     expect(timDong(r, '01')!.con![0].ten).toBe('Chưa phân nhóm');
   });
+
+  it('bản khoản mục: mã nhóm khoản mục không tra ra vẫn gom về MỘT "Chưa phân nhóm" duy nhất, xếp sau nhóm thật và trước rổ "Không phân bổ khoản mục"', () => {
+    const r = buildKqkdKeHoach(
+      [
+        // Hai mã nhóm khoản mục KHÁC NHAU, cả hai đều không có trong danh mục.
+        dong({ soTien: 5, danhMuc: { taiKhoanNo: { ma: '641' }, khoanMuc: { ma: 'KMX', ten: 'X', nhom: 'NHOM_LA_1' } } }),
+        dong({ soTien: 3, danhMuc: { taiKhoanNo: { ma: '641' }, khoanMuc: { ma: 'KMY', ten: 'Y', nhom: 'NHOM_LA_2' } } }),
+        // Một nhóm khoản mục tra ra bình thường.
+        dong({ soTien: 10, danhMuc: { taiKhoanNo: { ma: '641' }, khoanMuc: { ma: 'KM01', ten: 'Lương', nhom: 'NKM01' } } }),
+        // Dòng không chọn khoản mục -> rổ "Không phân bổ khoản mục".
+        dong({ soTien: 7, danhMuc: { taiKhoanNo: { ma: '641' } } }),
+      ],
+      danhMuc,
+      2026,
+    );
+
+    // Số ở dòng cấp 0 vẫn đúng: không rơi mất đồng nào.
+    expect(timDong(r, '25')!.thang[0]).toBe(25);
+
+    const con = timDong(r, '25')!.con!;
+    const tenCon = con.map((c) => c.ten);
+
+    // Chỉ MỘT dòng "Chưa phân nhóm" dù có hai mã không tra ra khác nhau.
+    expect(tenCon.filter((t) => t === 'Chưa phân nhóm')).toHaveLength(1);
+    const chuaPhanNhom = con.find((c) => c.ten === 'Chưa phân nhóm')!;
+    expect(chuaPhanNhom.thang[0]).toBe(8); // 5 + 3, gộp chung một rổ
+
+    // Hai rổ vét luôn xếp CUỐI, sau nhóm thật.
+    expect(tenCon.slice(-2)).toEqual(['Chưa phân nhóm', 'Không phân bổ khoản mục']);
+  });
+
+  it('bản sản phẩm: sản phẩm tra ra nhưng mã nhóm của nó không có trong danh mục nhóm -> "Chưa phân nhóm", không hiện mã thô làm tên', () => {
+    const dm: DanhMucTraCuuKqkd = {
+      sanPham: [{ ma: 'SPX', ten: 'X', nhom: 'NHOM_LA' }],
+      nhomSanPham: [{ ma: 'KHAC', ten: 'Khác' }], // không có 'NHOM_LA'
+      nhomKhoanMuc: [],
+    };
+    const r = buildKqkdKeHoach(
+      [dong({ soTien: 55, danhMuc: { taiKhoanCo: { ma: '511' }, sanPham: { ma: 'SPX', ten: 'X' } } })],
+      dm,
+      2026,
+    );
+    const con = timDong(r, '01')!.con!;
+    expect(con).toHaveLength(1);
+    expect(con[0].ten).toBe('Chưa phân nhóm'); // không phải 'NHOM_LA'
+    expect(con[0].thang[0]).toBe(55);
+  });
 });

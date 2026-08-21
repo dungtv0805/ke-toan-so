@@ -34,8 +34,15 @@ export interface DongKeHoachKqkd {
   };
 }
 
+/**
+ * `id` là getter trên prototype của `BaseEntity` — `JSON.stringify` không
+ * serialise được nên trên đường truyền thật response từ master-data chỉ
+ * mang `_id`. Giữ cả hai, ưu tiên `id` (fixture test có thể tự ghi `id`),
+ * rồi mới tới `_id` (dữ liệu thật).
+ */
 export interface MucTraCuu {
   id?: string;
+  _id?: string;
   ma: string;
   ten: string;
   nhom?: string;
@@ -105,12 +112,14 @@ export function buildKqkdKeHoach(
   const nhomSanPhamTheoKhoa = new Map<string, MucTraCuu>();
   for (const n of danhMuc.nhomSanPham) {
     nhomSanPhamTheoKhoa.set(n.ma, n);
-    if (n.id) nhomSanPhamTheoKhoa.set(n.id, n);
+    const khoaId = n.id ?? n._id;
+    if (khoaId) nhomSanPhamTheoKhoa.set(khoaId, n);
   }
   const nhomKhoanMucTheoKhoa = new Map<string, MucTraCuu>();
   for (const n of danhMuc.nhomKhoanMuc) {
     nhomKhoanMucTheoKhoa.set(n.ma, n);
-    if (n.id) nhomKhoanMucTheoKhoa.set(n.id, n);
+    const khoaId = n.id ?? n._id;
+    if (khoaId) nhomKhoanMucTheoKhoa.set(khoaId, n);
   }
 
   const tongThang: ChiTieuGocKqkd[] = Array.from(
@@ -161,9 +170,13 @@ export function buildKqkdKeHoach(
         continue;
       }
       const nhom = km.nhom ? nhomKhoanMucTheoKhoa.get(km.nhom) : undefined;
+      // Có `km.nhom` nhưng tra không ra (master-data chết, nhóm đã bị xoá) vẫn
+      // phải gộp về đúng MỘT rổ vét — không lấy mã thô làm khoá, kẻo N mã
+      // không tra được sinh ra N dòng con trùng tên "Chưa phân nhóm" và rổ đó
+      // trôi vào giữa danh sách thay vì luôn xếp cuối.
       const roNhom = layRo(
         bang,
-        nhom?.ma ?? (km.nhom ? `${km.nhom}` : KEY_CHUA_PHAN_NHOM),
+        nhom?.ma ?? KEY_CHUA_PHAN_NHOM,
         nhom?.ten ?? NHAN_CHUA_PHAN_NHOM,
       );
       roNhom.thang[i] += soTien;
@@ -193,8 +206,9 @@ function khoaNhomSanPham(
   const maNhom = sanPhamTheoMa.get(maSp)?.nhom;
   const nhom = maNhom ? nhomTheoKhoa.get(maNhom) : undefined;
   if (nhom) return { key: nhom.ma, ten: nhom.ten };
-  // Sản phẩm bị xoá khỏi danh mục, hoặc chưa gắn nhóm — vẫn phải hiện ra.
-  if (maNhom) return { key: maNhom, ten: maNhom };
+  // Sản phẩm không có trong danh mục, chưa gắn nhóm, hoặc có gắn nhóm nhưng
+  // mã nhóm tra không ra (master-data chết, nhóm đã bị xoá) — đồng bộ với
+  // nhánh khoản mục: luôn gộp về MỘT rổ vét, không lấy mã thô làm tên hiển thị.
   return { key: KEY_CHUA_PHAN_NHOM, ten: NHAN_CHUA_PHAN_NHOM };
 }
 

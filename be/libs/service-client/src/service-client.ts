@@ -179,8 +179,12 @@ export class ServiceClient extends BaseServiceClient {
 
   /**
    * Ba phương thức dưới đây gọi vào route `/all` chứ không phải route gốc: route gốc
-   * phân trang, lấy nhầm thì chỉ nhận trang đầu và báo cáo âm thầm gom sai. Cả ba
-   * đều truyền `x-tenant-id` — thiếu nó là lấy danh mục của tenant khác.
+   * phân trang, lấy nhầm thì chỉ nhận trang đầu và báo cáo âm thầm gom sai. Cả ba đều
+   * truyền `x-tenant-id` để khớp lối sẵn có (`getNganHang`, `getSoDuDauKy`), nhưng
+   * việc cách ly tenant thật ra không dựa vào header này: `TenantMiddleware` bên
+   * master-data cố ý bỏ qua header, suy tenant từ JWT trong `Authorization` được
+   * chuyển tiếp. Đừng "tối ưu" bỏ header `Authorization` — thiếu nó mới thật sự
+   * mất tenant.
    */
   private headerDanhMuc(
     authToken?: string,
@@ -397,17 +401,24 @@ export class ServiceClient extends BaseServiceClient {
   }
 }
 
-/** Sản phẩm rút gọn — `nhom` lưu MÃ của nhóm sản phẩm, không phải id. */
+/**
+ * Sản phẩm rút gọn — `nhom` lưu MÃ của nhóm sản phẩm, không phải id.
+ * `id` là getter trên prototype của `BaseEntity`, `JSON.stringify` không
+ * serialise được nên trên đường truyền thật response chỉ mang `_id`. Giữ cả
+ * hai để nơi tra cứu tự thử `id` rồi mới tới `_id`.
+ */
 export interface SanPhamRefResponse {
   id?: string;
+  _id?: string;
   ma: string;
   ten: string;
   nhom?: string;
 }
 
-/** Nhóm sản phẩm / nhóm khoản mục rút gọn. */
+/** Nhóm sản phẩm / nhóm khoản mục rút gọn — xem ghi chú `id`/`_id` ở trên. */
 export interface NhomRefResponse {
   id?: string;
+  _id?: string;
   ma: string;
   ten: string;
 }
