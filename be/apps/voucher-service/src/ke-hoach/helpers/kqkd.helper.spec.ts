@@ -63,6 +63,24 @@ describe('buildKqkdKeHoach — gom theo tháng', () => {
     const r = buildKqkdKeHoach([], danhMucRong, 2026);
     for (const d of r.dong) expect(d.thang).toHaveLength(12);
   });
+
+  it('dòng cấp 1 và cấp 2 cũng luôn có đúng 12 số tháng', () => {
+    const r = buildKqkdKeHoach(
+      [
+        dong({ soTien: 1000, danhMuc: { taiKhoanCo: { ma: '511' }, sanPham: { ma: 'SP01', ten: 'Bàn' } } }),
+        dong({ soTien: 30, danhMuc: { taiKhoanNo: { ma: '641' }, khoanMuc: { ma: 'KM01', ten: 'Lương', nhom: 'NKM01' } } }),
+      ],
+      danhMuc,
+      2026,
+    );
+    const duyet = (ds: Dong[]): void => {
+      for (const d of ds) {
+        expect(d.thang).toHaveLength(12);
+        if (d.con) duyet(d.con);
+      }
+    };
+    duyet(r.dong);
+  });
 });
 
 describe('buildKqkdKeHoach — bậc thang chỉ tiêu', () => {
@@ -183,6 +201,36 @@ describe('buildKqkdKeHoach — cây nhóm sản phẩm', () => {
       ['Nhóm 1', 10],
       ['Nhóm 2', 20],
     ]);
+  });
+
+  it('rổ vét luôn xếp CUỐI dù có mã nhóm bắt đầu bằng ký tự tiếng Việt có dấu', () => {
+    const dm: DanhMucTraCuuKqkd = {
+      sanPham: [
+        { ma: 'SPA', ten: 'A', nhom: 'A_NHOM' },
+        { ma: 'SPD', ten: 'D', nhom: 'Đ01' },
+      ],
+      nhomSanPham: [
+        { ma: 'A_NHOM', ten: 'Nhóm A' },
+        // Mã bắt đầu bằng 'Đ' (U+0110) — lớn hơn '~' (U+007E) trong so sánh UTF-16,
+        // nên comparator dựa vào bảng mã sẽ xếp nhóm này SAU cả hai rổ vét.
+        { ma: 'Đ01', ten: 'Đồ gỗ' },
+      ],
+      nhomKhoanMuc: [],
+    };
+    const r = buildKqkdKeHoach(
+      [
+        dong({ soTien: 1, danhMuc: { taiKhoanCo: { ma: '511' }, sanPham: { ma: 'SPA', ten: 'A' } } }),
+        dong({ soTien: 2, danhMuc: { taiKhoanCo: { ma: '511' }, sanPham: { ma: 'SPD', ten: 'D' } } }),
+        // Sản phẩm không có trong danh mục -> "Chưa phân nhóm".
+        dong({ soTien: 3, danhMuc: { taiKhoanCo: { ma: '511' }, sanPham: { ma: 'SP_LA', ten: 'Lạ' } } }),
+        // Dòng không chọn sản phẩm -> "Không phân bổ sản phẩm".
+        dong({ soTien: 4, danhMuc: { taiKhoanCo: { ma: '511' } } }),
+      ],
+      dm,
+      2026,
+    );
+    const ten = timDong(r, '01')!.con!.map((c) => c.ten);
+    expect(ten.slice(-2)).toEqual(['Chưa phân nhóm', 'Không phân bổ sản phẩm']);
   });
 });
 

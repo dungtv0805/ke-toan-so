@@ -13,7 +13,12 @@ export const NHAN_CHUA_PHAN_NHOM = 'Chưa phân nhóm';
 export const NHAN_KHONG_CO_SAN_PHAM = 'Không phân bổ sản phẩm';
 export const NHAN_KHONG_CO_KHOAN_MUC = 'Không phân bổ khoản mục';
 
-/** Hai rổ vét luôn xếp CUỐI, sau mọi nhóm có thật. */
+/**
+ * Hai rổ vét luôn xếp CUỐI, sau mọi nhóm có thật. Đây chỉ là khoá NHẬN DIỆN
+ * (so bằng `===`, không so bằng thứ tự bảng mã) — comparator `theoKhoa` mới là
+ * nơi thật sự đảm bảo thứ tự "vét luôn cuối", vì mã danh mục là chuỗi tự do
+ * (có thể bắt đầu bằng ký tự tiếng Việt có dấu, lớn hơn mọi ký tự ASCII).
+ */
 const KEY_CHUA_PHAN_NHOM = '~1';
 const KEY_KHONG_PHAN_BO = '~2';
 
@@ -74,9 +79,20 @@ const layRo = (
   return ro;
 };
 
-/** Xếp theo khoá; hai rổ vét (`~1`, `~2`) tự rơi xuống cuối vì `~` lớn hơn chữ. */
-const theoKhoa = (a: [string, RoThang], b: [string, RoThang]) =>
-  a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0;
+const laRoVet = (key: string) =>
+  key === KEY_CHUA_PHAN_NHOM || key === KEY_KHONG_PHAN_BO;
+
+/**
+ * Nhóm thật sắp theo mã; hai rổ vét luôn xuống cuối — không dựa vào bảng mã
+ * (mã danh mục là chuỗi tự do, có thể bắt đầu bằng ký tự có dấu lớn hơn mọi
+ * ký tự ASCII, nên không thể chọn một khoá "chắc chắn lớn nhất" theo chuỗi).
+ */
+const theoKhoa = (a: [string, unknown], b: [string, unknown]) => {
+  const vetA = laRoVet(a[0]);
+  const vetB = laRoVet(b[0]);
+  if (vetA !== vetB) return vetA ? 1 : -1;
+  return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0;
+};
 
 export function buildKqkdKeHoach(
   rows: DongKeHoachKqkd[],
@@ -227,9 +243,7 @@ function dungCayDong(
         if (!khoa.has(key)) khoa.set(key, ro.ten);
       }
     }
-    const sapXep = (a: [string, string], b: [string, string]) =>
-      a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0;
-    return [...khoa.entries()].sort(sapXep).map(([key, ten]) => {
+    return [...khoa.entries()].sort(theoKhoa).map(([key, ten]) => {
       const lay = (ma: MaChiTieuGoc, i: number) =>
         cayNhomSanPham.get(ma)!.get(key)?.thang[i] ?? 0;
       return {
