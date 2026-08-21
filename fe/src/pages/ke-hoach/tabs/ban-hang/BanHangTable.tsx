@@ -365,7 +365,7 @@ export const BanHangTable: React.FC = () => {
           columns={columns}
           dataSource={rows}
           pagination={false}
-          className="excel-table"
+          className="excel-table kh-bang"
           rowClassName={rowClassName}
           scroll={{ x: "max-content", y: tableBodyHeight }}
           locale={{

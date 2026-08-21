@@ -178,8 +178,10 @@ export const NhanSuTable: React.FC = () => {
   const columns: ColumnsType<Hang> = [
     {
       title: "Mã vị trí",
+      // Rộng 300: tên bộ phận đầy đủ ("DV - Phòng dịch vụ") không bị cắt còn
+      // "DV - Ph...", vì đọc mỗi mã không đủ để biết đang xếp dòng vào đâu.
       key: "maViTri",
-      width: 200,
+      width: 300,
       onCell: onCellNhan,
       render: (_: unknown, row: Hang) => {
         if (row.loai === "tong") {
@@ -210,7 +212,7 @@ export const NhanSuTable: React.FC = () => {
           <Space.Compact className="w-full">
             <Select
               size="small"
-              style={{ width: "52%" }}
+              style={{ width: "65%" }}
               placeholder="Bộ phận"
               showSearch
               optionFilterProp="label"
@@ -225,7 +227,7 @@ export const NhanSuTable: React.FC = () => {
             />
             <Input
               size="small"
-              style={{ width: "48%" }}
+              style={{ width: "35%" }}
               placeholder="Mã vị trí"
               value={row.dong!.val.maViTri}
               onChange={(e) =>
@@ -381,7 +383,7 @@ export const NhanSuTable: React.FC = () => {
           columns={columns}
           dataSource={rows}
           pagination={false}
-          className="excel-table"
+          className="excel-table kh-bang"
           rowClassName={rowClassName}
           scroll={{ x: "max-content", y: tableBodyHeight }}
           locale={{

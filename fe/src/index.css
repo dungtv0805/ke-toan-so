@@ -2673,3 +2673,27 @@ body.col-resizing .ant-table * {
   outline-offset: -2px;
   background: #fff;
 }
+
+/* Bảng kế hoạch: ô GÕ ĐƯỢC phải tự lộ ra.
+   Trước đây ô nhập trong suốt y hệt ô công thức (CỘNG, %, Q1…Q4) nên nhìn cả
+   bảng không biết chỗ nào bấm vào gõ được — nay viền mảnh + nền trắng, đúng
+   quy ước ô nhập của bảng tính. */
+/* !important vì các ô này dùng variant="borderless" — AntD chủ động xoá viền. */
+.kh-bang .excel-cell-input.ant-input-number,
+.kh-bang .excel-cell-input.ant-input {
+  padding: 0 4px !important;
+  background: #fff !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 2px;
+  transition: border-color 0.15s ease;
+}
+
+.kh-bang .excel-cell-input.ant-input-number:hover,
+.kh-bang .excel-cell-input.ant-input:hover {
+  border-color: var(--xl-green) !important;
+}
+
+.dark .kh-bang .excel-cell-input.ant-input-number,
+.dark .kh-bang .excel-cell-input.ant-input {
+  background: hsl(var(--background)) !important;
+}
