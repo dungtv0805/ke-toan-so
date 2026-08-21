@@ -3,8 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { ObjectId } from 'mongodb';
 import { ChungTu, KeHoachDong, PHIEN_BAN_MAC_DINH } from '@app/entities';
-import { PaginatedResult } from '@app/dto';
+import { PaginatedResult, KqkdKeHoachReport } from '@app/dto';
 import { TenantContextService } from '@app/core';
+import { ServiceClient } from '@app/service-client';
 import {
   BatchUpdateKeHoachItemDto,
   CreateKeHoachDto,
@@ -14,9 +15,12 @@ import {
 import {
   buildDimensionPipeline,
   buildKeHoachQuery,
+  buildKqkdKeHoach,
   buildSeries,
   ChiTieu,
+  DanhMucTraCuuKqkd,
   DimensionRow,
+  DongKeHoachKqkd,
   DongTinhSeries,
   gomSoSanh,
   KeHoachDimension,
@@ -32,6 +36,7 @@ export class KeHoachService {
     @InjectRepository(ChungTu)
     private readonly chungTuRepository: MongoRepository<ChungTu>,
     private readonly tenantContext: TenantContextService,
+    private readonly serviceClient: ServiceClient,
   ) {}
 
   private theoTenant(query: Record<string, unknown>): Record<string, unknown> {
@@ -155,6 +160,85 @@ export class KeHoachService {
       .toArray()) as unknown as DongTinhSeries[];
 
     return { success: true, data: buildSeries(rows, year, month) };
+  }
+
+  /**
+   * Báo cáo KQKD của số KẾ HOẠCH — cùng bản đồ chỉ tiêu với báo cáo KQKD bên
+   * Báo cáo tài chính, chỉ khác nguồn: đọc `ke_hoach` thay vì `chung_tu`.
+   *
+   * Trả về 12 số tháng cho mỗi dòng; năm, 6 tháng, quý và % do phía hiển thị cộng.
+   */
+  async getKqkd(
+    nam: number,
+    loaiKeHoach: string,
+    phienBan?: string,
+    authToken?: string,
+  ): Promise<{ success: boolean; data: KqkdKeHoachReport }> {
+    const match = this.theoTenant({
+      loaiKeHoach,
+      ...(phienBan ? { phienBan } : {}),
+      ngay: {
+        $gte: new Date(Date.UTC(nam, 0, 1)),
+        $lte: new Date(Date.UTC(nam, 11, 31, 23, 59, 59, 999)),
+      },
+    });
+
+    const tenantId = this.tenantContext.getCurrentTenantId();
+
+    const [rows, danhMuc] = await Promise.all([
+      this.keHoachRepository
+        .aggregate([
+          { $match: match },
+          {
+            $project: {
+              ngay: 1,
+              soTien: 1,
+              'danhMuc.taiKhoanNo.ma': 1,
+              'danhMuc.taiKhoanCo.ma': 1,
+              'danhMuc.sanPham.ma': 1,
+              'danhMuc.sanPham.ten': 1,
+              'danhMuc.khoanMuc.ma': 1,
+              'danhMuc.khoanMuc.ten': 1,
+              'danhMuc.khoanMuc.nhom': 1,
+            },
+          },
+        ])
+        .toArray() as Promise<unknown[]>,
+      this.napDanhMucKqkd(authToken, tenantId),
+    ]);
+
+    return {
+      success: true,
+      data: buildKqkdKeHoach(rows as DongKeHoachKqkd[], danhMuc, nam),
+    };
+  }
+
+  /**
+   * Master-data chết thì báo cáo vẫn phải ra: số ở các mục La Mã không phụ thuộc
+   * danh mục, chỉ có dòng con dồn hết vào "Chưa phân nhóm".
+   */
+  private async napDanhMucKqkd(
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<DanhMucTraCuuKqkd> {
+    const lay = async <T>(
+      goi: () => Promise<{ success: boolean; data?: T[] }>,
+    ): Promise<T[]> => {
+      try {
+        const res = await goi();
+        return res.success ? res.data ?? [] : [];
+      } catch {
+        return [];
+      }
+    };
+
+    const [sanPham, nhomSanPham, nhomKhoanMuc] = await Promise.all([
+      lay(() => this.serviceClient.getSanPham(authToken, tenantId)),
+      lay(() => this.serviceClient.getNhomSanPham(authToken, tenantId)),
+      lay(() => this.serviceClient.getNhomKhoanMuc(authToken, tenantId)),
+    ]);
+
+    return { sanPham, nhomSanPham, nhomKhoanMuc };
   }
 
   async findById(id: string): Promise<{ success: boolean; data: KeHoachDong }> {
