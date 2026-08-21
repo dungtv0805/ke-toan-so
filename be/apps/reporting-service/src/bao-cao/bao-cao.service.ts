@@ -5,6 +5,11 @@ import type {
   DoanhSoTheoResult,
 } from '@app/dto';
 import { ServiceClient } from '@app/service-client';
+import {
+  ButToanKqkd,
+  tinhChiTieuDanXuat,
+  tinhChiTieuGoc,
+} from '@app/core';
 import { Injectable } from '@nestjs/common';
 import {
   buildDoiTuongLoaiIndex,
@@ -706,51 +711,62 @@ export class BaoCaoService {
     const vouchersHT = vouchersHTRes.success ? vouchersHTRes.data || [] : [];
     const vouchersKT = vouchersKTRes.success ? vouchersKTRes.data || [] : [];
 
-    // Current period indicators
-    const m01_ht = this.sumByAccountPrefix(vouchersHT, '511', 'CO');
-    const m02_ht = this.sumByAccountPrefix(vouchersHT, '521', 'NO');
-    const m10_ht = m01_ht - m02_ht;
-    const m11_ht = this.sumByAccountPrefix(vouchersHT, '632', 'NO');
-    const m20_ht = m10_ht - m11_ht;
-    const m21_ht = this.sumByAccountPrefix(vouchersHT, '515', 'CO');
-    const m22_ht = this.sumByAccountPrefix(vouchersHT, '635', 'NO');
-    const m25_ht = this.sumByAccountPrefix(vouchersHT, '641', 'NO');
-    const m26_ht = this.sumByAccountPrefix(vouchersHT, '642', 'NO');
-    const m30_ht = m20_ht + (m21_ht - m22_ht) - (m25_ht + m26_ht);
-    const m31_ht = this.sumByAccountPrefix(vouchersHT, '711', 'CO');
-    const m32_ht = this.sumByAccountPrefix(vouchersHT, '811', 'NO');
-    const m40_ht = m31_ht - m32_ht;
-    const m50_ht = m30_ht + m40_ht;
-    const m51_ht = this.sumByAccountPrefix(vouchersHT, '8211', 'NO');
-    const m52_ht = this.sumByAccountPrefix(vouchersHT, '8212', 'NO');
-    const m60_ht = m50_ht - m51_ht - m52_ht;
+    // Chuyển bút toán về hình mà bản đồ chỉ tiêu dùng chung hiểu được.
+    const toButToan = (v: NhatKyChungEntry): ButToanKqkd => ({
+      soTien: v.soTien,
+      maTaiKhoanNo: v.danhMuc?.taiKhoanNo?.ma ?? v.taiKhoanNo,
+      maTaiKhoanCo: v.danhMuc?.taiKhoanCo?.ma ?? v.taiKhoanCo,
+    });
+
+    const goc_ht = tinhChiTieuGoc(vouchersHT.map(toButToan));
+    const goc_kt = tinhChiTieuGoc(vouchersKT.map(toButToan));
+    const dan_ht = tinhChiTieuDanXuat(goc_ht);
+    const dan_kt = tinhChiTieuDanXuat(goc_kt);
+
+    const m01_ht = goc_ht['01'];
+    const m02_ht = goc_ht['02'];
+    const m10_ht = dan_ht.m10;
+    const m11_ht = goc_ht['11'];
+    const m20_ht = dan_ht.m20;
+    const m21_ht = goc_ht['21'];
+    const m22_ht = goc_ht['22'];
+    const m25_ht = goc_ht['25'];
+    const m26_ht = goc_ht['26'];
+    const m30_ht = dan_ht.m30;
+    const m31_ht = goc_ht['31'];
+    const m32_ht = goc_ht['32'];
+    const m40_ht = dan_ht.m40;
+    const m50_ht = dan_ht.m50;
+    const m51_ht = goc_ht['51'];
+    const m52_ht = goc_ht['52'];
+    const m60_ht = dan_ht.m60;
+    // Khấu hao phục vụ EBITDA, không phải chỉ tiêu KQKD nên không nằm trong bản đồ.
     const khauHao_ht = this.sumByAccountPrefix(vouchersHT, '214', 'CO');
 
-    // Previous period indicators
-    const m01_kt = this.sumByAccountPrefix(vouchersKT, '511', 'CO');
-    const m02_kt = this.sumByAccountPrefix(vouchersKT, '521', 'NO');
-    const m10_kt = m01_kt - m02_kt;
-    const m11_kt = this.sumByAccountPrefix(vouchersKT, '632', 'NO');
-    const m20_kt = m10_kt - m11_kt;
-    const m21_kt = this.sumByAccountPrefix(vouchersKT, '515', 'CO');
-    const m22_kt = this.sumByAccountPrefix(vouchersKT, '635', 'NO');
-    const m25_kt = this.sumByAccountPrefix(vouchersKT, '641', 'NO');
-    const m26_kt = this.sumByAccountPrefix(vouchersKT, '642', 'NO');
-    const m30_kt = m20_kt + (m21_kt - m22_kt) - (m25_kt + m26_kt);
-    const m31_kt = this.sumByAccountPrefix(vouchersKT, '711', 'CO');
-    const m32_kt = this.sumByAccountPrefix(vouchersKT, '811', 'NO');
-    const m40_kt = m31_kt - m32_kt;
-    const m50_kt = m30_kt + m40_kt;
-    const m51_kt = this.sumByAccountPrefix(vouchersKT, '8211', 'NO');
-    const m52_kt = this.sumByAccountPrefix(vouchersKT, '8212', 'NO');
-    const m60_kt = m50_kt - m51_kt - m52_kt;
+    const m01_kt = goc_kt['01'];
+    const m02_kt = goc_kt['02'];
+    const m10_kt = dan_kt.m10;
+    const m11_kt = goc_kt['11'];
+    const m20_kt = dan_kt.m20;
+    const m21_kt = goc_kt['21'];
+    const m22_kt = goc_kt['22'];
+    const m25_kt = goc_kt['25'];
+    const m26_kt = goc_kt['26'];
+    const m30_kt = dan_kt.m30;
+    const m31_kt = goc_kt['31'];
+    const m32_kt = goc_kt['32'];
+    const m40_kt = dan_kt.m40;
+    const m50_kt = dan_kt.m50;
+    const m51_kt = goc_kt['51'];
+    const m52_kt = goc_kt['52'];
+    const m60_kt = dan_kt.m60;
     const khauHao_kt = this.sumByAccountPrefix(vouchersKT, '214', 'CO');
 
     // Derived column helpers
     const dtThuan_ht = m10_ht;
     const dtThuan_kt = m10_kt;
-    const tongCP_ht = m22_ht + m25_ht + m26_ht;
-    const tongCP_kt = m22_kt + m25_kt + m26_kt;
+    const tongCP_ht = dan_ht.tongChiPhi;
+    const tongCP_kt = dan_kt.tongChiPhi;
 
     const pctDT = (v: number, dt: number): number | null =>
       dt !== 0 ? (v / dt) * 100 : null;
