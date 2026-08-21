@@ -6,6 +6,7 @@ import { dashboardService } from '@/services/dashboardService';
 import { keHoachService } from '@/services/keHoachService';
 import { sliceToRange } from '@/components/shared/period';
 import { tinhTinhHinhThucHien, type MucSoSanh } from './tinhHinhThucHien';
+import { soTrieu } from './format';
 
 interface Props {
   year: number;
@@ -21,9 +22,7 @@ const ITEMS: { key: MucKey; title: string; color: string; vuotLaXau?: boolean }[
   { key: 'loiNhuan', title: 'Tình hình thực hiện lợi nhuận', color: 'hsl(var(--primary))' },
 ];
 
-const soTien = (v: number) => new Intl.NumberFormat('vi-VN').format(Math.round(v));
-
-/** Gauge nửa vòng 0%→150%. percent=0 khi chưa có dữ liệu kế hoạch. */
+/** Gauge nửa vòng 0%→150%. percent=0 khi có phát sinh mà không có kế hoạch. */
 const Gauge: React.FC<{ percent: number; color: string }> = ({ percent, color }) => (
   <div className="relative" style={{ height: 150 }}>
     <ResponsiveContainer width="100%" height="100%">
@@ -53,7 +52,7 @@ const Legend: React.FC<{ color: string; muc: MucSoSanh }> = ({ color, muc }) => 
     ] as [string, string, number][]).map(([label, c, value]) => (
       <div key={label} className="flex items-center justify-between gap-4">
         <span className="flex items-center gap-1.5"><span className="inline-block w-2 h-2 rounded-full" style={{ background: c }} />{label}</span>
-        <span className="font-medium">{soTien(value)}</span>
+        <span className="font-medium">{soTrieu(value)}</span>
       </div>
     ))}
     {muc.chuaCoKeHoach && (
@@ -97,7 +96,7 @@ const ExecutionStatusCharts: React.FC<Props> = ({ year, startMonth, endMonth }) 
         return (
           <Col xs={24} lg={8} key={it.key}>
             <Card title={<span className="text-sm sm:text-base">{it.title}</span>}
-                  extra={<span className="text-[10px] text-muted-foreground">Đvt: đồng</span>}>
+                  extra={<span className="text-[10px] text-muted-foreground">Đvt: triệu đồng</span>}>
               {dangTai ? (
                 <Skeleton active paragraph={{ rows: 3 }} />
               ) : (

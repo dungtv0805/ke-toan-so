@@ -32,6 +32,19 @@ export const nhanTrieu = (value?: number | null): string => {
   }).format(trieu);
 };
 
+/**
+ * Số tiền quy về TRIỆU đồng cho phần chữ cạnh biểu đồ (chú giải, thẻ số).
+ *
+ * Khác `nhanTrieu` ở chỗ GIỮ số 0: trong bảng chú giải một ô trống trông như
+ * lỗi tải dữ liệu, còn vẽ đè lên biểu đồ thì số 0 chỉ làm rối.
+ */
+export const soTrieu = (value?: number | null): string => {
+  const trieu = (value || 0) / 1_000_000;
+  return new Intl.NumberFormat('vi-VN', {
+    maximumFractionDigits: Math.abs(trieu) < 10 ? 1 : 0,
+  }).format(trieu);
+};
+
 /** Như nhanTrieu nhưng lấy trị tuyệt đối — dùng cho cột vẽ ngược xuống dưới. */
 export const nhanTrieuAbs = (value?: number | null): string => nhanTrieu(Math.abs(value || 0));
 

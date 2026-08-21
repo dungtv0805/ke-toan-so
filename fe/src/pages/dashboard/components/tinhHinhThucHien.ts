@@ -4,7 +4,7 @@ export interface MucSoSanh {
   keHoach: number;
   thucHien: number;
   chenhLech: number;
-  /** % thực hiện trên kế hoạch; 0 khi chưa có kế hoạch. */
+  /** % thực hiện trên kế hoạch; 100 khi cả hai bằng 0, 0 khi phát sinh ngoài kế hoạch. */
   tyLeDat: number;
   chuaCoKeHoach: boolean;
 }
@@ -22,9 +22,15 @@ const so = (keHoach: number, thucHien: number): MucSoSanh => ({
   keHoach,
   thucHien,
   chenhLech: thucHien - keHoach,
-  // Kế hoạch = 0 → gauge về 0% (không chia cho 0); dùng trị tuyệt đối để lợi nhuận
-  // kế hoạch âm vẫn ra tỷ lệ có nghĩa.
-  tyLeDat: keHoach === 0 ? 0 : (thucHien / Math.abs(keHoach)) * 100 * Math.sign(keHoach),
+  // Không chia cho 0. Kế hoạch 0 mà thực hiện cũng 0 thì chênh lệch bằng 0 —
+  // bám đúng kế hoạch, tức 100%; chỉ khi có phát sinh ngoài kế hoạch mới về 0%.
+  // Trị tuyệt đối để lợi nhuận kế hoạch âm vẫn ra tỷ lệ có nghĩa.
+  tyLeDat:
+    keHoach === 0
+      ? thucHien === 0
+        ? 100
+        : 0
+      : (thucHien / Math.abs(keHoach)) * 100 * Math.sign(keHoach),
   chuaCoKeHoach: keHoach === 0,
 });
 
