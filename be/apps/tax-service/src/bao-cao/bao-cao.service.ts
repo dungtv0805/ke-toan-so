@@ -17,7 +17,9 @@ import { quyToRange, inDateRange } from '../shared/tax-helpers';
 import { buildCpKhongTru } from './chi-phi-khong-tru.util';
 import {
   buildNvcsSections,
+  tinhNghiaVuTuSo,
   NghiaVuChinhSach,
+  NghiaVuTuSo,
   NvcsVatQuy,
 } from './nghia-vu-chinh-sach.util';
 
@@ -90,9 +92,10 @@ export class BaoCaoService {
   async baoCaoTNDN(
     nam: number,
     authToken?: string,
+    aggSan?: AggRow[][],
   ): Promise<{ nam: number; quy: TNDNQuyData[]; luyKe: TNDNQuyData }> {
     const [aggQuarters, dieuChinh, autoRes] = await Promise.all([
-      this.aggByQuy(nam, authToken),
+      aggSan ?? this.aggByQuy(nam, authToken),
       this.dieuChinhService.getOrDefault(nam),
       this.serviceClient.aggregateNonDeductible(nam, authToken),
     ]);
@@ -199,17 +202,27 @@ export class BaoCaoService {
     return { nam, quy, luyKe };
   }
 
+  /**
+   * Thuế TNCN và bảo hiểm phải nộp của 4 quý, lấy từ phát sinh bên CÓ trên sổ
+   * (3335 / 3383+3384+3386) — xem `tinhNghiaVuTuSo`.
+   */
+  private nghiaVuTuSoTheoQuy(aggQuarters: AggRow[][]): NghiaVuTuSo[] {
+    return aggQuarters.map((rows) => tinhNghiaVuTuSo(rows));
+  }
+
   /** Ma trận rút gọn báo cáo nghĩa vụ chính sách (TNDN/GTGT/TNCN/BHXH) theo quý + lũy kế. */
   async nghiaVuChinhSach(
     nam: number,
     authToken?: string,
   ): Promise<NghiaVuChinhSach> {
+    const aggQuarters = await this.aggByQuy(nam, authToken);
     const [tndn, muaVaoAll, banRaAll, dieuChinh] = await Promise.all([
-      this.baoCaoTNDN(nam, authToken),
+      this.baoCaoTNDN(nam, authToken, aggQuarters),
       this.muaVaoRepo.find({ where: this.getTenantFilter() as any }),
       this.banRaRepo.find({ where: this.getTenantFilter() as any }),
       this.dieuChinhService.getOrDefault(nam),
     ]);
+    const auto = this.nghiaVuTuSoTheoQuy(aggQuarters);
 
     const vatPerQuy: NvcsVatQuy[] = [1, 2, 3, 4].map((q) => {
       const range = quyToRange(q, nam);
@@ -231,7 +244,10 @@ export class BaoCaoService {
 
     return {
       nam,
-      sections: buildNvcsSections(tndn, vatPerQuy, dieuChinh as any),
+      sections: buildNvcsSections(tndn, vatPerQuy, dieuChinh as any, {
+        thueTNCN: auto.map((x) => x.thueTNCN),
+        baoHiem: auto.map((x) => x.baoHiem),
+      }),
     };
   }
 
@@ -244,12 +260,14 @@ export class BaoCaoService {
           end: new Date(Date.UTC(nam + 1, 0, 1)),
         };
 
+    const aggQuarters = await this.aggByQuy(nam, authToken);
     const [muaVaoAll, banRaAll, tndn, dieuChinh] = await Promise.all([
       this.muaVaoRepo.find({ where: this.getTenantFilter() as any }),
       this.banRaRepo.find({ where: this.getTenantFilter() as any }),
-      this.baoCaoTNDN(nam, authToken),
+      this.baoCaoTNDN(nam, authToken, aggQuarters),
       this.dieuChinhService.getOrDefault(nam),
     ]);
+    const auto = this.nghiaVuTuSoTheoQuy(aggQuarters);
 
     const muaVao = muaVaoAll.filter(
       (i) => i.isActive !== false && inDateRange(i.ngayHoaDon, range),
@@ -275,6 +293,10 @@ export class BaoCaoService {
         (s, i) => s + (Number(((dieuChinh as any)[f] || [])[i]) || 0),
         0,
       );
+    // Số từ sổ của kỳ đang xem — cùng nguồn với báo cáo nghĩa vụ chính sách
+    // để hai màn không lệch nhau; mỗi loại bảo hiểm về đúng dòng tài khoản.
+    const sumAuto = (sel: (x: NghiaVuTuSo) => number): number =>
+      idxs.reduce((s, i) => s + (auto[i] ? sel(auto[i]) : 0), 0);
     const tndnTamTinh = quy
       ? tndn.quy[quy - 1]?.thueTNDN || 0
       : tndn.luyKe.thueTNDN;
@@ -290,10 +312,10 @@ export class BaoCaoService {
       nghiaVuNganSach: {
         thueTNDN: tndnTamTinh,
         vatPhaiNop,
-        thueTNCN: sumDC('thueTNCN'),
-        bhxh: sumDC('bhxh3383'),
-        bhyt: sumDC('bhyt3384'),
-        bhtn: sumDC('bhtn3386'),
+        thueTNCN: sumAuto((x) => x.thueTNCN) + sumDC('thueTNCN'),
+        bhxh: sumAuto((x) => x.bhxh) + sumDC('bhxh3383'),
+        bhyt: sumAuto((x) => x.bhyt) + sumDC('bhyt3384'),
+        bhtn: sumAuto((x) => x.bhtn) + sumDC('bhtn3386'),
       },
     };
   }

@@ -52,6 +52,8 @@ export interface NvcsVatQuy {
   vatConKhauTru: number;
 }
 
+const num = (v: unknown): number => Number(v) || 0;
+
 /** Điều chỉnh thuế: mỗi field là mảng 4 quý. */
 export interface NvcsDieuChinh {
   thueTNCN?: number[];
@@ -60,7 +62,52 @@ export interface NvcsDieuChinh {
   bhtn3386?: number[];
 }
 
-const num = (v: unknown): number => Number(v) || 0;
+/** Số nghĩa vụ lấy thẳng từ sổ (phát sinh bên CÓ), mỗi field là mảng 4 quý. */
+export interface NvcsAuto {
+  thueTNCN: number[];
+  baoHiem: number[];
+}
+
+/** Dòng phát sinh theo tài khoản của một kỳ (khớp aggregate-balance). */
+export interface NvcsAggRow {
+  ma: string;
+  periodNo?: number;
+  periodCo: number;
+}
+
+/** Nghĩa vụ phát sinh trong kỳ, tách theo từng tài khoản nguồn. */
+export interface NghiaVuTuSo {
+  thueTNCN: number;
+  bhxh: number;
+  bhyt: number;
+  bhtn: number;
+  /** Tổng bảo hiểm = bhxh + bhyt + bhtn. */
+  baoHiem: number;
+}
+
+const tongCoTheoTk = (rows: NvcsAggRow[], tk: string): number =>
+  rows
+    .filter((r) => (r.ma || '').startsWith(tk))
+    .reduce((s, r) => s + num(r.periodCo), 0);
+
+/**
+ * Nghĩa vụ phát sinh trong kỳ, lấy bên CÓ của các tài khoản phải nộp:
+ * thuế TNCN từ 3335, bảo hiểm từ 3383 (BHXH) + 3384 (BHYT) + 3386 (BHTN).
+ * Bên NỢ là số ĐÃ nộp nên không tính. Gộp cả tiểu khoản (33351, 33831...).
+ */
+export function tinhNghiaVuTuSo(rows: NvcsAggRow[]): NghiaVuTuSo {
+  const r = rows || [];
+  const bhxh = tongCoTheoTk(r, '3383');
+  const bhyt = tongCoTheoTk(r, '3384');
+  const bhtn = tongCoTheoTk(r, '3386');
+  return {
+    thueTNCN: tongCoTheoTk(r, '3335'),
+    bhxh,
+    bhyt,
+    bhtn,
+    baoHiem: bhxh + bhyt + bhtn,
+  };
+}
 
 /** Lấy giá trị quý i (0-3) của 1 mảng điều chỉnh. */
 const dc = (arr: number[] | undefined, i: number): number => num((arr || [])[i]);
@@ -100,6 +147,7 @@ export function buildNvcsSections(
   tndn: NvcsTndnReport,
   vatPerQuy: NvcsVatQuy[],
   dieuChinh: NvcsDieuChinh,
+  auto?: NvcsAuto,
 ): NvcsSection[] {
   const v = vatPerQuy;
 
@@ -156,16 +204,17 @@ export function buildNvcsSections(
     ],
   };
 
+  // Số từ sổ (Có 3335 / Có 3383+3384+3386) là gốc; số nhập tay chỉ cộng thêm
+  // như một khoản điều chỉnh, giống cách chi phí không được trừ đang làm.
   const tncnSection: NvcsSection = {
     ma: 'TNCN',
     tieuDe: 'THUẾ TNCN',
     rows: [
-      sumRow('1', 'Thuế TNCN phải nộp', [
-        dc(dieuChinh.thueTNCN, 0),
-        dc(dieuChinh.thueTNCN, 1),
-        dc(dieuChinh.thueTNCN, 2),
-        dc(dieuChinh.thueTNCN, 3),
-      ]),
+      sumRow(
+        '1',
+        'Thuế TNCN phải nộp',
+        [0, 1, 2, 3].map((i) => dc(auto?.thueTNCN, i) + dc(dieuChinh.thueTNCN, i)),
+      ),
     ],
   };
 
@@ -178,6 +227,7 @@ export function buildNvcsSections(
         'Bảo hiểm phải nộp',
         [0, 1, 2, 3].map(
           (i) =>
+            dc(auto?.baoHiem, i) +
             dc(dieuChinh.bhxh3383, i) +
             dc(dieuChinh.bhyt3384, i) +
             dc(dieuChinh.bhtn3386, i),

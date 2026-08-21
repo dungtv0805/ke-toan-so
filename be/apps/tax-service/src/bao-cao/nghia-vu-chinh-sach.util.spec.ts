@@ -1,5 +1,6 @@
 import {
   buildNvcsSections,
+  tinhNghiaVuTuSo,
   NvcsTndnQuy,
   NvcsTndnReport,
   NvcsVatQuy,
@@ -150,5 +151,89 @@ describe('buildNvcsSections', () => {
     const row = bhxh.rows[0];
     expect(row.q1).toBe(111); // 100+10+1
     expect(row.luyKe).toBe(444); // 111*4
+  });
+});
+
+describe('tinhNghiaVuTuSo — lấy phát sinh bên CÓ từ sổ', () => {
+  it('TNCN lấy Có 3335, bảo hiểm lấy Có 3383+3384+3386', () => {
+    const rows = [
+      { ma: '3335', periodNo: 7, periodCo: 100 },
+      { ma: '3383', periodNo: 0, periodCo: 200 },
+      { ma: '3384', periodNo: 0, periodCo: 30 },
+      { ma: '3386', periodNo: 0, periodCo: 10 },
+    ];
+    expect(tinhNghiaVuTuSo(rows)).toEqual({
+      thueTNCN: 100,
+      bhxh: 200,
+      bhyt: 30,
+      bhtn: 10,
+      baoHiem: 240,
+    });
+  });
+
+  it('gộp cả tiểu khoản (33351, 33831) nhưng KHÔNG lấy 3385/3388/333 khác', () => {
+    const rows = [
+      { ma: '33351', periodNo: 0, periodCo: 60 },
+      { ma: '33352', periodNo: 0, periodCo: 40 },
+      { ma: '3331', periodNo: 0, periodCo: 999 },
+      { ma: '3334', periodNo: 0, periodCo: 999 },
+      { ma: '33831', periodNo: 0, periodCo: 5 },
+      { ma: '3385', periodNo: 0, periodCo: 999 },
+      { ma: '3388', periodNo: 0, periodCo: 999 },
+    ];
+    expect(tinhNghiaVuTuSo(rows)).toEqual({
+      thueTNCN: 100,
+      bhxh: 5,
+      bhyt: 0,
+      bhtn: 0,
+      baoHiem: 5,
+    });
+  });
+
+  it('bỏ qua bên NỢ (số đã nộp) và chịu được mảng rỗng', () => {
+    const rong = { thueTNCN: 0, bhxh: 0, bhyt: 0, bhtn: 0, baoHiem: 0 };
+    expect(tinhNghiaVuTuSo([{ ma: '3335', periodNo: 500, periodCo: 0 }])).toEqual(
+      rong,
+    );
+    expect(tinhNghiaVuTuSo([])).toEqual(rong);
+  });
+});
+
+describe('buildNvcsSections — TNCN/BHXH lấy từ sổ, cộng thêm số nhập tay', () => {
+  const tndn: NvcsTndnReport = {
+    quy: [tndnQuy({}), tndnQuy({}), tndnQuy({}), tndnQuy({})],
+    luyKe: tndnQuy({}),
+  };
+  const vat = [vatQuy({}), vatQuy({}), vatQuy({}), vatQuy({})];
+
+  it('TNCN = Có 3335 theo quý + điều chỉnh tay, lũy kế = tổng 4 quý', () => {
+    const tncn = buildNvcsSections(tndn, vat, { thueTNCN: [1, 0, 0, 0] }, {
+      thueTNCN: [10, 20, 30, 40],
+      baoHiem: [0, 0, 0, 0],
+    }).find((s) => s.ma === 'TNCN')!;
+    const row = tncn.rows[0];
+    expect(row.chiTieu).toBe('Thuế TNCN phải nộp');
+    expect(row.q1).toBe(11); // 10 từ sổ + 1 nhập tay
+    expect(row.q4).toBe(40);
+    expect(row.luyKe).toBe(101);
+  });
+
+  it('Bảo hiểm = Có 3383+3384+3386 theo quý + điều chỉnh tay', () => {
+    const bhxh = buildNvcsSections(
+      tndn,
+      vat,
+      { bhxh3383: [1, 0, 0, 0], bhyt3384: [2, 0, 0, 0], bhtn3386: [3, 0, 0, 0] },
+      { thueTNCN: [0, 0, 0, 0], baoHiem: [100, 200, 0, 0] },
+    ).find((s) => s.ma === 'BHXH')!;
+    const row = bhxh.rows[0];
+    expect(row.chiTieu).toBe('Bảo hiểm phải nộp');
+    expect(row.q1).toBe(106); // 100 từ sổ + 1+2+3 nhập tay
+    expect(row.q2).toBe(200);
+    expect(row.luyKe).toBe(306);
+  });
+
+  it('không truyền số từ sổ thì vẫn chạy như cũ (chỉ số nhập tay)', () => {
+    const sections = buildNvcsSections(tndn, vat, { thueTNCN: [5, 0, 0, 0] });
+    expect(sections.find((s) => s.ma === 'TNCN')!.rows[0].q1).toBe(5);
   });
 });

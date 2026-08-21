@@ -81,11 +81,11 @@ const ROWS: RowDef[] = [
   { key: "rRate", label: "Thuế suất TNDN", kind: "rate", note: "Bậc thang theo doanh thu lũy kế" },
   { key: "rThue", tt: "16", label: "Thuế TNDN hiện hành phải nộp", kind: "calc", calcKey: "thueTNDN", strong: true },
   { key: "rLnST", tt: "17", label: "Lợi nhuận sau thuế", kind: "calc", calcKey: "lnSauThue", strong: true },
-  { key: "sec2", label: "Nghĩa vụ ngân sách khác (nhập tay)", kind: "section" },
-  { key: "iTNCN", label: "Thuế TNCN phải nộp", kind: "input", inputKey: "thueTNCN" },
-  { key: "iBhxh", label: "Bảo hiểm xã hội (3383)", kind: "input", inputKey: "bhxh3383" },
-  { key: "iBhyt", label: "Bảo hiểm y tế (3384)", kind: "input", inputKey: "bhyt3384" },
-  { key: "iBhtn", label: "Bảo hiểm thất nghiệp (3386)", kind: "input", inputKey: "bhtn3386" },
+  { key: "sec2", label: "Nghĩa vụ ngân sách khác — đã tự lấy từ sổ, ô dưới chỉ nhập phần điều chỉnh thêm", kind: "section" },
+  { key: "iTNCN", label: "Thuế TNCN phải nộp", kind: "input", inputKey: "thueTNCN", note: "Tự lấy Có TK 3335 + số nhập thêm" },
+  { key: "iBhxh", label: "Bảo hiểm xã hội (3383)", kind: "input", inputKey: "bhxh3383", note: "Tự lấy Có TK 3383 + số nhập thêm" },
+  { key: "iBhyt", label: "Bảo hiểm y tế (3384)", kind: "input", inputKey: "bhyt3384", note: "Tự lấy Có TK 3384 + số nhập thêm" },
+  { key: "iBhtn", label: "Bảo hiểm thất nghiệp (3386)", kind: "input", inputKey: "bhtn3386", note: "Tự lấy Có TK 3386 + số nhập thêm" },
 ];
 
 const BaoCaoTNDNPage: React.FC = () => {

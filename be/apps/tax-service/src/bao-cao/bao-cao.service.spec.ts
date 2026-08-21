@@ -88,3 +88,85 @@ describe('BaoCaoService.nghiaVuChinhSach — bỏ dòng chờ bổ sung khỏi V
     expect(vatBanRa!.luyKe).toBe(300);
   });
 });
+
+// Hai dòng "Thuế TNCN phải nộp" và "Bảo hiểm phải nộp" lấy thẳng từ sổ:
+// phát sinh bên CÓ của 3335 (TNCN) và 3383+3384+3386 (bảo hiểm), theo từng quý.
+describe('BaoCaoService — TNCN/bảo hiểm lấy từ phát sinh bên Có', () => {
+  const nam = 2026;
+
+  // aggregateBalance được gọi 1 lần / quý: nhận ra quý qua tháng của startDate.
+  const aggregateBalance = jest.fn((start: string) => {
+    const thang = new Date(start).getUTCMonth();
+    const data =
+      thang === 0
+        ? [
+            { ma: '3335', priorNo: 0, priorCo: 0, periodNo: 40, periodCo: 100 },
+            { ma: '3383', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 200 },
+            { ma: '3384', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 30 },
+            { ma: '3386', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 10 },
+            { ma: '3388', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 999 },
+          ]
+        : thang === 3
+          ? [{ ma: '3335', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 50 }]
+          : [];
+    return Promise.resolve({ success: true, data });
+  });
+
+  const makeService = () =>
+    new BaoCaoService(
+      { find: jest.fn().mockResolvedValue([]) } as any,
+      { find: jest.fn().mockResolvedValue([]) } as any,
+      {
+        getOrDefault: jest.fn().mockResolvedValue({
+          nam,
+          thueTNCN: [1, 0, 0, 0],
+          bhxh3383: [0, 0, 0, 0],
+          bhyt3384: [0, 0, 0, 0],
+          bhtn3386: [0, 0, 0, 0],
+          thuNhapMienThue: [0, 0, 0, 0],
+          loDuocChuyen: [0, 0, 0, 0],
+        }),
+      } as any,
+      {
+        aggregateBalance,
+        aggregateNonDeductible: jest
+          .fn()
+          .mockResolvedValue({ success: true, data: [] }),
+      } as any,
+      { getCurrentTenantId: jest.fn().mockReturnValue(undefined) } as any,
+    );
+
+  beforeEach(() => aggregateBalance.mockClear());
+
+  it('nghiaVuChinhSach: TNCN = Có 3335 + số nhập tay; bảo hiểm = Có 3383+3384+3386', async () => {
+    const res = await makeService().nghiaVuChinhSach(nam);
+
+    const tncn = res.sections.find((s) => s.ma === 'TNCN')!.rows[0];
+    expect(tncn.q1).toBe(101); // 100 từ sổ + 1 nhập tay
+    expect(tncn.q2).toBe(50);
+    expect(tncn.luyKe).toBe(151);
+
+    const bh = res.sections.find((s) => s.ma === 'BHXH')!.rows[0];
+    expect(bh.q1).toBe(240); // 200+30+10, KHÔNG lấy 3388
+    expect(bh.luyKe).toBe(240);
+  });
+
+  it('nghiaVuChinhSach chỉ gọi aggregateBalance 4 lần (1 lần/quý, không lấy hai lượt)', async () => {
+    await makeService().nghiaVuChinhSach(nam);
+    expect(aggregateBalance).toHaveBeenCalledTimes(4);
+  });
+
+  it('tongHop cả năm: nghĩa vụ ngân sách cộng số từ sổ', async () => {
+    const res = await makeService().tongHop(nam, undefined);
+    expect(res.nghiaVuNganSach.thueTNCN).toBe(151); // 100 + 50 + 1 nhập tay
+    expect(res.nghiaVuNganSach.bhxh).toBe(200);
+    expect(res.nghiaVuNganSach.bhyt).toBe(30);
+    expect(res.nghiaVuNganSach.bhtn).toBe(10);
+  });
+
+  it('tongHop 1 quý: chỉ lấy số của quý đó', async () => {
+    const res = await makeService().tongHop(nam, 2);
+    expect(res.nghiaVuNganSach.thueTNCN).toBe(50);
+    expect(res.nghiaVuNganSach.bhxh).toBe(0);
+  });
+});
