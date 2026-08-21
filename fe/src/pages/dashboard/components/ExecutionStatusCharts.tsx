@@ -22,7 +22,7 @@ const ITEMS: { key: MucKey; title: string; color: string; vuotLaXau?: boolean }[
   { key: 'loiNhuan', title: 'Tình hình thực hiện lợi nhuận', color: 'hsl(var(--primary))' },
 ];
 
-/** Gauge nửa vòng 0%→150%. percent=0 khi có phát sinh mà không có kế hoạch. */
+/** Gauge nửa vòng 0%→150%. percent=100 khi kỳ chưa có kế hoạch. */
 const Gauge: React.FC<{ percent: number; color: string }> = ({ percent, color }) => (
   <div className="relative" style={{ height: 150 }}>
     <ResponsiveContainer width="100%" height="100%">

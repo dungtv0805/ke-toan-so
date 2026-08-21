@@ -24,13 +24,13 @@ describe("tinhTinhHinhThucHien", () => {
     expect(ketQua.loiNhuan).toMatchObject({ keHoach: 100, thucHien: 40, tyLeDat: 40 });
   });
 
-  it("phát sinh ngoài kế hoạch thì tỷ lệ đạt là 0 và cờ chuaCoKeHoach bật", () => {
-    const ketQua = tinhTinhHinhThucHien([], [diem(1, 50, 20)]);
-    expect(ketQua.doanhThu).toMatchObject({ keHoach: 0, thucHien: 50, tyLeDat: 0 });
+  it("chưa có kế hoạch mà đã phát sinh thì vẫn là 100%, cờ chuaCoKeHoach bật", () => {
+    const ketQua = tinhTinhHinhThucHien([], [diem(1, 302, 20)]);
+    expect(ketQua.doanhThu).toMatchObject({ keHoach: 0, thucHien: 302, tyLeDat: 100 });
     expect(ketQua.doanhThu.chuaCoKeHoach).toBe(true);
   });
 
-  it("kế hoạch 0 và thực hiện 0 là bám đúng kế hoạch — 100%", () => {
+  it("kế hoạch 0 và thực hiện 0 cũng là 100%", () => {
     const ketQua = tinhTinhHinhThucHien([], []);
     expect(ketQua.doanhThu).toMatchObject({ keHoach: 0, thucHien: 0, chenhLech: 0, tyLeDat: 100 });
     expect(ketQua.chiPhi.tyLeDat).toBe(100);
