@@ -85,7 +85,9 @@ const ROWS: RowDef[] = [
   { key: "iTNCN", label: "Thuế TNCN phải nộp", kind: "input", inputKey: "thueTNCN", note: "Tự lấy Có TK 3335 + số nhập thêm" },
   { key: "iBhxh", label: "Bảo hiểm xã hội (3383)", kind: "input", inputKey: "bhxh3383", note: "Tự lấy Có TK 3383 + số nhập thêm" },
   { key: "iBhyt", label: "Bảo hiểm y tế (3384)", kind: "input", inputKey: "bhyt3384", note: "Tự lấy Có TK 3384 + số nhập thêm" },
-  { key: "iBhtn", label: "Bảo hiểm thất nghiệp (3386)", kind: "input", inputKey: "bhtn3386", note: "Tự lấy Có TK 3386 + số nhập thêm" },
+  // inputKey giữ tên cũ bhtn3386 (khỏi phải chuyển dữ liệu đã lưu); nguồn tự
+  // tính là TK 3385 — theo hệ thống tài khoản, 3386 là nhận ký quỹ, ký cược.
+  { key: "iBhtn", label: "Bảo hiểm thất nghiệp (3385)", kind: "input", inputKey: "bhtn3386", note: "Tự lấy Có TK 3385 + số nhập thêm" },
 ];
 
 const BaoCaoTNDNPage: React.FC = () => {

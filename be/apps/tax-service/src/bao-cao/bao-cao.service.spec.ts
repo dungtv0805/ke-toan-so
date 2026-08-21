@@ -103,7 +103,8 @@ describe('BaoCaoService — TNCN/bảo hiểm lấy từ phát sinh bên Có', (
             { ma: '3335', priorNo: 0, priorCo: 0, periodNo: 40, periodCo: 100 },
             { ma: '3383', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 200 },
             { ma: '3384', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 30 },
-            { ma: '3386', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 10 },
+            { ma: '3385', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 10 },
+            { ma: '3386', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 777 },
             { ma: '3388', priorNo: 0, priorCo: 0, periodNo: 0, periodCo: 999 },
           ]
         : thang === 3
@@ -138,7 +139,7 @@ describe('BaoCaoService — TNCN/bảo hiểm lấy từ phát sinh bên Có', (
 
   beforeEach(() => aggregateBalance.mockClear());
 
-  it('nghiaVuChinhSach: TNCN = Có 3335 + số nhập tay; bảo hiểm = Có 3383+3384+3386', async () => {
+  it('nghiaVuChinhSach: TNCN = Có 3335 + số nhập tay; bảo hiểm = Có 3383+3384+3385', async () => {
     const res = await makeService().nghiaVuChinhSach(nam);
 
     const tncn = res.sections.find((s) => s.ma === 'TNCN')!.rows[0];
@@ -147,7 +148,7 @@ describe('BaoCaoService — TNCN/bảo hiểm lấy từ phát sinh bên Có', (
     expect(tncn.luyKe).toBe(151);
 
     const bh = res.sections.find((s) => s.ma === 'BHXH')!.rows[0];
-    expect(bh.q1).toBe(240); // 200+30+10, KHÔNG lấy 3388
+    expect(bh.q1).toBe(240); // 200+30+10, KHÔNG lấy 3386/3388
     expect(bh.luyKe).toBe(240);
   });
 

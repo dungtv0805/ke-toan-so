@@ -113,7 +113,7 @@ const TongHopThuePage: React.FC = () => {
     { key: "3", chiTieu: "Thuế TNCN phải nộp", giaTri: data?.nghiaVuNganSach.thueTNCN },
     { key: "4", chiTieu: "Bảo hiểm xã hội (3383)", giaTri: data?.nghiaVuNganSach.bhxh },
     { key: "5", chiTieu: "Bảo hiểm y tế (3384)", giaTri: data?.nghiaVuNganSach.bhyt },
-    { key: "6", chiTieu: "Bảo hiểm thất nghiệp (3386)", giaTri: data?.nghiaVuNganSach.bhtn },
+    { key: "6", chiTieu: "Bảo hiểm thất nghiệp (3385)", giaTri: data?.nghiaVuNganSach.bhtn },
   ];
 
   const vatView = vatRows.filter((r) => vatFilters.matches(r, cellValue));

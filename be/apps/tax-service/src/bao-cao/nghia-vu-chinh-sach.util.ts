@@ -81,7 +81,7 @@ export interface NghiaVuTuSo {
   bhxh: number;
   bhyt: number;
   bhtn: number;
-  /** Tổng bảo hiểm = bhxh + bhyt + bhtn. */
+  /** BHTN lấy ở 3385; ô nhập tay vẫn mang tên cũ bhtn3386 để khỏi đổi dữ liệu. */
   baoHiem: number;
 }
 
@@ -92,14 +92,14 @@ const tongCoTheoTk = (rows: NvcsAggRow[], tk: string): number =>
 
 /**
  * Nghĩa vụ phát sinh trong kỳ, lấy bên CÓ của các tài khoản phải nộp:
- * thuế TNCN từ 3335, bảo hiểm từ 3383 (BHXH) + 3384 (BHYT) + 3386 (BHTN).
+ * thuế TNCN từ 3335, bảo hiểm từ 3383 (BHXH) + 3384 (BHYT) + 3385 (BHTN).
  * Bên NỢ là số ĐÃ nộp nên không tính. Gộp cả tiểu khoản (33351, 33831...).
  */
 export function tinhNghiaVuTuSo(rows: NvcsAggRow[]): NghiaVuTuSo {
   const r = rows || [];
   const bhxh = tongCoTheoTk(r, '3383');
   const bhyt = tongCoTheoTk(r, '3384');
-  const bhtn = tongCoTheoTk(r, '3386');
+  const bhtn = tongCoTheoTk(r, '3385');
   return {
     thueTNCN: tongCoTheoTk(r, '3335'),
     bhxh,

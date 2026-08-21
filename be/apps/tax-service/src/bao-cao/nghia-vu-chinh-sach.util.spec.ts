@@ -155,12 +155,12 @@ describe('buildNvcsSections', () => {
 });
 
 describe('tinhNghiaVuTuSo — lấy phát sinh bên CÓ từ sổ', () => {
-  it('TNCN lấy Có 3335, bảo hiểm lấy Có 3383+3384+3386', () => {
+  it('TNCN lấy Có 3335, bảo hiểm lấy Có 3383+3384+3385', () => {
     const rows = [
       { ma: '3335', periodNo: 7, periodCo: 100 },
       { ma: '3383', periodNo: 0, periodCo: 200 },
       { ma: '3384', periodNo: 0, periodCo: 30 },
-      { ma: '3386', periodNo: 0, periodCo: 10 },
+      { ma: '3385', periodNo: 0, periodCo: 10 },
     ];
     expect(tinhNghiaVuTuSo(rows)).toEqual({
       thueTNCN: 100,
@@ -171,14 +171,14 @@ describe('tinhNghiaVuTuSo — lấy phát sinh bên CÓ từ sổ', () => {
     });
   });
 
-  it('gộp cả tiểu khoản (33351, 33831) nhưng KHÔNG lấy 3385/3388/333 khác', () => {
+  it('gộp cả tiểu khoản (33351, 33831) nhưng KHÔNG lấy 3386/3388/333 khác', () => {
     const rows = [
       { ma: '33351', periodNo: 0, periodCo: 60 },
       { ma: '33352', periodNo: 0, periodCo: 40 },
       { ma: '3331', periodNo: 0, periodCo: 999 },
       { ma: '3334', periodNo: 0, periodCo: 999 },
       { ma: '33831', periodNo: 0, periodCo: 5 },
-      { ma: '3385', periodNo: 0, periodCo: 999 },
+      { ma: '3386', periodNo: 0, periodCo: 999 },
       { ma: '3388', periodNo: 0, periodCo: 999 },
     ];
     expect(tinhNghiaVuTuSo(rows)).toEqual({
@@ -218,7 +218,7 @@ describe('buildNvcsSections — TNCN/BHXH lấy từ sổ, cộng thêm số nh�
     expect(row.luyKe).toBe(101);
   });
 
-  it('Bảo hiểm = Có 3383+3384+3386 theo quý + điều chỉnh tay', () => {
+  it('Bảo hiểm = Có 3383+3384+3385 theo quý + điều chỉnh tay', () => {
     const bhxh = buildNvcsSections(
       tndn,
       vat,
