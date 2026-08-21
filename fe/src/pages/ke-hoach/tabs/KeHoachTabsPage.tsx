@@ -1,12 +1,17 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ConfigProvider, Segmented, Select, Space, Typography } from "antd";
 import { CheckCircleOutlined } from "@ant-design/icons";
 import KeHoachPage from "../KeHoachPage";
 import { TabComingSoon } from "./TabComingSoon";
 import { BanHangTab } from "./ban-hang/BanHangTab";
 import { NhanSuTab } from "./nhan-su/NhanSuTab";
+import { KqkdTab } from "./kqkd/KqkdTab";
+import { keHoachService } from "@/services/keHoachService";
 
 const { Text } = Typography;
+
+/** Chuỗi rỗng = không lọc phiên bản. Không dùng undefined: antd hiện ô trống, mất nhãn. */
+const TAT_CA_PHIEN_BAN = "";
 
 /** Sáu tab đầu là sáu sheet của file thiết kế; "Chi tiết" là lưới bút toán cũ. */
 const TAB_OPTIONS = [
@@ -22,6 +27,16 @@ const TAB_OPTIONS = [
 const KeHoachTabsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("ban-hang");
   const [nam, setNam] = useState(() => new Date().getFullYear());
+  // Gộp nhiều phiên bản kế hoạch vào một bảng KQKD là cộng trùng — cho chọn được.
+  const [phienBan, setPhienBan] = useState<string>(TAT_CA_PHIEN_BAN);
+  const [phienBanList, setPhienBanList] = useState<string[]>([]);
+
+  useEffect(() => {
+    keHoachService
+      .getPhienBanOptions("KE_HOACH")
+      .then(setPhienBanList)
+      .catch(() => setPhienBanList([]));
+  }, []);
 
   const namOptions = useMemo(() => {
     const nayNay = new Date().getFullYear();
@@ -73,6 +88,17 @@ const KeHoachTabsPage: React.FC = () => {
           />
         </ConfigProvider>
         <Space wrap>
+          {activeTab === "kqkd" && (
+            <Select
+              value={phienBan}
+              onChange={setPhienBan}
+              style={{ width: 200 }}
+              options={[
+                { label: "Tất cả phiên bản", value: TAT_CA_PHIEN_BAN },
+                ...phienBanList.map((p) => ({ label: p, value: p })),
+              ]}
+            />
+          )}
           {/* Tab "Chi tiết" có bộ lọc kỳ riêng nên không dùng ô chọn năm này. */}
           {activeTab !== "chi-tiet" && (
             <Select
@@ -89,7 +115,7 @@ const KeHoachTabsPage: React.FC = () => {
         {activeTab === "ban-hang" && <BanHangTab nam={nam} />}
         {activeTab === "nhan-su" && <NhanSuTab nam={nam} />}
         {activeTab === "kqkd" && (
-          <TabComingSoon tieuDe="Kế hoạch kết quả kinh doanh" />
+          <KqkdTab nam={nam} phienBan={phienBan || undefined} />
         )}
         {activeTab === "dong-tien" && (
           <TabComingSoon tieuDe="Kế hoạch dòng tiền" />

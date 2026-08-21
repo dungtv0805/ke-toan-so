@@ -5,3 +5,4 @@ import './nhat-ky-chung.dto';
 // Re-export all types
 export * from './chung-tu.dto';
 export * from './nhat-ky-chung.dto';
+export * from './kqkd-ke-hoach.dto';

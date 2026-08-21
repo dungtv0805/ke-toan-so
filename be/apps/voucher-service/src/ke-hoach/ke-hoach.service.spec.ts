@@ -20,11 +20,21 @@ const repo = (rows: unknown[] = []): Repo => ({
   deleteMany: jest.fn(() => Promise.resolve({ deletedCount: 2 })),
 });
 
-const dungService = (keHoach: Repo, chungTu: Repo, tenantId = 't1') =>
+const dungService = (
+  keHoach: Repo,
+  chungTu: Repo,
+  tenantId = 't1',
+  serviceClient: unknown = {
+    getSanPham: jest.fn(() => Promise.resolve({ success: true, data: [] })),
+    getNhomSanPham: jest.fn(() => Promise.resolve({ success: true, data: [] })),
+    getNhomKhoanMuc: jest.fn(() => Promise.resolve({ success: true, data: [] })),
+  },
+) =>
   new KeHoachService(
     keHoach as never,
     chungTu as never,
     { getCurrentTenantId: () => tenantId } as never,
+    serviceClient as never,
   );
 
 /** $match luôn là stage đầu tiên của mọi pipeline trong service này. */
@@ -117,5 +127,75 @@ describe('KeHoachService.getSeries', () => {
     expect(res.data).toHaveLength(12);
     expect(res.data[2]).toMatchObject({ thang: 3, doanhThu: 100 });
     expect(matchDauTien(keHoach)).toMatchObject({ loaiKeHoach: 'KE_HOACH', tenantId: 't1' });
+  });
+});
+
+describe('KeHoachService.getKqkd', () => {
+  const serviceClientRong = () => ({
+    getSanPham: jest.fn(() => Promise.resolve({ success: true, data: [] })),
+    getNhomSanPham: jest.fn(() => Promise.resolve({ success: true, data: [] })),
+    getNhomKhoanMuc: jest.fn(() => Promise.resolve({ success: true, data: [] })),
+  });
+
+  it('lọc đúng năm, loại kế hoạch, phiên bản và tenant', async () => {
+    const keHoach = repo();
+    const sc = serviceClientRong();
+    await dungService(keHoach, repo(), 't9', sc).getKqkd(2026, 'KE_HOACH', 'KH gốc');
+
+    const match = matchDauTien(keHoach);
+    expect(match).toMatchObject({
+      loaiKeHoach: 'KE_HOACH',
+      phienBan: 'KH gốc',
+      tenantId: 't9',
+    });
+    const ngay = match.ngay as { $gte: Date; $lte: Date };
+    expect(ngay.$gte.getUTCFullYear()).toBe(2026);
+    expect(ngay.$gte.getUTCMonth()).toBe(0);
+    expect(ngay.$lte.getUTCFullYear()).toBe(2026);
+    expect(ngay.$lte.getUTCMonth()).toBe(11);
+  });
+
+  it('bỏ trống phiên bản thì không ràng buộc trường đó', async () => {
+    const keHoach = repo();
+    await dungService(keHoach, repo(), 't9', serviceClientRong()).getKqkd(2026, 'KE_HOACH');
+    expect(matchDauTien(keHoach)).not.toHaveProperty('phienBan');
+  });
+
+  it('trả cây báo cáo dựng từ dòng đọc được', async () => {
+    const keHoach = repo([
+      {
+        ngay: new Date('2026-02-10T00:00:00.000Z'),
+        soTien: 500,
+        danhMuc: { taiKhoanCo: { ma: '511' } },
+      },
+    ]);
+    const res = await dungService(keHoach, repo(), 't9', serviceClientRong()).getKqkd(
+      2026,
+      'KE_HOACH',
+    );
+
+    expect(res.success).toBe(true);
+    expect(res.data.nam).toBe(2026);
+    expect(res.data.doanhThuThuanNam).toBe(500);
+    expect(res.data.dong.find((d) => d.key === '01')!.thang[1]).toBe(500);
+  });
+
+  it('master-data hỏng thì báo cáo vẫn ra, không ném lỗi', async () => {
+    const keHoach = repo([
+      {
+        ngay: new Date('2026-02-10T00:00:00.000Z'),
+        soTien: 500,
+        danhMuc: { taiKhoanCo: { ma: '511' }, sanPham: { ma: 'SP01', ten: 'Bàn' } },
+      },
+    ]);
+    const sc = {
+      getSanPham: jest.fn(() => Promise.reject(new Error('master-data chết'))),
+      getNhomSanPham: jest.fn(() => Promise.reject(new Error('master-data chết'))),
+      getNhomKhoanMuc: jest.fn(() => Promise.reject(new Error('master-data chết'))),
+    };
+
+    const res = await dungService(keHoach, repo(), 't9', sc).getKqkd(2026, 'KE_HOACH');
+    expect(res.data.dong.find((d) => d.key === '01')!.thang[1]).toBe(500);
+    expect(res.data.dong.find((d) => d.key === '01')!.con![0].ten).toBe('Chưa phân nhóm');
   });
 });

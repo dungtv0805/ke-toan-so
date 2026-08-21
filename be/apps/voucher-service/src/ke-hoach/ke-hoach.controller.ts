@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   Patch,
   Post,
@@ -23,6 +24,7 @@ import {
   CreateKeHoachDto,
   DeleteBatchKeHoachDto,
   KeHoachQueryDto,
+  KqkdQueryDto,
   SeriesQueryDto,
   SoSanhQueryDto,
   UpdateKeHoachDto,
@@ -76,6 +78,20 @@ export class KeHoachController {
       this.chieu(type),
       this.chiTieu(chiTieu),
       filter,
+    );
+  }
+
+  @Get('kqkd')
+  @Roles(...XEM)
+  async getKqkd(
+    @Query() query: KqkdQueryDto,
+    @Headers('authorization') authToken?: string,
+  ) {
+    return this.keHoachService.getKqkd(
+      query.nam,
+      query.loaiKeHoach || 'KE_HOACH',
+      query.phienBan,
+      authToken,
     );
   }
 
