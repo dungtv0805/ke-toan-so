@@ -22,4 +22,15 @@ export interface KqkdKeHoachReport {
   dong: KqkdKeHoachDong[];
   /** Mẫu số của cột % — doanh thu thuần (mã 10) cả năm. */
   doanhThuThuanNam: number;
+  /**
+   * Ba dãy 12 tháng dưới đây phục vụ dòng "DOANH THU HÒA VỐN". Hòa vốn là một
+   * TỶ SỐ nên không cộng dồn được: mỗi cột (tháng, quý, 6 tháng, năm) phải tính
+   * lại từ ba số của chính kỳ đó, vì vậy BE trả nguyên liệu chứ không trả sẵn
+   * một dòng 12 số.
+   */
+  doanhThuThuanThang: number[];
+  /** Định phí: chi phí tài chính + CPBH/CPQLDN có khoản mục loại CO_DINH. */
+  dinhPhiThang: number[];
+  /** Biến phí: giá vốn + CPBH/CPQLDN có khoản mục loại BIEN_DOI. */
+  bienPhiThang: number[];
 }

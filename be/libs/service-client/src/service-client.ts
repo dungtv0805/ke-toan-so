@@ -223,6 +223,22 @@ export class ServiceClient extends BaseServiceClient {
     });
   }
 
+  /**
+   * Toàn bộ khoản mục KÈM `loaiChiPhi` (định phí / biến phí). Khoản mục không có
+   * route `/all` như ba danh mục trên — route gốc phân trang với `limit` mặc định
+   * 10, nên phải tự xin limit lớn; quên là báo cáo âm thầm phân loại sai từ khoản
+   * mục thứ 11 trở đi.
+   */
+  async getKhoanMucTatCa(
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<ServiceResponse<KhoanMucResponse[]>> {
+    return this.get<KhoanMucResponse[]>('master-data', '/khoan-muc', {
+      headers: this.headerDanhMuc(authToken, tenantId),
+      query: { limit: '5000', page: '1' },
+    });
+  }
+
   async getSoDuDauKy(
     authToken?: string,
     tenantId?: string,

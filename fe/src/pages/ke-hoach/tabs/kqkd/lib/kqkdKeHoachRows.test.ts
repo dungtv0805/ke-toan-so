@@ -8,7 +8,24 @@ const thang = (...v: number[]) =>
 const baoCao = (
   dong: KqkdKeHoachReport["dong"],
   doanhThuThuanNam = 0,
-): KqkdKeHoachReport => ({ nam: 2026, dong, doanhThuThuanNam });
+  hoaVon: Partial<
+    Pick<
+      KqkdKeHoachReport,
+      "doanhThuThuanThang" | "dinhPhiThang" | "bienPhiThang"
+    >
+  > = {},
+): KqkdKeHoachReport => ({
+  nam: 2026,
+  dong,
+  doanhThuThuanNam,
+  doanhThuThuanThang: thang(),
+  dinhPhiThang: thang(),
+  bienPhiThang: thang(),
+  ...hoaVon,
+});
+
+/** Dòng hòa vốn luôn là dòng cuối bảng. */
+const dongHoaVon = (r: KqkdKeHoachReport) => dungBangKqkd(r).at(-1)!;
 
 describe("dungBangKqkd", () => {
   it("quý là tổng đúng ba tháng của quý đó", () => {
@@ -85,5 +102,95 @@ describe("dungBangKqkd", () => {
       baoCao([{ key: "21", ten: "DOANH THU TÀI CHÍNH", cap: 0, thang: thang(1), con: [] }]),
     );
     expect(hang.children).toBeUndefined();
+  });
+});
+
+describe("dòng DOANH THU HÒA VỐN", () => {
+  it("là dòng cuối cùng của bảng, cấp 0, không có dòng con", () => {
+    const bang = dungBangKqkd(
+      baoCao([{ key: "01", ten: "DOANH THU", cap: 0, thang: thang(10) }]),
+    );
+    const cuoi = bang.at(-1)!;
+    expect(bang).toHaveLength(2);
+    expect(cuoi.key).toBe("HOA_VON");
+    expect(cuoi.nhan).toBe("DOANH THU HÒA VỐN");
+    expect(cuoi.cap).toBe(0);
+    expect(cuoi.children).toBeUndefined();
+  });
+
+  it("áp đúng công thức định phí / (1 − biến phí / doanh thu)", () => {
+    // T1: DT 1000, biến phí 600 -> tỷ lệ số dư đảm phí 0.4; định phí 200 -> 500.
+    const hv = dongHoaVon(
+      baoCao([], 1000, {
+        doanhThuThuanThang: thang(1000),
+        bienPhiThang: thang(600),
+        dinhPhiThang: thang(200),
+      }),
+    );
+    expect(hv.thang[0]).toBeCloseTo(500);
+    expect(hv.nam).toBeCloseTo(500);
+  });
+
+  it("mỗi cột tính lại từ số của chính kỳ đó, KHÔNG cộng dồn 12 tháng", () => {
+    // Hai tháng giống hệt nhau: hòa vốn từng tháng 500, cả năm 1000 (không phải
+    // 500 vì tử số cộng đôi, cũng không phải tổng 12 ô tháng = 1000 tình cờ ở
+    // đây — quý 1 mới là chỗ phân biệt rõ).
+    const hv = dongHoaVon(
+      baoCao([], 2000, {
+        doanhThuThuanThang: thang(1000, 1000),
+        bienPhiThang: thang(600, 600),
+        dinhPhiThang: thang(200, 200),
+      }),
+    );
+    expect(hv.thang[0]).toBeCloseTo(500);
+    expect(hv.thang[1]).toBeCloseTo(500);
+    expect(hv.quy[0]).toBeCloseTo(1000); // 400 / 0.4
+    expect(hv.sauThangDau).toBeCloseTo(1000);
+    expect(hv.sauThangCuoi).toBe(0);
+  });
+
+  it("tỷ lệ định phí/biến phí lệch nhau giữa các tháng thì hòa vốn năm không bằng tổng tháng", () => {
+    const hv = dongHoaVon(
+      baoCao([], 1200, {
+        doanhThuThuanThang: thang(1000, 200),
+        bienPhiThang: thang(500, 180),
+        dinhPhiThang: thang(100, 100),
+      }),
+    );
+    expect(hv.thang[0]).toBeCloseTo(200); // 100 / 0.5
+    expect(hv.thang[1]).toBeCloseTo(1000); // 100 / 0.1
+    // Năm: định phí 200, biến phí 680, DT 1200 -> 200 / (1 − 680/1200)
+    expect(hv.nam).toBeCloseTo(461.538, 2);
+    expect(hv.nam).not.toBeCloseTo(1200); // tổng hai ô tháng
+  });
+
+  it("doanh thu bằng 0 thì trả 0 — không chia cho 0, không ra Infinity", () => {
+    const hv = dongHoaVon(baoCao([], 0, { dinhPhiThang: thang(200) }));
+    expect(hv.thang[0]).toBe(0);
+    expect(hv.nam).toBe(0);
+    expect(hv.phanTram).toBeNull();
+  });
+
+  it("biến phí ăn hết doanh thu thì trả 0 — không ra số âm đánh lừa", () => {
+    const hv = dongHoaVon(
+      baoCao([], 1000, {
+        doanhThuThuanThang: thang(1000),
+        bienPhiThang: thang(1200),
+        dinhPhiThang: thang(200),
+      }),
+    );
+    expect(hv.thang[0]).toBe(0);
+    expect(hv.nam).toBe(0);
+  });
+
+  it("phần trăm là hòa vốn năm trên doanh thu thuần năm", () => {
+    const hv = dongHoaVon(
+      baoCao([], 1000, {
+        doanhThuThuanThang: thang(1000),
+        bienPhiThang: thang(600),
+        dinhPhiThang: thang(200),
+      }),
+    );
+    expect(hv.phanTram).toBeCloseTo(0.5); // 500 / 1000
   });
 });

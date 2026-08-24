@@ -6,6 +6,10 @@ export interface KhoanMucResponse {
   ma: string;
   ten: string;
   loai: LoaiKhoanMuc;
+  /** Mã nhóm khoản mục — khi lưu là mã, khi lưu là id, bên đọc phải nhận cả hai. */
+  nhom?: string;
+  /** 'CO_DINH' | 'BIEN_DOI' — chưa khai thì rỗng. */
+  loaiChiPhi?: string;
   moTa?: string;
   isActive: boolean;
 }

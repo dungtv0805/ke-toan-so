@@ -232,13 +232,14 @@ export class KeHoachService {
       }
     };
 
-    const [sanPham, nhomSanPham, nhomKhoanMuc] = await Promise.all([
+    const [sanPham, nhomSanPham, nhomKhoanMuc, khoanMuc] = await Promise.all([
       lay(() => this.serviceClient.getSanPham(authToken, tenantId)),
       lay(() => this.serviceClient.getNhomSanPham(authToken, tenantId)),
       lay(() => this.serviceClient.getNhomKhoanMuc(authToken, tenantId)),
+      lay(() => this.serviceClient.getKhoanMucTatCa(authToken, tenantId)),
     ]);
 
-    return { sanPham, nhomSanPham, nhomKhoanMuc };
+    return { sanPham, nhomSanPham, nhomKhoanMuc, khoanMuc };
   }
 
   async findById(id: string): Promise<{ success: boolean; data: KeHoachDong }> {

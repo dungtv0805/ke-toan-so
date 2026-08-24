@@ -46,12 +46,20 @@ export interface MucTraCuu {
   ma: string;
   ten: string;
   nhom?: string;
+  /** 'CO_DINH' | 'BIEN_DOI' — chỉ khoản mục mới mang trường này. */
+  loaiChiPhi?: string;
 }
 
 export interface DanhMucTraCuuKqkd {
   sanPham: MucTraCuu[];
   nhomSanPham: MucTraCuu[];
   nhomKhoanMuc: MucTraCuu[];
+  /**
+   * Danh mục khoản mục — chỉ cần cho việc tách định phí / biến phí. Không có
+   * (master-data chết) thì mọi chi phí bán hàng / quản lý rơi về định phí,
+   * đúng như khoản mục chưa khai loại chi phí.
+   */
+  khoanMuc?: MucTraCuu[];
 }
 
 const mangThang = (): number[] => new Array<number>(SO_THANG).fill(0);
@@ -122,10 +130,18 @@ export function buildKqkdKeHoach(
     if (khoaId) nhomKhoanMucTheoKhoa.set(khoaId, n);
   }
 
+  // Khoản mục nào là biến phí — tra theo MÃ, giống mọi chỗ khác trong file này.
+  const loaiChiPhiTheoMa = new Map(
+    (danhMuc.khoanMuc ?? []).map((km) => [km.ma, km.loaiChiPhi]),
+  );
+
   const tongThang: ChiTieuGocKqkd[] = Array.from(
     { length: SO_THANG },
     chiTieuGocRong,
   );
+  // Nguyên liệu của dòng "DOANH THU HÒA VỐN" — xem chú thích ở KqkdKeHoachReport.
+  const dinhPhiThang = mangThang();
+  const bienPhiThang = mangThang();
   // Cây nhóm sản phẩm, riêng cho từng chỉ tiêu gốc 01 / 02 / 11.
   const cayNhomSanPham = new Map<MaChiTieuGoc, Map<string, RoThang>>([
     ['01', new Map()],
@@ -151,6 +167,21 @@ export function buildKqkdKeHoach(
       maTaiKhoanNo: row.danhMuc?.taiKhoanNo?.ma,
       maTaiKhoanCo: row.danhMuc?.taiKhoanCo?.ma,
     });
+
+    // Tách định phí / biến phí. Giá vốn (11) là biến phí thuần — nó gom theo sản
+    // phẩm chứ không theo khoản mục nên không có gì để phân loại; chi phí tài
+    // chính (22) là định phí. CPBH (25) và CPQLDN (26) theo `loaiChiPhi` của
+    // khoản mục, CHƯA KHAI thì coi là định phí: thà doanh thu hòa vốn cao hơn
+    // thực tế còn hơn thấp giả.
+    if (tongThang[i]['11'] !== truoc['11']) bienPhiThang[i] += soTien;
+    if (tongThang[i]['22'] !== truoc['22']) dinhPhiThang[i] += soTien;
+    for (const ma of ['25', '26'] as const) {
+      if (tongThang[i][ma] === truoc[ma]) continue;
+      const maKm = row.danhMuc?.khoanMuc?.ma;
+      const loai = maKm ? loaiChiPhiTheoMa.get(maKm) : undefined;
+      if (loai === 'BIEN_DOI') bienPhiThang[i] += soTien;
+      else dinhPhiThang[i] += soTien;
+    }
 
     for (const [ma, bang] of cayNhomSanPham) {
       if (tongThang[i][ma] === truoc[ma]) continue;
@@ -185,12 +216,14 @@ export function buildKqkdKeHoach(
     }
   }
 
+  const doanhThuThuanThang = tongThang.map((g) => tinhChiTieuDanXuat(g).m10);
+
   return {
     nam,
-    doanhThuThuanNam: tongThang.reduce(
-      (t, g) => t + tinhChiTieuDanXuat(g).m10,
-      0,
-    ),
+    doanhThuThuanNam: doanhThuThuanThang.reduce((t, v) => t + v, 0),
+    doanhThuThuanThang,
+    dinhPhiThang,
+    bienPhiThang,
     dong: dungCayDong(tongThang, cayNhomSanPham, cayKhoanMuc),
   };
 }

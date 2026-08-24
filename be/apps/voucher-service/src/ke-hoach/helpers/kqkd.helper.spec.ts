@@ -347,3 +347,82 @@ describe('buildKqkdKeHoach — danh mục hỏng', () => {
     expect(con[0].thang[0]).toBe(55);
   });
 });
+
+describe('buildKqkdKeHoach — nguyên liệu dòng Doanh thu hòa vốn', () => {
+  const dmChiPhi: DanhMucTraCuuKqkd = {
+    sanPham: [],
+    nhomSanPham: [],
+    nhomKhoanMuc: [],
+    khoanMuc: [
+      { ma: 'KM_BD', ten: 'Hoa hồng bán hàng', loaiChiPhi: 'BIEN_DOI' },
+      { ma: 'KM_CD', ten: 'Thuê văn phòng', loaiChiPhi: 'CO_DINH' },
+      { ma: 'KM_TRONG', ten: 'Chưa khai loại' },
+    ],
+  };
+
+  it('giá vốn vào biến phí, chi phí tài chính vào định phí', () => {
+    const r = buildKqkdKeHoach(
+      [
+        dong({ soTien: 400, danhMuc: { taiKhoanNo: { ma: '632' }, taiKhoanCo: { ma: '156' } } }),
+        dong({ soTien: 20, danhMuc: { taiKhoanNo: { ma: '635' }, taiKhoanCo: { ma: '112' } } }),
+      ],
+      dmChiPhi,
+      2026,
+    );
+    expect(r.bienPhiThang[0]).toBe(400);
+    expect(r.dinhPhiThang[0]).toBe(20);
+  });
+
+  it('CPBH/CPQLDN tách theo loaiChiPhi của khoản mục', () => {
+    const r = buildKqkdKeHoach(
+      [
+        dong({ soTien: 30, danhMuc: { taiKhoanNo: { ma: '641' }, khoanMuc: { ma: 'KM_BD' } } }),
+        dong({ soTien: 50, danhMuc: { taiKhoanNo: { ma: '642' }, khoanMuc: { ma: 'KM_CD' } } }),
+      ],
+      dmChiPhi,
+      2026,
+    );
+    expect(r.bienPhiThang[0]).toBe(30);
+    expect(r.dinhPhiThang[0]).toBe(50);
+  });
+
+  it('khoản mục chưa khai loại chi phí, tra không ra, hoặc thiếu hẳn -> định phí', () => {
+    const r = buildKqkdKeHoach(
+      [
+        dong({ soTien: 7, danhMuc: { taiKhoanNo: { ma: '642' }, khoanMuc: { ma: 'KM_TRONG' } } }),
+        dong({ soTien: 3, danhMuc: { taiKhoanNo: { ma: '642' }, khoanMuc: { ma: 'KM_LA' } } }),
+        dong({ soTien: 2, danhMuc: { taiKhoanNo: { ma: '641' } } }),
+      ],
+      dmChiPhi,
+      2026,
+    );
+    expect(r.dinhPhiThang[0]).toBe(12);
+    expect(r.bienPhiThang[0]).toBe(0);
+  });
+
+  it('không có danh mục khoản mục thì mọi CPBH/CPQLDN rơi về định phí', () => {
+    const r = buildKqkdKeHoach(
+      [dong({ soTien: 30, danhMuc: { taiKhoanNo: { ma: '641' }, khoanMuc: { ma: 'KM_BD' } } })],
+      danhMucRong,
+      2026,
+    );
+    expect(r.dinhPhiThang[0]).toBe(30);
+    expect(r.bienPhiThang[0]).toBe(0);
+  });
+
+  it('doanhThuThuanThang là mã 10 của từng tháng, cộng lại đúng bằng doanhThuThuanNam', () => {
+    const r = buildKqkdKeHoach(
+      [
+        dong({ ngay: '2026-01-10T00:00:00.000Z', soTien: 1000, danhMuc: { taiKhoanCo: { ma: '511' } } }),
+        dong({ ngay: '2026-01-20T00:00:00.000Z', soTien: 100, danhMuc: { taiKhoanNo: { ma: '521' } } }),
+        dong({ ngay: '2026-05-10T00:00:00.000Z', soTien: 500, danhMuc: { taiKhoanCo: { ma: '511' } } }),
+      ],
+      danhMucRong,
+      2026,
+    );
+    expect(r.doanhThuThuanThang[0]).toBe(900);
+    expect(r.doanhThuThuanThang[4]).toBe(500);
+    expect(r.doanhThuThuanThang).toHaveLength(12);
+    expect(r.doanhThuThuanNam).toBe(1400);
+  });
+});
