@@ -13,10 +13,7 @@ const oSo = (v: number, cap: HangKqkd["cap"]) => {
   const chu = v < 0 ? `(${tien(Math.abs(v))})` : tien(v);
   return (
     <span
-      className={[
-        cap === 0 ? "font-semibold" : "",
-        v < 0 ? "text-red-500" : "",
-      ]
+      className={[cap === 0 ? "font-semibold" : "", v < 0 ? "text-red-500" : ""]
         .filter(Boolean)
         .join(" ")}
     >
@@ -42,7 +39,9 @@ const columns: ColumnsType<HangKqkd> = [
     key: "nhan",
     width: 320,
     render: (nhan: string, row) => (
-      <span className={row.cap === 0 ? "font-semibold" : undefined}>{nhan}</span>
+      <span className={row.cap === 0 ? "font-semibold" : undefined}>
+        {nhan}
+      </span>
     ),
   },
   {
@@ -114,7 +113,13 @@ export const KqkdTable: React.FC = () => {
       // Mặc định đóng hết: mở trang chỉ thấy các dòng mục.
       expandable={{ defaultExpandedRowKeys: [] }}
       scroll={{ x: "max-content", y: "calc(100vh - 260px)" }}
-      rowClassName={(row) => (row.cap === 0 ? "kh-hang-tong" : "")}
+      rowClassName={(row) =>
+        row.key === "HOA_VON"
+          ? "kh-hang-hoa-von"
+          : row.cap === 0
+            ? "kh-hang-tong"
+            : ""
+      }
       locale={{ emptyText: "Chưa có dòng kế hoạch nào trong năm" }}
     />
   );

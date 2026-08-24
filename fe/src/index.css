@@ -2678,6 +2678,26 @@ body.col-resizing .ant-table * {
   background: #fff3bf !important;
 }
 
+/* Dòng DOANH THU HÒA VỐN cuối bảng KQKD kế hoạch — vàng để tách khỏi các dòng
+   tổng (cũng là cấp 0) ngay phía trên. */
+.kh-hang-hoa-von > td {
+  background: #fef3c7 !important;
+  font-weight: 600;
+}
+
+.excel-table .ant-table-tbody > tr.kh-hang-hoa-von:hover > td {
+  background-color: #fde68a !important;
+}
+
+.dark .kh-hang-hoa-von > td,
+.dark .excel-table .ant-table-tbody > tr.kh-hang-hoa-von > td {
+  background: rgba(250, 204, 21, 0.18) !important;
+}
+
+.dark .excel-table .ant-table-tbody > tr.kh-hang-hoa-von:hover > td {
+  background-color: rgba(250, 204, 21, 0.28) !important;
+}
+
 /* Ô nhập trong bảng: hoà vào lưới, chỉ hiện viền khi đang gõ. */
 .excel-cell-input.ant-input-number,
 .excel-cell-input.ant-input {
