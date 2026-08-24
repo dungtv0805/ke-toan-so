@@ -90,29 +90,6 @@ const SanPhamPage: React.FC = () => {
     onDone: () => fetchData(),
   });
 
-  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
-    fileName: "danh-muc-san-pham",
-    sheetName: "Sản phẩm",
-    title: "DANH MỤC SẢN PHẨM",
-    columns: [
-      { header: "Mã", dataKey: "ma", width: 15 },
-      { header: "Tên", dataKey: "ten", width: 35 },
-      { header: "Đơn vị", dataKey: "donVi", width: 15 },
-      { header: "Giá bán", dataKey: "giaBan", width: 18 },
-      { header: "Mô tả", dataKey: "moTa", width: 40 },
-    ],
-    fetchData: async () => {
-      const result = await sanPhamService.getPaginated({ limit: 10000 });
-      return result.data.map((item) => ({
-        ma: item.ma,
-        ten: item.ten,
-        donVi: item.donVi || "",
-        giaBan: item.giaBan ?? "",
-        moTa: item.moTa || "",
-      }));
-    },
-  }), []);
-
   const fetchData = async (
     page = pagination.current,
     pageSize = pagination.pageSize,
@@ -382,6 +359,41 @@ const SanPhamPage: React.FC = () => {
     nhanTrong: "(Chưa gán nhóm)",
     onDoiCheDo: () => clearSelection(),
   });
+
+  // Xuất Excel bám theo đúng chế độ đang xem: đang ở dạng cây thì file cũng gom
+  // nhóm (dùng chung `gomTheoNhom` nên thứ tự nhóm y hệt trên màn hình).
+  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
+    fileName: "danh-muc-san-pham",
+    sheetName: "Sản phẩm",
+    title: "DANH MỤC SẢN PHẨM",
+    columns: [
+      { header: "Mã", dataKey: "ma", width: 15 },
+      { header: "Tên", dataKey: "ten", width: 35 },
+      { header: "Đơn vị", dataKey: "donVi", width: 15 },
+      { header: "Giá bán", dataKey: "giaBan", width: 18 },
+      { header: "Mô tả", dataKey: "moTa", width: 40 },
+    ],
+    fetchData: async () => {
+      const result = await sanPhamService.getPaginated({ limit: 10000 });
+      return result.data.map((item) => ({
+        ma: item.ma,
+        ten: item.ten,
+        donVi: item.donVi || "",
+        giaBan: item.giaBan ?? "",
+        moTa: item.moTa || "",
+        // Không có cột nào dùng khoá này — chỉ để gom nhóm.
+        nhom: item.nhom || "",
+      }));
+    },
+    group: laCay
+      ? {
+          layMa: (row) => row.nhom as string,
+          danhMuc: nhomList,
+          donVi: "sản phẩm",
+          nhanTrong: "(Chưa gán nhóm)",
+        }
+      : undefined,
+  }), [laCay, nhomList]);
 
   return (
     <div className="space-y-3">

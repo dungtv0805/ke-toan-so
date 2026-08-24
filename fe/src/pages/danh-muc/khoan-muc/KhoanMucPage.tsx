@@ -61,14 +61,16 @@ const khoanMucSchema = z.object({
   loaiChiPhi: z.enum(["CO_DINH", "BIEN_DOI"]).optional().nullable(),
 });
 
+// Nhãn không lặp lại chữ "Chi phí" — ô và cột đã tên "Loại chi phí" ngay trên.
+// (Giống Quy chuẩn hạch toán; mẫu Excel import vẫn nhận nhãn cũ, xem khoanMuc.config.ts.)
 const NHAN_LOAI_CHI_PHI: Record<LoaiChiPhi, string> = {
-  CO_DINH: "Chi phí cố định",
-  BIEN_DOI: "Chi phí biến đổi",
+  CO_DINH: "Cố định",
+  BIEN_DOI: "Biến đổi",
 };
 
 const LOAI_CHI_PHI_OPTIONS = [
-  { value: "CO_DINH", label: "Chi phí cố định" },
-  { value: "BIEN_DOI", label: "Chi phí biến đổi" },
+  { value: "CO_DINH", label: "Cố định" },
+  { value: "BIEN_DOI", label: "Biến đổi" },
 ];
 
 const KhoanMucPage: React.FC = () => {
@@ -110,29 +112,6 @@ const KhoanMucPage: React.FC = () => {
     onDeleteBatch: (ids) => khoanMucService.deleteBatch(ids),
     onDone: () => fetchData(),
   });
-
-  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
-    fileName: "danh-muc-khoan-muc",
-    sheetName: "Khoản mục",
-    title: "DANH MỤC KHOẢN MỤC",
-    columns: [
-      { header: "Mã", dataKey: "ma", width: 15 },
-      { header: "Tên khoản mục", dataKey: "ten", width: 35 },
-      { header: "Loại", dataKey: "loai", width: 15 },
-      { header: "Nhóm khoản mục", dataKey: "nhom", width: 25 },
-      { header: "Loại chi phí", dataKey: "loaiChiPhi", width: 18 },
-    ],
-    fetchData: async () => {
-      const result = await khoanMucService.getPaginated({ limit: 10000 });
-      return result.data.map((item) => ({
-        ma: item.ma,
-        ten: item.ten,
-        loai: item.loai === "CHI_PHI" ? "Chi phí" : item.loai === "DOANH_THU" ? "Doanh thu" : item.loai,
-        nhom: item.nhom || "",
-        loaiChiPhi: item.loaiChiPhi ? NHAN_LOAI_CHI_PHI[item.loaiChiPhi] : "",
-      }));
-    },
-  }), []);
 
   const fetchData = async (
     page = pagination.current,
@@ -397,6 +376,41 @@ const KhoanMucPage: React.FC = () => {
     nhanTrong: "(Chưa gán nhóm)",
     onDoiCheDo: () => clearSelection(),
   });
+
+  // Xuất Excel bám theo đúng chế độ đang xem: đang ở dạng cây thì file cũng gom
+  // nhóm (dùng chung `gomTheoNhom` nên thứ tự nhóm y hệt trên màn hình).
+  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
+    fileName: "danh-muc-khoan-muc",
+    sheetName: "Khoản mục",
+    title: "DANH MỤC KHOẢN MỤC",
+    columns: [
+      { header: "Mã", dataKey: "ma", width: 15 },
+      { header: "Tên khoản mục", dataKey: "ten", width: 35 },
+      { header: "Loại", dataKey: "loai", width: 15 },
+      { header: "Nhóm khoản mục", dataKey: "nhom", width: 25 },
+      { header: "Loại chi phí", dataKey: "loaiChiPhi", width: 18 },
+    ],
+    fetchData: async () => {
+      const result = await khoanMucService.getPaginated({ limit: 10000 });
+      return result.data.map((item) => ({
+        ma: item.ma,
+        ten: item.ten,
+        loai: item.loai === "CHI_PHI" ? "Chi phí" : item.loai === "DOANH_THU" ? "Doanh thu" : item.loai,
+        nhom: item.nhom || "",
+        loaiChiPhi: item.loaiChiPhi ? NHAN_LOAI_CHI_PHI[item.loaiChiPhi] : "",
+      }));
+    },
+    group: laCay
+      ? {
+          layMa: (row) => row.nhom as string,
+          danhMuc: nhomKhoanMucList,
+          donVi: "khoản mục",
+          nhanTrong: "(Chưa gán nhóm)",
+          // Nhóm đã nằm trên dòng tiêu đề — cột này chỉ lặp lại, mà lặp bằng MÃ.
+          boCot: ["nhom"],
+        }
+      : undefined,
+  }), [laCay, nhomKhoanMucList]);
   const fl = useFieldLabels('danhMuc.khoanMuc');
 
   const tabItems = [

@@ -97,30 +97,6 @@ const DongTienPage: React.FC = () => {
     onDone: () => fetchData(),
   });
 
-  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
-    fileName: "danh-muc-dong-tien",
-    sheetName: "Dòng tiền",
-    title: "DANH MỤC DÒNG TIỀN",
-    columns: [
-      { header: "Mã", dataKey: "ma", width: 15 },
-      { header: "Tên", dataKey: "ten", width: 35 },
-      { header: "Loại", dataKey: "loai", width: 15 },
-      { header: "Mô tả", dataKey: "moTa", width: 40 },
-    ],
-    fetchData: async () => {
-      const result = await dongTienService.getPaginated({ limit: 10000 });
-      const loaiMap: Record<string, string> = {
-        KINH_DOANH: "Kinh doanh", DAU_TU: "Đầu tư", TAI_CHINH: "Tài chính",
-      };
-      return result.data.map((item) => ({
-        ma: item.ma,
-        ten: item.ten,
-        loai: loaiMap[item.loai] || item.loai,
-        moTa: item.moTa || "",
-      }));
-    },
-  }), []);
-
   const fetchData = async (
     page = pagination.current,
     pageSize = pagination.pageSize,
@@ -338,6 +314,44 @@ const DongTienPage: React.FC = () => {
     nhanTrong: "(Chưa gán loại)",
     onDoiCheDo: () => clearSelection(),
   });
+
+  // Xuất Excel bám theo đúng chế độ đang xem: đang ở dạng cây thì file cũng gom
+  // nhóm theo Loại, đúng thứ tự Kinh doanh → Đầu tư → Tài chính như trên bảng.
+  const exportConfig: ExportDanhMucConfig = useMemo(() => ({
+    fileName: "danh-muc-dong-tien",
+    sheetName: "Dòng tiền",
+    title: "DANH MỤC DÒNG TIỀN",
+    columns: [
+      { header: "Mã", dataKey: "ma", width: 15 },
+      { header: "Tên", dataKey: "ten", width: 35 },
+      { header: "Loại", dataKey: "loai", width: 15 },
+      { header: "Mô tả", dataKey: "moTa", width: 40 },
+    ],
+    fetchData: async () => {
+      const result = await dongTienService.getPaginated({ limit: 10000 });
+      const loaiMap: Record<string, string> = {
+        KINH_DOANH: "Kinh doanh", DAU_TU: "Đầu tư", TAI_CHINH: "Tài chính",
+      };
+      return result.data.map((item) => ({
+        ma: item.ma,
+        ten: item.ten,
+        loai: loaiMap[item.loai] || item.loai,
+        moTa: item.moTa || "",
+        // Mã loại thô — chỉ để gom nhóm, không có cột nào in ra.
+        maLoai: item.loai,
+      }));
+    },
+    group: laCay
+      ? {
+          layMa: (row) => row.maLoai as string,
+          danhMuc: NHOM_LOAI_DONG_TIEN,
+          donVi: "dòng tiền",
+          nhanTrong: "(Chưa gán loại)",
+          // Loại đã nằm trên dòng tiêu đề nhóm.
+          boCot: ["loai"],
+        }
+      : undefined,
+  }), [laCay]);
   const fl = useFieldLabels('danhMuc.dongTien');
 
   return (

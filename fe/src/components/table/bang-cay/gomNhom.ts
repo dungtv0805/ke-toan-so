@@ -50,7 +50,7 @@ interface TuyChon<T> {
 export function gomTheoNhom<T>(
   list: readonly T[],
   { layMa, danhMuc, nhanTrong = "(Chưa phân nhóm)" }: TuyChon<T>
-): HangCay<T>[] {
+): NhomRow<T>[] {
   const theoMa = new Map<string, T[]>();
   for (const item of list) {
     const ma = layMa(item) || "";

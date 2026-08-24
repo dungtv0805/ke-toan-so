@@ -69,7 +69,7 @@ const QuyChaunPageInner: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <QuyChaunHeader settingsButton={settingsButton} bulkDeleteButton={bulkDeleteButton} />
+      <QuyChaunHeader settingsButton={settingsButton} bulkDeleteButton={bulkDeleteButton} cheDo={cheDo} />
 
       <Card style={{ marginTop: 16 }}>
         <QuyChaunTable
