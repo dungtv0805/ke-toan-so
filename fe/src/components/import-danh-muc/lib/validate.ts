@@ -177,7 +177,10 @@ function splitMultiRefCell(
 function resolveEnum(col: ImportColumn, raw: string): string | null {
   const list = col.enumValues ?? [];
   const hit = list.find(
-    (o) => norm(o.value) === norm(raw) || norm(o.label) === norm(raw),
+    (o) =>
+      norm(o.value) === norm(raw) ||
+      norm(o.label) === norm(raw) ||
+      (o.aliases ?? []).some((a) => norm(a) === norm(raw)),
   );
   return hit ? hit.value : null;
 }

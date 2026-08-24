@@ -36,6 +36,12 @@ export class DoiTuong extends BaseEntity {
   @Column({ nullable: true })
   nguoiLienHe: string;
 
+  // Mã nhân viên (chính là `ma` của một đối tượng loại NHAN_VIEN) đang phụ trách
+  // đối tượng này. Lưu mã chứ không lưu id để khớp cách các danh mục khác tham
+  // chiếu lẫn nhau và để import/export Excel đọc được.
+  @Column({ nullable: true })
+  nguoiPhuTrach: string;
+
   @Column({ default: true })
   isActive: boolean;
 }

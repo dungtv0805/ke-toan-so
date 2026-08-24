@@ -40,6 +40,8 @@ export interface DoiTuong {
   email?: string;
   maSoThue?: string;
   nguoiLienHe?: string;
+  /** Mã nhân viên (đối tượng loại NHAN_VIEN) phụ trách đối tượng này. */
+  nguoiPhuTrach?: string;
 }
 
 export interface DuAn {

@@ -72,6 +72,13 @@ const doiTuongSchema = z.object({
     .max(100, "Tên người liên hệ tối đa 100 ký tự")
     .optional()
     .nullable(),
+  // Mã nhân viên phụ trách — chọn từ danh sách nên chỉ cần kiểm độ dài.
+  nguoiPhuTrach: z
+    .string()
+    .max(20, "Mã nhân viên phụ trách tối đa 20 ký tự")
+    .optional()
+    .nullable()
+    .or(z.literal("")),
 });
 
 const DoiTuongPage: React.FC = () => {
@@ -94,6 +101,20 @@ const DoiTuongPage: React.FC = () => {
     pageSize: 50,
     total: 0,
   });
+  // Người phụ trách chọn từ chính danh mục này, lọc loại Nhân viên.
+  // Dùng getAll('NHAN_VIEN') (route /all) chứ không phải getPaginated mặc định:
+  // route /all trả trọn danh sách, không dừng ở 100 dòng.
+  const [nhanVienList, setNhanVienList] = useState<DoiTuong[]>([]);
+  const nhanVienOptions = useMemo(
+    () => nhanVienList.map((nv) => ({ value: nv.ma, label: `${nv.ma} - ${nv.ten}` })),
+    [nhanVienList],
+  );
+
+  /** Mã nhân viên → tên, để cột và file xuất hiện tên chứ không phải mã trơ. */
+  const tenNhanVien = useMemo(
+    () => new Map(nhanVienList.map((nv) => [nv.ma, nv.ten])),
+    [nhanVienList],
+  );
 
   const fetchStats = async () => {
     try {
@@ -127,6 +148,7 @@ const DoiTuongPage: React.FC = () => {
       { header: "Điện thoại", dataKey: "soDienThoai", width: 15 },
       { header: "Email", dataKey: "email", width: 25 },
       { header: "Mã số thuế", dataKey: "maSoThue", width: 15 },
+      { header: "Người phụ trách", dataKey: "nguoiPhuTrach", width: 25 },
       { header: "Địa chỉ", dataKey: "diaChi", width: 35 },
     ],
     fetchData: async () => {
@@ -142,10 +164,13 @@ const DoiTuongPage: React.FC = () => {
         soDienThoai: item.soDienThoai || "",
         email: item.email || "",
         maSoThue: item.maSoThue || "",
+        nguoiPhuTrach: item.nguoiPhuTrach
+          ? tenNhanVien.get(item.nguoiPhuTrach) || item.nguoiPhuTrach
+          : "",
         diaChi: item.diaChi || "",
       }));
     },
-  }), []);
+  }), [tenNhanVien]);
 
   const fetchData = async (
     page = pagination.current,
@@ -177,6 +202,14 @@ const DoiTuongPage: React.FC = () => {
     }
   };
 
+  const fetchNhanVien = async () => {
+    try {
+      setNhanVienList(await doiTuongService.getAll("NHAN_VIEN"));
+    } catch {
+      setNhanVienList([]);
+    }
+  };
+
   useEffect(() => {
     fetchData(
       1,
@@ -184,8 +217,10 @@ const DoiTuongPage: React.FC = () => {
       "",
       activeTab === "all" ? undefined : (activeTab as DoiTuong["loai"][number])
     );
+    fetchNhanVien();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   const handleTabChange = (key: string) => {
     setActiveTab(key);
@@ -226,6 +261,7 @@ const DoiTuongPage: React.FC = () => {
     // về "Tất cả" để các dòng vừa import không bị ẩn sau một từ khóa hoặc tab loại không còn khớp.
     setSearchText("");
     setActiveTab("all");
+    fetchNhanVien();
     fetchData(1, pagination.pageSize, "", undefined);
   };
 
@@ -266,6 +302,7 @@ const DoiTuongPage: React.FC = () => {
         message.success("Thêm mới thành công");
       }
       setModalVisible(false);
+      fetchNhanVien();
       fetchData(
         pagination.current,
         pagination.pageSize,
@@ -361,6 +398,14 @@ const DoiTuongPage: React.FC = () => {
           )}
         </Space>
       ),
+    },
+    {
+      title: "Người phụ trách",
+      dataIndex: "nguoiPhuTrach",
+      key: "nguoiPhuTrach",
+      width: 170,
+      // Nhân viên có thể đã bị xoá khỏi danh mục — vẫn hiện mã đã lưu, đừng nuốt mất.
+      render: (ma?: string) => (ma ? tenNhanVien.get(ma) || ma : "-"),
     },
     {
       title: "Địa chỉ",
@@ -711,6 +756,21 @@ const DoiTuongPage: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
+
+          <Form.Item
+            name="nguoiPhuTrach"
+            label={fl('nguoiPhuTrach', 'Người phụ trách')}
+            className="mb-0 mt-3"
+          >
+            <Select
+              showSearch
+              allowClear
+              placeholder="Chọn nhân viên phụ trách"
+              options={nhanVienOptions}
+              optionFilterProp="label"
+              notFoundContent="Chưa có đối tượng loại Nhân viên"
+            />
+          </Form.Item>
         </Form>
       </Modal>
     </div>

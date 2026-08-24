@@ -28,5 +28,18 @@ export const doiTuongImportConfig: ImportDanhMucConfig = {
     { key: "email", header: "Email", example: "lienhe@congtya.vn" },
     { key: "maSoThue", header: "Mã số thuế", example: "0101234567" },
     { key: "nguoiLienHe", header: "Người liên hệ", example: "Nguyễn Văn A" },
+    {
+      key: "nguoiPhuTrach",
+      header: "Người phụ trách",
+      example: "NV01",
+      // Chọn trong chính danh mục đối tượng, chỉ lấy loại Nhân viên.
+      ref: {
+        service: { getAll: () => doiTuongService.getAll("NHAN_VIEN") },
+        matchBy: "ma",
+        label: "Người phụ trách",
+        displayField: "ten",
+        assign: (found) => ({ nguoiPhuTrach: String(found.ma ?? "") }),
+      },
+    },
   ],
 };

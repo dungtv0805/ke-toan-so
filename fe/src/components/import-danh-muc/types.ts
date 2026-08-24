@@ -64,8 +64,12 @@ export interface ImportColumn {
   header: string;
   required?: boolean;
   type?: ImportColumnType;
-  /** Bắt buộc khi type là 'enum' hoặc 'enumList'. Excel nhận cả label lẫn value. */
-  enumValues?: { label: string; value: string }[];
+  /**
+   * Bắt buộc khi type là 'enum' hoặc 'enumList'. Excel nhận cả label lẫn value.
+   * `aliases` là các nhãn cũ vẫn chấp nhận khi đọc file (không hiện ở dropdown mẫu),
+   * để file người dùng lưu từ bản trước không hỏng khi đổi tên nhãn.
+   */
+  enumValues?: { label: string; value: string; aliases?: string[] }[];
   ref?: RefSpec;
   /** Giá trị mẫu ghi vào dòng ví dụ của file template. */
   example?: string;

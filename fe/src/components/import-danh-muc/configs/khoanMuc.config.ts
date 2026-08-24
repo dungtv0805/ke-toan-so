@@ -27,10 +27,10 @@ export const khoanMucImportConfig: ImportDanhMucConfig = {
       header: "Loại chi phí",
       type: "enum",
       enumValues: [
-        { label: "Chi phí cố định", value: "CO_DINH" },
-        { label: "Chi phí biến đổi", value: "BIEN_DOI" },
+        { label: "Cố định", value: "CO_DINH", aliases: ["Chi phí cố định"] },
+        { label: "Biến đổi", value: "BIEN_DOI", aliases: ["Chi phí biến đổi"] },
       ],
-      example: "Chi phí cố định",
+      example: "Cố định",
     },
     { key: "moTa", header: "Mô tả", example: "" },
   ],

@@ -123,17 +123,28 @@ export const QuyChaunForm: React.FC = () => {
   );
 
   /**
-   * Chọn khoản mục thì Loại chi phí nhảy theo khoản mục đó — khai một chỗ, dùng
-   * hai nơi. VẪN sửa tay được sau đó: một nghiệp vụ cá biệt có thể là định phí
-   * dù khoản mục nói chung là biến phí.
+   * Loại chi phí KHÔNG chọn tay ở đây nữa: nó là thuộc tính của khoản mục, khai
+   * một chỗ (Danh mục khoản mục) rồi tự chảy sang quy chuẩn.
    *
-   * Chỉ ghi đè khi khoản mục có khai loại chi phí; khoản mục bỏ trống thì giữ
-   * nguyên thứ người dùng đã chọn, không xoá trắng công của họ.
+   * - Chọn/đổi khoản mục → lấy đúng loại chi phí của khoản mục đó, kể cả khi
+   *   khoản mục bỏ trống loại chi phí (xoá luôn giá trị cũ, tránh dính số liệu
+   *   không còn đúng).
+   * - Chưa chọn khoản mục → giữ nguyên giá trị bản ghi cũ đang có, không xoá
+   *   trắng dữ liệu đã lưu từ trước.
+   *
+   * Chạy cả lúc mở form sửa (khi khoanMucList về xong), nên khoản mục đổi loại
+   * chi phí thì lần sửa quy chuẩn kế tiếp cũng cập nhật theo.
    */
-  const chonKhoanMuc = (ma?: string) => {
-    const km = khoanMucList.find((k) => k.ma === ma);
-    if (km?.loaiChiPhi) form.setFieldValue('loaiChiPhi', km.loaiChiPhi);
-  };
+  const khoanMucDangChon = Form.useWatch('khoanMuc', form) as string | undefined;
+  const loaiChiPhiTuKhoanMuc = useMemo(
+    () => khoanMucList.find((k) => k.ma === khoanMucDangChon)?.loaiChiPhi,
+    [khoanMucList, khoanMucDangChon],
+  );
+
+  useEffect(() => {
+    if (!modalVisible || !khoanMucDangChon) return;
+    form.setFieldValue('loaiChiPhi', loaiChiPhiTuKhoanMuc ?? undefined);
+  }, [modalVisible, khoanMucDangChon, loaiChiPhiTuKhoanMuc, form]);
 
   const handleCancel = () => {
     handler.executeEvent('closeModal', {});
@@ -278,7 +289,12 @@ export const QuyChaunForm: React.FC = () => {
                 placeholder={nhomDangChon ? 'Chọn khoản mục trong nhóm' : 'Chọn khoản mục'}
                 options={khoanMucOptions}
                 optionFilterProp="label"
-                onChange={chonKhoanMuc}
+                // Xoá khoản mục thì loại chi phí cũ không còn căn cứ — xoá theo.
+                // (useEffect bên trên chỉ chạy khi CÓ khoản mục, để không đụng
+                // vào bản ghi cũ vốn không gắn khoản mục nào.)
+                onChange={(ma?: string) => {
+                  if (!ma) form.setFieldValue('loaiChiPhi', undefined);
+                }}
               />
             </Form.Item>
           </Col>
@@ -304,8 +320,17 @@ export const QuyChaunForm: React.FC = () => {
               name="loaiChiPhi"
               label={fl('loaiChiPhi', NHAN_TRUONG_QUY_CHUAN.loaiChiPhi)}
               rules={[{ required: batBuoc('loaiChiPhi'), message: 'Tài khoản đã chọn bắt buộc nhập loại chi phí' }]}
+              extra={
+                khoanMucDangChon && !loaiChiPhiTuKhoanMuc
+                  ? 'Khoản mục đang chọn chưa khai loại chi phí — khai ở Danh mục khoản mục.'
+                  : 'Tự động theo khoản mục'
+              }
             >
-              <Select allowClear placeholder="Chọn loại chi phí" options={LOAI_CHI_PHI_OPTIONS} />
+              <Select
+                disabled
+                placeholder="Theo khoản mục"
+                options={LOAI_CHI_PHI_OPTIONS}
+              />
             </Form.Item>
           </Col>
         </Row>

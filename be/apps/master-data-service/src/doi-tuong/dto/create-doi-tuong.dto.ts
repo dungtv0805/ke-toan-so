@@ -44,4 +44,10 @@ export class CreateDoiTuongDto {
   @IsString()
   @IsOptional()
   nguoiLienHe?: string;
+
+  /** Mã nhân viên phụ trách đối tượng này. */
+  @Transform(({ value }) => (value === '' ? undefined : value))
+  @IsString()
+  @IsOptional()
+  nguoiPhuTrach?: string;
 }

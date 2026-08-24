@@ -192,6 +192,45 @@ describe("validateAndBuild — kiểu dữ liệu", () => {
     expect(b.validItems[0].loai).toBe("DOANH_THU");
   });
 
+  it("enum nhận cả nhãn cũ khai trong aliases (file lưu từ bản trước vẫn đọc được)", () => {
+    const cfgAlias: ImportDanhMucConfig = {
+      ...simpleConfig,
+      columns: [
+        { key: "ma", header: "Mã", required: true },
+        {
+          key: "loaiChiPhi",
+          header: "Loại chi phí",
+          type: "enum",
+          enumValues: [
+            { label: "Cố định", value: "CO_DINH", aliases: ["Chi phí cố định"] },
+            { label: "Biến đổi", value: "BIEN_DOI", aliases: ["Chi phí biến đổi"] },
+          ],
+        },
+      ],
+    };
+    const moi = validateAndBuild([row(2, { ma: "A", loaiChiPhi: "Cố định" })], cfgAlias, [], {});
+    const cu = validateAndBuild([row(2, { ma: "A", loaiChiPhi: "Chi phí biến đổi" })], cfgAlias, [], {});
+    expect(moi.validItems[0].loaiChiPhi).toBe("CO_DINH");
+    expect(cu.validItems[0].loaiChiPhi).toBe("BIEN_DOI");
+  });
+
+  it("nhãn cũ không lọt vào danh sách gợi ý khi báo lỗi", () => {
+    const cfgAlias: ImportDanhMucConfig = {
+      ...simpleConfig,
+      columns: [
+        { key: "ma", header: "Mã", required: true },
+        {
+          key: "loaiChiPhi",
+          header: "Loại chi phí",
+          type: "enum",
+          enumValues: [{ label: "Cố định", value: "CO_DINH", aliases: ["Chi phí cố định"] }],
+        },
+      ],
+    };
+    const out = validateAndBuild([row(2, { ma: "A", loaiChiPhi: "XYZ" })], cfgAlias, [], {});
+    expect(out.results[0].errors[0]).toBe("Loại chi phí chỉ nhận: Cố định");
+  });
+
   it("enum sai giá trị thì báo lỗi kèm danh sách cho phép", () => {
     const out = validateAndBuild([row(2, { ma: "A", loai: "XYZ" })], config, [], {});
     expect(out.results[0].errors[0]).toContain("Loại chỉ nhận:");
