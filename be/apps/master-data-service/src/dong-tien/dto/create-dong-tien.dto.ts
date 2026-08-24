@@ -15,5 +15,9 @@ export class CreateDongTienDto {
 
   @IsString()
   @IsOptional()
+  nhom?: string;
+
+  @IsString()
+  @IsOptional()
   moTa?: string;
 }

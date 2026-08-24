@@ -36,6 +36,7 @@ import {
   SoDuDauKyPage,
   NganHangPage,
   DongTienPage,
+  NhomDongTienPage,
   ChuDauTuPage,
   NhomKhuyenMaiPage,
   NhomQuanLyPage,
@@ -196,6 +197,11 @@ const App = () => (
                   <Route path="dong-tien" element={
                     <ProtectedRoute requiredPermission="/danh-muc/dong-tien:xem">
                       <DongTienPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="nhom-dong-tien" element={
+                    <ProtectedRoute requiredPermission="/danh-muc/nhom-dong-tien:xem">
+                      <NhomDongTienPage />
                     </ProtectedRoute>
                   } />
                   <Route path="chu-dau-tu" element={

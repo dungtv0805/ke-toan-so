@@ -16,6 +16,7 @@ import { NhomVatTuService } from '../nhom-vat-tu/nhom-vat-tu.service';
 import { NhomSanPhamService } from '../nhom-san-pham/nhom-san-pham.service';
 import { ChuDauTuService } from '../chu-dau-tu/chu-dau-tu.service';
 import { NhomKhoanMucService } from '../nhom-khoan-muc/nhom-khoan-muc.service';
+import { NhomDongTienService } from '../nhom-dong-tien/nhom-dong-tien.service';
 import { NganHangService } from '../ngan-hang/ngan-hang.service';
 import { DongTienService } from '../dong-tien/dong-tien.service';
 import { NhomKhuyenMaiService } from '../nhom-khuyen-mai/nhom-khuyen-mai.service';
@@ -39,6 +40,7 @@ import { CreateNhomVatTuDto } from '../nhom-vat-tu/dto';
 import { CreateNhomSanPhamDto } from '../nhom-san-pham/dto';
 import { CreateChuDauTuDto } from '../chu-dau-tu/dto';
 import { CreateNhomKhoanMucDto } from '../nhom-khoan-muc/dto';
+import { CreateNhomDongTienDto } from '../nhom-dong-tien/dto';
 import { CreateNganHangDto } from '../ngan-hang/dto';
 import { CreateDongTienDto } from '../dong-tien/dto';
 import { CreateNhomKhuyenMaiDto } from '../nhom-khuyen-mai/dto';
@@ -67,6 +69,7 @@ export class ImportDanhMucRegistry {
     nhomSanPham: NhomSanPhamService,
     chuDauTu: ChuDauTuService,
     nhomKhoanMuc: NhomKhoanMucService,
+    nhomDongTien: NhomDongTienService,
     nganHang: NganHangService,
     dongTien: DongTienService,
     nhomKhuyenMai: NhomKhuyenMaiService,
@@ -152,6 +155,14 @@ export class ImportDanhMucRegistry {
           service: nhomKhoanMuc,
           dtoClass: CreateNhomKhoanMucDto,
           label: 'Nhóm khoản mục',
+        },
+      ],
+      [
+        'nhom-dong-tien',
+        {
+          service: nhomDongTien,
+          dtoClass: CreateNhomDongTienDto,
+          label: 'Nhóm dòng tiền',
         },
       ],
       [

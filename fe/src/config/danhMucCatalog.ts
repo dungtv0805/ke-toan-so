@@ -57,6 +57,7 @@ export const DANH_MUC_GROUPS: DanhMucGroup[] = [
     links: [
       { label: 'Ngân hàng & Quỹ', path: '/danh-muc/ngan-hang' },
       { label: 'Dòng tiền', path: '/danh-muc/dong-tien' },
+      { label: 'Nhóm dòng tiền', path: '/danh-muc/nhom-dong-tien' },
       { label: 'Khoản mục', path: '/danh-muc/khoan-muc' },
       { label: 'Nhóm khoản mục', path: '/danh-muc/nhom-khoan-muc' },
     ],

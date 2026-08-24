@@ -101,6 +101,8 @@ export interface DongTien {
   ma: string;
   ten: string;
   loai: 'KINH_DOANH' | 'DAU_TU' | 'TAI_CHINH';
+  /** Mã Nhóm dòng tiền — chỉ để gom cây trên danh mục. */
+  nhom?: string;
   moTa?: string;
 }
 

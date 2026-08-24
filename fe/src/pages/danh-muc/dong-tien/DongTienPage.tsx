@@ -27,9 +27,11 @@ import {
   BankOutlined,
   LineChartOutlined,
   FundOutlined,
+  TagOutlined,
 } from "@ant-design/icons";
 import { DongTien } from "@/types";
 import { dongTienService, DongTienStats } from "@/services/dongTienService";
+import { nhomDongTienService, NhomDongTien } from "@/services/nhomDongTienService";
 import { loaiDongTienOptions } from "@/mock-data/dong-tien";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
@@ -60,15 +62,10 @@ const dongTienSchema = z.object({
   loai: z.enum(["KINH_DOANH", "DAU_TU", "TAI_CHINH"], {
     required_error: "Vui lòng chọn loại",
   }),
+  // Không bắt buộc: dòng tiền chưa gán nhóm vẫn hợp lệ, rơi vào "(Chưa gán nhóm)".
+  nhom: z.string().max(20, "Mã nhóm tối đa 20 ký tự").optional().nullable(),
   moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").optional().nullable(),
 });
-
-/** Ba loại chuẩn của báo cáo lưu chuyển tiền tệ — cũng là ba nhóm trên cây. */
-const NHOM_LOAI_DONG_TIEN = [
-  { ma: "KINH_DOANH", ten: "Hoạt động kinh doanh", color: "green" },
-  { ma: "DAU_TU", ten: "Hoạt động đầu tư", color: "blue" },
-  { ma: "TAI_CHINH", ten: "Hoạt động tài chính", color: "orange" },
-];
 
 const DongTienPage: React.FC = () => {
   const { canCreate, canEdit, canDelete, canExport } = usePagePermission("/danh-muc/dong-tien");
@@ -89,6 +86,15 @@ const DongTienPage: React.FC = () => {
     pageSize: 50,
     total: 0,
   });
+  const [nhomList, setNhomList] = useState<NhomDongTien[]>([]);
+
+  const fetchNhomDongTien = async () => {
+    try {
+      setNhomList(await nhomDongTienService.getAll());
+    } catch (error) {
+      console.error("Failed to load nhom dong tien:", error);
+    }
+  };
 
   const { rowSelection, bulkDeleteButton, clearSelection } = useBulkDelete<DongTien>({
     enabled: canDelete,
@@ -129,6 +135,7 @@ const DongTienPage: React.FC = () => {
   };
 
   useEffect(() => {
+    fetchNhomDongTien();
     fetchData(1, pagination.pageSize, "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -173,6 +180,9 @@ const DongTienPage: React.FC = () => {
 
       // Validate with zod
       const validated = dongTienSchema.parse(values);
+      // Bỏ chọn nhóm phải gửi chuỗi rỗng, không phải undefined: BE chỉ ghi đè
+      // những khoá có trong body, và sanitizeUpdateDto đổi "" thành null.
+      const payload = { ...validated, nhom: validated.nhom ?? "" };
 
       // Check if ma already exists
       const maExists = await dongTienService.checkMaExists(
@@ -185,10 +195,10 @@ const DongTienPage: React.FC = () => {
       }
 
       if (editingRecord) {
-        await dongTienService.update(editingRecord.id, validated);
+        await dongTienService.update(editingRecord.id, payload);
         message.success("Cập nhật dòng tiền thành công");
       } else {
-        await dongTienService.create(validated as Omit<DongTien, "id">);
+        await dongTienService.create(payload as Omit<DongTien, "id">);
         message.success("Thêm dòng tiền thành công");
       }
 
@@ -216,6 +226,12 @@ const DongTienPage: React.FC = () => {
   const getLoaiInfo = (loai: string) => {
     const info = loaiDongTienOptions.find((o) => o.value === loai);
     return info || { label: loai, color: "default" };
+  };
+
+  /** Dữ liệu cũ có thể lưu id thay vì mã — dò cả hai, không khớp thì in nguyên. */
+  const getNhomLabel = (nhom?: string) => {
+    if (!nhom) return "-";
+    return nhomList.find((n) => n.ma === nhom || n.id === nhom)?.ten || nhom;
   };
 
   const columns = [
@@ -252,6 +268,18 @@ const DongTienPage: React.FC = () => {
         const info = getLoaiInfo(loai);
         return <Tag color={info.color}>{info.label}</Tag>;
       },
+    },
+    {
+      title: "Nhóm dòng tiền",
+      dataIndex: "nhom",
+      key: "nhom",
+      width: 200,
+      render: (nhom: string) => (
+        <Space>
+          <TagOutlined className="text-muted-foreground" />
+          <Text type="secondary">{getNhomLabel(nhom)}</Text>
+        </Space>
+      ),
     },
     {
       title: "Mô tả",
@@ -301,22 +329,22 @@ const DongTienPage: React.FC = () => {
 
   const { columns: cfgColumns, settingsButton } = useTableTitleConfig('danhMuc.dongTien', columns);
 
-  // Cây 2 cấp theo chính trường Loại (Kinh doanh / Đầu tư / Tài chính) — chuẩn
-  // báo cáo lưu chuyển tiền tệ, không đẻ thêm danh mục nhóm nữa.
+  // Cây 2 cấp theo danh mục Nhóm dòng tiền. Loại hoạt động vẫn là cột riêng —
+  // nó phục vụ báo cáo lưu chuyển tiền tệ, còn nhóm là cách người dùng tự sắp xếp.
   const { laCay, chuyenCheDo, duLieuCay, cotCay, rowClassName, expandable } = useBangCay<DongTien>({
     khoaLuu: "dongTien.cheDoXem",
     danhSach: data,
-    danhMuc: NHOM_LOAI_DONG_TIEN,
-    layMa: (dt) => dt.loai,
+    danhMuc: nhomList,
+    layMa: (dt) => dt.nhom,
     cot: cfgColumns as never,
     donVi: "dòng tiền",
     cotChoXuongDong: ["ten"],
-    nhanTrong: "(Chưa gán loại)",
+    nhanTrong: "(Chưa gán nhóm)",
     onDoiCheDo: () => clearSelection(),
   });
 
   // Xuất Excel bám theo đúng chế độ đang xem: đang ở dạng cây thì file cũng gom
-  // nhóm theo Loại, đúng thứ tự Kinh doanh → Đầu tư → Tài chính như trên bảng.
+  // theo Nhóm dòng tiền, cùng thứ tự nhóm như trên bảng.
   const exportConfig: ExportDanhMucConfig = useMemo(() => ({
     fileName: "danh-muc-dong-tien",
     sheetName: "Dòng tiền",
@@ -325,6 +353,7 @@ const DongTienPage: React.FC = () => {
       { header: "Mã", dataKey: "ma", width: 15 },
       { header: "Tên", dataKey: "ten", width: 35 },
       { header: "Loại", dataKey: "loai", width: 15 },
+      { header: "Nhóm dòng tiền", dataKey: "nhom", width: 25 },
       { header: "Mô tả", dataKey: "moTa", width: 40 },
     ],
     fetchData: async () => {
@@ -336,22 +365,21 @@ const DongTienPage: React.FC = () => {
         ma: item.ma,
         ten: item.ten,
         loai: loaiMap[item.loai] || item.loai,
+        nhom: item.nhom || "",
         moTa: item.moTa || "",
-        // Mã loại thô — chỉ để gom nhóm, không có cột nào in ra.
-        maLoai: item.loai,
       }));
     },
     group: laCay
       ? {
-          layMa: (row) => row.maLoai as string,
-          danhMuc: NHOM_LOAI_DONG_TIEN,
+          layMa: (row) => row.nhom as string,
+          danhMuc: nhomList,
           donVi: "dòng tiền",
-          nhanTrong: "(Chưa gán loại)",
-          // Loại đã nằm trên dòng tiêu đề nhóm.
-          boCot: ["loai"],
+          nhanTrong: "(Chưa gán nhóm)",
+          // Nhóm đã nằm trên dòng tiêu đề nhóm.
+          boCot: ["nhom"],
         }
       : undefined,
-  }), [laCay]);
+  }), [laCay, nhomList]);
   const fl = useFieldLabels('danhMuc.dongTien');
 
   return (
@@ -524,6 +552,20 @@ const DongTienPage: React.FC = () => {
                 value: o.value,
                 label: o.label,
               }))}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="nhom"
+            label={fl('nhom', 'Nhóm dòng tiền')}
+            className="mb-3"
+          >
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder="Chọn nhóm dòng tiền"
+              options={nhomList.map((n) => ({ value: n.ma, label: n.ten }))}
             />
           </Form.Item>
 

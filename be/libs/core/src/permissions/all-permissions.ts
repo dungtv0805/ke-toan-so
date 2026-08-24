@@ -58,6 +58,7 @@ export const PERMISSION_MODULES = [
   '/danh-muc/nhom-khoan-muc',
   '/danh-muc/ngan-hang',
   '/danh-muc/dong-tien',
+  '/danh-muc/nhom-dong-tien',
   '/danh-muc/nhom-khuyen-mai',
   '/danh-muc/nhom-quan-ly',
   '/danh-muc/loai-chung-tu',

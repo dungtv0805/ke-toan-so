@@ -126,6 +126,7 @@ export const permissionModules: PermissionModule[] = [
           { key: '/danh-muc/nhom-khoan-muc', label: 'Nhóm khoản mục' },
           { key: '/danh-muc/ngan-hang', label: 'Ngân hàng & Quỹ' },
           { key: '/danh-muc/dong-tien', label: 'Dòng tiền' },
+          { key: '/danh-muc/nhom-dong-tien', label: 'Nhóm dòng tiền' },
           { key: '/danh-muc/nhom-khuyen-mai', label: 'Nhóm khuyến mại' },
           { key: '/danh-muc/nhom-quan-ly', label: 'Nhóm quản lý' },
           { key: '/danh-muc/loai-chung-tu', label: 'Loại chứng từ' },

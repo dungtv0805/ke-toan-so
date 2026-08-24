@@ -63,6 +63,10 @@ export const DongTienPage = loadable(() => import('./danh-muc/dong-tien/DongTien
   fallback: <PageLoader />
 });
 
+export const NhomDongTienPage = loadable(() => import('./danh-muc/nhom-dong-tien/NhomDongTienPage'), {
+  fallback: <PageLoader />
+});
+
 export const ChuDauTuPage = loadable(() => import('./danh-muc/chu-dau-tu/ChuDauTuPage'), {
   fallback: <PageLoader />
 });

@@ -15,6 +15,7 @@ import { NhomKhuyenMaiModule } from './nhom-khuyen-mai/nhom-khuyen-mai.module';
 import { NhomQuanLyModule } from './nhom-quan-ly/nhom-quan-ly.module';
 import { LoaiChungTuModule } from './loai-chung-tu/loai-chung-tu.module';
 import { NhomKhoanMucModule } from './nhom-khoan-muc/nhom-khoan-muc.module';
+import { NhomDongTienModule } from './nhom-dong-tien/nhom-dong-tien.module';
 import { LoaiGiaoDichModule } from './loai-giao-dich/loai-giao-dich.module';
 import { HopDongModule } from './hop-dong/hop-dong.module';
 import { TheoDoiHopDongModule } from './theo-doi-hop-dong/theo-doi-hop-dong.module';
@@ -47,6 +48,7 @@ import {
   NhomQuanLy,
   LoaiChungTuMaster,
   NhomKhoanMuc,
+  NhomDongTien,
   LoaiGiaoDich,
   HopDong,
   TheoDoiHopDong,
@@ -80,6 +82,7 @@ import {
       NhomQuanLy,
       LoaiChungTuMaster,
       NhomKhoanMuc,
+      NhomDongTien,
       LoaiGiaoDich,
       HopDong,
       TheoDoiHopDong,
@@ -106,6 +109,7 @@ import {
     NhomQuanLyModule,
     LoaiChungTuModule,
     NhomKhoanMucModule,
+    NhomDongTienModule,
     LoaiGiaoDichModule,
     HopDongModule,
     TheoDoiHopDongModule,

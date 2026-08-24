@@ -15,6 +15,7 @@ import { CreateNhomVatTuDto } from '../nhom-vat-tu/dto';
 import { CreateNhomSanPhamDto } from '../nhom-san-pham/dto';
 import { CreateChuDauTuDto } from '../chu-dau-tu/dto';
 import { CreateNhomKhoanMucDto } from '../nhom-khoan-muc/dto';
+import { CreateNhomDongTienDto } from '../nhom-dong-tien/dto';
 import { CreateNganHangDto } from '../ngan-hang/dto';
 import { CreateDongTienDto } from '../dong-tien/dto';
 import { CreateNhomKhuyenMaiDto } from '../nhom-khuyen-mai/dto';
@@ -24,8 +25,8 @@ import { CreateLoaiGiaoDichDto } from '../loai-giao-dich/dto';
 import { CreateHoSoChungTuDto } from '../ho-so-chung-tu/dto';
 
 describe('ImportDanhMucRegistry', () => {
-  /** 22 service giả, chỉ cần có create() vì registry không gọi gì khác. */
-  const fakes = Array.from({ length: 22 }, () => ({ create: jest.fn() }));
+  /** 23 service giả, chỉ cần có create() vì registry không gọi gì khác. */
+  const fakes = Array.from({ length: 23 }, () => ({ create: jest.fn() }));
   const registry = new ImportDanhMucRegistry(
     ...(fakes as unknown as ConstructorParameters<
       typeof ImportDanhMucRegistry
@@ -76,30 +77,35 @@ describe('ImportDanhMucRegistry', () => {
       position: 14,
       dtoClass: CreateNhomKhoanMucDto,
     },
-    { resource: 'ngan-hang', position: 15, dtoClass: CreateNganHangDto },
-    { resource: 'dong-tien', position: 16, dtoClass: CreateDongTienDto },
+    {
+      resource: 'nhom-dong-tien',
+      position: 15,
+      dtoClass: CreateNhomDongTienDto,
+    },
+    { resource: 'ngan-hang', position: 16, dtoClass: CreateNganHangDto },
+    { resource: 'dong-tien', position: 17, dtoClass: CreateDongTienDto },
     {
       resource: 'nhom-khuyen-mai',
-      position: 17,
+      position: 18,
       dtoClass: CreateNhomKhuyenMaiDto,
     },
-    { resource: 'nhom-quan-ly', position: 18, dtoClass: CreateNhomQuanLyDto },
-    { resource: 'loai-chung-tu', position: 19, dtoClass: CreateLoaiChungTuDto },
+    { resource: 'nhom-quan-ly', position: 19, dtoClass: CreateNhomQuanLyDto },
+    { resource: 'loai-chung-tu', position: 20, dtoClass: CreateLoaiChungTuDto },
     {
       resource: 'loai-giao-dich',
-      position: 20,
+      position: 21,
       dtoClass: CreateLoaiGiaoDichDto,
     },
     {
       resource: 'ho-so-chung-tu',
-      position: 21,
+      position: 22,
       dtoClass: CreateHoSoChungTuDto,
     },
   ];
 
-  it('đăng ký đủ 22 danh mục', () => {
-    expect(registry.resources()).toHaveLength(22);
-    expect(expected).toHaveLength(22);
+  it('đăng ký đủ 23 danh mục', () => {
+    expect(registry.resources()).toHaveLength(23);
+    expect(expected).toHaveLength(23);
   });
 
   it('mỗi entry có đủ service, dtoClass và label', () => {

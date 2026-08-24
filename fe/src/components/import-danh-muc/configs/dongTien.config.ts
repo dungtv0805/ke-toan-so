@@ -21,6 +21,7 @@ export const dongTienImportConfig: ImportDanhMucConfig = {
       ],
       example: "Hoạt động kinh doanh",
     },
+    { key: "nhom", header: "Nhóm dòng tiền", example: "NDT01" },
     { key: "moTa", header: "Mô tả", example: "" },
   ],
 };

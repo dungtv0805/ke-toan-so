@@ -10,6 +10,7 @@ export { hoSoChungTuImportConfig } from "./hoSoChungTu.config";
 export { khoanMucImportConfig } from "./khoanMuc.config";
 export { nhomKhoanMucImportConfig } from "./nhomKhoanMuc.config";
 export { dongTienImportConfig } from "./dongTien.config";
+export { nhomDongTienImportConfig } from "./nhomDongTien.config";
 export { nganHangImportConfig } from "./nganHang.config";
 export { loaiChungTuImportConfig } from "./loaiChungTu.config";
 export { khoImportConfig } from "./kho.config";

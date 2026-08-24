@@ -18,6 +18,10 @@ export class DongTien extends BaseEntity {
   @Column({ type: 'enum', enum: DongTienLoai })
   loai: DongTienLoai;
 
+  /** Mã Nhóm dòng tiền — chỉ để gom cây trên danh mục, không ảnh hưởng báo cáo. */
+  @Column({ nullable: true })
+  nhom: string;
+
   @Column({ nullable: true })
   moTa: string;
 
