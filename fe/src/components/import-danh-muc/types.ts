@@ -62,6 +62,11 @@ export interface ImportColumn {
   key: string;
   /** Tiêu đề cột trong file Excel — dùng để dò header, phải khớp chính xác. */
   header: string;
+  /**
+   * Tiêu đề cũ vẫn chấp nhận khi ĐỌC file (không ghi vào file mẫu). Dùng khi đổi tên
+   * một cột: file người dùng đã tải về từ bản trước vẫn nhập được, không bị báo thiếu cột.
+   */
+  headerAliases?: string[];
   required?: boolean;
   type?: ImportColumnType;
   /**

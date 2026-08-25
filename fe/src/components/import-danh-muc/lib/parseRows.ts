@@ -7,7 +7,11 @@ const normalizeHeader = (value: unknown): string =>
     .trim()
     .toLowerCase();
 
-/** Dò vị trí cột theo tên header. Cột không tìm thấy có index -1. */
+/**
+ * Dò vị trí cột theo tên header. Cột không tìm thấy có index -1.
+ * Ưu tiên `header` hiện hành; chỉ khi không thấy mới thử các `headerAliases` (tên cũ)
+ * theo đúng thứ tự khai báo — nhờ vậy đổi tên cột không làm hỏng file người dùng đã tải.
+ */
 function buildHeaderIndex(
   aoa: unknown[][],
   columns: ImportColumn[],
@@ -15,7 +19,12 @@ function buildHeaderIndex(
   const headerRow = (aoa[0] ?? []).map(normalizeHeader);
   const index: Record<string, number> = {};
   for (const col of columns) {
-    index[col.key] = headerRow.indexOf(normalizeHeader(col.header));
+    let at = headerRow.indexOf(normalizeHeader(col.header));
+    for (const alias of col.headerAliases ?? []) {
+      if (at !== -1) break;
+      at = headerRow.indexOf(normalizeHeader(alias));
+    }
+    index[col.key] = at;
   }
   return index;
 }

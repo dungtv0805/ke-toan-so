@@ -108,3 +108,50 @@ describe("aoaToRawRows", () => {
     expect(aoaToRawRows([["Mã đơn vị tính"]], columns)).toEqual([]);
   });
 });
+
+/**
+ * Đổi tên một cột trong config làm mọi file người dùng đã tải về trước đó báo "thiếu cột".
+ * `headerAliases` giữ tên cũ đọc được, nhưng chỉ khi tên mới không có trong file.
+ */
+describe("headerAliases — tên cột cũ", () => {
+  const cols: ImportColumn[] = [
+    { key: "ma", header: "Mã", required: true },
+    {
+      key: "ben",
+      header: "Bên kết chuyển",
+      headerAliases: ["Bên kết chuyển (NO/CO/HAI_BEN)"],
+      required: true,
+    },
+  ];
+
+  it("file dùng tên cột cũ vẫn đọc được, không báo thiếu cột", () => {
+    const aoa = [["Mã", "Bên kết chuyển (NO/CO/HAI_BEN)"], ["511-911", "CO"]];
+
+    expect(findMissingHeaders(aoa, cols)).toEqual([]);
+    expect(aoaToRawRows(aoa, cols)[0].values).toEqual({ ma: "511-911", ben: "CO" });
+  });
+
+  it("file dùng tên cột mới vẫn đọc bình thường", () => {
+    const aoa = [["Mã", "Bên kết chuyển"], ["511-911", "Có"]];
+
+    expect(findMissingHeaders(aoa, cols)).toEqual([]);
+    expect(aoaToRawRows(aoa, cols)[0].values).toEqual({ ma: "511-911", ben: "Có" });
+  });
+
+  // File có CẢ hai cột (người dùng tự thêm cột mới bên cạnh cột cũ): lấy cột tên mới,
+  // không phải cột trái nhất — nếu không, dữ liệu mới người dùng vừa điền sẽ bị bỏ qua.
+  it("có cả hai tên thì ưu tiên tên mới", () => {
+    const aoa = [
+      ["Mã", "Bên kết chuyển (NO/CO/HAI_BEN)", "Bên kết chuyển"],
+      ["511-911", "cũ", "Có"],
+    ];
+
+    expect(aoaToRawRows(aoa, cols)[0].values.ben).toBe("Có");
+  });
+
+  it("thiếu cả tên mới lẫn tên cũ thì vẫn báo thiếu, theo tên mới", () => {
+    const aoa = [["Mã"], ["511-911"]];
+
+    expect(findMissingHeaders(aoa, cols)).toEqual(["Bên kết chuyển"]);
+  });
+});
