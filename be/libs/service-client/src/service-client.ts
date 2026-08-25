@@ -118,6 +118,25 @@ export class ServiceClient extends BaseServiceClient {
     });
   }
 
+  /**
+   * Danh mục Tài khoản kết chuyển. Lấy qua `/all` để không dính bẫy phân trang
+   * mặc định 100 bản ghi của endpoint danh sách.
+   */
+  async getTaiKhoanKetChuyen(
+    authToken?: string,
+    tenantId?: string,
+  ): Promise<ServiceResponse<TaiKhoanKetChuyenResponse[]>> {
+    const headers: Record<string, string> = {};
+    if (authToken) headers['Authorization'] = authToken;
+    if (tenantId) headers['x-tenant-id'] = tenantId;
+
+    return this.get<TaiKhoanKetChuyenResponse[]>(
+      'master-data',
+      '/tai-khoan-ket-chuyen/all',
+      { headers: Object.keys(headers).length ? headers : undefined },
+    );
+  }
+
   async getBoPhan(
     authToken?: string,
   ): Promise<ServiceResponse<BoPhanResponse[]>> {
@@ -437,4 +456,19 @@ export interface NhomRefResponse {
   _id?: string;
   ma: string;
   ten: string;
+}
+
+/** Một dòng danh mục Tài khoản kết chuyển (trang Kết chuyển lãi lỗ). */
+export interface TaiKhoanKetChuyenResponse {
+  id?: string;
+  ma: string;
+  thuTu: number;
+  taiKhoanTu: string;
+  tenTaiKhoanTu?: string;
+  taiKhoanDen: string;
+  tenTaiKhoanDen?: string;
+  ben: 'NO' | 'CO' | 'HAI_BEN';
+  loai: 'XAC_DINH_KQKD';
+  dienGiai?: string;
+  isActive: boolean;
 }

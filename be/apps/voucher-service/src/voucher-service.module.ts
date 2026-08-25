@@ -8,6 +8,7 @@ import { ChungTuModule } from './chung-tu/chung-tu.module';
 import { NhatKyChungModule } from './nhat-ky-chung/nhat-ky-chung.module';
 import { KeHoachModule } from './ke-hoach/ke-hoach.module';
 import { KeHoachBangModule } from './ke-hoach-bang/ke-hoach-bang.module';
+import { KetChuyenModule } from './ket-chuyen/ket-chuyen.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { KeHoachBangModule } from './ke-hoach-bang/ke-hoach-bang.module';
     NhatKyChungModule,
     KeHoachModule,
     KeHoachBangModule,
+    KetChuyenModule,
   ],
 })
 export class VoucherServiceModule implements NestModule {
