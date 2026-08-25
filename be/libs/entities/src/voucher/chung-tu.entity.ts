@@ -189,6 +189,18 @@ export class ChungTu extends BaseEntity {
 
   @Column({ type: 'simple-json', nullable: true })
   kiemSoat?: KiemSoatChungTu;
+
+  /**
+   * Nguồn sinh ra bút toán. `KET_CHUYEN` = do trang Kết chuyển lãi lỗ sinh tự động.
+   * Không có tag này thì không lọc/xóa được nguyên lô, và các báo cáo tính net sau này
+   * cũng không loại được bút toán kết chuyển ra.
+   */
+  @Column({ nullable: true })
+  nguon?: 'KET_CHUYEN';
+
+  /** Mã dòng danh mục Tài khoản kết chuyển đã sinh ra bút toán này. */
+  @Column({ nullable: true })
+  maKetChuyen?: string;
 }
 
 export interface ChungTuEntities {

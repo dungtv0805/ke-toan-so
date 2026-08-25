@@ -26,6 +26,7 @@ import { NhomQuanLyModule } from '../nhom-quan-ly/nhom-quan-ly.module';
 import { LoaiChungTuModule } from '../loai-chung-tu/loai-chung-tu.module';
 import { LoaiGiaoDichModule } from '../loai-giao-dich/loai-giao-dich.module';
 import { HoSoChungTuModule } from '../ho-so-chung-tu/ho-so-chung-tu.module';
+import { TaiKhoanKetChuyenModule } from '../tai-khoan-ket-chuyen/tai-khoan-ket-chuyen.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { HoSoChungTuModule } from '../ho-so-chung-tu/ho-so-chung-tu.module';
     LoaiChungTuModule,
     LoaiGiaoDichModule,
     HoSoChungTuModule,
+    TaiKhoanKetChuyenModule,
   ],
   controllers: [ImportDanhMucController],
   providers: [ImportDanhMucService, ImportDanhMucRegistry],

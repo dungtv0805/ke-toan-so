@@ -35,6 +35,8 @@ const KNOWN_RESOURCES = [
   "loai-giao-dich",
   "ho-so-chung-tu",
   "quy-chuan",
+  "nhom-dong-tien",
+  "tai-khoan-ket-chuyen",
 ] as const;
 
 /** resource dùng config-service thay vì master-data-service mặc định. */

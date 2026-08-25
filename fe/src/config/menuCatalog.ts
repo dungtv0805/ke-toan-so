@@ -41,6 +41,7 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/chung-tu/nhat-ky-chung', label: 'Dữ liệu tổng hợp' },
   { key: '/chung-tu/phieu-thu', label: 'Phiếu thu' },
   { key: '/chung-tu/phieu-chi', label: 'Phiếu chi' },
+  { key: '/chung-tu/ket-chuyen-lai-lo', label: 'Kết chuyển lãi lỗ' },
   { key: '/trung-tam-du-lieu/tai-san', label: 'Quản lý Tài sản' },
   { key: '/trung-tam-du-lieu/hop-dong', label: 'Bán hàng' },
 
@@ -78,6 +79,7 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/danh-muc/ngan-hang', label: 'Ngân hàng & Quỹ', parentLabel: 'Danh mục › Khác' },
   { key: '/danh-muc/dong-tien', label: 'Dòng tiền', parentLabel: 'Danh mục › Khác' },
   { key: '/danh-muc/nhom-dong-tien', label: 'Nhóm dòng tiền', parentLabel: 'Danh mục › Khác' },
+  { key: '/danh-muc/tai-khoan-ket-chuyen', label: 'Tài khoản kết chuyển', parentLabel: 'Danh mục › Khác' },
   { key: '/danh-muc/nhom-khuyen-mai', label: 'Nhóm khuyến mại', parentLabel: 'Danh mục › Khác' },
   { key: '/danh-muc/nhom-quan-ly', label: 'Nhóm quản lý', parentLabel: 'Danh mục › Khác' },
   { key: '/danh-muc/loai-chung-tu', label: 'Loại chứng từ', parentLabel: 'Danh mục › Khác' },

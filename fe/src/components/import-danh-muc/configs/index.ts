@@ -22,3 +22,4 @@ export { hangHoaVatTuImportConfig } from "./hangHoaVatTu.config";
 export { loaiGiaoDichImportConfig } from "./loaiGiaoDich.config";
 export { hopDongImportConfig } from "./hopDong.config";
 export { quyChuanImportConfig } from "./quyChuan.config";
+export { taiKhoanKetChuyenImportConfig } from "./taiKhoanKetChuyen.config";

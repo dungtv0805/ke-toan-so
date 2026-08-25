@@ -267,6 +267,16 @@ sẵn từ mục 4.3 nên chỉ là một dòng filter mỗi hàm.
 Cho tới khi sửa: **đừng chạy kết chuyển trên công ty đang dùng trang PnL / gauge Tổng quan
 làm số liệu điều hành**, hoặc chấp nhận hai chỗ đó hiển thị 0.
 
+**Dòng thêm tay vào chứng từ kết chuyển sống sót qua "Xóa cả lô".** Kết chuyển sinh ra
+chứng từ bình thường (`loai: 'KHAC'`), nên ở Dữ liệu tổng hợp kế toán vẫn mở được chứng
+từ KC và thêm dòng vào đó. Dòng thêm tay không mang `nguon = 'KET_CHUYEN'`, mà `remove`
+lại lọc đúng theo `nguon` để không lỡ tay xóa chứng từ nhập tay trùng số phiếu — nên xóa
+lô sẽ để lại dòng thêm tay mồ côi dưới số phiếu cũ.
+
+Đây là hệ quả cố ý của thiết kế "KC là chứng từ bình thường", **không sửa trong lần này**.
+Cho tới khi sửa: đừng thêm dòng tay vào chứng từ do kết chuyển sinh ra; muốn có bút toán
+riêng thì lập một chứng từ khác.
+
 ## 9. Kiểm thử
 
 **Unit (BE)**

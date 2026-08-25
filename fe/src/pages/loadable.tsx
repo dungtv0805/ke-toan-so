@@ -67,6 +67,10 @@ export const NhomDongTienPage = loadable(() => import('./danh-muc/nhom-dong-tien
   fallback: <PageLoader />
 });
 
+export const TaiKhoanKetChuyenPage = loadable(() => import('./danh-muc/tai-khoan-ket-chuyen/TaiKhoanKetChuyenPage'), {
+  fallback: <PageLoader />
+});
+
 export const ChuDauTuPage = loadable(() => import('./danh-muc/chu-dau-tu/ChuDauTuPage'), {
   fallback: <PageLoader />
 });
@@ -171,6 +175,14 @@ export const NhatKyChungPage = loadable(() => import('./chung-tu/nhat-ky-chung/N
 });
 
 export const NhatKyChungFormPage = loadable(() => import('./chung-tu/nhat-ky-chung/NhatKyChungFormPage'), {
+  fallback: <PageLoader />
+});
+
+export const KetChuyenLaiLoListPage = loadable(() => import('./chung-tu/ket-chuyen-lai-lo/KetChuyenLaiLoListPage'), {
+  fallback: <PageLoader />
+});
+
+export const KetChuyenLaiLoFormPage = loadable(() => import('./chung-tu/ket-chuyen-lai-lo/KetChuyenLaiLoFormPage'), {
   fallback: <PageLoader />
 });
 

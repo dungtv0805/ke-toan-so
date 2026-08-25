@@ -14,6 +14,7 @@ export const routePermissions: Record<string, string> = {
   '/danh-muc/ngan-hang': '/danh-muc/ngan-hang:xem',
   '/danh-muc/dong-tien': '/danh-muc/dong-tien:xem',
   '/danh-muc/nhom-dong-tien': '/danh-muc/nhom-dong-tien:xem',
+  '/danh-muc/tai-khoan-ket-chuyen': '/danh-muc/tai-khoan-ket-chuyen:xem',
   '/danh-muc/chu-dau-tu': '/danh-muc/chu-dau-tu:xem',
   '/danh-muc/nhom-khuyen-mai': '/danh-muc/nhom-khuyen-mai:xem',
   '/danh-muc/nhom-quan-ly': '/danh-muc/nhom-quan-ly:xem',
@@ -55,6 +56,7 @@ export const routePermissions: Record<string, string> = {
   '/chung-tu/phieu-thu': '/chung-tu/phieu-thu:xem',
   '/chung-tu/phieu-chi': '/chung-tu/phieu-chi:xem',
   '/chung-tu/nhat-ky-chung': '/chung-tu/nhat-ky-chung:xem',
+  '/chung-tu/ket-chuyen-lai-lo': '/chung-tu/ket-chuyen-lai-lo:xem',
 
   '/so-quy': '/so-quy:xem',
 
