@@ -28,12 +28,16 @@ import type { ColumnsType } from 'antd/es/table';
 
 import { ketChuyenService } from '@/services/ketChuyenService';
 import {
+  boKhoaDong,
   dienGiaiMacDinh,
   dinhDangTien,
+  ganKhoaDong,
   moTaCanhBao,
+  suaDong,
   tongSoTien,
+  xoaDong,
   type CanhBaoKetChuyen,
-  type DongHachToan,
+  type DongHachToanCoKhoa,
 } from './ketChuyenTinhToan';
 
 const { Text, Title } = Typography;
@@ -47,15 +51,25 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
   const [ngayChungTu, setNgayChungTu] = useState<Dayjs>(dayjs());
   const [dienGiai, setDienGiai] = useState<string>(() => dienGiaiMacDinh(dayjs().format(DATE_FMT)));
   const [daSuaDienGiai, setDaSuaDienGiai] = useState(false);
+  const [daSuaNgayHachToan, setDaSuaNgayHachToan] = useState(false);
+  const [daSuaNgayChungTu, setDaSuaNgayChungTu] = useState(false);
 
-  const [dong, setDong] = useState<DongHachToan[]>([]);
+  const [dong, setDong] = useState<DongHachToanCoKhoa[]>([]);
   const [canhBao, setCanhBao] = useState<CanhBaoKetChuyen[]>([]);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Diễn giải tự cập nhật theo ngày kết chuyển — trừ khi người dùng đã tự sửa tay.
+  // Diễn giải, ngày hạch toán và ngày chứng từ tự bám theo ngày kết chuyển — trừ khi
+  // người dùng đã tự sửa tay ô đó (mỗi ô một cờ riêng).
+  //
+  // Bắt buộc phải đồng bộ ngày hạch toán: BE chỉ tính phần chênh trong cửa sổ
+  // [01/01 năm của denNgay, denNgay]. Chốt năm cũ (denNgay = 31/12/2025) mà để ngày
+  // hạch toán mặc định là hôm nay (2026) thì lô rơi vào sai năm, TK 5/6/7/8 của 2025
+  // không bao giờ sạch và mỗi lần Lưu lại nhân bản toàn bộ lô.
   useEffect(() => {
     if (!daSuaDienGiai) setDienGiai(dienGiaiMacDinh(denNgay.format(DATE_FMT)));
+    if (!daSuaNgayHachToan) setNgayHachToan(denNgay);
+    if (!daSuaNgayChungTu) setNgayChungTu(denNgay);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [denNgay]);
 
@@ -63,7 +77,7 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
     setLoadingPreview(true);
     try {
       const result = await ketChuyenService.preview(denNgay.format(DATE_FMT));
-      setDong(result.dong);
+      setDong(ganKhoaDong(result.dong));
       setCanhBao(result.canhBao);
     } catch {
       message.error('Không lấy được dữ liệu kết chuyển');
@@ -72,11 +86,12 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
     }
   };
 
-  const patchDong = (maKetChuyen: string, patch: Partial<DongHachToan>) =>
-    setDong((prev) => prev.map((d) => (d.maKetChuyen === maKetChuyen ? { ...d, ...patch } : d)));
+  // Sửa/xóa theo `khoa` chứ KHÔNG theo `maKetChuyen`: nhiều dòng có thể cùng một mã
+  // kết chuyển (một dòng cho mỗi tài khoản chi tiết), dùng mã sẽ đụng nhầm dòng khác.
+  const patchDong = (khoa: string, patch: Partial<DongHachToanCoKhoa>) =>
+    setDong((prev) => suaDong(prev, khoa, patch));
 
-  const removeDong = (maKetChuyen: string) =>
-    setDong((prev) => prev.filter((d) => d.maKetChuyen !== maKetChuyen));
+  const removeDong = (khoa: string) => setDong((prev) => xoaDong(prev, khoa));
 
   const handleSave = async () => {
     if (dong.length === 0) {
@@ -90,7 +105,8 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
         ngayHachToan: ngayHachToan.format(DATE_FMT),
         ngayChungTu: ngayChungTu.format(DATE_FMT),
         dienGiai,
-        dong,
+        // Bỏ `khoa` — hợp đồng gửi lên BE giữ nguyên đúng các field của DTO.
+        dong: boKhoaDong(dong),
       });
       message.success(`Đã lập chứng từ kết chuyển ${result.soPhieu}`);
       navigate('/chung-tu/ket-chuyen-lai-lo');
@@ -103,21 +119,21 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
     }
   };
 
-  const columns: ColumnsType<DongHachToan> = [
+  const columns: ColumnsType<DongHachToanCoKhoa> = [
     {
       title: '#',
       key: 'stt',
       width: 50,
-      render: (_: unknown, __: DongHachToan, index: number) => index + 1,
+      render: (_: unknown, __: DongHachToanCoKhoa, index: number) => index + 1,
     },
     {
       title: 'Diễn giải',
       dataIndex: 'dienGiai',
       key: 'dienGiai',
-      render: (v: string, record: DongHachToan) => (
+      render: (v: string, record: DongHachToanCoKhoa) => (
         <Input
           value={v}
-          onChange={(e) => patchDong(record.maKetChuyen, { dienGiai: e.target.value })}
+          onChange={(e) => patchDong(record.khoa, { dienGiai: e.target.value })}
         />
       ),
     },
@@ -129,14 +145,14 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
       key: 'soTien',
       width: 180,
       align: 'right' as const,
-      render: (v: number, record: DongHachToan) => (
+      render: (v: number, record: DongHachToanCoKhoa) => (
         <InputNumber
           style={{ width: '100%' }}
           value={v}
           min={0}
           formatter={(val) => `${val}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
           parser={(val) => Number((val || '').replace(/,/g, ''))}
-          onChange={(val) => patchDong(record.maKetChuyen, { soTien: Number(val) || 0 })}
+          onChange={(val) => patchDong(record.khoa, { soTien: Number(val) || 0 })}
         />
       ),
     },
@@ -144,12 +160,12 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
       title: '',
       key: 'actions',
       width: 60,
-      render: (_: unknown, record: DongHachToan) => (
+      render: (_: unknown, record: DongHachToanCoKhoa) => (
         <Button
           type="text"
           danger
           icon={<DeleteOutlined />}
-          onClick={() => removeDong(record.maKetChuyen)}
+          onClick={() => removeDong(record.khoa)}
         />
       ),
     },
@@ -204,7 +220,11 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
                   value={ngayHachToan}
                   format="DD/MM/YYYY"
                   allowClear={false}
-                  onChange={(d) => d && setNgayHachToan(d)}
+                  onChange={(d) => {
+                    if (!d) return;
+                    setNgayHachToan(d);
+                    setDaSuaNgayHachToan(true);
+                  }}
                 />
               </div>
               <div>
@@ -214,7 +234,11 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
                   value={ngayChungTu}
                   format="DD/MM/YYYY"
                   allowClear={false}
-                  onChange={(d) => d && setNgayChungTu(d)}
+                  onChange={(d) => {
+                    if (!d) return;
+                    setNgayChungTu(d);
+                    setDaSuaNgayChungTu(true);
+                  }}
                 />
               </div>
               <div>
@@ -242,8 +266,8 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
       </Card>
 
       <Card title="Hạch toán">
-        <Table<DongHachToan>
-          rowKey="maKetChuyen"
+        <Table<DongHachToanCoKhoa>
+          rowKey="khoa"
           dataSource={dong}
           columns={columns}
           pagination={false}
