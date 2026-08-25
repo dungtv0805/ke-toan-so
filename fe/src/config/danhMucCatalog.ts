@@ -69,6 +69,7 @@ export const DANH_MUC_GROUPS: DanhMucGroup[] = [
       { label: 'Loại giao dịch', path: '/danh-muc/loai-giao-dich' },
       { label: 'Hồ sơ chứng từ', path: '/danh-muc/ho-so-chung-tu' },
       { label: 'Lý do không hợp lệ', path: '/danh-muc/ly-do-khong-hop-le' },
+      { label: 'Tài khoản kết chuyển', path: '/danh-muc/tai-khoan-ket-chuyen' },
     ],
   },
 ];
