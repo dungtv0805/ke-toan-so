@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { TenantContextService } from '@app/core';
 import { ServiceClient } from '@app/service-client';
@@ -87,6 +88,24 @@ describe('KetChuyenService', () => {
     expect(end.getFullYear()).toBe(2026);
   });
 
+  it('preview lấy denNgay đến cuối ngày (23:59:59.999)', async () => {
+    await service.preview('2026-08-31', 'Bearer token');
+
+    const [, end] = nhatKyChungService.aggregateBalance.mock.calls[0];
+    expect(end.getHours()).toBe(23);
+    expect(end.getMinutes()).toBe(59);
+    expect(end.getSeconds()).toBe(59);
+    expect(end.getMilliseconds()).toBe(999);
+  });
+
+  it('preview dựng đầu năm cùng cơ sở (múi giờ) với ngày kết thúc', async () => {
+    await service.preview('2026-08-31', 'Bearer token');
+
+    const [start, end] = nhatKyChungService.aggregateBalance.mock.calls[0];
+    const dauNamMongDoi = new Date(end.getFullYear(), 0, 1);
+    expect(start.getTime()).toBe(dauNamMongDoi.getTime());
+  });
+
   it('preview gắn tên tài khoản vào cảnh báo', async () => {
     serviceClient.getTaiKhoanKetChuyen.mockResolvedValue({ success: true, data: [] });
 
@@ -143,6 +162,16 @@ describe('KetChuyenService', () => {
     expect(Object.is(kq.laiLo, -0)).toBe(false);
   });
 
+  it('preview ném lỗi khi không tải được danh mục tài khoản kết chuyển', async () => {
+    // Danh mục lỗi mà cứ trả 0 dòng thì trông y hệt "không có gì để kết chuyển" —
+    // phải phân biệt hai trường hợp bằng lỗi rõ ràng, không được im lặng.
+    serviceClient.getTaiKhoanKetChuyen.mockResolvedValue({ success: false, data: undefined });
+
+    await expect(service.preview('2026-08-31', 'Bearer token')).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
+  });
+
   it('create ghi mọi dòng cùng một số phiếu và gắn tag kết chuyển', async () => {
     const kq = await service.create(
       {
@@ -192,6 +221,64 @@ describe('KetChuyenService', () => {
       'KHAC',
       expect.objectContaining({ maLoaiChungTu: 'NVK' }),
     );
+  });
+
+  it('create ném lỗi và không ghi sổ khi không tải được danh mục tài khoản', async () => {
+    serviceClient.getTaiKhoan.mockResolvedValue({ success: false, data: undefined });
+
+    await expect(
+      service.create(
+        {
+          denNgay: '2026-08-31',
+          ngayHachToan: '2026-08-31',
+          ngayChungTu: '2026-08-31',
+          dienGiai: 'x',
+          dong: [{ maKetChuyen: '511-911', taiKhoanNo: '511', taiKhoanCo: '911', soTien: 100 }],
+        },
+        'user-1',
+        'Bearer token',
+      ),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+
+    expect(chungTuRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('create ném lỗi khi không còn số dư nào để kết chuyển (chặn double-submit)', async () => {
+    nhatKyChungService.aggregateBalance.mockResolvedValue({ success: true, data: [] });
+
+    await expect(
+      service.create(
+        {
+          denNgay: '2026-08-31',
+          ngayHachToan: '2026-08-31',
+          ngayChungTu: '2026-08-31',
+          dienGiai: 'x',
+          dong: [{ maKetChuyen: '511-911', taiKhoanNo: '511', taiKhoanCo: '911', soTien: 100 }],
+        },
+        'user-1',
+        'Bearer token',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(chungTuRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('create ném lỗi khi maKetChuyen không khớp mã nào trong preview hiện tại', async () => {
+    await expect(
+      service.create(
+        {
+          denNgay: '2026-08-31',
+          ngayHachToan: '2026-08-31',
+          ngayChungTu: '2026-08-31',
+          dienGiai: 'x',
+          dong: [{ maKetChuyen: 'ma-khong-ton-tai', taiKhoanNo: '511', taiKhoanCo: '911', soTien: 100 }],
+        },
+        'user-1',
+        'Bearer token',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(chungTuRepository.save).not.toHaveBeenCalled();
   });
 
   it('remove chỉ xóa chứng từ do kết chuyển sinh ra', async () => {

@@ -1,7 +1,12 @@
 import { TenantContextService } from '@app/core';
 import { ChungTu, type DanhMucTaiKhoan } from '@app/entities';
 import { ServiceClient } from '@app/service-client';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NhatKyChungService } from '../nhat-ky-chung/nhat-ky-chung.service';
@@ -48,7 +53,12 @@ export class KetChuyenService {
   }
 
   async preview(denNgay: string, authToken?: string): Promise<KetQuaPreview> {
+    // Chuẩn hoá về cuối ngày rồi mới lấy năm — cùng quy ước với
+    // `nhat-ky-chung/helpers/build-query.helper.ts` và `so-chi-tiet.service.ts`.
+    // Nếu không, chứng từ đúng ngày chốt nhưng có giờ khác 00:00 sẽ bị loại, và
+    // `dauNam` dựng theo cơ sở khác `ngayKetThuc` có thể lệch năm ở biên 31/12.
     const ngayKetThuc = new Date(denNgay);
+    ngayKetThuc.setHours(23, 59, 59, 999);
     const dauNam = new Date(ngayKetThuc.getFullYear(), 0, 1);
 
     const [danhMucRes, taiKhoanRes, soDuDauKyRes, phatSinhRes] = await Promise.all([
@@ -58,7 +68,15 @@ export class KetChuyenService {
       this.nhatKyChungService.aggregateBalance(dauNam, ngayKetThuc, this.tenantId),
     ]);
 
-    const danhMuc: DongDanhMucKetChuyen[] = (danhMucRes.success ? danhMucRes.data || [] : [])
+    // Danh mục lỗi trông y hệt "không có gì để kết chuyển" (0 dòng) nếu không chặn ở
+    // đây — người dùng dễ hiểu nhầm là đã kết chuyển xong.
+    if (!danhMucRes.success) {
+      throw new ServiceUnavailableException(
+        'Không tải được danh mục tài khoản kết chuyển',
+      );
+    }
+
+    const danhMuc: DongDanhMucKetChuyen[] = (danhMucRes.data || [])
       .filter((d) => d.isActive !== false && d.loai === 'XAC_DINH_KQKD')
       .map((d) => ({
         ma: d.ma,
@@ -110,14 +128,41 @@ export class KetChuyenService {
     nguoiTaoId: string,
     authToken?: string,
   ): Promise<{ soPhieu: string; soDong: number }> {
+    const taiKhoanRes = await this.serviceClient.getTaiKhoan(authToken, this.tenantId);
+    if (!taiKhoanRes.success) {
+      // Ném trước khi ghi bất cứ thứ gì: thiếu danh mục tài khoản thì snapshot
+      // lưu vào chứng từ sẽ rỗng ({ ten: '', loai: '', nhom: '' }) vĩnh viễn, không
+      // ai quay lại sửa được.
+      throw new ServiceUnavailableException(
+        'Không tải được danh mục tài khoản, chưa ghi sổ kết chuyển',
+      );
+    }
+
+    // Chốt chặn double-submit (double-click / retry sau timeout): chạy lại preview
+    // ngay trước khi ghi sổ. Không re-derive số tiền — người dùng có thể đã sửa số
+    // tiền trên form — chỉ chặn khi rõ ràng không còn gì để kết chuyển, hoặc dòng
+    // gửi lên tham chiếu một mã danh mục không còn khớp preview hiện tại.
+    const kqPreview = await this.preview(dto.denNgay, authToken);
+    if (kqPreview.dong.length === 0) {
+      throw new BadRequestException(
+        'Không còn số dư nào để kết chuyển đến ngày này. Nếu muốn lập lại, hãy xóa chứng từ kết chuyển cũ trước.',
+      );
+    }
+    const maHopLe = new Set(kqPreview.dong.map((d) => d.maKetChuyen));
+    const dongMaLa = dto.dong.find((d) => !maHopLe.has(d.maKetChuyen));
+    if (dongMaLa) {
+      throw new BadRequestException(
+        `Mã kết chuyển không hợp lệ: ${dongMaLa.maKetChuyen}`,
+      );
+    }
+
     const soPhieu = await this.voucherNumberService.generateVoucherNumber('KHAC', {
       maLoaiChungTu: MA_LOAI_CHUNG_TU,
       date: new Date(dto.ngayChungTu),
     });
 
-    const taiKhoanRes = await this.serviceClient.getTaiKhoan(authToken, this.tenantId);
     const taiKhoanTheoMa = new Map(
-      (taiKhoanRes.success ? taiKhoanRes.data || [] : []).map((t) => [t.ma, t]),
+      (taiKhoanRes.data || []).map((t) => [t.ma, t]),
     );
 
     const snapshot = (ma: string): DanhMucTaiKhoan => {

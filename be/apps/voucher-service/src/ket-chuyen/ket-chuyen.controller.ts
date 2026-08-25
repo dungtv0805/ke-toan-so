@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Headers,
-  Param,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Headers, Post, UseGuards } from '@nestjs/common';
 import {
   CurrentUser,
   JwtGuard,
@@ -15,7 +6,7 @@ import {
   Roles,
   type UserPayload,
 } from '@app/auth';
-import { CreateKetChuyenDto, PreviewKetChuyenDto } from './dto';
+import { CreateKetChuyenDto, PreviewKetChuyenDto, XoaKetChuyenDto } from './dto';
 import { KetChuyenService } from './ket-chuyen.service';
 
 @Controller('ket-chuyen')
@@ -51,10 +42,15 @@ export class KetChuyenController {
     return { success: true, data };
   }
 
-  @Delete(':soPhieu')
+  /**
+   * `POST /xoa` thay vì `DELETE /:soPhieu`: số chứng từ luôn chứa dấu `/`
+   * (`NVK202608/001`). Gateway giải mã `%2F` rồi ghép segment bằng `join('/')`
+   * trước khi route, nên path-param không bao giờ khớp được số chứng từ có `/`.
+   */
+  @Post('xoa')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
-  async remove(@Param('soPhieu') soPhieu: string) {
-    const data = await this.ketChuyenService.remove(soPhieu);
+  async remove(@Body() dto: XoaKetChuyenDto) {
+    const data = await this.ketChuyenService.remove(dto.soPhieu);
     return { success: true, data };
   }
 }
