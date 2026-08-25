@@ -13,11 +13,13 @@ import {
   Popconfirm,
   Tooltip,
   Typography,
+  Tag,
 } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
+  CopyOutlined,
 } from "@ant-design/icons";
 import {
   taiKhoanKetChuyenService,
@@ -94,6 +96,7 @@ const TaiKhoanKetChuyenPage: React.FC = () => {
       { header: "Bên kết chuyển", dataKey: "ben", width: 15 },
       { header: "Loại kết chuyển", dataKey: "loai", width: 35 },
       { header: "Diễn giải", dataKey: "dienGiai", width: 40 },
+      { header: "Trạng thái", dataKey: "trangThai", width: 20 },
     ],
     fetchData: async () => {
       const result = await taiKhoanKetChuyenService.getPaginated({ limit: 10000 });
@@ -105,6 +108,7 @@ const TaiKhoanKetChuyenPage: React.FC = () => {
         ben: NHAN_BEN[item.ben] ?? item.ben,
         loai: NHAN_LOAI[item.loai] ?? item.loai,
         dienGiai: item.dienGiai || "",
+        trangThai: item.isActive ? "Đang sử dụng" : "Ngừng sử dụng",
       }));
     },
   }), []);
@@ -161,6 +165,15 @@ const TaiKhoanKetChuyenPage: React.FC = () => {
   const handleEdit = (record: TaiKhoanKetChuyen) => {
     setEditingRecord(record);
     form.setFieldsValue(record);
+    setModalVisible(true);
+  };
+
+  const handleDuplicate = (record: TaiKhoanKetChuyen) => {
+    // Nhân bản thuần FE: mở modal Thêm mới với toàn bộ giá trị copy từ dòng
+    // đang chọn, riêng mã để trống để người dùng nhập mã mới (mã không được trùng).
+    setEditingRecord(null);
+    form.resetFields();
+    form.setFieldsValue({ ...record, ma: "" });
     setModalVisible(true);
   };
 
@@ -242,14 +255,28 @@ const TaiKhoanKetChuyenPage: React.FC = () => {
     },
     { title: "Diễn giải", dataIndex: "dienGiai", key: "dienGiai", ellipsis: true },
     {
+      title: "Trạng thái",
+      dataIndex: "isActive",
+      key: "isActive",
+      width: 130,
+      render: (isActive: boolean) => (
+        isActive
+          ? <Tag color="green">Đang sử dụng</Tag>
+          : <Tag>Ngừng sử dụng</Tag>
+      ),
+    },
+    {
       title: "Thao tác",
       key: "actions",
-      width: 100,
+      width: 140,
       fixed: "right" as const,
       render: (_: unknown, record: TaiKhoanKetChuyen) => (
         <Space size="small">
           {canEdit && (<Tooltip title="Sửa">
             <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} className="text-primary" />
+          </Tooltip>)}
+          {canCreate && (<Tooltip title="Nhân bản">
+            <Button type="text" icon={<CopyOutlined />} onClick={() => handleDuplicate(record)} />
           </Tooltip>)}
           {canDelete && (<Popconfirm
             title="Xác nhận xóa"
@@ -311,7 +338,7 @@ const TaiKhoanKetChuyenPage: React.FC = () => {
           rowKey="id"
           rowSelection={rowSelection}
           loading={loading}
-          scroll={{ x: 1200, y: "calc(100vh - 300px)" }}
+          scroll={{ x: 1400, y: "calc(100vh - 300px)" }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
