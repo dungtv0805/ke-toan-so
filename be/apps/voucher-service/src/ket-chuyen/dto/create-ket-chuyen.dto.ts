@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayNotEmpty,
   IsArray,
   IsDateString,
   IsNotEmpty,
@@ -50,6 +51,9 @@ export class CreateKetChuyenDto {
   dienGiai: string;
 
   @IsArray()
+  // Mảng rỗng lọt qua cả hai chốt chặn của `create` (chỗ đó chỉ kiểm số dòng của
+  // preview), tiêu một số trong dải NVK rồi trả `success` với `soDong: 0`.
+  @ArrayNotEmpty({ message: 'Phải có ít nhất một dòng hạch toán để kết chuyển' })
   @ValidateNested({ each: true })
   @Type(() => DongKetChuyenDto)
   dong: DongKetChuyenDto[];

@@ -18,10 +18,18 @@ import {
   type DongDanhMucKetChuyen,
   type DongHachToan,
 } from './ket-chuyen.engine';
-import { gomLoKetChuyen, type LoKetChuyen } from './ket-chuyen.helper';
+import {
+  dungCuaSoKetChuyen,
+  gomLoKetChuyen,
+  type LoKetChuyen,
+} from './ket-chuyen.helper';
 
 /** Tiền tố số chứng từ kết chuyển — Nghiệp vụ khác (NVK). */
 const MA_LOAI_CHUNG_TU = 'NVK';
+
+/** Ngày dạng dd/mm/yyyy cho thông báo lỗi gửi kế toán. */
+const dinhDangNgay = (d: Date) =>
+  `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 
 export interface CanhBaoKetChuyen {
   ma: string;
@@ -53,13 +61,7 @@ export class KetChuyenService {
   }
 
   async preview(denNgay: string, authToken?: string): Promise<KetQuaPreview> {
-    // Chuẩn hoá về cuối ngày rồi mới lấy năm — cùng quy ước với
-    // `nhat-ky-chung/helpers/build-query.helper.ts` và `so-chi-tiet.service.ts`.
-    // Nếu không, chứng từ đúng ngày chốt nhưng có giờ khác 00:00 sẽ bị loại, và
-    // `dauNam` dựng theo cơ sở khác `ngayKetThuc` có thể lệch năm ở biên 31/12.
-    const ngayKetThuc = new Date(denNgay);
-    ngayKetThuc.setHours(23, 59, 59, 999);
-    const dauNam = new Date(ngayKetThuc.getFullYear(), 0, 1);
+    const { dauNam, ngayKetThuc } = dungCuaSoKetChuyen(denNgay);
 
     const [danhMucRes, taiKhoanRes, soDuDauKyRes, phatSinhRes] = await Promise.all([
       this.serviceClient.getTaiKhoanKetChuyen(authToken, this.tenantId),
@@ -128,6 +130,20 @@ export class KetChuyenService {
     nguoiTaoId: string,
     authToken?: string,
   ): Promise<{ soPhieu: string; soDong: number }> {
+    // Cửa sổ kết chuyển dựng bằng đúng hàm mà `preview` dùng, nên hai chỗ không lệch
+    // mốc. Kiểm TRƯỚC mọi thứ khác: ghi sổ là hành động khó hoàn tác, mà lô rơi ngoài
+    // cửa sổ thì TK 5/6/7/8 của kỳ đó không bao giờ sạch, chốt chặn double-submit
+    // không bao giờ kích hoạt và mỗi lần Lưu lại nhân bản toàn bộ lô vào sai kỳ.
+    const { dauNam, ngayKetThuc } = dungCuaSoKetChuyen(dto.denNgay);
+    const { ngayKetThuc: mocHachToan } = dungCuaSoKetChuyen(dto.ngayHachToan);
+    if (mocHachToan < dauNam || mocHachToan > ngayKetThuc) {
+      throw new BadRequestException(
+        `Ngày hạch toán ${dinhDangNgay(mocHachToan)} nằm ngoài kỳ kết chuyển ` +
+          `${dinhDangNgay(dauNam)} - ${dinhDangNgay(ngayKetThuc)}. ` +
+          'Hãy sửa Ngày hạch toán về trong kỳ, hoặc đổi lại Kết chuyển đến ngày.',
+      );
+    }
+
     const taiKhoanRes = await this.serviceClient.getTaiKhoan(authToken, this.tenantId);
     if (!taiKhoanRes.success) {
       // Ném trước khi ghi bất cứ thứ gì: thiếu danh mục tài khoản thì snapshot
@@ -156,15 +172,35 @@ export class KetChuyenService {
       );
     }
 
+    const taiKhoanTheoMa = new Map(
+      (taiKhoanRes.data || []).map((t) => [t.ma, t]),
+    );
+
+    // Bảng cân đối kế toán duyệt tài khoản TỪ danh mục và khớp mã CHÍNH XÁC, nên một
+    // dòng ghi vào mã lạ (`'4212 '` thừa dấu cách, `'4121'` gõ nhầm) không đóng góp vào
+    // đâu cả → BCĐKT lệch đúng bằng lợi nhuận. Chặn trước khi sinh số chứng từ để
+    // không đốt oan một số trong dải NVK.
+    const maLa = [
+      ...new Set(
+        dto.dong
+          .flatMap((d) => [d.taiKhoanNo, d.taiKhoanCo])
+          .filter((ma) => !taiKhoanTheoMa.has(ma)),
+      ),
+    ];
+    if (maLa.length > 0) {
+      throw new BadRequestException(
+        `Tài khoản không có trong danh mục tài khoản: ${maLa.join(', ')}. ` +
+          'Hãy khai các tài khoản này vào danh mục Tài khoản rồi lấy lại dữ liệu.',
+      );
+    }
+
     const soPhieu = await this.voucherNumberService.generateVoucherNumber('KHAC', {
       maLoaiChungTu: MA_LOAI_CHUNG_TU,
       date: new Date(dto.ngayChungTu),
     });
 
-    const taiKhoanTheoMa = new Map(
-      (taiKhoanRes.data || []).map((t) => [t.ma, t]),
-    );
-
+    // Mã lạ đã bị chặn ở trên nên `tk` luôn tồn tại; `?? ''` chỉ để phòng bản ghi danh
+    // mục thiếu trường, không phải để nuốt mã sai.
     const snapshot = (ma: string): DanhMucTaiKhoan => {
       const tk = taiKhoanTheoMa.get(ma);
       return {

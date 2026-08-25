@@ -71,6 +71,59 @@ describe('TaiKhoanKetChuyenService', () => {
     ).rejects.toThrow(BadRequestException);
   });
 
+  it('từ chối tạo khi kết chuyển đến là tài khoản con của kết chuyển từ', async () => {
+    // Engine gom TK nguồn theo TIỀN TỐ: khai `511 → 5111` khiến TK đích nằm trong chính
+    // tập nguồn và sinh bút toán vô nghĩa `Nợ 5111 / Có 5111`.
+    mockRepository.findOne.mockResolvedValue(null);
+
+    await expect(
+      service.create({
+        thuTu: 10,
+        ma: '511-5111',
+        taiKhoanTu: '511',
+        taiKhoanDen: '5111',
+        ben: 'CO',
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('từ chối tạo khi kết chuyển đến là tài khoản cha của kết chuyển từ', async () => {
+    mockRepository.findOne.mockResolvedValue(null);
+
+    await expect(
+      service.create({
+        thuTu: 10,
+        ma: '5111-511',
+        taiKhoanTu: '5111',
+        taiKhoanDen: '511',
+        ben: 'CO',
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('vẫn cho phép cặp tài khoản không lồng nhau', async () => {
+    mockRepository.findOne.mockResolvedValue(null);
+
+    const ketQua = await service.create({
+      thuTu: 10,
+      ma: '511-911',
+      taiKhoanTu: '511',
+      taiKhoanDen: '911',
+      ben: 'CO',
+    });
+
+    expect(ketQua.taiKhoanDen).toBe('911');
+  });
+
+  it('từ chối khi sửa thành cặp tài khoản lồng nhau', async () => {
+    const banGhi = taoBanGhi('511-911', 10);
+    mockRepository.findOne.mockResolvedValue(banGhi);
+
+    await expect(
+      service.update(banGhi._id.toHexString(), { taiKhoanDen: '5111' }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
   it('sắp xếp theo thứ tự kết chuyển tăng dần, mã dùng làm tie-break', async () => {
     mockRepository.findAndCount.mockResolvedValue([
       [taoBanGhi('911-4212', 99), taoBanGhi('642-911', 20), taoBanGhi('511-911', 20)],

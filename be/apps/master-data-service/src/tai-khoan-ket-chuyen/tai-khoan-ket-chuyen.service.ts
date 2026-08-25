@@ -95,9 +95,22 @@ export class TaiKhoanKetChuyenService {
   }
 
   private kiemTraCapTaiKhoan(tu?: string, den?: string) {
-    if (tu && den && tu === den) {
+    if (!tu || !den) return;
+
+    if (tu === den) {
       throw new BadRequestException(
         'Kết chuyển từ và Kết chuyển đến không được trùng nhau',
+      );
+    }
+
+    // Engine kết chuyển gom tài khoản nguồn theo TIỀN TỐ (`511` kéo theo `5111`,
+    // `5112`...). Nếu hai mã lồng nhau thì tài khoản đích nằm trong chính tập nguồn,
+    // sinh bút toán vô nghĩa kiểu `Nợ 5111 / Có 5111` và số dư không bao giờ về 0.
+    if (den.startsWith(tu) || tu.startsWith(den)) {
+      throw new BadRequestException(
+        `Kết chuyển đến (${den}) và Kết chuyển từ (${tu}) không được lồng nhau: ` +
+          'kết chuyển gom cả tài khoản chi tiết theo tiền tố, nên tài khoản đích sẽ ' +
+          'nằm trong chính nhóm nguồn và sinh bút toán tự kết chuyển vào chính nó.',
       );
     }
   }

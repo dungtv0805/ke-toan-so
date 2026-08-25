@@ -281,6 +281,135 @@ describe('KetChuyenService', () => {
     expect(chungTuRepository.save).not.toHaveBeenCalled();
   });
 
+  it('create ném lỗi khi ngày hạch toán rơi ngoài cửa sổ kết chuyển', async () => {
+    // Tai nạn thật: chốt năm cũ (denNgay = 31/12/2025) nhưng để ngày hạch toán mặc
+    // định là hôm nay (2026) → lô rơi vào 2026, TK 5/6/7/8 của 2025 không bao giờ sạch
+    // và mỗi lần Lưu lại nhân bản toàn bộ lô vào sai năm.
+    await expect(
+      service.create(
+        {
+          denNgay: '2025-12-31',
+          ngayHachToan: '2026-08-25',
+          ngayChungTu: '2026-08-25',
+          dienGiai: 'x',
+          dong: [{ maKetChuyen: '511-911', taiKhoanNo: '511', taiKhoanCo: '911', soTien: 100 }],
+        },
+        'user-1',
+        'Bearer token',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(chungTuRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('create nêu rõ ngày trong thông báo lỗi ngày hạch toán ngoài cửa sổ', async () => {
+    await expect(
+      service.create(
+        {
+          denNgay: '2025-12-31',
+          ngayHachToan: '2026-08-25',
+          ngayChungTu: '2026-08-25',
+          dienGiai: 'x',
+          dong: [{ maKetChuyen: '511-911', taiKhoanNo: '511', taiKhoanCo: '911', soTien: 100 }],
+        },
+        'user-1',
+        'Bearer token',
+      ),
+    ).rejects.toThrow(/25\/08\/2026[\s\S]*01\/01\/2025[\s\S]*31\/12\/2025/);
+  });
+
+  it('create ném lỗi khi ngày hạch toán rơi vào năm trước ngày chốt', async () => {
+    await expect(
+      service.create(
+        {
+          denNgay: '2026-08-31',
+          ngayHachToan: '2025-12-31',
+          ngayChungTu: '2026-08-31',
+          dienGiai: 'x',
+          dong: [{ maKetChuyen: '511-911', taiKhoanNo: '511', taiKhoanCo: '911', soTien: 100 }],
+        },
+        'user-1',
+        'Bearer token',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(chungTuRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('create vẫn ghi bình thường khi ngày hạch toán nằm trong cửa sổ kết chuyển', async () => {
+    const kq = await service.create(
+      {
+        denNgay: '2026-08-31',
+        ngayHachToan: '2026-01-01',
+        ngayChungTu: '2026-01-01',
+        dienGiai: 'x',
+        dong: [{ maKetChuyen: '511-911', taiKhoanNo: '511', taiKhoanCo: '911', soTien: 100 }],
+      },
+      'user-1',
+      'Bearer token',
+    );
+
+    expect(kq.soDong).toBe(1);
+    expect(chungTuRepository.save).toHaveBeenCalled();
+  });
+
+  it('create chấp nhận ngày hạch toán đúng bằng ngày chốt', async () => {
+    await service.create(
+      {
+        denNgay: '2026-08-31',
+        ngayHachToan: '2026-08-31',
+        ngayChungTu: '2026-08-31',
+        dienGiai: 'x',
+        dong: [{ maKetChuyen: '511-911', taiKhoanNo: '511', taiKhoanCo: '911', soTien: 100 }],
+      },
+      'user-1',
+      'Bearer token',
+    );
+
+    expect(chungTuRepository.save).toHaveBeenCalled();
+  });
+
+  it('create từ chối khi tài khoản hạch toán không có trong danh mục tài khoản', async () => {
+    // '4212 ' thừa dấu cách: BCĐKT duyệt tài khoản TỪ danh mục và khớp mã chính xác
+    // nên dòng này không đóng góp vào đâu cả, BCĐKT lệch đúng bằng lợi nhuận.
+    await expect(
+      service.create(
+        {
+          denNgay: '2026-08-31',
+          ngayHachToan: '2026-08-31',
+          ngayChungTu: '2026-08-31',
+          dienGiai: 'x',
+          dong: [
+            { maKetChuyen: '511-911', taiKhoanNo: '511', taiKhoanCo: '911', soTien: 100 },
+            { maKetChuyen: '911-4212', taiKhoanNo: '911', taiKhoanCo: '4212 ', soTien: 100 },
+          ],
+        },
+        'user-1',
+        'Bearer token',
+      ),
+    ).rejects.toThrow(/4212/);
+
+    expect(chungTuRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('create không đốt số chứng từ khi tài khoản hạch toán không có trong danh mục', async () => {
+    await expect(
+      service.create(
+        {
+          denNgay: '2026-08-31',
+          ngayHachToan: '2026-08-31',
+          ngayChungTu: '2026-08-31',
+          dienGiai: 'x',
+          dong: [{ maKetChuyen: '511-911', taiKhoanNo: '4121', taiKhoanCo: '911', soTien: 100 }],
+        },
+        'user-1',
+        'Bearer token',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(voucherNumberService.generateVoucherNumber).not.toHaveBeenCalled();
+  });
+
   it('remove chỉ xóa chứng từ do kết chuyển sinh ra', async () => {
     await service.remove('NVK202608/001');
 

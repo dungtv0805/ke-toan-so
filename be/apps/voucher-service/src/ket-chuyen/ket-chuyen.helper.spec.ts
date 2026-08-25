@@ -1,4 +1,8 @@
-import { gomLoKetChuyen, tinhLaiLoTuDong } from './ket-chuyen.helper';
+import {
+  dungCuaSoKetChuyen,
+  gomLoKetChuyen,
+  tinhLaiLoTuDong,
+} from './ket-chuyen.helper';
 
 describe('tinhLaiLoTuDong', () => {
   it('lãi khi 911 nằm bên Nợ và bên kia không phải tài khoản KQKD', () => {
@@ -19,8 +23,65 @@ describe('tinhLaiLoTuDong', () => {
     expect(laiLo).toBe(-70);
   });
 
-  it('trả 0 khi lô không có bút toán chốt', () => {
-    expect(tinhLaiLoTuDong([{ taiKhoanNo: '511', taiKhoanCo: '911', soTien: 100 }])).toBe(0);
+  // Danh mục có thể thiếu dòng `911 → 421x` (danh mục bắt đầu trống, banner cảnh báo
+  // KHÔNG chặn Lưu). Khi đó lô đã ghi không có bút toán chốt, nhưng lãi/lỗ vẫn đo được
+  // từ net của 911 trong lô — nếu trả 0 thì form hiện "Lãi 70" còn danh sách hiện
+  // "Lãi 0" cho cùng một lô.
+  it('rơi về net của 911 khi lô không có bút toán chốt — lãi', () => {
+    const laiLo = tinhLaiLoTuDong([
+      { taiKhoanNo: '511', taiKhoanCo: '911', soTien: 100 },
+      { taiKhoanNo: '911', taiKhoanCo: '642', soTien: 30 },
+    ]);
+
+    expect(laiLo).toBe(70);
+  });
+
+  it('rơi về net của 911 khi lô không có bút toán chốt — lỗ', () => {
+    const laiLo = tinhLaiLoTuDong([
+      { taiKhoanNo: '511', taiKhoanCo: '911', soTien: 30 },
+      { taiKhoanNo: '911', taiKhoanCo: '642', soTien: 100 },
+    ]);
+
+    expect(laiLo).toBe(-70);
+  });
+
+  it('trả 0 (không phải -0) khi lô không dính tài khoản 911 nào', () => {
+    const laiLo = tinhLaiLoTuDong([{ taiKhoanNo: '641', taiKhoanCo: '642', soTien: 10 }]);
+
+    expect(laiLo).toBe(0);
+    expect(Object.is(laiLo, -0)).toBe(false);
+  });
+
+  it('vẫn ưu tiên bút toán chốt khi lô có đủ dòng 911 → 421x', () => {
+    const laiLo = tinhLaiLoTuDong([
+      { taiKhoanNo: '511', taiKhoanCo: '911', soTien: 100 },
+      { taiKhoanNo: '911', taiKhoanCo: '642', soTien: 30 },
+      { taiKhoanNo: '911', taiKhoanCo: '4212', soTien: 70 },
+    ]);
+
+    expect(laiLo).toBe(70);
+  });
+});
+
+describe('dungCuaSoKetChuyen', () => {
+  it('dựng cửa sổ từ đầu năm đến cuối ngày chốt', () => {
+    const { dauNam, ngayKetThuc } = dungCuaSoKetChuyen('2026-08-31');
+
+    expect(dauNam.getFullYear()).toBe(2026);
+    expect(dauNam.getMonth()).toBe(0);
+    expect(dauNam.getDate()).toBe(1);
+    expect(ngayKetThuc.getFullYear()).toBe(2026);
+    expect(ngayKetThuc.getHours()).toBe(23);
+    expect(ngayKetThuc.getMinutes()).toBe(59);
+    expect(ngayKetThuc.getSeconds()).toBe(59);
+    expect(ngayKetThuc.getMilliseconds()).toBe(999);
+  });
+
+  it('dựng đầu năm cùng cơ sở múi giờ với ngày kết thúc (không lệch năm ở biên 31/12)', () => {
+    const { dauNam, ngayKetThuc } = dungCuaSoKetChuyen('2025-12-31');
+
+    expect(ngayKetThuc.getFullYear()).toBe(2025);
+    expect(dauNam.getTime()).toBe(new Date(ngayKetThuc.getFullYear(), 0, 1).getTime());
   });
 });
 
