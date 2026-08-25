@@ -56,6 +56,7 @@ export const routePermissions: Record<string, string> = {
   '/chung-tu/phieu-thu': '/chung-tu/phieu-thu:xem',
   '/chung-tu/phieu-chi': '/chung-tu/phieu-chi:xem',
   '/chung-tu/nhat-ky-chung': '/chung-tu/nhat-ky-chung:xem',
+  '/chung-tu/ket-chuyen-lai-lo': '/chung-tu/ket-chuyen-lai-lo:xem',
 
   '/so-quy': '/so-quy:xem',
 

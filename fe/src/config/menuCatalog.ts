@@ -41,6 +41,7 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   { key: '/chung-tu/nhat-ky-chung', label: 'Dữ liệu tổng hợp' },
   { key: '/chung-tu/phieu-thu', label: 'Phiếu thu' },
   { key: '/chung-tu/phieu-chi', label: 'Phiếu chi' },
+  { key: '/chung-tu/ket-chuyen-lai-lo', label: 'Kết chuyển lãi lỗ' },
   { key: '/trung-tam-du-lieu/tai-san', label: 'Quản lý Tài sản' },
   { key: '/trung-tam-du-lieu/hop-dong', label: 'Bán hàng' },
 

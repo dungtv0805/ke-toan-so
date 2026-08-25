@@ -58,6 +58,8 @@ import {
   KeHoachTabsPage,
   KeHoachFormPage,
   NhatKyChungFormPage,
+  KetChuyenLaiLoListPage,
+  KetChuyenLaiLoFormPage,
   SoQuyPage,
   CongNoPhaiThuPage,
   CongNoPhaiTraPage,
@@ -337,6 +339,22 @@ const App = () => (
                     element={
                       <ProtectedRoute requiredPermission="/chung-tu/nhat-ky-chung:xem">
                         <NhatKyChungFormPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="ket-chuyen-lai-lo"
+                    element={
+                      <ProtectedRoute requiredPermission="/chung-tu/ket-chuyen-lai-lo:xem">
+                        <KetChuyenLaiLoListPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="ket-chuyen-lai-lo/tao-moi"
+                    element={
+                      <ProtectedRoute requiredPermission="/chung-tu/ket-chuyen-lai-lo:xem">
+                        <KetChuyenLaiLoFormPage />
                       </ProtectedRoute>
                     }
                   />

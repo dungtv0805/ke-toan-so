@@ -23,6 +23,11 @@ export const CHUNG_TU_NAV: SectionNavItem[] = [
   { label: "Phiếu thu", path: "/chung-tu/phieu-thu", icon: <CreditCardOutlined /> },
   { label: "Phiếu chi", path: "/chung-tu/phieu-chi", icon: <WalletOutlined /> },
   {
+    label: "Kết chuyển lãi lỗ",
+    path: "/chung-tu/ket-chuyen-lai-lo",
+    icon: <SwapOutlined />,
+  },
+  {
     label: "Phiếu kế toán",
     path: "/chung-tu/phieu-ke-toan",
     icon: <AuditOutlined />,

@@ -178,6 +178,14 @@ export const NhatKyChungFormPage = loadable(() => import('./chung-tu/nhat-ky-chu
   fallback: <PageLoader />
 });
 
+export const KetChuyenLaiLoListPage = loadable(() => import('./chung-tu/ket-chuyen-lai-lo/KetChuyenLaiLoListPage'), {
+  fallback: <PageLoader />
+});
+
+export const KetChuyenLaiLoFormPage = loadable(() => import('./chung-tu/ket-chuyen-lai-lo/KetChuyenLaiLoFormPage'), {
+  fallback: <PageLoader />
+});
+
 // Kế hoạch & Dự báo — cùng một trang, khác `loaiKeHoach` (xem KeHoachPage)
 export const KeHoachPage = loadable(() => import('./ke-hoach/KeHoachPage'), {
   fallback: <PageLoader />

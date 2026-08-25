@@ -155,6 +155,7 @@ const existingRoutes = new Set([
   "/chung-tu/phieu-thu",
   "/chung-tu/phieu-chi",
   "/chung-tu/nhat-ky-chung",
+  "/chung-tu/ket-chuyen-lai-lo",
   "/so-quy",
   "/cong-no/phai-thu",
   "/cong-no/phai-tra",
