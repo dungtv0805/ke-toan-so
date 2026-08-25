@@ -23,10 +23,11 @@ import { CreateNhomQuanLyDto } from '../nhom-quan-ly/dto';
 import { CreateLoaiChungTuDto } from '../loai-chung-tu/dto';
 import { CreateLoaiGiaoDichDto } from '../loai-giao-dich/dto';
 import { CreateHoSoChungTuDto } from '../ho-so-chung-tu/dto';
+import { CreateTaiKhoanKetChuyenDto } from '../tai-khoan-ket-chuyen/dto';
 
 describe('ImportDanhMucRegistry', () => {
-  /** 23 service giả, chỉ cần có create() vì registry không gọi gì khác. */
-  const fakes = Array.from({ length: 23 }, () => ({ create: jest.fn() }));
+  /** 24 service giả, chỉ cần có create() vì registry không gọi gì khác. */
+  const fakes = Array.from({ length: 24 }, () => ({ create: jest.fn() }));
   const registry = new ImportDanhMucRegistry(
     ...(fakes as unknown as ConstructorParameters<
       typeof ImportDanhMucRegistry
@@ -101,11 +102,16 @@ describe('ImportDanhMucRegistry', () => {
       position: 22,
       dtoClass: CreateHoSoChungTuDto,
     },
+    {
+      resource: 'tai-khoan-ket-chuyen',
+      position: 23,
+      dtoClass: CreateTaiKhoanKetChuyenDto,
+    },
   ];
 
-  it('đăng ký đủ 23 danh mục', () => {
-    expect(registry.resources()).toHaveLength(23);
-    expect(expected).toHaveLength(23);
+  it('đăng ký đủ 24 danh mục', () => {
+    expect(registry.resources()).toHaveLength(24);
+    expect(expected).toHaveLength(24);
   });
 
   it('mỗi entry có đủ service, dtoClass và label', () => {
@@ -130,4 +136,12 @@ describe('ImportDanhMucRegistry', () => {
       expect(entry!.dtoClass).toBe(dtoClass);
     },
   );
+
+  it('có entry cho danh mục Tài khoản kết chuyển', () => {
+    const entry = registry.get('tai-khoan-ket-chuyen');
+
+    expect(entry).toBeDefined();
+    expect(entry?.dtoClass).toBe(CreateTaiKhoanKetChuyenDto);
+    expect(entry?.label).toBe('Tài khoản kết chuyển');
+  });
 });

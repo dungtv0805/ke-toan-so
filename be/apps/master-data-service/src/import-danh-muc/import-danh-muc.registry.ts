@@ -24,6 +24,7 @@ import { NhomQuanLyService } from '../nhom-quan-ly/nhom-quan-ly.service';
 import { LoaiChungTuService } from '../loai-chung-tu/loai-chung-tu.service';
 import { LoaiGiaoDichService } from '../loai-giao-dich/loai-giao-dich.service';
 import { HoSoChungTuService } from '../ho-so-chung-tu/ho-so-chung-tu.service';
+import { TaiKhoanKetChuyenService } from '../tai-khoan-ket-chuyen/tai-khoan-ket-chuyen.service';
 
 import { CreateTaiKhoanDto } from '../tai-khoan/dto';
 import { CreateDoiTuongDto } from '../doi-tuong/dto';
@@ -48,6 +49,7 @@ import { CreateNhomQuanLyDto } from '../nhom-quan-ly/dto';
 import { CreateLoaiChungTuDto } from '../loai-chung-tu/dto';
 import { CreateLoaiGiaoDichDto } from '../loai-giao-dich/dto';
 import { CreateHoSoChungTuDto } from '../ho-so-chung-tu/dto';
+import { CreateTaiKhoanKetChuyenDto } from '../tai-khoan-ket-chuyen/dto';
 
 @Injectable()
 export class ImportDanhMucRegistry {
@@ -77,6 +79,7 @@ export class ImportDanhMucRegistry {
     loaiChungTu: LoaiChungTuService,
     loaiGiaoDich: LoaiGiaoDichService,
     hoSoChungTu: HoSoChungTuService,
+    taiKhoanKetChuyen: TaiKhoanKetChuyenService,
   ) {
     this.entries = new Map<string, ImportEntry>([
       [
@@ -163,6 +166,14 @@ export class ImportDanhMucRegistry {
           service: nhomDongTien,
           dtoClass: CreateNhomDongTienDto,
           label: 'Nhóm dòng tiền',
+        },
+      ],
+      [
+        'tai-khoan-ket-chuyen',
+        {
+          service: taiKhoanKetChuyen,
+          dtoClass: CreateTaiKhoanKetChuyenDto,
+          label: 'Tài khoản kết chuyển',
         },
       ],
       [
