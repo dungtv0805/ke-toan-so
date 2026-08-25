@@ -628,6 +628,7 @@ export class BaoCaoService {
         account.ma,
         'CO',
         openingNetForSide(openingMap.get(account.ma), 'CO'),
+        account.ma.startsWith('4'),
       );
       if (amount !== 0) {
         nguonVon.push({ ma: account.ma, ten: account.ten, soTien: amount });
@@ -925,6 +926,12 @@ export class BaoCaoService {
     maTaiKhoan: string,
     type: 'NO' | 'CO',
     openingNet = 0,
+    /**
+     * Bảng cân đối kế toán cần số âm ở nhóm nguồn vốn: kết chuyển LỖ làm 4212 dư Nợ,
+     * clamp về 0 sẽ khiến tổng nguồn vốn thiếu đúng phần lỗ. Các báo cáo khác giữ
+     * hành vi cũ (mặc định false) để không đổi số đang chạy.
+     */
+    choPhepAm = false,
   ): number {
     let balance = openingNet;
 
@@ -940,6 +947,6 @@ export class BaoCaoService {
       }
     }
 
-    return Math.max(0, balance);
+    return choPhepAm ? balance : Math.max(0, balance);
   }
 }
