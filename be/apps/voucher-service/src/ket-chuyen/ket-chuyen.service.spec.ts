@@ -3,7 +3,7 @@ import { BadRequestException, ServiceUnavailableException } from '@nestjs/common
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { TenantContextService } from '@app/core';
 import { ServiceClient } from '@app/service-client';
-import { CauHinhKetChuyen, ChungTu } from '@app/entities';
+import { CauHinhKetChuyen, ChungTu, QuyChuan } from '@app/entities';
 import { NhatKyChungService } from '../nhat-ky-chung/nhat-ky-chung.service';
 import { LoaiResolverService, VoucherNumberService } from '../shared';
 import { KetChuyenService } from './ket-chuyen.service';
@@ -15,6 +15,7 @@ describe('KetChuyenService', () => {
   let nhatKyChungService: any;
   let voucherNumberService: any;
   let cauHinhRepository: any;
+  let quyChuanRepository: any;
   let loaiResolver: any;
 
   const DANH_MUC = [
@@ -59,6 +60,11 @@ describe('KetChuyenService', () => {
       create: jest.fn((d: any) => d),
       save: jest.fn((d: any) => d),
     };
+    quyChuanRepository = {
+      find: jest.fn().mockResolvedValue([
+        { loaiGiaoDich: 'KC', nghiepVu: 'Kết chuyển doanh thu thuần', taiKhoanNo: '511', taiKhoanCo: '911', isActive: true },
+      ]),
+    };
     loaiResolver = {
       layThongTinLoaiGiaoDich: jest.fn(async (ma: string) =>
         ma === 'KC'
@@ -72,6 +78,7 @@ describe('KetChuyenService', () => {
         KetChuyenService,
         { provide: getRepositoryToken(ChungTu), useValue: chungTuRepository },
         { provide: getRepositoryToken(CauHinhKetChuyen), useValue: cauHinhRepository },
+        { provide: getRepositoryToken(QuyChuan), useValue: quyChuanRepository },
         { provide: LoaiResolverService, useValue: loaiResolver },
         { provide: NhatKyChungService, useValue: nhatKyChungService },
         { provide: VoucherNumberService, useValue: voucherNumberService },
@@ -302,6 +309,80 @@ describe('KetChuyenService', () => {
 
     expect(voucherNumberService.generateVoucherNumber).not.toHaveBeenCalled();
     expect(chungTuRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('create gắn nghiệp vụ từ quy chuẩn theo cặp tài khoản', async () => {
+    await service.create(LO_CO_LOAI_GD, 'user-1', 'Bearer token');
+
+    const daLuu = chungTuRepository.save.mock.calls[0][0];
+    expect(daLuu[0].danhMuc.nghiepVu).toEqual({
+      ma: 'Kết chuyển doanh thu thuần',
+      ten: 'Kết chuyển doanh thu thuần',
+    });
+    expect(quyChuanRepository.find).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { loaiGiaoDich: 'KC' } }),
+    );
+  });
+
+  it('create rơi về diễn giải danh mục khi cặp TK chưa có quy chuẩn', async () => {
+    quyChuanRepository.find.mockResolvedValue([]);
+
+    await service.create(LO_CO_LOAI_GD, 'user-1', 'Bearer token');
+
+    const daLuu = chungTuRepository.save.mock.calls[0][0];
+    expect(daLuu[0].danhMuc.nghiepVu).toEqual({
+      ma: 'Kết chuyển doanh thu',
+      ten: 'Kết chuyển doanh thu',
+    });
+  });
+
+  it('create lấy diễn giải GỐC của danh mục, không lấy chữ kế toán sửa trên form', async () => {
+    // Nghiệp vụ trôi theo ô diễn giải người dùng gõ thì mỗi lô một giá trị, bộ lọc
+    // Nghiệp vụ ở Nhật ký chung hết gom được.
+    quyChuanRepository.find.mockResolvedValue([]);
+
+    await service.create(
+      {
+        ...LO_CO_LOAI_GD,
+        dong: [{ maKetChuyen: '511-911', dienGiai: 'kc dt thang 8', taiKhoanNo: '511', taiKhoanCo: '911', soTien: 100 }],
+      },
+      'user-1',
+      'Bearer token',
+    );
+
+    const daLuu = chungTuRepository.save.mock.calls[0][0];
+    expect(daLuu[0].danhMuc.nghiepVu.ten).toBe('Kết chuyển doanh thu');
+    expect(daLuu[0].noiDung).toBe('kc dt thang 8');
+  });
+
+  it('create bỏ qua quy chuẩn đã tắt', async () => {
+    quyChuanRepository.find.mockResolvedValue([
+      { loaiGiaoDich: 'KC', nghiepVu: 'Nghiệp vụ đã tắt', taiKhoanNo: '511', taiKhoanCo: '911', isActive: false },
+    ]);
+
+    await service.create(LO_CO_LOAI_GD, 'user-1', 'Bearer token');
+
+    const daLuu = chungTuRepository.save.mock.calls[0][0];
+    expect(daLuu[0].danhMuc.nghiepVu.ten).toBe('Kết chuyển doanh thu');
+  });
+
+  it('create không tra quy chuẩn khi lô không chọn loại giao dịch', async () => {
+    await service.create(
+      {
+        denNgay: '2026-08-31',
+        ngayHachToan: '2026-08-31',
+        ngayChungTu: '2026-08-31',
+        dienGiai: 'x',
+        dong: [{ maKetChuyen: '511-911', taiKhoanNo: '511', taiKhoanCo: '911', soTien: 100 }],
+      },
+      'user-1',
+      'Bearer token',
+    );
+
+    expect(quyChuanRepository.find).not.toHaveBeenCalled();
+    // Vẫn có nghiệp vụ nhờ diễn giải danh mục — không cần chọn loại giao dịch mới tổng hợp được.
+    const daLuu = chungTuRepository.save.mock.calls[0][0];
+    expect(daLuu[0].danhMuc.nghiepVu.ten).toBe('Kết chuyển doanh thu');
   });
 
   it('create lưu loại giao dịch vừa dùng làm mặc định của công ty', async () => {

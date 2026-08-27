@@ -1,5 +1,11 @@
 import { TenantContextService } from '@app/core';
-import { CauHinhKetChuyen, ChungTu, type DanhMuc, type DanhMucTaiKhoan } from '@app/entities';
+import {
+  CauHinhKetChuyen,
+  ChungTu,
+  QuyChuan,
+  type DanhMuc,
+  type DanhMucTaiKhoan,
+} from '@app/entities';
 import { ServiceClient } from '@app/service-client';
 import {
   BadRequestException,
@@ -19,8 +25,10 @@ import {
   type DongHachToan,
 } from './ket-chuyen.engine';
 import {
+  chonNghiepVu,
   dungCuaSoKetChuyen,
   gomLoKetChuyen,
+  khoaCapTaiKhoan,
   type LoKetChuyen,
 } from './ket-chuyen.helper';
 
@@ -58,6 +66,8 @@ export class KetChuyenService {
     private readonly chungTuRepository: Repository<ChungTu>,
     @InjectRepository(CauHinhKetChuyen)
     private readonly cauHinhRepository: Repository<CauHinhKetChuyen>,
+    @InjectRepository(QuyChuan)
+    private readonly quyChuanRepository: Repository<QuyChuan>,
     private readonly loaiResolver: LoaiResolverService,
     private readonly nhatKyChungService: NhatKyChungService,
     private readonly voucherNumberService: VoucherNumberService,
@@ -234,6 +244,17 @@ export class KetChuyenService {
       };
     };
 
+    // Nghiệp vụ của từng dòng: quy chuẩn theo cặp TK, thiếu thì diễn giải GỐC của dòng
+    // danh mục (lấy từ preview, không lấy `d.dienGiai` của DTO — kế toán sửa tay ô diễn
+    // giải trên form thì nghiệp vụ sẽ trôi theo chữ họ gõ, mỗi lô một giá trị khác nhau
+    // và bộ lọc Nghiệp vụ hết gom được).
+    const nghiepVuTheoCapTaiKhoan = await this.napNghiepVuTheoCapTaiKhoan(
+      dto.loaiGiaoDichMa,
+    );
+    const dienGiaiGoc = new Map(
+      kqPreview.dong.map((d) => [d.maKetChuyen, d.dienGiai]),
+    );
+
     // `loai` của chứng từ kết chuyển luôn là KHAC, KHÔNG suy từ phân loại của loại
     // chứng từ: công ty trỏ nhầm loại GD kết chuyển sang một loại chứng từ phân loại
     // THU/CHI thì bút toán kết chuyển sẽ chui vào sổ quỹ / phiếu thu chi.
@@ -246,8 +267,14 @@ export class KetChuyenService {
         }
       : {};
 
-    const rows = dto.dong.map((d) =>
-      this.chungTuRepository.create({
+    const rows = dto.dong.map((d) => {
+      const nghiepVu = chonNghiepVu(
+        nghiepVuTheoCapTaiKhoan,
+        d.taiKhoanNo,
+        d.taiKhoanCo,
+        dienGiaiGoc.get(d.maKetChuyen),
+      );
+      return this.chungTuRepository.create({
         loai: 'KHAC' as const,
         soPhieu,
         ngay: new Date(dto.ngayHachToan),
@@ -259,12 +286,14 @@ export class KetChuyenService {
           taiKhoanNo: snapshot(d.taiKhoanNo),
           taiKhoanCo: snapshot(d.taiKhoanCo),
           ...danhMucLoai,
+          // Danh mục nghiệp vụ không có mã riêng — chứng từ thường cũng lưu ma = ten.
+          ...(nghiepVu ? { nghiepVu: { ma: nghiepVu, ten: nghiepVu } } : {}),
         },
         nguon: 'KET_CHUYEN' as const,
         maKetChuyen: d.maKetChuyen,
         nguoiTaoId,
-      }),
-    );
+      });
+    });
 
     await this.chungTuRepository.save(rows);
 
@@ -276,6 +305,32 @@ export class KetChuyenService {
     }
 
     return { soPhieu, soDong: rows.length };
+  }
+
+  /**
+   * Bản đồ `TK Nợ|TK Có` → nghiệp vụ, lấy từ danh mục Quy chuẩn của loại giao dịch này.
+   *
+   * Đọc thẳng collection `quy_chuan` (cùng MongoDB, repository tự lọc theo tenant) —
+   * cùng cách LoaiResolverService đọc danh mục loại giao dịch, không cần gọi liên
+   * service. Lô không chọn loại giao dịch thì không có gì để tra → map rỗng.
+   */
+  private async napNghiepVuTheoCapTaiKhoan(
+    loaiGiaoDichMa?: string,
+  ): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    if (!loaiGiaoDichMa) return map;
+
+    const rows = await this.quyChuanRepository.find({
+      where: { loaiGiaoDich: loaiGiaoDichMa } as any,
+    });
+    for (const r of rows) {
+      // Dòng đã tắt không được đè lên dòng đang dùng; dòng đầu khớp cặp TK thắng.
+      if (r.isActive === false) continue;
+      if (!r.taiKhoanNo || !r.taiKhoanCo || !r.nghiepVu) continue;
+      const khoa = khoaCapTaiKhoan(r.taiKhoanNo, r.taiKhoanCo);
+      if (!map.has(khoa)) map.set(khoa, r.nghiepVu);
+    }
+    return map;
   }
 
   /**

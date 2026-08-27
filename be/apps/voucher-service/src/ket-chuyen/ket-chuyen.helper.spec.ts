@@ -1,6 +1,8 @@
 import {
+  chonNghiepVu,
   dungCuaSoKetChuyen,
   gomLoKetChuyen,
+  khoaCapTaiKhoan,
   tinhLaiLoTuDong,
 } from './ket-chuyen.helper';
 
@@ -120,5 +122,37 @@ describe('gomLoKetChuyen', () => {
     ] as any);
 
     expect(lo.map((l) => l.soPhieu)).toEqual(['B', 'A']);
+  });
+});
+
+describe('chonNghiepVu', () => {
+  const QUY_CHUAN = new Map([
+    [khoaCapTaiKhoan('511', '911'), 'Kết chuyển doanh thu thuần'],
+    [khoaCapTaiKhoan('911', '4212'), '  Kết chuyển lãi  '],
+  ]);
+
+  it('ưu tiên nghiệp vụ khai trong quy chuẩn', () => {
+    expect(chonNghiepVu(QUY_CHUAN, '511', '911', 'Kết chuyển doanh thu bán hàng')).toBe(
+      'Kết chuyển doanh thu thuần',
+    );
+  });
+
+  it('cắt khoảng trắng thừa của quy chuẩn', () => {
+    expect(chonNghiepVu(QUY_CHUAN, '911', '4212', 'x')).toBe('Kết chuyển lãi');
+  });
+
+  it('rơi về diễn giải danh mục khi cặp TK chưa khai quy chuẩn', () => {
+    expect(chonNghiepVu(QUY_CHUAN, '632', '911', 'Kết chuyển giá vốn hàng bán')).toBe(
+      'Kết chuyển giá vốn hàng bán',
+    );
+  });
+
+  it('không gắn chuỗi rỗng khi cả hai nguồn đều trống', () => {
+    expect(chonNghiepVu(QUY_CHUAN, '632', '911', '   ')).toBeUndefined();
+    expect(chonNghiepVu(new Map(), '632', '911', undefined)).toBeUndefined();
+  });
+
+  it('phân biệt chiều Nợ/Có — 511/911 khác 911/511', () => {
+    expect(chonNghiepVu(QUY_CHUAN, '911', '511', undefined)).toBeUndefined();
   });
 });

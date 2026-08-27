@@ -109,3 +109,35 @@ export function gomLoKetChuyen(rows: ChungTu[]): LoKetChuyen[] {
 
   return lo.sort((a, b) => new Date(b.ngay).getTime() - new Date(a.ngay).getTime());
 }
+
+/** Khoá tra quy chuẩn: một cặp TK Nợ/Có chỉ ứng với một nghiệp vụ. */
+export function khoaCapTaiKhoan(taiKhoanNo: string, taiKhoanCo: string): string {
+  return `${taiKhoanNo}|${taiKhoanCo}`;
+}
+
+/**
+ * Nghiệp vụ cho một dòng kết chuyển.
+ *
+ * Ưu tiên danh mục Quy chuẩn — đó là nguồn nghiệp vụ của mọi chứng từ thường, dùng
+ * chung thì bộ lọc "Nghiệp vụ" ở Nhật ký chung mới gom đúng một giá trị. Cặp TK chưa
+ * khai quy chuẩn thì lấy diễn giải của dòng danh mục Tài khoản kết chuyển ("Kết chuyển
+ * giá vốn hàng bán"...) để báo cáo không bỏ trống, thay vì bắt công ty khai đủ quy
+ * chuẩn mới tổng hợp được.
+ *
+ * Trả `undefined` khi không có nguồn nào — chứng từ không gắn `nghiepVu`, đúng như
+ * trước, chứ không gắn chuỗi rỗng.
+ */
+export function chonNghiepVu(
+  nghiepVuTheoCapTaiKhoan: Map<string, string>,
+  taiKhoanNo: string,
+  taiKhoanCo: string,
+  dienGiaiDanhMuc?: string,
+): string | undefined {
+  const tuQuyChuan = nghiepVuTheoCapTaiKhoan.get(
+    khoaCapTaiKhoan(taiKhoanNo, taiKhoanCo),
+  );
+  if (tuQuyChuan?.trim()) return tuQuyChuan.trim();
+
+  const tuDanhMuc = dienGiaiDanhMuc?.trim();
+  return tuDanhMuc || undefined;
+}
