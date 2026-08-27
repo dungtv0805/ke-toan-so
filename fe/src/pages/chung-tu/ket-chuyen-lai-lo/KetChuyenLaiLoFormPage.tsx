@@ -17,6 +17,7 @@ import {
   InputNumber,
   Popconfirm,
   Row,
+  Select,
   Space,
   Table,
   Typography,
@@ -27,6 +28,9 @@ import dayjs, { Dayjs } from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 
 import { ketChuyenService } from '@/services/ketChuyenService';
+import { loaiGiaoDichService } from '@/services/loaiGiaoDichService';
+import type { LoaiGiaoDich } from '@/types';
+import { chonMacDinh, thieuLoaiGiaoDich, tienToSoPhieu } from './loaiGiaoDichLo';
 import {
   boKhoaDong,
   dienGiaiMacDinh,
@@ -54,6 +58,9 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
   const [daSuaNgayHachToan, setDaSuaNgayHachToan] = useState(false);
   const [daSuaNgayChungTu, setDaSuaNgayChungTu] = useState(false);
 
+  const [loaiGiaoDich, setLoaiGiaoDich] = useState<LoaiGiaoDich[]>([]);
+  const [loaiGiaoDichMa, setLoaiGiaoDichMa] = useState<string>();
+
   const [dong, setDong] = useState<DongHachToanCoKhoa[]>([]);
   const [canhBao, setCanhBao] = useState<CanhBaoKetChuyen[]>([]);
   const [loadingPreview, setLoadingPreview] = useState(false);
@@ -72,6 +79,23 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
     if (!daSuaNgayChungTu) setNgayChungTu(denNgay);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [denNgay]);
+
+  // Loại giao dịch của lô: mỗi công ty đặt một mã riêng nên không thể fix cứng — lấy
+  // danh mục của công ty và chọn sẵn mã đã dùng lần trước (BE lưu sau mỗi lần ghi sổ).
+  useEffect(() => {
+    (async () => {
+      try {
+        const [ds, cauHinh] = await Promise.all([
+          loaiGiaoDichService.getAll(),
+          ketChuyenService.getCauHinh().catch(() => ({ loaiGiaoDichMa: undefined })),
+        ]);
+        setLoaiGiaoDich(ds);
+        setLoaiGiaoDichMa(chonMacDinh(cauHinh.loaiGiaoDichMa, ds));
+      } catch {
+        message.error('Không tải được danh mục Loại giao dịch');
+      }
+    })();
+  }, []);
 
   const handleLayDuLieu = async () => {
     setLoadingPreview(true);
@@ -98,6 +122,12 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
       message.warning('Chưa có dòng hạch toán nào để lưu');
       return;
     }
+    // Chỉ ép chọn khi công ty thực sự có danh mục Loại giao dịch; công ty chưa khai gì
+    // vẫn ghi sổ được như trước (số phiếu về tiền tố NVK).
+    if (thieuLoaiGiaoDich(loaiGiaoDich, loaiGiaoDichMa)) {
+      message.warning('Chọn Loại giao dịch cho bút toán kết chuyển');
+      return;
+    }
     setSaving(true);
     try {
       const result = await ketChuyenService.create({
@@ -105,6 +135,7 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
         ngayHachToan: ngayHachToan.format(DATE_FMT),
         ngayChungTu: ngayChungTu.format(DATE_FMT),
         dienGiai,
+        loaiGiaoDichMa,
         // Bỏ `khoa` — hợp đồng gửi lên BE giữ nguyên đúng các field của DTO.
         dong: boKhoaDong(dong),
       });
@@ -118,6 +149,12 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
       setSaving(false);
     }
   };
+
+  // Tiền tố số phiếu bám theo Loại chứng từ mà Loại giao dịch trỏ tới — cho kế toán
+  // thấy trước số sẽ sinh ra thay vì đợi lưu xong mới biết.
+  const goiYSoChungTu =
+    `Tự sinh khi lưu (${tienToSoPhieu(loaiGiaoDich, loaiGiaoDichMa)}` +
+    `${ngayChungTu.format('YYYYMM')}/...)`;
 
   const columns: ColumnsType<DongHachToanCoKhoa> = [
     {
@@ -200,6 +237,25 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
                 </Space>
               </div>
               <div>
+                <div><Text>Loại giao dịch</Text></div>
+                <Select
+                  style={{ width: '100%' }}
+                  value={loaiGiaoDichMa}
+                  onChange={setLoaiGiaoDichMa}
+                  placeholder="Chọn loại giao dịch cho bút toán kết chuyển"
+                  showSearch
+                  optionFilterProp="label"
+                  allowClear
+                  options={loaiGiaoDich.map((l) => ({
+                    value: l.ma,
+                    label: `${l.ma} — ${l.ten}`,
+                  }))}
+                  notFoundContent={
+                    <Link to="/danh-muc/loai-giao-dich">Chưa có loại giao dịch nào — mở danh mục</Link>
+                  }
+                />
+              </div>
+              <div>
                 <div><Text>Diễn giải</Text></div>
                 <Input
                   value={dienGiai}
@@ -243,7 +299,7 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
               </div>
               <div>
                 <div><Text>Số chứng từ</Text></div>
-                <Input disabled placeholder="Tự sinh khi lưu" />
+                <Input disabled placeholder={goiYSoChungTu} />
               </div>
             </Space>
           </Col>

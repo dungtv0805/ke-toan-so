@@ -1,5 +1,5 @@
 import { TenantContextService } from '@app/core';
-import { ChungTu, type DanhMucTaiKhoan } from '@app/entities';
+import { CauHinhKetChuyen, ChungTu, type DanhMuc, type DanhMucTaiKhoan } from '@app/entities';
 import { ServiceClient } from '@app/service-client';
 import {
   BadRequestException,
@@ -10,7 +10,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NhatKyChungService } from '../nhat-ky-chung/nhat-ky-chung.service';
-import { VoucherNumberService } from '../shared';
+import { LoaiResolverService, VoucherNumberService } from '../shared';
 import { CreateKetChuyenDto } from './dto';
 import {
   chayKetChuyen,
@@ -24,8 +24,14 @@ import {
   type LoKetChuyen,
 } from './ket-chuyen.helper';
 
-/** Tiền tố số chứng từ kết chuyển — Nghiệp vụ khác (NVK). */
-const MA_LOAI_CHUNG_TU = 'NVK';
+/**
+ * Tiền tố số chứng từ dự phòng — Nghiệp vụ khác (NVK).
+ *
+ * Chỉ dùng khi lô không chọn Loại giao dịch, hoặc loại giao dịch được chọn chưa liên
+ * kết Loại chứng từ. Có liên kết thì tiền tố lấy theo mã Loại chứng từ (mỗi công ty
+ * một mã riêng — MasterCeo dùng `KC`), giống hệt chứng từ thường.
+ */
+const MA_LOAI_CHUNG_TU_DU_PHONG = 'NVK';
 
 /** Ngày dạng dd/mm/yyyy cho thông báo lỗi gửi kế toán. */
 const dinhDangNgay = (d: Date) =>
@@ -50,6 +56,9 @@ export class KetChuyenService {
   constructor(
     @InjectRepository(ChungTu)
     private readonly chungTuRepository: Repository<ChungTu>,
+    @InjectRepository(CauHinhKetChuyen)
+    private readonly cauHinhRepository: Repository<CauHinhKetChuyen>,
+    private readonly loaiResolver: LoaiResolverService,
     private readonly nhatKyChungService: NhatKyChungService,
     private readonly voucherNumberService: VoucherNumberService,
     private readonly serviceClient: ServiceClient,
@@ -194,8 +203,22 @@ export class KetChuyenService {
       );
     }
 
+    // Tra loại giao dịch TRƯỚC khi sinh số phiếu: mã lạ mà vẫn sinh số thì đốt oan một
+    // số trong dải, y như trường hợp tài khoản lạ ở trên.
+    const thongTinLoaiGD = dto.loaiGiaoDichMa
+      ? await this.loaiResolver.layThongTinLoaiGiaoDich(dto.loaiGiaoDichMa)
+      : null;
+    if (dto.loaiGiaoDichMa && !thongTinLoaiGD) {
+      throw new BadRequestException(
+        `Loại giao dịch không có trong danh mục: ${dto.loaiGiaoDichMa}. ` +
+          'Hãy khai vào danh mục Loại giao dịch rồi chọn lại.',
+      );
+    }
+
     const soPhieu = await this.voucherNumberService.generateVoucherNumber('KHAC', {
-      maLoaiChungTu: MA_LOAI_CHUNG_TU,
+      // Loại giao dịch chưa liên kết Loại chứng từ thì không có mã nào để làm tiền tố —
+      // rơi về NVK thay vì sinh số phiếu không có tiền tố.
+      maLoaiChungTu: thongTinLoaiGD?.loaiChungTu?.ma ?? MA_LOAI_CHUNG_TU_DU_PHONG,
       date: new Date(dto.ngayChungTu),
     });
 
@@ -211,6 +234,18 @@ export class KetChuyenService {
       };
     };
 
+    // `loai` của chứng từ kết chuyển luôn là KHAC, KHÔNG suy từ phân loại của loại
+    // chứng từ: công ty trỏ nhầm loại GD kết chuyển sang một loại chứng từ phân loại
+    // THU/CHI thì bút toán kết chuyển sẽ chui vào sổ quỹ / phiếu thu chi.
+    const danhMucLoai: Pick<DanhMuc, 'loaiGiaoDich' | 'loaiChungTu'> = thongTinLoaiGD
+      ? {
+          loaiGiaoDich: { ma: thongTinLoaiGD.ma, ten: thongTinLoaiGD.ten },
+          ...(thongTinLoaiGD.loaiChungTu
+            ? { loaiChungTu: thongTinLoaiGD.loaiChungTu }
+            : {}),
+        }
+      : {};
+
     const rows = dto.dong.map((d) =>
       this.chungTuRepository.create({
         loai: 'KHAC' as const,
@@ -223,6 +258,7 @@ export class KetChuyenService {
         danhMuc: {
           taiKhoanNo: snapshot(d.taiKhoanNo),
           taiKhoanCo: snapshot(d.taiKhoanCo),
+          ...danhMucLoai,
         },
         nguon: 'KET_CHUYEN' as const,
         maKetChuyen: d.maKetChuyen,
@@ -232,7 +268,39 @@ export class KetChuyenService {
 
     await this.chungTuRepository.save(rows);
 
+    // Ghi sổ xong mới lưu mặc định: lô bị từ chối (ngày ngoài kỳ, tài khoản lạ) không
+    // được phép đổi cấu hình của công ty. Lỗi ở bước này cũng không được làm hỏng kết
+    // quả ghi sổ — chứng từ đã nằm trong sổ rồi.
+    if (thongTinLoaiGD) {
+      await this.luuCauHinh(thongTinLoaiGD.ma).catch(() => undefined);
+    }
+
     return { soPhieu, soDong: rows.length };
+  }
+
+  /**
+   * Cấu hình kết chuyển của công ty hiện tại. Chưa từng lưu → trả object rỗng.
+   */
+  async layCauHinh(): Promise<{ loaiGiaoDichMa?: string }> {
+    const row = await this.cauHinhRepository.findOne({ where: {} as any });
+    return row?.loaiGiaoDichMa ? { loaiGiaoDichMa: row.loaiGiaoDichMa } : {};
+  }
+
+  /**
+   * Ghi đè mặc định của công ty. Mỗi tenant chỉ giữ MỘT bản ghi — repository đã tự lọc
+   * theo tenant nên `findOne({})` không thể chạm sang công ty khác.
+   */
+  async luuCauHinh(loaiGiaoDichMa: string): Promise<{ loaiGiaoDichMa: string }> {
+    const row = await this.cauHinhRepository.findOne({ where: {} as any });
+    if (row) {
+      row.loaiGiaoDichMa = loaiGiaoDichMa;
+      await this.cauHinhRepository.save(row);
+    } else {
+      await this.cauHinhRepository.save(
+        this.cauHinhRepository.create({ loaiGiaoDichMa }),
+      );
+    }
+    return { loaiGiaoDichMa };
   }
 
   async list(): Promise<LoKetChuyen[]> {

@@ -3,9 +3,9 @@ import { BadRequestException, ServiceUnavailableException } from '@nestjs/common
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { TenantContextService } from '@app/core';
 import { ServiceClient } from '@app/service-client';
-import { ChungTu } from '@app/entities';
+import { CauHinhKetChuyen, ChungTu } from '@app/entities';
 import { NhatKyChungService } from '../nhat-ky-chung/nhat-ky-chung.service';
-import { VoucherNumberService } from '../shared';
+import { LoaiResolverService, VoucherNumberService } from '../shared';
 import { KetChuyenService } from './ket-chuyen.service';
 
 describe('KetChuyenService', () => {
@@ -14,6 +14,8 @@ describe('KetChuyenService', () => {
   let serviceClient: any;
   let nhatKyChungService: any;
   let voucherNumberService: any;
+  let cauHinhRepository: any;
+  let loaiResolver: any;
 
   const DANH_MUC = [
     { ma: '511-911', thuTu: 10, taiKhoanTu: '511', taiKhoanDen: '911', ben: 'CO', loai: 'XAC_DINH_KQKD', isActive: true, dienGiai: 'Kết chuyển doanh thu' },
@@ -52,11 +54,25 @@ describe('KetChuyenService', () => {
     voucherNumberService = {
       generateVoucherNumber: jest.fn().mockResolvedValue('NVK202608/001'),
     };
+    cauHinhRepository = {
+      findOne: jest.fn().mockResolvedValue(null),
+      create: jest.fn((d: any) => d),
+      save: jest.fn((d: any) => d),
+    };
+    loaiResolver = {
+      layThongTinLoaiGiaoDich: jest.fn(async (ma: string) =>
+        ma === 'KC'
+          ? { ma: 'KC', ten: 'Kết chuyển', loaiChungTu: { ma: 'KC', ten: 'Phiếu kết chuyển' }, phanLoai: 'KHAC' }
+          : null,
+      ),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         KetChuyenService,
         { provide: getRepositoryToken(ChungTu), useValue: chungTuRepository },
+        { provide: getRepositoryToken(CauHinhKetChuyen), useValue: cauHinhRepository },
+        { provide: LoaiResolverService, useValue: loaiResolver },
         { provide: NhatKyChungService, useValue: nhatKyChungService },
         { provide: VoucherNumberService, useValue: voucherNumberService },
         { provide: ServiceClient, useValue: serviceClient },
@@ -204,7 +220,7 @@ describe('KetChuyenService', () => {
     });
   });
 
-  it('create dùng tiền tố NVK cho số chứng từ', async () => {
+  it('create dùng tiền tố NVK khi lô không chọn loại giao dịch', async () => {
     await service.create(
       {
         denNgay: '2026-08-31',
@@ -220,6 +236,123 @@ describe('KetChuyenService', () => {
     expect(voucherNumberService.generateVoucherNumber).toHaveBeenCalledWith(
       'KHAC',
       expect.objectContaining({ maLoaiChungTu: 'NVK' }),
+    );
+  });
+
+  const LO_CO_LOAI_GD = {
+    denNgay: '2026-08-31',
+    ngayHachToan: '2026-08-31',
+    ngayChungTu: '2026-08-31',
+    dienGiai: 'x',
+    loaiGiaoDichMa: 'KC',
+    dong: [{ maKetChuyen: '511-911', taiKhoanNo: '511', taiKhoanCo: '911', soTien: 100 }],
+  };
+
+  it('create lấy tiền tố số phiếu theo loại chứng từ mà loại giao dịch trỏ tới', async () => {
+    await service.create(LO_CO_LOAI_GD, 'user-1', 'Bearer token');
+
+    expect(voucherNumberService.generateVoucherNumber).toHaveBeenCalledWith(
+      'KHAC',
+      expect.objectContaining({ maLoaiChungTu: 'KC' }),
+    );
+  });
+
+  it('create snapshot loại giao dịch và loại chứng từ vào mọi dòng', async () => {
+    await service.create(LO_CO_LOAI_GD, 'user-1', 'Bearer token');
+
+    const daLuu = chungTuRepository.save.mock.calls[0][0];
+    expect(daLuu[0].danhMuc.loaiGiaoDich).toEqual({ ma: 'KC', ten: 'Kết chuyển' });
+    expect(daLuu[0].danhMuc.loaiChungTu).toEqual({ ma: 'KC', ten: 'Phiếu kết chuyển' });
+  });
+
+  it('create giữ loai KHAC kể cả khi loại chứng từ liên kết có phân loại THU', async () => {
+    // Trỏ nhầm sang loại chứng từ phân loại THU không được biến bút toán kết chuyển
+    // thành phiếu thu — nó sẽ chui vào sổ quỹ.
+    loaiResolver.layThongTinLoaiGiaoDich.mockResolvedValue({
+      ma: 'KC',
+      ten: 'Kết chuyển',
+      loaiChungTu: { ma: 'THU', ten: 'Phiếu thu' },
+      phanLoai: 'THU',
+    });
+
+    await service.create(LO_CO_LOAI_GD, 'user-1', 'Bearer token');
+
+    const daLuu = chungTuRepository.save.mock.calls[0][0];
+    expect(daLuu.every((r: any) => r.loai === 'KHAC')).toBe(true);
+  });
+
+  it('create vẫn snapshot loại giao dịch chưa liên kết loại chứng từ, tiền tố về NVK', async () => {
+    loaiResolver.layThongTinLoaiGiaoDich.mockResolvedValue({ ma: 'KC', ten: 'Kết chuyển' });
+
+    await service.create(LO_CO_LOAI_GD, 'user-1', 'Bearer token');
+
+    expect(voucherNumberService.generateVoucherNumber).toHaveBeenCalledWith(
+      'KHAC',
+      expect.objectContaining({ maLoaiChungTu: 'NVK' }),
+    );
+    const daLuu = chungTuRepository.save.mock.calls[0][0];
+    expect(daLuu[0].danhMuc.loaiGiaoDich).toEqual({ ma: 'KC', ten: 'Kết chuyển' });
+    expect(daLuu[0].danhMuc.loaiChungTu).toBeUndefined();
+  });
+
+  it('create ném lỗi và không sinh số phiếu khi mã loại giao dịch không có trong danh mục', async () => {
+    await expect(
+      service.create({ ...LO_CO_LOAI_GD, loaiGiaoDichMa: 'KHONG_CO' }, 'user-1', 'Bearer token'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(voucherNumberService.generateVoucherNumber).not.toHaveBeenCalled();
+    expect(chungTuRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('create lưu loại giao dịch vừa dùng làm mặc định của công ty', async () => {
+    await service.create(LO_CO_LOAI_GD, 'user-1', 'Bearer token');
+
+    expect(cauHinhRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({ loaiGiaoDichMa: 'KC' }),
+    );
+  });
+
+  it('create không đổi mặc định khi lô bị từ chối', async () => {
+    await expect(
+      service.create(
+        { ...LO_CO_LOAI_GD, ngayHachToan: '2025-12-31' },
+        'user-1',
+        'Bearer token',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(cauHinhRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('create vẫn trả kết quả ghi sổ khi lưu mặc định lỗi', async () => {
+    // Chứng từ đã nằm trong sổ — ném lỗi ở bước lưu mặc định sẽ khiến kế toán tưởng
+    // chưa ghi và bấm Lưu lần nữa, nhân đôi cả lô.
+    cauHinhRepository.save.mockRejectedValue(new Error('mongo down'));
+
+    const kq = await service.create(LO_CO_LOAI_GD, 'user-1', 'Bearer token');
+
+    expect(kq.soDong).toBe(1);
+  });
+
+  it('layCauHinh trả object rỗng khi công ty chưa từng chọn', async () => {
+    expect(await service.layCauHinh()).toEqual({});
+  });
+
+  it('layCauHinh trả mã đã lưu', async () => {
+    cauHinhRepository.findOne.mockResolvedValue({ loaiGiaoDichMa: 'KC' });
+
+    expect(await service.layCauHinh()).toEqual({ loaiGiaoDichMa: 'KC' });
+  });
+
+  it('luuCauHinh ghi đè bản ghi sẵn có thay vì tạo thêm', async () => {
+    const banGhi = { loaiGiaoDichMa: 'CU' };
+    cauHinhRepository.findOne.mockResolvedValue(banGhi);
+
+    await service.luuCauHinh('KC');
+
+    expect(cauHinhRepository.create).not.toHaveBeenCalled();
+    expect(cauHinhRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({ loaiGiaoDichMa: 'KC' }),
     );
   });
 

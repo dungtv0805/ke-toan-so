@@ -21,6 +21,17 @@ export class KetChuyenController {
     return { success: true, data };
   }
 
+  /**
+   * Cấu hình kết chuyển của công ty — hiện chỉ có mã Loại giao dịch mặc định.
+   * Đặt TRƯỚC `@Get()` không cần thiết (path khác nhau), nhưng để cạnh nhau cho dễ đọc.
+   */
+  @Get('cau-hinh')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async layCauHinh() {
+    const data = await this.ketChuyenService.layCauHinh();
+    return { success: true, data };
+  }
+
   @Post('preview')
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_TONG_HOP')
   async preview(

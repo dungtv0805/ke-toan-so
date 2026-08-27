@@ -27,7 +27,14 @@ export interface TaoKetChuyenPayload {
   ngayHachToan: string;
   ngayChungTu: string;
   dienGiai: string;
+  /** Mã Loại giao dịch của lô — quyết định tiền tố số phiếu và snapshot trên chứng từ. */
+  loaiGiaoDichMa?: string;
   dong: DongHachToan[];
+}
+
+export interface CauHinhKetChuyen {
+  /** Loại giao dịch đã dùng lần gần nhất; rỗng khi công ty chưa từng kết chuyển. */
+  loaiGiaoDichMa?: string;
 }
 
 class KetChuyenService extends ServiceBase {
@@ -37,6 +44,10 @@ class KetChuyenService extends ServiceBase {
 
   async preview(denNgay: string): Promise<KetQuaPreview> {
     return this.post<KetQuaPreview>({ denNgay }, { endpoint: '/preview' });
+  }
+
+  async getCauHinh(): Promise<CauHinhKetChuyen> {
+    return this.get<CauHinhKetChuyen>({ endpoint: '/cau-hinh' });
   }
 
   async list(): Promise<LoKetChuyen[]> {

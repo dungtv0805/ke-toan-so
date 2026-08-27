@@ -20,16 +20,18 @@ import { SectionNav } from '@/components/layout/SectionNav';
 import { CHUNG_TU_NAV } from '@/config/sectionNavs';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { ketChuyenService, type LoKetChuyen } from '@/services/ketChuyenService';
+import { nguoiDungService } from '@/services/nguoiDungService';
 import { nhatKyChungService } from '@/services/nhatKyChungService';
 import type { NhatKyChung } from '@/types';
 import { dinhDangTien } from './ketChuyenTinhToan';
+import { dungBanDoNguoiDung, tenNguoiTao } from './nguoiTaoHienThi';
 
 const { Text } = Typography;
 
-// FE chưa có cơ chế tra tên người dùng từ id nào đang sống (nguoiDungService không được
-// trang nào dùng để resolve id → tên) — hiển thị id rút gọn kèm Tooltip đầy đủ thay vì bỏ
-// trống hay tự dựng thêm một lượt gọi API mới.
-const rutGonNguoiTao = (id: string) => (id.length > 8 ? `${id.slice(0, 8)}…` : id);
+// Danh sách người dùng của một tenant chỉ vài chục bản ghi, nhưng API mặc định trả 10
+// (`PaginationQueryDto.limit = 10`) nên phải xin đủ một lượt, không thì đa số chứng từ
+// tra không ra tên.
+const GIOI_HAN_NGUOI_DUNG = 500;
 
 interface XemBanGhiState {
   open: boolean;
@@ -44,6 +46,7 @@ const KetChuyenLaiLoListPage: React.FC = () => {
   const navigate = useNavigate();
   const { canCreate, canDelete } = usePagePermission('/chung-tu/ket-chuyen-lai-lo');
   const [lo, setLo] = useState<LoKetChuyen[]>([]);
+  const [banDoNguoiDung, setBanDoNguoiDung] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(false);
   const [xem, setXem] = useState<XemBanGhiState>(initXemBanGhi);
 
@@ -59,7 +62,17 @@ const KetChuyenLaiLoListPage: React.FC = () => {
     }
   };
 
-  useEffect(() => { loadData(); }, []);
+  // Tra tên người tạo không được phép làm hỏng trang: lỗi ở đây chỉ khiến cột hiện lại id.
+  const loadNguoiDung = async () => {
+    try {
+      const res = await nguoiDungService.getAll({ limit: GIOI_HAN_NGUOI_DUNG });
+      setBanDoNguoiDung(dungBanDoNguoiDung(res.data));
+    } catch {
+      setBanDoNguoiDung(new Map());
+    }
+  };
+
+  useEffect(() => { loadData(); loadNguoiDung(); }, []);
 
   const handleDelete = async (soPhieu: string) => {
     try {
@@ -117,8 +130,12 @@ const KetChuyenLaiLoListPage: React.FC = () => {
       title: 'Người tạo',
       dataIndex: 'nguoiTaoId',
       key: 'nguoiTaoId',
-      width: 140,
-      render: (id?: string) => (id ? <Tooltip title={id}>{rutGonNguoiTao(id)}</Tooltip> : '—'),
+      width: 180,
+      ellipsis: true,
+      render: (id?: string) => {
+        const ten = tenNguoiTao(id, banDoNguoiDung);
+        return id ? <Tooltip title={id}>{ten}</Tooltip> : ten;
+      },
     },
     {
       title: 'Thao tác',

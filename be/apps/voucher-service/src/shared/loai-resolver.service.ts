@@ -19,7 +19,20 @@ type CachedConfig = {
   at: number;
   lgdToLct: Map<string, string>;
   lctToPhanLoai: Map<string, PhanLoaiChungTu>;
+  /** Tên hiển thị theo mã — để snapshot vào `danhMuc` của chứng từ. */
+  lgdToTen: Map<string, string>;
+  lctToTen: Map<string, string>;
 };
+
+/** Thông tin đủ để snapshot một loại giao dịch vào chứng từ. */
+export interface ThongTinLoaiGiaoDich {
+  ma: string;
+  ten: string;
+  /** Loại chứng từ liên kết. Không có nếu loại giao dịch chưa khai `loaiChungTuMa`. */
+  loaiChungTu?: { ma: string; ten: string };
+  /** Phân loại của loại chứng từ liên kết. */
+  phanLoai?: PhanLoaiChungTu;
+}
 
 /**
  * Suy ra `loai` (PHIEU_THU/PHIEU_CHI/KHAC) cho chứng từ từ cấu hình
@@ -64,7 +77,22 @@ export class LoaiResolverService {
       if (lct.ma && lct.phanLoai) lctToPhanLoai.set(lct.ma, lct.phanLoai);
     }
 
-    const entry: CachedConfig = { at: Date.now(), lgdToLct, lctToPhanLoai };
+    const lgdToTen = new Map<string, string>();
+    for (const lgd of loaiGiaoDichList) {
+      if (lgd.ma) lgdToTen.set(lgd.ma, lgd.ten ?? '');
+    }
+    const lctToTen = new Map<string, string>();
+    for (const lct of loaiChungTuList) {
+      if (lct.ma) lctToTen.set(lct.ma, lct.ten ?? '');
+    }
+
+    const entry: CachedConfig = {
+      at: Date.now(),
+      lgdToLct,
+      lctToPhanLoai,
+      lgdToTen,
+      lctToTen,
+    };
     this.cache.set(tenantId, entry);
     return entry;
   }
@@ -97,5 +125,27 @@ export class LoaiResolverService {
       lgdToLct,
       lctToPhanLoai,
     );
+  }
+
+  /**
+   * Tra một loại giao dịch theo mã, kèm loại chứng từ liên kết.
+   *
+   * Trả `null` khi mã không có trong danh mục của công ty — caller phải chặn thay vì
+   * ghi một snapshot rỗng vào chứng từ.
+   */
+  async layThongTinLoaiGiaoDich(
+    ma: string,
+  ): Promise<ThongTinLoaiGiaoDich | null> {
+    if (!ma) return null;
+    const { lgdToLct, lctToPhanLoai, lgdToTen, lctToTen } = await this.getConfig();
+    if (!lgdToTen.has(ma)) return null;
+
+    const lctMa = lgdToLct.get(ma);
+    return {
+      ma,
+      ten: lgdToTen.get(ma) ?? '',
+      loaiChungTu: lctMa ? { ma: lctMa, ten: lctToTen.get(lctMa) ?? '' } : undefined,
+      phanLoai: lctMa ? lctToPhanLoai.get(lctMa) : undefined,
+    };
   }
 }

@@ -10,6 +10,7 @@ describe('KetChuyenController', () => {
   beforeEach(async () => {
     ketChuyenService = {
       remove: jest.fn().mockResolvedValue({ deleted: 3 }),
+      layCauHinh: jest.fn().mockResolvedValue({ loaiGiaoDichMa: 'KC' }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -30,5 +31,12 @@ describe('KetChuyenController', () => {
 
     expect(ketChuyenService.remove).toHaveBeenCalledWith('NVK202608/001');
     expect(ketQua).toEqual({ success: true, data: { deleted: 3 } });
+  });
+
+  it('GET /cau-hinh trả mã loại giao dịch mặc định của công ty', async () => {
+    expect(await controller.layCauHinh()).toEqual({
+      success: true,
+      data: { loaiGiaoDichMa: 'KC' },
+    });
   });
 });
