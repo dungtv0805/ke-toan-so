@@ -52,6 +52,7 @@ import {
   SnippetsOutlined,
   NodeIndexOutlined,
   CopyOutlined,
+  SwapOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import type { MenuProps } from "antd";
@@ -293,6 +294,7 @@ const keToAnMenuItems: MenuItem[] = [
   // Nhóm "Chứng từ" đã gỡ, 2 trang phiếu còn sống về đây (khớp ma trận Phân quyền).
   getMenuItem("Phiếu thu", "/chung-tu/phieu-thu", <CreditCardOutlined />),
   getMenuItem("Phiếu chi", "/chung-tu/phieu-chi", <WalletOutlined />),
+  getMenuItem("Kết chuyển lãi lỗ", "/chung-tu/ket-chuyen-lai-lo", <SwapOutlined />),
   getMenuItem("Quản lý Tài sản", "/trung-tam-du-lieu/tai-san", <CarOutlined />),
   getMenuItem("Bán hàng", "/trung-tam-du-lieu/hop-dong", <FileProtectOutlined />),
 

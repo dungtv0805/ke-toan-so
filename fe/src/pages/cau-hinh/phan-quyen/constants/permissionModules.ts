@@ -76,6 +76,7 @@ export const permissionModules: PermissionModule[] = [
           // sống nên quyền của chúng chuyển về đây, KHÔNG được xóa theo.
           { key: '/chung-tu/phieu-thu', label: 'Phiếu thu' },
           { key: '/chung-tu/phieu-chi', label: 'Phiếu chi' },
+          { key: '/chung-tu/ket-chuyen-lai-lo', label: 'Kết chuyển lãi lỗ' },
           { key: '/trung-tam-du-lieu/tai-san', label: 'Quản lý Tài sản' },
           { key: '/trung-tam-du-lieu/hop-dong', label: 'Bán hàng' },
           { key: '/trung-tam-du-lieu/thu-tien-hop-dong', label: 'Thu tiền hợp đồng' },
@@ -133,6 +134,7 @@ export const permissionModules: PermissionModule[] = [
           { key: '/danh-muc/loai-giao-dich', label: 'Loại giao dịch' },
           { key: '/danh-muc/quy-chuan', label: 'Quy chuẩn hạch toán' },
           { key: '/danh-muc/ho-so-chung-tu', label: 'Hồ sơ chứng từ' },
+          { key: '/danh-muc/tai-khoan-ket-chuyen', label: 'Tài khoản kết chuyển' },
         ],
       },
       { key: '/so-quy', label: 'Sổ quỹ' },
