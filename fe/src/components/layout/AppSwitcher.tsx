@@ -10,8 +10,8 @@ import { identityApps, decodeApps, CURRENT_APP_ID, type IdentityApp } from '@/se
 import { getAuthToken } from '@/services/base/service-base';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Tên app hiện tại (Kế toán).
-const APP_NAME = 'Kế toán';
+// Tên app hiện tại (đổi 'Kế toán' → 'Tài chính' 29.08.26; appId vẫn là 'ke-toan').
+const APP_NAME = 'Tài chính';
 
 // Màu + icon theo app — KHỚP portal Identity (AppPicker).
 const APP_STYLE: Record<string, { bg: string; icon: ReactNode }> = {
