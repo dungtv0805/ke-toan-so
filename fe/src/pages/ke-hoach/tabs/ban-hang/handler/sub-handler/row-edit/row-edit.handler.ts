@@ -7,6 +7,7 @@ import {
   type KeHoachBanHangDong,
 } from "@/services/keHoachBanHangService";
 import type { NhomSanPham, SanPham } from "@/types";
+import type { LoaiKeHoach } from "@/services/keHoachService";
 import type { BanHangEvents, BanHangStates } from "../../ban-hang.handler";
 import {
   laKhacNhau,
@@ -123,6 +124,7 @@ export class BanHangRowEditHandler extends CSubHanlder<
     try {
       const kq = await keHoachBanHangService.luuHangLoat({
         nam: this.getState("nam") as number,
+        loaiKeHoach: this.getState("loaiKeHoach") as LoaiKeHoach,
         them: them as never,
         // Sửa không đổi được sản phẩm — chỉ gửi phần server cho phép sửa.
         sua: sua.map(

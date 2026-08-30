@@ -1,23 +1,29 @@
 import React, { useEffect } from "react";
+import type { LoaiKeHoach } from "@/services/keHoachService";
 import {
   NhanSuHandlerProvider,
   useNhanSuHandler,
 } from "./NhanSuHandlerContext";
 import { NhanSuTable } from "./NhanSuTable";
 
-const NhanSuTabInner: React.FC<{ nam: number }> = ({ nam }) => {
+interface Props {
+  nam: number;
+  loaiKeHoach: LoaiKeHoach;
+}
+
+const NhanSuTabInner: React.FC<Props> = ({ nam, loaiKeHoach }) => {
   const handler = useNhanSuHandler();
 
   useEffect(() => {
-    handler.executeEvent("init", { nam });
+    handler.executeEvent("init", { nam, loaiKeHoach });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nam]);
+  }, [nam, loaiKeHoach]);
 
   return <NhanSuTable />;
 };
 
-export const NhanSuTab: React.FC<{ nam: number }> = ({ nam }) => (
+export const NhanSuTab: React.FC<Props> = (props) => (
   <NhanSuHandlerProvider>
-    <NhanSuTabInner nam={nam} />
+    <NhanSuTabInner {...props} />
   </NhanSuHandlerProvider>
 );

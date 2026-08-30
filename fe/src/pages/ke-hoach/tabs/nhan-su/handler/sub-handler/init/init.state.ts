@@ -1,4 +1,5 @@
 import { BaseStates } from "@/common/c-handler/core/actions/c-state.action";
+import type { LoaiKeHoach } from "@/services/keHoachService";
 import type { BoPhan } from "@/types";
 import type {
   ChiPhiNhanSu,
@@ -28,6 +29,7 @@ export const valTuDong = (d: KeHoachNhanSuDong): NhanSuVal => ({
 });
 
 export interface NhanSuInitStates extends BaseStates {
+  loaiKeHoach: LoaiKeHoach;
   nam: number;
   data: KeHoachNhanSuDong[];
   loading: boolean;

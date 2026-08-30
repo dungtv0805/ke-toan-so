@@ -9,6 +9,7 @@ import {
   type KeHoachNhanSuDong,
 } from "@/services/keHoachNhanSuService";
 import type { BoPhan } from "@/types";
+import type { LoaiKeHoach } from "@/services/keHoachService";
 import type { NhanSuEvents, NhanSuStates } from "../../nhan-su.handler";
 import { laKhacNhau, tamId, type DongNhap } from "../../../../lib/nhapBang";
 import { valTuDong, type NhanSuVal } from "../init/init.state";
@@ -128,6 +129,7 @@ export class NhanSuRowEditHandler extends CSubHanlder<
     try {
       const kq = await keHoachNhanSuService.luuHangLoat({
         nam: this.getState("nam") as number,
+        loaiKeHoach: this.getState("loaiKeHoach") as LoaiKeHoach,
         them: them as never,
         sua: sua as never,
       });
