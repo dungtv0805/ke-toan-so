@@ -190,6 +190,8 @@ Response: `{ success: true, data: { created: number, failed: [{ index: number, m
 | GET | /ke-hoach/phien-ban | Danh sách phiên bản đã dùng |
 | GET | /ke-hoach/series | Chuỗi DT/CP/LN kế hoạch theo tháng (hoặc tuần khi có `month`) — shape giống `pnl-series` |
 | GET | /ke-hoach/so-sanh | So sánh Kế hoạch vs Thực hiện theo chiều (`type`, `chiTieu`) |
+| GET | /ke-hoach/kqkd | Báo cáo P&L kế hoạch 12 tháng, cây 3 cấp (`nam`, `loaiKeHoach`, `phienBan`) |
+| GET | /ke-hoach/kqkd-3-lop | P&L ba lớp KH/DB/TH — ba cây CÙNG tập khoá, ghép theo `key` |
 | GET | /ke-hoach/summary/:type | Tổng hợp riêng số kế hoạch theo chiều |
 | GET | /ke-hoach/:id | By ID |
 | POST | /ke-hoach | Create |
@@ -219,7 +221,24 @@ Response: `{ success: true, data: { created: number, failed: [{ index: number, m
 | PATCH | /ke-hoach-nhan-su/:id | Sửa dòng (không đổi được `nam`) |
 | DELETE | /ke-hoach-nhan-su/:id | Xoá dòng |
 
-> Mỗi dòng là CẤP 2 (sản phẩm / chức vụ) kèm khoá cấp 1 và mảng `thang` 12 phần tử.
+### /ke-hoach-dong-tien, /ke-hoach-tai-san, /ke-hoach-nguon-von (3 bảng chi tiết còn lại)
+Cùng hình với hai bảng trên: `GET ?nam=&loaiKeHoach=`, `POST`, `POST /batch`, `PATCH /:id`, `DELETE /:id`.
+Khoá chống trùng: dòng tiền → `dongTien.id`; tài sản → `boPhan.id` + `maTaiSan`;
+nguồn vốn → `nhom` + `maChiTieu`. Riêng dòng tiền có thêm `GET|PUT /ke-hoach-dong-tien/ton-dau`
+(tồn quỹ đầu năm, một bản ghi cho mỗi cặp năm × loại, collection `ke_hoach_ton_dau`).
+
+### /ke-hoach-dinh-khoan (cấu hình định khoản kế hoạch)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /ke-hoach-dinh-khoan | 7 cặp Nợ/Có của công ty; lần đọc đầu tự seed bộ mặc định |
+| PUT | /ke-hoach-dinh-khoan | Ghi đè cả bảng (`{ items: [...] }`) — chỉ ADMIN / KE_TOAN_TRUONG |
+
+> Mỗi dòng của 5 bảng chi tiết là CẤP 2 kèm khoá cấp 1 và mảng `thang` 12 phần tử.
+> Cả 5 bảng có `loaiKeHoach` (`KE_HOACH` mặc định). Bản ghi cũ chưa có trường này vẫn
+> đọc được ở nhánh KE_HOACH — xem `dieuKienLoaiKeHoach`; dọn bằng
+> `be/scripts/backfill-loai-ke-hoach-bang.js`.
+>
+> Lưu một bảng chi tiết sẽ TỰ SINH LẠI dòng trong `ke_hoach` (`nguonLoai`/`nguonId`).
 > Cấp 1 (nhóm sản phẩm / bộ phận) KHÔNG có bản ghi riêng — suy ra từ dòng con.
 > Giá trị suy ra (Doanh thu, CỘNG, quý, %, hàng nhóm, hàng tổng) KHÔNG lưu, FE tính
 > bằng `fe/src/pages/ke-hoach/tabs/lib/tongHop.ts`.
@@ -286,7 +305,7 @@ Same pattern as /phai-thu (with summary-by-supplier instead)
 |--------|------|-------------|
 | GET | /bao-cao/pnl | P&L report |
 | GET | /bao-cao/balance-sheet | Balance sheet |
-| GET | /bao-cao/kqkd | Operational results |
+| GET | /bao-cao/kqkd | KQKD chuẩn TT200. `loaiTruKhauHao=true` → góc nhìn P&L KHÔNG KHẤU HAO (lọc bút toán khấu hao ngay ở tầng đọc, trước khi tổng hợp) |
 | GET | /bao-cao/doanh-thu | Doanh thu theo đơn hàng × tháng (pivot Có 511, `startDate`/`endDate`) |
 
 ### /so-cai (Ledger)
