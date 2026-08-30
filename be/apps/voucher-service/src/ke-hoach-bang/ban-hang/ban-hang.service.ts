@@ -5,19 +5,15 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
-import { ObjectId } from 'mongodb';
-import { KeHoachBanHang, type LoaiKeHoach } from '@app/entities';
+import { KeHoachBanHang } from '@app/entities';
 import { TenantContextService } from '@app/core';
 import {
   BatchKeHoachBanHangDto,
   CreateKeHoachBanHangDto,
   UpdateKeHoachBanHangDto,
 } from './dto';
-import {
-  dieuKienLoaiKeHoach,
-  kiemTraTrungKhoa,
-  LOAI_KE_HOACH_MAC_DINH,
-} from '../helpers';
+import { kiemTraTrungKhoa, LOAI_KE_HOACH_MAC_DINH } from '../helpers';
+import { KeHoachBangBaseService } from '../base';
 
 /**
  * CRUD bảng kế hoạch bán hàng. Mỗi dòng là một sản phẩm trong một năm.
@@ -25,28 +21,19 @@ import {
  * chỉ giữ các ô người dùng nhập.
  */
 @Injectable()
-export class KeHoachBanHangService {
+export class KeHoachBanHangService extends KeHoachBangBaseService<KeHoachBanHang> {
+  protected readonly tenBang = 'kế hoạch bán hàng';
+  protected readonly thuTuDoc = {
+    'nhomSanPham.ma': 'ASC',
+    'sanPham.ma': 'ASC',
+  } as const as Record<string, 'ASC' | 'DESC'>;
+
   constructor(
     @InjectRepository(KeHoachBanHang)
-    private readonly repo: MongoRepository<KeHoachBanHang>,
-    private readonly tenantContext: TenantContextService,
-  ) {}
-
-  private theoTenant(where: Record<string, unknown>): Record<string, unknown> {
-    const tenantId = this.tenantContext.getCurrentTenantId();
-    if (tenantId) where.tenantId = tenantId;
-    return where;
-  }
-
-  /** Vài chục dòng mỗi năm nên trả hết, không phân trang. */
-  async layTheoNam(
-    nam: number,
-    loaiKeHoach: LoaiKeHoach,
-  ): Promise<KeHoachBanHang[]> {
-    return this.repo.find({
-      where: this.theoTenant({ nam, ...dieuKienLoaiKeHoach(loaiKeHoach) }),
-      order: { 'nhomSanPham.ma': 'ASC', 'sanPham.ma': 'ASC' } as never,
-    });
+    repo: MongoRepository<KeHoachBanHang>,
+    tenantContext: TenantContextService,
+  ) {
+    super(repo, tenantContext);
   }
 
   async taoMoi(
@@ -97,10 +84,7 @@ export class KeHoachBanHangService {
 
     // Lọc theo loại: lô Dự báo không được soi trùng với dòng Kế hoạch.
     const hienCo = await this.repo.find({
-      where: this.theoTenant({
-        nam: dto.nam,
-        ...dieuKienLoaiKeHoach(dto.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH),
-      }),
+      where: this.phamVi(dto.nam, dto.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH),
     });
 
     const kiemTra = kiemTraTrungKhoa({
@@ -158,21 +142,4 @@ export class KeHoachBanHangService {
     return this.repo.save(dong);
   }
 
-  async xoa(id: string): Promise<void> {
-    const dong = await this.timTheoId(id);
-    await this.repo.deleteOne({ _id: dong._id });
-  }
-
-  private async timTheoId(id: string): Promise<KeHoachBanHang> {
-    if (!ObjectId.isValid(id)) {
-      throw new BadRequestException('Mã dòng không hợp lệ');
-    }
-    const dong = await this.repo.findOne({
-      where: this.theoTenant({ _id: new ObjectId(id) }),
-    });
-    if (!dong) {
-      throw new NotFoundException('Không tìm thấy dòng kế hoạch bán hàng');
-    }
-    return dong;
-  }
 }

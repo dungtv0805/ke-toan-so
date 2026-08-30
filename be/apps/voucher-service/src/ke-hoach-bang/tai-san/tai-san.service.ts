@@ -5,66 +5,64 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
-import { KeHoachNhanSu } from '@app/entities';
+import { KeHoachTaiSan } from '@app/entities';
 import { TenantContextService } from '@app/core';
 import {
-  BatchKeHoachNhanSuDto,
-  CreateKeHoachNhanSuDto,
-  UpdateKeHoachNhanSuDto,
+  BatchKeHoachTaiSanDto,
+  CreateKeHoachTaiSanDto,
+  UpdateKeHoachTaiSanDto,
 } from './dto';
 import { kiemTraTrungKhoa, LOAI_KE_HOACH_MAC_DINH } from '../helpers';
 import { KeHoachBangBaseService } from '../base';
 
-/**
- * CRUD bảng kế hoạch nhân sự. Mỗi dòng là một chức vụ trong một bộ phận,
- * trong một năm. CỘNG, quý, %, hàng bộ phận, hàng tổng do phía hiển thị tính.
- */
-/** Khoá định danh một dòng nhân sự trong một năm. */
-const khoaNhanSu = (boPhanId: string, maViTri: string) =>
-  `${boPhanId}|${maViTri}`;
+/** Khoá định danh một dòng tài sản trong một bản kế hoạch. */
+const khoaTaiSan = (boPhanId: string, maTaiSan: string) =>
+  `${boPhanId}|${maTaiSan}`;
 
+/**
+ * CRUD bảng kế hoạch tài sản. Mỗi dòng là một tài sản dự kiến trang bị cho một
+ * bộ phận, trong một năm. Thành tiền, quý, %, hàng nhóm, hàng tổng do phía hiển
+ * thị tính.
+ */
 @Injectable()
-export class KeHoachNhanSuService extends KeHoachBangBaseService<KeHoachNhanSu> {
-  protected readonly tenBang = 'kế hoạch nhân sự';
+export class KeHoachTaiSanService extends KeHoachBangBaseService<KeHoachTaiSan> {
+  protected readonly tenBang = 'kế hoạch tài sản';
   protected readonly thuTuDoc = {
     'boPhan.ma': 'ASC',
-    maViTri: 'ASC',
+    maTaiSan: 'ASC',
   } as const as Record<string, 'ASC' | 'DESC'>;
 
   constructor(
-    @InjectRepository(KeHoachNhanSu)
-    repo: MongoRepository<KeHoachNhanSu>,
+    @InjectRepository(KeHoachTaiSan)
+    repo: MongoRepository<KeHoachTaiSan>,
     tenantContext: TenantContextService,
   ) {
     super(repo, tenantContext);
   }
 
   async taoMoi(
-    dto: CreateKeHoachNhanSuDto,
+    dto: CreateKeHoachTaiSanDto,
     nguoiTaoId: string,
-  ): Promise<KeHoachNhanSu> {
-    // Trùng tính theo cả bộ phận: cùng mã vị trí ở hai bộ phận khác nhau là hợp lệ.
-    // Dùng thẳng `dto.loaiKeHoach` chứ không qua `dieuKienLoaiKeHoach`: dòng mới
-    // luôn có trường này, mà nới bằng $or sẽ khiến một chức vụ đã có bên Kế
-    // hoạch chặn mất việc thêm chính nó vào Dự báo.
+  ): Promise<KeHoachTaiSan> {
+    const loaiKeHoach = dto.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH;
+    // Trùng tính theo cả bộ phận: cùng mã tài sản ở hai nơi sử dụng là hợp lệ.
     const trung = await this.repo.countDocuments(
       this.theoTenant({
         nam: dto.nam,
-        loaiKeHoach: dto.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH,
+        loaiKeHoach,
         'boPhan.id': dto.boPhan.id,
-        maViTri: dto.maViTri,
+        maTaiSan: dto.maTaiSan,
       }),
     );
     if (trung > 0) {
       throw new BadRequestException(
-        `Mã vị trí ${dto.maViTri} đã có trong bộ phận ${dto.boPhan.ten} năm ${dto.nam}`,
+        `Tài sản ${dto.maTaiSan} đã có ở ${dto.boPhan.ten} năm ${dto.nam}`,
       );
     }
 
     const dong = this.repo.create({
       ...dto,
-      // `dto.loaiKeHoach` có thể trống (bản FE cũ) — không để undefined lọt vào kho.
-      loaiKeHoach: dto.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH,
+      loaiKeHoach,
       nguoiTaoId,
       tenantId: this.tenantContext.getCurrentTenantId(),
     });
@@ -72,13 +70,11 @@ export class KeHoachNhanSuService extends KeHoachBangBaseService<KeHoachNhanSu> 
   }
 
   /**
-   * Lưu một thể: thêm và sửa trong cùng một lần bấm Lưu của bảng.
-   *
-   * Khoá gồm bộ phận + mã vị trí, mà sửa đổi được CẢ HAI — nên khoá của dòng sửa
-   * phải ghép từ giá trị mới (nếu có) với giá trị cũ, rồi mới soi trùng.
+   * Lưu một thể. Khoá gồm bộ phận + mã tài sản, mà sửa đổi được CẢ HAI — nên
+   * khoá của dòng sửa phải ghép từ giá trị mới (nếu có) với giá trị cũ.
    */
   async luuHangLoat(
-    dto: BatchKeHoachNhanSuDto,
+    dto: BatchKeHoachTaiSanDto,
     nguoiTaoId: string,
   ): Promise<{ daThem: number; daSua: number }> {
     const them = dto.them ?? [];
@@ -87,26 +83,26 @@ export class KeHoachNhanSuService extends KeHoachBangBaseService<KeHoachNhanSu> 
       return { daThem: 0, daSua: 0 };
     }
 
-    // Lọc theo loại: lô Dự báo không được soi trùng với dòng Kế hoạch.
+    const loaiKeHoach = dto.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH;
     const hienCo = await this.repo.find({
-      where: this.phamVi(dto.nam, dto.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH),
+      where: this.phamVi(dto.nam, loaiKeHoach),
     });
     const theoId = new Map(hienCo.map((d) => [d.id, d]));
 
     const kiemTra = kiemTraTrungKhoa({
       hienCo: hienCo.map((d) => ({
         id: d.id,
-        khoa: khoaNhanSu(d.boPhan.id, d.maViTri),
+        khoa: khoaTaiSan(d.boPhan.id, d.maTaiSan),
       })),
-      them: them.map((t) => khoaNhanSu(t.boPhan.id, t.maViTri)),
+      them: them.map((t) => khoaTaiSan(t.boPhan.id, t.maTaiSan)),
       sua: sua.map((s) => {
         const cu = theoId.get(s.id);
         if (!cu) return { id: s.id };
         return {
           id: s.id,
-          khoa: khoaNhanSu(
+          khoa: khoaTaiSan(
             s.boPhan?.id ?? cu.boPhan.id,
-            s.maViTri ?? cu.maViTri,
+            s.maTaiSan ?? cu.maTaiSan,
           ),
         };
       }),
@@ -114,14 +110,14 @@ export class KeHoachNhanSuService extends KeHoachBangBaseService<KeHoachNhanSu> 
 
     if (kiemTra.idKhongTonTai.length > 0) {
       throw new NotFoundException(
-        `Không tìm thấy dòng kế hoạch nhân sự: ${kiemTra.idKhongTonTai.join(', ')}`,
+        `Không tìm thấy dòng ${this.tenBang}: ${kiemTra.idKhongTonTai.join(', ')}`,
       );
     }
 
     if (kiemTra.trung.length > 0) {
       const nhan = kiemTra.trung.map((k) => k.split('|')[1] ?? k);
       throw new BadRequestException(
-        `Mã vị trí bị lặp trong cùng bộ phận, năm ${dto.nam}: ${nhan.join(', ')}`,
+        `Mã tài sản bị lặp trong cùng nơi sử dụng, năm ${dto.nam}: ${nhan.join(', ')}`,
       );
     }
 
@@ -130,7 +126,7 @@ export class KeHoachNhanSuService extends KeHoachBangBaseService<KeHoachNhanSu> 
       this.repo.create({
         ...t,
         nam: dto.nam,
-        loaiKeHoach: dto.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH,
+        loaiKeHoach,
         nguoiTaoId,
         tenantId,
       }),
@@ -149,11 +145,10 @@ export class KeHoachNhanSuService extends KeHoachBangBaseService<KeHoachNhanSu> 
 
   async capNhat(
     id: string,
-    dto: UpdateKeHoachNhanSuDto,
-  ): Promise<KeHoachNhanSu> {
+    dto: UpdateKeHoachTaiSanDto,
+  ): Promise<KeHoachTaiSan> {
     const dong = await this.timTheoId(id);
     Object.assign(dong, dto);
     return this.repo.save(dong);
   }
-
 }
