@@ -313,7 +313,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
       render: (_: unknown, r: BangKeRecord) =>
         r.soChungTu ? (
           <Space size={4}>
-            <Tooltip title={`Số phiếu: ${r.soChungTu} — mở Dữ liệu tổng hợp rồi tìm số này`}>
+            <Tooltip title={`Số phiếu: ${r.soChungTu} — mở Thực hiện rồi tìm số này`}>
               <a onClick={() => window.open("/chung-tu/nhat-ky-chung", "_blank")}>{r.soChungTu}</a>
             </Tooltip>
             {canEdit && (

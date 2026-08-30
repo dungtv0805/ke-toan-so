@@ -71,7 +71,7 @@ export const permissionModules: PermissionModule[] = [
         children: [
           { key: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch' },
           { key: '/trung-tam-du-lieu/du-bao', label: 'Dự báo' },
-          { key: '/chung-tu/nhat-ky-chung', label: 'Dữ liệu tổng hợp' },
+          { key: '/chung-tu/nhat-ky-chung', label: 'Thực hiện' },
           // Nhóm "Chứng từ" đã gỡ khỏi sidebar lẫn ma trận này; 2 trang phiếu còn
           // sống nên quyền của chúng chuyển về đây, KHÔNG được xóa theo.
           { key: '/chung-tu/phieu-thu', label: 'Phiếu thu' },

@@ -1,6 +1,7 @@
 import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '../base.entity';
 import { SO_THANG, type MucDanhMucKeHoach } from './ke-hoach-ban-hang.entity';
+import type { LoaiKeHoach } from './ke-hoach.entity';
 
 /** Sáu loại chi phí nhân sự — cố định, khớp cột LCHINH…THUONGCN của sheet thiết kế. */
 export interface ChiPhiNhanSu {
@@ -29,6 +30,16 @@ export const CHI_PHI_NHAN_SU_KEYS: (keyof ChiPhiNhanSu)[] = [
  */
 @Entity('ke_hoach_nhan_su')
 export class KeHoachNhanSu extends BaseEntity {
+  /**
+   * KE_HOACH hay DU_BAO. Hai trang dùng chung bảng này; thiếu trường thì số kế
+   * hoạch và số dự báo trộn vào nhau.
+   *
+   * Bản ghi tạo trước khi có trường này không mang nó — đều là KE_HOACH,
+   * xem `dieuKienLoaiKeHoach` phía service.
+   */
+  @Column({ default: 'KE_HOACH' })
+  loaiKeHoach: LoaiKeHoach;
+
   @Column()
   nam: number;
 

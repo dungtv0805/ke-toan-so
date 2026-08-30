@@ -45,11 +45,20 @@ describe('KeHoachNhanSuService', () => {
     service = mod.get(KeHoachNhanSuService);
   });
 
-  it('lọc theo năm và tenant', async () => {
+  it('lọc theo năm, tenant và loại kế hoạch', async () => {
     repo.find.mockResolvedValue([]);
-    await service.layTheoNam(2026);
+    await service.layTheoNam(2026, 'KE_HOACH');
     expect(repo.find).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { nam: 2026, tenantId: 't1' } }),
+      expect.objectContaining({
+        where: {
+          nam: 2026,
+          tenantId: 't1',
+          $or: [
+            { loaiKeHoach: 'KE_HOACH' },
+            { loaiKeHoach: { $exists: false } },
+          ],
+        },
+      }),
     );
   });
 
@@ -65,6 +74,7 @@ describe('KeHoachNhanSuService', () => {
     const dong = await service.taoMoi(dtoMau, 'u1');
     expect(repo.countDocuments).toHaveBeenCalledWith({
       nam: 2026,
+      loaiKeHoach: 'KE_HOACH',
       'boPhan.id': 'b1',
       maViTri: 'GD',
       tenantId: 't1',
@@ -160,6 +170,26 @@ describe('KeHoachNhanSuService', () => {
       await expect(
         service.luuHangLoat({ nam: 2026, sua: [{ id: 'khong-co' }] }, 'u1'),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('loaiKeHoach', () => {
+    it('Dự báo chỉ lấy đúng dòng dự báo', async () => {
+      repo.find.mockResolvedValue([]);
+      await service.layTheoNam(2026, 'DU_BAO');
+      expect(repo.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { nam: 2026, tenantId: 't1', loaiKeHoach: 'DU_BAO' },
+        }),
+      );
+    });
+
+    it('cùng chức vụ ở hai loại khác nhau không coi là trùng', async () => {
+      repo.countDocuments.mockResolvedValue(0);
+      await service.taoMoi({ ...dtoMau, loaiKeHoach: 'DU_BAO' }, 'u1');
+      expect(repo.countDocuments).toHaveBeenCalledWith(
+        expect.objectContaining({ loaiKeHoach: 'DU_BAO' }),
+      );
     });
   });
 });

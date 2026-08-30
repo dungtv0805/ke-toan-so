@@ -7,6 +7,7 @@ import {
   type KeHoachBanHangDong,
 } from "@/services/keHoachBanHangService";
 import type { NhomSanPham, SanPham } from "@/types";
+import type { LoaiKeHoach } from "@/services/keHoachService";
 import type { BanHangEvents, BanHangStates } from "../../ban-hang.handler";
 import {
   laKhacNhau,
@@ -19,6 +20,7 @@ import "./row-edit.event";
 const valRong = (nhomMa = ""): BanHangVal => ({
   nhomMa,
   sanPhamId: "",
+  ghiChu: "",
   luong: 0,
   giaBinhQuan: 0,
   thang: Array(SO_THANG).fill(0),
@@ -122,15 +124,19 @@ export class BanHangRowEditHandler extends CSubHanlder<
     try {
       const kq = await keHoachBanHangService.luuHangLoat({
         nam: this.getState("nam") as number,
+        loaiKeHoach: this.getState("loaiKeHoach") as LoaiKeHoach,
         them: them as never,
         // Sửa không đổi được sản phẩm — chỉ gửi phần server cho phép sửa.
-        sua: sua.map(({ id, nhomSanPham, luong, giaBinhQuan, thang }) => ({
-          id,
-          nhomSanPham: nhomSanPham!,
-          luong,
-          giaBinhQuan,
-          thang,
-        })),
+        sua: sua.map(
+          ({ id, nhomSanPham, ghiChu, luong, giaBinhQuan, thang }) => ({
+            id,
+            nhomSanPham: nhomSanPham!,
+            ghiChu,
+            luong,
+            giaBinhQuan,
+            thang,
+          }),
+        ),
       });
       message.success(`Đã lưu ${kq.daThem} dòng mới, ${kq.daSua} dòng sửa`);
       this.setState("nhap", {});
@@ -175,6 +181,7 @@ export class BanHangRowEditHandler extends CSubHanlder<
         ? { id: nhom.id, ma: nhom.ma, ten: nhom.ten }
         : undefined,
       sanPham: sp ? { id: sp.id, ma: sp.ma, ten: sp.ten } : undefined,
+      ghiChu: val.ghiChu,
       luong: val.luong,
       giaBinhQuan: val.giaBinhQuan,
       thang: val.thang,

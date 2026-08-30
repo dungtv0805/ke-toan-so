@@ -54,7 +54,6 @@ import {
   PhieuThuPage,
   PhieuChiPage,
   NhatKyChungPage,
-  KeHoachPage,
   KeHoachTabsPage,
   KeHoachFormPage,
   NhatKyChungFormPage,
@@ -600,7 +599,7 @@ const App = () => (
                     path="ke-hoach"
                     element={
                       <ProtectedRoute requiredPermission="/trung-tam-du-lieu/ke-hoach:xem">
-                        <KeHoachTabsPage />
+                        <KeHoachTabsPage loaiKeHoach="KE_HOACH" />
                       </ProtectedRoute>
                     }
                   />
@@ -616,7 +615,7 @@ const App = () => (
                     path="du-bao"
                     element={
                       <ProtectedRoute requiredPermission="/trung-tam-du-lieu/du-bao:xem">
-                        <KeHoachPage loaiKeHoach="DU_BAO" />
+                        <KeHoachTabsPage loaiKeHoach="DU_BAO" />
                       </ProtectedRoute>
                     }
                   />

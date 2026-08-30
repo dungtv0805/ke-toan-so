@@ -34,16 +34,19 @@ import {
 } from "../lib/tongHop";
 import { demThayDoi, gopNhap, type DongHienThi } from "../lib/nhapBang";
 import {
+  CAP_CHINH,
+  capCot,
+  cotCaNamVaChenhLech,
   cotQuyVaThang,
   laHangGop,
   numberInputProps,
   onCellNhan,
   onCellNhanPhu,
-  oSoNam,
   phanTramText,
   rowClassName,
   tien,
 } from "../lib/cotChung";
+import { CanhBaoLechMucTieu } from "../lib/CanhBaoLechMucTieu";
 import { useNhanSuHandler, useNhanSuState } from "./NhanSuHandlerContext";
 import {
   valTuDong,
@@ -99,6 +102,7 @@ export const NhanSuTable: React.FC = () => {
       nhomKey: d.val.boPhanId || CHUA_CHON,
       nhomNhan: tenBoPhan.get(d.val.boPhanId) ?? "(Chưa chọn bộ phận)",
       nhan: d.val.maViTri,
+      ghiChu: d.val.ghiChu,
       thang: d.val.thang,
       // CỘNG của một dòng = tổng 6 loại chi phí.
       namKhaiBao: tongChiPhi(d.val.chiPhi),
@@ -151,6 +155,7 @@ export const NhanSuTable: React.FC = () => {
     key: col.key,
     width: 140,
     align: "right" as const,
+    ...capCot(CAP_CHINH),
     render: (_: unknown, row: Hang) => {
       if (laHangGop(row.loai)) {
         return (
@@ -183,6 +188,7 @@ export const NhanSuTable: React.FC = () => {
       key: "maViTri",
       width: 300,
       onCell: onCellNhan,
+      ...capCot(CAP_CHINH),
       render: (_: unknown, row: Hang) => {
         if (row.loai === "tong") {
           return <span className="font-semibold">{row.nhan}</span>;
@@ -246,6 +252,7 @@ export const NhanSuTable: React.FC = () => {
       key: "tenChucVu",
       width: 190,
       onCell: onCellNhanPhu,
+      ...capCot(CAP_CHINH),
       render: (_: unknown, row: Hang) => {
         if (laHangGop(row.loai)) return null;
         return (
@@ -266,17 +273,47 @@ export const NhanSuTable: React.FC = () => {
       },
     },
     {
-      title: "CỘNG",
-      key: "cong",
+      title: "Diễn giải",
+      key: "ghiChu",
+      width: 260,
+      ...capCot(CAP_CHINH),
+      render: (_: unknown, row: Hang) => {
+        if (laHangGop(row.loai)) return null;
+        return (
+          <Input
+            size="small"
+            variant="borderless"
+            className="excel-cell-input"
+            placeholder="Cơ sở hình thành dòng kế hoạch"
+            value={row.dong!.val.ghiChu}
+            onChange={(e) =>
+              handler.executeEvent("suaO", {
+                id: row.dong!.id,
+                patch: { ghiChu: e.target.value },
+              })
+            }
+          />
+        );
+      },
+    },
+    {
+      title: "Thành tiền",
+      key: "thanhTien",
       width: 160,
       align: "right",
-      render: (_: unknown, row: Hang) => oSoNam(row, "CỘNG"),
+      ...capCot(CAP_CHINH),
+      render: (_: unknown, row: Hang) => (
+        <span className={laHangGop(row.loai) ? "font-semibold" : undefined}>
+          {tien(row.namKhaiBao)}
+        </span>
+      ),
     },
     {
       title: "%",
       key: "phanTram",
       width: 80,
       align: "right",
+      ...capCot(CAP_CHINH),
       render: (_: unknown, row: Hang) => (
         <span className={laHangGop(row.loai) ? "font-semibold" : undefined}>
           {phanTramText(row.phanTram)}
@@ -284,6 +321,7 @@ export const NhanSuTable: React.FC = () => {
       ),
     },
     ...cotChiPhi,
+    ...cotCaNamVaChenhLech<Hang>(),
     ...cotQuyVaThang<Hang>({
       suaDuoc,
       doiThang: (row, chiSo, giaTri) =>
@@ -373,6 +411,8 @@ export const NhanSuTable: React.FC = () => {
           {soThayDoi > 0 ? `${soThayDoi} dòng chưa lưu` : "Đã lưu mọi thay đổi"}
         </span>
       </div>
+
+      <CanhBaoLechMucTieu rows={rows} />
 
       <div ref={tableWrapRef} className="flex flex-col flex-1 min-h-0">
         <Table<Hang>

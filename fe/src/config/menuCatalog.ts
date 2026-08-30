@@ -38,7 +38,7 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
   // Nhóm bọc "Trung tâm dữ liệu" đã bỏ → không còn parentLabel.
   { key: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch' },
   { key: '/trung-tam-du-lieu/du-bao', label: 'Dự báo' },
-  { key: '/chung-tu/nhat-ky-chung', label: 'Dữ liệu tổng hợp' },
+  { key: '/chung-tu/nhat-ky-chung', label: 'Thực hiện' },
   { key: '/chung-tu/phieu-thu', label: 'Phiếu thu' },
   { key: '/chung-tu/phieu-chi', label: 'Phiếu chi' },
   { key: '/chung-tu/ket-chuyen-lai-lo', label: 'Kết chuyển lãi lỗ' },

@@ -9,6 +9,7 @@ import {
   type KeHoachNhanSuDong,
 } from "@/services/keHoachNhanSuService";
 import type { BoPhan } from "@/types";
+import type { LoaiKeHoach } from "@/services/keHoachService";
 import type { NhanSuEvents, NhanSuStates } from "../../nhan-su.handler";
 import { laKhacNhau, tamId, type DongNhap } from "../../../../lib/nhapBang";
 import { valTuDong, type NhanSuVal } from "../init/init.state";
@@ -18,6 +19,7 @@ const valRong = (boPhanId = ""): NhanSuVal => ({
   boPhanId,
   maViTri: "",
   tenChucVu: "",
+  ghiChu: "",
   chiPhi: chiPhiRong(),
   thang: Array(SO_THANG).fill(0),
 });
@@ -127,6 +129,7 @@ export class NhanSuRowEditHandler extends CSubHanlder<
     try {
       const kq = await keHoachNhanSuService.luuHangLoat({
         nam: this.getState("nam") as number,
+        loaiKeHoach: this.getState("loaiKeHoach") as LoaiKeHoach,
         them: them as never,
         sua: sua as never,
       });
@@ -169,6 +172,7 @@ export class NhanSuRowEditHandler extends CSubHanlder<
       boPhan: bp ? { id: bp.id, ma: bp.ma, ten: bp.ten } : undefined,
       maViTri: val.maViTri.trim(),
       tenChucVu: val.tenChucVu.trim() || undefined,
+      ghiChu: val.ghiChu,
       chiPhi: val.chiPhi,
       thang: val.thang,
     };

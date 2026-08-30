@@ -2,6 +2,7 @@ import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
 import { keHoachNhanSuService } from "@/services/keHoachNhanSuService";
 import { boPhanService } from "@/services/boPhanService";
+import type { LoaiKeHoach } from "@/services/keHoachService";
 import type { NhanSuEvents, NhanSuStates } from "../../nhan-su.handler";
 import "./init.event";
 import "./init.state";
@@ -12,24 +13,37 @@ const DANH_MUC_LIMIT = 500;
 @RegisterHandler("ke-hoach-nhan-su")
 export class NhanSuInitHandler extends CSubHanlder<NhanSuEvents, NhanSuStates> {
   @HandlerDecorator("init")
-  async init(params: { nam: number }): Promise<void> {
+  async init(params: {
+    nam: number;
+    loaiKeHoach: LoaiKeHoach;
+  }): Promise<void> {
     this.khoiTaoMacDinh();
     this.setState("nam", params.nam);
-    // Đổi năm là đổi hẳn bản kế hoạch — bỏ mọi thứ đang gõ dở.
+    this.setState("loaiKeHoach", params.loaiKeHoach);
+    // Đổi năm hoặc đổi loại là đổi hẳn bản kế hoạch — bỏ mọi thứ đang gõ dở.
     this.setState("nhap", {});
     this.setState("dongMoi", []);
-    await Promise.all([this.napDong(params.nam), this.napDanhMuc()]);
+    await Promise.all([
+      this.napDong(params.nam, params.loaiKeHoach),
+      this.napDanhMuc(),
+    ]);
   }
 
   @HandlerDecorator("refresh")
   async refresh(): Promise<void> {
-    await this.napDong(this.getState("nam") as number);
+    await this.napDong(
+      this.getState("nam") as number,
+      this.getState("loaiKeHoach") as LoaiKeHoach,
+    );
   }
 
-  private async napDong(nam: number): Promise<void> {
+  private async napDong(
+    nam: number,
+    loaiKeHoach: LoaiKeHoach,
+  ): Promise<void> {
     this.setState("loading", true);
     try {
-      this.setState("data", await keHoachNhanSuService.layTheoNam(nam));
+      this.setState("data", await keHoachNhanSuService.layTheoNam(nam, loaiKeHoach));
     } catch (error) {
       console.error("Lỗi nạp kế hoạch nhân sự:", error);
     } finally {
@@ -50,6 +64,7 @@ export class NhanSuInitHandler extends CSubHanlder<NhanSuEvents, NhanSuStates> {
 
   private khoiTaoMacDinh(): void {
     const mac: [string, unknown][] = [
+      ["loaiKeHoach", "KE_HOACH"],
       ["data", []],
       ["loading", false],
       ["boPhanList", []],

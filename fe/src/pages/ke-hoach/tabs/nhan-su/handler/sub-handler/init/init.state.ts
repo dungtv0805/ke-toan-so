@@ -1,4 +1,5 @@
 import { BaseStates } from "@/common/c-handler/core/actions/c-state.action";
+import type { LoaiKeHoach } from "@/services/keHoachService";
 import type { BoPhan } from "@/types";
 import type {
   ChiPhiNhanSu,
@@ -11,6 +12,8 @@ export interface NhanSuVal {
   boPhanId: string;
   maViTri: string;
   tenChucVu: string;
+  /** Cột DIỄN GIẢI — lưu vào trường `ghiChu` của bản ghi. */
+  ghiChu: string;
   chiPhi: ChiPhiNhanSu;
   thang: number[];
 }
@@ -20,11 +23,13 @@ export const valTuDong = (d: KeHoachNhanSuDong): NhanSuVal => ({
   boPhanId: d.boPhan.id,
   maViTri: d.maViTri,
   tenChucVu: d.tenChucVu ?? "",
+  ghiChu: d.ghiChu ?? "",
   chiPhi: { ...d.chiPhi },
   thang: [...d.thang],
 });
 
 export interface NhanSuInitStates extends BaseStates {
+  loaiKeHoach: LoaiKeHoach;
   nam: number;
   data: KeHoachNhanSuDong[];
   loading: boolean;

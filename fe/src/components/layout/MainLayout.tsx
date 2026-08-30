@@ -290,7 +290,7 @@ const keToAnMenuItems: MenuItem[] = [
   // "Thuế" / "Kho". Route vẫn giữ tiền tố /trung-tam-du-lieu để khỏi phải cấp lại quyền.
   getMenuItem("Kế hoạch", "/trung-tam-du-lieu/ke-hoach", <ScheduleOutlined />),
   getMenuItem("Dự báo", "/trung-tam-du-lieu/du-bao", <RiseOutlined />),
-  getMenuItem("Dữ liệu tổng hợp", "/chung-tu/nhat-ky-chung", <AuditOutlined />),
+  getMenuItem("Thực hiện", "/chung-tu/nhat-ky-chung", <AuditOutlined />),
   // Nhóm "Chứng từ" đã gỡ, 2 trang phiếu còn sống về đây (khớp ma trận Phân quyền).
   getMenuItem("Phiếu thu", "/chung-tu/phieu-thu", <CreditCardOutlined />),
   getMenuItem("Phiếu chi", "/chung-tu/phieu-chi", <WalletOutlined />),

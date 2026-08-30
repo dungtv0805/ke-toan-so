@@ -1,4 +1,5 @@
 import { ServiceBase } from './base/service-base';
+import type { LoaiKeHoach } from './keHoachService';
 
 /** Ảnh chụp một mục danh mục lúc lưu — giữ mã/tên để bảng đọc lại được. */
 export interface MucDanhMucKeHoach {
@@ -15,6 +16,7 @@ export const chuanHoaThang = (thang?: number[]): number[] =>
 
 export interface KeHoachBanHangDong {
   id: string;
+  loaiKeHoach: LoaiKeHoach;
   nam: number;
   nhomSanPham: MucDanhMucKeHoach;
   sanPham: MucDanhMucKeHoach;
@@ -27,15 +29,19 @@ export interface KeHoachBanHangDong {
 
 export type KeHoachBanHangPayload = Omit<KeHoachBanHangDong, 'id'>;
 
-/** Sửa được mọi thứ trừ năm và sản phẩm — hai trường đó là khoá chống trùng. */
+/**
+ * Sửa được mọi thứ trừ loại kế hoạch, năm và sản phẩm — ba trường đó là khoá
+ * chống trùng. Đổi loại nghĩa là chuyển sang bảng khác, phải thêm dòng mới.
+ */
 export type KeHoachBanHangPatch = Partial<
-  Omit<KeHoachBanHangPayload, 'nam' | 'sanPham'>
+  Omit<KeHoachBanHangPayload, 'loaiKeHoach' | 'nam' | 'sanPham'>
 >;
 
 /** Một lần bấm Lưu gửi hết dòng mới và dòng đã sửa. */
 export interface KeHoachBanHangBatch {
   nam: number;
-  them: Omit<KeHoachBanHangPayload, 'nam'>[];
+  loaiKeHoach: LoaiKeHoach;
+  them: Omit<KeHoachBanHangPayload, 'nam' | 'loaiKeHoach'>[];
   sua: (KeHoachBanHangPatch & { id: string })[];
 }
 
@@ -63,8 +69,13 @@ class KeHoachBanHangService extends ServiceBase {
     } as KeHoachBanHangDong;
   }
 
-  async layTheoNam(nam: number): Promise<KeHoachBanHangDong[]> {
-    const res = await this.get<DongResponse[]>({ params: { nam } });
+  async layTheoNam(
+    nam: number,
+    loaiKeHoach: LoaiKeHoach,
+  ): Promise<KeHoachBanHangDong[]> {
+    const res = await this.get<DongResponse[]>({
+      params: { nam, loaiKeHoach },
+    });
     return (res ?? []).map((d) => this.map(d));
   }
 

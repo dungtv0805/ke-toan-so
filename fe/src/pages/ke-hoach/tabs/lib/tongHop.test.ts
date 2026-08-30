@@ -1,151 +1,127 @@
 import { describe, expect, it } from 'vitest';
-import { dungCayBang, quyTuThang, tongMang, type MoTaHang } from './tongHop';
+import {
+  dungCayBang,
+  tongLech,
+  type HangBang,
+  type MoTaHang,
+} from './tongHop';
 
-interface Mau {
-  id: string;
+interface DongTho {
+  key: string;
   nhomKey: string;
-  nhomNhan: string;
-  nhan: string;
   thang: number[];
   namKhaiBao: number;
+  ghiChu?: string;
 }
 
-const doc = (m: Mau): MoTaHang => ({
-  key: m.id,
-  nhomKey: m.nhomKey,
-  nhomNhan: m.nhomNhan,
-  nhan: m.nhan,
-  thang: m.thang,
-  namKhaiBao: m.namKhaiBao,
+const doc = (d: DongTho): MoTaHang => ({
+  key: d.key,
+  nhomKey: d.nhomKey,
+  nhomNhan: `Nhóm ${d.nhomKey}`,
+  nhan: d.key,
+  thang: d.thang,
+  namKhaiBao: d.namKhaiBao,
+  ghiChu: d.ghiChu,
 });
 
-const thang = (...v: number[]) =>
-  Array.from({ length: 12 }, (_, i) => v[i] ?? 0);
+/** Mảng 12 tháng, mỗi tháng `v`. Tổng năm = v × 12. */
+const deu = (v: number): number[] => Array(12).fill(v);
 
-describe('quyTuThang', () => {
-  it('mỗi quý là tổng đúng 3 tháng của quý đó', () => {
-    expect(quyTuThang(thang(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12))).toEqual([
-      6, 15, 24, 33,
-    ]);
+const chiTiet = (rows: HangBang<DongTho>[]) =>
+  rows.filter((r) => r.loai === 'chiTiet');
+
+describe('dungCayBang — chênh lệch', () => {
+  it('chênh lệch bằng 0 khi 12 tháng khớp mục tiêu năm', () => {
+    const rows = dungCayBang(
+      [{ key: 'a', nhomKey: 'N1', thang: deu(10), namKhaiBao: 120 }],
+      doc,
+    );
+    expect(chiTiet(rows)[0].chenhLech).toBe(0);
+    expect(chiTiet(rows)[0].lech).toBe(false);
   });
 
-  it('mảng ngắn hơn 12 coi phần thiếu là 0', () => {
-    expect(quyTuThang([1, 2])).toEqual([3, 0, 0, 0]);
+  it('chênh lệch dương khi phân bổ vượt mục tiêu', () => {
+    const rows = dungCayBang(
+      [{ key: 'a', nhomKey: 'N1', thang: deu(10), namKhaiBao: 100 }],
+      doc,
+    );
+    expect(chiTiet(rows)[0].chenhLech).toBe(20);
+    expect(chiTiet(rows)[0].lech).toBe(true);
+  });
+
+  it('chênh lệch âm khi còn thiếu', () => {
+    const rows = dungCayBang(
+      [{ key: 'a', nhomKey: 'N1', thang: deu(10), namKhaiBao: 200 }],
+      doc,
+    );
+    expect(chiTiet(rows)[0].chenhLech).toBe(-80);
+  });
+
+  it('hàng nhóm và hàng tổng cũng có chênh lệch', () => {
+    const rows = dungCayBang(
+      [
+        { key: 'a', nhomKey: 'N1', thang: deu(10), namKhaiBao: 100 },
+        { key: 'b', nhomKey: 'N1', thang: deu(10), namKhaiBao: 150 },
+      ],
+      doc,
+    );
+    const tong = rows.find((r) => r.loai === 'tong')!;
+    const nhom = rows.find((r) => r.loai === 'nhom')!;
+    // 240 phân bổ so với 250 mục tiêu.
+    expect(tong.chenhLech).toBe(-10);
+    expect(nhom.chenhLech).toBe(-10);
+  });
+
+  it('chuyển diễn giải xuống hàng chi tiết', () => {
+    const rows = dungCayBang(
+      [
+        {
+          key: 'a',
+          nhomKey: 'N1',
+          thang: deu(10),
+          namKhaiBao: 120,
+          ghiChu: 'Đơn hàng dự kiến Khách hàng A',
+        },
+      ],
+      doc,
+    );
+    expect(chiTiet(rows)[0].ghiChu).toBe('Đơn hàng dự kiến Khách hàng A');
   });
 });
 
-describe('tongMang', () => {
-  it('cộng theo từng vị trí', () => {
-    expect(tongMang([1, 2, 3], [10, 20, 30])).toEqual([11, 22, 33]);
-  });
-});
-
-describe('dungCayBang', () => {
-  const items: Mau[] = [
-    {
-      id: 'a',
-      nhomKey: 'n1',
-      nhomNhan: 'Nhóm 1',
-      nhan: 'SP A',
-      thang: thang(10, 10, 10),
-      namKhaiBao: 30,
-    },
-    {
-      id: 'b',
-      nhomKey: 'n1',
-      nhomNhan: 'Nhóm 1',
-      nhan: 'SP B',
-      thang: thang(0, 0, 0, 20),
-      namKhaiBao: 20,
-    },
-    {
-      id: 'c',
-      nhomKey: 'n2',
-      nhomNhan: 'Nhóm 2',
-      nhan: 'SP C',
-      thang: thang(50),
-      namKhaiBao: 50,
-    },
-  ];
-
-  it('hàng đầu là TỔNG CỘNG, gộp mọi dòng', () => {
-    const rows = dungCayBang(items, doc);
-    expect(rows[0].loai).toBe('tong');
-    expect(rows[0].namTheoThang).toBe(100);
-    expect(rows[0].namKhaiBao).toBe(100);
-    expect(rows[0].quy).toEqual([80, 20, 0, 0]);
+describe('tongLech', () => {
+  it('gom riêng phần thiếu và phần vượt', () => {
+    const rows = dungCayBang(
+      [
+        // vượt 20
+        { key: 'a', nhomKey: 'N1', thang: deu(10), namKhaiBao: 100 },
+        // thiếu 80
+        { key: 'b', nhomKey: 'N2', thang: deu(10), namKhaiBao: 200 },
+      ],
+      doc,
+    );
+    expect(tongLech(rows)).toEqual({ thieu: 80, vuot: 20, soDongLech: 2 });
   });
 
-  it('sau hàng tổng là từng nhóm kèm dòng con của nhóm đó', () => {
-    const rows = dungCayBang(items, doc);
-    expect(rows.map((r) => r.loai)).toEqual([
-      'tong',
-      'nhom',
-      'chiTiet',
-      'chiTiet',
-      'nhom',
-      'chiTiet',
-    ]);
-    expect(rows[1].nhan).toBe('Nhóm 1');
-    expect(rows[1].namKhaiBao).toBe(50);
-    expect(rows[1].quy).toEqual([30, 20, 0, 0]);
+  it('chỉ đếm hàng chi tiết, không cộng trùng hàng nhóm và hàng tổng', () => {
+    const rows = dungCayBang(
+      [{ key: 'a', nhomKey: 'N1', thang: deu(10), namKhaiBao: 100 }],
+      doc,
+    );
+    // Nếu cộng cả hàng nhóm và hàng tổng thì vượt sẽ là 60, không phải 20.
+    expect(tongLech(rows).vuot).toBe(20);
+    expect(tongLech(rows).soDongLech).toBe(1);
   });
 
-  it('phần trăm tính theo tổng cộng', () => {
-    const rows = dungCayBang(items, doc);
-    expect(rows[2].phanTram).toBeCloseTo(0.3);
-    expect(rows[5].phanTram).toBeCloseTo(0.5);
+  it('lệch dưới 1 đồng coi như khớp', () => {
+    const rows = dungCayBang(
+      [{ key: 'a', nhomKey: 'N1', thang: deu(10), namKhaiBao: 120.4 }],
+      doc,
+    );
+    expect(tongLech(rows)).toEqual({ thieu: 0, vuot: 0, soDongLech: 0 });
   });
 
-  it('tổng cộng bằng 0 thì phần trăm là 0, không chia cho 0', () => {
-    const rong: Mau[] = [
-      {
-        id: 'z',
-        nhomKey: 'n1',
-        nhomNhan: 'Nhóm 1',
-        nhan: 'SP Z',
-        thang: thang(),
-        namKhaiBao: 0,
-      },
-    ];
-    const rows = dungCayBang(rong, doc);
-    expect(rows.every((r) => r.phanTram === 0)).toBe(true);
-  });
-
-  it('đánh dấu lệch khi tổng 12 tháng khác số khai báo', () => {
-    const lech: Mau[] = [
-      {
-        id: 'x',
-        nhomKey: 'n1',
-        nhomNhan: 'Nhóm 1',
-        nhan: 'SP X',
-        thang: thang(10),
-        namKhaiBao: 99,
-      },
-    ];
-    const rows = dungCayBang(lech, doc);
-    expect(rows.find((r) => r.key === 'x')?.lech).toBe(true);
-  });
-
-  it('không lệch khi hai số khớp nhau', () => {
-    const rows = dungCayBang(items, doc);
-    expect(
-      rows.filter((r) => r.loai === 'chiTiet').every((r) => !r.lech),
-    ).toBe(true);
-  });
-
-  it('hàng chi tiết giữ lại dòng gốc để sửa', () => {
-    const rows = dungCayBang(items, doc);
-    expect(rows[2].dong).toBe(items[0]);
-    expect(rows[0].dong).toBeUndefined();
-    expect(rows[1].dong).toBeUndefined();
-  });
-
-  it('không có dòng nào thì chỉ còn hàng tổng rỗng', () => {
-    const rows = dungCayBang<Mau>([], doc);
-    expect(rows).toHaveLength(1);
-    expect(rows[0].loai).toBe('tong');
-    expect(rows[0].thang).toEqual(thang());
-    expect(rows[0].lech).toBe(false);
+  it('bảng rỗng không có gì để cảnh báo', () => {
+    expect(tongLech([])).toEqual({ thieu: 0, vuot: 0, soDongLech: 0 });
   });
 });

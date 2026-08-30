@@ -1,5 +1,6 @@
 import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '../base.entity';
+import type { LoaiKeHoach } from './ke-hoach.entity';
 
 /** Số tháng trong một bản kế hoạch năm. */
 export const SO_THANG = 12;
@@ -22,6 +23,16 @@ export interface MucDanhMucKeHoach {
  */
 @Entity('ke_hoach_ban_hang')
 export class KeHoachBanHang extends BaseEntity {
+  /**
+   * KE_HOACH hay DU_BAO. Hai trang dùng chung bảng này; thiếu trường thì số kế
+   * hoạch và số dự báo trộn vào nhau.
+   *
+   * Bản ghi tạo trước khi có trường này không mang nó — đều là KE_HOACH,
+   * xem `dieuKienLoaiKeHoach` phía service.
+   */
+  @Column({ default: 'KE_HOACH' })
+  loaiKeHoach: LoaiKeHoach;
+
   @Column()
   nam: number;
 

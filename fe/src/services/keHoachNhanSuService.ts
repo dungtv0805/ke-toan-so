@@ -1,4 +1,5 @@
 import { ServiceBase } from './base/service-base';
+import type { LoaiKeHoach } from './keHoachService';
 import {
   chuanHoaThang,
   type MucDanhMucKeHoach,
@@ -48,6 +49,7 @@ export const tongChiPhi = (chiPhi: ChiPhiNhanSu): number =>
 
 export interface KeHoachNhanSuDong {
   id: string;
+  loaiKeHoach: LoaiKeHoach;
   nam: number;
   boPhan: MucDanhMucKeHoach;
   maViTri: string;
@@ -60,13 +62,16 @@ export interface KeHoachNhanSuDong {
 
 export type KeHoachNhanSuPayload = Omit<KeHoachNhanSuDong, 'id'>;
 
-/** Sửa được cả bộ phận lẫn mã vị trí — chỉ khoá năm. */
-export type KeHoachNhanSuPatch = Partial<Omit<KeHoachNhanSuPayload, 'nam'>>;
+/** Sửa được cả bộ phận lẫn mã vị trí — chỉ khoá loại kế hoạch và năm. */
+export type KeHoachNhanSuPatch = Partial<
+  Omit<KeHoachNhanSuPayload, 'loaiKeHoach' | 'nam'>
+>;
 
 /** Một lần bấm Lưu gửi hết dòng mới và dòng đã sửa. */
 export interface KeHoachNhanSuBatch {
   nam: number;
-  them: Omit<KeHoachNhanSuPayload, 'nam'>[];
+  loaiKeHoach: LoaiKeHoach;
+  them: Omit<KeHoachNhanSuPayload, 'nam' | 'loaiKeHoach'>[];
   sua: (KeHoachNhanSuPatch & { id: string })[];
 }
 
@@ -97,8 +102,13 @@ class KeHoachNhanSuService extends ServiceBase {
     } as KeHoachNhanSuDong;
   }
 
-  async layTheoNam(nam: number): Promise<KeHoachNhanSuDong[]> {
-    const res = await this.get<DongResponse[]>({ params: { nam } });
+  async layTheoNam(
+    nam: number,
+    loaiKeHoach: LoaiKeHoach,
+  ): Promise<KeHoachNhanSuDong[]> {
+    const res = await this.get<DongResponse[]>({
+      params: { nam, loaiKeHoach },
+    });
     return (res ?? []).map((d) => this.map(d));
   }
 

@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import {
   Button,
   Empty,
+  Input,
   InputNumber,
   Popconfirm,
   Select,
@@ -23,16 +24,19 @@ import { sapXepTheoNhan } from "@/lib/sapXep";
 import { dungCayBang, type HangBang, type MoTaHang } from "../lib/tongHop";
 import { demThayDoi, gopNhap, type DongHienThi } from "../lib/nhapBang";
 import {
+  CAP_CHINH,
+  capCot,
+  cotCaNamVaChenhLech,
   cotQuyVaThang,
   laHangGop,
   numberInputProps,
   onCellNhan,
   onCellNhanPhu,
-  oSoNam,
   phanTramText,
   rowClassName,
   tien,
 } from "../lib/cotChung";
+import { CanhBaoLechMucTieu } from "../lib/CanhBaoLechMucTieu";
 import { useBanHangHandler, useBanHangState } from "./BanHangHandlerContext";
 import {
   valTuDong,
@@ -87,8 +91,9 @@ export const BanHangTable: React.FC = () => {
         tenNhom.get(d.val.nhomMa) ??
         (d.val.nhomMa || "(Chưa chọn nhóm)"),
       nhan: tenSanPham.get(d.val.sanPhamId)?.ten ?? "",
+      ghiChu: d.val.ghiChu,
       thang: d.val.thang,
-      // Doanh thu năm = Lượng × Giá bình quân.
+      // Thành tiền = Lượng × Giá bình quân — mục tiêu năm của dòng.
       namKhaiBao: d.val.luong * d.val.giaBinhQuan,
     });
     // Chưa có dòng nào thì trả rỗng để bảng hiện lời nhắc, thay vì một hàng
@@ -127,6 +132,7 @@ export const BanHangTable: React.FC = () => {
       key: "ma",
       width: 200,
       onCell: onCellNhan,
+      ...capCot(CAP_CHINH),
       render: (_: unknown, row: Hang) => {
         if (row.loai === "tong") {
           return <span className="font-semibold">{row.nhan}</span>;
@@ -178,6 +184,7 @@ export const BanHangTable: React.FC = () => {
       key: "ten",
       width: 240,
       onCell: onCellNhanPhu,
+      ...capCot(CAP_CHINH),
       render: (_: unknown, row: Hang) => {
         if (laHangGop(row.loai)) return null;
         if (!row.dong?.tam) {
@@ -203,10 +210,35 @@ export const BanHangTable: React.FC = () => {
       },
     },
     {
+      title: "Diễn giải",
+      key: "ghiChu",
+      width: 260,
+      ...capCot(CAP_CHINH),
+      render: (_: unknown, row: Hang) => {
+        if (laHangGop(row.loai)) return null;
+        return (
+          <Input
+            size="small"
+            variant="borderless"
+            className="excel-cell-input"
+            placeholder="Cơ sở hình thành dòng kế hoạch"
+            value={row.dong!.val.ghiChu}
+            onChange={(e) =>
+              handler.executeEvent("suaO", {
+                id: row.dong!.id,
+                patch: { ghiChu: e.target.value },
+              })
+            }
+          />
+        );
+      },
+    },
+    {
       title: "Lượng",
       key: "luong",
       width: 110,
       align: "right",
+      ...capCot(CAP_CHINH),
       render: (_: unknown, row: Hang) => {
         // Cộng lượng của các sản phẩm khác đơn vị tính là vô nghĩa → hàng gộp để trống.
         if (laHangGop(row.loai)) return null;
@@ -229,6 +261,7 @@ export const BanHangTable: React.FC = () => {
       key: "giaBinhQuan",
       width: 140,
       align: "right",
+      ...capCot(CAP_CHINH),
       render: (_: unknown, row: Hang) => {
         if (laHangGop(row.loai)) return null;
         return (
@@ -246,23 +279,30 @@ export const BanHangTable: React.FC = () => {
       },
     },
     {
-      title: "Doanh thu",
-      key: "doanhThu",
+      title: "Thành tiền",
+      key: "thanhTien",
       width: 160,
       align: "right",
-      render: (_: unknown, row: Hang) => oSoNam(row, "doanh thu"),
+      ...capCot(CAP_CHINH),
+      render: (_: unknown, row: Hang) => (
+        <span className={laHangGop(row.loai) ? "font-semibold" : undefined}>
+          {tien(row.namKhaiBao)}
+        </span>
+      ),
     },
     {
       title: "%",
       key: "phanTram",
       width: 80,
       align: "right",
+      ...capCot(CAP_CHINH),
       render: (_: unknown, row: Hang) => (
         <span className={laHangGop(row.loai) ? "font-semibold" : undefined}>
           {phanTramText(row.phanTram)}
         </span>
       ),
     },
+    ...cotCaNamVaChenhLech<Hang>(),
     ...cotQuyVaThang<Hang>({
       suaDuoc,
       doiThang: (row, chiSo, giaTri) =>
@@ -355,6 +395,8 @@ export const BanHangTable: React.FC = () => {
             : "Đã lưu mọi thay đổi"}
         </span>
       </div>
+
+      <CanhBaoLechMucTieu rows={rows} />
 
       <div ref={tableWrapRef} className="flex flex-col flex-1 min-h-0">
         <Table<Hang>

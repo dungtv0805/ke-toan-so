@@ -21,6 +21,8 @@ export interface MoTaHang {
   nhomKey: string;
   nhomNhan: string;
   nhan: string;
+  /** Cột DIỄN GIẢI — cơ sở hình thành dòng kế hoạch. */
+  ghiChu?: string;
   thang: number[];
   /** Số năm người dùng khai: Doanh thu = Lượng × Giá, hoặc CỘNG 6 loại chi phí. */
   namKhaiBao: number;
@@ -30,6 +32,8 @@ export interface HangBang<T> {
   key: string;
   loai: LoaiHang;
   nhan: string;
+  /** Cột DIỄN GIẢI — chỉ có ở hàng chi tiết. */
+  ghiChu?: string;
   /** Khoá nhóm cha — có ở hàng nhóm và hàng chi tiết, không có ở hàng tổng. */
   nhomKey?: string;
   thang: number[];
@@ -37,6 +41,11 @@ export interface HangBang<T> {
   quy: number[];
   namTheoThang: number;
   namKhaiBao: number;
+  /**
+   * CẢ NĂM − Thành tiền. Dương = phân bổ vượt mục tiêu, âm = còn thiếu.
+   * Có ở cả ba cấp hàng, vì hàng nhóm và hàng tổng cũng phải cảnh báo được.
+   */
+  chenhLech: number;
   phanTram: number;
   /** Tổng 12 tháng khác số khai báo — chỉ cảnh báo, không chặn lưu. */
   lech: boolean;
@@ -60,7 +69,10 @@ export const quyTuThang = (thang: number[]): number[] => {
 const cong = (xs: number[]): number => xs.reduce((s, x) => s + x, 0);
 
 /** So khớp tiền: lệch dưới 1 đồng coi như bằng nhau. */
-const bangNhau = (a: number, b: number): boolean => Math.abs(a - b) < 1;
+export const LECH_TOI_THIEU = 1;
+
+const bangNhau = (a: number, b: number): boolean =>
+  Math.abs(a - b) < LECH_TOI_THIEU;
 
 export function dungCayBang<T>(
   items: T[],
@@ -97,6 +109,7 @@ export function dungCayBang<T>(
       quy: quyTuThang(tongThang),
       namTheoThang: cong(tongThang),
       namKhaiBao: tongKhaiBao,
+      chenhLech: cong(tongThang) - tongKhaiBao,
       phanTram: tyLe(tongKhaiBao),
       lech: !bangNhau(cong(tongThang), tongKhaiBao),
     },
@@ -119,6 +132,7 @@ export function dungCayBang<T>(
       quy: quyTuThang(thangNhom),
       namTheoThang: cong(thangNhom),
       namKhaiBao: khaiBaoNhom,
+      chenhLech: cong(thangNhom) - khaiBaoNhom,
       phanTram: tyLe(khaiBaoNhom),
       lech: !bangNhau(cong(thangNhom), khaiBaoNhom),
     });
@@ -129,11 +143,13 @@ export function dungCayBang<T>(
         key: m.key,
         loai: 'chiTiet',
         nhan: m.nhan,
+        ghiChu: m.ghiChu,
         nhomKey,
         thang: t,
         quy: quyTuThang(t),
         namTheoThang: cong(t),
         namKhaiBao: m.namKhaiBao,
+        chenhLech: cong(t) - m.namKhaiBao,
         phanTram: tyLe(m.namKhaiBao),
         lech: !bangNhau(cong(t), m.namKhaiBao),
         dong: item,
@@ -142,4 +158,35 @@ export function dungCayBang<T>(
   }
 
   return rows;
+}
+
+export interface TongLech {
+  /** Tổng phần CÒN THIẾU, luôn là số dương. */
+  thieu: number;
+  /** Tổng phần PHÂN BỔ VƯỢT, luôn là số dương. */
+  vuot: number;
+  /** Số hàng chi tiết đang lệch. */
+  soDongLech: number;
+}
+
+/**
+ * Tổng lệch của cả bảng, dùng cho banner cảnh báo cấp bảng.
+ *
+ * Chỉ cộng hàng CHI TIẾT: hàng nhóm và hàng tổng là số cộng dồn của chính các
+ * hàng đó, cộng thêm vào sẽ đếm mỗi khoản lệch ba lần.
+ */
+export function tongLech<T>(rows: HangBang<T>[]): TongLech {
+  let thieu = 0;
+  let vuot = 0;
+  let soDongLech = 0;
+
+  for (const row of rows) {
+    if (row.loai !== 'chiTiet') continue;
+    if (Math.abs(row.chenhLech) < LECH_TOI_THIEU) continue;
+    soDongLech += 1;
+    if (row.chenhLech > 0) vuot += row.chenhLech;
+    else thieu += -row.chenhLech;
+  }
+
+  return { thieu, vuot, soDongLech };
 }
