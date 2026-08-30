@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import {
+  CauHinhDinhKhoanKeHoach,
   KeHoachBanHang,
   KeHoachDongTien,
   KeHoachNguonVon,
   KeHoachNhanSu,
   KeHoachTaiSan,
+  KeHoachDong,
   KeHoachTonDau,
 } from '@app/entities';
 import { DatabaseModule } from '@app/database';
@@ -20,6 +22,8 @@ import { KeHoachTaiSanService } from './tai-san/tai-san.service';
 import { KeHoachTaiSanController } from './tai-san/tai-san.controller';
 import { KeHoachNguonVonService } from './nguon-von/nguon-von.service';
 import { KeHoachNguonVonController } from './nguon-von/nguon-von.controller';
+import { DongBoHachToanKeHoachService } from './dong-bo/dong-bo.service';
+import { CauHinhDinhKhoanController } from './dong-bo/cau-hinh-dinh-khoan.controller';
 
 /**
  * Năm bảng nhập liệu của trang Kế hoạch: Bán hàng, Nhân sự, Dòng tiền, Tài sản,
@@ -38,6 +42,8 @@ import { KeHoachNguonVonController } from './nguon-von/nguon-von.controller';
       KeHoachTonDau,
       KeHoachTaiSan,
       KeHoachNguonVon,
+      KeHoachDong,
+      CauHinhDinhKhoanKeHoach,
     ]),
     TenantModule,
   ],
@@ -47,8 +53,10 @@ import { KeHoachNguonVonController } from './nguon-von/nguon-von.controller';
     KeHoachDongTienController,
     KeHoachTaiSanController,
     KeHoachNguonVonController,
+    CauHinhDinhKhoanController,
   ],
   providers: [
+    DongBoHachToanKeHoachService,
     KeHoachBanHangService,
     KeHoachNhanSuService,
     KeHoachDongTienService,
@@ -56,6 +64,7 @@ import { KeHoachNguonVonController } from './nguon-von/nguon-von.controller';
     KeHoachNguonVonService,
   ],
   exports: [
+    DongBoHachToanKeHoachService,
     KeHoachBanHangService,
     KeHoachNhanSuService,
     KeHoachDongTienService,

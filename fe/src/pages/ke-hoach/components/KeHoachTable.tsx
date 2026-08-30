@@ -18,6 +18,7 @@ import {
   CopyOutlined,
   ReloadOutlined,
   FileExcelOutlined,
+  LockOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import type { ColumnType, ColumnsType } from "antd/es/table";
@@ -25,7 +26,11 @@ import { useColumnVisibility } from "@/components/table/useColumnVisibility";
 import { useTableColumnResize } from "@/hooks/useTableColumnResize";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
 import { usePagePermission } from "@/hooks/usePagePermission";
-import type { KeHoachDong, LoaiKeHoach } from "@/services/keHoachService";
+import {
+  NHAN_BANG_NGUON,
+  type KeHoachDong,
+  type LoaiKeHoach,
+} from "@/services/keHoachService";
 import { useKeHoachHandler, useKeHoachState } from "../KeHoachHandlerContext";
 import { useKeHoachColumnFilters } from "../hooks/useKeHoachColumnFilters";
 import { DONG_MOI_ID } from "../handler/sub-handler/row-edit/row-edit.state";
@@ -373,6 +378,16 @@ export const KeHoachTable: React.FC = () => {
                 />
               </Tooltip>
             </Space>
+          ) : record.nguonId ? (
+            // Dòng do bảng chi tiết sinh ra: sửa tay ở đây sẽ bị ghi đè ở lần
+            // lưu bảng nguồn kế tiếp, nên chặn từ đầu thay vì để mất dữ liệu.
+            <Tooltip
+              title={`Sinh tự động từ bảng ${
+                NHAN_BANG_NGUON[record.nguonLoai ?? ""] ?? "chi tiết"
+              } — sửa ở bảng đó`}
+            >
+              <LockOutlined className="text-gray-400" />
+            </Tooltip>
           ) : (
             <Space size={2}>
               <Tooltip title="Sửa dòng">

@@ -14,6 +14,10 @@ import {
 } from './dto';
 import { kiemTraTrungKhoa, LOAI_KE_HOACH_MAC_DINH } from '../helpers';
 import { KeHoachBangBaseService } from '../base';
+import {
+  DongBoHachToanKeHoachService,
+  type NguonDongKeHoach,
+} from '../dong-bo';
 
 /** Khoá định danh một dòng tài sản trong một bản kế hoạch. */
 const khoaTaiSan = (boPhanId: string, maTaiSan: string) =>
@@ -36,8 +40,24 @@ export class KeHoachTaiSanService extends KeHoachBangBaseService<KeHoachTaiSan> 
     @InjectRepository(KeHoachTaiSan)
     repo: MongoRepository<KeHoachTaiSan>,
     tenantContext: TenantContextService,
+    dongBo: DongBoHachToanKeHoachService,
   ) {
-    super(repo, tenantContext);
+    super(repo, tenantContext, dongBo);
+  }
+
+  protected readonly nguonLoai = 'TAI_SAN' as const;
+
+  protected moTaNguon(d: KeHoachTaiSan): NguonDongKeHoach {
+    return {
+      nguonLoai: this.nguonLoai,
+      nguonId: d.id,
+      nam: d.nam,
+      loaiKeHoach: d.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH,
+      ghiChu: d.ghiChu,
+      tenMacDinh: d.tenTaiSan || d.maTaiSan,
+      thang: d.thang,
+      danhMuc: { boPhan: { ma: d.boPhan.ma, ten: d.boPhan.ten } },
+    };
   }
 
   async taoMoi(
@@ -66,7 +86,9 @@ export class KeHoachTaiSanService extends KeHoachBangBaseService<KeHoachTaiSan> 
       nguoiTaoId,
       tenantId: this.tenantContext.getCurrentTenantId(),
     });
-    return this.repo.save(dong);
+    const daLuu = await this.repo.save(dong);
+    await this.dongBoSauKhiLuu([daLuu]);
+    return daLuu;
   }
 
   /**
@@ -138,7 +160,10 @@ export class KeHoachTaiSanService extends KeHoachBangBaseService<KeHoachTaiSan> 
     });
 
     const tatCa = [...dongThem, ...dongSua];
-    if (tatCa.length > 0) await this.repo.save(tatCa);
+    if (tatCa.length > 0) {
+      const daLuu = await this.repo.save(tatCa);
+      await this.dongBoSauKhiLuu(daLuu);
+    }
 
     return { daThem: dongThem.length, daSua: dongSua.length };
   }
@@ -149,6 +174,8 @@ export class KeHoachTaiSanService extends KeHoachBangBaseService<KeHoachTaiSan> 
   ): Promise<KeHoachTaiSan> {
     const dong = await this.timTheoId(id);
     Object.assign(dong, dto);
-    return this.repo.save(dong);
+    const daLuu = await this.repo.save(dong);
+    await this.dongBoSauKhiLuu([daLuu]);
+    return daLuu;
   }
 }

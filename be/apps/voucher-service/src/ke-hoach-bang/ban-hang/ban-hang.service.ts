@@ -14,6 +14,10 @@ import {
 } from './dto';
 import { kiemTraTrungKhoa, LOAI_KE_HOACH_MAC_DINH } from '../helpers';
 import { KeHoachBangBaseService } from '../base';
+import {
+  DongBoHachToanKeHoachService,
+  type NguonDongKeHoach,
+} from '../dong-bo';
 
 /**
  * CRUD bảng kế hoạch bán hàng. Mỗi dòng là một sản phẩm trong một năm.
@@ -32,8 +36,24 @@ export class KeHoachBanHangService extends KeHoachBangBaseService<KeHoachBanHang
     @InjectRepository(KeHoachBanHang)
     repo: MongoRepository<KeHoachBanHang>,
     tenantContext: TenantContextService,
+    dongBo: DongBoHachToanKeHoachService,
   ) {
-    super(repo, tenantContext);
+    super(repo, tenantContext, dongBo);
+  }
+
+  protected readonly nguonLoai = 'BAN_HANG' as const;
+
+  protected moTaNguon(d: KeHoachBanHang): NguonDongKeHoach {
+    return {
+      nguonLoai: this.nguonLoai,
+      nguonId: d.id,
+      nam: d.nam,
+      loaiKeHoach: d.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH,
+      ghiChu: d.ghiChu,
+      tenMacDinh: d.sanPham.ten,
+      thang: d.thang,
+      danhMuc: { sanPham: { ma: d.sanPham.ma, ten: d.sanPham.ten } },
+    };
   }
 
   async taoMoi(
@@ -63,7 +83,9 @@ export class KeHoachBanHangService extends KeHoachBangBaseService<KeHoachBanHang
       nguoiTaoId,
       tenantId: this.tenantContext.getCurrentTenantId(),
     });
-    return this.repo.save(dong);
+    const daLuu = await this.repo.save(dong);
+    await this.dongBoSauKhiLuu([daLuu]);
+    return daLuu;
   }
 
   /**
@@ -128,7 +150,10 @@ export class KeHoachBanHangService extends KeHoachBangBaseService<KeHoachBanHang
     });
 
     const tatCa = [...dongThem, ...dongSua];
-    if (tatCa.length > 0) await this.repo.save(tatCa);
+    if (tatCa.length > 0) {
+      const daLuu = await this.repo.save(tatCa);
+      await this.dongBoSauKhiLuu(daLuu);
+    }
 
     return { daThem: dongThem.length, daSua: dongSua.length };
   }
@@ -139,7 +164,9 @@ export class KeHoachBanHangService extends KeHoachBangBaseService<KeHoachBanHang
   ): Promise<KeHoachBanHang> {
     const dong = await this.timTheoId(id);
     Object.assign(dong, dto);
-    return this.repo.save(dong);
+    const daLuu = await this.repo.save(dong);
+    await this.dongBoSauKhiLuu([daLuu]);
+    return daLuu;
   }
 
 }

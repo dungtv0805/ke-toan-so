@@ -1,6 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ConfigProvider, Segmented, Select, Space, Typography } from "antd";
-import { CheckCircleOutlined } from "@ant-design/icons";
+import {
+  Button,
+  ConfigProvider,
+  Segmented,
+  Select,
+  Space,
+  Tooltip,
+  Typography,
+} from "antd";
+import { CheckCircleOutlined, SettingOutlined } from "@ant-design/icons";
 import KeHoachPage from "../KeHoachPage";
 import { BanHangTab } from "./ban-hang/BanHangTab";
 import { NhanSuTab } from "./nhan-su/NhanSuTab";
@@ -8,6 +16,7 @@ import { KqkdTab } from "./kqkd/KqkdTab";
 import { DongTienTab } from "./dong-tien/DongTienTab";
 import { TaiSanTab } from "./tai-san/TaiSanTab";
 import { NguonVonTab } from "./nguon-von/NguonVonTab";
+import { DinhKhoanModal } from "./DinhKhoanModal";
 import {
   keHoachService,
   type LoaiKeHoach,
@@ -37,6 +46,7 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
   // Gộp nhiều phiên bản kế hoạch vào một bảng KQKD là cộng trùng — cho chọn được.
   const [phienBan, setPhienBan] = useState<string>(TAT_CA_PHIEN_BAN);
   const [phienBanList, setPhienBanList] = useState<string[]>([]);
+  const [moDinhKhoan, setMoDinhKhoan] = useState(false);
 
   useEffect(() => {
     keHoachService
@@ -95,6 +105,15 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
           />
         </ConfigProvider>
         <Space wrap>
+          <Tooltip title="Cặp Nợ/Có dùng khi sinh dòng hạch toán kế hoạch">
+            <Button
+              size="small"
+              icon={<SettingOutlined />}
+              onClick={() => setMoDinhKhoan(true)}
+            >
+              Định khoản
+            </Button>
+          </Tooltip>
           {activeTab === "kqkd" && (
             <Select
               value={phienBan}
@@ -143,6 +162,11 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
         )}
         {activeTab === "chi-tiet" && <KeHoachPage loaiKeHoach={loaiKeHoach} />}
       </div>
+
+      <DinhKhoanModal
+        moLen={moDinhKhoan}
+        dong={() => setMoDinhKhoan(false)}
+      />
     </div>
   );
 };

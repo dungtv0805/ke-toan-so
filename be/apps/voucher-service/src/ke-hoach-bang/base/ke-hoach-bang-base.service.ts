@@ -1,9 +1,13 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { MongoRepository, ObjectLiteral } from 'typeorm';
 import { ObjectId } from 'mongodb';
-import type { LoaiKeHoach } from '@app/entities';
+import type { BangKeHoachNguon, LoaiKeHoach } from '@app/entities';
 import { TenantContextService } from '@app/core';
 import { dieuKienLoaiKeHoach } from '../helpers';
+import {
+  DongBoHachToanKeHoachService,
+  type NguonDongKeHoach,
+} from '../dong-bo';
 
 /**
  * Phần dùng chung của các bảng kế hoạch chi tiết: phạm vi tenant, lọc theo
@@ -20,6 +24,7 @@ export abstract class KeHoachBangBaseService<
   protected constructor(
     protected readonly repo: MongoRepository<T>,
     protected readonly tenantContext: TenantContextService,
+    protected readonly dongBo: DongBoHachToanKeHoachService,
   ) {}
 
   /** Tên bảng trong thông báo lỗi, ví dụ "kế hoạch dòng tiền". */
@@ -27,6 +32,30 @@ export abstract class KeHoachBangBaseService<
 
   /** Khoá sắp xếp khi đọc — cấp cha trước, cấp con sau. */
   protected abstract readonly thuTuDoc: Record<string, 'ASC' | 'DESC'>;
+
+  /** Bảng này gắn nhãn gì trên dòng hạch toán kế hoạch nó sinh ra. */
+  protected abstract readonly nguonLoai: BangKeHoachNguon;
+
+  /** Quy một dòng của bảng về hình mà engine đồng bộ cần. */
+  protected abstract moTaNguon(dong: T): NguonDongKeHoach;
+
+  /**
+   * Sinh lại dòng hạch toán kế hoạch cho các dòng vừa lưu.
+   *
+   * Không để lỗi đồng bộ làm hỏng thao tác Lưu: bảng chi tiết mới là nguồn sự
+   * thật, còn phần hạch toán sinh ra luôn dựng lại được ở lần lưu sau.
+   */
+  protected async dongBoSauKhiLuu(dong: T[]): Promise<void> {
+    if (dong.length === 0) return;
+    try {
+      await this.dongBo.dongBo(
+        dong.map((d) => this.moTaNguon(d)),
+        dong[0].nguoiTaoId as string,
+      );
+    } catch (error) {
+      console.error(`Đồng bộ hạch toán ${this.tenBang} thất bại:`, error);
+    }
+  }
 
   protected theoTenant(where: Record<string, unknown>): Record<string, unknown> {
     const tenantId = this.tenantContext.getCurrentTenantId();
@@ -53,6 +82,8 @@ export abstract class KeHoachBangBaseService<
   async xoa(id: string): Promise<void> {
     const dong = await this.timTheoId(id);
     await this.repo.deleteOne({ _id: dong._id });
+    // Xoá dòng nguồn thì các bút toán nó sinh ra cũng phải biến mất.
+    await this.dongBo.xoaTheoNguon(this.nguonLoai, [id]);
   }
 
   protected async timTheoId(id: string): Promise<T> {

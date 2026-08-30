@@ -14,6 +14,10 @@ import {
 } from './dto';
 import { kiemTraTrungKhoa, LOAI_KE_HOACH_MAC_DINH } from '../helpers';
 import { KeHoachBangBaseService } from '../base';
+import {
+  DongBoHachToanKeHoachService,
+  type NguonDongKeHoach,
+} from '../dong-bo';
 
 /** Khoá định danh một chỉ tiêu nguồn vốn trong một bản kế hoạch. */
 const khoaNguonVon = (nhom: string, maChiTieu: string) =>
@@ -37,8 +41,25 @@ export class KeHoachNguonVonService extends KeHoachBangBaseService<KeHoachNguonV
     @InjectRepository(KeHoachNguonVon)
     repo: MongoRepository<KeHoachNguonVon>,
     tenantContext: TenantContextService,
+    dongBo: DongBoHachToanKeHoachService,
   ) {
-    super(repo, tenantContext);
+    super(repo, tenantContext, dongBo);
+  }
+
+  protected readonly nguonLoai = 'NGUON_VON' as const;
+
+  protected moTaNguon(d: KeHoachNguonVon): NguonDongKeHoach {
+    return {
+      nguonLoai: this.nguonLoai,
+      nguonId: d.id,
+      nam: d.nam,
+      loaiKeHoach: d.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH,
+      ghiChu: d.ghiChu,
+      tenMacDinh: d.tenChiTieu || d.maChiTieu,
+      thang: d.thang,
+      // Nợ phải trả và Vốn chủ sở hữu định khoản khác nhau.
+      phanLoai: d.nhom,
+    };
   }
 
   async taoMoi(
@@ -66,7 +87,9 @@ export class KeHoachNguonVonService extends KeHoachBangBaseService<KeHoachNguonV
       nguoiTaoId,
       tenantId: this.tenantContext.getCurrentTenantId(),
     });
-    return this.repo.save(dong);
+    const daLuu = await this.repo.save(dong);
+    await this.dongBoSauKhiLuu([daLuu]);
+    return daLuu;
   }
 
   /**
@@ -135,7 +158,10 @@ export class KeHoachNguonVonService extends KeHoachBangBaseService<KeHoachNguonV
     });
 
     const tatCa = [...dongThem, ...dongSua];
-    if (tatCa.length > 0) await this.repo.save(tatCa);
+    if (tatCa.length > 0) {
+      const daLuu = await this.repo.save(tatCa);
+      await this.dongBoSauKhiLuu(daLuu);
+    }
 
     return { daThem: dongThem.length, daSua: dongSua.length };
   }
@@ -146,6 +172,8 @@ export class KeHoachNguonVonService extends KeHoachBangBaseService<KeHoachNguonV
   ): Promise<KeHoachNguonVon> {
     const dong = await this.timTheoId(id);
     Object.assign(dong, dto);
-    return this.repo.save(dong);
+    const daLuu = await this.repo.save(dong);
+    await this.dongBoSauKhiLuu([daLuu]);
+    return daLuu;
   }
 }

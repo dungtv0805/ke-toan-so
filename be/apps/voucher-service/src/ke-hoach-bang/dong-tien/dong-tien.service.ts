@@ -16,6 +16,10 @@ import {
 } from './dto';
 import { kiemTraTrungKhoa, LOAI_KE_HOACH_MAC_DINH } from '../helpers';
 import { KeHoachBangBaseService } from '../base';
+import {
+  DongBoHachToanKeHoachService,
+  type NguonDongKeHoach,
+} from '../dong-bo';
 
 /**
  * CRUD bảng kế hoạch dòng tiền. Mỗi dòng là một dòng tiền trong một năm.
@@ -38,8 +42,28 @@ export class KeHoachDongTienService extends KeHoachBangBaseService<KeHoachDongTi
     @InjectRepository(KeHoachTonDau)
     private readonly tonDauRepo: MongoRepository<KeHoachTonDau>,
     tenantContext: TenantContextService,
+    dongBo: DongBoHachToanKeHoachService,
   ) {
-    super(repo, tenantContext);
+    super(repo, tenantContext, dongBo);
+  }
+
+  protected readonly nguonLoai = 'DONG_TIEN' as const;
+
+  protected moTaNguon(d: KeHoachDongTien): NguonDongKeHoach {
+    return {
+      nguonLoai: this.nguonLoai,
+      nguonId: d.id,
+      nam: d.nam,
+      loaiKeHoach: d.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH,
+      ghiChu: d.ghiChu,
+      tenMacDinh: d.dongTien.ten,
+      thang: d.thang,
+      // Thu và Chi định khoản ngược nhau nên phải tách cấu hình theo chiều.
+      phanLoai: d.chieu,
+      danhMuc: {
+        dongTien: { ma: d.dongTien.ma, ten: d.dongTien.ten, loai: '' },
+      },
+    };
   }
 
   async taoMoi(
@@ -67,7 +91,9 @@ export class KeHoachDongTienService extends KeHoachBangBaseService<KeHoachDongTi
       nguoiTaoId,
       tenantId: this.tenantContext.getCurrentTenantId(),
     });
-    return this.repo.save(dong);
+    const daLuu = await this.repo.save(dong);
+    await this.dongBoSauKhiLuu([daLuu]);
+    return daLuu;
   }
 
   /**
@@ -132,7 +158,10 @@ export class KeHoachDongTienService extends KeHoachBangBaseService<KeHoachDongTi
     });
 
     const tatCa = [...dongThem, ...dongSua];
-    if (tatCa.length > 0) await this.repo.save(tatCa);
+    if (tatCa.length > 0) {
+      const daLuu = await this.repo.save(tatCa);
+      await this.dongBoSauKhiLuu(daLuu);
+    }
 
     return { daThem: dongThem.length, daSua: dongSua.length };
   }
@@ -143,7 +172,9 @@ export class KeHoachDongTienService extends KeHoachBangBaseService<KeHoachDongTi
   ): Promise<KeHoachDongTien> {
     const dong = await this.timTheoId(id);
     Object.assign(dong, dto);
-    return this.repo.save(dong);
+    const daLuu = await this.repo.save(dong);
+    await this.dongBoSauKhiLuu([daLuu]);
+    return daLuu;
   }
 
   /** Tồn quỹ đầu năm — chưa khai thì coi như 0. */
