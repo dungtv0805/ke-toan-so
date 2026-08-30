@@ -95,6 +95,19 @@ export class KeHoachController {
     );
   }
 
+  /**
+   * P&L ba lớp KẾ HOẠCH – DỰ BÁO – THỰC HIỆN. Phải đứng TRƯỚC ':id' để không bị
+   * ':id' nuốt.
+   */
+  @Get('kqkd-3-lop')
+  @Roles(...XEM)
+  async getKqkd3Lop(
+    @Query() query: KqkdQueryDto,
+    @Headers('authorization') authToken?: string,
+  ) {
+    return this.keHoachService.getKqkd3Lop(query.nam, query.phienBan, authToken);
+  }
+
   @Get('summary/:type')
   @Roles(...XEM)
   async getSummary(@Param('type') type: string, @Query() query: KeHoachQueryDto) {

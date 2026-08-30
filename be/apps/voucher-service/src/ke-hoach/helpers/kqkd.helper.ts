@@ -148,10 +148,17 @@ export function buildKqkdKeHoach(
     ['02', new Map()],
     ['11', new Map()],
   ]);
-  // Cây nhóm khoản mục → khoản mục, riêng cho 25 và 26.
+  /**
+   * Cây nhóm khoản mục → khoản mục. Tài liệu nâng cấp yêu cầu mở/đóng chi tiết
+   * cho mọi nhóm chi phí, không riêng CPBH và CPQLDN — nên gồm cả chi phí tài
+   * chính (22), thu nhập khác (31) và chi phí khác (32).
+   */
   const cayKhoanMuc = new Map<MaChiTieuGoc, Map<string, RoThang>>([
+    ['22', new Map()],
     ['25', new Map()],
     ['26', new Map()],
+    ['31', new Map()],
+    ['32', new Map()],
   ]);
 
   for (const row of rows) {
@@ -315,13 +322,13 @@ function dungCayDong(
     { key: '11', ma: '11', soLaMa: 'III', ten: 'GIÁ VỐN BÁN HÀNG', cap: 0, thang: goc('11'), con: conSanPham('11') },
     { key: '20', ma: '20', soLaMa: 'IV', ten: 'LỢI NHUẬN GỘP', cap: 0, thang: danXuat((d) => d.m20), con: conLoiNhuanGop() },
     { key: '21', ma: '21', soLaMa: 'V', ten: 'DOANH THU TÀI CHÍNH', cap: 0, thang: goc('21') },
-    { key: '22', ma: '22', soLaMa: 'VI', ten: 'CHI PHÍ TÀI CHÍNH', cap: 0, thang: goc('22') },
+    { key: '22', ma: '22', soLaMa: 'VI', ten: 'CHI PHÍ TÀI CHÍNH', cap: 0, thang: goc('22'), con: conKhoanMuc('22') },
     { key: '25', ma: '25', soLaMa: 'VII', ten: 'CHI PHÍ BÁN HÀNG', cap: 0, thang: goc('25'), con: conKhoanMuc('25') },
     { key: '26', ma: '26', soLaMa: 'VIII', ten: 'CHI PHÍ QUẢN LÝ DOANH NGHIỆP', cap: 0, thang: goc('26'), con: conKhoanMuc('26') },
     { key: 'IX', soLaMa: 'IX', ten: 'TOTAL CHI PHÍ', cap: 0, thang: danXuat((d) => d.tongChiPhi) },
     { key: '30', ma: '30', soLaMa: 'X', ten: 'LỢI NHUẬN THUẦN TỪ HĐSXKD', cap: 0, thang: danXuat((d) => d.m30) },
-    { key: '31', ma: '31', ten: 'THU NHẬP KHÁC', cap: 0, thang: goc('31') },
-    { key: '32', ma: '32', ten: 'CHI PHÍ KHÁC', cap: 0, thang: goc('32') },
+    { key: '31', ma: '31', ten: 'THU NHẬP KHÁC', cap: 0, thang: goc('31'), con: conKhoanMuc('31') },
+    { key: '32', ma: '32', ten: 'CHI PHÍ KHÁC', cap: 0, thang: goc('32'), con: conKhoanMuc('32') },
     { key: '40', ma: '40', ten: 'LỢI NHUẬN KHÁC', cap: 0, thang: danXuat((d) => d.m40) },
     { key: '50', ma: '50', soLaMa: 'XI', ten: 'LỢI NHUẬN TRƯỚC THUẾ', cap: 0, thang: danXuat((d) => d.m50) },
     { key: 'XII', soLaMa: 'XII', ten: 'CHI PHÍ THUẾ THU NHẬP DOANH NGHIỆP', cap: 0, thang: thangCua(tongThang, (g) => g['51'] + g['52']) },

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { ObjectId } from 'mongodb';
 import { ChungTu, KeHoachDong, PHIEN_BAN_MAC_DINH } from '@app/entities';
-import { PaginatedResult, KqkdKeHoachReport } from '@app/dto';
+import { PaginatedResult, Kqkd3LopReport, KqkdKeHoachReport } from '@app/dto';
 import { TenantContextService } from '@app/core';
 import { ServiceClient } from '@app/service-client';
 import {
@@ -211,6 +211,86 @@ export class KeHoachService {
       success: true,
       data: buildKqkdKeHoach(rows as DongKeHoachKqkd[], danhMuc, nam),
     };
+  }
+
+  /**
+   * P&L ba lớp: KẾ HOẠCH – DỰ BÁO – THỰC HIỆN, cùng một cấu trúc cây.
+   *
+   * Mấu chốt là `chung_tu` (Thực hiện) nằm CÙNG database với `ke_hoach` trong
+   * voucher-service, và hình bút toán mà `buildKqkdKeHoach` nhận khớp đúng hình
+   * của chứng từ. Nhờ vậy ba lớp đi qua cùng một hàm dựng cây, cùng một bản đồ
+   * chỉ tiêu — không thể lệch cách tính, và không phải đụng tới reporting-service.
+   *
+   * Ba cây dùng CÙNG tập khoá ('01', '01:N1', '25:N2:KM01') nên phía hiển thị
+   * ghép theo `key` là ra bảng so sánh.
+   */
+  async getKqkd3Lop(
+    nam: number,
+    phienBan?: string,
+    authToken?: string,
+  ): Promise<{ success: boolean; data: Kqkd3LopReport }> {
+    const khoangNam = {
+      $gte: new Date(Date.UTC(nam, 0, 1)),
+      $lte: new Date(Date.UTC(nam, 11, 31, 23, 59, 59, 999)),
+    };
+    const tenantId = this.tenantContext.getCurrentTenantId();
+
+    const [keHoachRows, duBaoRows, thucHienRows, danhMuc] = await Promise.all([
+      this.docButToanKqkd(this.keHoachRepository, {
+        loaiKeHoach: 'KE_HOACH',
+        ...(phienBan ? { phienBan } : {}),
+        ngay: khoangNam,
+      }),
+      this.docButToanKqkd(this.keHoachRepository, {
+        loaiKeHoach: 'DU_BAO',
+        ...(phienBan ? { phienBan } : {}),
+        ngay: khoangNam,
+      }),
+      // Chứng từ thực tế không có loaiKeHoach/phienBan — chỉ lọc theo kỳ.
+      this.docButToanKqkd(this.chungTuRepository, { ngay: khoangNam }),
+      this.napDanhMucKqkd(authToken, tenantId),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        nam,
+        keHoach: buildKqkdKeHoach(keHoachRows, danhMuc, nam),
+        duBao: buildKqkdKeHoach(duBaoRows, danhMuc, nam),
+        thucHien: buildKqkdKeHoach(thucHienRows, danhMuc, nam),
+      },
+    };
+  }
+
+  /**
+   * Đọc bút toán rút gọn cho báo cáo KQKD từ một collection bất kỳ.
+   *
+   * `ke_hoach` và `chung_tu` chỉ khác nhau ở bộ lọc, còn hình dữ liệu thì giống
+   * — nên chiếu cùng một `$project`.
+   */
+  private async docButToanKqkd(
+    repo: MongoRepository<KeHoachDong> | MongoRepository<ChungTu>,
+    dieuKien: Record<string, unknown>,
+  ): Promise<DongKeHoachKqkd[]> {
+    const rows = await repo
+      .aggregate([
+        { $match: this.theoTenant({ ...dieuKien }) },
+        {
+          $project: {
+            ngay: 1,
+            soTien: 1,
+            'danhMuc.taiKhoanNo.ma': 1,
+            'danhMuc.taiKhoanCo.ma': 1,
+            'danhMuc.sanPham.ma': 1,
+            'danhMuc.sanPham.ten': 1,
+            'danhMuc.khoanMuc.ma': 1,
+            'danhMuc.khoanMuc.ten': 1,
+            'danhMuc.khoanMuc.nhom': 1,
+          },
+        },
+      ])
+      .toArray();
+    return rows as unknown as DongKeHoachKqkd[];
   }
 
   /**

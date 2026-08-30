@@ -426,3 +426,56 @@ describe('buildKqkdKeHoach — nguyên liệu dòng Doanh thu hòa vốn', () =>
     expect(r.doanhThuThuanNam).toBe(1400);
   });
 });
+
+describe('drill-down cho chi phí tài chính và thu nhập/chi phí khác', () => {
+  const butToan = (maTk: string, ben: 'NO' | 'CO', maKm: string) =>
+    dong({
+      soTien: 1_000_000,
+      danhMuc: {
+        ...(ben === 'NO' ? { taiKhoanNo: { ma: maTk } } : { taiKhoanCo: { ma: maTk } }),
+        khoanMuc: { ma: maKm, ten: `Khoản ${maKm}`, nhom: 'NKM01' },
+      },
+    });
+
+  it('chi phí tài chính (22) mở được xuống nhóm khoản mục rồi khoản mục', () => {
+    const bc = buildKqkdKeHoach([butToan('635', 'NO', 'KM90')], danhMuc, 2026);
+    const nhom = timDong(bc, '22:NKM01');
+    expect(nhom?.ten).toBe('Chi phí nhân sự');
+    expect(timDong(bc, '22:NKM01:KM90')?.thang[0]).toBe(1_000_000);
+  });
+
+  it('thu nhập khác (31) mở được xuống chi tiết', () => {
+    const bc = buildKqkdKeHoach([butToan('711', 'CO', 'KM91')], danhMuc, 2026);
+    expect(timDong(bc, '31:NKM01:KM91')?.thang[0]).toBe(1_000_000);
+  });
+
+  it('chi phí khác (32) mở được xuống chi tiết', () => {
+    const bc = buildKqkdKeHoach([butToan('811', 'NO', 'KM92')], danhMuc, 2026);
+    expect(timDong(bc, '32:NKM01:KM92')?.thang[0]).toBe(1_000_000);
+  });
+
+  it('bút toán 22 không có khoản mục vẫn gom được vào rổ vét', () => {
+    const bc = buildKqkdKeHoach(
+      [dong({ soTien: 500, danhMuc: { taiKhoanNo: { ma: '635' } } })],
+      danhMuc,
+      2026,
+    );
+    const cha = timDong(bc, '22');
+    expect(cha?.thang[0]).toBe(500);
+    // Rổ vét luôn xếp cuối và gom về đúng MỘT dòng.
+    expect(cha?.con).toHaveLength(1);
+    expect(cha?.con?.[0].thang[0]).toBe(500);
+  });
+
+  it('số ở dòng cha bằng tổng các dòng con', () => {
+    const bc = buildKqkdKeHoach(
+      [butToan('635', 'NO', 'KM90'), butToan('635', 'NO', 'KM93')],
+      danhMuc,
+      2026,
+    );
+    const cha = timDong(bc, '22')!;
+    const tongCon = (cha.con ?? []).reduce((t, c) => t + c.thang[0], 0);
+    expect(cha.thang[0]).toBe(2_000_000);
+    expect(tongCon).toBe(cha.thang[0]);
+  });
+});
