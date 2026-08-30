@@ -53,6 +53,7 @@ export const permissionModules: PermissionModule[] = [
           { key: '/bao-cao/bang-tong-hop', label: 'Tổng hợp công nợ' },
           { key: '/bao-cao/hop-dong', label: 'Báo cáo bán hàng (hợp đồng)' },
           { key: '/bao-cao/doanh-thu', label: 'Báo cáo doanh thu' },
+          { key: '/bao-cao/pnl-khong-khau-hao', label: 'P&L không khấu hao' },
         ],
       },
       {

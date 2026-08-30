@@ -155,6 +155,12 @@ lại cây phân quyền vì `menuCatalog` là nguồn của nhãn node.
 
 ### 6.1. Kế hoạch dòng tiền — `ke_hoach_dong_tien`
 
+> **Sửa so với bản đầu (phát hiện lúc thực thi):** bản đầu viết `chieu` được
+> "chụp từ `dong_tien.loai` lúc lưu". SAI. `DongTien.loai` là
+> `KINH_DOANH | DAU_TU | TAI_CHINH` (phục vụ báo cáo lưu chuyển tiền tệ), không
+> phải Thu/Chi. Danh mục không có chỗ nào mang chiều tiền, nên **người lập kế
+> hoạch chọn Thu/Chi trên từng dòng**, qua một cột riêng.
+
 ```ts
 @Entity('ke_hoach_dong_tien')
 export class KeHoachDongTien extends BaseEntity {
@@ -245,10 +251,15 @@ số trong code chứ không dựng danh mục.
 
 ### 6.4. Phần dùng chung
 
-**BE** — `KeHoachBangBaseService<T>` trong `be/apps/voucher-service/src/ke-hoach-bang/base/`:
-`layTheoNam`, `taoMoi`, `capNhat`, `luuHangLoat`, `xoa`, kiểm tra trùng khoá. Ba service mới kế thừa,
-chỉ khai báo khoá trùng và các trường riêng. `ban-hang` và `nhan-su` cũng chuyển sang base này để
-không có hai đường code song song.
+**BE** — `KeHoachBangBaseService<T>` trong `be/apps/voucher-service/src/ke-hoach-bang/base/`.
+
+> **Thu hẹp so với bản đầu:** base chỉ gom phần thật sự dùng chung — phạm vi
+> tenant, lọc theo (năm, loại), `layTheoNam`, `xoa`, `timTheoId`, và móc nối
+> engine đồng bộ. `taoMoi` và `luuHangLoat` ở lại từng service: khoá chống trùng
+> của mỗi bảng là một quy tắc nghiệp vụ khác nhau (sản phẩm / bộ phận+mã vị trí /
+> dòng tiền / bộ phận+mã tài sản / nhóm+mã chỉ tiêu), và một lớp cha cố nhận hết
+> các biến thể đó sẽ khó đọc hơn chính đoạn code nó thay thế. Cả năm bảng đều
+> dùng base — không có hai đường code song song.
 
 **FE** — mỗi bảng mới: 1 service, 1 handler namespace (`ke-hoach-dong-tien`, `ke-hoach-tai-san`,
 `ke-hoach-nguon-von`), 2 sub-handler (`init`, `row-edit`), 1 HandlerContext, 1 Tab, 1 Table. Đúng khuôn
@@ -437,6 +448,16 @@ hình phải làm được trước khi bật engine cho công ty thật.
 **Phiên bản kế hoạch cho năm bảng chi tiết.** Collection `ke_hoach` có `phienBan`, năm bảng chi tiết
 thì không. Ở GĐ3, dòng sinh ra luôn vào phiên bản `Mặc định`. Nếu công ty cần nhiều phiên bản kế hoạch
 ở cấp bảng chi tiết thì phải mở rộng thêm — chưa nằm trong phạm vi này.
+
+## 10b. Trạng thái thực thi
+
+Cả năm giai đoạn đã làm xong (2026-08-30 → 31). Hai sai lệch so với bản thiết kế
+đầu đã ghi ngay tại mục tương ứng: chiều Thu/Chi của dòng tiền, và phạm vi của
+lớp base.
+
+Điểm treo ở mục 10 vẫn còn nguyên: **bộ định khoản mặc định chưa được nghiệp vụ
+xác nhận.** Nay đã có màn hình sửa được (nút "Định khoản" trên trang Kế hoạch),
+và màn hình đó tự nói rõ đây là giả định kỹ thuật.
 
 ## 11. Ngoài phạm vi
 

@@ -34,3 +34,16 @@ export interface KqkdKeHoachReport {
   /** Biến phí: giá vốn + CPBH/CPQLDN có khoản mục loại BIEN_DOI. */
   bienPhiThang: number[];
 }
+
+/**
+ * P&L ba lớp — ba báo cáo CÙNG cấu trúc cây, ghép theo `key` ở phía hiển thị.
+ *
+ * Cả ba đi qua cùng `buildKqkdKeHoach` nên không thể lệch cách tính; khác nhau
+ * duy nhất ở nguồn: `ke_hoach` (KE_HOACH), `ke_hoach` (DU_BAO) và `chung_tu`.
+ */
+export interface Kqkd3LopReport {
+  nam: number;
+  keHoach: KqkdKeHoachReport;
+  duBao: KqkdKeHoachReport;
+  thucHien: KqkdKeHoachReport;
+}

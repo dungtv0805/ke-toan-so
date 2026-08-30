@@ -34,29 +34,54 @@ Một số mục đã được gỡ khỏi dropdown sidebar và chuyển lên th
 | Bao cao doanh thu | `/bao-cao/doanh-thu` | ACTIVE | reporting:3006 |
 | Tong hop cong no | `/bao-cao/bang-tong-hop` | ACTIVE | reporting:3006 |
 | Bao cao hop dong | `/bao-cao/hop-dong` | ACTIVE (thanh ngang Bán hàng) | reporting:3006 |
+| P&L khong khau hao | `/bao-cao/pnl-khong-khau-hao` | ACTIVE | reporting:3006 (`/bao-cao/kqkd?loaiTruKhauHao=true`) |
+
+> `/bao-cao/pnl-khong-khau-hao` dùng CHUNG component với trang KQKD
+> (`fe/src/pages/bao-cao/kqkd/KqkdPage.tsx` nhận prop `loaiTruKhauHao`), chỉ khác cờ gửi
+> lên BE. Chỉ là một góc nhìn: không sửa bút toán, không đổi báo cáo tài chính.
+> Điều kiện loại trừ là VÀ: khoản mục tên chứa "khấu hao" VÀ có TK 214 ở Nợ hoặc Có
+> (`be/libs/core/src/utils/loai-tru-khau-hao.ts`).
 
 ### KE TOAN — Trung Tam Du Lieu (Data Center)
 | Menu Item | Route | Status | API |
 |-----------|-------|--------|-----|
 | Ke hoach | `/trung-tam-du-lieu/ke-hoach` | ACTIVE | voucher:3003 (`/voucher/ke-hoach`) |
-| Du bao | `/trung-tam-du-lieu/du-bao` | ACTIVE | voucher:3003 (cung page, `loaiKeHoach=DU_BAO`) |
+| Du bao | `/trung-tam-du-lieu/du-bao` | ACTIVE | voucher:3003 (cung page 8 tab, `loaiKeHoach=DU_BAO`) |
 | Cac muc con lai | `/trung-tam-du-lieu/*` | COMING SOON | — |
 
-> **`/trung-tam-du-lieu/ke-hoach` giờ là trang 7 TAB** (`fe/src/pages/ke-hoach/tabs/KeHoachTabsPage.tsx`),
-> thanh `Segmented` sticky giống Tổng quan + ô chọn Năm. Sáu tab đầu là sáu sheet của
-> `docs/THIẾT KẾ KẾ HOẠCH.xlsx`:
+> **`/trung-tam-du-lieu/ke-hoach` VÀ `/trung-tam-du-lieu/du-bao` cùng là trang 8 TAB**
+> (`fe/src/pages/ke-hoach/tabs/KeHoachTabsPage.tsx`, nhận prop `loaiKeHoach`),
+> thanh `Segmented` sticky giống Tổng quan + ô chọn Năm + nút "Định khoản":
 >
 > | Tab | Trạng thái | API |
 > |-----|-----------|-----|
-> | Bán hàng | ACTIVE — bảng 2 cấp nhóm SP → sản phẩm | `/voucher/ke-hoach-ban-hang` |
-> | Nhân sự | ACTIVE — bảng 2 cấp bộ phận → chức vụ (free text) | `/voucher/ke-hoach-nhan-su` |
-> | KQKD, Dòng tiền, Tài sản, Nguồn vốn | Khung "Sắp có" trong tab | — |
+> | Bán hàng | ACTIVE — nhóm SP → sản phẩm | `/voucher/ke-hoach-ban-hang` |
+> | Nhân sự | ACTIVE — bộ phận → chức vụ (free text) | `/voucher/ke-hoach-nhan-su` |
+> | P&L Kế hoạch | ACTIVE — chỉ xem, cây 3 cấp | `/voucher/ke-hoach/kqkd` |
+> | P&L 3 lớp | ACTIVE — so sánh KH/DB/TH theo kỳ | `/voucher/ke-hoach/kqkd-3-lop` |
+> | Dòng tiền | ACTIVE — nhóm DT → dòng tiền, 5 dòng tổng hợp tự tính | `/voucher/ke-hoach-dong-tien` |
+> | Tài sản | ACTIVE — nơi sử dụng (bộ phận) → tài sản (free text) | `/voucher/ke-hoach-tai-san` |
+> | Nguồn vốn | ACTIVE — 2 nhóm cố định → chỉ tiêu (free text) | `/voucher/ke-hoach-nguon-von` |
 > | Chi tiết | ACTIVE — lưới 17 cột cũ, bọc `KeHoachPage` | `/voucher/ke-hoach` |
 >
-> Hai bảng mới: một bản/năm, chưa phân quyền riêng (dùng vai trò của Kế hoạch).
-> Quý = 3 tháng cộng lại, năm = 12 tháng; hàng nhóm và hàng TỔNG CỘNG tự cộng, không lưu
-> (`fe/src/pages/ke-hoach/tabs/lib/tongHop.ts`). Lệch giữa tổng 12 tháng và Doanh thu/CỘNG
-> chỉ tô đỏ cảnh báo, KHÔNG chặn lưu. Không ghim cột — xem commit `db51ad9`.
+> Năm bảng chi tiết: một bản/năm/loại, chưa phân quyền riêng (dùng vai trò của Kế hoạch).
+> Khung cột chung: `... | Diễn giải | Thành tiền hoặc Giá trị/Mục tiêu | CẢ NĂM | CHÊNH LỆCH | Q1–Q4 | T1–T12`.
+> Quý = 3 tháng cộng lại, cả năm = 12 tháng; hàng nhóm và hàng TỔNG CỘNG tự cộng, không lưu
+> (`fe/src/pages/ke-hoach/tabs/lib/tongHop.ts`). Lệch mục tiêu chỉ CẢNH BÁO (banner đỏ cấp
+> bảng + cột CHÊNH LỆCH xanh/đỏ cấp dòng), KHÔNG chặn lưu. Không ghim cột — xem commit `db51ad9`.
+>
+> **Ba điểm dễ hiểu nhầm:**
+> - Chiều **Thu/Chi** của bảng Dòng tiền do người dùng chọn trên từng dòng. KHÔNG suy từ
+>   danh mục: `DongTien.loai` là Kinh doanh/Đầu tư/Tài chính, không phải chiều tiền.
+> - Bảng **Nguồn vốn** nhập BIẾN ĐỘNG (cho phép âm), không phải số dư; số dư là dòng phụ
+>   suy ra từ `soDuDauNam` + luỹ kế.
+> - Dòng **TỒN ĐẦU/CUỐI KỲ** của bảng Dòng tiền là SỐ DƯ nên Quý lấy tháng đầu/cuối quý,
+>   không cộng dồn.
+>
+> **Engine đồng bộ:** lưu một bảng chi tiết → tự sinh lại dòng trong `ke_hoach` theo
+> `nguonLoai`/`nguonId` (xoá rồi chèn lại, idempotent). Dòng có `nguonId` hiện CHỈ ĐỌC
+> trên tab Chi tiết. Cặp Nợ/Có lấy từ `cau_hinh_dinh_khoan_ke_hoach`, sửa ở nút
+> "Định khoản" — **bộ mặc định là giả định kỹ thuật, chưa được nghiệp vụ xác nhận.**
 >
 > Nhập liệu qua trang form nhiều dòng `/trung-tam-du-lieu/{ke-hoach,du-bao}/tao-moi`
 > (`fe/src/pages/ke-hoach/form/`), dùng đúng khuôn + style form chứng từ của Dữ liệu tổng hợp.

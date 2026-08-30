@@ -1,11 +1,23 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ConfigProvider, Segmented, Select, Space, Typography } from "antd";
-import { CheckCircleOutlined } from "@ant-design/icons";
+import {
+  Button,
+  ConfigProvider,
+  Segmented,
+  Select,
+  Space,
+  Tooltip,
+  Typography,
+} from "antd";
+import { CheckCircleOutlined, SettingOutlined } from "@ant-design/icons";
 import KeHoachPage from "../KeHoachPage";
-import { TabComingSoon } from "./TabComingSoon";
 import { BanHangTab } from "./ban-hang/BanHangTab";
 import { NhanSuTab } from "./nhan-su/NhanSuTab";
 import { KqkdTab } from "./kqkd/KqkdTab";
+import { DongTienTab } from "./dong-tien/DongTienTab";
+import { TaiSanTab } from "./tai-san/TaiSanTab";
+import { NguonVonTab } from "./nguon-von/NguonVonTab";
+import { Pnl3LopTab } from "./pnl-3-lop/Pnl3LopTab";
+import { DinhKhoanModal } from "./DinhKhoanModal";
 import {
   keHoachService,
   type LoaiKeHoach,
@@ -16,11 +28,12 @@ const { Text } = Typography;
 /** Chuỗi rỗng = không lọc phiên bản. Không dùng undefined: antd hiện ô trống, mất nhãn. */
 const TAT_CA_PHIEN_BAN = "";
 
-/** Sáu tab đầu là sáu sheet của file thiết kế; "Chi tiết" là lưới bút toán cũ. */
+/** Sáu sheet của file thiết kế, hai báo cáo P&L, và lưới bút toán "Chi tiết". */
 const TAB_OPTIONS = [
   { label: "Bán hàng", value: "ban-hang" },
   { label: "Nhân sự", value: "nhan-su" },
-  { label: "KQKD", value: "kqkd" },
+  { label: "P&L Kế hoạch", value: "kqkd" },
+  { label: "P&L 3 lớp", value: "pnl-3-lop" },
   { label: "Dòng tiền", value: "dong-tien" },
   { label: "Tài sản", value: "tai-san" },
   { label: "Nguồn vốn", value: "nguon-von" },
@@ -35,6 +48,7 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
   // Gộp nhiều phiên bản kế hoạch vào một bảng KQKD là cộng trùng — cho chọn được.
   const [phienBan, setPhienBan] = useState<string>(TAT_CA_PHIEN_BAN);
   const [phienBanList, setPhienBanList] = useState<string[]>([]);
+  const [moDinhKhoan, setMoDinhKhoan] = useState(false);
 
   useEffect(() => {
     keHoachService
@@ -93,7 +107,16 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
           />
         </ConfigProvider>
         <Space wrap>
-          {activeTab === "kqkd" && (
+          <Tooltip title="Cặp Nợ/Có dùng khi sinh dòng hạch toán kế hoạch">
+            <Button
+              size="small"
+              icon={<SettingOutlined />}
+              onClick={() => setMoDinhKhoan(true)}
+            >
+              Định khoản
+            </Button>
+          </Tooltip>
+          {(activeTab === "kqkd" || activeTab === "pnl-3-lop") && (
             <Select
               value={phienBan}
               onChange={setPhienBan}
@@ -130,15 +153,25 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
             phienBan={phienBan || undefined}
           />
         )}
-        {activeTab === "dong-tien" && (
-          <TabComingSoon tieuDe="Kế hoạch dòng tiền" />
+        {activeTab === "pnl-3-lop" && (
+          <Pnl3LopTab nam={nam} phienBan={phienBan || undefined} />
         )}
-        {activeTab === "tai-san" && <TabComingSoon tieuDe="Kế hoạch tài sản" />}
+        {activeTab === "dong-tien" && (
+          <DongTienTab nam={nam} loaiKeHoach={loaiKeHoach} />
+        )}
+        {activeTab === "tai-san" && (
+          <TaiSanTab nam={nam} loaiKeHoach={loaiKeHoach} />
+        )}
         {activeTab === "nguon-von" && (
-          <TabComingSoon tieuDe="Kế hoạch nguồn vốn" />
+          <NguonVonTab nam={nam} loaiKeHoach={loaiKeHoach} />
         )}
         {activeTab === "chi-tiet" && <KeHoachPage loaiKeHoach={loaiKeHoach} />}
       </div>
+
+      <DinhKhoanModal
+        moLen={moDinhKhoan}
+        dong={() => setMoDinhKhoan(false)}
+      />
     </div>
   );
 };

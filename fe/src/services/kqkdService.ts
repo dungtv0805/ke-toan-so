@@ -8,6 +8,11 @@ export interface KqkdQueryParams {
   startDate: string;
   endDate: string;
   periodType: KqkdPeriodType;
+  /**
+   * Góc nhìn "P&L không khấu hao": BE bỏ các phát sinh khấu hao NGAY Ở TẦNG
+   * ĐỌC BÚT TOÁN, trước khi tổng hợp — không phải lấy tổng rồi trừ ngược.
+   */
+  loaiTruKhauHao?: boolean;
 }
 
 export interface KqkdChiTieu {
@@ -78,6 +83,7 @@ class KqkdServiceImpl extends ServiceBase {
         startDate: params.startDate,
         endDate: params.endDate,
         periodType: params.periodType,
+        ...(params.loaiTruKhauHao ? { loaiTruKhauHao: true } : {}),
       },
     });
   }

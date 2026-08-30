@@ -5,19 +5,19 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
-import { ObjectId } from 'mongodb';
-import { KeHoachNhanSu, type LoaiKeHoach } from '@app/entities';
+import { KeHoachNhanSu } from '@app/entities';
 import { TenantContextService } from '@app/core';
 import {
   BatchKeHoachNhanSuDto,
   CreateKeHoachNhanSuDto,
   UpdateKeHoachNhanSuDto,
 } from './dto';
+import { kiemTraTrungKhoa, LOAI_KE_HOACH_MAC_DINH } from '../helpers';
+import { KeHoachBangBaseService } from '../base';
 import {
-  dieuKienLoaiKeHoach,
-  kiemTraTrungKhoa,
-  LOAI_KE_HOACH_MAC_DINH,
-} from '../helpers';
+  DongBoHachToanKeHoachService,
+  type NguonDongKeHoach,
+} from '../dong-bo';
 
 /**
  * CRUD bảng kế hoạch nhân sự. Mỗi dòng là một chức vụ trong một bộ phận,
@@ -28,28 +28,35 @@ const khoaNhanSu = (boPhanId: string, maViTri: string) =>
   `${boPhanId}|${maViTri}`;
 
 @Injectable()
-export class KeHoachNhanSuService {
+export class KeHoachNhanSuService extends KeHoachBangBaseService<KeHoachNhanSu> {
+  protected readonly tenBang = 'kế hoạch nhân sự';
+  protected readonly thuTuDoc = {
+    'boPhan.ma': 'ASC',
+    maViTri: 'ASC',
+  } as const as Record<string, 'ASC' | 'DESC'>;
+
   constructor(
     @InjectRepository(KeHoachNhanSu)
-    private readonly repo: MongoRepository<KeHoachNhanSu>,
-    private readonly tenantContext: TenantContextService,
-  ) {}
-
-  private theoTenant(where: Record<string, unknown>): Record<string, unknown> {
-    const tenantId = this.tenantContext.getCurrentTenantId();
-    if (tenantId) where.tenantId = tenantId;
-    return where;
+    repo: MongoRepository<KeHoachNhanSu>,
+    tenantContext: TenantContextService,
+    dongBo: DongBoHachToanKeHoachService,
+  ) {
+    super(repo, tenantContext, dongBo);
   }
 
-  /** Vài chục dòng mỗi năm nên trả hết, không phân trang. */
-  async layTheoNam(
-    nam: number,
-    loaiKeHoach: LoaiKeHoach,
-  ): Promise<KeHoachNhanSu[]> {
-    return this.repo.find({
-      where: this.theoTenant({ nam, ...dieuKienLoaiKeHoach(loaiKeHoach) }),
-      order: { 'boPhan.ma': 'ASC', maViTri: 'ASC' } as never,
-    });
+  protected readonly nguonLoai = 'NHAN_SU' as const;
+
+  protected moTaNguon(d: KeHoachNhanSu): NguonDongKeHoach {
+    return {
+      nguonLoai: this.nguonLoai,
+      nguonId: d.id,
+      nam: d.nam,
+      loaiKeHoach: d.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH,
+      ghiChu: d.ghiChu,
+      tenMacDinh: d.tenChucVu || d.maViTri,
+      thang: d.thang,
+      danhMuc: { boPhan: { ma: d.boPhan.ma, ten: d.boPhan.ten } },
+    };
   }
 
   async taoMoi(
@@ -81,7 +88,9 @@ export class KeHoachNhanSuService {
       nguoiTaoId,
       tenantId: this.tenantContext.getCurrentTenantId(),
     });
-    return this.repo.save(dong);
+    const daLuu = await this.repo.save(dong);
+    await this.dongBoSauKhiLuu([daLuu]);
+    return daLuu;
   }
 
   /**
@@ -102,10 +111,7 @@ export class KeHoachNhanSuService {
 
     // Lọc theo loại: lô Dự báo không được soi trùng với dòng Kế hoạch.
     const hienCo = await this.repo.find({
-      where: this.theoTenant({
-        nam: dto.nam,
-        ...dieuKienLoaiKeHoach(dto.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH),
-      }),
+      where: this.phamVi(dto.nam, dto.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH),
     });
     const theoId = new Map(hienCo.map((d) => [d.id, d]));
 
@@ -158,7 +164,10 @@ export class KeHoachNhanSuService {
     });
 
     const tatCa = [...dongThem, ...dongSua];
-    if (tatCa.length > 0) await this.repo.save(tatCa);
+    if (tatCa.length > 0) {
+      const daLuu = await this.repo.save(tatCa);
+      await this.dongBoSauKhiLuu(daLuu);
+    }
 
     return { daThem: dongThem.length, daSua: dongSua.length };
   }
@@ -169,24 +178,9 @@ export class KeHoachNhanSuService {
   ): Promise<KeHoachNhanSu> {
     const dong = await this.timTheoId(id);
     Object.assign(dong, dto);
-    return this.repo.save(dong);
+    const daLuu = await this.repo.save(dong);
+    await this.dongBoSauKhiLuu([daLuu]);
+    return daLuu;
   }
 
-  async xoa(id: string): Promise<void> {
-    const dong = await this.timTheoId(id);
-    await this.repo.deleteOne({ _id: dong._id });
-  }
-
-  private async timTheoId(id: string): Promise<KeHoachNhanSu> {
-    if (!ObjectId.isValid(id)) {
-      throw new BadRequestException('Mã dòng không hợp lệ');
-    }
-    const dong = await this.repo.findOne({
-      where: this.theoTenant({ _id: new ObjectId(id) }),
-    });
-    if (!dong) {
-      throw new NotFoundException('Không tìm thấy dòng kế hoạch nhân sự');
-    }
-    return dong;
-  }
 }

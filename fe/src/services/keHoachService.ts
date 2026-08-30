@@ -29,8 +29,23 @@ export interface KeHoachDong {
   soTien: number;
   noiDung: string;
   ghiChu?: string;
+  /**
+   * Bảng chi tiết đã sinh ra dòng này. Không có = người dùng tự nhập ở tab
+   * Chi tiết. Dòng có nguồn thì CHỈ ĐỌC: lần lưu bảng nguồn kế tiếp sẽ ghi đè.
+   */
+  nguonLoai?: 'BAN_HANG' | 'NHAN_SU' | 'DONG_TIEN' | 'TAI_SAN' | 'NGUON_VON';
+  nguonId?: string;
   danhMuc?: DanhMuc;
 }
+
+/** Nhãn hiển thị của bảng đã sinh ra một dòng hạch toán kế hoạch. */
+export const NHAN_BANG_NGUON: Record<string, string> = {
+  BAN_HANG: 'Bán hàng',
+  NHAN_SU: 'Nhân sự',
+  DONG_TIEN: 'Dòng tiền',
+  TAI_SAN: 'Tài sản',
+  NGUON_VON: 'Nguồn vốn',
+};
 
 interface KeHoachResponse extends Omit<KeHoachDong, 'id' | 'ngay'> {
   _id?: string;

@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { KeHoachBanHang } from '@app/entities';
 import { TenantContextService } from '@app/core';
+import { DongBoHachToanKeHoachService } from '../dong-bo';
 import { KeHoachBanHangService } from './ban-hang.service';
 
 const repo = {
@@ -14,6 +15,9 @@ const repo = {
   deleteOne: jest.fn(),
 };
 const tenant = { getCurrentTenantId: jest.fn(() => 't1') };
+// Engine đồng bộ được kiểm riêng ở dong-bo.service.spec.ts; ở đây chỉ cần
+// xác nhận bảng có gọi nó đúng lúc.
+const dongBo = { dongBo: jest.fn(), xoaTheoNguon: jest.fn() };
 
 const dtoMau = {
   nam: 2026,
@@ -34,6 +38,7 @@ describe('KeHoachBanHangService', () => {
         KeHoachBanHangService,
         { provide: getRepositoryToken(KeHoachBanHang), useValue: repo },
         { provide: TenantContextService, useValue: tenant },
+        { provide: DongBoHachToanKeHoachService, useValue: dongBo },
       ],
     }).compile();
     service = mod.get(KeHoachBanHangService);
@@ -213,6 +218,62 @@ describe('KeHoachBanHangService', () => {
       expect(repo.countDocuments).toHaveBeenCalledWith(
         expect.objectContaining({ loaiKeHoach: 'DU_BAO' }),
       );
+    });
+  });
+
+  describe('đồng bộ chi tiết hạch toán', () => {
+    it('lưu hàng loạt xong thì sinh lại bút toán cho đúng các dòng vừa lưu', async () => {
+      repo.find.mockResolvedValue([]);
+      await service.luuHangLoat(
+        {
+          nam: 2026,
+          them: [
+            {
+              nhomSanPham: dtoMau.nhomSanPham,
+              sanPham: dtoMau.sanPham,
+              luong: 1,
+              giaBinhQuan: 10,
+              thang: Array(12).fill(0) as number[],
+            },
+          ],
+        },
+        'u1',
+      );
+      expect(dongBo.dongBo).toHaveBeenCalledTimes(1);
+      const [nguon] = dongBo.dongBo.mock.calls[0];
+      expect(nguon[0]).toEqual(
+        expect.objectContaining({ nguonLoai: 'BAN_HANG', nam: 2026 }),
+      );
+    });
+
+    it('xoá dòng nguồn thì xoá luôn bút toán nó sinh ra', async () => {
+      const id = '507f1f77bcf86cd799439011';
+      repo.findOne.mockResolvedValue({ id, _id: id });
+      await service.xoa(id);
+      expect(dongBo.xoaTheoNguon).toHaveBeenCalledWith('BAN_HANG', [id]);
+    });
+
+    it('engine hỏng thì KHÔNG làm hỏng thao tác Lưu', async () => {
+      // Bảng chi tiết mới là nguồn sự thật; phần hạch toán luôn dựng lại được.
+      repo.find.mockResolvedValue([]);
+      dongBo.dongBo.mockRejectedValueOnce(new Error('mongo sập'));
+      await expect(
+        service.luuHangLoat(
+          {
+            nam: 2026,
+            them: [
+              {
+                nhomSanPham: dtoMau.nhomSanPham,
+                sanPham: dtoMau.sanPham,
+                luong: 1,
+                giaBinhQuan: 10,
+                thang: Array(12).fill(0) as number[],
+              },
+            ],
+          },
+          'u1',
+        ),
+      ).resolves.toEqual({ daThem: 1, daSua: 0 });
     });
   });
 });

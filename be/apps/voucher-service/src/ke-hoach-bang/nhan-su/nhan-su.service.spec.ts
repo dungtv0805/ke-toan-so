@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { KeHoachNhanSu } from '@app/entities';
 import { TenantContextService } from '@app/core';
+import { DongBoHachToanKeHoachService } from '../dong-bo';
 import { KeHoachNhanSuService } from './nhan-su.service';
 
 const repo = {
@@ -14,6 +15,9 @@ const repo = {
   deleteOne: jest.fn(),
 };
 const tenant = { getCurrentTenantId: jest.fn(() => 't1') };
+// Engine đồng bộ được kiểm riêng ở dong-bo.service.spec.ts; ở đây chỉ cần
+// xác nhận bảng có gọi nó đúng lúc.
+const dongBo = { dongBo: jest.fn(), xoaTheoNguon: jest.fn() };
 
 const dtoMau = {
   nam: 2026,
@@ -40,6 +44,7 @@ describe('KeHoachNhanSuService', () => {
         KeHoachNhanSuService,
         { provide: getRepositoryToken(KeHoachNhanSu), useValue: repo },
         { provide: TenantContextService, useValue: tenant },
+        { provide: DongBoHachToanKeHoachService, useValue: dongBo },
       ],
     }).compile();
     service = mod.get(KeHoachNhanSuService);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, message } from "antd";
+import { Alert, Button, message } from "antd";
 import { ExportOutlined } from "@ant-design/icons";
 import { KqkdHandlerProvider, useKqkdHandler, useKqkdState } from "./KqkdHandlerContext";
 import { usePagePermission } from "@/hooks/usePagePermission";
@@ -9,16 +9,28 @@ import type { KqkdReport } from "@/services/kqkdService";
 import { exportReportExcel } from "@/utils/exportReportExcel";
 import { buildKqkdSheets } from "./kqkdExport";
 
-function KqkdPageInner() {
+interface Props {
+  /**
+   * Bật góc nhìn "P&L KHÔNG KHẤU HAO": BE bỏ phát sinh khấu hao ngay ở tầng
+   * đọc bút toán. Chỉ là một góc nhìn — không sửa bút toán, không ảnh hưởng
+   * báo cáo tài chính.
+   */
+  loaiTruKhauHao?: boolean;
+  /** Đường dẫn dùng để tra quyền — hai trang có quyền riêng. */
+  duongDanQuyen?: string;
+  tieuDe?: string;
+}
+
+function KqkdPageInner({ loaiTruKhauHao, duongDanQuyen, tieuDe }: Props) {
   const handler = useKqkdHandler();
-  const { canExport } = usePagePermission("/bao-cao/kqkd");
+  const { canExport } = usePagePermission(duongDanQuyen ?? "/bao-cao/kqkd");
   const [kqkdData] = useKqkdState("kqkdData") as [KqkdReport | null, unknown];
   const [loading] = useKqkdState("loading") as [boolean, unknown];
 
   useEffect(() => {
-    handler.executeEvent("init", {});
+    handler.executeEvent("init", { loaiTruKhauHao });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loaiTruKhauHao]);
 
   const handleFilter = (params: KqkdFilterParams) => {
     handler.executeEvent("onFilterChange", params);
@@ -36,11 +48,17 @@ function KqkdPageInner() {
       ? [`Kỳ hiện tại: ${formatDate(kqkdData.kyHienTai.startDate)} – ${formatDate(kqkdData.kyHienTai.endDate)}`,
          `Kỳ trước: ${formatDate(kqkdData.kyTruoc.startDate)} – ${formatDate(kqkdData.kyTruoc.endDate)}`]
       : undefined;
-    const sheets = buildKqkdSheets(chiTieu, "BÁO CÁO KẾT QUẢ HOẠT ĐỘNG KINH DOANH", meta);
+    const tenBaoCao = loaiTruKhauHao
+      ? "P&L KHÔNG KHẤU HAO"
+      : "BÁO CÁO KẾT QUẢ HOẠT ĐỘNG KINH DOANH";
+    const sheets = buildKqkdSheets(chiTieu, tenBaoCao, meta);
     if (sheets.length === 0) { message.warning("Không có dữ liệu để xuất"); return; }
     setExporting(true);
     try {
-      await exportReportExcel("Bao cao KQKD", sheets);
+      await exportReportExcel(
+        loaiTruKhauHao ? "P&L khong khau hao" : "Bao cao KQKD",
+        sheets,
+      );
       message.success("Đã xuất Excel");
     } catch (e) {
       console.error("export excel error", e);
@@ -54,7 +72,7 @@ function KqkdPageInner() {
     <div className="kqkd-page space-y-3">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">
-          Báo cáo kết quả hoạt động kinh doanh
+          {tieuDe ?? "Báo cáo kết quả hoạt động kinh doanh"}
         </h1>
         {canExport && (
           <Button icon={<ExportOutlined />} onClick={handleExport} loading={exporting}>
@@ -62,6 +80,15 @@ function KqkdPageInner() {
           </Button>
         )}
       </div>
+
+      {loaiTruKhauHao && (
+        <Alert
+          type="info"
+          showIcon
+          message="Đã loại trừ các phát sinh khấu hao (khoản mục Khấu hao kèm tài khoản 214) ngay từ dữ liệu chi tiết."
+          description="Đây chỉ là một góc nhìn báo cáo: bút toán khấu hao vẫn nguyên trong sổ, báo cáo tài chính không đổi."
+        />
+      )}
 
       <KqkdFilter onFilter={handleFilter} loading={loading} />
 
@@ -83,10 +110,10 @@ function KqkdPageInner() {
   );
 }
 
-const KqkdPage: React.FC = () => {
+const KqkdPage: React.FC<Props> = (props) => {
   return (
     <KqkdHandlerProvider>
-      <KqkdPageInner />
+      <KqkdPageInner {...props} />
     </KqkdHandlerProvider>
   );
 };

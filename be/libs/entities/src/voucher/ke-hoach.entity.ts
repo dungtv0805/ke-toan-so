@@ -6,6 +6,17 @@ import type { DanhMuc } from './chung-tu.entity';
 // Hai màn hình /trung-tam-du-lieu/ke-hoach và /du-bao dùng chung collection này.
 export type LoaiKeHoach = 'KE_HOACH' | 'DU_BAO';
 
+/** Năm bảng chi tiết có thể sinh ra dòng hạch toán kế hoạch. */
+export const BANG_KE_HOACH_NGUON = [
+  'BAN_HANG',
+  'NHAN_SU',
+  'DONG_TIEN',
+  'TAI_SAN',
+  'NGUON_VON',
+] as const;
+
+export type BangKeHoachNguon = (typeof BANG_KE_HOACH_NGUON)[number];
+
 /** Phiên bản mặc định khi người dùng không đặt tên bản kế hoạch. */
 export const PHIEN_BAN_MAC_DINH = 'Mặc định';
 
@@ -41,6 +52,20 @@ export class KeHoachDong extends BaseEntity {
 
   @Column()
   nguoiTaoId: string;
+
+  /**
+   * Bảng chi tiết đã SINH RA dòng này. Không có = người dùng tự nhập ở tab
+   * Chi tiết.
+   *
+   * Engine đồng bộ chỉ được đụng vào dòng CÓ `nguonId`: dòng nhập tay không
+   * bao giờ bị xoá khi lưu lại một bảng chi tiết.
+   */
+  @Column({ nullable: true })
+  nguonLoai?: BangKeHoachNguon;
+
+  /** Id của dòng trong bảng chi tiết tương ứng. */
+  @Column({ nullable: true })
+  nguonId?: string;
 
   // Dùng lại nguyên interface danh mục của chứng từ (nghiệp vụ, TK Nợ/Có, đối tượng,
   // chủ đầu tư, dự án, sản phẩm, bộ phận, đội, nhân viên, dòng tiền, khoản mục,
