@@ -2,10 +2,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ConfigProvider, Segmented, Select, Space, Typography } from "antd";
 import { CheckCircleOutlined } from "@ant-design/icons";
 import KeHoachPage from "../KeHoachPage";
-import { TabComingSoon } from "./TabComingSoon";
 import { BanHangTab } from "./ban-hang/BanHangTab";
 import { NhanSuTab } from "./nhan-su/NhanSuTab";
 import { KqkdTab } from "./kqkd/KqkdTab";
+import { DongTienTab } from "./dong-tien/DongTienTab";
+import { TaiSanTab } from "./tai-san/TaiSanTab";
+import { NguonVonTab } from "./nguon-von/NguonVonTab";
 import {
   keHoachService,
   type LoaiKeHoach,
@@ -131,11 +133,13 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
           />
         )}
         {activeTab === "dong-tien" && (
-          <TabComingSoon tieuDe="Kế hoạch dòng tiền" />
+          <DongTienTab nam={nam} loaiKeHoach={loaiKeHoach} />
         )}
-        {activeTab === "tai-san" && <TabComingSoon tieuDe="Kế hoạch tài sản" />}
+        {activeTab === "tai-san" && (
+          <TaiSanTab nam={nam} loaiKeHoach={loaiKeHoach} />
+        )}
         {activeTab === "nguon-von" && (
-          <TabComingSoon tieuDe="Kế hoạch nguồn vốn" />
+          <NguonVonTab nam={nam} loaiKeHoach={loaiKeHoach} />
         )}
         {activeTab === "chi-tiet" && <KeHoachPage loaiKeHoach={loaiKeHoach} />}
       </div>

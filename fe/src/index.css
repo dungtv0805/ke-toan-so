@@ -2713,6 +2713,22 @@ body.col-resizing .ant-table * {
   font-variant-numeric: tabular-nums;
 }
 
+/* Năm dòng tổng hợp của bảng Dòng tiền (Tồn đầu/cuối kỳ, Thu, Chi, Thặng dư):
+   in đậm và đổ màu khác hẳn dòng nhóm, vì chúng là kết quả tính chứ không phải
+   một nhóm dữ liệu người dùng gõ vào. */
+.kh-hang-tong-hop > td {
+  background: hsl(var(--primary) / 0.16) !important;
+  font-weight: 700;
+}
+
+/* Dòng phụ Số dư của bảng Nguồn vốn — số suy ra, lùi lại một bậc thị giác so
+   với dòng chi tiết sinh ra nó. */
+.kh-hang-so-du > td {
+  background: hsl(var(--muted) / 0.5) !important;
+  font-size: 11px;
+  color: hsl(var(--muted-foreground));
+}
+
 /* Dòng DOANH THU HÒA VỐN cuối bảng KQKD kế hoạch — vàng để tách khỏi các dòng
    tổng (cũng là cấp 0) ngay phía trên. */
 .kh-hang-hoa-von > td {

@@ -63,6 +63,23 @@ export const numberInputProps = {
   parser: (v: string | undefined) => Number((v ?? "").replace(/\D/g, "")),
 };
 
+/**
+ * Ô nhập cho phép SỐ ÂM — bảng Nguồn vốn nhập biến động, giảm là số âm.
+ *
+ * `numberInputProps` ở trên đặt `min: 0` và parser `replace(/\D/g, "")` nên nuốt
+ * mất dấu trừ; ở đây phải giữ lại đúng một dấu trừ đứng đầu.
+ */
+export const numberInputPropsCoAm = {
+  ...numberInputProps,
+  min: undefined,
+  parser: (v: string | undefined) => {
+    const tho = v ?? "";
+    const am = tho.trim().startsWith("-");
+    const so = Number(tho.replace(/\D/g, "")) || 0;
+    return am ? -so : so;
+  },
+};
+
 /** Chữ số bên phải, hàng gộp in đậm. */
 const soCell = (loai: LoaiHang, noiDung: React.ReactNode) => (
   <span className={laHangGop(loai) ? "font-semibold" : undefined}>
