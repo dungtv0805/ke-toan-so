@@ -8,6 +8,8 @@ export interface BanHangVal {
   /** Mã nhóm sản phẩm — `SanPham.nhom` lưu mã chứ không lưu id. */
   nhomMa: string;
   sanPhamId: string;
+  /** Cột DIỄN GIẢI — lưu vào trường `ghiChu` của bản ghi. */
+  ghiChu: string;
   luong: number;
   giaBinhQuan: number;
   thang: number[];
@@ -17,6 +19,7 @@ export interface BanHangVal {
 export const valTuDong = (d: KeHoachBanHangDong): BanHangVal => ({
   nhomMa: d.nhomSanPham.ma,
   sanPhamId: d.sanPham.id,
+  ghiChu: d.ghiChu ?? "",
   luong: d.luong,
   giaBinhQuan: d.giaBinhQuan,
   thang: [...d.thang],
