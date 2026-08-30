@@ -18,6 +18,7 @@ const valRong = (boPhanId = ""): NhanSuVal => ({
   boPhanId,
   maViTri: "",
   tenChucVu: "",
+  ghiChu: "",
   chiPhi: chiPhiRong(),
   thang: Array(SO_THANG).fill(0),
 });
@@ -169,6 +170,7 @@ export class NhanSuRowEditHandler extends CSubHanlder<
       boPhan: bp ? { id: bp.id, ma: bp.ma, ten: bp.ten } : undefined,
       maViTri: val.maViTri.trim(),
       tenChucVu: val.tenChucVu.trim() || undefined,
+      ghiChu: val.ghiChu,
       chiPhi: val.chiPhi,
       thang: val.thang,
     };

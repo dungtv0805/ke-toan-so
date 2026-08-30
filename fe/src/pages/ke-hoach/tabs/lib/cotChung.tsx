@@ -151,26 +151,6 @@ export function cotQuyVaThang<T extends HangBang<unknown>>(
   ];
 }
 
-/**
- * Ô số năm (Doanh thu / CỘNG). Tô đỏ kèm chú thích khi tổng 12 tháng lệch —
- * chỉ cảnh báo, không chặn lưu.
- */
-export function oSoNam<T extends HangBang<unknown>>(
-  row: T,
-  tenChiTieu: string,
-) {
-  if (!row.lech) return soCell(row.loai, tien(row.namKhaiBao));
-  return (
-    <Tooltip
-      title={`Tổng 12 tháng (${tien(row.namTheoThang)}) khác ${tenChiTieu} (${tien(
-        row.namKhaiBao,
-      )})`}
-    >
-      <span className="text-red-500 font-semibold">{tien(row.namKhaiBao)}</span>
-    </Tooltip>
-  );
-}
-
 /** Gộp cột nhãn cấp 1 + cấp 2 lại ở hàng tổng và hàng nhóm. */
 export const onCellNhan = (row: { loai: LoaiHang }) =>
   laHangGop(row.loai) ? { colSpan: 2 } : {};

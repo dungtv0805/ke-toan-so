@@ -11,6 +11,8 @@ export interface NhanSuVal {
   boPhanId: string;
   maViTri: string;
   tenChucVu: string;
+  /** Cột DIỄN GIẢI — lưu vào trường `ghiChu` của bản ghi. */
+  ghiChu: string;
   chiPhi: ChiPhiNhanSu;
   thang: number[];
 }
@@ -20,6 +22,7 @@ export const valTuDong = (d: KeHoachNhanSuDong): NhanSuVal => ({
   boPhanId: d.boPhan.id,
   maViTri: d.maViTri,
   tenChucVu: d.tenChucVu ?? "",
+  ghiChu: d.ghiChu ?? "",
   chiPhi: { ...d.chiPhi },
   thang: [...d.thang],
 });
