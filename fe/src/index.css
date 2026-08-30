@@ -2678,6 +2678,41 @@ body.col-resizing .ant-table * {
   background: #fff3bf !important;
 }
 
+/* --- Quy chuẩn màu theo CẤP THÔNG TIN của bảng kế hoạch ---
+   Nguyên tắc bắt buộc: cùng cấp = cùng màu. Không nhạt dần theo từng cột riêng
+   lẻ — người đọc phải nhận ra ranh giới giữa Năm / Quý / Tháng bằng thị giác,
+   chứ không phải bằng cách đọc tiêu đề từng cột.
+
+   Hàng TỔNG CỘNG / hàng nhóm / hàng đang gõ dở đặt !important nên vẫn thắng
+   được nền cấp cột ở phần thân bảng — đúng ý: cấp HÀNG quan trọng hơn cấp CỘT. */
+.kh-bang th.kh-cot-chinh {
+  background: hsl(var(--primary) / 0.14) !important;
+}
+
+.kh-bang th.kh-cot-nam {
+  background: hsl(var(--primary) / 0.22) !important;
+}
+
+.kh-bang th.kh-cot-quy {
+  background: hsl(var(--primary) / 0.1) !important;
+}
+
+.kh-bang th.kh-cot-thang {
+  background: hsl(var(--primary) / 0.04) !important;
+}
+
+/* Thân bảng: chỉ hai cột cấp năm được nhấn, để mắt bám được cột quan trọng nhất
+   khi kéo ngang qua 16 cột số. */
+.kh-bang td.kh-cot-nam {
+  background: hsl(var(--primary) / 0.06);
+  font-variant-numeric: tabular-nums;
+}
+
+.kh-bang td.kh-cot-quy,
+.kh-bang td.kh-cot-thang {
+  font-variant-numeric: tabular-nums;
+}
+
 /* Dòng DOANH THU HÒA VỐN cuối bảng KQKD kế hoạch — vàng để tách khỏi các dòng
    tổng (cũng là cấp 0) ngay phía trên. */
 .kh-hang-hoa-von > td {
