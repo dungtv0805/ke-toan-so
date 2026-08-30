@@ -3,3 +3,7 @@ deploy/loki/**/.env
 
 # git worktrees (local isolation)
 .claude/worktrees/
+
+# Rác build/OS — không thuộc mã nguồn
+*.tsbuildinfo
+.DS_Store
