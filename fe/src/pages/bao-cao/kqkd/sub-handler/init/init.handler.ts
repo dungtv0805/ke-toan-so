@@ -13,10 +13,12 @@ import { InitEvent } from "./init.event";
 @RegisterHandler("kqkd")
 export class InitHandler extends CSubHanlder<InitEvent, KqkdStates> {
   @HandlerDecorator("init")
-  async init(): Promise<void> {
+  async init(params: { loaiTruKhauHao?: boolean } = {}): Promise<void> {
     const now = new Date();
     const defaultPeriodType: KqkdPeriodType = "thang";
 
+    // Giữ trong state để lần lọc sau vẫn đúng góc nhìn của trang.
+    this.setState("loaiTruKhauHao", params.loaiTruKhauHao === true);
     this.setState("periodType", defaultPeriodType);
     this.setState("selectedDate", now);
     this.setState("dateRange", getDateRange(defaultPeriodType, now));
@@ -29,6 +31,7 @@ export class InitHandler extends CSubHanlder<InitEvent, KqkdStates> {
         startDate,
         endDate,
         periodType: defaultPeriodType,
+        loaiTruKhauHao: params.loaiTruKhauHao === true,
       });
       this.setState("kqkdData", data);
     } catch (error) {

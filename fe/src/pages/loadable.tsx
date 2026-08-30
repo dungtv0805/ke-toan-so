@@ -244,6 +244,13 @@ export const KqkdPage = loadable(() => import('./bao-cao/kqkd/KqkdPage'), {
   fallback: <PageLoader />
 });
 
+export const PnlKhongKhauHaoPage = loadable(
+  () => import('./bao-cao/pnl-khong-khau-hao/PnlKhongKhauHaoPage'),
+  {
+  fallback: <PageLoader />
+  },
+);
+
 // Thư viện tài liệu
 export const QuyTrinhPage = loadable(() => import('./thu-vien/QuyTrinhPage'), {
   fallback: <PageLoader />

@@ -13,6 +13,9 @@ export class BaoCaoController {
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Query('periodType') periodType: string = 'thang',
+    // Góc nhìn "P&L không khấu hao" — không tạo nguồn dữ liệu mới, không sửa
+    // bút toán, chỉ bỏ phát sinh khấu hao trước khi tổng hợp.
+    @Query('loaiTruKhauHao') loaiTruKhauHao: string,
     @Headers('authorization') authToken: string,
     @CurrentUser() user: UserPayload,
   ) {
@@ -115,6 +118,9 @@ export class BaoCaoController {
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Query('periodType') periodType: string = 'thang',
+    // Góc nhìn "P&L không khấu hao" — không tạo nguồn dữ liệu mới, không sửa
+    // bút toán, chỉ bỏ phát sinh khấu hao trước khi tổng hợp.
+    @Query('loaiTruKhauHao') loaiTruKhauHao: string,
     @Headers('authorization') authToken: string,
     @CurrentUser() user: UserPayload,
   ) {
@@ -131,6 +137,7 @@ export class BaoCaoController {
       periodType as 'ngay' | 'thang' | 'quy' | 'nam' | 'tuyChon',
       authToken,
       user.tenantId,
+      loaiTruKhauHao === 'true',
     );
     return { success: true, data };
   }

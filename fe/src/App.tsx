@@ -85,6 +85,7 @@ import {
   QuanLyHopDongPage,
   BaoCaoHopDongPage,
   BaoCaoDoanhThuPage,
+  PnlKhongKhauHaoPage,
   SoThuTienPage,
   SoHoaDonBanRaPage,
   BangKeMuaVaoPage,
@@ -539,6 +540,14 @@ const App = () => (
                     element={
                       <ProtectedRoute requiredPermission="/bao-cao/doanh-thu:xem">
                         <BaoCaoDoanhThuPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="pnl-khong-khau-hao"
+                    element={
+                      <ProtectedRoute requiredPermission="/bao-cao/pnl-khong-khau-hao:xem">
+                        <PnlKhongKhauHaoPage />
                       </ProtectedRoute>
                     }
                   />

@@ -9,6 +9,7 @@ import {
   ButToanKqkd,
   tinhChiTieuDanXuat,
   tinhChiTieuGoc,
+  loaiTruKhauHao,
 } from '@app/core';
 import { Injectable } from '@nestjs/common';
 import {
@@ -685,12 +686,18 @@ export class BaoCaoService {
   /**
    * Generate KQKD (Income Statement) report
    */
+  /**
+   * @param loaiTruKhauHao Bỏ các phát sinh khấu hao khỏi báo cáo — góc nhìn
+   * "P&L KHÔNG KHẤU HAO". Lọc ngay ở tầng đọc bút toán, TRƯỚC khi tổng hợp,
+   * đúng yêu cầu "không lấy tổng P&L rồi cộng ngược khấu hao".
+   */
   async getKqkd(
     startDate: Date,
     endDate: Date,
     periodType: 'ngay' | 'thang' | 'quy' | 'nam' | 'tuyChon',
     authToken?: string,
     tenantId?: string,
+    loaiTruKhauHaoFlag = false,
   ): Promise<KqkdReport> {
     const prevPeriod = this.getPreviousPeriod(startDate, endDate, periodType);
 
@@ -709,8 +716,14 @@ export class BaoCaoService {
       ),
     ]);
 
-    const vouchersHT = vouchersHTRes.success ? vouchersHTRes.data || [] : [];
-    const vouchersKT = vouchersKTRes.success ? vouchersKTRes.data || [] : [];
+    const thoHT = vouchersHTRes.success ? vouchersHTRes.data || [] : [];
+    const thoKT = vouchersKTRes.success ? vouchersKTRes.data || [] : [];
+
+    // Lọc ngay tại đây, trước mọi phép cộng: cả kỳ này lẫn kỳ trước, để hai cột
+    // so sánh cùng một góc nhìn. Kéo theo EBITDA có khấu hao bằng 0 — đúng, vì
+    // báo cáo này đã không còn phát sinh khấu hao nào.
+    const vouchersHT = loaiTruKhauHaoFlag ? loaiTruKhauHao(thoHT) : thoHT;
+    const vouchersKT = loaiTruKhauHaoFlag ? loaiTruKhauHao(thoKT) : thoKT;
 
     // Chuyển bút toán về hình mà bản đồ chỉ tiêu dùng chung hiểu được.
     const toButToan = (v: NhatKyChungEntry): ButToanKqkd => ({

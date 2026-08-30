@@ -64,6 +64,7 @@ export const routePermissions: Record<string, string> = {
   '/cong-no/phai-tra': '/cong-no/phai-tra:xem',
 
   '/bao-cao/pnl': '/bao-cao/pnl:xem',
+  '/bao-cao/pnl-khong-khau-hao': '/bao-cao/pnl-khong-khau-hao:xem',
   '/bao-cao/so-cai': '/bao-cao/so-cai:xem',
   '/bao-cao/so-chi-tiet-tai-khoan': '/bao-cao/so-chi-tiet-tai-khoan:xem',
   '/bao-cao/bang-can-doi': '/bao-cao/bang-can-doi:xem',

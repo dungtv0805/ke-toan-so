@@ -9,3 +9,4 @@ export * from './utils/dto.utils';
 export * from './permissions/all-permissions';
 export * from './utils/soft-delete-batch';
 export * from './utils/kqkd-chi-tieu';
+export * from './utils/loai-tru-khau-hao';

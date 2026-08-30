@@ -43,6 +43,7 @@ export class FilterHandler extends CSubHanlder<FilterEvent, KqkdStates> {
         startDate: range.startDate,
         endDate: range.endDate,
         periodType,
+        loaiTruKhauHao: this.getState("loaiTruKhauHao") === true,
       });
       this.setState("kqkdData", data);
     } catch (error) {
