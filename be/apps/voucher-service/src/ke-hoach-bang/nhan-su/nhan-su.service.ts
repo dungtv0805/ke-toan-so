@@ -6,14 +6,18 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { ObjectId } from 'mongodb';
-import { KeHoachNhanSu } from '@app/entities';
+import { KeHoachNhanSu, type LoaiKeHoach } from '@app/entities';
 import { TenantContextService } from '@app/core';
 import {
   BatchKeHoachNhanSuDto,
   CreateKeHoachNhanSuDto,
   UpdateKeHoachNhanSuDto,
 } from './dto';
-import { kiemTraTrungKhoa } from '../helpers';
+import {
+  dieuKienLoaiKeHoach,
+  kiemTraTrungKhoa,
+  LOAI_KE_HOACH_MAC_DINH,
+} from '../helpers';
 
 /**
  * CRUD bảng kế hoạch nhân sự. Mỗi dòng là một chức vụ trong một bộ phận,
@@ -38,9 +42,12 @@ export class KeHoachNhanSuService {
   }
 
   /** Vài chục dòng mỗi năm nên trả hết, không phân trang. */
-  async layTheoNam(nam: number): Promise<KeHoachNhanSu[]> {
+  async layTheoNam(
+    nam: number,
+    loaiKeHoach: LoaiKeHoach,
+  ): Promise<KeHoachNhanSu[]> {
     return this.repo.find({
-      where: this.theoTenant({ nam }),
+      where: this.theoTenant({ nam, ...dieuKienLoaiKeHoach(loaiKeHoach) }),
       order: { 'boPhan.ma': 'ASC', maViTri: 'ASC' } as never,
     });
   }
@@ -50,9 +57,13 @@ export class KeHoachNhanSuService {
     nguoiTaoId: string,
   ): Promise<KeHoachNhanSu> {
     // Trùng tính theo cả bộ phận: cùng mã vị trí ở hai bộ phận khác nhau là hợp lệ.
+    // Dùng thẳng `dto.loaiKeHoach` chứ không qua `dieuKienLoaiKeHoach`: dòng mới
+    // luôn có trường này, mà nới bằng $or sẽ khiến một chức vụ đã có bên Kế
+    // hoạch chặn mất việc thêm chính nó vào Dự báo.
     const trung = await this.repo.countDocuments(
       this.theoTenant({
         nam: dto.nam,
+        loaiKeHoach: dto.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH,
         'boPhan.id': dto.boPhan.id,
         maViTri: dto.maViTri,
       }),
@@ -65,6 +76,8 @@ export class KeHoachNhanSuService {
 
     const dong = this.repo.create({
       ...dto,
+      // `dto.loaiKeHoach` có thể trống (bản FE cũ) — không để undefined lọt vào kho.
+      loaiKeHoach: dto.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH,
       nguoiTaoId,
       tenantId: this.tenantContext.getCurrentTenantId(),
     });
@@ -87,8 +100,12 @@ export class KeHoachNhanSuService {
       return { daThem: 0, daSua: 0 };
     }
 
+    // Lọc theo loại: lô Dự báo không được soi trùng với dòng Kế hoạch.
     const hienCo = await this.repo.find({
-      where: this.theoTenant({ nam: dto.nam }),
+      where: this.theoTenant({
+        nam: dto.nam,
+        ...dieuKienLoaiKeHoach(dto.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH),
+      }),
     });
     const theoId = new Map(hienCo.map((d) => [d.id, d]));
 
@@ -126,7 +143,13 @@ export class KeHoachNhanSuService {
 
     const tenantId = this.tenantContext.getCurrentTenantId();
     const dongThem = them.map((t) =>
-      this.repo.create({ ...t, nam: dto.nam, nguoiTaoId, tenantId }),
+      this.repo.create({
+        ...t,
+        nam: dto.nam,
+        loaiKeHoach: dto.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH,
+        nguoiTaoId,
+        tenantId,
+      }),
     );
 
     const dongSua = sua.map((s) => {

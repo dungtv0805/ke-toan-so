@@ -39,11 +39,20 @@ describe('KeHoachBanHangService', () => {
     service = mod.get(KeHoachBanHangService);
   });
 
-  it('lọc theo năm và tenant', async () => {
+  it('lọc theo năm, tenant và loại kế hoạch', async () => {
     repo.find.mockResolvedValue([]);
-    await service.layTheoNam(2026);
+    await service.layTheoNam(2026, 'KE_HOACH');
     expect(repo.find).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { nam: 2026, tenantId: 't1' } }),
+      expect.objectContaining({
+        where: {
+          nam: 2026,
+          tenantId: 't1',
+          $or: [
+            { loaiKeHoach: 'KE_HOACH' },
+            { loaiKeHoach: { $exists: false } },
+          ],
+        },
+      }),
     );
   });
 
@@ -156,6 +165,54 @@ describe('KeHoachBanHangService', () => {
       await expect(
         service.luuHangLoat({ nam: 2026, sua: [{ id: 'khong-co', luong: 1 }] }, 'u1'),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('loaiKeHoach', () => {
+    it('Kế hoạch nhận cả dòng cũ chưa có trường loaiKeHoach', async () => {
+      repo.find.mockResolvedValue([]);
+      await service.layTheoNam(2026, 'KE_HOACH');
+      expect(repo.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            nam: 2026,
+            tenantId: 't1',
+            $or: [
+              { loaiKeHoach: 'KE_HOACH' },
+              { loaiKeHoach: { $exists: false } },
+            ],
+          }),
+        }),
+      );
+    });
+
+    it('Dự báo chỉ lấy đúng dòng dự báo', async () => {
+      repo.find.mockResolvedValue([]);
+      await service.layTheoNam(2026, 'DU_BAO');
+      expect(repo.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { nam: 2026, tenantId: 't1', loaiKeHoach: 'DU_BAO' },
+        }),
+      );
+    });
+
+    it('dòng thêm mới mang đúng loại của lô', async () => {
+      repo.countDocuments.mockResolvedValue(0);
+      const dong = await service.taoMoi(
+        { ...dtoMau, loaiKeHoach: 'DU_BAO' },
+        'u1',
+      );
+      expect(dong).toEqual(expect.objectContaining({ loaiKeHoach: 'DU_BAO' }));
+    });
+
+    it('cùng sản phẩm ở hai loại khác nhau không coi là trùng', async () => {
+      // Trùng phải soi trong PHẠM VI loại: sản phẩm SP1 có ở Kế hoạch không cản
+      // việc thêm SP1 vào Dự báo.
+      repo.countDocuments.mockResolvedValue(0);
+      await service.taoMoi({ ...dtoMau, loaiKeHoach: 'DU_BAO' }, 'u1');
+      expect(repo.countDocuments).toHaveBeenCalledWith(
+        expect.objectContaining({ loaiKeHoach: 'DU_BAO' }),
+      );
     });
   });
 });

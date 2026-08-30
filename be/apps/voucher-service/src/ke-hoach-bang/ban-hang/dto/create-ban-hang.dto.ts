@@ -3,6 +3,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsNumber,
@@ -11,7 +12,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { SO_THANG } from '@app/entities';
+import { SO_THANG, type LoaiKeHoach } from '@app/entities';
 
 /** Ảnh chụp một mục danh mục lúc lưu — giữ cả mã và tên để bảng đọc lại được. */
 export class MucDanhMucDto {
@@ -29,6 +30,11 @@ export class MucDanhMucDto {
 }
 
 export class CreateKeHoachBanHangDto {
+  // Không truyền = Kế hoạch: giữ nguyên hành vi cho bản FE cũ chưa gửi trường này.
+  @IsOptional()
+  @IsIn(['KE_HOACH', 'DU_BAO'])
+  loaiKeHoach?: LoaiKeHoach;
+
   @IsNotEmpty()
   @IsInt()
   @Min(1900)

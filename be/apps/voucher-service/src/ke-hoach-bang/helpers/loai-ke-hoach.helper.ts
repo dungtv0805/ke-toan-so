@@ -1,6 +1,12 @@
 import type { LoaiKeHoach } from '@app/entities';
 
 /**
+ * Loại mặc định khi phía gọi không truyền. Bản FE cũ không gửi trường này, và
+ * mọi dòng lập trước đây đều là số Kế hoạch.
+ */
+export const LOAI_KE_HOACH_MAC_DINH: LoaiKeHoach = 'KE_HOACH';
+
+/**
  * Mảnh điều kiện Mongo lọc theo loại kế hoạch, trộn vào `where` của bảng.
  *
  * Bản ghi tạo TRƯỚC khi hai bảng có trường `loaiKeHoach` không mang trường này.

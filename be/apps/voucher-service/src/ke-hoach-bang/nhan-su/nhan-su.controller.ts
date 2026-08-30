@@ -16,6 +16,7 @@ import {
   Roles,
   type UserPayload,
 } from '@app/auth';
+import { LOAI_KE_HOACH_MAC_DINH } from '../helpers';
 import { KeHoachNhanSuService } from './nhan-su.service';
 import {
   BatchKeHoachNhanSuDto,
@@ -43,7 +44,13 @@ export class KeHoachNhanSuController {
   @Get()
   @Roles(...XEM)
   async layTheoNam(@Query() query: KeHoachNhanSuQueryDto) {
-    return { success: true, data: await this.service.layTheoNam(query.nam) };
+    return {
+      success: true,
+      data: await this.service.layTheoNam(
+        query.nam,
+        query.loaiKeHoach ?? LOAI_KE_HOACH_MAC_DINH,
+      ),
+    };
   }
 
   @Post()
