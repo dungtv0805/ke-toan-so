@@ -1,5 +1,6 @@
 import { ServiceBase } from './base/service-base';
 import { chuanHoaThang } from './keHoachBanHangService';
+import type { LoaiKeHoach } from './keHoachService';
 
 export interface KqkdKeHoachDong {
   key: string;
@@ -39,9 +40,13 @@ class KqkdKeHoachService extends ServiceBase {
     super({ endpoint: '/voucher/ke-hoach/kqkd' });
   }
 
-  async layBaoCao(nam: number, phienBan?: string): Promise<KqkdKeHoachReport> {
+  async layBaoCao(
+    nam: number,
+    loaiKeHoach: LoaiKeHoach,
+    phienBan?: string,
+  ): Promise<KqkdKeHoachReport> {
     const res = await this.get<KqkdKeHoachReport>({
-      params: { nam, loaiKeHoach: 'KE_HOACH', ...(phienBan ? { phienBan } : {}) },
+      params: { nam, loaiKeHoach, ...(phienBan ? { phienBan } : {}) },
     });
     return {
       nam: res?.nam ?? nam,

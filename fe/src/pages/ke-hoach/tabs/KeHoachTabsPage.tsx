@@ -6,7 +6,10 @@ import { TabComingSoon } from "./TabComingSoon";
 import { BanHangTab } from "./ban-hang/BanHangTab";
 import { NhanSuTab } from "./nhan-su/NhanSuTab";
 import { KqkdTab } from "./kqkd/KqkdTab";
-import { keHoachService } from "@/services/keHoachService";
+import {
+  keHoachService,
+  type LoaiKeHoach,
+} from "@/services/keHoachService";
 
 const { Text } = Typography;
 
@@ -24,7 +27,9 @@ const TAB_OPTIONS = [
   { label: "Chi tiết", value: "chi-tiet" },
 ];
 
-const KeHoachTabsPage: React.FC = () => {
+const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
+  loaiKeHoach,
+}) => {
   const [activeTab, setActiveTab] = useState("ban-hang");
   const [nam, setNam] = useState(() => new Date().getFullYear());
   // Gộp nhiều phiên bản kế hoạch vào một bảng KQKD là cộng trùng — cho chọn được.
@@ -33,10 +38,10 @@ const KeHoachTabsPage: React.FC = () => {
 
   useEffect(() => {
     keHoachService
-      .getPhienBanOptions("KE_HOACH")
+      .getPhienBanOptions(loaiKeHoach)
       .then(setPhienBanList)
       .catch(() => setPhienBanList([]));
-  }, []);
+  }, [loaiKeHoach]);
 
   const namOptions = useMemo(() => {
     const nayNay = new Date().getFullYear();
@@ -62,7 +67,7 @@ const KeHoachTabsPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <CheckCircleOutlined className="text-primary" />
           <Text strong className="text-sm sm:text-base">
-            Kế hoạch
+            {loaiKeHoach === "DU_BAO" ? "Dự báo" : "Kế hoạch"}
           </Text>
         </div>
         <ConfigProvider
@@ -112,10 +117,18 @@ const KeHoachTabsPage: React.FC = () => {
       </div>
 
       <div className="flex flex-col flex-1 min-h-0 pt-2">
-        {activeTab === "ban-hang" && <BanHangTab nam={nam} />}
-        {activeTab === "nhan-su" && <NhanSuTab nam={nam} />}
+        {activeTab === "ban-hang" && (
+          <BanHangTab nam={nam} loaiKeHoach={loaiKeHoach} />
+        )}
+        {activeTab === "nhan-su" && (
+          <NhanSuTab nam={nam} loaiKeHoach={loaiKeHoach} />
+        )}
         {activeTab === "kqkd" && (
-          <KqkdTab nam={nam} phienBan={phienBan || undefined} />
+          <KqkdTab
+            nam={nam}
+            loaiKeHoach={loaiKeHoach}
+            phienBan={phienBan || undefined}
+          />
         )}
         {activeTab === "dong-tien" && (
           <TabComingSoon tieuDe="Kế hoạch dòng tiền" />
@@ -124,7 +137,7 @@ const KeHoachTabsPage: React.FC = () => {
         {activeTab === "nguon-von" && (
           <TabComingSoon tieuDe="Kế hoạch nguồn vốn" />
         )}
-        {activeTab === "chi-tiet" && <KeHoachPage loaiKeHoach="KE_HOACH" />}
+        {activeTab === "chi-tiet" && <KeHoachPage loaiKeHoach={loaiKeHoach} />}
       </div>
     </div>
   );
