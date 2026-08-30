@@ -16,6 +16,7 @@ import { KqkdTab } from "./kqkd/KqkdTab";
 import { DongTienTab } from "./dong-tien/DongTienTab";
 import { TaiSanTab } from "./tai-san/TaiSanTab";
 import { NguonVonTab } from "./nguon-von/NguonVonTab";
+import { Pnl3LopTab } from "./pnl-3-lop/Pnl3LopTab";
 import { DinhKhoanModal } from "./DinhKhoanModal";
 import {
   keHoachService,
@@ -27,11 +28,12 @@ const { Text } = Typography;
 /** Chuỗi rỗng = không lọc phiên bản. Không dùng undefined: antd hiện ô trống, mất nhãn. */
 const TAT_CA_PHIEN_BAN = "";
 
-/** Sáu tab đầu là sáu sheet của file thiết kế; "Chi tiết" là lưới bút toán cũ. */
+/** Sáu sheet của file thiết kế, hai báo cáo P&L, và lưới bút toán "Chi tiết". */
 const TAB_OPTIONS = [
   { label: "Bán hàng", value: "ban-hang" },
   { label: "Nhân sự", value: "nhan-su" },
-  { label: "KQKD", value: "kqkd" },
+  { label: "P&L Kế hoạch", value: "kqkd" },
+  { label: "P&L 3 lớp", value: "pnl-3-lop" },
   { label: "Dòng tiền", value: "dong-tien" },
   { label: "Tài sản", value: "tai-san" },
   { label: "Nguồn vốn", value: "nguon-von" },
@@ -114,7 +116,7 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
               Định khoản
             </Button>
           </Tooltip>
-          {activeTab === "kqkd" && (
+          {(activeTab === "kqkd" || activeTab === "pnl-3-lop") && (
             <Select
               value={phienBan}
               onChange={setPhienBan}
@@ -150,6 +152,9 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
             loaiKeHoach={loaiKeHoach}
             phienBan={phienBan || undefined}
           />
+        )}
+        {activeTab === "pnl-3-lop" && (
+          <Pnl3LopTab nam={nam} phienBan={phienBan || undefined} />
         )}
         {activeTab === "dong-tien" && (
           <DongTienTab nam={nam} loaiKeHoach={loaiKeHoach} />
