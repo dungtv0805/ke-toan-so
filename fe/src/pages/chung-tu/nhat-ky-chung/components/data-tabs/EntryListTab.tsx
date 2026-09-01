@@ -929,6 +929,12 @@ export function EntryListTab() {
   // "Biên tập hồ sơ" trườn sang chỗ khác, "Ngày PS CT" và "Kiểm soát" đứng lệch hẳn
   // so với cột dữ liệu bên dưới. Kết luận: bảng này (ô tick chọn dòng + cột co giãn
   // được + cuộn cả hai chiều + "Thao tác" ghim phải) KHÔNG chịu thêm cột ghim trái.
+  //
+  // NẾU LÀM LẠI: bảng Kế hoạch đã ghim được (2026-09-01) nhờ giữ bề rộng trong
+  // STATE REACT (`useCotCoGian`) thay vì sửa thẳng DOM như hook này — antd cần
+  // render lại mới tính lại `left` của cột sticky. Có trang nghiệm thu sẵn ở
+  // `ghim-cot.harness.html`; nhớ antd 6 đặt lớp `ant-table-cell-fix-start`,
+  // KHÔNG phải `-fix-left`.
   const columns = useMemo(() => {
     const base = getColumnDefinitions(
       taiKhoanOptions,
@@ -1081,6 +1087,9 @@ export function EntryListTab() {
             onClick={() =>
               handler.executeEvent("printList", {
                 tenCongTy: currentTenant?.tenantName,
+                // Bản in bám theo bộ chọn cột: cột nào đang hiện thì in cột đó,
+                // đúng thứ tự trên bảng.
+                cot: visibleColumns.map((c) => String(c.key ?? "")),
               })
             }
           >

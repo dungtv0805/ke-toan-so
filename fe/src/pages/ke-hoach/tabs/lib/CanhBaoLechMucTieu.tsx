@@ -11,6 +11,10 @@ import { tien } from "./cotChung";
  *
  * Phần lệch của từng dòng nằm ở cột CHÊNH LỆCH; ở đây chỉ nói tổng, để người
  * dùng biết còn bao nhiêu phải chia trước khi cuộn xuống tìm dòng đỏ.
+ *
+ * Gói gọn trong MỘT dòng (`banner`, không dùng `description`): bảng kế hoạch
+ * cuộn cả hai chiều, mỗi dòng chiều cao nhường cho cảnh báo là một dòng dữ
+ * liệu người dùng không nhìn thấy.
  */
 export const CanhBaoLechMucTieu: React.FC<{
   rows: HangBang<unknown>[];
@@ -23,25 +27,25 @@ export const CanhBaoLechMucTieu: React.FC<{
     <Alert
       type="error"
       showIcon
-      className="mb-2"
-      message="Kế hoạch chi tiết chưa khớp với mục tiêu năm. Vui lòng kiểm tra các dòng được cảnh báo bên dưới."
-      description={
+      banner
+      className="kh-canh-bao"
+      message={
         <span className="text-xs">
+          Kế hoạch chưa khớp mục tiêu năm
           {lech.thieu > 0 && (
             <>
-              Còn cần phân bổ:{" "}
+              {" — còn cần phân bổ "}
               <b className="text-red-600">{tien(lech.thieu)} ₫</b>
             </>
           )}
-          {lech.thieu > 0 && lech.vuot > 0 && " · "}
           {lech.vuot > 0 && (
             <>
-              Phân bổ vượt:{" "}
+              {lech.thieu > 0 ? ", " : " — "}
+              {"phân bổ vượt "}
               <b className="text-green-600">{tien(lech.vuot)} ₫</b>
             </>
           )}
-          {" · "}
-          {lech.soDongLech} dòng lệch
+          {` · ${lech.soDongLech} dòng lệch`}
         </span>
       }
     />

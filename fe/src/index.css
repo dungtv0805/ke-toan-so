@@ -2794,3 +2794,130 @@ body.col-resizing .ant-table * {
 .dark .kh-bang .excel-cell-input.ant-input {
   background: hsl(var(--background)) !important;
 }
+
+/* ===== Cảnh báo lệch mục tiêu — đúng MỘT dòng =====
+   Bảng kế hoạch cuộn cả hai chiều: mỗi dòng chiều cao nhường cho cảnh báo là
+   một dòng dữ liệu người dùng không nhìn thấy. Nén hết mức nhưng vẫn đỏ để đập
+   vào mắt. */
+.kh-canh-bao.ant-alert {
+  padding: 3px 10px;
+  margin-bottom: 4px;
+  line-height: 1.5;
+  align-items: center;
+}
+
+.kh-canh-bao.ant-alert .ant-alert-icon {
+  margin-inline-end: 6px;
+  font-size: 13px;
+}
+
+.kh-canh-bao.ant-alert .ant-alert-content {
+  /* Một dòng thật: dài quá thì cắt bằng dấu ba chấm chứ không xuống dòng. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== Cột ghim của bảng kế hoạch =====
+   Ô ghim phải ĐỤC — nền trong suốt thì phần bảng cuộn bên dưới hiện xuyên qua,
+   chữ chồng lên nhau.
+
+   PHẢI KHAI CẢ HAI BỘ TÊN LỚP: antd 5 dùng `...-fix-left`, antd 6 đổi sang
+   `...-fix-start`. Dự án đang ở antd 6 nên chỉ khai bộ cũ là quy tắc khớp ĐÚNG
+   KHÔNG Ô NÀO — lỗi này đã một lần lọt qua vì trông vẫn "gần đúng" trên ảnh
+   chụp. Giữ cả hai để nâng/hạ phiên bản antd không âm thầm làm hỏng lại. */
+.kh-bang .ant-table-cell-fix-left,
+.kh-bang .ant-table-cell-fix-start {
+  background: hsl(var(--background));
+}
+
+/* Tiêu đề cột ghim giữ nguyên màu theo cấp (kh-cot-*), chỉ cần đục nền. */
+.kh-bang .ant-table-thead > tr > th.ant-table-cell-fix-left,
+.kh-bang .ant-table-thead > tr > th.ant-table-cell-fix-start {
+  background-color: hsl(var(--background));
+}
+
+/* Nền theo CẤP HÀNG phải thắng nền ô ghim ở trên, nếu không hàng TỔNG / hàng
+   nhóm / hàng gõ dở mất màu ngay ở tám cột trái. */
+.kh-bang .kh-hang-tong > td.ant-table-cell-fix-start,
+.kh-bang .kh-hang-tong > td.ant-table-cell-fix-left {
+  background: hsl(var(--primary) / 0.1) !important;
+}
+
+.kh-bang .kh-hang-nhom > td.ant-table-cell-fix-start,
+.kh-bang .kh-hang-nhom > td.ant-table-cell-fix-left {
+  background: hsl(var(--muted)) !important;
+}
+
+.kh-bang .kh-hang-tong-hop > td.ant-table-cell-fix-start,
+.kh-bang .kh-hang-tong-hop > td.ant-table-cell-fix-left {
+  background: hsl(var(--primary) / 0.16) !important;
+}
+
+.kh-bang .kh-hang-nhap > td.ant-table-cell-fix-start,
+.kh-bang .kh-hang-nhap > td.ant-table-cell-fix-left {
+  background: #fffbe6 !important;
+}
+
+/* Hàng chẵn của .excel-table có nền riêng — ô ghim phải theo cho khớp, không
+   thì cột trái trắng còn phần cuộn xám, nhìn như hai bảng khác nhau. */
+.kh-bang .ant-table-tbody > tr:nth-child(even) > td.ant-table-cell-fix-start,
+.kh-bang .ant-table-tbody > tr:nth-child(even) > td.ant-table-cell-fix-left {
+  background-color: #fafafa;
+}
+
+.kh-bang .ant-table-tbody > tr:hover > td.ant-table-cell-fix-start,
+.kh-bang .ant-table-tbody > tr:hover > td.ant-table-cell-fix-left {
+  background-color: var(--xl-green-tint) !important;
+}
+
+/* Vạch phân cách giữa vùng ghim và vùng cuộn — không có nó thì người đọc không
+   nhận ra bảng có hai phần, tưởng bảng bị lỗi khi kéo ngang. */
+.kh-bang .ant-table-cell-fix-left-last::after,
+.kh-bang .ant-table-cell-fix-start-last::after {
+  border-inline-end: 2px solid hsl(var(--primary) / 0.35) !important;
+}
+
+/* Ô tiêu đề phải là gốc toạ độ cho tay kéo — antd không tự đặt relative. */
+.kh-bang .ant-table-thead > tr > th {
+  position: relative;
+}
+
+.kh-bang .kh-o-tieu-de {
+  display: inline-block;
+  max-width: 100%;
+}
+
+/* Tay kéo giãn cột — bám mép phải ô tiêu đề, chỉ hiện rõ khi rê chuột tới. */
+.kh-bang .kh-tay-keo {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: -4px;
+  width: 8px;
+  cursor: col-resize;
+  z-index: 2;
+  touch-action: none;
+  user-select: none;
+}
+
+.kh-bang .kh-tay-keo::after {
+  content: "";
+  position: absolute;
+  inset-block: 4px;
+  inset-inline-start: 3px;
+  width: 2px;
+  background: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.kh-bang .kh-tay-keo:hover::after,
+.kh-bang .kh-tay-keo.dang-keo::after {
+  background: var(--xl-green, hsl(var(--primary)));
+}
+
+/* Khi đang kéo: khoá con trỏ toàn trang, nếu không rê nhanh ra ngoài ô tiêu đề
+   là con trỏ nhảy về mũi tên và người dùng tưởng đã nhả chuột. */
+body.kh-dang-keo-cot {
+  cursor: col-resize !important;
+  user-select: none !important;
+}

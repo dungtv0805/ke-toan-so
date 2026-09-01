@@ -94,25 +94,32 @@ interface CotSoThoiGianOptions<T> {
 }
 
 /**
- * Hai cột tổng hợp cấp năm, luôn đứng TRƯỚC nhóm Quý (thứ tự tài liệu:
- * CẢ NĂM → Q1..Q4 → T1..T12). Cả hai đều tự tính, không nhập được.
+ * Cột CẢ NĂM — cột cuối cùng của vùng GHIM. Tự tính, không nhập được.
+ *
+ * Tách riêng khỏi CHÊNH LỆCH vì ranh giới ghim nằm đúng giữa hai cột này: khi
+ * kéo ngang xem từng tháng, người dùng cần CẢ NĂM luôn đứng yên để đối chiếu,
+ * còn CHÊNH LỆCH thì không.
  */
-export function cotCaNamVaChenhLech<
-  T extends HangBang<unknown>,
->(): ColumnsType<T> {
+export function cotCaNam<T extends HangBang<unknown>>(): ColumnsType<T> {
   return [
     {
       title: "CẢ NĂM",
       key: "caNam",
-      width: 150,
+      width: 140,
       align: "right",
       ...capCot(CAP_NAM),
       render: (_: unknown, row: T) => soCell(row.loai, tien(row.namTheoThang)),
     },
+  ];
+}
+
+/** Cột CHÊNH LỆCH — cột đầu tiên của vùng CUỘN. */
+export function cotChenhLech<T extends HangBang<unknown>>(): ColumnsType<T> {
+  return [
     {
       title: "CHÊNH LỆCH",
       key: "chenhLech",
-      width: 150,
+      width: 140,
       align: "right",
       ...capCot(CAP_NAM),
       render: (_: unknown, row: T) => {
@@ -126,6 +133,30 @@ export function cotCaNamVaChenhLech<
       },
     },
   ];
+}
+
+/**
+ * Hai cột tổng hợp cấp năm, luôn đứng TRƯỚC nhóm Quý (thứ tự tài liệu:
+ * CẢ NĂM → Q1..Q4 → T1..T12). Cả hai đều tự tính, không nhập được.
+ */
+export function cotCaNamVaChenhLech<
+  T extends HangBang<unknown>,
+>(): ColumnsType<T> {
+  return [...cotCaNam<T>(), ...cotChenhLech<T>()];
+}
+
+/**
+ * Ghim các cột đầu bảng vào mép trái.
+ *
+ * Chỉ dùng cho khối cột LIỀN NHAU tính từ cột đầu tiên — antd tính offset của
+ * cột sticky bằng cách cộng dồn bề rộng các cột ghim đứng trước, ghim cách
+ * quãng là lệch.
+ *
+ * Bề rộng các cột này do `useCotCoGian` giữ trong state React chứ không sửa
+ * thẳng DOM — đó là điều kiện bắt buộc để ghim và co giãn sống chung được.
+ */
+export function ghimTrai<T>(cols: ColumnsType<T>): ColumnsType<T> {
+  return cols.map((c) => ({ ...c, fixed: "left" as const }));
 }
 
 /**
