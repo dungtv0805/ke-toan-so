@@ -19,6 +19,7 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
+import { useCotCoGian } from "../../hooks/useCotCoGian";
 import {
   CHI_PHI_NHAN_SU_COLS,
   chiPhiRong,
@@ -36,7 +37,9 @@ import { demThayDoi, gopNhap, type DongHienThi } from "../lib/nhapBang";
 import {
   CAP_CHINH,
   capCot,
-  cotCaNamVaChenhLech,
+  cotCaNam,
+  cotChenhLech,
+  ghimTrai,
   cotQuyVaThang,
   laHangGop,
   numberInputProps,
@@ -64,6 +67,9 @@ const congChiPhi = (a: ChiPhiNhanSu, b: ChiPhiNhanSu): ChiPhiNhanSu => {
   for (const { key } of CHI_PHI_NHAN_SU_COLS) kq[key] = a[key] + b[key];
   return kq;
 };
+
+/** Bề rộng cột người dùng tự kéo — lưu theo KEY cột, xem `useCotCoGian`. */
+const KHOA_RONG_COT = "kh-rong-cot-nhan-su";
 
 export const NhanSuTable: React.FC = () => {
   const handler = useNhanSuHandler();
@@ -180,148 +186,152 @@ export const NhanSuTable: React.FC = () => {
     },
   }));
 
-  const columns: ColumnsType<Hang> = [
-    {
-      title: "Mã vị trí",
-      // Rộng 300: tên bộ phận đầy đủ ("DV - Phòng dịch vụ") không bị cắt còn
-      // "DV - Ph...", vì đọc mỗi mã không đủ để biết đang xếp dòng vào đâu.
-      key: "maViTri",
-      width: 300,
-      onCell: onCellNhan,
-      ...capCot(CAP_CHINH),
-      render: (_: unknown, row: Hang) => {
-        if (row.loai === "tong") {
-          return <span className="font-semibold">{row.nhan}</span>;
-        }
-        if (row.loai === "nhom") {
+  // Vùng GHIM = các cột nhãn + CẢ NĂM; CHÊNH LỆCH trở đi thì cuộn ngang.
+  const cotGoc: ColumnsType<Hang> = [
+    ...ghimTrai<Hang>([
+      {
+        title: "Mã vị trí",
+        // Rộng 300: tên bộ phận đầy đủ ("DV - Phòng dịch vụ") không bị cắt còn
+        // "DV - Ph...", vì đọc mỗi mã không đủ để biết đang xếp dòng vào đâu.
+        key: "maViTri",
+        width: 200,
+        onCell: onCellNhan,
+        ...capCot(CAP_CHINH),
+        render: (_: unknown, row: Hang) => {
+          if (row.loai === "tong") {
+            return <span className="font-semibold">{row.nhan}</span>;
+          }
+          if (row.loai === "nhom") {
+            return (
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold">{row.nhan}</span>
+                {row.nhomKey !== CHUA_CHON && (
+                  <Tooltip title="Thêm chức vụ vào bộ phận này">
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<PlusOutlined />}
+                      onClick={() =>
+                        handler.executeEvent("themDong", {
+                          boPhanId: row.nhomKey,
+                        })
+                      }
+                    />
+                  </Tooltip>
+                )}
+              </div>
+            );
+          }
           return (
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-semibold">{row.nhan}</span>
-              {row.nhomKey !== CHUA_CHON && (
-                <Tooltip title="Thêm chức vụ vào bộ phận này">
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<PlusOutlined />}
-                    onClick={() =>
-                      handler.executeEvent("themDong", {
-                        boPhanId: row.nhomKey,
-                      })
-                    }
-                  />
-                </Tooltip>
-              )}
-            </div>
+            <Space.Compact className="w-full">
+              <Select
+                size="small"
+                style={{ width: "65%" }}
+                placeholder="Bộ phận"
+                showSearch
+                optionFilterProp="label"
+                options={boPhanOptions}
+                value={row.dong!.val.boPhanId || undefined}
+                onChange={(v) =>
+                  handler.executeEvent("suaO", {
+                    id: row.dong!.id,
+                    patch: { boPhanId: v },
+                  })
+                }
+              />
+              <Input
+                size="small"
+                style={{ width: "35%" }}
+                placeholder="Mã vị trí"
+                value={row.dong!.val.maViTri}
+                onChange={(e) =>
+                  handler.executeEvent("suaO", {
+                    id: row.dong!.id,
+                    patch: { maViTri: e.target.value },
+                  })
+                }
+              />
+            </Space.Compact>
           );
-        }
-        return (
-          <Space.Compact className="w-full">
-            <Select
-              size="small"
-              style={{ width: "65%" }}
-              placeholder="Bộ phận"
-              showSearch
-              optionFilterProp="label"
-              options={boPhanOptions}
-              value={row.dong!.val.boPhanId || undefined}
-              onChange={(v) =>
-                handler.executeEvent("suaO", {
-                  id: row.dong!.id,
-                  patch: { boPhanId: v },
-                })
-              }
-            />
+        },
+      },
+      {
+        title: "Tên chức vụ",
+        key: "tenChucVu",
+        width: 160,
+        onCell: onCellNhanPhu,
+        ...capCot(CAP_CHINH),
+        render: (_: unknown, row: Hang) => {
+          if (laHangGop(row.loai)) return null;
+          return (
             <Input
               size="small"
-              style={{ width: "35%" }}
-              placeholder="Mã vị trí"
-              value={row.dong!.val.maViTri}
+              variant="borderless"
+              className="excel-cell-input"
+              placeholder="Tên chức vụ"
+              value={row.dong!.val.tenChucVu}
               onChange={(e) =>
                 handler.executeEvent("suaO", {
                   id: row.dong!.id,
-                  patch: { maViTri: e.target.value },
+                  patch: { tenChucVu: e.target.value },
                 })
               }
             />
-          </Space.Compact>
-        );
+          );
+        },
       },
-    },
-    {
-      title: "Tên chức vụ",
-      key: "tenChucVu",
-      width: 190,
-      onCell: onCellNhanPhu,
-      ...capCot(CAP_CHINH),
-      render: (_: unknown, row: Hang) => {
-        if (laHangGop(row.loai)) return null;
-        return (
-          <Input
-            size="small"
-            variant="borderless"
-            className="excel-cell-input"
-            placeholder="Tên chức vụ"
-            value={row.dong!.val.tenChucVu}
-            onChange={(e) =>
-              handler.executeEvent("suaO", {
-                id: row.dong!.id,
-                patch: { tenChucVu: e.target.value },
-              })
-            }
-          />
-        );
+      {
+        title: "Diễn giải",
+        key: "ghiChu",
+        width: 170,
+        ...capCot(CAP_CHINH),
+        render: (_: unknown, row: Hang) => {
+          if (laHangGop(row.loai)) return null;
+          return (
+            <Input
+              size="small"
+              variant="borderless"
+              className="excel-cell-input"
+              placeholder="Cơ sở hình thành dòng kế hoạch"
+              value={row.dong!.val.ghiChu}
+              onChange={(e) =>
+                handler.executeEvent("suaO", {
+                  id: row.dong!.id,
+                  patch: { ghiChu: e.target.value },
+                })
+              }
+            />
+          );
+        },
       },
-    },
-    {
-      title: "Diễn giải",
-      key: "ghiChu",
-      width: 260,
-      ...capCot(CAP_CHINH),
-      render: (_: unknown, row: Hang) => {
-        if (laHangGop(row.loai)) return null;
-        return (
-          <Input
-            size="small"
-            variant="borderless"
-            className="excel-cell-input"
-            placeholder="Cơ sở hình thành dòng kế hoạch"
-            value={row.dong!.val.ghiChu}
-            onChange={(e) =>
-              handler.executeEvent("suaO", {
-                id: row.dong!.id,
-                patch: { ghiChu: e.target.value },
-              })
-            }
-          />
-        );
+      {
+        title: "Thành tiền",
+        key: "thanhTien",
+        width: 160,
+        align: "right",
+        ...capCot(CAP_CHINH),
+        render: (_: unknown, row: Hang) => (
+          <span className={laHangGop(row.loai) ? "font-semibold" : undefined}>
+            {tien(row.namKhaiBao)}
+          </span>
+        ),
       },
-    },
-    {
-      title: "Thành tiền",
-      key: "thanhTien",
-      width: 160,
-      align: "right",
-      ...capCot(CAP_CHINH),
-      render: (_: unknown, row: Hang) => (
-        <span className={laHangGop(row.loai) ? "font-semibold" : undefined}>
-          {tien(row.namKhaiBao)}
-        </span>
-      ),
-    },
-    {
-      title: "%",
-      key: "phanTram",
-      width: 80,
-      align: "right",
-      ...capCot(CAP_CHINH),
-      render: (_: unknown, row: Hang) => (
-        <span className={laHangGop(row.loai) ? "font-semibold" : undefined}>
-          {phanTramText(row.phanTram)}
-        </span>
-      ),
-    },
-    ...cotChiPhi,
-    ...cotCaNamVaChenhLech<Hang>(),
+      {
+        title: "%",
+        key: "phanTram",
+        width: 80,
+        align: "right",
+        ...capCot(CAP_CHINH),
+        render: (_: unknown, row: Hang) => (
+          <span className={laHangGop(row.loai) ? "font-semibold" : undefined}>
+            {phanTramText(row.phanTram)}
+          </span>
+        ),
+      },
+      ...cotChiPhi,
+      ...cotCaNam<Hang>(),
+    ]),
+    ...cotChenhLech<Hang>(),
     ...cotQuyVaThang<Hang>({
       suaDuoc,
       doiThang: (row, chiSo, giaTri) =>
@@ -364,6 +374,12 @@ export const NhanSuTable: React.FC = () => {
       },
     },
   ];
+
+  /**
+   * Bề rộng nằm trong state React (không sửa thẳng DOM) — nhờ vậy antd
+   * tính lại được offset của các cột ghim mỗi lần kéo giãn.
+   */
+  const columns = useCotCoGian(KHOA_RONG_COT, cotGoc);
 
   return (
     <div className="excel-container">

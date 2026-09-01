@@ -86,6 +86,7 @@ import {
   BaoCaoHopDongPage,
   BaoCaoDoanhThuPage,
   PnlKhongKhauHaoPage,
+  Pnl3LopPage,
   SoThuTienPage,
   SoHoaDonBanRaPage,
   BangKeMuaVaoPage,
@@ -548,6 +549,16 @@ const App = () => (
                     element={
                       <ProtectedRoute requiredPermission="/bao-cao/pnl-khong-khau-hao:xem">
                         <PnlKhongKhauHaoPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  {/* Bảng so sánh 3 lớp KH-DB-TH: là BÁO CÁO, không phải tab
+                      trong trang Kế hoạch/Dự báo. */}
+                  <Route
+                    path="pnl-3-lop"
+                    element={
+                      <ProtectedRoute requiredPermission="/bao-cao/pnl-3-lop:xem">
+                        <Pnl3LopPage />
                       </ProtectedRoute>
                     }
                   />

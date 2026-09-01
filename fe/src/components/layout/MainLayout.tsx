@@ -163,6 +163,7 @@ const existingRoutes = new Set([
   "/bao-cao/tai-chinh",
   "/bao-cao/pnl",
   "/bao-cao/pnl-khong-khau-hao",
+  "/bao-cao/pnl-3-lop",
   "/bao-cao/so-cai",
   "/bao-cao/so-chi-tiet-tai-khoan",
   "/bao-cao/bang-can-doi",
@@ -282,6 +283,7 @@ const keToAnMenuItems: MenuItem[] = [
     getMenuItem("Tổng hợp công nợ", "/bao-cao/bang-tong-hop", <TableOutlined />),
     getMenuItem("Báo cáo doanh thu", "/bao-cao/doanh-thu", <RiseOutlined />),
     getMenuItem("P&L không khấu hao", "/bao-cao/pnl-khong-khau-hao", <PieChartOutlined />),
+    getMenuItem("P&L so sánh KH-DB-TH", "/bao-cao/pnl-3-lop", <PieChartOutlined />),
   ]),
 
   // 4 trang thuế nằm trên thanh ngang của chính các trang thuế (xem THUE_NAV);

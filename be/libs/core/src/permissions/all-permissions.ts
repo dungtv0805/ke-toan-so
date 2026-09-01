@@ -19,6 +19,7 @@ export const PERMISSION_MODULES = [
   '/bao-cao/hop-dong',
   '/bao-cao/doanh-thu',
   '/bao-cao/pnl-khong-khau-hao',
+  '/bao-cao/pnl-3-lop',
   '/thue/bang-ke-mua-vao',
   '/thue/bang-ke-ban-ra',
   '/thue/tong-hop',

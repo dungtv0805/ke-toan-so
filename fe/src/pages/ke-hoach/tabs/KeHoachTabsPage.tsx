@@ -16,7 +16,6 @@ import { KqkdTab } from "./kqkd/KqkdTab";
 import { DongTienTab } from "./dong-tien/DongTienTab";
 import { TaiSanTab } from "./tai-san/TaiSanTab";
 import { NguonVonTab } from "./nguon-von/NguonVonTab";
-import { Pnl3LopTab } from "./pnl-3-lop/Pnl3LopTab";
 import { DinhKhoanModal } from "./DinhKhoanModal";
 import {
   keHoachService,
@@ -28,12 +27,20 @@ const { Text } = Typography;
 /** Chuỗi rỗng = không lọc phiên bản. Không dùng undefined: antd hiện ô trống, mất nhãn. */
 const TAT_CA_PHIEN_BAN = "";
 
-/** Sáu sheet của file thiết kế, hai báo cáo P&L, và lưới bút toán "Chi tiết". */
-const TAB_OPTIONS = [
+/**
+ * Sáu sheet của file thiết kế, một báo cáo P&L, và lưới bút toán "Chi tiết".
+ *
+ * Nhãn tab P&L đi theo `loaiKeHoach`: mỗi trang chỉ có P&L CỦA CHÍNH NÓ. Bảng
+ * so sánh ba lớp KH–DB–TH nằm ở menu Báo cáo (`/bao-cao/pnl-3-lop`) — đứng
+ * trong trang Kế hoạch thì chưa thể có số Thực hiện lẫn Dự báo để mà so.
+ */
+const tabOptions = (loaiKeHoach: LoaiKeHoach) => [
   { label: "Bán hàng", value: "ban-hang" },
   { label: "Nhân sự", value: "nhan-su" },
-  { label: "P&L Kế hoạch", value: "kqkd" },
-  { label: "P&L 3 lớp", value: "pnl-3-lop" },
+  {
+    label: loaiKeHoach === "DU_BAO" ? "P&L Dự báo" : "P&L Kế hoạch",
+    value: "kqkd",
+  },
   { label: "Dòng tiền", value: "dong-tien" },
   { label: "Tài sản", value: "tai-san" },
   { label: "Nguồn vốn", value: "nguon-von" },
@@ -101,7 +108,7 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
           <Segmented
             value={activeTab}
             onChange={(v) => setActiveTab(v as string)}
-            options={TAB_OPTIONS}
+            options={tabOptions(loaiKeHoach)}
             size="large"
             className="font-semibold"
           />
@@ -116,7 +123,7 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
               Định khoản
             </Button>
           </Tooltip>
-          {(activeTab === "kqkd" || activeTab === "pnl-3-lop") && (
+          {activeTab === "kqkd" && (
             <Select
               value={phienBan}
               onChange={setPhienBan}
@@ -152,9 +159,6 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
             loaiKeHoach={loaiKeHoach}
             phienBan={phienBan || undefined}
           />
-        )}
-        {activeTab === "pnl-3-lop" && (
-          <Pnl3LopTab nam={nam} phienBan={phienBan || undefined} />
         )}
         {activeTab === "dong-tien" && (
           <DongTienTab nam={nam} loaiKeHoach={loaiKeHoach} />

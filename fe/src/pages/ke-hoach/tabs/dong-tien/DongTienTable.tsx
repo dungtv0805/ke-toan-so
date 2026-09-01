@@ -19,8 +19,13 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
+import { useCotCoGian } from "../../hooks/useCotCoGian";
 import { CHIEU_OPTIONS } from "@/services/keHoachDongTienService";
 import { sapXepTheoNhan } from "@/lib/sapXep";
+import {
+  nhomCuaMuc,
+  nhomOptions as dungNhomOptions,
+} from "../lib/nhomTuDanhMuc";
 import { dungCayBang, type HangBang, type MoTaHang } from "../lib/tongHop";
 import {
   quyTuSoDuCuoi,
@@ -31,7 +36,9 @@ import { demThayDoi, gopNhap, type DongHienThi } from "../lib/nhapBang";
 import {
   CAP_CHINH,
   capCot,
-  cotCaNamVaChenhLech,
+  cotCaNam,
+  cotChenhLech,
+  ghimTrai,
   cotQuyVaThang,
   laHangGop,
   numberInputProps,
@@ -42,11 +49,11 @@ import {
   tien,
 } from "../lib/cotChung";
 import { CanhBaoLechMucTieu } from "../lib/CanhBaoLechMucTieu";
+import { useDongTienHandler, useDongTienState } from "./DongTienHandlerContext";
 import {
-  useDongTienHandler,
-  useDongTienState,
-} from "./DongTienHandlerContext";
-import { valTuDong, type DongTienVal } from "./handler/sub-handler/init/init.state";
+  valTuDong,
+  type DongTienVal,
+} from "./handler/sub-handler/init/init.state";
 
 /** Nhóm ảo gom các dòng mới chưa chọn nhóm. */
 const CHUA_CHON = "";
@@ -81,6 +88,9 @@ const hangTongHop = (
   phanTram: 0,
   lech: false,
 });
+
+/** Bề rộng cột người dùng tự kéo — lưu theo KEY cột, xem `useCotCoGian`. */
+const KHOA_RONG_COT = "kh-rong-cot-dong-tien";
 
 export const DongTienTable: React.FC = () => {
   const handler = useDongTienHandler();
@@ -207,15 +217,14 @@ export const DongTienTable: React.FC = () => {
     ];
   }, [hienThi, doc, tongHop]);
 
+  /**
+   * Danh mục Nhóm dòng tiền của nhiều công ty còn rỗng — chỉ đọc mỗi nó thì ô
+   * "Chọn nhóm" hiện Trống và người dùng tắc hẳn. Gộp thêm mã nhóm có thật
+   * trên danh mục Dòng tiền.
+   */
   const nhomOptions = useMemo(
-    () =>
-      sapXepTheoNhan(
-        nhomDongTienList.map((n) => ({
-          value: n.ma,
-          label: `${n.ma} - ${n.ten}`,
-        })),
-      ),
-    [nhomDongTienList],
+    () => dungNhomOptions(nhomDongTienList, dongTienList),
+    [nhomDongTienList, dongTienList],
   );
 
   /** `DongTien.nhom` lưu MÃ nhóm, không lưu id — lọc theo mã. */
@@ -228,173 +237,183 @@ export const DongTienTable: React.FC = () => {
 
   const suaDuoc = (row: Hang) => !laHangGop(row.loai);
 
-  const columns: ColumnsType<Hang> = [
-    {
-      title: "Mã",
-      key: "ma",
-      width: 220,
-      onCell: onCellNhan,
-      ...capCot(CAP_CHINH),
-      render: (_: unknown, row: Hang) => {
-        if (row.tongHop) {
-          return <span className="font-semibold">{row.nhan}</span>;
-        }
-        if (row.loai === "nhom") {
+  // Vùng GHIM = các cột nhãn + CẢ NĂM; CHÊNH LỆCH trở đi thì cuộn ngang.
+  const cotGoc: ColumnsType<Hang> = [
+    ...ghimTrai<Hang>([
+      {
+        title: "Mã",
+        key: "ma",
+        width: 140,
+        onCell: onCellNhan,
+        ...capCot(CAP_CHINH),
+        render: (_: unknown, row: Hang) => {
+          if (row.tongHop) {
+            return <span className="font-semibold">{row.nhan}</span>;
+          }
+          if (row.loai === "nhom") {
+            return (
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold">{row.nhan}</span>
+                {row.nhomKey !== CHUA_CHON && (
+                  <Tooltip title="Thêm dòng tiền vào nhóm này">
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<PlusOutlined />}
+                      onClick={() =>
+                        handler.executeEvent("themDong", {
+                          nhomMa: row.nhomKey,
+                        })
+                      }
+                    />
+                  </Tooltip>
+                )}
+              </div>
+            );
+          }
+          // Dòng đã lưu không đổi được dòng tiền → hiện mã dạng chữ.
+          if (!row.dong?.tam) {
+            return (
+              <span>
+                {tenDongTien.get(row.dong!.val.dongTienId)?.ma ?? "-"}
+              </span>
+            );
+          }
           return (
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-semibold">{row.nhan}</span>
-              {row.nhomKey !== CHUA_CHON && (
-                <Tooltip title="Thêm dòng tiền vào nhóm này">
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<PlusOutlined />}
-                    onClick={() =>
-                      handler.executeEvent("themDong", { nhomMa: row.nhomKey })
-                    }
-                  />
-                </Tooltip>
-              )}
-            </div>
-          );
-        }
-        // Dòng đã lưu không đổi được dòng tiền → hiện mã dạng chữ.
-        if (!row.dong?.tam) {
-          return (
-            <span>{tenDongTien.get(row.dong!.val.dongTienId)?.ma ?? "-"}</span>
-          );
-        }
-        return (
-          <Select
-            size="small"
-            className="w-full"
-            placeholder="Chọn nhóm"
-            showSearch
-            optionFilterProp="label"
-            options={nhomOptions}
-            value={row.dong.val.nhomMa || undefined}
-            onChange={(v) =>
-              handler.executeEvent("suaO", {
-                id: row.dong!.id,
-                patch: { nhomMa: v },
-              })
-            }
-          />
-        );
-      },
-    },
-    {
-      title: "Tên dòng tiền",
-      key: "ten",
-      width: 240,
-      onCell: onCellNhanPhu,
-      ...capCot(CAP_CHINH),
-      render: (_: unknown, row: Hang) => {
-        if (laHangGop(row.loai)) return null;
-        if (!row.dong?.tam) {
-          return <span className="excel-cell-text">{row.nhan || "-"}</span>;
-        }
-        return (
-          <Select
-            size="small"
-            className="w-full"
-            placeholder="Chọn dòng tiền"
-            showSearch
-            optionFilterProp="label"
-            options={dongTienTheoNhom(row.dong.val.nhomMa)}
-            value={row.dong.val.dongTienId || undefined}
-            onChange={(v) =>
-              handler.executeEvent("suaO", {
-                id: row.dong!.id,
-                patch: { dongTienId: v },
-              })
-            }
-          />
-        );
-      },
-    },
-    {
-      title: "Diễn giải",
-      key: "ghiChu",
-      width: 240,
-      ...capCot(CAP_CHINH),
-      render: (_: unknown, row: Hang) => {
-        if (laHangGop(row.loai)) return null;
-        return (
-          <Input
-            size="small"
-            variant="borderless"
-            className="excel-cell-input"
-            placeholder="Cơ sở hình thành dòng kế hoạch"
-            value={row.dong!.val.ghiChu}
-            onChange={(e) =>
-              handler.executeEvent("suaO", {
-                id: row.dong!.id,
-                patch: { ghiChu: e.target.value },
-              })
-            }
-          />
-        );
-      },
-    },
-    {
-      title: "Thu/Chi",
-      key: "chieu",
-      width: 100,
-      ...capCot(CAP_CHINH),
-      render: (_: unknown, row: Hang) => {
-        if (laHangGop(row.loai)) return null;
-        return (
-          <Select
-            size="small"
-            className="w-full"
-            options={CHIEU_OPTIONS}
-            value={row.dong!.val.chieu}
-            onChange={(v) =>
-              handler.executeEvent("suaO", {
-                id: row.dong!.id,
-                patch: { chieu: v },
-              })
-            }
-          />
-        );
-      },
-    },
-    {
-      title: "Giá trị/Mục tiêu",
-      key: "giaTriMucTieu",
-      width: 160,
-      align: "right",
-      ...capCot(CAP_CHINH),
-      render: (_: unknown, row: Hang) => {
-        if (row.tongHop === "tonDau") {
-          // Ô duy nhất nhập được trong nhóm dòng tổng hợp.
-          return (
-            <InputNumber
-              {...numberInputPropsCoAm}
-              value={tonDauHienThi}
+            <Select
+              size="small"
+              className="w-full"
+              placeholder="Chọn nhóm"
+              showSearch
+              optionFilterProp="label"
+              options={nhomOptions}
+              value={row.dong.val.nhomMa || undefined}
               onChange={(v) =>
-                handler.executeEvent("suaTonDau", { giaTri: Number(v) || 0 })
+                handler.executeEvent("suaO", {
+                  id: row.dong!.id,
+                  patch: { nhomMa: v },
+                })
               }
             />
           );
-        }
-        if (laHangGop(row.loai)) return null;
-        return (
-          <InputNumber
-            {...numberInputProps}
-            value={row.dong!.val.giaTriMucTieu}
-            onChange={(v) =>
-              handler.executeEvent("suaO", {
-                id: row.dong!.id,
-                patch: { giaTriMucTieu: Number(v) || 0 },
-              })
-            }
-          />
-        );
+        },
       },
-    },
-    ...cotCaNamVaChenhLech<Hang>(),
+      {
+        title: "Tên dòng tiền",
+        key: "ten",
+        width: 180,
+        onCell: onCellNhanPhu,
+        ...capCot(CAP_CHINH),
+        render: (_: unknown, row: Hang) => {
+          if (laHangGop(row.loai)) return null;
+          if (!row.dong?.tam) {
+            return <span className="excel-cell-text">{row.nhan || "-"}</span>;
+          }
+          return (
+            <Select
+              size="small"
+              className="w-full"
+              placeholder="Chọn dòng tiền"
+              showSearch
+              optionFilterProp="label"
+              options={dongTienTheoNhom(row.dong.val.nhomMa)}
+              value={row.dong.val.dongTienId || undefined}
+              onChange={(v) =>
+                handler.executeEvent("suaO", {
+                  id: row.dong!.id,
+                  // Tự điền nhóm theo dòng tiền vừa chọn — khỏi phải chọn hai lần,
+                  // và dòng không rơi vào rổ "(Chưa chọn nhóm)" nữa.
+                  patch: { dongTienId: v, nhomMa: nhomCuaMuc(dongTienList, v) },
+                })
+              }
+            />
+          );
+        },
+      },
+      {
+        title: "Diễn giải",
+        key: "ghiChu",
+        width: 180,
+        ...capCot(CAP_CHINH),
+        render: (_: unknown, row: Hang) => {
+          if (laHangGop(row.loai)) return null;
+          return (
+            <Input
+              size="small"
+              variant="borderless"
+              className="excel-cell-input"
+              placeholder="Cơ sở hình thành dòng kế hoạch"
+              value={row.dong!.val.ghiChu}
+              onChange={(e) =>
+                handler.executeEvent("suaO", {
+                  id: row.dong!.id,
+                  patch: { ghiChu: e.target.value },
+                })
+              }
+            />
+          );
+        },
+      },
+      {
+        title: "Thu/Chi",
+        key: "chieu",
+        width: 100,
+        ...capCot(CAP_CHINH),
+        render: (_: unknown, row: Hang) => {
+          if (laHangGop(row.loai)) return null;
+          return (
+            <Select
+              size="small"
+              className="w-full"
+              options={CHIEU_OPTIONS}
+              value={row.dong!.val.chieu}
+              onChange={(v) =>
+                handler.executeEvent("suaO", {
+                  id: row.dong!.id,
+                  patch: { chieu: v },
+                })
+              }
+            />
+          );
+        },
+      },
+      {
+        title: "Giá trị/Mục tiêu",
+        key: "giaTriMucTieu",
+        width: 160,
+        align: "right",
+        ...capCot(CAP_CHINH),
+        render: (_: unknown, row: Hang) => {
+          if (row.tongHop === "tonDau") {
+            // Ô duy nhất nhập được trong nhóm dòng tổng hợp.
+            return (
+              <InputNumber
+                {...numberInputPropsCoAm}
+                value={tonDauHienThi}
+                onChange={(v) =>
+                  handler.executeEvent("suaTonDau", { giaTri: Number(v) || 0 })
+                }
+              />
+            );
+          }
+          if (laHangGop(row.loai)) return null;
+          return (
+            <InputNumber
+              {...numberInputProps}
+              value={row.dong!.val.giaTriMucTieu}
+              onChange={(v) =>
+                handler.executeEvent("suaO", {
+                  id: row.dong!.id,
+                  patch: { giaTriMucTieu: Number(v) || 0 },
+                })
+              }
+            />
+          );
+        },
+      },
+      ...cotCaNam<Hang>(),
+    ]),
+    ...cotChenhLech<Hang>(),
     ...cotQuyVaThang<Hang>({
       suaDuoc,
       doiThang: (row, chiSo, giaTri) =>
@@ -437,6 +456,12 @@ export const DongTienTable: React.FC = () => {
       },
     },
   ];
+
+  /**
+   * Bề rộng nằm trong state React (không sửa thẳng DOM) — nhờ vậy antd
+   * tính lại được offset của các cột ghim mỗi lần kéo giãn.
+   */
+  const columns = useCotCoGian(KHOA_RONG_COT, cotGoc);
 
   return (
     <div className="excel-container">

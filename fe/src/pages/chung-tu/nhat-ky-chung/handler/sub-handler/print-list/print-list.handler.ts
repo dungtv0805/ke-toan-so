@@ -1,6 +1,7 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
 import { message } from "antd";
+import type { NhomKhoanMucItem } from "@/utils/nhomKhoanMuc";
 import { buildFilterParams, fetchAllEntries } from "../../lib/filteredEntries";
 import { printNkcList } from "../../../print/nkcListPrint";
 import "./print-list.event";
@@ -15,7 +16,10 @@ export class PrintListHandler extends CSubHanlder<
 > {
   /** In danh sách bút toán ĐANG LỌC (mọi trang), không chỉ trang hiện tại. */
   @HandlerDecorator("printList")
-  async printList(params: { tenCongTy?: string }): Promise<void> {
+  async printList(params: {
+    tenCongTy?: string;
+    cot?: string[];
+  }): Promise<void> {
     this.setState("printingList", true);
     try {
       const filter = buildFilterParams((k) => this.getState(k));
@@ -30,6 +34,11 @@ export class PrintListHandler extends CSubHanlder<
         tenCongTy: params?.tenCongTy,
         tuNgay: filter.startDate,
         denNgay: filter.endDate,
+        // In ĐÚNG các cột đang hiện trên bảng: chị ẩn/hiện cột nào thì bản in
+        // ra đúng vậy, khỏi phải qua thêm một màn hình chọn cột nữa.
+        cot: params?.cot,
+        nhomKhoanMucList: (this.getState("nhomKhoanMucList") ??
+          []) as NhomKhoanMucItem[],
       });
     } catch (error) {
       console.error("Error printing entry list:", error);
