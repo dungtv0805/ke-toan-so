@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
+import { sapXepTheoNhan } from "@/lib/sapXep";
 import type { KeHoachPayload, LoaiKeHoach } from "@/services/keHoachService";
 import {
   loiCuaDong,
@@ -13,10 +14,45 @@ export interface DongKeHoach extends RowValues {
 }
 
 export interface QuyChuanGoiY {
+  /** Loại giao dịch của Quy chuẩn hạch toán — dùng để lọc bớt danh sách nghiệp vụ. */
+  loaiGiaoDich?: string;
   nghiepVu: string;
   taiKhoanNo: string;
   taiKhoanCo: string;
   moTa?: string;
+}
+
+export interface MucChon {
+  value: string;
+  label: string;
+}
+
+const duyNhatTheoNhan = (ten: string[]): MucChon[] =>
+  sapXepTheoNhan(
+    [...new Set(ten.filter(Boolean))].map((n) => ({ value: n, label: n })),
+  );
+
+/** Danh sách Loại giao dịch rút từ Quy chuẩn hạch toán, mỗi loại đúng một lần. */
+export function giaoDichOptions(quyChuanList: QuyChuanGoiY[]): MucChon[] {
+  return duyNhatTheoNhan(quyChuanList.map((q) => q.loaiGiaoDich ?? ""));
+}
+
+/**
+ * Danh sách Nghiệp vụ cho ô chọn trên từng dòng.
+ *
+ * Bỏ trống `loaiGiaoDich` thì trả về tất cả — người dùng chưa chọn giao dịch
+ * vẫn phải nhập được. Chọn một giao dịch không có nghiệp vụ nào thì trả rỗng
+ * chứ KHÔNG âm thầm trả lại toàn bộ: danh sách rỗng nói đúng sự thật là quy
+ * chuẩn chưa khai nghiệp vụ nào cho giao dịch đó.
+ */
+export function nghiepVuOptions(
+  quyChuanList: QuyChuanGoiY[],
+  loaiGiaoDich: string | undefined,
+): MucChon[] {
+  const trongPhamVi = loaiGiaoDich
+    ? quyChuanList.filter((q) => q.loaiGiaoDich === loaiGiaoDich)
+    : quyChuanList;
+  return duyNhatTheoNhan(trongPhamVi.map((q) => q.nghiepVu));
 }
 
 export function dongMoi(ngayMacDinh?: string): DongKeHoach {

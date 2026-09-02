@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  chieuCuaNhom,
   quyTuSoDuCuoi,
   quyTuSoDuDau,
   tinhTongHopDongTien,
@@ -80,5 +81,43 @@ describe('quý của dòng số dư', () => {
 
   it('tồn cuối quý lấy tháng cuối quý, không cộng dồn', () => {
     expect(quyTuSoDuCuoi(thang)).toEqual([3, 6, 9, 12]);
+  });
+});
+
+describe('chieuCuaNhom', () => {
+  // Chiều tiền là thuộc tính của NHÓM ("Thu từ bán hàng" không bao giờ là chi),
+  // khai một lần ở danh mục thay vì bắt người lập kế hoạch gõ lại mỗi dòng.
+  const nhom = [
+    { ma: 'NT02', chieu: 'THU' as const },
+    { ma: 'NC01', chieu: 'CHI' as const },
+    { ma: 'NX09' }, // nhóm chưa khai chiều
+  ];
+
+  it('lấy chiều đã khai ở nhóm', () => {
+    expect(chieuCuaNhom(nhom, 'NT02', 'CHI')).toBe('THU');
+    expect(chieuCuaNhom(nhom, 'NC01', 'THU')).toBe('CHI');
+  });
+
+  it('nhóm chưa khai chiều thì giữ chiều đã lưu trên dòng kế hoạch cũ', () => {
+    expect(chieuCuaNhom(nhom, 'NX09', 'CHI')).toBe('CHI');
+  });
+
+  it('nhóm không có trong danh mục cũng giữ chiều đã lưu', () => {
+    expect(chieuCuaNhom(nhom, 'KHONG-CO', 'CHI')).toBe('CHI');
+  });
+
+  it('không khai được ở đâu cả thì mặc định THU, không ném lỗi', () => {
+    expect(chieuCuaNhom(nhom, 'NX09', undefined)).toBe('THU');
+  });
+
+  // Khoá tra cứu là MÃ nhóm — `NhomCoChieu` cố ý không có `ten` nên không thể
+  // lỡ tay tra theo tên, mà hai nhóm khác nhau thì hoàn toàn có thể trùng tên.
+  it('tra đúng nhóm theo mã khi có nhiều nhóm chiều khác nhau', () => {
+    const nhieu = [
+      { ma: 'A', chieu: 'THU' as const },
+      { ma: 'B', chieu: 'CHI' as const },
+    ];
+    expect(chieuCuaNhom(nhieu, 'A', undefined)).toBe('THU');
+    expect(chieuCuaNhom(nhieu, 'B', undefined)).toBe('CHI');
   });
 });

@@ -5,12 +5,19 @@ import { BarChart, Bar, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, Respons
 import { formatCurrency, DASH_COLORS, nhanTrieu } from './format';
 import type { DoanhSoChieuRow } from '@/services/doanhSoService';
 
-/** Sáu chiều đặc tả yêu cầu cho tab Bán hàng. */
+/**
+ * Các chiều của tab Bán hàng.
+ *
+ * "Nhóm sản phẩm" đứng ngay sau "Sản phẩm/dịch vụ" vì hai chiều này đọc cùng
+ * một câu hỏi ở hai mức. BE phải tra danh mục mới trả được chiều này (snapshot
+ * sản phẩm trong bút toán không mang nhóm) — xem `gomTheoNhomSanPham`.
+ */
 export const CHIEU_BAN_HANG = [
   { label: 'Nhân viên kinh doanh', value: 'nhan-vien' },
   { label: 'Đội', value: 'doi' },
   { label: 'Bộ phận', value: 'bo-phan' },
   { label: 'Sản phẩm/dịch vụ', value: 'san-pham' },
+  { label: 'Nhóm sản phẩm', value: 'nhom-san-pham' },
   { label: 'Khách hàng', value: 'doi-tuong' },
   { label: 'Hợp đồng', value: 'hop-dong' },
 ];

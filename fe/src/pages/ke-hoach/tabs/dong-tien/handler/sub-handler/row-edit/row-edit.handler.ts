@@ -11,6 +11,7 @@ import type { NhomDongTien } from "@/services/nhomDongTienService";
 import type { DongTien } from "@/types";
 import type { DongTienEvents, DongTienStates } from "../../dong-tien.handler";
 import { laKhacNhau, tamId, type DongNhap } from "../../../../lib/nhapBang";
+import { chieuCuaNhom } from "../../../../lib/dongTienTongHop";
 import { valTuDong, type DongTienVal } from "../init/init.state";
 import "./row-edit.event";
 
@@ -186,9 +187,8 @@ export class DongTienRowEditHandler extends CSubHanlder<
   }
 
   private dungPayload(val: DongTienVal) {
-    const nhom = (this.getState("nhomDongTienList") as NhomDongTien[]).find(
-      (n) => n.ma === val.nhomMa,
-    );
+    const nhomList = this.getState("nhomDongTienList") as NhomDongTien[];
+    const nhom = nhomList.find((n) => n.ma === val.nhomMa);
     const dt = (this.getState("dongTienList") as DongTien[]).find(
       (d) => d.id === val.dongTienId,
     );
@@ -197,7 +197,10 @@ export class DongTienRowEditHandler extends CSubHanlder<
         ? { id: nhom.id, ma: nhom.ma, ten: nhom.ten }
         : undefined,
       dongTien: dt ? { id: dt.id, ma: dt.ma, ten: dt.ten } : undefined,
-      chieu: val.chieu,
+      // Chiều lưu xuống là chiều SUY TỪ NHÓM, không phải giá trị còn sót trên
+      // dòng: bảng đã bỏ cột Thu/Chi nên `val.chieu` chỉ còn là giá trị cũ.
+      // Ghi đúng chiều để dữ liệu đọc ra ngoài bảng này cũng không sai.
+      chieu: chieuCuaNhom(nhomList, val.nhomMa, val.chieu),
       ghiChu: val.ghiChu,
       giaTriMucTieu: val.giaTriMucTieu,
       thang: val.thang,

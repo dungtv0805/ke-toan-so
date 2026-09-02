@@ -9,6 +9,16 @@ export const nhomDongTienImportConfig: ImportDanhMucConfig = {
   columns: [
     { key: "ma", header: "Mã nhóm dòng tiền", required: true, example: "NDT01" },
     { key: "ten", header: "Tên nhóm dòng tiền", required: true, example: "Dòng tiền bán hàng" },
+    {
+      key: "chieu",
+      header: "Thu/Chi",
+      type: "enum",
+      enumValues: [
+        { label: "Thu", value: "THU" },
+        { label: "Chi", value: "CHI" },
+      ],
+      example: "Thu",
+    },
     { key: "moTa", header: "Mô tả", example: "" },
   ],
 };

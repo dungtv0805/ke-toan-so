@@ -2669,6 +2669,16 @@ body.col-resizing .ant-table * {
   font-weight: 600;
 }
 
+/* Dòng lệch mục tiêu năm — đỏ nhạt, thay cho cột CHÊNH LỆCH đã gỡ. Chỉ tô dòng
+   CHI TIẾT (xem `rowClassName`); số lệch cụ thể nằm ở tooltip ô CẢ NĂM. */
+.kh-hang-lech > td {
+  background: #fff1f0 !important;
+}
+
+.excel-table .kh-hang-lech:hover > td {
+  background: #ffe3e0 !important;
+}
+
 /* Dòng đang gõ dở hoặc mới thêm — vàng nhạt để thấy ngay cái gì chưa lưu. */
 .kh-hang-nhap > td {
   background: #fffbe6 !important;
@@ -2685,26 +2695,34 @@ body.col-resizing .ant-table * {
 
    Hàng TỔNG CỘNG / hàng nhóm / hàng đang gõ dở đặt !important nên vẫn thắng
    được nền cấp cột ở phần thân bảng — đúng ý: cấp HÀNG quan trọng hơn cấp CỘT. */
+/* ĐỤC, không dùng alpha — ô tiêu đề của cột ghim cũng nằm đè lên phần header
+   đang cuộn, hệt như ô dữ liệu. Nền gốc của `th` trong .excel-table là #f0f0f0
+   nên pha lên đúng màu đó thì tiêu đề vùng ghim và vùng cuộn cùng tông. */
 .kh-bang th.kh-cot-chinh {
-  background: hsl(var(--primary) / 0.14) !important;
+  background: hsl(var(--muted)) !important;
+  background: color-mix(in srgb, hsl(var(--primary)) 14%, #f0f0f0) !important;
 }
 
 .kh-bang th.kh-cot-nam {
-  background: hsl(var(--primary) / 0.22) !important;
+  background: hsl(var(--muted)) !important;
+  background: color-mix(in srgb, hsl(var(--primary)) 22%, #f0f0f0) !important;
 }
 
 .kh-bang th.kh-cot-quy {
-  background: hsl(var(--primary) / 0.1) !important;
+  background: hsl(var(--muted)) !important;
+  background: color-mix(in srgb, hsl(var(--primary)) 10%, #f0f0f0) !important;
 }
 
 .kh-bang th.kh-cot-thang {
-  background: hsl(var(--primary) / 0.04) !important;
+  background: hsl(var(--muted)) !important;
+  background: color-mix(in srgb, hsl(var(--primary)) 4%, #f0f0f0) !important;
 }
 
 /* Thân bảng: chỉ hai cột cấp năm được nhấn, để mắt bám được cột quan trọng nhất
    khi kéo ngang qua 16 cột số. */
 .kh-bang td.kh-cot-nam {
-  background: hsl(var(--primary) / 0.06);
+  background: hsl(var(--muted));
+  background: color-mix(in srgb, hsl(var(--primary)) 6%, hsl(var(--card)));
   font-variant-numeric: tabular-nums;
 }
 
@@ -2838,10 +2856,22 @@ body.col-resizing .ant-table * {
 }
 
 /* Nền theo CẤP HÀNG phải thắng nền ô ghim ở trên, nếu không hàng TỔNG / hàng
-   nhóm / hàng gõ dở mất màu ngay ở tám cột trái. */
+   nhóm / hàng gõ dở mất màu ngay ở tám cột trái.
+
+   HAI DÒNG DƯỚI ĐÂY PHẢI ĐỤC HOÀN TOÀN. Trước 02/09/2026 chúng dùng thẳng
+   `hsl(var(--primary) / 0.1)` — màu TRONG MỜ. Ở vùng cuộn thì không sao (bên
+   dưới là nền bảng), nhưng ô GHIM nằm đè lên phần bảng đang cuộn, nền trong mờ
+   là số của các tháng bên ngoài hiện xuyên qua và chồng chữ lên nhãn — đúng lỗi
+   người dùng báo ở tab Dòng tiền ("kéo thanh trượt vào đến đâu vẫn thấy số của
+   bên ngoài kéo vào").
+
+   Cách giữ đúng màu mà vẫn đục: chồng lớp tint lên nền nguyên khối bằng
+   `linear-gradient` hai điểm dừng cùng màu. Kết quả hợp màu y hệt alpha trên
+   nền đó, nên vùng ghim và vùng cuộn không bị lệch tông. */
 .kh-bang .kh-hang-tong > td.ant-table-cell-fix-start,
 .kh-bang .kh-hang-tong > td.ant-table-cell-fix-left {
-  background: hsl(var(--primary) / 0.1) !important;
+  background: hsl(var(--muted)) !important;
+  background: color-mix(in srgb, hsl(var(--primary)) 10%, hsl(var(--card))) !important;
 }
 
 .kh-bang .kh-hang-nhom > td.ant-table-cell-fix-start,
@@ -2851,12 +2881,26 @@ body.col-resizing .ant-table * {
 
 .kh-bang .kh-hang-tong-hop > td.ant-table-cell-fix-start,
 .kh-bang .kh-hang-tong-hop > td.ant-table-cell-fix-left {
-  background: hsl(var(--primary) / 0.16) !important;
+  background: hsl(var(--muted)) !important;
+  background: color-mix(in srgb, hsl(var(--primary)) 16%, hsl(var(--card))) !important;
 }
 
 .kh-bang .kh-hang-nhap > td.ant-table-cell-fix-start,
 .kh-bang .kh-hang-nhap > td.ant-table-cell-fix-left {
   background: #fffbe6 !important;
+}
+
+.kh-bang .kh-hang-lech > td.ant-table-cell-fix-start,
+.kh-bang .kh-hang-lech > td.ant-table-cell-fix-left {
+  background: #fff1f0 !important;
+}
+
+/* Dòng "Số dư" của bảng Nguồn vốn — cùng bệnh trong mờ (`--muted / 0.5`), chỉ là
+   ít dòng nên chưa ai báo. Đục sẵn luôn cho khỏi quay lại lần nữa. */
+.kh-bang .kh-hang-so-du > td.ant-table-cell-fix-start,
+.kh-bang .kh-hang-so-du > td.ant-table-cell-fix-left {
+  background: hsl(var(--muted)) !important;
+  background: color-mix(in srgb, hsl(var(--muted)) 50%, hsl(var(--card))) !important;
 }
 
 /* Hàng chẵn của .excel-table có nền riêng — ô ghim phải theo cho khớp, không
@@ -2879,17 +2923,23 @@ body.col-resizing .ant-table * {
 }
 
 /* Ô tiêu đề phải là gốc toạ độ cho tay kéo — antd không tự đặt relative. */
-.kh-bang .ant-table-thead > tr > th {
+/* `.co-gian-cot` là lớp đánh dấu chung cho MỌI bảng dùng `useCotCoGian`, không
+   riêng bảng kế hoạch nữa (Nhật ký chung dùng từ 02/09/2026). `.kh-bang` giữ
+   lại để khỏi phải sửa năm bảng kế hoạch. */
+.kh-bang .ant-table-thead > tr > th,
+.co-gian-cot .ant-table-thead > tr > th {
   position: relative;
 }
 
-.kh-bang .kh-o-tieu-de {
+.kh-bang .kh-o-tieu-de,
+.co-gian-cot .kh-o-tieu-de {
   display: inline-block;
   max-width: 100%;
 }
 
 /* Tay kéo giãn cột — bám mép phải ô tiêu đề, chỉ hiện rõ khi rê chuột tới. */
-.kh-bang .kh-tay-keo {
+.kh-bang .kh-tay-keo,
+.co-gian-cot .kh-tay-keo {
   position: absolute;
   inset-block: 0;
   inset-inline-end: -4px;
@@ -2900,7 +2950,8 @@ body.col-resizing .ant-table * {
   user-select: none;
 }
 
-.kh-bang .kh-tay-keo::after {
+.kh-bang .kh-tay-keo::after,
+.co-gian-cot .kh-tay-keo::after {
   content: "";
   position: absolute;
   inset-block: 4px;
@@ -2911,8 +2962,20 @@ body.col-resizing .ant-table * {
 }
 
 .kh-bang .kh-tay-keo:hover::after,
-.kh-bang .kh-tay-keo.dang-keo::after {
+.kh-bang .kh-tay-keo.dang-keo::after,
+.co-gian-cot .kh-tay-keo:hover::after,
+.co-gian-cot .kh-tay-keo.dang-keo::after {
   background: var(--xl-green, hsl(var(--primary)));
+}
+
+/* Nhật ký chung là bảng ĐẦU TIÊN vừa có tay kéo vừa có icon lọc trên header, mà
+   hai thứ này tranh nhau đúng mép phải ô tiêu đề. Nâng icon lọc lên trên tay kéo:
+   bấm vào icon thì ra bộ lọc, phần gutter còn lại vẫn kéo giãn được. Không có
+   dòng này thì tay kéo (z-index 2) nuốt mất một góc icon và người dùng bấm lọc
+   lại hoá ra đang kéo cột. */
+.co-gian-cot .ant-table-filter-trigger {
+  position: relative;
+  z-index: 3;
 }
 
 /* Khi đang kéo: khoá con trỏ toàn trang, nếu không rê nhanh ra ngoài ô tiêu đề

@@ -20,7 +20,7 @@ import {
 } from "@ant-design/icons";
 import { NhatKyChung, QuyChuan, HoSoChungTu } from "@/types";
 import { bangKeMuaVaoService, bangKeBanRaService } from "@/services/taxService";
-import { useTableColumnResize } from "@/hooks/useTableColumnResize";
+import { useCotCoGian } from "@/hooks/useCotCoGian";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import {
@@ -811,9 +811,12 @@ const getColumnDefinitions = (
 // Calculate total width
 const TOTAL_WIDTH = Object.values(DEFAULT_WIDTHS).reduce((sum, w) => sum + w, 0);
 
-/** Width cột do người dùng kéo — lưu theo CHỈ SỐ cột nên phải đổi key khi cấu trúc cột đổi. */
-// v6: thêm cột "HĐ" ngay sau "Số CT" → chỉ số các cột sau đó lệch đi một.
-const WIDTH_STORAGE_KEY = "table-col-widths-nkc-v6";
+/**
+ * Width cột do người dùng kéo — nay lưu theo KEY cột (`useCotCoGian`), không
+ * theo chỉ số nữa, nên thêm/bớt/ẩn cột không còn làm lệch bề rộng đã lưu.
+ * Khoá mới hoàn toàn: dữ liệu `...-v6` cũ là map theo chỉ số, đọc lại sẽ sai.
+ */
+const WIDTH_STORAGE_KEY = "nkc-rong-cot-theo-key";
 
 
 export function EntryListTab() {
@@ -874,10 +877,6 @@ export function EntryListTab() {
   const [importOpen, setImportOpen] = useState(false);
   const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
   const { withColumnFilter } = useNkcColumnFilters();
-
-  // Enable column resize via DOM manipulation (no React re-renders)
-  // storageKey bump 'v6': thêm cột "HĐ" → width cũ lưu theo chỉ số đã lệch.
-  useTableColumnResize("resizable-table", WIDTH_STORAGE_KEY);
 
   const { t } = useTerm();
 
@@ -1004,18 +1003,24 @@ export function EntryListTab() {
   const { columns: visibleColumns, chooserButton } = useColumnVisibility(
     NKC_COT_PAGE_KEY,
     columns,
-    labelOf,
-    {
-      // Width resize lưu theo CHỈ SỐ cột → ẩn/hiện làm lệch. Xoá để cột về width mặc định.
-      onChange: () => {
-        try {
-          localStorage.removeItem(WIDTH_STORAGE_KEY);
-        } catch {
-          /* ignore */
-        }
-      },
-    }
+    labelOf
   );
+
+  /**
+   * Co giãn cột bằng STATE REACT.
+   *
+   * Chạy SAU `useColumnVisibility`: hook này bọc `title` vào một <span> có tay
+   * kéo, mà `labelOf` của bộ chọn cột chỉ đọc được title dạng chuỗi/TermText —
+   * đảo thứ tự là bộ chọn cột mất sạch nhãn.
+   *
+   * Vì sao bỏ `useTableColumnResize` ở bảng này: hook đó sửa thẳng `colgroup`
+   * trong DOM, còn `scroll.x` lại tính từ `width` trong state React. Tổng bề
+   * rộng bảng vì thế không đổi khi kéo → thu hẹp một cột là trình duyệt chia
+   * phần dư cho các cột khác (chúng "tự to ra"), còn nới cột Diễn giải thì bị
+   * chặn vì tổng đã kịch. Giữ bề rộng trong state thì `scroll.x` bên dưới cộng
+   * lại đúng, cột nào kéo cột đó đứng yên.
+   */
+  const cotCoGian = useCotCoGian(WIDTH_STORAGE_KEY, visibleColumns);
 
   // Row class name for highlighting editing row
   const getRowClassName = (record: NhatKyChung) => {
@@ -1118,12 +1123,12 @@ export function EntryListTab() {
       {/* flex-col để `.excel-table { flex: 1 }` vẫn ăn như khi Table là con trực tiếp */}
       <div ref={tableWrapRef} className="flex flex-col flex-1 min-h-0">
         <Table
-          columns={visibleColumns}
+          columns={cotCoGian}
           dataSource={data || []}
           rowKey="id"
           rowSelection={rowSelection}
           loading={loading}
-          className="excel-table resizable-table"
+          className="excel-table co-gian-cot"
           rowClassName={getRowClassName}
           pagination={{
             current: pagination?.page || 1,
@@ -1137,7 +1142,10 @@ export function EntryListTab() {
           size="small"
           bordered
           scroll={{
-            x: visibleColumns.reduce(
+            // Cộng từ `cotCoGian`, KHÔNG từ `visibleColumns`: bề rộng người dùng
+            // vừa kéo chỉ có ở bản đã co giãn. Cộng nhầm bản gốc là tổng đứng im
+            // và trình duyệt lại đi chia phần dư cho các cột khác.
+            x: cotCoGian.reduce(
               (sum, c) => sum + (typeof c.width === "number" ? c.width : 100),
               0
             ) || TOTAL_WIDTH,

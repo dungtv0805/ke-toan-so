@@ -11,6 +11,11 @@ export interface KeHoachFormHeader {
   ngayMacDinh?: string;
   /** Diễn giải chung — dòng nào bỏ trống diễn giải thì lấy cái này khi lưu. */
   dienGiaiChung?: string;
+  /**
+   * Loại giao dịch của cả lô. CHỈ để lọc bớt danh sách Nghiệp vụ ở bảng dưới,
+   * không lưu xuống dòng kế hoạch — mỗi dòng vẫn tự mang nghiệp vụ của nó.
+   */
+  loaiGiaoDich?: string;
 }
 
 export interface KeHoachFormInitStates extends BaseStates {

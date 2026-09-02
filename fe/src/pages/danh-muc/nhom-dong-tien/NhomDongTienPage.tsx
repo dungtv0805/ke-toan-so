@@ -9,6 +9,8 @@ import {
   Form,
   message,
   Popconfirm,
+  Select,
+  Tag,
   Tooltip,
   Typography,
 } from "antd";
@@ -19,7 +21,9 @@ import {
 } from "@ant-design/icons";
 import {
   nhomDongTienService,
+  CHIEU_NHOM_OPTIONS,
   NhomDongTien,
+  type ChieuNhomDongTien,
 } from "@/services/nhomDongTienService";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
@@ -33,10 +37,17 @@ import { ExportDanhMucButton, ExportDanhMucConfig } from "@/components/export-da
 
 const { Text } = Typography;
 
+/** Nhãn tiếng Việt của chiều tiền; nhóm chưa khai thì trả chuỗi rỗng cho file Excel. */
+const nhanChieu = (chieu?: ChieuNhomDongTien | null): string =>
+  CHIEU_NHOM_OPTIONS.find((o) => o.value === chieu)?.label ?? "";
+
 const nhomDongTienSchema = z.object({
   ma: z.string().trim().min(1, "Mã không được để trống").max(20, "Mã tối đa 20 ký tự"),
   ten: z.string().trim().min(1, "Tên không được để trống").max(200, "Tên tối đa 200 ký tự"),
   moTa: z.string().max(500, "Mô tả tối đa 500 ký tự").optional().nullable(),
+  // `.nullable()` bắt buộc: BE trả `null` cho nhóm chưa khai chiều, chỉ
+  // `.optional()` là zod đánh trượt và form không mở lên được.
+  chieu: z.enum(["THU", "CHI"]).optional().nullable(),
 });
 
 const NhomDongTienPage: React.FC = () => {
@@ -63,6 +74,7 @@ const NhomDongTienPage: React.FC = () => {
     columns: [
       { header: "Mã", dataKey: "ma", width: 15 },
       { header: "Tên nhóm", dataKey: "ten", width: 35 },
+      { header: "Thu/Chi", dataKey: "chieu", width: 12 },
       { header: "Mô tả", dataKey: "moTa", width: 40 },
     ],
     fetchData: async () => {
@@ -70,6 +82,7 @@ const NhomDongTienPage: React.FC = () => {
       return result.data.map((item) => ({
         ma: item.ma,
         ten: item.ten,
+        chieu: nhanChieu(item.chieu),
         moTa: item.moTa || "",
       }));
     },
@@ -185,6 +198,21 @@ const NhomDongTienPage: React.FC = () => {
       key: "ten",
       ellipsis: true,
       sorter: (a: NhomDongTien, b: NhomDongTien) => a.ten.localeCompare(b.ten),
+    },
+    {
+      title: "Thu/Chi",
+      dataIndex: "chieu",
+      key: "chieu",
+      width: 110,
+      // Nhóm chưa khai chiều hiện thẻ CẢNH BÁO chứ không phải dấu gạch: Kế hoạch
+      // dòng tiền dựa vào trường này, bỏ trống là dòng của nhóm đó không vào được
+      // THU hay CHI TRONG KỲ — phải thấy ngay mà đi khai.
+      render: (chieu?: ChieuNhomDongTien | null) =>
+        chieu ? (
+          <Tag color={chieu === "THU" ? "green" : "volcano"}>{nhanChieu(chieu)}</Tag>
+        ) : (
+          <Tag color="warning">Chưa khai</Tag>
+        ),
     },
     {
       title: "Mô tả",
@@ -303,6 +331,17 @@ const NhomDongTienPage: React.FC = () => {
             rules={[{ required: true, message: "Vui lòng nhập tên" }, { max: 200, message: "Tên tối đa 200 ký tự" }]}
           >
             <Input placeholder="Nhập tên nhóm dòng tiền" />
+          </Form.Item>
+          <Form.Item
+            name="chieu"
+            label={fl('chieu', 'Thu/Chi')}
+            tooltip="Kế hoạch dòng tiền dùng chiều này để cộng dòng vào THU hay CHI TRONG KỲ"
+          >
+            <Select
+              allowClear
+              placeholder="Chọn chiều tiền của nhóm"
+              options={CHIEU_NHOM_OPTIONS}
+            />
           </Form.Item>
           <Form.Item
             name="moTa"

@@ -602,3 +602,79 @@ describe("excelSerialToISO", () => {
     expect(excelSerialToISO(46174)).toBe("2026-06-01");
   });
 });
+
+describe("validateAndBuild — cột tham chiếu có matchAlso", () => {
+  // Danh mục Khoản mục lưu `nhom` bằng MÃ nhóm. Người dùng lại quen gõ TÊN nhóm
+  // vào ô Excel; trước khi có `matchAlso`, giá trị đó lọt xuống DB nguyên văn và
+  // mọi chỗ lọc theo mã sau này im lặng không khớp gì.
+  const config: ImportDanhMucConfig = {
+    ...simpleConfig,
+    columns: [
+      { key: "ma", header: "Mã", required: true },
+      {
+        key: "nhom",
+        header: "Nhóm",
+        ref: {
+          service: noopService,
+          matchBy: "ma",
+          matchAlso: ["ten"],
+          label: "Nhóm khoản mục",
+          assign: (found) => ({ nhom: found.ma }),
+        },
+      },
+    ],
+  };
+
+  const refData = {
+    nhom: [
+      { id: "n1", ma: "CPTX", ten: "Chi phí lái xe" },
+      { id: "n2", ma: "CPNL", ten: "Chi phí nhiên liệu" },
+    ],
+  };
+
+  it("gõ mã thì vẫn dò được như cũ", () => {
+    const out = validateAndBuild([row(2, { ma: "KM01", nhom: "CPTX" })], config, [], refData);
+    expect(out.validItems[0]).toEqual({ ma: "KM01", nhom: "CPTX" });
+  });
+
+  it("gõ TÊN nhóm thì quy về đúng MÃ, không lưu nguyên văn tên", () => {
+    const out = validateAndBuild(
+      [row(2, { ma: "KM01", nhom: "Chi phí lái xe" })],
+      config,
+      [],
+      refData,
+    );
+    expect(out.hasErrors).toBe(false);
+    expect(out.validItems[0]).toEqual({ ma: "KM01", nhom: "CPTX" });
+  });
+
+  it("mã được ưu tiên hơn tên khi một chuỗi vừa là mã nhóm này vừa là tên nhóm khác", () => {
+    const nhapNhang = {
+      nhom: [
+        { id: "n1", ma: "CPTX", ten: "Chi phí lái xe" },
+        { id: "n2", ma: "KHAC", ten: "CPTX" },
+      ],
+    };
+    const out = validateAndBuild([row(2, { ma: "KM01", nhom: "CPTX" })], config, [], nhapNhang);
+    expect(out.validItems[0]).toEqual({ ma: "KM01", nhom: "CPTX" });
+  });
+
+  it("hai nhóm TRÙNG TÊN thì báo lỗi chứ không đoán bừa một cái", () => {
+    const trungTen = {
+      nhom: [
+        { id: "n1", ma: "A", ten: "Trùng" },
+        { id: "n2", ma: "B", ten: "Trùng" },
+      ],
+    };
+    const out = validateAndBuild([row(2, { ma: "KM01", nhom: "Trùng" })], config, [], trungTen);
+    expect(out.results[0].errors).toContain(
+      'Nhóm khoản mục "Trùng" trùng tên ở nhiều bản ghi — nhập mã để chỉ rõ',
+    );
+    expect(out.validItems).toEqual([]);
+  });
+
+  it("không khớp mã lẫn tên thì vẫn báo không tồn tại", () => {
+    const out = validateAndBuild([row(2, { ma: "KM01", nhom: "XXX" })], config, [], refData);
+    expect(out.results[0].errors).toContain('Nhóm khoản mục "XXX" không tồn tại');
+  });
+});

@@ -289,6 +289,13 @@ export const QuyChaunForm: React.FC = () => {
                 placeholder={nhomDangChon ? 'Chọn khoản mục trong nhóm' : 'Chọn khoản mục'}
                 options={khoanMucOptions}
                 optionFilterProp="label"
+                // Nhóm rỗng thì ô này trống trơn và người dùng tưởng chức năng
+                // hỏng (phản hồi 02/09/2026). Nói thẳng lý do ngay trong ô.
+                notFoundContent={
+                  nhomDangChon
+                    ? `Nhóm "${nhomDangChon}" chưa có khoản mục nào — thêm ở Danh mục › Khoản mục`
+                    : 'Chưa có khoản mục nào'
+                }
                 // Xoá khoản mục thì loại chi phí cũ không còn căn cứ — xoá theo.
                 // (useEffect bên trên chỉ chạy khi CÓ khoản mục, để không đụng
                 // vào bản ghi cũ vốn không gắn khoản mục nào.)

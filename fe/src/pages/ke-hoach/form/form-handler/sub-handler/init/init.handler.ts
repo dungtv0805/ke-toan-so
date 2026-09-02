@@ -110,6 +110,7 @@ export class KeHoachFormInitHandler extends CSubHanlder<
       this.setState(
         "quyChuanList",
         quyChuan.map((qc) => ({
+          loaiGiaoDich: qc.loaiGiaoDich,
           nghiepVu: qc.nghiepVu,
           taiKhoanNo: qc.taiKhoanNo,
           taiKhoanCo: qc.taiKhoanCo,

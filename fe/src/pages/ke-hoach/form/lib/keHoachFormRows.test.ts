@@ -3,7 +3,9 @@ import {
   apDungQuyChuan,
   capNhat,
   dongMoi,
+  giaoDichOptions,
   loiCuaLo,
+  nghiepVuOptions,
   nhanBan,
   toPayloads,
   type DongKeHoach,
@@ -125,5 +127,47 @@ describe("toPayloads", () => {
     expect(payloads).toHaveLength(2);
     expect(payloads.every((p) => p.loaiKeHoach === "KE_HOACH" && p.phienBan === "KH 2026")).toBe(true);
     expect(payloads[0].danhMuc?.taiKhoanCo?.ma).toBe("511");
+  });
+});
+
+describe("locTheoGiaoDich / nghiepVuOptions", () => {
+  const quyChuan = [
+    { loaiGiaoDich: "Bán hàng", nghiepVu: "Ghi nhận doanh thu", taiKhoanNo: "131", taiKhoanCo: "511" },
+    { loaiGiaoDich: "Bán hàng", nghiepVu: "Thu tiền khách hàng", taiKhoanNo: "111", taiKhoanCo: "131" },
+    { loaiGiaoDich: "Lương & lao động", nghiepVu: "Ghi nhận lương phải trả", taiKhoanNo: "642", taiKhoanCo: "334" },
+    // Bản ghi cũ chưa gắn loại giao dịch — không được biến mất khỏi danh sách đầy đủ.
+    { loaiGiaoDich: "", nghiepVu: "Nghiệp vụ chưa phân loại", taiKhoanNo: "", taiKhoanCo: "" },
+  ];
+
+  it("bỏ trống giao dịch thì giữ nguyên toàn bộ nghiệp vụ", () => {
+    expect(nghiepVuOptions(quyChuan, undefined).map((o) => o.value)).toEqual([
+      "Ghi nhận doanh thu",
+      "Ghi nhận lương phải trả",
+      "Nghiệp vụ chưa phân loại",
+      "Thu tiền khách hàng",
+    ]);
+  });
+
+  it("chọn giao dịch thì chỉ còn nghiệp vụ của giao dịch đó", () => {
+    expect(nghiepVuOptions(quyChuan, "Bán hàng").map((o) => o.value)).toEqual([
+      "Ghi nhận doanh thu",
+      "Thu tiền khách hàng",
+    ]);
+  });
+
+  it("giao dịch không có nghiệp vụ nào thì trả danh sách rỗng, không âm thầm trả hết", () => {
+    expect(nghiepVuOptions(quyChuan, "Kho vận")).toEqual([]);
+  });
+
+  it("một nghiệp vụ khai ở nhiều quy chuẩn chỉ hiện một lần", () => {
+    const trung = [...quyChuan, { loaiGiaoDich: "Bán hàng", nghiepVu: "Ghi nhận doanh thu", taiKhoanNo: "131", taiKhoanCo: "5111" }];
+    expect(nghiepVuOptions(trung, "Bán hàng")).toHaveLength(2);
+  });
+
+  it("danh sách giao dịch bỏ bản ghi chưa gắn loại", () => {
+    expect(giaoDichOptions(quyChuan).map((o) => o.value)).toEqual([
+      "Bán hàng",
+      "Lương & lao động",
+    ]);
   });
 });

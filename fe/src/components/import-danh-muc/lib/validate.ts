@@ -259,9 +259,32 @@ export function validateAndBuild(
           }
         } else {
           const k = refKeyOf(rawText);
-          const hit = pool.find((p) => matches(p, k));
-          if (!hit) errors.push(`${ref.label} "${k}" không tồn tại`);
-          else {
+          let hit = pool.find((p) => matches(p, k));
+
+          // Vớt theo trường dự phòng (thường là tên) khi mã không ra. Trùng tên
+          // thì dừng lại báo lỗi — chọn đại một bản ghi là gán sai âm thầm.
+          let trungTen = false;
+          if (!hit) {
+            for (const truong of ref.matchAlso ?? []) {
+              const khop = pool.filter((p) => norm(field(p, truong)) === norm(k));
+              if (khop.length > 1) {
+                trungTen = true;
+                break;
+              }
+              if (khop.length === 1) {
+                hit = khop[0];
+                break;
+              }
+            }
+          }
+
+          if (trungTen) {
+            errors.push(
+              `${ref.label} "${k}" trùng tên ở nhiều bản ghi — nhập mã để chỉ rõ`,
+            );
+          } else if (!hit) {
+            errors.push(`${ref.label} "${k}" không tồn tại`);
+          } else {
             Object.assign(payload, ref.assign(hit as RefRecord));
             converted[col.key] = field(hit as RefRecord, ref.matchBy);
           }

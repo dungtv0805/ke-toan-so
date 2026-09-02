@@ -1,10 +1,23 @@
 import { ServiceBase, PaginatedResponse, PaginationParams } from './base/service-base';
 
+/** Chiều tiền của nhóm — tiền vào hay tiền ra. */
+export type ChieuNhomDongTien = 'THU' | 'CHI';
+
+export const CHIEU_NHOM_OPTIONS: { value: ChieuNhomDongTien; label: string }[] = [
+  { value: 'THU', label: 'Thu' },
+  { value: 'CHI', label: 'Chi' },
+];
+
 export interface NhomDongTien {
   id: string;
   ma: string;
   ten: string;
   moTa?: string;
+  /**
+   * Bảng Kế hoạch dòng tiền suy Thu/Chi của từng dòng từ đây thay vì bắt gõ lại
+   * trên từng dòng. Bỏ trống = nhóm chưa khai chiều.
+   */
+  chieu?: ChieuNhomDongTien | null;
   isActive: boolean;
 }
 

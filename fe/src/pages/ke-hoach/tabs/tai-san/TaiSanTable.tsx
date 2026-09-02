@@ -19,7 +19,7 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
-import { useCotCoGian } from "../../hooks/useCotCoGian";
+import { useCotCoGian } from "@/hooks/useCotCoGian";
 import { sapXepTheoNhan } from "@/lib/sapXep";
 import { dungCayBang, type HangBang, type MoTaHang } from "../lib/tongHop";
 import { demThayDoi, gopNhap, type DongHienThi } from "../lib/nhapBang";
@@ -27,7 +27,6 @@ import {
   CAP_CHINH,
   capCot,
   cotCaNam,
-  cotChenhLech,
   ghimTrai,
   cotQuyVaThang,
   laHangGop,
@@ -109,7 +108,7 @@ export const TaiSanTable: React.FC = () => {
 
   const suaDuoc = (row: Hang) => !laHangGop(row.loai);
 
-  // Vùng GHIM = các cột nhãn + CẢ NĂM; CHÊNH LỆCH trở đi thì cuộn ngang.
+  // Vùng GHIM = các cột nhãn + CẢ NĂM; từ nhóm Quý trở đi thì cuộn ngang.
   const cotGoc: ColumnsType<Hang> = [
     ...ghimTrai<Hang>([
       {
@@ -297,7 +296,6 @@ export const TaiSanTable: React.FC = () => {
       },
       ...cotCaNam<Hang>(),
     ]),
-    ...cotChenhLech<Hang>(),
     ...cotQuyVaThang<Hang>({
       suaDuoc,
       doiThang: (row, chiSo, giaTri) =>
