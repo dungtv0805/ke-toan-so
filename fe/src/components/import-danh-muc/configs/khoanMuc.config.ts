@@ -1,3 +1,4 @@
+import { nhomKhoanMucService } from "@/services/nhomKhoanMucService";
 import { khoanMucCompleteSource } from "./completeSetSources";
 import type { ImportDanhMucConfig } from "../types";
 
@@ -21,7 +22,23 @@ export const khoanMucImportConfig: ImportDanhMucConfig = {
       ],
       example: "Chi phí",
     },
-    { key: "nhom", header: "Nhóm", example: "" },
+    {
+      key: "nhom",
+      header: "Nhóm",
+      // Danh mục lưu MÃ nhóm. Trước 02/09/2026 cột này không có `ref` nên ô Excel
+      // lọt xuống DB nguyên văn — người dùng gõ tên nhóm là mọi chỗ lọc theo mã
+      // (rõ nhất: ô Khoản mục của Quy chuẩn hạch toán) im lặng trống trơn.
+      // `matchAlso` nhận cả tên để file cũ vẫn nhập được, nhưng vẫn quy về mã.
+      ref: {
+        service: nhomKhoanMucService,
+        matchBy: "ma",
+        matchAlso: ["ten"],
+        label: "Nhóm khoản mục",
+        displayField: "ten",
+        assign: (found) => ({ nhom: found.ma }),
+      },
+      example: "",
+    },
     {
       key: "loaiChiPhi",
       header: "Loại chi phí",

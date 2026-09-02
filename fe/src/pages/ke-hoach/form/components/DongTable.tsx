@@ -5,7 +5,12 @@ import dayjs from "dayjs";
 import type { ColumnsType } from "antd/es/table";
 import { ngayLuu, nhomKhoanMucCua, type MucDanhMuc } from "../../lib/keHoachRow";
 import { useKeHoachFormHandler, useKeHoachFormState } from "../KeHoachFormHandlerContext";
-import type { DongKeHoach, QuyChuanGoiY } from "../lib/keHoachFormRows";
+import {
+  nghiepVuOptions,
+  type DongKeHoach,
+  type QuyChuanGoiY,
+} from "../lib/keHoachFormRows";
+import type { KeHoachFormHeader } from "../form-handler/sub-handler/init/init.state";
 import { sapXepTheoNhan } from "@/lib/sapXep";
 
 const toOptions = (list: MucDanhMuc[] = []) =>
@@ -29,6 +34,8 @@ export const DongTable: React.FC = () => {
   const [chuDauTuList] = useKeHoachFormState("chuDauTuList", []);
   const [nhomKhoanMucList] = useKeHoachFormState("nhomKhoanMucList", []);
   const [quyChuanList] = useKeHoachFormState("quyChuanList", []);
+  const [header] = useKeHoachFormState("header");
+  const loaiGiaoDich = (header as KeHoachFormHeader | undefined)?.loaiGiaoDich;
 
   const sua = (key: string, field: keyof DongKeHoach, value: unknown) =>
     handler.executeEvent("suaDong", { key, field, value });
@@ -52,13 +59,9 @@ export const DongTable: React.FC = () => {
       khoanMuc: toOptions(khoanMucList as MucDanhMuc[]),
       nhomQuanLy: toOptions(nhomQuanLyList as MucDanhMuc[]),
       chuDauTu: toOptions(chuDauTuList as MucDanhMuc[]),
-      nghiepVu: sapXepTheoNhan(
-        [
-          ...new Set(
-            (quyChuanList as QuyChuanGoiY[]).map((q) => q.nghiepVu).filter(Boolean),
-          ),
-        ].map((n) => ({ value: n, label: n })),
-      ),
+      // Chọn Giao dịch ở đầu form thì danh sách này co lại theo — xem
+      // `nghiepVuOptions`. Bỏ trống thì vẫn hiện đủ như trước.
+      nghiepVu: nghiepVuOptions(quyChuanList as QuyChuanGoiY[], loaiGiaoDich),
     }),
     [
       taiKhoanList,
@@ -71,6 +74,7 @@ export const DongTable: React.FC = () => {
       nhomQuanLyList,
       chuDauTuList,
       quyChuanList,
+      loaiGiaoDich,
     ],
   );
 

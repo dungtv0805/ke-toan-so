@@ -20,7 +20,7 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
-import { useCotCoGian } from "../../hooks/useCotCoGian";
+import { useCotCoGian } from "@/hooks/useCotCoGian";
 import {
   NHOM_NGUON_VON_OPTIONS,
   nhanNhomNguonVon,
@@ -34,7 +34,6 @@ import {
   CAP_CHINH,
   capCot,
   cotCaNam,
-  cotChenhLech,
   ghimTrai,
   cotQuyVaThang,
   laHangGop,
@@ -128,7 +127,7 @@ export const NguonVonTable: React.FC = () => {
 
   const suaDuoc = (row: Hang) => !laHangGop(row.loai) && !row.soDu;
 
-  // Vùng GHIM = các cột nhãn + CẢ NĂM; CHÊNH LỆCH trở đi thì cuộn ngang.
+  // Vùng GHIM = các cột nhãn + CẢ NĂM; từ nhóm Quý trở đi thì cuộn ngang.
   const cotGoc: ColumnsType<Hang> = [
     ...ghimTrai<Hang>([
       {
@@ -293,7 +292,6 @@ export const NguonVonTable: React.FC = () => {
       },
       ...cotCaNam<Hang>(),
     ]),
-    ...cotChenhLech<Hang>(),
     ...cotQuyVaThang<Hang>({
       suaDuoc,
       doiThang: (row, chiSo, giaTri) =>

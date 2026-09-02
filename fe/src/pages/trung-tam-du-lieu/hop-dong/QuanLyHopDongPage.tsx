@@ -163,6 +163,7 @@ export default function QuanLyHopDongPage() {
   const [tongHop, setTongHop] = useState<Record<string, TongHopDonHang>>({});
 
   const [search, setSearch] = useState('');
+  const [pageSize, setPageSize] = useState(20);
   // Ô kỳ dùng chung một danh sách với "Dữ liệu tổng hợp": kỳ dựng sẵn của trang Tổng
   // quan + "Tùy chọn" để chọn từ ngày → đến ngày.
   const [period, setPeriod] = useState<PeriodKey>('namNay');
@@ -656,7 +657,17 @@ export default function QuanLyHopDongPage() {
           // Header dính khi cuộn dọc. Vùng cuộn của app là <Content> trong MainLayout
           // (overflow:auto), KHÔNG phải window → phải trỏ getContainer vào đó.
           sticky={{ offsetHeader: 0, getContainer: getScrollContainer }}
-          pagination={{ pageSize: 20, showTotal: (t) => `Tổng ${t} hợp đồng` }}
+          // `pageSize` là prop CÓ KIỂM SOÁT: để số cứng thì ô "x / trang" vẫn hiện
+          // nhưng bấm đổi không ăn gì (antd đổi state trong nó, prop lại ghi đè lại).
+          // Phải giữ trong state của trang mới chọn được.
+          pagination={{
+            pageSize,
+            onShowSizeChange: (_, size) => setPageSize(size),
+            onChange: (_, size) => setPageSize(size),
+            showSizeChanger: true,
+            pageSizeOptions: [20, 50, 100, 200],
+            showTotal: (t) => `Tổng ${t} hợp đồng`,
+          }}
         />
       </Card>
 

@@ -19,7 +19,7 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
-import { useCotCoGian } from "../../hooks/useCotCoGian";
+import { useCotCoGian } from "@/hooks/useCotCoGian";
 import {
   CHI_PHI_NHAN_SU_COLS,
   chiPhiRong,
@@ -38,7 +38,6 @@ import {
   CAP_CHINH,
   capCot,
   cotCaNam,
-  cotChenhLech,
   ghimTrai,
   cotQuyVaThang,
   laHangGop,
@@ -186,7 +185,7 @@ export const NhanSuTable: React.FC = () => {
     },
   }));
 
-  // Vùng GHIM = các cột nhãn + CẢ NĂM; CHÊNH LỆCH trở đi thì cuộn ngang.
+  // Vùng GHIM = các cột nhãn đến hết cột %; từ cột chi phí trở đi thì cuộn ngang.
   const cotGoc: ColumnsType<Hang> = [
     ...ghimTrai<Hang>([
       {
@@ -328,10 +327,12 @@ export const NhanSuTable: React.FC = () => {
           </span>
         ),
       },
-      ...cotChiPhi,
-      ...cotCaNam<Hang>(),
     ]),
-    ...cotChenhLech<Hang>(),
+    // Vùng ghim của bảng Nhân sự DỪNG Ở CỘT % (nghiệp vụ 02/09/2026). Sáu cột
+    // chi phí + CẢ NĂM ra vùng cuộn: ghim đến hết CẢ NĂM thì vùng đứng yên rộng
+    // gần hết màn hình, không còn chỗ kéo xem 12 tháng.
+    ...cotChiPhi,
+    ...cotCaNam<Hang>(),
     ...cotQuyVaThang<Hang>({
       suaDuoc,
       doiThang: (row, chiSo, giaTri) =>

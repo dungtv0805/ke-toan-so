@@ -3,12 +3,11 @@ import ReactDOM from "react-dom/client";
 import { Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import "@/index.css";
-import { useCotCoGian } from "@/pages/ke-hoach/hooks/useCotCoGian";
+import { useCotCoGian } from "@/hooks/useCotCoGian";
 import {
   CAP_CHINH,
   capCot,
   cotCaNam,
-  cotChenhLech,
   cotQuyVaThang,
   ghimTrai,
   onCellNhan,
@@ -117,7 +116,6 @@ const Harness: React.FC = () => {
       { title: "%", key: "phanTram", width: 80, align: "right", ...capCot(CAP_CHINH), render: () => "25.00%" },
       ...cotCaNam<Hang>(),
     ]),
-    ...cotChenhLech<Hang>(),
     ...cotQuyVaThang<Hang>({ suaDuoc: () => false, doiThang: () => {} }),
   ];
 

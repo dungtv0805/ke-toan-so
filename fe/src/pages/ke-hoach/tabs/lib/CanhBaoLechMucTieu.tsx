@@ -9,8 +9,9 @@ import { tien } from "./cotChung";
  * Chỉ cảnh báo, KHÔNG chặn lưu: kế hoạch được lập dần trong nhiều buổi, chặn
  * lưu khi chưa phân bổ đủ sẽ làm mất công gõ dở.
  *
- * Phần lệch của từng dòng nằm ở cột CHÊNH LỆCH; ở đây chỉ nói tổng, để người
- * dùng biết còn bao nhiêu phải chia trước khi cuộn xuống tìm dòng đỏ.
+ * Phần lệch của từng dòng nằm ở nền đỏ của chính dòng đó và ở ô CẢ NĂM tô màu;
+ * ở đây chỉ nói tổng, để người dùng biết còn bao nhiêu phải chia trước khi cuộn
+ * xuống tìm dòng đỏ.
  *
  * Gói gọn trong MỘT dòng (`banner`, không dùng `description`): bảng kế hoạch
  * cuộn cả hai chiều, mỗi dòng chiều cao nhường cho cảnh báo là một dòng dữ

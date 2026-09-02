@@ -28,8 +28,10 @@ import {
 import {
   gomTheoThoiGian,
   gomTheoChieu,
+  gomTheoNhomSanPham,
   ghepCungKy,
   luiMotNam,
+  CHIEU_NHOM_SAN_PHAM,
   type GroupBy,
 } from './doanh-so.helper';
 
@@ -473,7 +475,12 @@ export class BaoCaoService {
     authToken?: string,
     tenantId?: string,
   ): Promise<DoanhSoTheoResult> {
-    const [nayRes, truocRes] = await Promise.all([
+    // Chiều "Nhóm sản phẩm" phải tra thêm hai danh mục — snapshot sản phẩm trong
+    // bút toán không mang nhóm. Chỉ gọi khi thực sự cần, các chiều khác không
+    // phải trả giá thêm hai lượt gọi master-data.
+    const canNhomSanPham = dimension === CHIEU_NHOM_SAN_PHAM;
+
+    const [nayRes, truocRes, sanPhamRes, nhomRes] = await Promise.all([
       this.serviceClient.getNhatKyChung(
         startDate.toISOString(),
         endDate.toISOString(),
@@ -486,6 +493,12 @@ export class BaoCaoService {
         authToken,
         tenantId,
       ),
+      canNhomSanPham
+        ? this.serviceClient.getSanPham(authToken, tenantId)
+        : undefined,
+      canNhomSanPham
+        ? this.serviceClient.getNhomSanPham(authToken, tenantId)
+        : undefined,
     ]);
 
     const vNay = nayRes.success ? nayRes.data || [] : [];
@@ -499,9 +512,17 @@ export class BaoCaoService {
 
     const field = DIMENSION_FIELD_MAP[dimension] || 'doiTuong';
 
+    const theoChieu = canNhomSanPham
+      ? gomTheoNhomSanPham(
+          vNay,
+          sanPhamRes?.success ? sanPhamRes.data || [] : [],
+          nhomRes?.success ? nhomRes.data || [] : [],
+        )
+      : gomTheoChieu(vNay, field);
+
     return {
       theoThoiGian,
-      theoChieu: gomTheoChieu(vNay, field),
+      theoChieu,
       tong: kyNay.reduce((s, r) => s + r.soTien, 0),
       tongCungKy: kyTruoc.reduce((s, r) => s + r.soTien, 0),
     };

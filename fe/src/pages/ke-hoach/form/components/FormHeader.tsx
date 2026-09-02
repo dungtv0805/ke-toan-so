@@ -4,7 +4,11 @@ import dayjs from "dayjs";
 import { ngayLuu } from "../../lib/keHoachRow";
 import { useKeHoachFormHandler, useKeHoachFormState } from "../KeHoachFormHandlerContext";
 import type { KeHoachFormHeader } from "../form-handler/sub-handler/init/init.state";
-import type { DongKeHoach } from "../lib/keHoachFormRows";
+import {
+  giaoDichOptions,
+  type DongKeHoach,
+  type QuyChuanGoiY,
+} from "../lib/keHoachFormRows";
 
 const tien = (v: number) => new Intl.NumberFormat("vi-VN").format(v);
 
@@ -14,6 +18,7 @@ export const FormHeader: React.FC = () => {
   const [header] = useKeHoachFormState("header");
   const [phienBanList] = useKeHoachFormState("phienBanList", []);
   const [dongList] = useKeHoachFormState("dongList", []);
+  const [quyChuanList] = useKeHoachFormState("quyChuanList", []);
 
   const h = (header ?? {}) as KeHoachFormHeader;
   const tongTien = ((dongList ?? []) as DongKeHoach[]).reduce(
@@ -48,6 +53,24 @@ export const FormHeader: React.FC = () => {
             value={h.phienBan ? [h.phienBan] : []}
             options={((phienBanList ?? []) as string[]).map((p) => ({ value: p, label: p }))}
             onChange={(v: string[]) => doi("phienBan", v[v.length - 1])}
+          />
+        </div>
+
+        {/* Giao dịch KHÔNG lưu xuống dòng — chỉ thu hẹp danh sách Nghiệp vụ ở
+            bảng dưới, vì Quy chuẩn hạch toán có hàng trăm nghiệp vụ và người
+            nhập bao giờ cũng làm trọn một loại giao dịch trong mỗi lô. */}
+        <div className="nkc-field flex-1" style={{ minWidth: 180 }}>
+          <label className="nkc-label">Giao dịch</label>
+          <Select
+            size="small"
+            className="w-full"
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            placeholder="Tất cả nghiệp vụ"
+            value={h.loaiGiaoDich || undefined}
+            options={giaoDichOptions((quyChuanList ?? []) as QuyChuanGoiY[])}
+            onChange={(v?: string) => doi("loaiGiaoDich", v)}
           />
         </div>
 

@@ -24,6 +24,17 @@ interface RefSpecBase {
   service: RefSource;
   /** Trường dùng để dò khớp với giá trị trong ô Excel, thường là "ma". */
   matchBy: string;
+  /**
+   * Các trường dò khớp DỰ PHÒNG khi `matchBy` không ra, thường là `["ten"]`.
+   *
+   * Có vì người dùng quen gõ TÊN danh mục vào ô Excel thay vì mã. Không có nó,
+   * giá trị nhập lọt xuống DB nguyên văn và mọi chỗ lọc theo mã về sau im lặng
+   * không khớp gì (đúng lỗi khoản mục lưu `nhom` bằng tên, 02/09/2026).
+   *
+   * `matchBy` luôn được thử TRƯỚC — mã là định danh, tên chỉ là phương án vớt.
+   * Tên trùng ở nhiều bản ghi thì BÁO LỖI chứ không đoán bừa.
+   */
+  matchAlso?: string[];
   /** Tên hiển thị trong thông báo lỗi, ví dụ "Chủ đầu tư". */
   label: string;
   /** Trường hiển thị kèm mã trong danh sách thả xuống của file mẫu. */

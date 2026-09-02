@@ -69,3 +69,30 @@ export const quyTuSoDuDau = (thang: number[]): number[] =>
 /** Quý của dòng TỒN CUỐI KỲ: lấy tháng CUỐI quý. Cùng lý do như trên. */
 export const quyTuSoDuCuoi = (thang: number[]): number[] =>
   [0, 1, 2, 3].map((q) => Number(thang[q * 3 + 2]) || 0);
+
+/** Phần danh mục Nhóm dòng tiền mà việc suy chiều cần đến. */
+export interface NhomCoChieu {
+  ma: string;
+  chieu?: ChieuDongTien | null;
+}
+
+/**
+ * Chiều Thu/Chi của một dòng kế hoạch, suy từ NHÓM dòng tiền.
+ *
+ * Từ 02/09/2026 bảng Kế hoạch dòng tiền không còn cột "Thu/Chi" — chiều là
+ * thuộc tính cố hữu của nhóm nên khai một lần ở danh mục, khỏi gõ lại mỗi dòng.
+ *
+ * `chieuDaLuu` là chiều nằm sẵn trên dòng kế hoạch cũ (trước khi có trường ở
+ * danh mục). Dùng làm phương án dự phòng cho nhóm chưa khai chiều — nếu không,
+ * mọi kế hoạch cũ có dòng CHI sẽ lặng lẽ nhảy hết sang THU và TỒN CUỐI KỲ sai.
+ *
+ * Tra theo MÃ nhóm, không theo tên: hai nhóm khác nhau có thể trùng tên.
+ */
+export function chieuCuaNhom(
+  nhomList: NhomCoChieu[],
+  nhomMa: string,
+  chieuDaLuu: ChieuDongTien | undefined,
+): ChieuDongTien {
+  const nhom = nhomList.find((n) => n.ma === nhomMa);
+  return nhom?.chieu ?? chieuDaLuu ?? 'THU';
+}

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   Button,
   Empty,
@@ -19,8 +19,7 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
-import { useCotCoGian } from "../../hooks/useCotCoGian";
-import { CHIEU_OPTIONS } from "@/services/keHoachDongTienService";
+import { useCotCoGian } from "@/hooks/useCotCoGian";
 import { sapXepTheoNhan } from "@/lib/sapXep";
 import {
   nhomCuaMuc,
@@ -28,6 +27,7 @@ import {
 } from "../lib/nhomTuDanhMuc";
 import { dungCayBang, type HangBang, type MoTaHang } from "../lib/tongHop";
 import {
+  chieuCuaNhom,
   quyTuSoDuCuoi,
   quyTuSoDuDau,
   tinhTongHopDongTien,
@@ -37,18 +37,16 @@ import {
   CAP_CHINH,
   capCot,
   cotCaNam,
-  cotChenhLech,
   ghimTrai,
   cotQuyVaThang,
   laHangGop,
-  numberInputProps,
   numberInputPropsCoAm,
   onCellNhan,
   onCellNhanPhu,
   rowClassName,
   tien,
 } from "../lib/cotChung";
-import { CanhBaoLechMucTieu } from "../lib/CanhBaoLechMucTieu";
+
 import { useDongTienHandler, useDongTienState } from "./DongTienHandlerContext";
 import {
   valTuDong,
@@ -144,19 +142,31 @@ export const DongTienTable: React.FC = () => {
         nhan: tenDongTien.get(d.val.dongTienId)?.ten ?? "",
         ghiChu: d.val.ghiChu,
         thang: d.val.thang,
-        // Biến thể B: mục tiêu năm là ô "Giá trị/Mục tiêu" nhập tay.
-        namKhaiBao: d.val.giaTriMucTieu,
+        // Bảng Dòng tiền KHÔNG có mục tiêu năm (cột "Giá trị/Mục tiêu" đã bỏ
+        // 02/09/2026 theo yêu cầu nghiệp vụ). Lấy chính tổng 12 tháng làm mục
+        // tiêu để chênh lệch luôn bằng 0 — nếu để 0 thì mọi dòng hoá ra "lệch"
+        // và banner đỏ nổi vĩnh viễn dù người dùng không làm gì sai.
+        namKhaiBao: (d.val.thang ?? []).reduce((t, x) => t + (Number(x) || 0), 0),
       }),
     [tenNhom, tenDongTien],
+  );
+
+  /**
+   * Chiều Thu/Chi của từng dòng — suy từ NHÓM dòng tiền, không còn cột nhập.
+   * Xem `chieuCuaNhom`: nhóm chưa khai chiều thì giữ chiều đã lưu trên dòng cũ.
+   */
+  const chieuCua = useCallback(
+    (d: Dong) => chieuCuaNhom(nhomDongTienList, d.val.nhomMa, d.val.chieu),
+    [nhomDongTienList],
   );
 
   const tongHop = useMemo(
     () =>
       tinhTongHopDongTien(
-        hienThi.map((d) => ({ chieu: d.val.chieu, thang: d.val.thang })),
+        hienThi.map((d) => ({ chieu: chieuCua(d), thang: d.val.thang })),
         tonDauHienThi,
       ),
-    [hienThi, tonDauHienThi],
+    [hienThi, tonDauHienThi, chieuCua],
   );
 
   /**
@@ -165,7 +175,7 @@ export const DongTienTable: React.FC = () => {
    */
   const rows = useMemo<Hang[]>(() => {
     const chiTiet = (chieu: "THU" | "CHI") => {
-      const cua = hienThi.filter((d) => d.val.chieu === chieu);
+      const cua = hienThi.filter((d) => chieuCua(d) === chieu);
       if (cua.length === 0) return [];
       // Bỏ hàng TỔNG CỘNG của cây con — dòng tổng hợp phía trên đã là tổng rồi.
       return (dungCayBang(cua, doc) as Hang[])
@@ -215,7 +225,7 @@ export const DongTienTable: React.FC = () => {
         cong(tongHop.thangDu),
       ),
     ];
-  }, [hienThi, doc, tongHop]);
+  }, [hienThi, doc, tongHop, chieuCua]);
 
   /**
    * Danh mục Nhóm dòng tiền của nhiều công ty còn rỗng — chỉ đọc mỗi nó thì ô
@@ -237,7 +247,32 @@ export const DongTienTable: React.FC = () => {
 
   const suaDuoc = (row: Hang) => !laHangGop(row.loai);
 
-  // Vùng GHIM = các cột nhãn + CẢ NĂM; CHÊNH LỆCH trở đi thì cuộn ngang.
+  /**
+   * Cột CẢ NĂM của bảng Dòng tiền, kiêm luôn ô nhập TỒN ĐẦU KỲ.
+   *
+   * Tồn đầu năm là con số CẢ NĂM của dòng TỒN ĐẦU KỲ, nên đặt ở đây đúng nghĩa
+   * hơn chỗ cũ (nó từng nằm nhờ trong cột "Giá trị/Mục tiêu" đã gỡ). Đây vẫn là
+   * ô duy nhất gõ được trong khối dòng tổng hợp.
+   */
+  const cotTonDauVaCaNam: ColumnsType<Hang> = cotCaNam<Hang>().map((c) => ({
+    ...c,
+    render: (giaTri: unknown, row: Hang, chiSo: number) => {
+      if (row.tongHop === "tonDau") {
+        return (
+          <InputNumber
+            {...numberInputPropsCoAm}
+            value={tonDauHienThi}
+            onChange={(v) =>
+              handler.executeEvent("suaTonDau", { giaTri: Number(v) || 0 })
+            }
+          />
+        );
+      }
+      return (c.render as NonNullable<typeof c.render>)(giaTri, row, chiSo);
+    },
+  }));
+
+  // Vùng GHIM = các cột nhãn + CẢ NĂM; từ nhóm Quý trở đi thì cuộn ngang.
   const cotGoc: ColumnsType<Hang> = [
     ...ghimTrai<Hang>([
       {
@@ -354,66 +389,13 @@ export const DongTienTable: React.FC = () => {
           );
         },
       },
-      {
-        title: "Thu/Chi",
-        key: "chieu",
-        width: 100,
-        ...capCot(CAP_CHINH),
-        render: (_: unknown, row: Hang) => {
-          if (laHangGop(row.loai)) return null;
-          return (
-            <Select
-              size="small"
-              className="w-full"
-              options={CHIEU_OPTIONS}
-              value={row.dong!.val.chieu}
-              onChange={(v) =>
-                handler.executeEvent("suaO", {
-                  id: row.dong!.id,
-                  patch: { chieu: v },
-                })
-              }
-            />
-          );
-        },
-      },
-      {
-        title: "Giá trị/Mục tiêu",
-        key: "giaTriMucTieu",
-        width: 160,
-        align: "right",
-        ...capCot(CAP_CHINH),
-        render: (_: unknown, row: Hang) => {
-          if (row.tongHop === "tonDau") {
-            // Ô duy nhất nhập được trong nhóm dòng tổng hợp.
-            return (
-              <InputNumber
-                {...numberInputPropsCoAm}
-                value={tonDauHienThi}
-                onChange={(v) =>
-                  handler.executeEvent("suaTonDau", { giaTri: Number(v) || 0 })
-                }
-              />
-            );
-          }
-          if (laHangGop(row.loai)) return null;
-          return (
-            <InputNumber
-              {...numberInputProps}
-              value={row.dong!.val.giaTriMucTieu}
-              onChange={(v) =>
-                handler.executeEvent("suaO", {
-                  id: row.dong!.id,
-                  patch: { giaTriMucTieu: Number(v) || 0 },
-                })
-              }
-            />
-          );
-        },
-      },
-      ...cotCaNam<Hang>(),
+      // ĐÃ GỠ hai cột "Thu/Chi" và "Giá trị/Mục tiêu" (nghiệp vụ 02/09/2026):
+      // - Thu/Chi: chiều nay khai ở danh mục Nhóm dòng tiền, xem `chieuCuaNhom`.
+      // - Giá trị/Mục tiêu: bảng Dòng tiền không lập mục tiêu năm, người dùng
+      //   phân bổ thẳng theo tháng. Ô nhập TỒN ĐẦU KỲ từng nằm nhờ trong cột này
+      //   nên chuyển sang cột CẢ NĂM ngay dưới đây.
+      ...cotTonDauVaCaNam,
     ]),
-    ...cotChenhLech<Hang>(),
     ...cotQuyVaThang<Hang>({
       suaDuoc,
       doiThang: (row, chiSo, giaTri) =>
@@ -512,7 +494,8 @@ export const DongTienTable: React.FC = () => {
         </span>
       </div>
 
-      <CanhBaoLechMucTieu rows={rows} />
+      {/* KHÔNG có cảnh báo lệch mục tiêu ở bảng này: Dòng tiền không khai mục
+          tiêu năm nên chẳng có gì để so. Bốn bảng kế hoạch kia vẫn giữ. */}
 
       <div ref={tableWrapRef} className="flex flex-col flex-1 min-h-0">
         <Table<Hang>

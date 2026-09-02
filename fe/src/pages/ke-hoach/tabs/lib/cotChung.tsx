@@ -96,9 +96,10 @@ interface CotSoThoiGianOptions<T> {
 /**
  * Cột CẢ NĂM — cột cuối cùng của vùng GHIM. Tự tính, không nhập được.
  *
- * Tách riêng khỏi CHÊNH LỆCH vì ranh giới ghim nằm đúng giữa hai cột này: khi
- * kéo ngang xem từng tháng, người dùng cần CẢ NĂM luôn đứng yên để đối chiếu,
- * còn CHÊNH LỆCH thì không.
+ * ĐÃ GỠ cột CHÊNH LỆCH đứng cạnh (nghiệp vụ 02/09/2026: "không cần cột chênh
+ * lệch, chỉ cần báo đỏ dòng lệch"). Phần lệch không mất đi mà dồn vào chính ô
+ * này: số tô đỏ / xanh kèm tooltip nói thiếu hay vượt bao nhiêu. Đặt ở đây vì
+ * CẢ NĂM là số bị đem so, người đọc không phải kéo ngang mới thấy sai ở đâu.
  */
 export function cotCaNam<T extends HangBang<unknown>>(): ColumnsType<T> {
   return [
@@ -108,41 +109,18 @@ export function cotCaNam<T extends HangBang<unknown>>(): ColumnsType<T> {
       width: 140,
       align: "right",
       ...capCot(CAP_NAM),
-      render: (_: unknown, row: T) => soCell(row.loai, tien(row.namTheoThang)),
-    },
-  ];
-}
-
-/** Cột CHÊNH LỆCH — cột đầu tiên của vùng CUỘN. */
-export function cotChenhLech<T extends HangBang<unknown>>(): ColumnsType<T> {
-  return [
-    {
-      title: "CHÊNH LỆCH",
-      key: "chenhLech",
-      width: 140,
-      align: "right",
-      ...capCot(CAP_NAM),
       render: (_: unknown, row: T) => {
+        const so = soCell(row.loai, tien(row.namTheoThang));
         const nhan = nhanChenhLech(row.chenhLech);
-        if (!nhan) return null;
+        if (!nhan) return so;
         return (
           <Tooltip title={nhan.tooltip}>
-            <span className={nhan.lop}>{nhan.text}</span>
+            <span className={nhan.lop}>{so}</span>
           </Tooltip>
         );
       },
     },
   ];
-}
-
-/**
- * Hai cột tổng hợp cấp năm, luôn đứng TRƯỚC nhóm Quý (thứ tự tài liệu:
- * CẢ NĂM → Q1..Q4 → T1..T12). Cả hai đều tự tính, không nhập được.
- */
-export function cotCaNamVaChenhLech<
-  T extends HangBang<unknown>,
->(): ColumnsType<T> {
-  return [...cotCaNam<T>(), ...cotChenhLech<T>()];
 }
 
 /**
@@ -206,12 +184,22 @@ export const onCellNhan = (row: { loai: LoaiHang }) =>
 export const onCellNhanPhu = (row: { loai: LoaiHang }) =>
   laHangGop(row.loai) ? { colSpan: 0 } : {};
 
-/** Nền phân biệt: hàng tổng, hàng nhóm, và hàng đang có sửa đổi chưa lưu. */
+/**
+ * Nền phân biệt: hàng tổng, hàng nhóm, hàng đang sửa chưa lưu, hàng lệch mục tiêu.
+ *
+ * Thứ tự ưu tiên có chủ đích, KHÔNG dựa vào thứ tự khai báo trong CSS:
+ * - Hàng tổng / hàng nhóm giữ nền cấp hàng của mình; phần lệch của chúng đã
+ *   nằm ở banner phía trên bảng và ở ô CẢ NĂM tô màu.
+ * - Hàng CHƯA LƯU thắng hàng lệch: dòng vừa thêm bao giờ cũng lệch (chưa phân
+ *   bổ tháng nào), tô đỏ ngay lúc người dùng còn đang gõ là báo động giả.
+ */
 export const rowClassName = (row: {
   loai: LoaiHang;
   chuaLuu?: boolean;
+  lech?: boolean;
 }): string => {
   if (row.loai === "tong") return "kh-hang-tong";
   if (row.loai === "nhom") return "kh-hang-nhom";
-  return row.chuaLuu ? "kh-hang-nhap" : "";
+  if (row.chuaLuu) return "kh-hang-nhap";
+  return row.lech ? "kh-hang-lech" : "";
 };

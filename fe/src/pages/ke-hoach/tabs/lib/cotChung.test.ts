@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { capCot, nhanChenhLech } from './cotChung';
+import { capCot, nhanChenhLech, rowClassName } from './cotChung';
 
 describe('nhanChenhLech', () => {
   it('khớp mục tiêu thì không cảnh báo', () => {
@@ -31,5 +31,28 @@ describe('capCot', () => {
     const kq = capCot('kh-cot-quy');
     expect(kq.className).toBe('kh-cot-quy');
     expect(kq.onHeaderCell()).toEqual({ className: 'kh-cot-quy' });
+  });
+});
+
+describe('rowClassName', () => {
+  it('hàng tổng và hàng nhóm giữ nền cấp hàng của mình, không tô đỏ', () => {
+    expect(rowClassName({ loai: 'tong', lech: true })).toBe('kh-hang-tong');
+    expect(rowClassName({ loai: 'nhom', lech: true })).toBe('kh-hang-nhom');
+  });
+
+  it('dòng chi tiết lệch mục tiêu thì tô đỏ', () => {
+    expect(rowClassName({ loai: 'chiTiet', lech: true })).toBe('kh-hang-lech');
+  });
+
+  it('dòng chi tiết khớp mục tiêu thì không tô gì', () => {
+    expect(rowClassName({ loai: 'chiTiet', lech: false })).toBe('');
+  });
+
+  // Dòng vừa thêm luôn lệch (chưa phân bổ tháng nào) — tô đỏ ngay lúc đang gõ
+  // dở là báo động giả, nền vàng "chưa lưu" phải thắng.
+  it('dòng chưa lưu giữ nền vàng dù đang lệch', () => {
+    expect(rowClassName({ loai: 'chiTiet', lech: true, chuaLuu: true })).toBe(
+      'kh-hang-nhap',
+    );
   });
 });

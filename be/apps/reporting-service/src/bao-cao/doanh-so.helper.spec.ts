@@ -7,6 +7,7 @@ import {
   gomTheoThoiGian,
   ghepCungKy,
   gomTheoChieu,
+  gomTheoNhomSanPham,
 } from './doanh-so.helper';
 import type { NhatKyChungEntry } from '@app/dto';
 
@@ -255,5 +256,101 @@ describe('gomTheoChieu', () => {
       'nhanVien',
     );
     expect(rows).toEqual([{ ten: 'Nguyễn Văn An', soTien: 300 }]);
+  });
+});
+
+describe('gomTheoNhomSanPham', () => {
+  // Snapshot sản phẩm trong bút toán CHỈ có {ma, ten, donVi, giaBan} — không có
+  // nhóm. Nhóm phải tra ngược từ danh mục Sản phẩm, đó là lý do hàm này tồn tại
+  // riêng thay vì dùng `gomTheoChieu` với field 'nhomSanPham'.
+  const sanPham = [
+    { ma: 'SP1', ten: 'Bàn', nhom: 'NOI_THAT' },
+    { ma: 'SP2', ten: 'Ghế', nhom: 'NOI_THAT' },
+    { ma: 'SP3', ten: 'Bút', nhom: 'VPP' },
+    { ma: 'SP4', ten: 'Chưa gán nhóm' },
+    // Dữ liệu cũ: `nhom` lưu bằng id thay vì mã.
+    { ma: 'SP5', ten: 'Tủ', nhom: 'id-noi-that' },
+  ];
+  const nhomSanPham = [
+    { id: 'id-noi-that', ma: 'NOI_THAT', ten: 'Nội thất' },
+    { id: 'id-vpp', ma: 'VPP', ten: 'Văn phòng phẩm' },
+  ];
+
+  it('cộng doanh số của các sản phẩm cùng nhóm về một dòng', () => {
+    const rows = gomTheoNhomSanPham(
+      [
+        v('2026-01-01', 100, '5111', { sanPham: { ma: 'SP1', ten: 'Bàn' } }),
+        v('2026-01-02', 300, '5111', { sanPham: { ma: 'SP2', ten: 'Ghế' } }),
+        v('2026-01-03', 50, '5111', { sanPham: { ma: 'SP3', ten: 'Bút' } }),
+      ],
+      sanPham,
+      nhomSanPham,
+    );
+    expect(rows).toEqual([
+      { ten: 'Nội thất', soTien: 400 },
+      { ten: 'Văn phòng phẩm', soTien: 50 },
+    ]);
+  });
+
+  it('sản phẩm lưu nhóm bằng id vẫn về đúng nhóm, không tách thành dòng riêng', () => {
+    const rows = gomTheoNhomSanPham(
+      [
+        v('2026-01-01', 100, '5111', { sanPham: { ma: 'SP1', ten: 'Bàn' } }),
+        v('2026-01-02', 70, '5111', { sanPham: { ma: 'SP5', ten: 'Tủ' } }),
+      ],
+      sanPham,
+      nhomSanPham,
+    );
+    expect(rows).toEqual([{ ten: 'Nội thất', soTien: 170 }]);
+  });
+
+  it('hai nhóm trùng TÊN khác MÃ vẫn là hai dòng', () => {
+    const rows = gomTheoNhomSanPham(
+      [
+        v('2026-01-01', 100, '5111', { sanPham: { ma: 'SP1', ten: 'Bàn' } }),
+        v('2026-01-02', 20, '5111', { sanPham: { ma: 'SP3', ten: 'Bút' } }),
+      ],
+      sanPham,
+      [
+        { id: 'id-noi-that', ma: 'NOI_THAT', ten: 'Trùng tên' },
+        { id: 'id-vpp', ma: 'VPP', ten: 'Trùng tên' },
+      ],
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows.map((r) => r.soTien)).toEqual([100, 20]);
+  });
+
+  it('sản phẩm chưa gán nhóm, không có trong danh mục, hoặc bút toán không gắn sản phẩm đều về "Chưa phân nhóm"', () => {
+    const rows = gomTheoNhomSanPham(
+      [
+        v('2026-01-01', 10, '5111', { sanPham: { ma: 'SP4', ten: 'Chưa gán nhóm' } }),
+        v('2026-01-02', 20, '5111', { sanPham: { ma: 'SP-LA', ten: 'Không có trong danh mục' } }),
+        v('2026-01-03', 30, '5111', {}),
+      ],
+      sanPham,
+      nhomSanPham,
+    );
+    expect(rows).toEqual([{ ten: 'Chưa phân nhóm', soTien: 60 }]);
+  });
+
+  it('chỉ tính bút toán doanh thu (Có 511)', () => {
+    const rows = gomTheoNhomSanPham(
+      [
+        v('2026-01-01', 100, '5111', { sanPham: { ma: 'SP1', ten: 'Bàn' } }),
+        v('2026-01-02', 999, '331', { sanPham: { ma: 'SP1', ten: 'Bàn' } }),
+      ],
+      sanPham,
+      nhomSanPham,
+    );
+    expect(rows).toEqual([{ ten: 'Nội thất', soTien: 100 }]);
+  });
+
+  it('nhóm không có trong danh mục Nhóm sản phẩm thì lấy chính mã làm nhãn', () => {
+    const rows = gomTheoNhomSanPham(
+      [v('2026-01-01', 100, '5111', { sanPham: { ma: 'SP1', ten: 'Bàn' } })],
+      sanPham,
+      [],
+    );
+    expect(rows).toEqual([{ ten: 'NOI_THAT', soTien: 100 }]);
   });
 });

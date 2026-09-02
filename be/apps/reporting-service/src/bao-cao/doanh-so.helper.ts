@@ -151,3 +151,75 @@ export function gomTheoChieu(
   }
   return Array.from(out.values()).sort((a, b) => b.soTien - a.soTien);
 }
+
+/** Danh mục Sản phẩm rút gọn — `nhom` có thể là MÃ nhóm hoặc (dữ liệu cũ) id nhóm. */
+export interface SanPhamCoNhom {
+  ma: string;
+  nhom?: string;
+}
+
+/** Danh mục Nhóm sản phẩm rút gọn. */
+export interface NhomSanPhamMuc {
+  id?: string;
+  _id?: string;
+  ma: string;
+  ten: string;
+}
+
+/** Dòng gom cho sản phẩm chưa xác định được nhóm. */
+export const CHUA_PHAN_NHOM = 'Chưa phân nhóm';
+
+/**
+ * Giá trị `dimension` của chiều Nhóm sản phẩm. Không nằm trong
+ * `DIMENSION_FIELD_MAP` vì nó KHÔNG map thẳng vào một trường của `danhMuc` —
+ * phải tra danh mục mới ra nhóm.
+ */
+export const CHIEU_NHOM_SAN_PHAM = 'nhom-san-pham';
+
+/**
+ * Gom doanh số theo NHÓM SẢN PHẨM.
+ *
+ * Phải viết riêng chứ không dùng `gomTheoChieu` được: snapshot `danhMuc.sanPham`
+ * trong bút toán chỉ giữ `{ma, ten, donVi, giaBan}`, KHÔNG có nhóm. Nhóm chỉ tra
+ * ngược được từ danh mục Sản phẩm, nên hàm này nhận thêm hai danh mục.
+ *
+ * Khoá gom luôn là MÃ nhóm, không phải tên: hai nhóm khác nhau có thể trùng tên,
+ * gom theo tên là cộng nhầm hai nhóm vào một dòng.
+ */
+export function gomTheoNhomSanPham(
+  vouchers: NhatKyChungEntry[],
+  sanPhamList: SanPhamCoNhom[],
+  nhomList: NhomSanPhamMuc[],
+): DoanhSoChieuRow[] {
+  // Danh mục Sản phẩm lưu `nhom` bằng mã, nhưng bản ghi cũ lưu bằng id — tra
+  // được cả hai, nếu không những sản phẩm đó rơi hết vào "Chưa phân nhóm".
+  const nhomTheoKhoa = new Map<string, NhomSanPhamMuc>();
+  for (const n of nhomList) {
+    if (n.ma) nhomTheoKhoa.set(n.ma, n);
+    if (n.id) nhomTheoKhoa.set(n.id, n);
+    if (n._id) nhomTheoKhoa.set(n._id, n);
+  }
+
+  const nhomCuaSanPham = new Map<string, string>();
+  for (const sp of sanPhamList) {
+    if (sp.ma && sp.nhom) nhomCuaSanPham.set(sp.ma, sp.nhom);
+  }
+
+  const out = new Map<string, { ten: string; soTien: number }>();
+  for (const v of vouchers) {
+    if (!laDoanhThu(v)) continue;
+    const dm = v.danhMuc as unknown as Record<string, GiaTriChieu | undefined>;
+    const maSanPham = maChieu(dm?.sanPham);
+    const khoaNhomTho = maSanPham ? nhomCuaSanPham.get(maSanPham) : undefined;
+    const nhom = khoaNhomTho ? nhomTheoKhoa.get(khoaNhomTho) : undefined;
+
+    // Khoá gom là MÃ nhóm (đã chuẩn hoá từ id nếu cần), không phải tên.
+    const khoa = nhom?.ma ?? khoaNhomTho ?? '';
+    const ten = nhom?.ten || khoaNhomTho || CHUA_PHAN_NHOM;
+
+    const e = out.get(khoa) ?? { ten, soTien: 0 };
+    e.soTien += v.soTien;
+    out.set(khoa, e);
+  }
+  return Array.from(out.values()).sort((a, b) => b.soTien - a.soTien);
+}
