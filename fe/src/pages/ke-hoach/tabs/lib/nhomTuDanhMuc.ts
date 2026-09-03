@@ -62,3 +62,57 @@ export function nhomOptions(
 export function nhomCuaMuc(mucList: MucDanhMuc[], id: string): string {
   return mucList.find((m) => m.id === id)?.nhom ?? "";
 }
+
+/** Rổ option của một nhóm — đúng dạng optgroup mà antd Select nhận. */
+export interface NhomOptionGroup {
+  label: string;
+  options: OptionNhom[];
+}
+
+/** Nhãn rổ chứa các mục danh mục chưa gắn nhóm nào. */
+export const NHAN_CHUA_GAN_NHOM = '(Chưa gán nhóm)';
+
+/**
+ * Toàn bộ mục danh mục con, gom sẵn theo nhóm để đổ vào MỘT ô select.
+ *
+ * Bảng kế hoạch từng có hai ô: chọn nhóm rồi mới chọn mục. Bước chọn nhóm là
+ * thừa — mỗi mục đã mang sẵn mã nhóm (`MucDanhMuc.nhom`), và chiều Thu/Chi suy
+ * tiếp từ nhóm đó (xem `chieuCuaNhom`). Gom theo optgroup thì người dùng vẫn
+ * nhìn thấy cây nhóm ngay trong ô, mà chỉ phải chọn một lần.
+ *
+ * Gom theo MÃ chứ không theo tên: hai nhóm khác nhau có thể trùng tên.
+ * Nhóm rỗng không sinh rổ — rổ trống chỉ tổ làm dài danh sách.
+ */
+export function mucOptionsTheoNhom(
+  nhomList: NhomDanhMuc[],
+  mucList: MucDanhMuc[],
+): NhomOptionGroup[] {
+  const nhanNhom = new Map<string, string>();
+  for (const n of nhomList) {
+    if (n.ma) nhanNhom.set(n.ma, `${n.ma} - ${n.ten}`);
+  }
+
+  const theoNhom = new Map<string, OptionNhom[]>();
+  for (const m of mucList) {
+    const ma = m.nhom || '';
+    const cungNhom = theoNhom.get(ma) ?? [];
+    cungNhom.push({ value: m.id, label: `${m.ma} - ${m.ten}` });
+    theoNhom.set(ma, cungNhom);
+  }
+
+  const coNhom = [...theoNhom.entries()].filter(([ma]) => ma !== '');
+  const nhom = sapXepTheoNhan(
+    coNhom.map(([ma, options]) => ({
+      // Chưa khai ở danh mục Nhóm → hiện mã trần, còn hơn dồn vào rổ "chưa gán".
+      label: nhanNhom.get(ma) ?? ma,
+      options: sapXepTheoNhan(options),
+    })),
+  );
+
+  // Rổ "chưa gán" luôn xuống cuối: nó là chỗ chứa dữ liệu còn thiếu, không phải
+  // một nhóm nghiệp vụ để lẫn vào giữa danh sách.
+  const chuaGan = theoNhom.get('');
+  return chuaGan
+    ? [...nhom, { label: NHAN_CHUA_GAN_NHOM, options: sapXepTheoNhan(chuaGan) }]
+    : nhom;
+}

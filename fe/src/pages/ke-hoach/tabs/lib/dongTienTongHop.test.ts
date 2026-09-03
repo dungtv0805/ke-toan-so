@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   chieuCuaNhom,
+  nhomDaKhaiChieu,
   quyTuSoDuCuoi,
   quyTuSoDuDau,
   tinhTongHopDongTien,
@@ -119,5 +120,27 @@ describe('chieuCuaNhom', () => {
     ];
     expect(chieuCuaNhom(nhieu, 'A', undefined)).toBe('THU');
     expect(chieuCuaNhom(nhieu, 'B', undefined)).toBe('CHI');
+  });
+});
+
+describe('nhomDaKhaiChieu', () => {
+  const nhom = [
+    { ma: 'C', chieu: 'CHI' as const },
+    { ma: 'X', chieu: null },
+    { ma: 'Y' },
+  ];
+
+  it('khai rồi thì true', () => {
+    expect(nhomDaKhaiChieu(nhom, 'C')).toBe(true);
+  });
+
+  it('chieu null hoặc thiếu hẳn đều là chưa khai', () => {
+    expect(nhomDaKhaiChieu(nhom, 'X')).toBe(false);
+    expect(nhomDaKhaiChieu(nhom, 'Y')).toBe(false);
+  });
+
+  it('mã không có trong danh mục Nhóm cũng là chưa khai', () => {
+    expect(nhomDaKhaiChieu(nhom, 'KHONG-CO')).toBe(false);
+    expect(nhomDaKhaiChieu(nhom, '')).toBe(false);
   });
 });

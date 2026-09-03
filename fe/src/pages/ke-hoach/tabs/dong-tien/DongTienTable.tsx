@@ -12,6 +12,7 @@ import {
 } from "antd";
 import {
   DeleteOutlined,
+  ExclamationCircleOutlined,
   PlusOutlined,
   ReloadOutlined,
   SaveOutlined,
@@ -20,14 +21,14 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
 import { useCotCoGian } from "@/hooks/useCotCoGian";
-import { sapXepTheoNhan } from "@/lib/sapXep";
 import {
+  mucOptionsTheoNhom,
   nhomCuaMuc,
-  nhomOptions as dungNhomOptions,
 } from "../lib/nhomTuDanhMuc";
 import { dungCayBang, type HangBang, type MoTaHang } from "../lib/tongHop";
 import {
   chieuCuaNhom,
+  nhomDaKhaiChieu,
   quyTuSoDuCuoi,
   quyTuSoDuDau,
   tinhTongHopDongTien,
@@ -228,22 +229,17 @@ export const DongTienTable: React.FC = () => {
   }, [hienThi, doc, tongHop, chieuCua]);
 
   /**
-   * Danh mục Nhóm dòng tiền của nhiều công ty còn rỗng — chỉ đọc mỗi nó thì ô
-   * "Chọn nhóm" hiện Trống và người dùng tắc hẳn. Gộp thêm mã nhóm có thật
-   * trên danh mục Dòng tiền.
+   * Một ô chọn duy nhất cho cả nhóm lẫn dòng tiền (nghiệp vụ 03/09/2026).
+   *
+   * Trước đây phải chọn nhóm rồi mới chọn dòng tiền — thừa hẳn một bước, vì
+   * danh mục Dòng tiền đã gắn sẵn nhóm cho từng dòng và nhóm đã khai Thu/Chi.
+   * Nay đổ hết dòng tiền vào một ô, gom theo optgroup nhóm: vẫn nhìn ra cây
+   * nhóm, gõ tìm được, mà chỉ chọn một lần.
    */
-  const nhomOptions = useMemo(
-    () => dungNhomOptions(nhomDongTienList, dongTienList),
+  const dongTienOptions = useMemo(
+    () => mucOptionsTheoNhom(nhomDongTienList, dongTienList),
     [nhomDongTienList, dongTienList],
   );
-
-  /** `DongTien.nhom` lưu MÃ nhóm, không lưu id — lọc theo mã. */
-  const dongTienTheoNhom = (nhomMa: string) =>
-    sapXepTheoNhan(
-      dongTienList
-        .filter((d) => !nhomMa || d.nhom === nhomMa)
-        .map((d) => ({ value: d.id, label: `${d.ma} - ${d.ten}` })),
-    );
 
   const suaDuoc = (row: Hang) => !laHangGop(row.loai);
 
@@ -289,6 +285,12 @@ export const DongTienTable: React.FC = () => {
             return (
               <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold">{row.nhan}</span>
+                {row.nhomKey !== CHUA_CHON &&
+                  !nhomDaKhaiChieu(nhomDongTienList, row.nhomKey) && (
+                    <Tooltip title="Nhóm này chưa khai Thu/Chi ở Danh mục ▸ Nhóm dòng tiền — bảng đang tạm xếp theo chiều cũ của từng dòng.">
+                      <ExclamationCircleOutlined className="text-amber-500" />
+                    </Tooltip>
+                  )}
                 {row.nhomKey !== CHUA_CHON && (
                   <Tooltip title="Thêm dòng tiền vào nhóm này">
                     <Button
@@ -306,30 +308,10 @@ export const DongTienTable: React.FC = () => {
               </div>
             );
           }
-          // Dòng đã lưu không đổi được dòng tiền → hiện mã dạng chữ.
-          if (!row.dong?.tam) {
-            return (
-              <span>
-                {tenDongTien.get(row.dong!.val.dongTienId)?.ma ?? "-"}
-              </span>
-            );
-          }
+          // Không còn ô "Chọn nhóm" ở đây: mã hiện ra theo dòng tiền đã chọn ở
+          // cột bên cạnh, dòng mới chưa chọn thì để trống.
           return (
-            <Select
-              size="small"
-              className="w-full"
-              placeholder="Chọn nhóm"
-              showSearch
-              optionFilterProp="label"
-              options={nhomOptions}
-              value={row.dong.val.nhomMa || undefined}
-              onChange={(v) =>
-                handler.executeEvent("suaO", {
-                  id: row.dong!.id,
-                  patch: { nhomMa: v },
-                })
-              }
-            />
+            <span>{tenDongTien.get(row.dong!.val.dongTienId)?.ma ?? "—"}</span>
           );
         },
       },
@@ -351,13 +333,13 @@ export const DongTienTable: React.FC = () => {
               placeholder="Chọn dòng tiền"
               showSearch
               optionFilterProp="label"
-              options={dongTienTheoNhom(row.dong.val.nhomMa)}
+              options={dongTienOptions}
               value={row.dong.val.dongTienId || undefined}
               onChange={(v) =>
                 handler.executeEvent("suaO", {
                   id: row.dong!.id,
-                  // Tự điền nhóm theo dòng tiền vừa chọn — khỏi phải chọn hai lần,
-                  // và dòng không rơi vào rổ "(Chưa chọn nhóm)" nữa.
+                  // Nhóm điền theo dòng tiền vừa chọn — dòng tự nhảy đúng nhóm
+                  // và `chieuCuaNhom` suy tiếp ra Thu/Chi, không hỏi lại gì nữa.
                   patch: { dongTienId: v, nhomMa: nhomCuaMuc(dongTienList, v) },
                 })
               }
