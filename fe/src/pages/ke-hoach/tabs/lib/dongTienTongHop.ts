@@ -96,3 +96,20 @@ export function chieuCuaNhom(
   const nhom = nhomList.find((n) => n.ma === nhomMa);
   return nhom?.chieu ?? chieuDaLuu ?? 'THU';
 }
+
+/**
+ * Nhóm đã khai Thu/Chi ở danh mục chưa?
+ *
+ * Bảng không còn ô nhập chiều, nên nhóm chưa khai sẽ lặng lẽ rơi về chiều cũ
+ * (hoặc THU) — đúng dữ liệu cũ nhưng người dùng không có cách nào biết. Dùng
+ * hàm này để cắm cảnh báo lên hàng nhóm, chỉ họ về danh mục mà khai.
+ *
+ * Mã không có trong danh mục Nhóm cũng tính là chưa khai: bảng vẫn dựng được
+ * hàng nhóm từ mã trần nằm trên danh mục Dòng tiền.
+ */
+export function nhomDaKhaiChieu(
+  nhomList: NhomCoChieu[],
+  nhomMa: string,
+): boolean {
+  return Boolean(nhomList.find((n) => n.ma === nhomMa)?.chieu);
+}

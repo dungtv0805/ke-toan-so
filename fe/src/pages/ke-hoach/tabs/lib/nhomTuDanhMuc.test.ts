@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nhomCuaMuc, nhomOptions } from './nhomTuDanhMuc';
+import { mucOptionsTheoNhom, nhomCuaMuc, nhomOptions } from './nhomTuDanhMuc';
 
 const NHOM = [
   { ma: 'T', ten: 'Thu' },
@@ -84,5 +84,69 @@ describe('nhomCuaMuc', () => {
   it('trả chuỗi rỗng khi mục không có nhóm hoặc không tìm thấy', () => {
     expect(nhomCuaMuc(MUC, 'khong-co')).toBe('');
     expect(nhomCuaMuc([{ id: '9', ma: 'X', ten: 'X' }], '9')).toBe('');
+  });
+});
+
+describe('mucOptionsTheoNhom', () => {
+  it('gom mục vào đúng nhóm, nhãn nhóm lấy từ danh mục Nhóm', () => {
+    expect(mucOptionsTheoNhom(NHOM, MUC)).toEqual([
+      {
+        label: 'C - Chi',
+        options: [{ value: '2', label: 'C01 - Chi lương' }],
+      },
+      {
+        label: 'T - Thu',
+        options: [{ value: '1', label: 'T03 - Thu nợ khách hàng' }],
+      },
+    ]);
+  });
+
+  /** Danh mục Nhóm rỗng vẫn phải gom được — mã trần còn hơn dồn hết vào một rổ. */
+  it('hiện mã trần khi nhóm chưa khai ở danh mục Nhóm', () => {
+    expect(mucOptionsTheoNhom([], MUC).map((g) => g.label)).toEqual(['C', 'T']);
+  });
+
+  it('mục chưa gắn nhóm dồn vào rổ cuối cùng', () => {
+    const muc = [
+      { id: '1', ma: 'X', ten: 'Chưa gắn' },
+      { id: '2', ma: 'C01', ten: 'Chi lương', nhom: 'C' },
+    ];
+    const nhom = mucOptionsTheoNhom(NHOM, muc);
+    expect(nhom.map((g) => g.label)).toEqual(['C - Chi', '(Chưa gán nhóm)']);
+    expect(nhom[1].options).toEqual([{ value: '1', label: 'X - Chưa gắn' }]);
+  });
+
+  it('gom theo MÃ — hai nhóm trùng tên khác mã không bị nhập một', () => {
+    const nhom = [
+      { ma: 'T1', ten: 'Thu' },
+      { ma: 'T2', ten: 'Thu' },
+    ];
+    const muc = [
+      { id: '1', ma: 'A', ten: 'A', nhom: 'T1' },
+      { id: '2', ma: 'B', ten: 'B', nhom: 'T2' },
+    ];
+    expect(mucOptionsTheoNhom(nhom, muc)).toEqual([
+      { label: 'T1 - Thu', options: [{ value: '1', label: 'A - A' }] },
+      { label: 'T2 - Thu', options: [{ value: '2', label: 'B - B' }] },
+    ]);
+  });
+
+  it('nhóm không có mục nào thì không hiện rổ rỗng', () => {
+    expect(mucOptionsTheoNhom(NHOM, []).length).toBe(0);
+  });
+
+  it('sắp nhóm và mục theo nhãn tiếng Việt', () => {
+    const nhom = [
+      { ma: 'N10', ten: 'Nhóm 10' },
+      { ma: 'N2', ten: 'Nhóm 2' },
+    ];
+    const muc = [
+      { id: '1', ma: 'B', ten: 'Bê', nhom: 'N2' },
+      { id: '2', ma: 'A', ten: 'A', nhom: 'N2' },
+      { id: '3', ma: 'C', ten: 'Xê', nhom: 'N10' },
+    ];
+    const kq = mucOptionsTheoNhom(nhom, muc);
+    expect(kq.map((g) => g.label)).toEqual(['N2 - Nhóm 2', 'N10 - Nhóm 10']);
+    expect(kq[0].options.map((o) => o.value)).toEqual(['2', '1']);
   });
 });
