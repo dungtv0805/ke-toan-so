@@ -13,6 +13,32 @@ export interface VisibleModule {
 }
 
 /**
+ * Các khoá quyền chấp nhận được cho một mục.
+ * Mục Tổng quan có HAI khoá vì lịch sử: routePermissions ánh xạ '/' sang
+ * '/tong-quan:xem', nên người dùng thật cầm khoá sau chứ không phải '/:xem'.
+ * Bỏ OR này là cả công ty mất Bảng điều hành khỏi sidebar.
+ */
+export const cacKhoaQuyen = (leaf: MenuLeaf): string[] =>
+  pathOf(leaf) === '/'
+    ? ['/:xem', '/tong-quan:xem']
+    : [`${permKeyOf(leaf)}:xem`];
+
+/**
+ * Mục gộp (Danh mục) mở khi lĩnh vực cho phép ÍT NHẤT 1 route con, VÀ user có
+ * quyền xem ÍT NHẤT 1 route con — hai phép kiểm ĐỘC LẬP, không bắt cùng một
+ * route thoả cả hai. Đây là bản sao nguyên vẹn của MainLayout.tsx:91 và :376.
+ */
+export const moPhanHeGop = (
+  routes: string[],
+  moduleKeys: string[],
+  coQuyen: (perm: string) => boolean,
+  isSuperAdmin: boolean,
+): boolean =>
+  isSuperAdmin ||
+  (routes.some((r) => keyMatches(r, moduleKeys)) &&
+    routes.some((r) => coQuyen(`${r}:xem`)));
+
+/**
  * Hai tầng lọc, thứ tự cố định: lĩnh vực trước, quyền sau.
  * Mục `soon` bỏ qua tầng quyền — chưa có gì để cấp, ẩn đi thì người dùng
  * không bao giờ biết tính năng đang được làm.
@@ -28,7 +54,7 @@ export function locMuc(
     if (isSuperAdmin) return true;
     if (!keyMatches(pathOf(leaf), moduleKeys)) return false;
     if (leaf.status === 'soon') return true;
-    return coQuyen(`${permKeyOf(leaf)}:xem`);
+    return cacKhoaQuyen(leaf).some(coQuyen);
   });
 }
 
@@ -40,16 +66,13 @@ export function useVisibleMenu(): VisibleModule[] {
   return useMemo(
     () =>
       MENU_MODULES.map((module) => {
-        // Mục gộp (Danh mục): mở khi có quyền xem ít nhất 1 route con.
         if (module.aggregateRoutes) {
-          // Giữ đúng hành vi cũ của menuKeyVisible trong MainLayout:
-          // mở khi có ÍT NHẤT 1 route con vừa thuộc lĩnh vực vừa có quyền xem.
-          const mo =
-            isSuperAdmin ||
-            module.aggregateRoutes.some(
-              (r) =>
-                keyMatches(r, allEffectiveKeys) && hasPermission(`${r}:xem`),
-            );
+          const mo = moPhanHeGop(
+            module.aggregateRoutes,
+            allEffectiveKeys,
+            hasPermission,
+            isSuperAdmin,
+          );
           return { module, leaves: mo ? leavesOfModule(module.id) : [] };
         }
         return {

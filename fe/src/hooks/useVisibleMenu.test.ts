@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { locMuc } from './useVisibleMenu';
+import { locMuc, cacKhoaQuyen, moPhanHeGop } from './useVisibleMenu';
 import type { MenuLeaf } from '@/config/menuCatalog';
 
 const muc = (key: string, extra: Partial<MenuLeaf> = {}): MenuLeaf => ({
@@ -39,13 +39,44 @@ describe('locMuc', () => {
     expect(ra).toHaveLength(1);
   });
 
-  it('mục soon vẫn hiện dù chưa ai được cấp quyền cho nó', () => {
+  it('mục soon vẫn hiện nếu thuộc lĩnh vực, nhưng bị ẩn nếu ngoài lĩnh vực', () => {
     const ds = [muc('/kho/tinh-gia-xuat', { status: 'soon' })];
+    // soon vẫn respects domain layer: ngoài /kho → bị ẩn
+    expect(locMuc(ds, ['/thue'], () => false, false)).toHaveLength(0);
+    // soon vẫn hiện dù không có quyền: trong /kho → hiện
     expect(locMuc(ds, ['/kho'], () => false, false)).toHaveLength(1);
   });
 
   it('mục legacy không bao giờ hiện', () => {
     const ds = [muc('/bao-cao/so-cai', { legacy: true })];
     expect(locMuc(ds, ['/bao-cao'], () => true, false)).toEqual([]);
+  });
+});
+
+describe('cacKhoaQuyen', () => {
+  it('trả hai khoá cho mục Tổng quan (/)', () => {
+    const ds = muc('/', { key: '/' });
+    expect(cacKhoaQuyen(ds)).toEqual(['/:xem', '/tong-quan:xem']);
+  });
+
+  it('trả một khoá cho mục thường', () => {
+    const ds = muc('/kho/nhap-kho');
+    expect(cacKhoaQuyen(ds)).toEqual(['/kho/nhap-kho:xem']);
+  });
+});
+
+describe('moPhanHeGop', () => {
+  it('mở nếu lĩnh vực thoả route A và quyền thoả route B khác', () => {
+    const routes = ['/danh-muc/tai-khoan', '/danh-muc/doi-tuong'];
+    const moduleKeys = ['/danh-muc/tai-khoan'];
+    const coQuyen = (p: string) => p === '/danh-muc/doi-tuong:xem';
+    expect(moPhanHeGop(routes, moduleKeys, coQuyen, false)).toBe(true);
+  });
+
+  it('đóng nếu có quyền nhưng route nào không thuộc lĩnh vực', () => {
+    const routes = ['/danh-muc/tai-khoan', '/danh-muc/doi-tuong'];
+    const moduleKeys = ['/thue'];
+    const coQuyen = (p: string) => p === '/danh-muc/tai-khoan:xem';
+    expect(moPhanHeGop(routes, moduleKeys, coQuyen, false)).toBe(false);
   });
 });
