@@ -44,8 +44,14 @@ export interface MenuLeaf {
   permKey?: string;
   /** Nhãn đổi theo ngành (glossary). */
   termKey?: string;
-  /** Giữ route + giữ quyền nhưng KHÔNG hiện trên sidebar. */
+  /** Giữ route, KHÔNG hiện trên sidebar. Quyền cũ (nếu có) vẫn nguyên hiệu lực. */
   legacy?: true;
+  /**
+   * Route có thật nhưng KHÔNG có khoá quyền riêng — ví dụ trang chuyển hướng
+   * `/thue` chỉ đẩy sang trang thuế đầu tiên user xem được. Quyền đã nằm ở các
+   * route con. Đánh cờ này để `permissionKeys()` không sinh khoá mới.
+   */
+  khongCoQuyenRieng?: true;
 }
 
 export const MENU_MODULES: MenuModule[] = [
@@ -198,7 +204,7 @@ export const MENU_LEAVES: MenuLeaf[] = [
   // App.tsx: <Route path="thue"><Route index element={<ThueIndexRoute />} />...
   // ThueIndexRoute bare (không ProtectedRoute) — tự chuyển sang trang con đầu
   // tiên user có quyền xem. Không sinh khóa quyền của riêng nó.
-  { key: '/thue', label: 'Thuế', module: 'thue', status: 'soon', legacy: true },
+  { key: '/thue', label: 'Thuế', module: 'thue', status: 'ok', legacy: true, khongCoQuyenRieng: true },
 ];
 
 /** Đường dẫn để navigate (gồm cả query nếu có). */
@@ -231,7 +237,7 @@ export const permissionKeys = (): string[] => {
   return Array.from(
     new Set(
       MENU_LEAVES
-        .filter((l) => l.status === 'ok' && !phanHeGop.has(l.module))
+        .filter((l) => l.status === 'ok' && !phanHeGop.has(l.module) && !l.khongCoQuyenRieng)
         .map(permKeyOf),
     ),
   );
