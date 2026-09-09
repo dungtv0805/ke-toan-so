@@ -24,6 +24,7 @@ export const SidebarRail: React.FC<Props> = ({
           key={module.id}
           type="button"
           title={`${module.label} — ${leaves.length} mục`}
+          aria-label={module.label}
           aria-current={dangMo ? 'true' : undefined}
           onClick={() => onPick(module.id)}
           onMouseEnter={() => onHover?.(module.id)}
