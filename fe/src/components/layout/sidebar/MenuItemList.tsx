@@ -5,15 +5,34 @@ interface Props {
   leaves: MenuLeaf[];
   /** location.pathname hiện tại. */
   activePath: string;
+  /** location.search hiện tại (kèm dấu '?'). BẮT BUỘC truyền ở nơi có
+   *  Router — thiếu nó thì 4 mục "Kế hoạch …" ở 4 phân hệ khác nhau cùng
+   *  sáng, vì chúng chỉ khác nhau ở `?tab=`. */
+  activeSearch?: string;
   onSelect: (key: string) => void;
 }
+
+/**
+ * Mục có query trong `key` phải khớp CẢ query mới coi là trang hiện tại;
+ * mục không có query so như cũ (chỉ pathname).
+ * So theo từng tham số đã khai chứ không so nguyên chuỗi: URL thật có thể
+ * mang thêm tham số khác (phân trang, bộ lọc) mà mục vẫn phải sáng.
+ */
+export const khopQuery = (leafKey: string, activeSearch = ''): boolean => {
+  const q = leafKey.split('?')[1];
+  if (!q) return true;
+  const dangCo = new URLSearchParams(activeSearch);
+  return [...new URLSearchParams(q)].every(([k, v]) => dangCo.get(k) === v);
+};
 
 /**
  * Danh sách mục con của một phân hệ.
  * DÙNG CHUNG cho panel · flyout · drawer mobile — ba chỗ đó không được
  * tự vẽ lại danh sách, nếu không sẽ lệch nhau khi menu đổi.
  */
-export const MenuItemList: React.FC<Props> = ({ leaves, activePath, onSelect }) => {
+export const MenuItemList: React.FC<Props> = ({
+  leaves, activePath, activeSearch, onSelect,
+}) => {
   let clusterDangVe: string | undefined;
 
   return (
@@ -23,7 +42,7 @@ export const MenuItemList: React.FC<Props> = ({ leaves, activePath, onSelect }) 
         // Tracker phải là cụm của mục ngay trước, không phải cụm không rỗng gần nhất.
         // Nếu không, khối cụm lặp lại (cụm A → mục không cụm → cụm A) sẽ mất tiêu đề lần 2.
         clusterDangVe = leaf.cluster;
-        const dangMo = pathOf(leaf) === activePath;
+        const dangMo = pathOf(leaf) === activePath && khopQuery(leaf.key, activeSearch);
         const soon = leaf.status === 'soon';
 
         return (

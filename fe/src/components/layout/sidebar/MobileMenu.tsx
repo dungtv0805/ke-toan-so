@@ -16,7 +16,7 @@ interface Props {
 export const MobileMenu: React.FC<Props> = ({ open, onClose }) => {
   const modules = useVisibleMenu();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const [dangXem, datDangXem] = useState<ModuleId | undefined>();
   const current = modules.find((m) => m.module.id === dangXem);
 
@@ -47,6 +47,7 @@ export const MobileMenu: React.FC<Props> = ({ open, onClose }) => {
           <MenuItemList
             leaves={current.leaves}
             activePath={pathname}
+            activeSearch={search}
             onSelect={(key) => {
               navigate(key);
               dong();

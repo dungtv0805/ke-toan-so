@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { MenuItemList } from './MenuItemList';
+import { MenuItemList, khopQuery } from './MenuItemList';
 import type { MenuLeaf } from '@/config/menuCatalog';
 
 const leaves: MenuLeaf[] = [
@@ -55,6 +55,34 @@ describe('MenuItemList', () => {
     ];
     render(<MenuItemList leaves={ds} activePath="/" onSelect={() => {}} />);
     expect(screen.getAllByText('A')).toHaveLength(2);
+  });
+
+  /**
+   * Bốn phân hệ cùng trỏ '/trung-tam-du-lieu/ke-hoach', chỉ khác `?tab=`.
+   * So mỗi pathname thì cả bốn cùng nhận là trang hiện tại.
+   */
+  it('hai mục cùng path khác ?tab= — chỉ mục khớp cả query mới được đánh dấu', () => {
+    const ds: MenuLeaf[] = [
+      { key: '/trung-tam-du-lieu/ke-hoach?tab=ban-hang', permKey: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch bán hàng', module: 'ban-hang', status: 'ok' },
+      { key: '/trung-tam-du-lieu/ke-hoach?tab=dong-tien', permKey: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch ngân sách', module: 'von-dong-tien', status: 'ok' },
+    ];
+    render(
+      <MenuItemList
+        leaves={ds}
+        activePath="/trung-tam-du-lieu/ke-hoach"
+        activeSearch="?tab=ban-hang"
+        onSelect={() => {}}
+      />,
+    );
+    expect(screen.getByText('Kế hoạch bán hàng').closest('button')!.getAttribute('aria-current')).toBe('page');
+    expect(screen.getByText('Kế hoạch ngân sách').closest('button')!.getAttribute('aria-current')).toBeNull();
+  });
+
+  it('khopQuery: mục không query so như cũ, mục có query bỏ qua tham số thừa của URL', () => {
+    expect(khopQuery('/so-quy', '?tab=abc')).toBe(true);
+    expect(khopQuery('/x?tab=a', '?tab=a&page=2')).toBe(true);
+    expect(khopQuery('/x?tab=a', '?tab=b')).toBe(false);
+    expect(khopQuery('/x?tab=a', '')).toBe(false);
   });
 
   it('nhãn dài phải có min-w-0 để truncate hoạt động', () => {

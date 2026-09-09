@@ -18,7 +18,7 @@ export const BE_RONG_THU_GON = 62;
 
 export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const { user } = useAuth();
   const modules = useVisibleMenu();
   // Lấy luôn moduleDangChon/chonModule từ hook — không tự khai useState
@@ -127,6 +127,7 @@ export const Sidebar: React.FC = () => {
             current={current}
             allModules={modules}
             activePath={pathname}
+            activeSearch={search}
             onSelect={navigate}
             onCollapse={() => datThuGon(true)}
           />
@@ -135,6 +136,7 @@ export const Sidebar: React.FC = () => {
           <ModuleFlyout
             current={flyoutModule}
             activePath={pathname}
+            activeSearch={search}
             onSelect={navigate}
             onClose={() => datFlyout(undefined)}
           />

@@ -9,6 +9,7 @@ interface Props {
   current: VisibleModule;
   allModules: VisibleModule[];
   activePath: string;
+  activeSearch?: string;
   onSelect: (key: string) => void;
   onCollapse?: () => void;
 }
@@ -18,7 +19,7 @@ interface Props {
  * Chỗ trống giữa danh sách và đáy là nơi thẻ "Kỳ kế toán" sẽ vào (hoãn — thiếu API).
  */
 export const ModulePanel: React.FC<Props> = ({
-  current, allModules, activePath, onSelect, onCollapse,
+  current, allModules, activePath, activeSearch, onSelect, onCollapse,
 }) => (
   <div className="flex w-[196px] shrink-0 flex-col gap-[8px] border-r border-[hsl(var(--border))] bg-[hsl(var(--sidebar-panel))] px-[8px] py-[10px]">
     <div className="flex items-center justify-between">
@@ -37,7 +38,12 @@ export const ModulePanel: React.FC<Props> = ({
 
     <SidebarSearch modules={allModules} onSelect={onSelect} />
 
-    <MenuItemList leaves={current.leaves} activePath={activePath} onSelect={onSelect} />
+    <MenuItemList
+      leaves={current.leaves}
+      activePath={activePath}
+      activeSearch={activeSearch}
+      onSelect={onSelect}
+    />
 
     {/* Thẻ "Kỳ kế toán" sẽ nằm ở đây khi có API — spec §14.2 */}
     <div className="flex-1" />

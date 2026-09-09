@@ -5,6 +5,7 @@ import type { VisibleModule } from '@/hooks/useVisibleMenu';
 interface Props {
   current: VisibleModule;
   activePath: string;
+  activeSearch?: string;
   onSelect: (key: string) => void;
   onClose: () => void;
 }
@@ -15,7 +16,7 @@ interface Props {
  * cùng cách đánh dấu mục sắp có.
  */
 export const ModuleFlyout: React.FC<Props> = ({
-  current, activePath, onSelect, onClose,
+  current, activePath, activeSearch, onSelect, onClose,
 }) => (
   <div
     role="dialog"
@@ -29,6 +30,7 @@ export const ModuleFlyout: React.FC<Props> = ({
     <MenuItemList
       leaves={current.leaves}
       activePath={activePath}
+      activeSearch={activeSearch}
       onSelect={(key) => {
         onSelect(key);
         onClose();
