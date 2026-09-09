@@ -3,14 +3,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
 import {
-  MENU_MODULES, MENU_LEAVES, MENU_CATALOG, pathOf, permKeyOf, permissionKeys,
+  MENU_MODULES, MENU_LEAVES, MENU_CATALOG, pathOf, permissionKeys,
 } from './menuCatalog';
 import { routePermissions } from './routePermissions';
 import { DANH_MUC_ROUTES } from './danhMucCatalog';
-import {
-  permissionModules,
-  type PermissionModule,
-} from '@/pages/cau-hinh/phan-quyen/constants/permissionModules';
 import keysTruocDoi from './__snapshots__/permission-keys-truoc-doi.json';
 import routeTruocDoi from './__snapshots__/route-permissions-truoc-doi.json';
 import maTranTruocDoi from '@/pages/cau-hinh/phan-quyen/constants/__snapshots__/matrix-keys-truoc-doi.json';
@@ -75,16 +71,19 @@ function docRouteTuApp(): Map<string, boolean> {
 }
 
 /**
- * Tập key quyền ĐÃ TỒN TẠI trong hệ thống = hợp của hai nguồn:
- * `routePermissions` (nơi ProtectedRoute tra) và ma trận `permissionModules`
- * (nơi admin bấm cấp quyền). Một key có ở bất kỳ nguồn nào cũng là quyền cũ,
- * không phải quyền mới. Ví dụ `/bao-cao/bang-tong-hop` có trong ma trận nhưng
- * thiếu trong routePermissions — lỗ hổng có sẵn, không phải do đợt này tạo ra.
+ * Tập key quyền ĐÃ TỒN TẠI trong hệ thống = hợp của hai ẢNH CHỤP ĐÓNG BĂNG
+ * trước đợt sửa: `permission-keys-truoc-doi.json` (từ `permissionKeys()` cũ)
+ * và `matrix-keys-truoc-doi.json` (từ ma trận `permissionModules` cũ).
+ *
+ * CỐ Ý dùng snapshot TĨNH, không dùng `permissionModules` SỐNG: ma trận sống
+ * cũng sinh từ `MENU_LEAVES` giống hệt `permissionKeys()`, nên hợp với nguồn
+ * sống sẽ luôn chứa MỌI khoá mà `permissionKeys()` sinh ra — test "tập con"
+ * bên dưới thành hằng đúng, không bắt được khoá mới lạ nào. Đã kiểm bằng
+ * mutation: thêm một mục `ok` với khoá hoàn toàn mới vào catalog thì bản dùng
+ * nguồn sống vẫn xanh; dùng snapshot tĩnh thì đỏ đúng như kỳ vọng.
  */
 function keyQuyenDaCo(): Set<string> {
-  const la = (ds: PermissionModule[]): string[] =>
-    ds.flatMap((m) => (m.children ? la(m.children) : [m.key]));
-  return new Set([...(keysTruocDoi as string[]), ...la(permissionModules)]);
+  return new Set([...(keysTruocDoi as string[]), ...(maTranTruocDoi as string[])]);
 }
 
 const ROUTES = docRouteTuApp();
@@ -165,38 +164,21 @@ describe('phân quyền — không cấp lại', () => {
   });
 
   /**
-   * Chiều ngược của test dưới: không chỉ "có khai trong MENU_LEAVES" mà phải
-   * được `permissionKeys()` SINH RA. Đợt sau sinh ma trận phân quyền từ hàm
-   * này — khoá nào rơi khỏi đây thì biến khỏi ma trận, và mỗi lần lưu trang
-   * Phân quyền sẽ xoá nó khỏi vai trò.
+   * XOÁ hai test trước đây ở đây — "mọi khoá routePermissions đều được
+   * permissionKeys() sinh lại" và "không key nào trong routePermissions bị
+   * catalog bỏ rơi" — vì chúng vòng tròn THẬT SỰ, không chỉ tình cờ đúng lúc
+   * viết: `routePermissions.ts` dựng bằng đúng `permissionKeys() ∪
+   * DANH_MUC_ROUTES` (hàm `sinhTuCatalog()`), nên so `Object.keys(routePermissions)`
+   * với `permissionKeys() ∪ DANH_MUC_ROUTES` hay với `MENU_LEAVES.map(permKeyOf)
+   * ∪ DANH_MUC_ROUTES` (tập cha của vế trên) là so một giá trị với chính công
+   * thức đã sinh ra nó — không có cách nào đỏ được, kể cả khi catalog sai.
+   * Đã kiểm bằng mutation (thêm khoá lạ `/kiem-thu/khoa-la` vào catalog): cả
+   * hai vẫn xanh, trong khi test "tập con của key quyền cũ" ở trên (đã sửa
+   * dùng snapshot tĩnh) và test "route mới thêm chỉ dùng khoá đã tồn tại" bên
+   * dưới đỏ đúng như kỳ vọng — hai test đó đã phủ hết phần việc thật.
    */
-  it('mọi khoá routePermissions đều được permissionKeys() sinh lại', () => {
-    const sinhRa = new Set([...permissionKeys(), ...DANH_MUC_ROUTES]);
-    const roiRung = Object.keys(routePermissions).filter(
-      (k) => !sinhRa.has(k) && !k.startsWith('/cau-hinh/'),
-    );
-    expect(roiRung).toEqual([]);
-  });
-
-  it('không key nào trong routePermissions bị catalog bỏ rơi', () => {
-    const daKhai = new Set([
-      ...MENU_LEAVES.map(permKeyOf),
-      ...DANH_MUC_ROUTES,
-    ]);
-    const roiRung = Object.keys(routePermissions).filter(
-      (k) => !daKhai.has(k) && !k.startsWith('/cau-hinh/'),
-    );
-    expect(roiRung).toEqual([]);
-  });
 });
 
-/**
- * `routePermissions` giờ SINH từ catalog, nên hai test ở trên
- * ("mọi khoá routePermissions đều được permissionKeys() sinh lại" và "không key
- * nào bị catalog bỏ rơi") đã thành vòng tròn — chúng chỉ còn canh phần khai tay.
- * Chốt chặn thật nằm ở đây: đối chiếu với ẢNH CHỤP ĐÓNG BĂNG của bảng cũ.
- * KHÔNG sinh lại hai file snapshot này.
- */
 describe('routePermissions — ảnh chụp đóng băng', () => {
   const cu = routeTruocDoi as Record<string, string>;
 
