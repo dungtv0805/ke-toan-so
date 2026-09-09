@@ -250,7 +250,8 @@ export const MENU_LEAVES: MenuLeaf[] = [
   { key: '/chinh-sach', label: 'Chính sách', module: 'danh-muc', status: 'ok', legacy: true },
   { key: '/bieu-mau', label: 'Biểu mẫu', module: 'danh-muc', status: 'ok', legacy: true },
   { key: '/huong-dan', label: 'Hướng dẫn', module: 'danh-muc', status: 'ok', legacy: true },
-  { key: '/cau-hinh/linh-vuc', label: 'Lĩnh vực', module: 'danh-muc', status: 'ok', legacy: true },
+  // `/cau-hinh/*` KHÔNG khai ở đây: vào từ nút bánh răng, không thuộc menu chính,
+  // và `/cau-hinh/linh-vuc` chưa từng có khóa quyền nào — khai vào là tạo quyền mới.
 ];
 
 /** Đường dẫn để navigate (gồm cả query nếu có). */
@@ -273,10 +274,23 @@ export const leafByKey = (key: string): MenuLeaf | undefined =>
 export const labelByPath = (path: string): string | undefined =>
   MENU_LEAVES.find((l) => pathOf(l) === path)?.label;
 
-/** Mọi khóa quyền sinh từ catalog (mục soon không sinh — chưa có gì để cấp). */
+/**
+ * Mọi khóa quyền sinh từ catalog.
+ * - Mục `soon` không sinh: chưa có trang thì chưa có gì để cấp.
+ * - Mục của phân hệ GỘP (Danh mục) không sinh: quyền suy từ 26 route con,
+ *   bản thân `/danh-muc` chưa bao giờ là một khóa quyền.
+ */
+const ID_PHAN_HE_GOP = new Set(
+  MENU_MODULES.filter((m) => m.aggregateRoutes).map((m) => m.id),
+);
+
 export const permissionKeys = (): string[] =>
   Array.from(
-    new Set(MENU_LEAVES.filter((l) => l.status === 'ok').map(permKeyOf)),
+    new Set(
+      MENU_LEAVES.filter(
+        (l) => l.status === 'ok' && !ID_PHAN_HE_GOP.has(l.module),
+      ).map(permKeyOf),
+    ),
   );
 
 // ===== Tương thích ngược — useEffectiveMenuKeys và trang Danh mục đang dùng =====
@@ -370,32 +384,88 @@ Expected: in ra khoảng 80 key. File này là bằng chứng "không cấp lạ
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import ts from 'typescript';
 import {
-  MENU_MODULES, MENU_LEAVES, pathOf, permKeyOf, permissionKeys,
+  MENU_MODULES, MENU_LEAVES, MENU_CATALOG, pathOf, permKeyOf, permissionKeys,
 } from './menuCatalog';
 import { routePermissions } from './routePermissions';
-import { MENU_CATALOG } from './menuCatalog';
 import { DANH_MUC_ROUTES } from './danhMucCatalog';
+import {
+  permissionModules,
+  type PermissionModule,
+} from '@/pages/cau-hinh/phan-quyen/constants/permissionModules';
 import keysTruocDoi from './__snapshots__/permission-keys-truoc-doi.json';
 
-/** Đọc App.tsx, trả về map route đầy đủ → có phải ComingSoonPage không. */
+/**
+ * Đọc App.tsx bằng AST của chính TypeScript, KHÔNG dùng regex theo dòng.
+ * Lý do: 51 thẻ <Route> trong App.tsx viết xuống nhiều dòng và có 3 thẻ
+ * <Route index>; regex một dòng bỏ sót gần hết, làm test báo sai hàng loạt.
+ *
+ * Trả map: đường dẫn đầy đủ → có phải ComingSoonPage không.
+ * Chỉ ghi những Route CÓ `element` (route thật). Thẻ bọc như
+ * `<Route path="danh-muc">` không có element nên bị bỏ qua — nó là nhóm,
+ * không phải trang.
+ */
 function docRouteTuApp(): Map<string, boolean> {
-  const src = fs
-    .readFileSync(path.resolve(__dirname, '../App.tsx'), 'utf8')
-    .split('\n');
-  const stack: { indent: number; full: string }[] = [];
+  const file = path.resolve(__dirname, '../App.tsx');
+  const src = ts.createSourceFile(
+    file,
+    fs.readFileSync(file, 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  );
   const out = new Map<string, boolean>();
-  for (const line of src) {
-    const m = line.match(/<Route\s+path="([^"]+)"/);
-    if (!m) continue;
-    const indent = line.search(/\S/);
-    while (stack.length && stack[stack.length - 1].indent >= indent) stack.pop();
-    const parent = stack.length ? stack[stack.length - 1].full : '';
-    const full = (parent + '/' + m[1]).replace(/\/+/g, '/');
-    out.set(full, /ComingSoonPage/.test(line));
-    if (!/\/>\s*$/.test(line)) stack.push({ indent, full });
-  }
+
+  const thuocTinh = (
+    the: ts.JsxOpeningElement | ts.JsxSelfClosingElement,
+    ten: string,
+  ): ts.JsxAttribute | undefined =>
+    the.attributes.properties.find(
+      (a): a is ts.JsxAttribute => ts.isJsxAttribute(a) && a.name.getText() === ten,
+    );
+
+  const duyet = (node: ts.Node, cha: string): void => {
+    let hienTai = cha;
+    const the = ts.isJsxElement(node)
+      ? node.openingElement
+      : ts.isJsxSelfClosingElement(node)
+        ? node
+        : undefined;
+
+    if (the && the.tagName.getText() === 'Route') {
+      const aPath = thuocTinh(the, 'path');
+      const aIndex = thuocTinh(the, 'index');
+      const aElement = thuocTinh(the, 'element');
+
+      if (aPath?.initializer && ts.isStringLiteral(aPath.initializer)) {
+        hienTai = (cha + '/' + aPath.initializer.text).replace(/\/+/g, '/');
+      } else if (aIndex) {
+        hienTai = cha || '/';
+      }
+      if (aElement) {
+        out.set(hienTai, /ComingSoonPage/.test(aElement.getText()));
+      }
+    }
+
+    node.forEachChild((con) => duyet(con, hienTai));
+  };
+
+  duyet(src, '');
   return out;
+}
+
+/**
+ * Tập key quyền ĐÃ TỒN TẠI trong hệ thống = hợp của hai nguồn:
+ * `routePermissions` (nơi ProtectedRoute tra) và ma trận `permissionModules`
+ * (nơi admin bấm cấp quyền). Một key có ở bất kỳ nguồn nào cũng là quyền cũ,
+ * không phải quyền mới. Ví dụ `/bao-cao/bang-tong-hop` có trong ma trận nhưng
+ * thiếu trong routePermissions — lỗ hổng có sẵn, không phải do đợt này tạo ra.
+ */
+function keyQuyenDaCo(): Set<string> {
+  const la = (ds: PermissionModule[]): string[] =>
+    ds.flatMap((m) => (m.children ? la(m.children) : [m.key]));
+  return new Set([...(keysTruocDoi as string[]), ...la(permissionModules)]);
 }
 
 const ROUTES = docRouteTuApp();
@@ -416,7 +486,9 @@ describe('menuCatalog ↔ App.tsx', () => {
       '/tao-moi', '/sua',  // route con của trang biểu mẫu
       '/:',                // route có tham số
     ];
-    const daKhai = new Set(MENU_LEAVES.map(pathOf));
+    // MENU_CATALOG chứ không phải MENU_LEAVES: 26 trang danh mục con nằm ở
+    // danhMucCatalog và chỉ xuất hiện qua MENU_CATALOG.
+    const daKhai = new Set(MENU_CATALOG.map((e) => e.key));
     const thieu = [...ROUTES.keys()].filter(
       (r) => !daKhai.has(r) && !BO_QUA.some((b) => r.includes(b)),
     );
@@ -444,7 +516,7 @@ describe('menuCatalog — toàn vẹn', () => {
 
 describe('phân quyền — không cấp lại', () => {
   it('key quyền sinh ra là tập con của key quyền cũ', () => {
-    const cu = new Set(keysTruocDoi as string[]);
+    const cu = keyQuyenDaCo();
     const themMoi = permissionKeys().filter((k) => !cu.has(k));
     expect(themMoi).toEqual([]);
   });
@@ -456,7 +528,10 @@ describe('phân quyền — không cấp lại', () => {
   });
 
   it('không key nào trong routePermissions bị catalog bỏ rơi', () => {
-    const daKhai = new Set(MENU_LEAVES.map(permKeyOf));
+    const daKhai = new Set([
+      ...MENU_LEAVES.map(permKeyOf),
+      ...DANH_MUC_ROUTES,
+    ]);
     const roiRung = Object.keys(routePermissions).filter(
       (k) => !daKhai.has(k) && !k.startsWith('/cau-hinh/'),
     );
