@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useVisibleMenu } from '@/hooks/useVisibleMenu';
@@ -47,7 +47,13 @@ export const Sidebar: React.FC = () => {
   // Bề rộng phải khớp với việc panel có thật render hay không — nếu không
   // MainLayout sẽ chừa thừa 196px trống khi panel bị ẩn vì phân hệ có route.
   const beRong = panelSeHien ? 258 : 62;
-  useEffect(() => {
+  // useLayoutEffect (KHÔNG phải useEffect): MainLayout vẽ content bằng
+  // var(--sidebar-w, 258px) NGAY LẦN VẼ ĐẦU — useEffect chạy sau khi trình
+  // duyệt đã sơn khung hình đó, nên ai đang thu gọn sẽ thấy content nháy
+  // trượt 196px mỗi lần tải lại (rõ hơn vì có transition). useLayoutEffect
+  // chạy trước khi sơn nên giá trị đúng có ngay từ khung hình đầu tiên.
+  // ĐỪNG đổi lại thành useEffect.
+  useLayoutEffect(() => {
     document.documentElement.style.setProperty('--sidebar-w', `${beRong}px`);
   }, [beRong]);
 
