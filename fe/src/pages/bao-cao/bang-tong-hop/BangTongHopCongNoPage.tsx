@@ -194,7 +194,7 @@ const BangTongHopCongNoPage: React.FC = () => {
         <span
           style={{
             fontWeight: r.isAccount ? 700 : 400,
-            color: r.isAccount ? "#1890ff" : "inherit",
+            color: r.isAccount ? "hsl(var(--blue))" : "inherit",
             paddingLeft: r.isAccount ? 0 : 16,
           }}
         >
@@ -400,7 +400,7 @@ const BangTongHopCongNoPage: React.FC = () => {
             style: r.drillable
               ? { cursor: "pointer" }
               : r.isAccount
-                ? { background: "#fff7e6" }
+                ? { background: "hsl(var(--amber) / 0.1)" }
                 : undefined,
           })}
         />
