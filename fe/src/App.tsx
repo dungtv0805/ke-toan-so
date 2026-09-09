@@ -128,7 +128,12 @@ const App = () => (
           colorBorder: '#E5E5EA',
           colorText: '#1D1D1F',
           colorTextSecondary: '#6E6E73',
-          colorTextTertiary: '#98989D',
+          // antd map colorTextTertiary sang colorIcon (và colorTextDescription),
+          // nên nó là màu của icon x-xoá, mũi tên Select, nút đóng Modal, phễu
+          // lọc bảng. #98989D chỉ cho 2.87:1 trên nền trắng — dưới ngưỡng 3:1
+          // của thành phần phi văn bản. #8A8A8F cho 3.44:1 trên #FFFFFF và
+          // 3.16:1 trên nền trang #F5F5F7.
+          colorTextTertiary: '#8A8A8F',
           colorBgLayout: '#F5F5F7',
         },
         components: {
