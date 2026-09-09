@@ -81,7 +81,7 @@ import {
   AppstoreOutlined, ContainerOutlined, SnippetsOutlined, FileAddOutlined,
   FileDoneOutlined, BellOutlined, SafetyCertificateOutlined, FundOutlined,
 } from '@ant-design/icons';
-import { DANH_MUC_ROUTES } from './danhMucCatalog';
+import { DANH_MUC_GROUPS, DANH_MUC_ROUTES } from './danhMucCatalog';
 
 export type ModuleId =
   | 'tong-quan' | 'phan-tich' | 'tong-hop' | 'von-dong-tien'
@@ -286,11 +286,25 @@ export interface MenuCatalogEntry {
   parentLabel?: string;
 }
 
-export const MENU_CATALOG: MenuCatalogEntry[] = MENU_LEAVES.map((l) => ({
-  key: pathOf(l),
-  label: l.label,
-  parentLabel: MENU_MODULES.find((m) => m.id === l.module)?.label,
-}));
+/**
+ * PHẢI gồm cả 26 route danh mục con: `DanhMucIndexPage` lọc link bằng
+ * `keyMatches(path, allEffectiveKeys)`, mà `allEffectiveKeys` lấy `unassignedKeys`
+ * từ đây. Thiếu chúng thì link danh mục chưa gán lĩnh vực biến mất khỏi trang Danh mục.
+ */
+export const MENU_CATALOG: MenuCatalogEntry[] = [
+  ...MENU_LEAVES.map((l) => ({
+    key: pathOf(l),
+    label: l.label,
+    parentLabel: MENU_MODULES.find((m) => m.id === l.module)?.label,
+  })),
+  ...DANH_MUC_GROUPS.flatMap((g) =>
+    g.links.map((l) => ({
+      key: l.path,
+      label: l.label,
+      parentLabel: `Danh mục › ${g.title}`,
+    })),
+  ),
+];
 
 export const flattenMenuKeys = (
   entries: MenuCatalogEntry[] = MENU_CATALOG,
@@ -360,6 +374,8 @@ import {
   MENU_MODULES, MENU_LEAVES, pathOf, permKeyOf, permissionKeys,
 } from './menuCatalog';
 import { routePermissions } from './routePermissions';
+import { MENU_CATALOG } from './menuCatalog';
+import { DANH_MUC_ROUTES } from './danhMucCatalog';
 import keysTruocDoi from './__snapshots__/permission-keys-truoc-doi.json';
 
 /** Đọc App.tsx, trả về map route đầy đủ → có phải ComingSoonPage không. */
@@ -431,6 +447,12 @@ describe('phân quyền — không cấp lại', () => {
     const cu = new Set(keysTruocDoi as string[]);
     const themMoi = permissionKeys().filter((k) => !cu.has(k));
     expect(themMoi).toEqual([]);
+  });
+
+  it('MENU_CATALOG tương thích giữ đủ 26 route danh mục con', () => {
+    const keys = new Set(MENU_CATALOG.map((e) => e.key));
+    const thieu = DANH_MUC_ROUTES.filter((r) => !keys.has(r));
+    expect(thieu).toEqual([]);
   });
 
   it('không key nào trong routePermissions bị catalog bỏ rơi', () => {
@@ -612,9 +634,14 @@ export function useVisibleMenu(): VisibleModule[] {
       MENU_MODULES.map((module) => {
         // Mục gộp (Danh mục): mở khi có quyền xem ít nhất 1 route con.
         if (module.aggregateRoutes) {
+          // Giữ đúng hành vi cũ của menuKeyVisible trong MainLayout:
+          // mở khi có ÍT NHẤT 1 route con vừa thuộc lĩnh vực vừa có quyền xem.
           const mo =
             isSuperAdmin ||
-            module.aggregateRoutes.some((r) => hasPermission(`${r}:xem`));
+            module.aggregateRoutes.some(
+              (r) =>
+                keyMatches(r, allEffectiveKeys) && hasPermission(`${r}:xem`),
+            );
           return { module, leaves: mo ? leavesOfModule(module.id) : [] };
         }
         return {
