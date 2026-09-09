@@ -50,15 +50,16 @@
 
     --radius: 0px;
 
-    /* Sidebar - Deep teal thương hiệu, active = gold logo */
-    --sidebar-background: 172 45% 15%;
-    --sidebar-foreground: 170 25% 90%;
-    --sidebar-primary: 41 42% 51%;
-    --sidebar-primary-foreground: 172 45% 13%;
-    --sidebar-accent: 171 40% 22%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 171 38% 24%;
-    --sidebar-ring: 41 42% 51%;
+    /* Sidebar tông sáng — rail #EFEFF2, panel #FAFAFA (07-design-system.png) */
+    --sidebar-background: 240 11% 94%;
+    --sidebar-panel: 0 0% 98%;
+    --sidebar-foreground: 240 3% 12%;
+    --sidebar-primary: 170 59% 29%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 6% 90%;
+    --sidebar-accent-foreground: 240 3% 12%;
+    --sidebar-border: 240 11% 91%;
+    --sidebar-ring: 170 59% 29%;
 
     /* Custom semantic colors */
     --success: 142 71% 45%;
@@ -106,14 +107,15 @@
     --input: 217 33% 17%;
     --ring: 170 59% 29%;
 
-    --sidebar-background: 173 48% 11%;
-    --sidebar-foreground: 170 25% 90%;
-    --sidebar-primary: 41 42% 51%;
-    --sidebar-primary-foreground: 173 48% 10%;
-    --sidebar-accent: 171 40% 18%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 171 38% 18%;
-    --sidebar-ring: 41 42% 51%;
+    --sidebar-background: 240 5% 12%;
+    --sidebar-panel: 240 5% 15%;
+    --sidebar-foreground: 0 0% 92%;
+    --sidebar-primary: 170 59% 29%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 20%;
+    --sidebar-accent-foreground: 0 0% 92%;
+    --sidebar-border: 240 5% 22%;
+    --sidebar-ring: 170 59% 29%;
   }
 }
 
