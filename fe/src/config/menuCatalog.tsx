@@ -97,7 +97,7 @@ export const MENU_LEAVES: MenuLeaf[] = [
   { key: '/bao-cao/pnl-3-lop', label: 'P&L so sánh KH-DB-TH', module: 'phan-tich', status: 'ok', icon: <PieChartOutlined /> },
   { key: '/phan-tich/thanh-khoan', label: 'Khả năng thanh khoản', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <StockOutlined /> },
 
-  // ===== 3. Tổng hợp (9 ở đợt A — cụm BCTC còn 1 mục, đợt C tách thành 4) =====
+  // ===== 3. Tổng hợp (13 — cụm BCTC tách thành 6 mục ở đợt C) =====
   { key: '/bao-cao/so-chi-tiet-tai-khoan', label: 'Sổ chi tiết tài khoản', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'ok', icon: <AccountBookOutlined /> },
   { key: '/bao-cao/so-chi-tiet-cong-no', label: 'Sổ chi tiết công nợ', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'soon', quyenDaCap: true, icon: <FileSearchOutlined /> },
   { key: '/bao-cao/so-chi-tiet-phat-sinh', label: 'Sổ chi tiết phát sinh', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'soon', quyenDaCap: true, icon: <ProfileOutlined /> },
@@ -105,7 +105,14 @@ export const MENU_LEAVES: MenuLeaf[] = [
   { key: '/bao-cao/bang-tong-hop', label: 'Tổng hợp công nợ', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'ok', icon: <TableOutlined /> },
   { key: '/tong-hop/quyet-toan-tam-ung', label: 'Quyết toán tạm ứng', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'soon', icon: <FileTextOutlined /> },
   { key: '/chung-tu/ket-chuyen-lai-lo', label: 'Kết chuyển', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'ok', icon: <SwapOutlined /> },
-  { key: '/bao-cao/tai-chinh', label: 'Báo cáo tài chính', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'ok', icon: <PieChartOutlined /> },
+  // Bốn mục dưới cùng trỏ trang /bao-cao/tai-chinh, chỉ khác `?tab=` — trang có
+  // đúng 4 tab đó. permKey giữ nguyên '/bao-cao/tai-chinh' để KHÔNG sinh khoá
+  // quyền mới; tách mục chỉ là chuyện điều hướng.
+  { key: '/bao-cao/tai-chinh?tab=can-doi-ke-toan', permKey: '/bao-cao/tai-chinh', label: 'Bảng cân đối kế toán', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'ok', icon: <PieChartOutlined /> },
+  { key: '/bao-cao/tai-chinh?tab=ket-qua-kinh-doanh', permKey: '/bao-cao/tai-chinh', label: 'Kết quả kinh doanh', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'ok', icon: <BarChartOutlined /> },
+  { key: '/bao-cao/tai-chinh?tab=can-doi-tai-khoan', permKey: '/bao-cao/tai-chinh', label: 'Bảng cân đối tài khoản', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'ok', icon: <TableOutlined /> },
+  { key: '/bao-cao/tai-chinh?tab=so-sanh-lai-lo', permKey: '/bao-cao/tai-chinh', label: 'So sánh lãi lỗ', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'ok', icon: <PieChartOutlined /> },
+  { key: '/bao-cao/tai-chinh/luu-chuyen-tien-te', label: 'Lưu chuyển tiền tệ', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'soon', icon: <SwapOutlined /> },
   { key: '/bao-cao/tai-chinh/thuyet-minh', label: 'Thuyết minh', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'soon', icon: <FileTextOutlined /> },
 
   // ===== 4. Vốn & dòng tiền (5) =====

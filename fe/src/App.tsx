@@ -773,6 +773,7 @@ const App = () => (
                 {/* Mục đã lên sidebar nhưng chưa có màn hình — ra thẳng trang "đang phát triển".
                     Danh sách sinh từ menuCatalog; thêm mục soon mới thì thêm một dòng ở đây. */}
                 <Route path="tong-hop/quyet-toan-tam-ung" element={<ComingSoonPage />} />
+                <Route path="bao-cao/tai-chinh/luu-chuyen-tien-te" element={<ComingSoonPage />} />
                 <Route path="bao-cao/tai-chinh/thuyet-minh" element={<ComingSoonPage />} />
                 <Route path="mua-hang">
                   <Route path="ke-hoach" element={<ComingSoonPage />} />
