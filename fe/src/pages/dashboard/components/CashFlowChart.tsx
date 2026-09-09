@@ -11,7 +11,7 @@ import { formatCurrency, DASH_COLORS, nhanTrieu, nhanTrieuAbs } from './format';
 interface Props { year: number; startMonth: number; endMonth: number; }
 const TEAL = DASH_COLORS.revenue;
 const GRAY = 'hsl(var(--muted-foreground) / 0.35)';
-const ORANGE = '#F2994A';
+const ORANGE = 'hsl(var(--chart-orange))'; // trùng giá trị --chart-orange, quy về token vì cùng ý nghĩa
 
 const kpiTrieu = (v: number) => Math.round((v || 0) / 1e6).toLocaleString('vi-VN');
 
