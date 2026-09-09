@@ -24,11 +24,11 @@
 
     /* Cards - White with subtle shadow */
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 240 4% 12%; /* = --ink */
 
     /* Popovers/Modals */
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 240 4% 12%; /* = --ink */
 
     /* Primary - Teal thương hiệu MasterCEO (#1f7769) */
     --primary: 170 59% 29%;
@@ -39,7 +39,7 @@
 
     /* Secondary - Light gray/blue tint */
     --secondary: 220 14% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary-foreground: 240 4% 12%; /* = --ink */
 
     /* Muted - Subtle backgrounds */
     --muted: 220 14% 96%;
@@ -128,16 +128,16 @@
     --foreground: 0 0% 96%; /* = --ink (dark) */
 
     --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
+    --card-foreground: 0 0% 96%; /* = --ink (dark) */
 
     --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
+    --popover-foreground: 0 0% 96%; /* = --ink (dark) */
 
     --primary: 170 59% 29%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary-foreground: 0 0% 96%; /* = --ink (dark) */
 
     /* Thang bề mặt bản tối PHẢI tách bậc: trước đây --card, --muted và --border
        cùng là 217 33% 17% nên viền `.action-icon-btn` vô hình, StatusPill tông

@@ -48,6 +48,12 @@ describe('design token', () => {
     // nếu hai bên lệch nhau thì cùng một nghĩa lại ra hai màu.
     expect(bien('foreground')).toBe(bien('ink'));
     expect(bien('muted-foreground')).toBe(bien('ink-2'));
+    // Ba khoá dưới nằm ngoài bảng bí danh cũ nên đợt trước bị bỏ sót, vẫn giữ
+    // 222 47% 11% trong khi --foreground đã chuyển sang --ink. Cùng là "chữ
+    // trên nền sáng" nên phải cùng một màu.
+    expect(bien('card-foreground')).toBe(bien('ink'));
+    expect(bien('popover-foreground')).toBe(bien('ink'));
+    expect(bien('secondary-foreground')).toBe(bien('ink'));
     expect(bien('destructive')).toBe(bien('red'));
     expect(bien('success')).toBe(bien('green'));
     expect(bien('warning')).toBe(bien('amber'));
@@ -88,6 +94,9 @@ describe('design token', () => {
   it('bí danh cũ và tên mới cũng phải trùng nhau ở khối tối', () => {
     expect(bienToi('foreground')).toBe(bienToi('ink'));
     expect(bienToi('muted-foreground')).toBe(bienToi('ink-2'));
+    expect(bienToi('card-foreground')).toBe(bienToi('ink'));
+    expect(bienToi('popover-foreground')).toBe(bienToi('ink'));
+    expect(bienToi('secondary-foreground')).toBe(bienToi('ink'));
     expect(bienToi('destructive')).toBe(bienToi('red'));
     expect(bienToi('success')).toBe(bienToi('green'));
     expect(bienToi('warning')).toBe(bienToi('amber'));
