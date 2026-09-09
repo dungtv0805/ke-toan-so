@@ -1,74 +1,34 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Layout,
-  Menu,
   Avatar,
   Dropdown,
   Button,
   Tooltip,
   Tag,
   message,
-  Drawer,
 } from "antd";
 import {
-  DashboardOutlined,
-  BookOutlined,
-  WalletOutlined,
-  CreditCardOutlined,
   TeamOutlined,
-  BarChartOutlined,
   SettingOutlined,
   UserOutlined,
   LogoutOutlined,
   DownloadOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
   AppstoreOutlined,
-  DollarOutlined,
-  AuditOutlined,
-  QuestionCircleOutlined,
   MenuOutlined,
-  CloseOutlined,
   SafetyCertificateOutlined,
-  LineChartOutlined,
-  ShoppingCartOutlined,
-  ShoppingOutlined,
-  StockOutlined,
-  CalculatorOutlined,
-  CarOutlined,
-  ToolOutlined,
-  ContainerOutlined,
-  FormOutlined,
-  FileProtectOutlined,
-  ScheduleOutlined,
-  RiseOutlined,
-  InboxOutlined,
-  ReconciliationOutlined,
-  ProfileOutlined,
-  TableOutlined,
-  FileSearchOutlined,
-  AccountBookOutlined,
-  PieChartOutlined,
-  SnippetsOutlined,
-  NodeIndexOutlined,
   CopyOutlined,
-  SwapOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import type { MenuProps } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTerm } from "@/contexts/TermContext";
 import { TenantSwitcher } from "./TenantSwitcher";
 import { AppSwitcher } from "./AppSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { keyMatches } from "@/config/modules";
-import { DANH_MUC_ROUTES } from "@/config/danhMucCatalog";
-import { THUE_NAV } from "@/config/sectionNavs";
-import { useEffectiveMenuKeys } from "@/hooks/useEffectiveMenuKeys";
+import { Sidebar, MobileMenu } from "./sidebar";
+import { BE_RONG_MO } from "./sidebar/Sidebar";
 
-const { Header, Sider, Content } = Layout;
-
-type MenuItem = Required<MenuProps>["items"][number];
+const { Header, Content } = Layout;
 
 // Ảnh avatar thật của user được identity-service phục vụ; ?v= để bust cache khi avatar đổi.
 const IDENTITY_URL = import.meta.env.VITE_IDENTITY_URL as string | undefined;
@@ -78,277 +38,7 @@ const IS_MOBILE_OR_TABLET =
   /android|iphone|ipod|ipad/i.test(navigator.userAgent) ||
   (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 
-// Mục menu gộp nhiều trang con vào 1 trang tổng hợp: hiển thị/mở khóa theo tập route con.
-const AGGREGATE_MENU_ROUTES: Record<string, string[]> = {
-  "/danh-muc": DANH_MUC_ROUTES,
-  // 4 trang thuế đã chuyển lên thanh ngang (THUE_NAV) — sidebar giữ đúng 1 mục.
-  "/thue": THUE_NAV.map((i) => i.path),
-};
-
-// Như keyMatches nhưng hiểu cả mục gộp (Danh mục).
-function menuKeyVisible(key: string, moduleKeys: string[]): boolean {
-  const routes = AGGREGATE_MENU_ROUTES[key];
-  if (routes) return routes.some((r) => keyMatches(r, moduleKeys));
-  return keyMatches(key, moduleKeys);
-}
-
-// Lọc menu theo lĩnh vực đang chọn: giữ COMMON + mục thuộc menuKeys của lĩnh vực.
-// Mục cha giữ lại nếu còn ít nhất 1 con sau khi lọc.
-function filterByModule(items: MenuItem[], moduleKeys: string[]): MenuItem[] {
-  return items
-    .map((item) => {
-      if (!item || typeof item !== "object") return null;
-      const mi = item as { key?: string; children?: MenuItem[] };
-      if (mi.children && mi.children.length > 0) {
-        const fc = filterByModule(mi.children, moduleKeys);
-        if (fc.length === 0) return null;
-        return { ...mi, children: fc } as MenuItem;
-      }
-      return menuKeyVisible(mi.key as string, moduleKeys) ? item : null;
-    })
-    .filter(Boolean) as MenuItem[];
-}
-
-// Danh sách các routes đã có component
-const existingRoutes = new Set([
-  "/",
-  "/profile",
-  "/danh-muc",
-  "/danh-muc/tai-khoan",
-  "/danh-muc/doi-tuong",
-  "/danh-muc/du-an",
-  "/danh-muc/san-pham",
-  "/danh-muc/nhom-san-pham",
-  "/danh-muc/bo-phan",
-  "/danh-muc/khoan-muc",
-  "/danh-muc/so-du-dau-ky",
-  "/danh-muc/ngan-hang",
-  "/danh-muc/dong-tien",
-  "/danh-muc/nhom-dong-tien",
-  "/danh-muc/tai-khoan-ket-chuyen",
-  "/danh-muc/chu-dau-tu",
-  "/danh-muc/nhom-khuyen-mai",
-  "/danh-muc/nhom-quan-ly",
-  "/danh-muc/loai-chung-tu",
-  "/danh-muc/nhom-khoan-muc",
-  "/danh-muc/loai-giao-dich",
-  "/danh-muc/hop-dong",
-  "/danh-muc/quy-chuan",
-  "/danh-muc/ho-so-chung-tu",
-  "/danh-muc/kho",
-  "/danh-muc/don-vi-tinh",
-  "/danh-muc/ly-do-khong-hop-le",
-  "/danh-muc/nhom-vat-tu",
-  "/danh-muc/hang-hoa-vat-tu",
-  "/trung-tam-du-lieu/ke-hoach",
-  "/trung-tam-du-lieu/du-bao",
-  "/kho/nhap-kho",
-  "/kho/xuat-kho",
-  "/kho/chuyen-kho",
-  "/bep-an/dinh-muc-tien-an",
-  "/bep-an/cong-thuc-dinh-luong",
-  "/bep-an/diem-danh-an",
-  "/bep-an/de-xuat-mua",
-  "/bep-an/kiem-soat-chi-phi",
-  "/trung-tam-du-lieu/hop-dong",
-  "/trung-tam-du-lieu/thu-tien-hop-dong",
-  "/trung-tam-du-lieu/hd-ban-ra",
-  "/chung-tu/phieu-thu",
-  "/chung-tu/phieu-chi",
-  "/chung-tu/nhat-ky-chung",
-  "/chung-tu/ket-chuyen-lai-lo",
-  "/so-quy",
-  "/cong-no/phai-thu",
-  "/cong-no/phai-tra",
-  "/bao-cao/tai-chinh",
-  "/bao-cao/pnl",
-  "/bao-cao/pnl-khong-khau-hao",
-  "/bao-cao/pnl-3-lop",
-  "/bao-cao/so-cai",
-  "/bao-cao/so-chi-tiet-tai-khoan",
-  "/bao-cao/bang-can-doi",
-  "/bao-cao/bang-tong-hop",
-  "/bao-cao/hop-dong",
-  "/bao-cao/doanh-thu",
-
-  "/thue",
-  "/thue/bang-ke-mua-vao",
-  "/thue/bang-ke-ban-ra",
-  "/thue/tong-hop",
-  "/thue/bao-cao-tndn",
-
-  "/quy-trinh",
-  "/bieu-mau",
-  "/chinh-sach",
-  "/huong-dan",
-
-  "/cau-hinh/phan-quyen",
-  "/cau-hinh/vai-tro",
-]);
-
-// Helper để tạo label với badge "Sắp ra mắt"
-const createLabel = (text: string, path: string) => {
-  const isComingSoon = !existingRoutes.has(path);
-  if (isComingSoon) {
-    return (
-      <span className="menu-coming-soon" title={`${text} - Sắp ra mắt`}>
-        <span className="menu-text">{text}</span>
-        <span className="coming-soon-dot" />
-      </span>
-    );
-  }
-  return text;
-};
-
-function getItem(
-  label: React.ReactNode,
-  key: string,
-  icon?: React.ReactNode,
-  children?: MenuItem[],
-  type?: "group"
-): MenuItem {
-  return {
-    key,
-    icon,
-    children,
-    label,
-    type,
-  } as MenuItem;
-}
-
-// Helper để tạo menu item với check coming soon
-function getMenuItem(
-  text: string,
-  path: string,
-  icon?: React.ReactNode,
-  children?: MenuItem[]
-): MenuItem {
-  const isComingSoon = !existingRoutes.has(path) && !children;
-  return {
-    key: path,
-    icon,
-    children,
-    label: createLabel(text, path),
-    className: isComingSoon ? "menu-item-coming-soon" : undefined,
-  } as MenuItem;
-}
-
-// Map menuKey → termKey cho các menu đổi tên theo ngành.
-const MENU_TERM_KEYS: Record<string, string> = {
-  "/danh-muc/chu-dau-tu": "chuDauTu",
-};
-
-// Trả mảng MỚI, thay label các item có termKey bằng nhãn động (đệ quy children).
-function relabelMenu(
-  items: MenuItem[],
-  t: (key: string, surface?: string) => string
-): MenuItem[] {
-  return items.map((item) => {
-    const mi = item as { key?: string; children?: MenuItem[] };
-    const key = mi.key as string;
-    let next: MenuItem = item;
-    if (mi.children && mi.children.length > 0) {
-      next = { ...(next as any), children: relabelMenu(mi.children, t) };
-    }
-    const termKey = MENU_TERM_KEYS[key];
-    if (termKey) {
-      next = { ...(next as any), label: createLabel(t(termKey), key) };
-    }
-    return next;
-  });
-}
-
-// ===== ĐIỀU HÀNH =====
-const dieuHanhMenuItems: MenuItem[] = [
-  getMenuItem("Tổng quan", "/", <DashboardOutlined />),
-
-  getItem("Phân tích", "/phan-tich", <LineChartOutlined />, [
-    getMenuItem("Kế toán", "/phan-tich/bao-cao-tai-chinh", <PieChartOutlined />),
-    getMenuItem("Bán hàng", "/phan-tich/ban-hang", <ShoppingCartOutlined />),
-    getMenuItem("Mua hàng", "/phan-tich/mua-hang", <ShoppingOutlined />),
-    getMenuItem("Công nợ", "/phan-tich/cong-no", <ReconciliationOutlined />),
-    getMenuItem("Dòng tiền", "/phan-tich/dong-tien", <DollarOutlined />),
-    getMenuItem("Tồn kho", "/phan-tich/ton-kho", <InboxOutlined />),
-    getMenuItem("Khả năng thanh khoản", "/phan-tich/thanh-khoan", <StockOutlined />),
-  ]),
-];
-
-// ===== KẾ TOÁN =====
-const keToAnMenuItems: MenuItem[] = [
-  getItem("Báo cáo", "/bao-cao", <BarChartOutlined />, [
-    getMenuItem("Báo cáo tài chính", "/bao-cao/tai-chinh", <PieChartOutlined />),
-    getMenuItem("Sổ chi tiết tài khoản", "/bao-cao/so-chi-tiet-tai-khoan", <AccountBookOutlined />),
-    getMenuItem("Sổ chi tiết công nợ", "/bao-cao/so-chi-tiet-cong-no", <FileSearchOutlined />),
-    getMenuItem("Sổ chi tiết phát sinh", "/bao-cao/so-chi-tiet-phat-sinh", <ProfileOutlined />),
-    getMenuItem("Tổng hợp công nợ", "/bao-cao/bang-tong-hop", <TableOutlined />),
-    getMenuItem("Báo cáo doanh thu", "/bao-cao/doanh-thu", <RiseOutlined />),
-    getMenuItem("P&L không khấu hao", "/bao-cao/pnl-khong-khau-hao", <PieChartOutlined />),
-    getMenuItem("P&L so sánh KH-DB-TH", "/bao-cao/pnl-3-lop", <PieChartOutlined />),
-  ]),
-
-  // 4 trang thuế nằm trên thanh ngang của chính các trang thuế (xem THUE_NAV);
-  // sidebar chỉ còn một mục, bấm vào là vào trang thuế đầu tiên user có quyền.
-  getMenuItem("Thuế", "/thue", <CalculatorOutlined />),
-
-  // Nhóm "Trung tâm dữ liệu" đã bỏ cấp bọc — các mục con đứng thẳng hàng với
-  // "Thuế" / "Kho". Route vẫn giữ tiền tố /trung-tam-du-lieu để khỏi phải cấp lại quyền.
-  getMenuItem("Kế hoạch", "/trung-tam-du-lieu/ke-hoach", <ScheduleOutlined />),
-  getMenuItem("Dự báo", "/trung-tam-du-lieu/du-bao", <RiseOutlined />),
-  getMenuItem("Thực hiện", "/chung-tu/nhat-ky-chung", <AuditOutlined />),
-  // Nhóm "Chứng từ" đã gỡ, 2 trang phiếu còn sống về đây (khớp ma trận Phân quyền).
-  getMenuItem("Phiếu thu", "/chung-tu/phieu-thu", <CreditCardOutlined />),
-  getMenuItem("Phiếu chi", "/chung-tu/phieu-chi", <WalletOutlined />),
-  getMenuItem("Kết chuyển lãi lỗ", "/chung-tu/ket-chuyen-lai-lo", <SwapOutlined />),
-  getMenuItem("Quản lý Tài sản", "/trung-tam-du-lieu/tai-san", <CarOutlined />),
-  getMenuItem("Bán hàng", "/trung-tam-du-lieu/hop-dong", <FileProtectOutlined />),
-
-  // Nhập / Xuất / Chuyển / Kiểm kê kho nằm trên thanh ngang của các trang kho
-  // (xem KHO_NAV); dropdown chỉ giữ 4 nhóm hàng trong kho.
-  getItem("Kho", "/kho", <InboxOutlined />, [
-    getMenuItem("Hàng hóa", "/trung-tam-du-lieu/hang-hoa", <AppstoreOutlined />),
-    getMenuItem("Nguyên vật liệu", "/trung-tam-du-lieu/nguyen-lieu", <ContainerOutlined />),
-    getMenuItem("Dụng cụ", "/trung-tam-du-lieu/dung-cu", <ToolOutlined />),
-    getMenuItem("Văn phòng phẩm", "/trung-tam-du-lieu/van-phong-pham", <SnippetsOutlined />),
-  ]),
-
-  // Nhóm "Bếp ăn" đã gỡ khỏi sidebar. Route + quyền vẫn còn nên 5 trang vẫn vào
-  // được bằng URL trực tiếp.
-];
-
-// ===== THƯ VIỆN - Library menu =====
-const thuVienMenuItems: MenuItem[] = [
-  // Danh mục — gộp toàn bộ vào 1 trang toàn màn hình (/danh-muc) thay vì
-  // danh sách thả xuống dài; nội dung trang xem `config/danhMucCatalog.ts`.
-  getMenuItem("Danh mục", "/danh-muc", <BookOutlined />),
-
-  // getMenuItem("Sổ quỹ", "/so-quy", <WalletOutlined />),
-
-  // getItem("Công nợ", "/cong-no", <ReconciliationOutlined />, [
-  //   getMenuItem("Phải thu", "/cong-no/phai-thu", <RiseOutlined />),
-  //   getMenuItem("Phải trả", "/cong-no/phai-tra", <DollarOutlined />),
-  // ]),
-
-  // Quy trình
-  getMenuItem("Quy trình", "/quy-trinh", <NodeIndexOutlined />),
-
-  // Chính sách
-  getMenuItem("Chính sách", "/chinh-sach", <SafetyCertificateOutlined />),
-
-  // Biểu mẫu
-  getMenuItem("Biểu mẫu", "/bieu-mau", <FormOutlined />),
-
-  // Hướng dẫn
-  getMenuItem("Hướng dẫn", "/huong-dan", <QuestionCircleOutlined />),
-];
-
-// Helper function to check if current route is a form screen (create/edit)
-const isFormScreen = (pathname: string): boolean => {
-  return pathname.includes('/tao-moi') || pathname.includes('/sua');
-};
-
 const MainLayout: React.FC = () => {
-  // Initialize collapsed based on current URL - if on form screen, start collapsed
-  const [collapsed, setCollapsed] = useState(() => isFormScreen(window.location.pathname));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
@@ -357,9 +47,7 @@ const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, currentTenant, hasPermission } = useAuth();
-  const { t } = useTerm();
   const currentRole = currentTenant?.role;
-  const isSuperAdmin = user?.isSuperAdmin || false;
   const isMobile = useIsMobile();
 
   const roleInfo = currentRole ? { label: currentRole, color: 'blue' } : null;
@@ -367,85 +55,6 @@ const MainLayout: React.FC = () => {
     IDENTITY_URL && user?.id && user?.avatarUpdatedAt
       ? `${IDENTITY_URL.replace(/\/$/, "")}/api/users/${user.id}/avatar?v=${encodeURIComponent(user.avatarUpdatedAt)}`
       : undefined;
-
-  const canAccessRoute = (path: string): boolean => {
-    if (isSuperAdmin) return true;
-    if (path === '/') return hasPermission('/:xem') || hasPermission('/tong-quan:xem');
-    // Mục gộp (Danh mục): mở nếu có quyền xem ít nhất 1 trang con.
-    const routes = AGGREGATE_MENU_ROUTES[path];
-    if (routes) return routes.some((r) => hasPermission(`${r}:xem`));
-    return hasPermission(`${path}:xem`);
-  };
-
-  const filterMenuItems = (items: MenuItem[]): MenuItem[] => {
-    return items
-      .map((item) => {
-        if (!item || typeof item !== "object") return null;
-
-        const menuItem = item as {
-          key?: string;
-          children?: MenuItem[];
-          label?: React.ReactNode;
-          icon?: React.ReactNode;
-        };
-        const key = menuItem.key as string;
-
-        if (menuItem.children && menuItem.children.length > 0) {
-          const filteredChildren = filterMenuItems(menuItem.children);
-          if (filteredChildren.length === 0) {
-            return null;
-          }
-          return {
-            ...menuItem,
-            children: filteredChildren,
-          } as MenuItem;
-        }
-
-        if (!canAccessRoute(key)) {
-          return null;
-        }
-
-        return item;
-      })
-      .filter(Boolean) as MenuItem[];
-  };
-
-  // Phân hệ khả dụng (đã sắp theo order) — hiển thị GỘP, không cần chọn.
-  // Union menuKeys mọi phân hệ + phần chưa gán → dùng cho ĐIỀU HÀNH & THƯ VIỆN.
-  const {
-    moduleDefs: availableModuleDefs,
-    unassignedKeys,
-    allEffectiveKeys,
-  } = useEffectiveMenuKeys();
-
-  // Lọc theo vai trò (SuperAdmin bỏ qua).
-  const byRole = (items: MenuItem[]): MenuItem[] =>
-    isSuperAdmin ? items : filterMenuItems(items);
-
-  const filteredDieuHanhMenu = relabelMenu(
-    byRole(filterByModule(dieuHanhMenuItems, allEffectiveKeys)),
-    t
-  );
-  const filteredThuVienMenu = relabelMenu(
-    byRole(filterByModule(thuVienMenuItems, allEffectiveKeys)),
-    t
-  );
-
-  // Khu nghiệp vụ: 1 section / phân hệ, tiêu đề = tên phân hệ.
-  const moduleSections = availableModuleDefs
-    .map((def) => {
-      const keys =
-        def.code === "KE_TOAN"
-          ? [...def.menuKeys, ...unassignedKeys]
-          : def.menuKeys;
-      const items = relabelMenu(byRole(filterByModule(keToAnMenuItems, keys)), t);
-      return { code: def.code, title: def.name.toUpperCase(), items };
-    })
-    .filter((s) => s.items.length > 0);
-
-  // Công ty chỉ có 1 lĩnh vực → giấu tên lĩnh vực đi, người dùng trong 1 công ty
-  // không cần nhìn thấy dòng ngành nghề. Nhiều lĩnh vực thì vẫn cần để phân biệt.
-  const showModuleSectionTitle = moduleSections.length > 1;
 
   useEffect(() => {
     if (darkMode) {
@@ -456,24 +65,10 @@ const MainLayout: React.FC = () => {
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
   }, [darkMode]);
 
-  // Track previous pathname to detect navigation
-  const prevPathnameRef = useRef(location.pathname);
-
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
-
-  // Auto collapse sidebar when navigating to form screens (create/edit)
-  useEffect(() => {
-    // Skip on initial render (when prev === current)
-    if (prevPathnameRef.current !== location.pathname) {
-      if (!isMobile && !collapsed && isFormScreen(location.pathname)) {
-        setCollapsed(true);
-      }
-      prevPathnameRef.current = location.pathname;
-    }
-  }, [location.pathname, isMobile, collapsed]);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -483,13 +78,6 @@ const MainLayout: React.FC = () => {
     logout();
     message.success("Đã đăng xuất thành công");
     navigate("/login");
-  };
-
-  const handleMenuClick: MenuProps["onClick"] = (e) => {
-    navigate(e.key);
-    if (isMobile) {
-      setMobileMenuOpen(false);
-    }
   };
 
   const userMenuItems: MenuProps["items"] = [
@@ -582,232 +170,33 @@ const MainLayout: React.FC = () => {
     }] : []),
   ];
 
-  const getSelectedKeys = () => {
-    const path = location.pathname;
-    if (path === "/") return ["/"];
-    // Trang con của mục gộp (Danh mục, Thuế) không đứng trong sidebar — không quy
-    // về mục cha thì đang ở trang thuế mà sidebar trắng trơn, không biết mình ở đâu.
-    const goc = Object.entries(AGGREGATE_MENU_ROUTES).find(([, routes]) =>
-      routes.includes(path)
-    );
-    return [goc ? goc[0] : path];
-  };
-
-  const getOpenKeys = () => {
-    const path = location.pathname;
-    const parts = path.split("/").filter(Boolean);
-    if (parts.length > 0) {
-      return ["/" + parts[0]];
-    }
-    return [];
-  };
-
-  const siderWidth = collapsed ? 56 : 240;
-
-  // Mobile Drawer Menu
-  const MobileDrawer = () => (
-    <Drawer
-      title={
-        <div className="flex items-center gap-3">
-          <img
-            src="/logo.jpg"
-            alt="Master CEO"
-            className="w-8 h-8 rounded-lg object-cover"
-          />
-          <span className="font-semibold">Master CEO</span>
-        </div>
-      }
-      placement="left"
-      onClose={() => setMobileMenuOpen(false)}
-      open={mobileMenuOpen}
-      width={300}
-      closeIcon={<CloseOutlined />}
-      styles={{
-        body: { padding: 0, background: "hsl(var(--sidebar-background))", overflowY: "auto" },
-        header: {
-          background: "hsl(var(--sidebar-background))",
-          borderBottom: "1px solid hsl(var(--sidebar-border))",
-          color: "hsl(var(--sidebar-foreground))",
-        },
-      }}
-    >
-      {/* ĐIỀU HÀNH Section */}
-      <div className="sidebar-section">
-        <div className="sidebar-section-header">
-          <span className="sidebar-section-title">ĐIỀU HÀNH</span>
-        </div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={getSelectedKeys()}
-          defaultOpenKeys={getOpenKeys()}
-          items={filteredDieuHanhMenu}
-          onClick={handleMenuClick}
-          className="!bg-transparent border-r-0 sidebar-menu"
-        />
-      </div>
-
-      {/* Nghiệp vụ — 1 section / phân hệ */}
-      {moduleSections.map((sec) => (
-        <div className="sidebar-section" key={sec.code}>
-          {showModuleSectionTitle && (
-            <div className="sidebar-section-header">
-              <span className="sidebar-section-title">{sec.title}</span>
-            </div>
-          )}
-          <Menu
-            theme="dark"
-            mode="inline"
-            selectedKeys={getSelectedKeys()}
-            defaultOpenKeys={getOpenKeys()}
-            items={sec.items}
-            onClick={handleMenuClick}
-            className="!bg-transparent border-r-0 sidebar-menu"
-          />
-        </div>
-      ))}
-
-      {/* THƯ VIỆN Section */}
-      <div className="sidebar-section">
-        <div className="sidebar-section-header">
-          <span className="sidebar-section-title">THƯ VIỆN</span>
-        </div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={getSelectedKeys()}
-          defaultOpenKeys={getOpenKeys()}
-          items={filteredThuVienMenu}
-          onClick={handleMenuClick}
-          className="!bg-transparent border-r-0 sidebar-menu"
-        />
-      </div>
-    </Drawer>
-  );
-
   return (
     <Layout className="min-h-screen">
-      {/* Mobile Drawer */}
-      {isMobile && <MobileDrawer />}
-
-      {/* Desktop Sidebar */}
-      {!isMobile && (
-        <Sider
-          trigger={null}
-          collapsible
-          collapsed={collapsed}
-          width={240}
-          collapsedWidth={56}
-          className={`!bg-sidebar ${collapsed ? "sidebar-collapsed" : ""}`}
+      {isMobile ? (
+        <MobileMenu
+          open={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+        />
+      ) : (
+        // Sidebar tự công bố bề rộng ra biến CSS --sidebar-w; thẻ bọc chỉ ghim
+        // nó vào mép trái, không được đoán bề rộng thay nó.
+        <div
           style={{
-            height: "100vh",
             position: "fixed",
             left: 0,
             top: 0,
-            bottom: 0,
+            height: "100vh",
             zIndex: 100,
-            display: "flex",
-            flexDirection: "column",
           }}
         >
-          {/* Logo & Collapse Button */}
-          <div className="h-12 flex items-center justify-between px-3 border-b border-sidebar-border flex-shrink-0">
-            {collapsed ? (
-              <Button
-                type="text"
-                size="small"
-                icon={<MenuUnfoldOutlined />}
-                onClick={() => setCollapsed(!collapsed)}
-                className="!text-sidebar-foreground/70 hover:!text-sidebar-foreground hover:!bg-sidebar-accent mx-auto"
-              />
-            ) : (
-              <>
-                <div className="flex items-center gap-2">
-                  <img
-                    src="/logo.jpg"
-                    alt="Master CEO"
-                    className="w-8 h-8 rounded-lg object-cover"
-                  />
-                  <span className="text-sidebar-foreground font-semibold text-sm">
-                    Master CEO
-                  </span>
-                </div>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<MenuFoldOutlined />}
-                  onClick={() => setCollapsed(!collapsed)}
-                  className="!text-sidebar-foreground/70 hover:!text-sidebar-foreground hover:!bg-sidebar-accent"
-                />
-              </>
-            )}
-          </div>
-
-          {/* Scrollable Menu Container */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll">
-            {/* ĐIỀU HÀNH Section */}
-            <div className="sidebar-section">
-              {!collapsed && (
-                <div className="sidebar-section-header">
-                  <span className="sidebar-section-title">ĐIỀU HÀNH</span>
-                </div>
-              )}
-              <Menu
-                theme="dark"
-                mode="inline"
-                selectedKeys={getSelectedKeys()}
-                defaultOpenKeys={collapsed ? [] : getOpenKeys()}
-                items={filteredDieuHanhMenu}
-                onClick={handleMenuClick}
-                className="!bg-transparent border-r-0 sidebar-menu"
-              />
-            </div>
-
-            {/* Nghiệp vụ — 1 section / phân hệ */}
-            {moduleSections.map((sec) => (
-              <div className="sidebar-section" key={sec.code}>
-                {!collapsed && showModuleSectionTitle && (
-                  <div className="sidebar-section-header">
-                    <span className="sidebar-section-title">{sec.title}</span>
-                  </div>
-                )}
-                <Menu
-                  theme="dark"
-                  mode="inline"
-                  selectedKeys={getSelectedKeys()}
-                  defaultOpenKeys={collapsed ? [] : getOpenKeys()}
-                  items={sec.items}
-                  onClick={handleMenuClick}
-                  className="!bg-transparent border-r-0 sidebar-menu"
-                />
-              </div>
-            ))}
-
-            {/* THƯ VIỆN Section */}
-            <div className="sidebar-section">
-              {!collapsed && (
-                <div className="sidebar-section-header">
-                  <span className="sidebar-section-title">THƯ VIỆN</span>
-                </div>
-              )}
-              <Menu
-                theme="dark"
-                mode="inline"
-                selectedKeys={getSelectedKeys()}
-                defaultOpenKeys={collapsed ? [] : getOpenKeys()}
-                items={filteredThuVienMenu}
-                onClick={handleMenuClick}
-                className="!bg-transparent border-r-0 sidebar-menu"
-              />
-            </div>
-          </div>
-        </Sider>
+          <Sidebar />
+        </div>
       )}
 
       {/* Main Content Area */}
       <Layout
         style={{
-          marginLeft: isMobile ? 0 : siderWidth,
+          marginLeft: isMobile ? 0 : `var(--sidebar-w, ${BE_RONG_MO}px)`,
           transition: "margin-left 0.2s ease",
           minHeight: "100vh",
         }}

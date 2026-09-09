@@ -443,6 +443,9 @@ const App = () => (
                   />
                   {/* Kiểm kê kho — mới có mục trên thanh ngang, chức năng làm sau */}
                   <Route path="kiem-ke" element={<ComingSoonPage />} />
+                  <Route path="tinh-gia-xuat" element={<ComingSoonPage />} />
+                  <Route path="tong-hop-xuat" element={<ComingSoonPage />} />
+                  <Route path="nhap-xuat-ton" element={<ComingSoonPage />} />
                 </Route>
 
                 {/* Sổ quỹ */}
@@ -744,6 +747,44 @@ const App = () => (
                     path="sao-chep-danh-muc"
                     element={<SaoChepDanhMucPage />}
                   />
+                </Route>
+
+                {/* Mục đã lên sidebar nhưng chưa có màn hình — ra thẳng trang "đang phát triển".
+                    Danh sách sinh từ menuCatalog; thêm mục soon mới thì thêm một dòng ở đây. */}
+                <Route path="tong-hop/quyet-toan-tam-ung" element={<ComingSoonPage />} />
+                <Route path="bao-cao/tai-chinh/thuyet-minh" element={<ComingSoonPage />} />
+                <Route path="mua-hang">
+                  <Route path="ke-hoach" element={<ComingSoonPage />} />
+                  <Route path="du-bao" element={<ComingSoonPage />} />
+                  <Route path="hop-dong" element={<ComingSoonPage />} />
+                  <Route path="mua-hang" element={<ComingSoonPage />} />
+                  <Route path="so-chi-tiet" element={<ComingSoonPage />} />
+                  <Route path="tong-hop" element={<ComingSoonPage />} />
+                  <Route path="bao-cao" element={<ComingSoonPage />} />
+                </Route>
+                <Route path="ban-hang">
+                  <Route path="don-hang" element={<ComingSoonPage />} />
+                  <Route path="so-chi-tiet" element={<ComingSoonPage />} />
+                  <Route path="tong-hop" element={<ComingSoonPage />} />
+                  <Route path="nhac-no" element={<ComingSoonPage />} />
+                </Route>
+                <Route path="tien-luong">
+                  <Route path="tinh-luong" element={<ComingSoonPage />} />
+                  <Route path="so-chi-tiet" element={<ComingSoonPage />} />
+                  <Route path="bhxh" element={<ComingSoonPage />} />
+                  <Route path="cong-no" element={<ComingSoonPage />} />
+                  <Route path="bao-cao" element={<ComingSoonPage />} />
+                </Route>
+                <Route path="tai-san">
+                  <Route path="danh-muc" element={<ComingSoonPage />} />
+                  <Route path="khau-hao" element={<ComingSoonPage />} />
+                  <Route path="dieu-chuyen" element={<ComingSoonPage />} />
+                  <Route path="ghi-giam" element={<ComingSoonPage />} />
+                </Route>
+                <Route path="ccdc">
+                  <Route path="phan-bo" element={<ComingSoonPage />} />
+                  <Route path="dieu-chuyen" element={<ComingSoonPage />} />
+                  <Route path="danh-muc" element={<ComingSoonPage />} />
                 </Route>
               </Route>
 
