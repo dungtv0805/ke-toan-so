@@ -82,7 +82,7 @@ const Dashboard: React.FC = () => {
             components: {
               Segmented: {
                 itemSelectedBg: 'hsl(var(--primary))',
-                itemSelectedColor: '#fff',
+                itemSelectedColor: 'hsl(var(--primary-foreground))',
                 itemColor: 'hsl(var(--primary))',
                 itemHoverColor: 'hsl(var(--primary))',
                 trackBg: 'hsl(var(--primary) / 0.08)',
