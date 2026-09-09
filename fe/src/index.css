@@ -2664,3 +2664,24 @@ body.kh-dang-keo-cot {
   cursor: col-resize !important;
   user-select: none !important;
 }
+
+/* Hàng nút biểu tượng ở đầu bảng — thêm / sửa / xoá / xuất / làm mới. */
+.action-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  color: hsl(var(--ink-2));
+  transition: background-color 0.15s, color 0.15s;
+}
+.action-icon-btn:hover {
+  background: hsl(var(--muted));
+  color: hsl(var(--ink));
+}
+.action-icon-btn--danger:hover {
+  color: hsl(var(--red));
+}
