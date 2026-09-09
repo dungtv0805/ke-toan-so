@@ -96,6 +96,13 @@ describe('menuCatalog ↔ App.tsx', () => {
     expect(sai.map((l) => l.key)).toEqual([]);
   });
 
+  it('mọi mục soon phải có route, dù chỉ là ComingSoon', () => {
+    const thieu = MENU_LEAVES.filter(
+      (l) => l.status === 'soon' && !ROUTES.has(pathOf(l)),
+    );
+    expect(thieu.map((l) => l.key)).toEqual([]);
+  });
+
   it('mọi route trong App.tsx phải được khai trong catalog', () => {
     const BO_QUA = [
       '/login', '/profile', '/*',
