@@ -225,8 +225,12 @@
 }
 
 /* Buttons */
+/* border-radius để ConfigProvider (App.tsx) quyết: borderRadius 7 ·
+   borderRadiusSM 6 · borderRadiusXS 4. Trước đây rule này ép 7px
+   !important cho MỌI cỡ, vừa vô hiệu hoá borderRadiusSM/XS (482 chỗ
+   size="small"), vừa bo lại cả góc trong của Space.Compact /
+   Button.Group vốn phải phẳng. */
 .ant-btn {
-  border-radius: var(--radius) !important;
   font-weight: 500 !important;
   transition: all 0.2s ease !important;
 }
@@ -254,11 +258,12 @@
 }
 
 /* Inputs */
+/* border-radius bỏ theo cùng lý do với .ant-btn: để antd phân cỡ và
+   giữ góc phẳng cho input group (addonBefore/addonAfter). */
 .ant-input,
 .ant-input-affix-wrapper,
 .ant-select-selector,
 .ant-picker {
-  border-radius: var(--radius) !important;
   border-color: hsl(var(--border)) !important;
 }
 
@@ -346,8 +351,10 @@
 }
 
 /* Tags / Badges */
+/* KHÔNG đặt border-radius ở đây: calc(var(--radius) * 0.5) ra 3.5px —
+   một giá trị không có trong thang {4, 6, 7, 9, 14} — và đè
+   borderRadiusSM: 6 khai trong ConfigProvider (App.tsx). Để antd quyết. */
 .ant-tag {
-  border-radius: calc(var(--radius) * 0.5) !important;
   font-weight: 500 !important;
 }
 
@@ -370,8 +377,8 @@
   padding: 8px !important;
 }
 
+/* Cũng bỏ border-radius vì lý do như .ant-tag ở trên. */
 .ant-dropdown-menu-item {
-  border-radius: calc(var(--radius) * 0.5) !important;
   padding: 8px 12px !important;
 }
 
