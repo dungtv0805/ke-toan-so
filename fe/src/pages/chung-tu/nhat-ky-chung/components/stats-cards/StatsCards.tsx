@@ -79,7 +79,7 @@ export function StatsCards() {
                 formatter={(value) =>
                   `${(Number(value) / 1000000).toFixed(0)}M`
                 }
-                valueStyle={{ color: "#52c41a" }}
+                valueStyle={{ color: "hsl(var(--green))" }}
               />
             </Card>
           </Col>
@@ -92,7 +92,7 @@ export function StatsCards() {
                 formatter={(value) =>
                   `${(Number(value) / 1000000).toFixed(0)}M`
                 }
-                valueStyle={{ color: "#ef4444" }}
+                valueStyle={{ color: "hsl(var(--red))" }}
               />
             </Card>
           </Col>
@@ -105,7 +105,7 @@ export function StatsCards() {
                   `${(Number(value) / 1000000).toFixed(0)}M`
                 }
                 valueStyle={{
-                  color: (stats?.soDu || 0) >= 0 ? "#52c41a" : "#ef4444",
+                  color: (stats?.soDu || 0) >= 0 ? "hsl(var(--green))" : "hsl(var(--red))",
                 }}
               />
             </Card>
