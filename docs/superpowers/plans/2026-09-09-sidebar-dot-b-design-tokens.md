@@ -44,6 +44,12 @@
 
 ### Task 1: Đo hiện trạng — kiểm kê màu cứng
 
+> **ĐÃ ĐO SẴN 09/09/2026, sau khi gộp đợt A** — `src/pages`: **232** chỗ mã màu hex,
+> **5** chỗ `borderRadius`, **1** class màu tuỳ ý. File nhiều nhất: `CongNoPhaiTraPage`
+> và `CongNoPhaiThuPage` (24 mỗi file), `SoCaiPage` (20), `PermissionMatrix` (16),
+> `BangCanDoiPage` (16), `BaoCaoTaiChinhPage` (13), `BalanceStructureChart` (12).
+> Vẫn chạy lại lệnh đếm ở Step 1 để có số tại thời điểm làm và có file kiểm kê.
+
 **Files:**
 - Create: `docs/superpowers/plans/kiem-ke-mau-cung.md`
 
@@ -131,8 +137,8 @@ describe('design token', () => {
     expect(bien('primary')).toBe('170 59% 29%');
   });
 
-  it('sidebar chuyển sang tông sáng', () => {
-    expect(bien('sidebar-background')).toBe('240 5% 94%');
+  it('sidebar giữ tông sáng đã đổi ở đợt A — KHÔNG đổi lại', () => {
+    expect(bien('sidebar-background')).toBe('240 11% 94%');
     expect(bien('sidebar-panel')).toBe('0 0% 98%');
   });
 
@@ -155,6 +161,10 @@ describe('design token', () => {
 Run: `cd fe && npx vitest run src/index.css.test.ts`
 Expected: FAIL — `--radius` đang là `0px`
 
+> **Đợt A đã đổi xong cụm `--sidebar-*` và thêm `--sidebar-panel`.** Task này KHÔNG
+> được đụng lại chúng — chỉ đổi các token còn lại. Test ở Step 1 có một ca ghim giá trị
+> sidebar hiện tại để bắt nếu ai lỡ đổi.
+
 - [ ] **Step 3: Sửa `:root`**
 
 Đổi các dòng có sẵn:
@@ -171,16 +181,6 @@ Expected: FAIL — `--radius` đang là `0px`
     --radius-card: 9px;
     --radius-modal: 14px;
 
-    /* Sidebar sáng — rail #EFEFF2, panel #FAFAFA */
-    --sidebar-background: 240 5% 94%;
-    --sidebar-panel: 0 0% 98%;
-    --sidebar-foreground: 240 3% 12%;
-    --sidebar-primary: 170 59% 29%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 6% 90%;
-    --sidebar-accent-foreground: 240 3% 12%;
-    --sidebar-border: 240 9% 91%;
-    --sidebar-ring: 170 59% 29%;
 ```
 
 Thêm khối mới ngay dưới, trước dấu `}` đóng `:root`:
@@ -208,15 +208,10 @@ Thêm khối mới ngay dưới, trước dấu `}` đóng `:root`:
 
 - [ ] **Step 4: Sửa `.dark` cho khớp**
 
-Trong khối `.dark`, thay khối `--sidebar-*` cũ bằng bản tối tương ứng và thêm cùng bộ token mới với giá trị hợp tông tối:
+Trong khối `.dark`, thêm cùng bộ token mới với giá trị hợp tông tối. KHÔNG đụng cụm
+`--sidebar-*` trong khối này — đợt A đã đặt xong.
 
 ```css
-    --sidebar-background: 240 5% 12%;
-    --sidebar-panel: 240 5% 14%;
-    --sidebar-foreground: 0 0% 92%;
-    --sidebar-accent: 240 5% 20%;
-    --sidebar-border: 240 5% 22%;
-
     --ink: 0 0% 96%;
     --ink-2: 240 3% 70%;
     --ink-3: 240 3% 52%;
