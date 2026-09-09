@@ -59,7 +59,7 @@ const ProfilePage = () => {
             <div className="text-center">
               <Avatar
                 size={100}
-                style={{ backgroundColor: "#1890ff" }}
+                style={{ backgroundColor: "hsl(var(--blue))" }}
                 src={avatarUrl}
                 icon={<UserOutlined />}
                 className="mb-4"

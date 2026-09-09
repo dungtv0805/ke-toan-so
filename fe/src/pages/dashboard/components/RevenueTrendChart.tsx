@@ -6,13 +6,15 @@ import {
 } from 'recharts';
 import { dashboardService } from '@/services/dashboardService';
 import { sliceToRange } from '@/components/shared/period';
-import { formatCurrency, DASH_COLORS, nhanTrieu } from './format';
+import { formatCurrency, DASH_COLORS, CHART_GRID, nhanTrieu } from './format';
 
 interface Props { year: number; startMonth: number; endMonth: number; }
 
 const TEAL = DASH_COLORS.revenue;
-const GRAY = 'hsl(var(--muted-foreground) / 0.35)';
-const ORANGE = '#F2994A';
+// Hex bắt buộc: var() không giải được trong thuộc tính SVG mà recharts sinh ra
+// cho fill=/stroke= (xem chú thích DASH_COLORS ở ./format).
+const GRAY = '#6E6E7359'; // = --muted-foreground ở alpha 0.35
+const ORANGE = '#F2994A'; // = --chart-orange
 
 /** Số tiền → triệu (làm tròn), KPI luôn có số; nhãn trên cây bỏ qua giá trị 0. */
 const kpiTrieu = (v: number) => Math.round((v || 0) / 1e6).toLocaleString('vi-VN');
@@ -55,7 +57,7 @@ const RevenueTrendChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
       ) : (
         <ResponsiveContainer width="100%" height={280}>
           <ComposedChart data={data} margin={{ left: -10, right: 8, top: 18 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
             <XAxis dataKey="thang" tickFormatter={(v) => `${isWeekly ? 'Tuần' : 'Th'} ${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={nhanTrieu} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={42} />
             <Tooltip formatter={(value: number) => formatCurrency(value)} labelFormatter={(l) => `${isWeekly ? 'Tuần' : 'Tháng'} ${l}`} />

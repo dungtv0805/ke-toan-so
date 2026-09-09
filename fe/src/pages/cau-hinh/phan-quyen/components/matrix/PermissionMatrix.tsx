@@ -52,13 +52,28 @@ function getAllState(
   };
 }
 
+/**
+ * BA bậc nền của bảng, đậm dần từ dưới lên: hàng lá chẵn → hàng cha cấp 1 →
+ * hàng tiêu đề nhóm. Trước đây cả ba đều là `hsl(var(--muted))` nên tiêu đề
+ * nhóm có nền y hệt hàng lá chẵn và cấu trúc bảng phẳng ra.
+ *
+ * Chọn theo token để chạy được ở CẢ hai theme (bản tối vừa được tách bậc
+ * --card 17% / --muted 23% / --border 34%):
+ *   sáng: #E6E6EA → #F3F4F6 → #FAFAFB (trên card trắng)
+ *   tối:  #42526C → #29374C → #222F42 (trên card #1D283A)
+ * Chênh lệch giữa hai bậc liền kề: 1.13 / 1.05 (sáng), 1.52 / 1.12 (tối).
+ */
+const NEN_TIEU_DE_NHOM = "hsl(var(--border))";
+const NEN_HANG_CHA = "hsl(var(--muted))";
+const NEN_HANG_LA_CHAN = "hsl(var(--muted) / 0.45)";
+
 function SectionRow({ mod }: { mod: PermissionModule }) {
   return (
     <tr>
       <td
         colSpan={7}
         style={{
-          backgroundColor: "#f0f0f0",
+          backgroundColor: NEN_TIEU_DE_NHOM,
           fontWeight: 700,
           padding: "10px 12px",
           fontSize: 13,
@@ -86,18 +101,18 @@ function ParentRow({
   const allState = getAllState(permissions, leafKeys);
 
   return (
-    <tr style={{ backgroundColor: depth === 1 ? "#fafafa" : undefined }}>
+    <tr style={{ backgroundColor: depth === 1 ? NEN_HANG_CHA : undefined }}>
       <td
         style={{
           padding: "8px 12px",
           paddingLeft: 12 + depth * 20,
           fontWeight: 600,
-          borderBottom: "1px solid #f0f0f0",
+          borderBottom: "1px solid hsl(var(--border))",
         }}
       >
         {mod.label}
       </td>
-      <td style={{ textAlign: "center", borderBottom: "1px solid #f0f0f0" }}>
+      <td style={{ textAlign: "center", borderBottom: "1px solid hsl(var(--border))" }}>
         <Checkbox
           checked={allState.checked}
           indeterminate={allState.indeterminate}
@@ -114,7 +129,7 @@ function ParentRow({
         return (
           <td
             key={action.key}
-            style={{ textAlign: "center", borderBottom: "1px solid #f0f0f0" }}
+            style={{ textAlign: "center", borderBottom: "1px solid hsl(var(--border))" }}
           >
             <Checkbox
               checked={state.checked}
@@ -153,17 +168,17 @@ function LeafRow({
   const someChecked = PERMISSION_ACTIONS.some((a) => perm.actions[a.key]);
 
   return (
-    <tr style={{ backgroundColor: isEven ? "#fafbfc" : "#ffffff" }}>
+    <tr style={{ backgroundColor: isEven ? NEN_HANG_LA_CHAN : "hsl(var(--card))" }}>
       <td
         style={{
           padding: "8px 12px",
           paddingLeft: 12 + depth * 20,
-          borderBottom: "1px solid #f0f0f0",
+          borderBottom: "1px solid hsl(var(--border))",
         }}
       >
         {mod.label}
       </td>
-      <td style={{ textAlign: "center", borderBottom: "1px solid #f0f0f0" }}>
+      <td style={{ textAlign: "center", borderBottom: "1px solid hsl(var(--border))" }}>
         <Checkbox
           checked={allChecked}
           indeterminate={!allChecked && someChecked}
@@ -178,7 +193,7 @@ function LeafRow({
       {PERMISSION_ACTIONS.map((action) => (
         <td
           key={action.key}
-          style={{ textAlign: "center", borderBottom: "1px solid #f0f0f0" }}
+          style={{ textAlign: "center", borderBottom: "1px solid hsl(var(--border))" }}
         >
           <Checkbox
             checked={perm.actions[action.key]}
@@ -277,14 +292,14 @@ export function PermissionMatrix() {
           }}
         >
           <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
-            <tr style={{ backgroundColor: "#fafafa" }}>
+            <tr style={{ backgroundColor: "hsl(var(--muted))" }}>
               <th
                 style={{
                   textAlign: "left",
                   padding: "12px",
-                  borderBottom: "2px solid #e8e8e8",
+                  borderBottom: "2px solid hsl(var(--border))",
                   fontWeight: 600,
-                  backgroundColor: "#fafafa",
+                  backgroundColor: "hsl(var(--muted))",
                 }}
               >
                 Module
@@ -293,11 +308,11 @@ export function PermissionMatrix() {
                 style={{
                   textAlign: "center",
                   padding: "12px 4px",
-                  borderBottom: "2px solid #e8e8e8",
+                  borderBottom: "2px solid hsl(var(--border))",
                   fontWeight: 600,
                   width: 50,
                   whiteSpace: "nowrap",
-                  backgroundColor: "#fafafa",
+                  backgroundColor: "hsl(var(--muted))",
                 }}
               >
                 Tất cả
@@ -308,11 +323,11 @@ export function PermissionMatrix() {
                   style={{
                     textAlign: "center",
                     padding: "12px 4px",
-                    borderBottom: "2px solid #e8e8e8",
+                    borderBottom: "2px solid hsl(var(--border))",
                     fontWeight: 600,
                     width: 50,
                     whiteSpace: "nowrap",
-                    backgroundColor: "#fafafa",
+                    backgroundColor: "hsl(var(--muted))",
                   }}
                 >
                   {action.label}

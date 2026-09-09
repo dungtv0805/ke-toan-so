@@ -172,7 +172,7 @@ const KiemSoatChiPhiPage: React.FC = () => {
                   value={data.haoPhiPct}
                   precision={2}
                   suffix="%"
-                  valueStyle={data.vuot ? { color: "#ff4d4f" } : undefined}
+                  valueStyle={data.vuot ? { color: "hsl(var(--red))" } : undefined}
                 />
               </Card>
             </Col>

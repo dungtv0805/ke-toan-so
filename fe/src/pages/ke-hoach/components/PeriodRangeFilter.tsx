@@ -41,7 +41,7 @@ export const PeriodRangeFilter: React.FC = () => {
 
   return (
     <>
-      <CalendarOutlined style={{ color: "#1890ff" }} />
+      <CalendarOutlined style={{ color: "hsl(var(--blue))" }} />
       <Select<NkcPeriodKey>
         size="small"
         showSearch

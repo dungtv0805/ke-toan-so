@@ -225,7 +225,7 @@ export function FileHopDongModal({
                 <List.Item.Meta
                   avatar={
                     <FilePdfOutlined
-                      style={{ fontSize: 20, color: "#cf1322" }}
+                      style={{ fontSize: 20, color: "hsl(var(--red))" }}
                     />
                   }
                   title={

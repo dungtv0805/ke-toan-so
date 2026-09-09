@@ -30,7 +30,7 @@ const fmt = (n?: number) => (n ?? 0).toLocaleString("vi-VN");
 // Dòng "Tổng (gồm tự tính)" — 1 dòng, không wrap, cắt gọn nếu dài.
 const autoTotalStyle: React.CSSProperties = {
   fontSize: 11,
-  color: "#8c8c8c",
+  color: "hsl(var(--ink-2))",
   marginTop: 2,
   textAlign: "right",
   whiteSpace: "nowrap",

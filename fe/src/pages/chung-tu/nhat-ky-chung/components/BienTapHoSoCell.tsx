@@ -125,7 +125,7 @@ export function BienTapHoSoCell({
   const popoverContent = (
     <div style={{ width: 320 }}>
       {items.length === 0 ? (
-        <div style={{ color: "#999", marginBottom: 8 }}>
+        <div style={{ color: "hsl(var(--ink-2))", marginBottom: 8 }}>
           Chưa có hồ sơ chứng từ nào.
         </div>
       ) : (
@@ -210,7 +210,7 @@ export function BienTapHoSoCell({
         </div>
         {items.map((i) => (
           <div key={i.id}>
-            <span style={{ color: i.daCo ? "#52c41a" : "#bbb" }}>
+            <span style={{ color: i.daCo ? "hsl(var(--green))" : "hsl(var(--ink-3))" }}>
               {i.daCo ? "✓" : "○"}
             </span>{" "}
             {i.ten}
@@ -245,7 +245,7 @@ export function BienTapHoSoCell({
             size="small"
             type="link"
             icon={<PlusOutlined />}
-            style={{ padding: 0, color: "#999" }}
+            style={{ padding: 0, color: "hsl(var(--ink-2))" }}
           >
             —
           </Button>

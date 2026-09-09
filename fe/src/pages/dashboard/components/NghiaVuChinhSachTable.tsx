@@ -142,7 +142,7 @@ const NghiaVuChinhSachTable: React.FC<Props> = ({ year }) => {
             return {
               style: {
                 ...(bold ? { fontWeight: 600 } : {}),
-                ...(red ? { color: '#cf1322' } : {}),
+                ...(red ? { color: 'hsl(var(--red))' } : {}),
               },
             };
           }}

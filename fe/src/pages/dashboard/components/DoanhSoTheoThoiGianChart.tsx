@@ -3,7 +3,7 @@ import { Card, Segmented, Empty, Space } from 'antd';
 import { BarChartOutlined } from '@ant-design/icons';
 import { ComposedChart, Bar, Line, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
-import { formatCurrency, DASH_COLORS, nhanTrieu } from './format';
+import { formatCurrency, DASH_COLORS, CHART_GRID, nhanTrieu } from './format';
 import type { DoanhSoThoiGianPoint } from '@/services/doanhSoService';
 
 export type GroupBy = 'ngay' | 'thang' | 'quy' | 'nam';
@@ -38,7 +38,7 @@ const DoanhSoTheoThoiGianChart: React.FC<Props> = ({ data, groupBy, onGroupByCha
     ) : (
       <ResponsiveContainer width="100%" height={300}>
         <ComposedChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
           <XAxis dataKey="ky" tick={{ fontSize: 11 }} />
           <YAxis tick={{ fontSize: 11 }} tickFormatter={nhanTrieu} />
           <Tooltip formatter={(v: number) => formatCurrency(v)} />

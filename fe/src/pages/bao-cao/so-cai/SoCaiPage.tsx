@@ -199,7 +199,7 @@ const SoCaiPage: React.FC = () => {
         key: 'soDuNo',
         width: 140,
         align: 'right',
-        render: (value) => value > 0 ? <span style={{ color: '#1890ff' }}>{formatCurrency(value)}</span> : '-',
+        render: (value) => value > 0 ? <span style={{ color: 'hsl(var(--blue))' }}>{formatCurrency(value)}</span> : '-',
       },
       { type: 'number' },
     ),
@@ -210,7 +210,7 @@ const SoCaiPage: React.FC = () => {
         key: 'soDuCo',
         width: 140,
         align: 'right',
-        render: (value) => value > 0 ? <span style={{ color: '#52c41a' }}>{formatCurrency(value)}</span> : '-',
+        render: (value) => value > 0 ? <span style={{ color: 'hsl(var(--green))' }}>{formatCurrency(value)}</span> : '-',
       },
       { type: 'number' },
     ),
@@ -260,7 +260,7 @@ const SoCaiPage: React.FC = () => {
         key: 'phatSinhNo',
         width: 140,
         align: 'right',
-        render: (value) => value > 0 ? <span style={{ color: '#1890ff' }}>{formatCurrency(value)}</span> : '-',
+        render: (value) => value > 0 ? <span style={{ color: 'hsl(var(--blue))' }}>{formatCurrency(value)}</span> : '-',
         sorter: (a, b) => a.phatSinhNo - b.phatSinhNo,
       },
       { type: 'number' },
@@ -272,7 +272,7 @@ const SoCaiPage: React.FC = () => {
         key: 'phatSinhCo',
         width: 140,
         align: 'right',
-        render: (value) => value > 0 ? <span style={{ color: '#52c41a' }}>{formatCurrency(value)}</span> : '-',
+        render: (value) => value > 0 ? <span style={{ color: 'hsl(var(--green))' }}>{formatCurrency(value)}</span> : '-',
         sorter: (a, b) => a.phatSinhCo - b.phatSinhCo,
       },
       { type: 'number' },
@@ -284,7 +284,7 @@ const SoCaiPage: React.FC = () => {
         key: 'soDuCuoiKyNo',
         width: 140,
         align: 'right',
-        render: (value) => value > 0 ? <span style={{ fontWeight: 600, color: '#1890ff' }}>{formatCurrency(value)}</span> : '-',
+        render: (value) => value > 0 ? <span style={{ fontWeight: 600, color: 'hsl(var(--blue))' }}>{formatCurrency(value)}</span> : '-',
       },
       { type: 'number' },
     ),
@@ -295,7 +295,7 @@ const SoCaiPage: React.FC = () => {
         key: 'soDuCuoiKyCo',
         width: 140,
         align: 'right',
-        render: (value) => value > 0 ? <span style={{ fontWeight: 600, color: '#52c41a' }}>{formatCurrency(value)}</span> : '-',
+        render: (value) => value > 0 ? <span style={{ fontWeight: 600, color: 'hsl(var(--green))' }}>{formatCurrency(value)}</span> : '-',
       },
       { type: 'number' },
     ),
@@ -372,7 +372,7 @@ const SoCaiPage: React.FC = () => {
             key: 'phatSinhNo',
             width: 130,
             align: 'right',
-            render: (value) => value > 0 ? <span style={{ color: '#1890ff' }}>{formatCurrency(value)}</span> : '-',
+            render: (value) => value > 0 ? <span style={{ color: 'hsl(var(--blue))' }}>{formatCurrency(value)}</span> : '-',
           },
           { type: 'number', filterTitle: 'Phát sinh Nợ' },
         ),
@@ -383,7 +383,7 @@ const SoCaiPage: React.FC = () => {
             key: 'phatSinhCo',
             width: 130,
             align: 'right',
-            render: (value) => value > 0 ? <span style={{ color: '#52c41a' }}>{formatCurrency(value)}</span> : '-',
+            render: (value) => value > 0 ? <span style={{ color: 'hsl(var(--green))' }}>{formatCurrency(value)}</span> : '-',
           },
           { type: 'number', filterTitle: 'Phát sinh Có' },
         ),
@@ -450,12 +450,12 @@ const SoCaiPage: React.FC = () => {
             }), { soDuDauKyNo: 0, soDuDauKyCo: 0, phatSinhNo: 0, phatSinhCo: 0, soDuCuoiKyNo: 0, soDuCuoiKyCo: 0 });
             
             return (
-              <Table.Summary.Row style={{ backgroundColor: '#fafafa', fontWeight: 600 }}>
+              <Table.Summary.Row style={{ backgroundColor: 'hsl(var(--muted))', fontWeight: 600 }}>
                 <Table.Summary.Cell index={0} colSpan={2}>Tổng cộng</Table.Summary.Cell>
                 <Table.Summary.Cell index={1} align="right">{formatCurrency(totals.soDuDauKyNo)}</Table.Summary.Cell>
                 <Table.Summary.Cell index={2} align="right">{formatCurrency(totals.soDuDauKyCo)}</Table.Summary.Cell>
-                <Table.Summary.Cell index={3} align="right"><span style={{ color: '#1890ff' }}>{formatCurrency(totals.phatSinhNo)}</span></Table.Summary.Cell>
-                <Table.Summary.Cell index={4} align="right"><span style={{ color: '#52c41a' }}>{formatCurrency(totals.phatSinhCo)}</span></Table.Summary.Cell>
+                <Table.Summary.Cell index={3} align="right"><span style={{ color: 'hsl(var(--blue))' }}>{formatCurrency(totals.phatSinhNo)}</span></Table.Summary.Cell>
+                <Table.Summary.Cell index={4} align="right"><span style={{ color: 'hsl(var(--green))' }}>{formatCurrency(totals.phatSinhCo)}</span></Table.Summary.Cell>
                 <Table.Summary.Cell index={5} align="right">{formatCurrency(totals.soDuCuoiKyNo)}</Table.Summary.Cell>
                 <Table.Summary.Cell index={6} align="right">{formatCurrency(totals.soDuCuoiKyCo)}</Table.Summary.Cell>
                 <Table.Summary.Cell index={7}></Table.Summary.Cell>
@@ -483,10 +483,10 @@ const SoCaiPage: React.FC = () => {
                   {formatCurrency(detailView.soDuDauKyCo)}
                 </Descriptions.Item>
                 <Descriptions.Item label="Phát sinh Nợ">
-                  <span style={{ color: '#1890ff', fontWeight: 600 }}>{formatCurrency(detailView.phatSinhNo)}</span>
+                  <span style={{ color: 'hsl(var(--blue))', fontWeight: 600 }}>{formatCurrency(detailView.phatSinhNo)}</span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Phát sinh Có">
-                  <span style={{ color: '#52c41a', fontWeight: 600 }}>{formatCurrency(detailView.phatSinhCo)}</span>
+                  <span style={{ color: 'hsl(var(--green))', fontWeight: 600 }}>{formatCurrency(detailView.phatSinhCo)}</span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Số dư cuối kỳ Nợ">
                   <strong>{formatCurrency(detailView.soDuCuoiKyNo)}</strong>
@@ -545,7 +545,7 @@ const SoCaiPage: React.FC = () => {
             const isBalanced = Math.abs(totals.phatSinhNo - totals.phatSinhCo) < 1;
             
             return (
-              <Table.Summary.Row style={{ backgroundColor: '#fafafa', fontWeight: 600 }}>
+              <Table.Summary.Row style={{ backgroundColor: 'hsl(var(--muted))', fontWeight: 600 }}>
                 <Table.Summary.Cell index={0} colSpan={2}>
                   Tổng cộng {isBalanced 
                     ? <Tag color="success" icon={<CheckCircleOutlined />}>Cân đối</Tag>
@@ -554,8 +554,8 @@ const SoCaiPage: React.FC = () => {
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={1} align="right">{formatCurrency(totals.soDuDauKyNo)}</Table.Summary.Cell>
                 <Table.Summary.Cell index={2} align="right">{formatCurrency(totals.soDuDauKyCo)}</Table.Summary.Cell>
-                <Table.Summary.Cell index={3} align="right"><span style={{ color: '#1890ff' }}>{formatCurrency(totals.phatSinhNo)}</span></Table.Summary.Cell>
-                <Table.Summary.Cell index={4} align="right"><span style={{ color: '#52c41a' }}>{formatCurrency(totals.phatSinhCo)}</span></Table.Summary.Cell>
+                <Table.Summary.Cell index={3} align="right"><span style={{ color: 'hsl(var(--blue))' }}>{formatCurrency(totals.phatSinhNo)}</span></Table.Summary.Cell>
+                <Table.Summary.Cell index={4} align="right"><span style={{ color: 'hsl(var(--green))' }}>{formatCurrency(totals.phatSinhCo)}</span></Table.Summary.Cell>
                 <Table.Summary.Cell index={5} align="right">{formatCurrency(totals.soDuCuoiKyNo)}</Table.Summary.Cell>
                 <Table.Summary.Cell index={6} align="right">{formatCurrency(totals.soDuCuoiKyCo)}</Table.Summary.Cell>
               </Table.Summary.Row>
@@ -610,7 +610,7 @@ const SoCaiPage: React.FC = () => {
               <Statistic
                 title="Số tài khoản"
                 value={stats?.soTaiKhoan || 0}
-                valueStyle={{ color: '#1890ff' }}
+                valueStyle={{ color: 'hsl(var(--blue))' }}
               />
             </Card>
           </Col>
@@ -621,7 +621,7 @@ const SoCaiPage: React.FC = () => {
                 value={stats?.tongPhatSinhNo || 0}
                 precision={0}
                 formatter={(value) => formatCurrency(value as number)}
-                valueStyle={{ color: '#1890ff' }}
+                valueStyle={{ color: 'hsl(var(--blue))' }}
               />
             </Card>
           </Col>
@@ -632,7 +632,7 @@ const SoCaiPage: React.FC = () => {
                 value={stats?.tongPhatSinhCo || 0}
                 precision={0}
                 formatter={(value) => formatCurrency(value as number)}
-                valueStyle={{ color: '#52c41a' }}
+                valueStyle={{ color: 'hsl(var(--green))' }}
               />
             </Card>
           </Col>
@@ -641,7 +641,7 @@ const SoCaiPage: React.FC = () => {
               <Statistic
                 title="Trạng thái cân đối"
                 value={stats?.canDoi ? 'Cân đối' : 'Không cân đối'}
-                valueStyle={{ color: stats?.canDoi ? '#52c41a' : '#ff4d4f' }}
+                valueStyle={{ color: stats?.canDoi ? 'hsl(var(--green))' : 'hsl(var(--red))' }}
                 prefix={stats?.canDoi ? <CheckCircleOutlined /> : <WarningOutlined />}
               />
             </Card>

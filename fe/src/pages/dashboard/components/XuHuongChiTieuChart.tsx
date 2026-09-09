@@ -5,7 +5,7 @@ import { LineChart, Line, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, Respo
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { dashboardService } from '@/services/dashboardService';
-import { formatCurrency, DASH_COLORS, nhanTrieu } from './format';
+import { formatCurrency, DASH_COLORS, CHART_GRID, nhanTrieu } from './format';
 
 type ChiTieu = 'doanhThu' | 'chiPhi' | 'loiNhuan';
 
@@ -53,7 +53,7 @@ const XuHuongChiTieuChart: React.FC<Props> = ({ year, startMonth, endMonth }) =>
     >
       <ResponsiveContainer width="100%" height={280}>
         <LineChart data={rows} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
           <XAxis dataKey="thang" tick={{ fontSize: 11 }} />
           <YAxis tick={{ fontSize: 11 }} tickFormatter={nhanTrieu} />
           <Tooltip formatter={(v: number) => formatCurrency(v)} />

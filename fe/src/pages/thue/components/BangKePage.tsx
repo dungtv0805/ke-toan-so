@@ -586,7 +586,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
                 className="mb-0"
                 extra={
                   lechTienThue > LECH_WARN ? (
-                    <span style={{ color: "#faad14" }}>
+                    <span style={{ color: "hsl(var(--amber))" }}>
                       Lệch {fmt(lechTienThue)} đ so với công thức ({fmt(thueTheoCongThuc)} đ)
                     </span>
                   ) : undefined

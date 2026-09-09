@@ -16,10 +16,18 @@ interface Props {
 
 type MucKey = 'doanhThu' | 'chiPhi' | 'loiNhuan';
 
+/**
+ * Màu gauge — HEX bắt buộc: giá trị này đi vào `fill=` của <RadialBar>, tức
+ * thuộc tính trình bày của SVG, nơi hsl(var(--token)) không giải được nên vòng
+ * gauge sẽ không được tô. (Trong style={{ background }} của chú giải bên dưới
+ * thì token vẫn chạy — nhưng dùng chung một hằng cho khỏi lệch màu.)
+ */
+const MAU_CANH_BAO = '#D93025'; // = --destructive / --red
+
 const ITEMS: { key: MucKey; title: string; color: string; vuotLaXau?: boolean }[] = [
-  { key: 'doanhThu', title: 'Tình hình thực hiện doanh thu', color: 'hsl(var(--success))' },
-  { key: 'chiPhi', title: 'Tình hình thực hiện chi phí', color: 'hsl(var(--destructive))', vuotLaXau: true },
-  { key: 'loiNhuan', title: 'Tình hình thực hiện lợi nhuận', color: 'hsl(var(--primary))' },
+  { key: 'doanhThu', title: 'Tình hình thực hiện doanh thu', color: '#1F9254' }, // = --success
+  { key: 'chiPhi', title: 'Tình hình thực hiện chi phí', color: MAU_CANH_BAO, vuotLaXau: true },
+  { key: 'loiNhuan', title: 'Tình hình thực hiện lợi nhuận', color: '#1F7769' }, // = --primary
 ];
 
 /** Gauge nửa vòng 0%→150%. percent=100 khi kỳ chưa có kế hoạch. */
@@ -92,7 +100,7 @@ const ExecutionStatusCharts: React.FC<Props> = ({ year, startMonth, endMonth }) 
       {ITEMS.map((it) => {
         const muc = ketQua[it.key];
         // Chi phí vượt kế hoạch là dấu hiệu xấu → chuyển sang màu cảnh báo.
-        const color = it.vuotLaXau && muc.tyLeDat > 100 ? 'hsl(var(--destructive))' : it.color;
+        const color = it.vuotLaXau && muc.tyLeDat > 100 ? MAU_CANH_BAO : it.color;
         return (
           <Col xs={24} lg={8} key={it.key}>
             <Card title={<span className="text-sm sm:text-base">{it.title}</span>}

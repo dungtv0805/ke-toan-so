@@ -43,6 +43,8 @@ import { buildBangCanDoiSheets } from './bangCanDoiExport';
 import { filterBangCanDoi } from './bangCanDoiFilter';
 import { nhanTrieu, NGUONG_NHAN_LAT_CAT } from '@/pages/dashboard/components/format';
 
+// Màu phân biệt các lát trên 2 biểu đồ tròn (Cơ cấu Tài sản / Nguồn vốn) — giữ nguyên,
+// không quy về token vì mục đích là phân biệt các lát dữ liệu với nhau.
 const COLORS = ['#1890ff', '#52c41a', '#faad14', '#ff4d4f', '#722ed1', '#13c2c2'];
 
 const formatCurrency = (value: number) =>
@@ -120,7 +122,7 @@ const BangCanDoiPage: React.FC = () => {
         <span style={{
           fontWeight: record.isSection ? 700 : record.isTotal ? 600 : 400,
           paddingLeft: record.level * 16,
-          color: record.isSection ? '#1890ff' : 'inherit',
+          color: record.isSection ? 'hsl(var(--blue))' : 'inherit',
         }}>
           {text}
         </span>
@@ -143,7 +145,7 @@ const BangCanDoiPage: React.FC = () => {
         render: (value: number, record: BalanceSheetItem) => (
           <span style={{
             fontWeight: record.isSection || record.isTotal ? 600 : 400,
-            color: value < 0 ? '#ff4d4f' : 'inherit',
+            color: value < 0 ? 'hsl(var(--red))' : 'inherit',
           }}>
             {value !== 0 ? formatCurrency(value) : '-'}
           </span>
@@ -161,7 +163,7 @@ const BangCanDoiPage: React.FC = () => {
         render: (value: number, record: BalanceSheetItem) => (
           <span style={{
             fontWeight: record.isSection || record.isTotal ? 600 : 400,
-            color: value < 0 ? '#ff4d4f' : 'inherit',
+            color: value < 0 ? 'hsl(var(--red))' : 'inherit',
           }}>
             {value !== 0 ? formatCurrency(value) : '-'}
           </span>
@@ -180,11 +182,11 @@ const BangCanDoiPage: React.FC = () => {
           const diff = record.cuoiKy - record.dauNam;
           return (
             <Space>
-              <span style={{ color: diff >= 0 ? '#52c41a' : '#ff4d4f' }}>
+              <span style={{ color: diff >= 0 ? 'hsl(var(--green))' : 'hsl(var(--red))' }}>
                 {formatCurrencyShort(diff)}
               </span>
               {diff !== 0 && (
-                diff > 0 ? <RiseOutlined style={{ color: '#52c41a' }} /> : <FallOutlined style={{ color: '#ff4d4f' }} />
+                diff > 0 ? <RiseOutlined style={{ color: 'hsl(var(--green))' }} /> : <FallOutlined style={{ color: 'hsl(var(--red))' }} />
               )}
             </Space>
           );
@@ -240,7 +242,7 @@ const BangCanDoiPage: React.FC = () => {
                 title="Tổng tài sản"
                 value={stats?.tongTaiSan ?? 0}
                 formatter={(val) => formatCurrencyShort(val as number)}
-                valueStyle={{ color: '#1890ff' }}
+                valueStyle={{ color: 'hsl(var(--blue))' }}
               />
             </Card>
           </Col>
@@ -269,7 +271,7 @@ const BangCanDoiPage: React.FC = () => {
                 title="Nợ phải trả"
                 value={stats?.noPhaiTra ?? 0}
                 formatter={(val) => formatCurrencyShort(val as number)}
-                valueStyle={{ color: '#fa8c16' }}
+                valueStyle={{ color: 'hsl(var(--amber))' }}
               />
             </Card>
           </Col>
@@ -279,7 +281,7 @@ const BangCanDoiPage: React.FC = () => {
                 title="Vốn chủ sở hữu"
                 value={stats?.vonChuSoHuu ?? 0}
                 formatter={(val) => formatCurrencyShort(val as number)}
-                valueStyle={{ color: '#52c41a' }}
+                valueStyle={{ color: 'hsl(var(--green))' }}
               />
             </Card>
           </Col>
@@ -288,7 +290,7 @@ const BangCanDoiPage: React.FC = () => {
               <Statistic
                 title="Trạng thái"
                 value={stats?.canDoi ? 'Cân đối' : 'Chưa cân đối'}
-                valueStyle={{ color: stats?.canDoi ? '#52c41a' : '#ff4d4f' }}
+                valueStyle={{ color: stats?.canDoi ? 'hsl(var(--green))' : 'hsl(var(--red))' }}
                 prefix={stats?.canDoi ? <CheckCircleOutlined /> : <WarningOutlined />}
               />
             </Card>
@@ -305,7 +307,7 @@ const BangCanDoiPage: React.FC = () => {
               children: view && (
                 <>
                   <Card
-                    title={<span style={{ color: '#1890ff', fontWeight: 600 }}>TÀI SẢN</span>}
+                    title={<span style={{ color: 'hsl(var(--blue))', fontWeight: 600 }}>TÀI SẢN</span>}
                     size="small"
                     style={{ marginBottom: 16 }}
                   >
@@ -322,15 +324,15 @@ const BangCanDoiPage: React.FC = () => {
                     />
                     {/* Lọc không còn chỉ tiêu nào → không hiện dòng TỔNG CỘNG toàn số 0. */}
                     {view.taiSan.length > 0 && (
-                      <div style={{ padding: '12px 16px', backgroundColor: '#e6f7ff', fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ padding: '12px 16px', backgroundColor: 'hsl(var(--blue-soft))', fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
                         <span>TỔNG CỘNG TÀI SẢN</span>
-                        <span style={{ color: '#1890ff' }}>{formatCurrency(view.tongTaiSan.cuoiKy)}</span>
+                        <span style={{ color: 'hsl(var(--blue))' }}>{formatCurrency(view.tongTaiSan.cuoiKy)}</span>
                       </div>
                     )}
                   </Card>
 
                   <Card
-                    title={<span style={{ color: '#52c41a', fontWeight: 600 }}>NGUỒN VỐN</span>}
+                    title={<span style={{ color: 'hsl(var(--green))', fontWeight: 600 }}>NGUỒN VỐN</span>}
                     size="small"
                   >
                     <Table
@@ -344,9 +346,9 @@ const BangCanDoiPage: React.FC = () => {
                       scroll={{ x: hasPinned ? 'max-content' : undefined }}
                     />
                     {view.nguonVon.length > 0 && (
-                      <div style={{ padding: '12px 16px', backgroundColor: '#f6ffed', fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ padding: '12px 16px', backgroundColor: 'hsl(var(--green) / 0.1)', fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
                         <span>TỔNG CỘNG NGUỒN VỐN</span>
-                        <span style={{ color: '#52c41a' }}>{formatCurrency(view.tongNguonVon.cuoiKy)}</span>
+                        <span style={{ color: 'hsl(var(--green))' }}>{formatCurrency(view.tongNguonVon.cuoiKy)}</span>
                       </div>
                     )}
                   </Card>

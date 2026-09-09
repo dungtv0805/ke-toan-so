@@ -6,19 +6,28 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 import { dashboardService, type BreakdownSlice } from '@/services/dashboardService';
 import { formatCurrency, nhanLatCat } from './format';
 
-/** Sáu hue tách bạch, khai báo ở `index.css` để chế độ tối có bậc màu riêng. */
+/**
+ * Sáu hue tách bạch — GIỮ NGUYÊN giá trị của --viz-1..6 trong `index.css` nhưng
+ * viết thẳng bằng HEX: mảng này đi vào `fill=` của <Cell>, tức thuộc tính trình
+ * bày của SVG, nơi `var()` KHÔNG được thay thế (var() chỉ giải ở computed-value
+ * time cho khai báo CSS) — dùng token ở đây thì lát cắt không được tô màu.
+ * Sửa --viz-* trong index.css thì sửa cả ở đây.
+ */
 const PALETTE = [
-  'var(--viz-1)',
-  'var(--viz-2)',
-  'var(--viz-3)',
-  'var(--viz-4)',
-  'var(--viz-5)',
-  'var(--viz-6)',
+  '#2a78d6', // = --viz-1 lam
+  '#eb6834', // = --viz-2 cam
+  '#1baf7a', // = --viz-3 ngọc
+  '#eda100', // = --viz-4 vàng
+  '#e87ba4', // = --viz-5 hồng
+  '#008300', // = --viz-6 lục
 ];
 
 /** "Khác" là rổ gom, không phải một nhóm — luôn xám để lùi lại phía sau. */
-const MAU_KHAC = 'var(--viz-khac)';
+const MAU_KHAC = '#84847d'; // = --viz-khac
 const TEN_KHAC = 'Khác';
+
+/** Màu chữ nhãn quanh vành — hex vì đi vào thuộc tính `fill` của <text>. */
+const MAU_CHU = '#1D1D1F'; // = --foreground / --ink
 
 const TOP_N = 6;
 
@@ -58,7 +67,7 @@ const Donut: React.FC<{ data: BreakdownSlice[] }> = ({ data }) => {
         textAnchor={p.textAnchor}
         dominantBaseline="central"
         fontSize={12}
-        fill="hsl(var(--foreground))"
+        fill={MAU_CHU}
       >
         {chu}
       </text>

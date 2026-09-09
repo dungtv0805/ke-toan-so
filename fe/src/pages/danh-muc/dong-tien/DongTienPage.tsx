@@ -395,6 +395,9 @@ const DongTienPage: React.FC = () => {
             />
           </Card>
         </Col>
+        {/* GIỮ 3 màu cứng: Kinh doanh/Đầu tư/Tài chính là 3 loại dòng tiền cần phân biệt
+            trực quan với nhau (giống vai trò màu biểu đồ) — "Tài chính" dùng tím, không
+            có token tương ứng trong bộ token hiện tại. */}
         <Col xs={24} sm={6}>
           <Card className="stat-card">
             <Statistic

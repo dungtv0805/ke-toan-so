@@ -201,7 +201,7 @@ const CongNoPhaiTraPage: React.FC = () => {
         key: 'daThu',
         width: 130,
         align: 'right',
-        render: (value) => <span style={{ color: '#52c41a' }}>{formatCurrency(value)}</span>,
+        render: (value) => <span style={{ color: 'hsl(var(--green))' }}>{formatCurrency(value)}</span>,
         sorter: (a, b) => a.daThu - b.daThu,
       },
       { type: 'number' },
@@ -213,7 +213,7 @@ const CongNoPhaiTraPage: React.FC = () => {
         key: 'conLai',
         width: 140,
         align: 'right',
-        render: (value) => <span style={{ color: '#ff4d4f', fontWeight: 600 }}>{formatCurrency(value)}</span>,
+        render: (value) => <span style={{ color: 'hsl(var(--red))', fontWeight: 600 }}>{formatCurrency(value)}</span>,
         sorter: (a, b) => a.conLai - b.conLai,
       },
       { type: 'number' },
@@ -291,7 +291,7 @@ const CongNoPhaiTraPage: React.FC = () => {
         key: 'daTra',
         width: 140,
         align: 'right',
-        render: (value) => <span style={{ color: '#52c41a' }}>{formatCurrency(value)}</span>,
+        render: (value) => <span style={{ color: 'hsl(var(--green))' }}>{formatCurrency(value)}</span>,
       },
       { type: 'number' },
     ),
@@ -302,7 +302,7 @@ const CongNoPhaiTraPage: React.FC = () => {
         key: 'conLai',
         width: 150,
         align: 'right',
-        render: (value) => <span style={{ color: '#1890ff', fontWeight: 600 }}>{formatCurrency(value)}</span>,
+        render: (value) => <span style={{ color: 'hsl(var(--blue))', fontWeight: 600 }}>{formatCurrency(value)}</span>,
         sorter: (a, b) => a.conLai - b.conLai,
       },
       { type: 'number' },
@@ -315,8 +315,8 @@ const CongNoPhaiTraPage: React.FC = () => {
         width: 150,
         align: 'right',
         render: (value) => value > 0
-          ? <span style={{ color: '#ff4d4f', fontWeight: 600 }}>{formatCurrency(value)}</span>
-          : <span style={{ color: '#52c41a' }}>-</span>,
+          ? <span style={{ color: 'hsl(var(--red))', fontWeight: 600 }}>{formatCurrency(value)}</span>
+          : <span style={{ color: 'hsl(var(--green))' }}>-</span>,
         sorter: (a, b) => a.quaHan - b.quaHan,
       },
       { type: 'number' },
@@ -409,11 +409,11 @@ const CongNoPhaiTraPage: React.FC = () => {
               const totalDaTra = pageData.reduce((sum, item) => sum + item.daThu, 0);
               const totalConLai = pageData.reduce((sum, item) => sum + item.conLai, 0);
               return (
-                <Table.Summary.Row style={{ backgroundColor: '#fafafa', fontWeight: 600 }}>
+                <Table.Summary.Row style={{ backgroundColor: 'hsl(var(--muted))', fontWeight: 600 }}>
                   <Table.Summary.Cell index={0} colSpan={4}>Tổng trang hiện tại</Table.Summary.Cell>
                   <Table.Summary.Cell index={1} align="right">{formatCurrency(totalGoc)}</Table.Summary.Cell>
-                  <Table.Summary.Cell index={2} align="right"><span style={{ color: '#52c41a' }}>{formatCurrency(totalDaTra)}</span></Table.Summary.Cell>
-                  <Table.Summary.Cell index={3} align="right"><span style={{ color: '#ff4d4f' }}>{formatCurrency(totalConLai)}</span></Table.Summary.Cell>
+                  <Table.Summary.Cell index={2} align="right"><span style={{ color: 'hsl(var(--green))' }}>{formatCurrency(totalDaTra)}</span></Table.Summary.Cell>
+                  <Table.Summary.Cell index={3} align="right"><span style={{ color: 'hsl(var(--red))' }}>{formatCurrency(totalConLai)}</span></Table.Summary.Cell>
                   <Table.Summary.Cell index={4} colSpan={2}></Table.Summary.Cell>
                 </Table.Summary.Row>
               );
@@ -444,12 +444,12 @@ const CongNoPhaiTraPage: React.FC = () => {
             const totalConLai = pageData.reduce((sum, item) => sum + item.conLai, 0);
             const totalQuaHan = pageData.reduce((sum, item) => sum + item.quaHan, 0);
             return (
-              <Table.Summary.Row style={{ backgroundColor: '#fafafa', fontWeight: 600 }}>
+              <Table.Summary.Row style={{ backgroundColor: 'hsl(var(--muted))', fontWeight: 600 }}>
                 <Table.Summary.Cell index={0} colSpan={3}>Tổng cộng</Table.Summary.Cell>
                 <Table.Summary.Cell index={1} align="right">{formatCurrency(totalNo)}</Table.Summary.Cell>
-                <Table.Summary.Cell index={2} align="right"><span style={{ color: '#52c41a' }}>{formatCurrency(totalDaTra)}</span></Table.Summary.Cell>
-                <Table.Summary.Cell index={3} align="right"><span style={{ color: '#1890ff' }}>{formatCurrency(totalConLai)}</span></Table.Summary.Cell>
-                <Table.Summary.Cell index={4} align="right"><span style={{ color: '#ff4d4f' }}>{formatCurrency(totalQuaHan)}</span></Table.Summary.Cell>
+                <Table.Summary.Cell index={2} align="right"><span style={{ color: 'hsl(var(--green))' }}>{formatCurrency(totalDaTra)}</span></Table.Summary.Cell>
+                <Table.Summary.Cell index={3} align="right"><span style={{ color: 'hsl(var(--blue))' }}>{formatCurrency(totalConLai)}</span></Table.Summary.Cell>
+                <Table.Summary.Cell index={4} align="right"><span style={{ color: 'hsl(var(--red))' }}>{formatCurrency(totalQuaHan)}</span></Table.Summary.Cell>
                 <Table.Summary.Cell index={5}></Table.Summary.Cell>
               </Table.Summary.Row>
             );
@@ -461,6 +461,17 @@ const CongNoPhaiTraPage: React.FC = () => {
       key: '3',
       label: 'Phân tích tuổi nợ',
       children: agingData && (
+        // GIỮ màu cứng: 6 mức độ tuổi nợ cần một thang màu tăng dần từ an toàn (xanh) đến
+        // nguy cấp (đỏ đậm) để phân biệt mức độ nghiêm trọng — bộ token hiện chỉ có 1 mã
+        // --amber và 1 mã --red nên không đủ để diễn tả thang 6 bậc này.
+        //
+        // NGOẠI LỆ ở bậc đầu: "Chưa đến hạn" dùng hsl(var(--green)) chứ không phải
+        // #52c41a. Chính trang này đã quy #52c41a về --green ở 6 chỗ khác (cột Đã trả,
+        // dòng tổng, thẻ "Đã trả"), nên để nguyên hex thì trên cùng MỘT màn hình có hai
+        // sắc xanh khác nhau cho cùng nghĩa "tốt". Thang vẫn tăng dần vì nó đi theo
+        // SẮC (xanh → vàng → cam → đỏ → đỏ đậm) chứ không theo độ sáng — vốn đã không
+        // đơn điệu về độ sáng từ đầu (#faad14 sáng hơn cả bậc xanh cũ). Năm bậc còn lại
+        // giữ nguyên hex.
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={12} lg={8}>
             <Card>
@@ -469,7 +480,7 @@ const CongNoPhaiTraPage: React.FC = () => {
                 value={agingData.chuaDenHan}
                 precision={0}
                 formatter={(value) => formatCurrency(value as number)}
-                valueStyle={{ color: '#52c41a' }}
+                valueStyle={{ color: 'hsl(var(--green))' }}
                 prefix={<CheckCircleOutlined />}
               />
             </Card>
@@ -574,7 +585,7 @@ const CongNoPhaiTraPage: React.FC = () => {
               <Statistic
                 title="Số khoản nợ"
                 value={stats?.soKhoanNo || 0}
-                valueStyle={{ color: '#1890ff' }}
+                valueStyle={{ color: 'hsl(var(--blue))' }}
               />
             </Card>
           </Col>
@@ -595,7 +606,7 @@ const CongNoPhaiTraPage: React.FC = () => {
                 value={stats?.daThu || 0}
                 precision={0}
                 formatter={(value) => formatCurrency(value as number)}
-                valueStyle={{ color: '#52c41a' }}
+                valueStyle={{ color: 'hsl(var(--green))' }}
               />
             </Card>
           </Col>
@@ -606,7 +617,7 @@ const CongNoPhaiTraPage: React.FC = () => {
                 value={stats?.conLai || 0}
                 precision={0}
                 formatter={(value) => formatCurrency(value as number)}
-                valueStyle={{ color: '#1890ff' }}
+                valueStyle={{ color: 'hsl(var(--blue))' }}
               />
             </Card>
           </Col>
@@ -615,7 +626,7 @@ const CongNoPhaiTraPage: React.FC = () => {
               <Statistic
                 title="Số khoản quá hạn"
                 value={stats?.soKhoanQuaHan || 0}
-                valueStyle={{ color: '#ff4d4f' }}
+                valueStyle={{ color: 'hsl(var(--red))' }}
                 prefix={<WarningOutlined />}
               />
             </Card>
@@ -627,7 +638,7 @@ const CongNoPhaiTraPage: React.FC = () => {
                 value={agingData ? (agingData.quaHan1_30 + agingData.quaHan31_60 + agingData.quaHan61_90 + agingData.quaHanTren90) : 0}
                 precision={0}
                 formatter={(value) => formatCurrency(value as number)}
-                valueStyle={{ color: '#ff4d4f' }}
+                valueStyle={{ color: 'hsl(var(--red))' }}
               />
             </Card>
           </Col>

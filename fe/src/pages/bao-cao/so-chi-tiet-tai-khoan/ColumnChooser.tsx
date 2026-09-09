@@ -35,7 +35,7 @@ const ColumnChooser: React.FC<Props> = ({ visibleKeys, onChange }) => {
   const panel = (
     <div
       style={{
-        background: '#fff', padding: 12, borderRadius: 8,
+        background: 'hsl(var(--card))', padding: 12, borderRadius: 'var(--radius-card)',
         boxShadow: '0 2px 8px rgba(0,0,0,0.15)', maxHeight: 420,
         overflowY: 'auto', minWidth: 220,
       }}

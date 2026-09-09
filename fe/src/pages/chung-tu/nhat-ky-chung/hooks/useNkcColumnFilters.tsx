@@ -37,7 +37,7 @@ export function useNkcColumnFilters() {
         // Kính lúp = "bấm để tìm/lọc"; đang lọc thì đổi thành phễu, đúng quy ước Excel.
         // Chỉ đổi icon, KHÔNG nhuộm nền cột — badge trên nút "Xóa lọc" đã đếm sẵn rồi.
         filterIcon: active ? (
-          <FilterFilled style={{ color: "#217346" }} />
+          <FilterFilled style={{ color: "var(--xl-green)" }} />
         ) : (
           <SearchOutlined />
         ),

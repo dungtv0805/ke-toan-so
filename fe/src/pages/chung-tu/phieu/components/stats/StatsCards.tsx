@@ -8,7 +8,7 @@ export function StatsCards() {
   const config = usePhieuConfig();
 
   const isThu = config.loai === "PHIEU_THU";
-  const moneyColor = isThu ? "#16a34a" : "#dc2626";
+  const moneyColor = isThu ? "hsl(var(--green))" : "hsl(var(--red))";
 
   return (
     <Row gutter={16}>

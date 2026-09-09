@@ -274,12 +274,12 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
     <>
       <style>{`
         .field-deleted .ant-select-selector {
-          border-color: #ff4d4f !important;
-          background-color: #fff2f0 !important;
+          border-color: hsl(var(--red)) !important;
+          background-color: hsl(var(--red) / 0.08) !important;
         }
         .field-changed .ant-select-selector {
-          border-color: #faad14 !important;
-          background-color: #fffbe6 !important;
+          border-color: hsl(var(--amber)) !important;
+          background-color: hsl(var(--amber) / 0.08) !important;
         }
         .compact-form .ant-form-item {
           margin-bottom: 8px !important;

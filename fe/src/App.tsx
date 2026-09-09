@@ -105,22 +105,43 @@ const App = () => (
       locale={viVN}
       theme={{
         token: {
-          // Màu thương hiệu MasterCEO: teal logo (gold #b6954e dùng làm accent).
+          // Màu thương hiệu MasterCEO — giữ nguyên.
           colorPrimary: '#1f7769',
-          // Đồng bộ toàn dự án: bo góc = 0 (giữ tròn cho avatar/chấm/spinner riêng).
-          borderRadius: 0,
-          borderRadiusLG: 0,
-          borderRadiusSM: 0,
-          borderRadiusXS: 0,
-          // Đợt 2: chiều cao control đồng nhất (compact).
+          // Bo góc theo 07-design-system: nút/ô nhập 7 · thẻ/bảng 9 · nhỏ 6.
+          borderRadius: 7,
+          borderRadiusLG: 9,
+          borderRadiusSM: 6,
+          borderRadiusXS: 4,
+          // Mật độ cao: nội dung bảng 11px.
+          fontSize: 11,
+          // antd suy cả thang chữ từ fontSize, nên base 11 kéo fontSizeSM
+          // xuống 10 (mặc định 12) — cỡ chữ của Tag/Badge, và fontSizeIcon
+          // (= fontSizeSM) xuống 10. Tiếng Việt có dấu ở 10px khó đọc, nên
+          // ghim lại 11. Các cỡ khác bị kéo theo nhưng vẫn giữ đúng thứ tự
+          // và vẫn đọc được (fontSizeLG 12 · Heading5 12 · Heading4 16),
+          // nên để nguyên.
+          fontSizeSM: 11,
+          // Chiều cao control giữ như đợt trước.
           controlHeight: 28,
           controlHeightSM: 24,
           controlHeightLG: 36,
+          colorBorder: '#E5E5EA',
+          colorText: '#1D1D1F',
+          colorTextSecondary: '#6E6E73',
+          // antd map colorTextTertiary sang colorIcon (và colorTextDescription),
+          // nên nó là màu của icon x-xoá, mũi tên Select, nút đóng Modal, phễu
+          // lọc bảng. #98989D chỉ cho 2.87:1 trên nền trắng — dưới ngưỡng 3:1
+          // của thành phần phi văn bản. #8A8A8F cho 3.44:1 trên #FFFFFF và
+          // 3.16:1 trên nền trang #F5F5F7.
+          colorTextTertiary: '#8A8A8F',
+          colorBgLayout: '#F5F5F7',
         },
         components: {
           // Card header + body padding 12px đồng bộ nhịp 12
           // (var --ant-card-header-padding / --ant-card-body-padding).
-          Card: { headerPadding: 12, bodyPadding: 12 },
+          Card: { headerPadding: 12, bodyPadding: 12, borderRadiusLG: 9 },
+          Modal: { borderRadiusLG: 14 },
+          Table: { borderRadius: 9, headerBorderRadius: 9, cellPaddingBlockSM: 3 },
         },
       }}
     >

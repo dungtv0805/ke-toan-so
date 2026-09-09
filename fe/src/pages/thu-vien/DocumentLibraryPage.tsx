@@ -58,6 +58,9 @@ const formatDate = (value?: string): string => {
   });
 };
 
+// GIỮ hầu hết màu cứng: mỗi icon dùng đúng màu thương hiệu quen thuộc của loại file
+// (YouTube đỏ, PDF đỏ, Excel xanh lá, PowerPoint cam, Ảnh xanh ngọc) để người dùng
+// nhận diện loại file bằng màu — quy về chung một token sẽ làm mất khả năng phân biệt.
 const renderTypeIcon = (item: TaiLieu): React.ReactNode => {
   if (item.type === "youtube")
     return <YoutubeOutlined style={{ color: "#FF0000", fontSize: 18 }} />;
@@ -67,7 +70,7 @@ const renderTypeIcon = (item: TaiLieu): React.ReactNode => {
   if (mime.startsWith("image/"))
     return <FileImageOutlined style={{ color: "#13A8A8", fontSize: 18 }} />;
   if (mime.includes("word"))
-    return <FileWordOutlined style={{ color: "#1f7769", fontSize: 18 }} />;
+    return <FileWordOutlined style={{ color: "hsl(var(--primary))", fontSize: 18 }} />;
   if (mime.includes("excel") || mime.includes("spreadsheet"))
     return <FileExcelOutlined style={{ color: "#389E0D", fontSize: 18 }} />;
   if (mime.includes("powerpoint") || mime.includes("presentation"))

@@ -27,13 +27,13 @@ export function PreviewTable() {
       render: (_: unknown, r: RowValidationResult) => (
         <div>
           {r.errors.map((e, i) => (
-            <div key={`e${i}`} style={{ color: "#cf1322" }}>• {e.message}</div>
+            <div key={`e${i}`} style={{ color: "hsl(var(--red))" }}>• {e.message}</div>
           ))}
           {r.warnings.map((w, i) => (
-            <div key={`w${i}`} style={{ color: "#d46b08" }}>⚠ {w.message}</div>
+            <div key={`w${i}`} style={{ color: "hsl(var(--amber))" }}>⚠ {w.message}</div>
           ))}
           {r.errors.length === 0 && r.warnings.length === 0 && (
-            <span style={{ color: "#389e0d" }}>OK</span>
+            <span style={{ color: "hsl(var(--green))" }}>OK</span>
           )}
         </div>
       ),

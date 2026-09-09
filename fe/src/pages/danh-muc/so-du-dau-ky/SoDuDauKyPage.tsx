@@ -278,7 +278,7 @@ const SoDuDauKyPage: React.FC = () => {
     const opts = seedCurrentOpt(optCache[loai] || [], row);
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 24 }}>
-        <span style={{ color: '#bfbfbf', flex: 'none' }}>•</span>
+        <span style={{ color: 'hsl(var(--ink-3))', flex: 'none' }}>•</span>
         <Select
           style={{ flex: 1, minWidth: 200 }} showSearch optionFilterProp="label"
           placeholder={loai === 'NGAN_HANG_QUY' ? 'Chọn ngân hàng' : `Chọn ${CHI_TIET_LABEL[loai]}`}

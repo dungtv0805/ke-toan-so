@@ -393,7 +393,7 @@ const DeXuatMuaPage: React.FC = () => {
                   <Button
                     type="text"
                     icon={<CheckOutlined />}
-                    style={{ color: "#1677ff" }}
+                    style={{ color: "hsl(var(--blue))" }}
                     onClick={() => handleApprove(record.id)}
                   />
                 </Tooltip>
@@ -419,7 +419,7 @@ const DeXuatMuaPage: React.FC = () => {
               cancelText="Hủy"
             >
               <Tooltip title="Nhận hàng">
-                <Button type="text" icon={<InboxOutlined />} style={{ color: "#52c41a" }} />
+                <Button type="text" icon={<InboxOutlined />} style={{ color: "hsl(var(--green))" }} />
               </Tooltip>
             </Popconfirm>
           )}

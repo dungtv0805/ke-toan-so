@@ -272,7 +272,7 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
           )}
         </div>
       </Card>
-      <style>{`.sct-summary-row { background:#fafafa; font-weight:600; }`}</style>
+      <style>{`.sct-summary-row { background: hsl(var(--muted)); font-weight:600; }`}</style>
     </div>
   );
 };

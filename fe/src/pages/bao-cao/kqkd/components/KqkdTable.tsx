@@ -22,7 +22,7 @@ const formatPercent = (value: number | null | undefined): string => {
 };
 
 const numberCell = (v: number) => (
-  <span style={{ color: v < 0 ? '#dc2626' : undefined }}>{formatNumber(v)}</span>
+  <span style={{ color: v < 0 ? 'hsl(var(--red))' : undefined }}>{formatNumber(v)}</span>
 );
 
 const columns: ColumnsType<KqkdChiTieu> = [
@@ -69,7 +69,7 @@ const columns: ColumnsType<KqkdChiTieu> = [
         align: 'right',
         width: 80,
         render: (v: number | null) => (
-          <span style={{ color: v !== null && v < 0 ? '#dc2626' : undefined }}>
+          <span style={{ color: v !== null && v < 0 ? 'hsl(var(--red))' : undefined }}>
             {formatPercent(v)}
           </span>
         ),

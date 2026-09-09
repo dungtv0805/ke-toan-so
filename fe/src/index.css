@@ -8,17 +8,27 @@
 
 @layer base {
   :root {
-    /* Main backgrounds */
-    --background: 220 20% 97%;
-    --foreground: 222 47% 11%;
+    /* ---------------------------------------------------------------
+     * BÍ DANH TOKEN: mỗi cặp dưới đây là MỘT màu mang hai tên.
+     * Tên mới (--ink, --ink-2, --red, --green, --amber, --blue) là tên
+     * chuẩn của bảng màu; tên cũ (--foreground, --muted-foreground,
+     * --destructive, --success, --warning, --info) được GIỮ LẠI vì
+     * Tailwind phơi chúng thành class có tên (text-muted-foreground,
+     * bg-muted, text-foreground, text-destructive…) và đang được dùng
+     * ~140 chỗ trong src/. Hai bộ PHẢI luôn cùng giá trị — nếu sửa một
+     * bên thì sửa cả bên kia (src/index.css.test.ts canh việc này).
+     * --------------------------------------------------------------- */
+    /* Main backgrounds — nền trang #F5F5F7 */
+    --background: 240 11% 96.5%; /* #F5F5F7 */
+    --foreground: 240 4% 12%; /* = --ink */
 
     /* Cards - White with subtle shadow */
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 240 4% 12%; /* = --ink */
 
     /* Popovers/Modals */
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 240 4% 12%; /* = --ink */
 
     /* Primary - Teal thương hiệu MasterCEO (#1f7769) */
     --primary: 170 59% 29%;
@@ -29,26 +39,29 @@
 
     /* Secondary - Light gray/blue tint */
     --secondary: 220 14% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary-foreground: 240 4% 12%; /* = --ink */
 
     /* Muted - Subtle backgrounds */
     --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    --muted-foreground: 240 2% 44%; /* = --ink-2 */
 
     /* Accent */
     --accent: 170 59% 29%;
     --accent-foreground: 0 0% 100%;
 
     /* Destructive */
-    --destructive: 0 84% 60%;
+    --destructive: 4 71% 50%; /* = --red */
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
+    /* Borders — viền #E5E5EA */
+    --border: 240 9% 91%;
+    --input: 240 9% 91%;
     --ring: 170 59% 29%;
 
-    --radius: 0px;
+    /* Bo góc: nút & ô nhập 7px · thẻ & bảng 9px · modal 14px */
+    --radius: 0.4375rem;
+    --radius-card: 9px;
+    --radius-modal: 14px;
 
     /* Sidebar tông sáng — rail #EFEFF2, panel #FAFAFA (07-design-system.png) */
     --sidebar-background: 240 11% 94%;
@@ -62,11 +75,11 @@
     --sidebar-ring: 170 59% 29%;
 
     /* Custom semantic colors */
-    --success: 142 71% 45%;
+    --success: 148 65% 35%; /* = --green */
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
+    --warning: 36 100% 35%; /* = --amber */
     --warning-foreground: 0 0% 100%;
-    --info: 199 89% 48%;
+    --info: 211 100% 50%; /* = --blue */
     --info-foreground: 0 0% 100%;
 
     /* Page header gradient - Hero section */
@@ -76,35 +89,79 @@
     /* Card shadows */
     --shadow-card: 0 1px 3px 0 hsl(220 13% 91% / 0.5), 0 1px 2px -1px hsl(220 13% 91% / 0.5);
     --shadow-card-hover: 0 10px 15px -3px hsl(220 13% 91% / 0.3), 0 4px 6px -4px hsl(220 13% 91% / 0.3);
+
+    /* Thang chữ — #1D1D1F / #6E6E73 / #8A8A8F */
+    --ink: 240 4% 12%;
+    --ink-2: 240 2% 44%;
+    /* Bậc "chữ mờ" phải trùng ĐÚNG colorTextTertiary khai trong App.tsx
+       (#8A8A8F): cùng một vai trò mà hai sắc xám khác nhau thì chữ mờ của
+       antd và chữ mờ của Tailwind đặt cạnh nhau sẽ lệch tông. Giá trị cũ
+       240 2% 60% ra #98989D — chính mã đã bị loại vì chỉ đạt 2.87:1. */
+    --ink-3: 240 2% 55%; /* #8A8A8F */
+
+    /* Link, mã chứng từ — #007AFF / #E8F2FF */
+    --blue: 211 100% 50%;
+    --blue-soft: 214 100% 95.5%; /* #E8F2FF */
+
+    /* Tăng / giảm / cảnh báo — #1F9254 / #D93025 / #B26A00 */
+    --green: 148 65% 35%;
+    --red: 4 71% 50%;
+    --amber: 36 100% 35%;
+
+    /* ------------------------------------------------------------------
+     * BẢN "MỰC" của bốn màu trên: dùng làm MÀU CHỮ trên nền pill nhạt cùng
+     * tông (StatusPill). Bản gốc chỉ đạt ~3.4–4.0:1 ở cỡ chữ 10.5px — dưới
+     * ngưỡng 4.5:1 của WCAG AA cho chữ thường. Hạ độ sáng (không hạ alpha:
+     * alpha chỉ làm chữ nhạt thêm) để mỗi tông đạt ≥4.5:1 trên chính nền
+     * pill của nó, đo cả trên card trắng lẫn nền trang #F5F5F7.
+     *   green-ink 4.91 · amber-ink 4.93 · red-ink 4.87 · blue-ink 4.91
+     * ------------------------------------------------------------------ */
+    --green-ink: 148 65% 28%; /* #197644 */
+    --amber-ink: 36 100% 29%; /* #945900 */
+    --red-ink: 4 71% 44%; /* #C02B21 */
+    --blue-ink: 211 100% 41%; /* #0065D1 */
+
+    /* Biểu đồ — #F2994A / #1F3864 / #C9A227 */
+    --chart-orange: 28 87% 62%;
+    --chart-navy: 220 51% 26%;
+    --chart-gold: 45.5 67.5% 47%; /* #C9A227 */
   }
 
   .dark {
     --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --foreground: 0 0% 96%; /* = --ink (dark) */
 
     --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
+    --card-foreground: 0 0% 96%; /* = --ink (dark) */
 
     --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
+    --popover-foreground: 0 0% 96%; /* = --ink (dark) */
 
     --primary: 170 59% 29%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary-foreground: 0 0% 96%; /* = --ink (dark) */
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    /* Thang bề mặt bản tối PHẢI tách bậc: trước đây --card, --muted và --border
+       cùng là 217 33% 17% nên viền `.action-icon-btn` vô hình, StatusPill tông
+       xám mất hình dạng và zebra bảng biến mất hẳn. Thứ tự sáng dần:
+       background 11% → card 17% → muted 23% → border 34%.
+       Tương phản: card/background 1.21 · muted/card 1.23 · border/card 1.87. */
+    --muted: 217 30% 23%;
+    --muted-foreground: 240 3% 70%; /* = --ink-2 (dark) */
 
     --accent: 217 33% 17%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 4 71% 62%; /* = --red (dark) */
+    /* Nền đỏ bản tối SÁNG hơn bản sáng (#E36259 so với #C4281A), nên chữ gần
+       trắng chỉ còn 3.25:1. Đổi sang màu tối gần đen (= --ink bản sáng,
+       #1D1D20) đạt 4.93:1 trên #E36259 — vẫn giữ --destructive = --red. */
+    --destructive-foreground: 240 4% 12%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
+    --border: 217 24% 34%;
+    --input: 217 24% 34%;
     --ring: 170 59% 29%;
 
     --sidebar-background: 240 5% 12%;
@@ -116,6 +173,36 @@
     --sidebar-accent-foreground: 0 0% 92%;
     --sidebar-border: 240 5% 22%;
     --sidebar-ring: 170 59% 29%;
+
+    /* Thang chữ + thang màu bản tối (--radius* khai một lần ở :root) */
+    --ink: 0 0% 96%;
+    --ink-2: 240 3% 70%;
+    --ink-3: 240 3% 52%;
+    --blue: 211 100% 62%;
+    --blue-soft: 213 40% 22%;
+    --green: 148 50% 48%;
+    --red: 4 71% 62%;
+    --amber: 36 80% 55%;
+
+    /* Bản "mực" ở nền tối đi NGƯỢC chiều: phải SÁNG hơn nền pill, không tối
+       hơn. green/amber đã đủ nên giữ nguyên giá trị; red/blue phải nâng.
+       green-ink 4.79 · amber-ink 5.39 · red-ink 4.93 · blue-ink 4.82 */
+    --green-ink: 148 50% 48%;
+    --amber-ink: 36 80% 55%;
+    --red-ink: 4 71% 70%;
+    --blue-ink: 211 100% 66%;
+    --chart-orange: 28 87% 62%;
+    --chart-navy: 220 45% 55%;
+    --chart-gold: 45 71% 55%;
+
+    /* Bí danh bản tối của --green / --amber / --blue (xem chú thích ở :root).
+       Trước đây ba token này không có bản tối nên rơi về giá trị :root. */
+    --success: 148 50% 48%; /* = --green (dark) */
+    --success-foreground: 0 0% 100%;
+    --warning: 36 80% 55%; /* = --amber (dark) */
+    --warning-foreground: 0 0% 100%;
+    --info: 211 100% 62%; /* = --blue (dark) */
+    --info-foreground: 0 0% 100%;
   }
 }
 
@@ -150,7 +237,7 @@
 
 /* Cards */
 .ant-card {
-  border-radius: var(--radius) !important;
+  border-radius: var(--radius-card) !important;
   border: 1px solid hsl(var(--border)) !important;
   box-shadow: 0 1px 3px 0 hsl(220 13% 91% / 0.3) !important;
   transition: box-shadow 0.2s ease, transform 0.2s ease !important;
@@ -171,8 +258,12 @@
 }
 
 /* Buttons */
+/* border-radius để ConfigProvider (App.tsx) quyết: borderRadius 7 ·
+   borderRadiusSM 6 · borderRadiusXS 4. Trước đây rule này ép 7px
+   !important cho MỌI cỡ, vừa vô hiệu hoá borderRadiusSM/XS (482 chỗ
+   size="small"), vừa bo lại cả góc trong của Space.Compact /
+   Button.Group vốn phải phẳng. */
 .ant-btn {
-  border-radius: var(--radius) !important;
   font-weight: 500 !important;
   transition: all 0.2s ease !important;
 }
@@ -200,11 +291,12 @@
 }
 
 /* Inputs */
+/* border-radius bỏ theo cùng lý do với .ant-btn: để antd phân cỡ và
+   giữ góc phẳng cho input group (addonBefore/addonAfter). */
 .ant-input,
 .ant-input-affix-wrapper,
 .ant-select-selector,
 .ant-picker {
-  border-radius: var(--radius) !important;
   border-color: hsl(var(--border)) !important;
 }
 
@@ -226,7 +318,7 @@
 
 /* Tables */
 .ant-table {
-  border-radius: var(--radius) !important;
+  border-radius: var(--radius-card) !important;
 }
 
 .ant-table-thead > tr > th {
@@ -271,7 +363,7 @@
 
 /* Modals */
 .ant-modal-content {
-  border-radius: calc(var(--radius) * 1.5) !important;
+  border-radius: var(--radius-modal) !important;
   overflow: hidden !important;
 }
 
@@ -292,8 +384,10 @@
 }
 
 /* Tags / Badges */
+/* KHÔNG đặt border-radius ở đây: calc(var(--radius) * 0.5) ra 3.5px —
+   một giá trị không có trong thang {4, 6, 7, 9, 14} — và đè
+   borderRadiusSM: 6 khai trong ConfigProvider (App.tsx). Để antd quyết. */
 .ant-tag {
-  border-radius: calc(var(--radius) * 0.5) !important;
   font-weight: 500 !important;
 }
 
@@ -316,8 +410,8 @@
   padding: 8px !important;
 }
 
+/* Cũng bỏ border-radius vì lý do như .ant-tag ở trên. */
 .ant-dropdown-menu-item {
-  border-radius: calc(var(--radius) * 0.5) !important;
   padding: 8px 12px !important;
 }
 
@@ -500,10 +594,10 @@
   display: inline-block;
   width: 6px;
   height: 6px;
-  background: hsl(38 92% 50%);
+  background: hsl(var(--amber));
   border-radius: 50%;
   flex-shrink: 0;
-  box-shadow: 0 0 4px hsl(38 92% 50% / 0.5);
+  box-shadow: 0 0 4px hsl(var(--amber) / 0.5);
 }
 
 /* Old badge style - keep for reference */
@@ -515,9 +609,9 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  color: hsl(38 92% 50%);
-  background: hsl(38 92% 50% / 0.15);
-  border: 1px solid hsl(38 92% 50% / 0.3);
+  color: hsl(var(--amber));
+  background: hsl(var(--amber) / 0.15);
+  border: 1px solid hsl(var(--amber) / 0.3);
   border-radius: 0;
   white-space: nowrap;
   flex-shrink: 0;
@@ -2628,4 +2722,25 @@ body.col-resizing .ant-table * {
 body.kh-dang-keo-cot {
   cursor: col-resize !important;
   user-select: none !important;
+}
+
+/* Hàng nút biểu tượng ở đầu bảng — thêm / sửa / xoá / xuất / làm mới. */
+.action-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  color: hsl(var(--ink-2));
+  transition: background-color 0.15s, color 0.15s;
+}
+.action-icon-btn:hover {
+  background: hsl(var(--muted));
+  color: hsl(var(--ink));
+}
+.action-icon-btn--danger:hover {
+  color: hsl(var(--red));
 }

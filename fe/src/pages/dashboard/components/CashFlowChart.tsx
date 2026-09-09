@@ -6,12 +6,15 @@ import {
 } from 'recharts';
 import { dashboardService, type CashMoneyLine } from '@/services/dashboardService';
 import { sliceToRange } from '@/components/shared/period';
-import { formatCurrency, DASH_COLORS, nhanTrieu, nhanTrieuAbs } from './format';
+import { formatCurrency, DASH_COLORS, CHART_GRID, nhanTrieu, nhanTrieuAbs } from './format';
 
 interface Props { year: number; startMonth: number; endMonth: number; }
 const TEAL = DASH_COLORS.revenue;
-const GRAY = 'hsl(var(--muted-foreground) / 0.35)';
-const ORANGE = '#F2994A';
+// Hai màu dưới đi thẳng vào thuộc tính SVG (fill=/stroke= của recharts) nên PHẢI
+// là hex: hsl(var(--token)) không giải được trong presentation attribute của SVG,
+// giá trị bị coi là không hợp lệ và đường/cột không vẽ ra. Xem DASH_COLORS.
+const GRAY = '#6E6E7359'; // = --muted-foreground ở alpha 0.35
+const ORANGE = '#F2994A'; // = --chart-orange
 
 const kpiTrieu = (v: number) => Math.round((v || 0) / 1e6).toLocaleString('vi-VN');
 
@@ -152,10 +155,10 @@ const CashFlowChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
       ) : (
         <ResponsiveContainer width="100%" height={280}>
           <ComposedChart data={data} margin={{ left: -10, right: 8, top: 16, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
             <XAxis dataKey="thang" tickFormatter={(v) => `${isWeekly ? 'Tuần' : 'Th'} ${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={nhanTrieu} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={42} />
-            <ReferenceLine y={0} stroke="hsl(var(--border))" />
+            <ReferenceLine y={0} stroke={CHART_GRID} />
             <Tooltip
               formatter={(value: number, name: string) => [formatCurrency(Math.abs(value)), name]}
               labelFormatter={(l) => `${isWeekly ? 'Tuần' : 'Tháng'} ${l}`}
