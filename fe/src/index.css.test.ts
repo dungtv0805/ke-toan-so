@@ -4,9 +4,16 @@ import path from 'node:path';
 
 const css = fs.readFileSync(path.resolve(__dirname, './index.css'), 'utf8');
 const goc = css.slice(css.indexOf(':root {'), css.indexOf('.dark {'));
+// Lát cắt trên dừng ngay trước '.dark {' nên khối tối nằm NGOÀI tầm kiểm.
+// Đọc riêng khối tối: từ '.dark {' tới dấu đóng khối đầu tiên.
+const dauKhoiToi = css.indexOf('.dark {');
+const khoiToi = css.slice(dauKhoiToi, css.indexOf('\n  }', dauKhoiToi));
 
-const bien = (ten: string): string | undefined =>
-  goc.match(new RegExp(`--${ten}:\\s*([^;]+);`))?.[1].trim();
+const doc = (khoi: string) => (ten: string): string | undefined =>
+  khoi.match(new RegExp(`--${ten}:\\s*([^;]+);`))?.[1].trim();
+
+const bien = doc(goc);
+const bienToi = doc(khoiToi);
 
 describe('design token', () => {
   it('bo góc theo thiết kế mới', () => {
@@ -45,5 +52,32 @@ describe('design token', () => {
     expect(bien('success')).toBe(bien('green'));
     expect(bien('warning')).toBe(bien('amber'));
     expect(bien('info')).toBe(bien('blue'));
+  });
+  it('mọi token màu mới đều phải có bản tối', () => {
+    const mau = [
+      'ink',
+      'ink-2',
+      'ink-3',
+      'blue',
+      'blue-soft',
+      'green',
+      'red',
+      'amber',
+      'chart-orange',
+      'chart-navy',
+      'chart-gold',
+    ];
+    for (const ten of mau) {
+      expect(bienToi(ten), `--${ten} thiếu bản tối trong khối .dark`).toBeDefined();
+    }
+  });
+
+  it('bí danh cũ và tên mới cũng phải trùng nhau ở khối tối', () => {
+    expect(bienToi('foreground')).toBe(bienToi('ink'));
+    expect(bienToi('muted-foreground')).toBe(bienToi('ink-2'));
+    expect(bienToi('destructive')).toBe(bienToi('red'));
+    expect(bienToi('success')).toBe(bienToi('green'));
+    expect(bienToi('warning')).toBe(bienToi('amber'));
+    expect(bienToi('info')).toBe(bienToi('blue'));
   });
 });
