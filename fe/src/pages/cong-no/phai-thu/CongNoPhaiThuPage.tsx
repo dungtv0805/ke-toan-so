@@ -463,6 +463,14 @@ const CongNoPhaiThuPage: React.FC = () => {
         // GIỮ màu cứng: 6 mức độ tuổi nợ cần một thang màu tăng dần từ an toàn (xanh) đến
         // nguy cấp (đỏ đậm) để phân biệt mức độ nghiêm trọng — bộ token hiện chỉ có 1 mã
         // --amber và 1 mã --red nên không đủ để diễn tả thang 6 bậc này.
+        //
+        // NGOẠI LỆ ở bậc đầu: "Chưa đến hạn" dùng hsl(var(--green)) chứ không phải
+        // #52c41a. Chính trang này đã quy #52c41a về --green ở 6 chỗ khác (cột Đã thu,
+        // dòng tổng, thẻ "Đã thu"), nên để nguyên hex thì trên cùng MỘT màn hình có hai
+        // sắc xanh khác nhau cho cùng nghĩa "tốt". Thang vẫn tăng dần vì nó đi theo
+        // SẮC (xanh → vàng → cam → đỏ → đỏ đậm) chứ không theo độ sáng — vốn đã không
+        // đơn điệu về độ sáng từ đầu (#faad14 sáng hơn cả bậc xanh cũ). Năm bậc còn lại
+        // giữ nguyên hex.
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={12} lg={8}>
             <Card>
@@ -471,7 +479,7 @@ const CongNoPhaiThuPage: React.FC = () => {
                 value={agingData.chuaDenHan}
                 precision={0}
                 formatter={(value) => formatCurrency(value as number)}
-                valueStyle={{ color: '#52c41a' }}
+                valueStyle={{ color: 'hsl(var(--green))' }}
                 prefix={<CheckCircleOutlined />}
               />
             </Card>
