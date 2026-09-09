@@ -4,6 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { balanceSheetService } from '@/services/balanceSheetService';
 import { formatCurrency } from './format';
 
+// GIỮ nguyên cả bảng màu: biểu đồ cơ cấu tài sản/nguồn vốn cần 7 màu phân biệt các
+// mảng khác nhau (không phải thang tốt/xấu nên không map được vào token green/red/amber),
+// và các màu chữ (#3a2a00, #063b45, #fff, #333 bên dưới) được chọn riêng để tương phản
+// với nền mảng tương ứng — đổi đồng loạt sẽ vỡ độ tương phản.
 const COL = {
   taiSan: '#82B366',
   nguonVon: '#D9909A',
