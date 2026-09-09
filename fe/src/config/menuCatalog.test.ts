@@ -136,6 +136,17 @@ describe('menuCatalog — toàn vẹn', () => {
     const sai = MENU_LEAVES.filter((l) => l.key.includes('?') && !l.permKey);
     expect(sai.map((l) => l.key)).toEqual([]);
   });
+
+  /**
+   * MENU_CATALOG quy mọi mục về `pathOf`, nên 8 mục mang `?tab=` cộng 2 mục
+   * legacy dồn về 2 path. Key trùng làm <Tree> của trang Lĩnh vực báo lỗi key
+   * trùng, và `handleSubmit` lưu cùng một key nhiều lần xuống `menuKeys`.
+   */
+  it('MENU_CATALOG không có key trùng', () => {
+    const keys = MENU_CATALOG.map((e) => e.key);
+    const trung = [...new Set(keys.filter((k, i) => keys.indexOf(k) !== i))];
+    expect(trung).toEqual([]);
+  });
 });
 
 describe('phân quyền — không cấp lại', () => {

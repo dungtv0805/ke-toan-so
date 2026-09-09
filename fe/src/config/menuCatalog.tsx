@@ -251,11 +251,26 @@ export interface MenuCatalogEntry {
 }
 
 /**
+ * Khử trùng theo `key`, GIỮ BẢN ĐẦU TIÊN. Bắt buộc: MENU_CATALOG quy mọi mục
+ * về `pathOf`, nên 8 mục mang `?tab=` (Kế hoạch/Dự báo của 4 phân hệ) cộng 2
+ * mục legacy cùng tên dồn về đúng 2 path. Để nguyên thì trang Lĩnh vực dựng
+ * <Tree> với key trùng (antd báo lỗi, trạng thái tick không xác định) và lưu
+ * cùng một key nhiều lần xuống `menuKeys` trong MongoDB.
+ *
+ * Giữ bản ĐẦU TIÊN để `parentLabel` là phân hệ đầu tiên khai mục đó —
+ * '/trung-tam-du-lieu/ke-hoach' về 'Vốn & dòng tiền', đúng thứ tự khai báo.
+ */
+const khuTrungTheoKey = (ds: MenuCatalogEntry[]): MenuCatalogEntry[] => {
+  const daCo = new Set<string>();
+  return ds.filter((e) => (daCo.has(e.key) ? false : (daCo.add(e.key), true)));
+};
+
+/**
  * PHẢI gồm cả 26 route danh mục con: `DanhMucIndexPage` lọc link bằng
  * `keyMatches(path, allEffectiveKeys)`, mà `allEffectiveKeys` lấy `unassignedKeys`
  * từ đây. Thiếu chúng thì link danh mục chưa gán lĩnh vực biến mất khỏi trang Danh mục.
  */
-export const MENU_CATALOG: MenuCatalogEntry[] = [
+export const MENU_CATALOG: MenuCatalogEntry[] = khuTrungTheoKey([
   ...MENU_LEAVES.map((l) => ({
     key: pathOf(l),
     label: l.label,
@@ -268,7 +283,7 @@ export const MENU_CATALOG: MenuCatalogEntry[] = [
       parentLabel: `Danh mục › ${g.title}`,
     })),
   ),
-];
+]);
 
 export const flattenMenuKeys = (
   entries: MenuCatalogEntry[] = MENU_CATALOG,
