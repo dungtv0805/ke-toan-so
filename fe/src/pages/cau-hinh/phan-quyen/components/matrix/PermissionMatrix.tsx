@@ -52,13 +52,28 @@ function getAllState(
   };
 }
 
+/**
+ * BA bậc nền của bảng, đậm dần từ dưới lên: hàng lá chẵn → hàng cha cấp 1 →
+ * hàng tiêu đề nhóm. Trước đây cả ba đều là `hsl(var(--muted))` nên tiêu đề
+ * nhóm có nền y hệt hàng lá chẵn và cấu trúc bảng phẳng ra.
+ *
+ * Chọn theo token để chạy được ở CẢ hai theme (bản tối vừa được tách bậc
+ * --card 17% / --muted 23% / --border 34%):
+ *   sáng: #E6E6EA → #F3F4F6 → #FAFAFB (trên card trắng)
+ *   tối:  #42526C → #29374C → #222F42 (trên card #1D283A)
+ * Chênh lệch giữa hai bậc liền kề: 1.13 / 1.05 (sáng), 1.52 / 1.12 (tối).
+ */
+const NEN_TIEU_DE_NHOM = "hsl(var(--border))";
+const NEN_HANG_CHA = "hsl(var(--muted))";
+const NEN_HANG_LA_CHAN = "hsl(var(--muted) / 0.45)";
+
 function SectionRow({ mod }: { mod: PermissionModule }) {
   return (
     <tr>
       <td
         colSpan={7}
         style={{
-          backgroundColor: "hsl(var(--muted))",
+          backgroundColor: NEN_TIEU_DE_NHOM,
           fontWeight: 700,
           padding: "10px 12px",
           fontSize: 13,
@@ -86,7 +101,7 @@ function ParentRow({
   const allState = getAllState(permissions, leafKeys);
 
   return (
-    <tr style={{ backgroundColor: depth === 1 ? "hsl(var(--muted))" : undefined }}>
+    <tr style={{ backgroundColor: depth === 1 ? NEN_HANG_CHA : undefined }}>
       <td
         style={{
           padding: "8px 12px",
@@ -153,7 +168,7 @@ function LeafRow({
   const someChecked = PERMISSION_ACTIONS.some((a) => perm.actions[a.key]);
 
   return (
-    <tr style={{ backgroundColor: isEven ? "hsl(var(--muted))" : "hsl(var(--card))" }}>
+    <tr style={{ backgroundColor: isEven ? NEN_HANG_LA_CHAN : "hsl(var(--card))" }}>
       <td
         style={{
           padding: "8px 12px",
