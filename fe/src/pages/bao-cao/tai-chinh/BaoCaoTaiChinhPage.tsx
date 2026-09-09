@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Card,
   Table,
@@ -117,9 +118,31 @@ const getPeriodLabel = (params: PeriodFilterParams): string => {
 
 // ============ MAIN COMPONENT ============
 
+/** Mỗi báo cáo là một mục sidebar riêng, cùng trỏ trang này, khác `?tab=`. */
+const TAB_THEO_TEN: Record<string, string> = {
+  'can-doi-tai-khoan': '1',
+  'can-doi-ke-toan': '2',
+  'ket-qua-kinh-doanh': '3',
+  'so-sanh-lai-lo': '4',
+};
+
+/** Tab mở đầu theo ?tab= trên URL. Tên lạ thì về tab 1 như cũ. */
+export const tabBanDauBCTC = (tab: string | null): string =>
+  (tab && TAB_THEO_TEN[tab]) || '1';
+
 const BaoCaoTaiChinhPage: React.FC = () => {
   const { canExport } = usePagePermission("/bao-cao/tai-chinh");
-  const [activeTab, setActiveTab] = useState('1');
+  const [searchParams] = useSearchParams();
+  const tabTheoUrl = tabBanDauBCTC(searchParams.get('tab'));
+  const [activeTab, setActiveTab] = useState(tabTheoUrl);
+
+  // Các mục menu của cụm BÁO CÁO TÀI CHÍNH cùng một pathname, chỉ khác `?tab=`,
+  // nên React Router KHÔNG remount trang khi đổi mục — giá trị khởi tạo của
+  // useState chỉ chạy đúng một lần. Không có effect này thì bấm mục khác chỉ
+  // đổi URL mà tab đứng yên.
+  useEffect(() => {
+    setActiveTab(tabTheoUrl);
+  }, [tabTheoUrl]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
 

@@ -1,91 +1,47 @@
 // Route permission mapping - maps routes to their required permission string
 // Used by ProtectedRoute to check if user has access via hasPermission()
-export const routePermissions: Record<string, string> = {
-  '/': '/tong-quan:xem',
+//
+// SINH TỪ menuCatalog — không chép tay nữa. Thêm trang mới vào catalog là bảng
+// này tự có. KHÔNG đổi một ký tự nào của khoá đang có: khoá mới = người dùng
+// thật mất quyền sau khi deploy.
+import { permissionKeys } from './menuCatalog';
+import { DANH_MUC_ROUTES } from './danhMucCatalog';
 
-  '/danh-muc/tai-khoan': '/danh-muc/tai-khoan:xem',
-  '/danh-muc/doi-tuong': '/danh-muc/doi-tuong:xem',
-  '/danh-muc/du-an': '/danh-muc/du-an:xem',
-  '/danh-muc/san-pham': '/danh-muc/san-pham:xem',
-  '/danh-muc/nhom-san-pham': '/danh-muc/nhom-san-pham:xem',
-  '/danh-muc/bo-phan': '/danh-muc/bo-phan:xem',
-  '/danh-muc/khoan-muc': '/danh-muc/khoan-muc:xem',
-  '/danh-muc/so-du-dau-ky': '/danh-muc/so-du-dau-ky:xem',
-  '/danh-muc/ngan-hang': '/danh-muc/ngan-hang:xem',
-  '/danh-muc/dong-tien': '/danh-muc/dong-tien:xem',
-  '/danh-muc/nhom-dong-tien': '/danh-muc/nhom-dong-tien:xem',
-  '/danh-muc/tai-khoan-ket-chuyen': '/danh-muc/tai-khoan-ket-chuyen:xem',
-  '/danh-muc/chu-dau-tu': '/danh-muc/chu-dau-tu:xem',
-  '/danh-muc/nhom-khuyen-mai': '/danh-muc/nhom-khuyen-mai:xem',
-  '/danh-muc/nhom-quan-ly': '/danh-muc/nhom-quan-ly:xem',
-  '/danh-muc/loai-chung-tu': '/danh-muc/loai-chung-tu:xem',
-  '/danh-muc/nhom-khoan-muc': '/danh-muc/nhom-khoan-muc:xem',
-  '/danh-muc/loai-giao-dich': '/danh-muc/loai-giao-dich:xem',
-  '/danh-muc/hop-dong': '/danh-muc/hop-dong:xem',
-  '/danh-muc/quy-chuan': '/danh-muc/quy-chuan:xem',
-  '/danh-muc/ho-so-chung-tu': '/danh-muc/ho-so-chung-tu:xem',
-  '/danh-muc/kho': '/danh-muc/kho:xem',
-  '/danh-muc/don-vi-tinh': '/danh-muc/don-vi-tinh:xem',
-  '/danh-muc/ly-do-khong-hop-le': '/danh-muc/ly-do-khong-hop-le:xem',
-  '/danh-muc/nhom-vat-tu': '/danh-muc/nhom-vat-tu:xem',
-  '/danh-muc/hang-hoa-vat-tu': '/danh-muc/hang-hoa-vat-tu:xem',
-
-  // Kho — 4 nhóm hàng vẫn giữ key /trung-tam-du-lieu/* (quyền đã cấp sẵn),
-  // chỉ đổi chỗ hiển thị sang menu Kho.
-  '/trung-tam-du-lieu/hang-hoa': '/trung-tam-du-lieu/hang-hoa:xem',
-  '/trung-tam-du-lieu/nguyen-lieu': '/trung-tam-du-lieu/nguyen-lieu:xem',
-  '/trung-tam-du-lieu/dung-cu': '/trung-tam-du-lieu/dung-cu:xem',
-  '/trung-tam-du-lieu/van-phong-pham': '/trung-tam-du-lieu/van-phong-pham:xem',
-
-  '/kho/nhap-kho': '/kho/nhap-kho:xem',
-  '/kho/xuat-kho': '/kho/xuat-kho:xem',
-  '/kho/chuyen-kho': '/kho/chuyen-kho:xem',
-
-  '/bep-an/dinh-muc-tien-an': '/bep-an/dinh-muc-tien-an:xem',
-  '/bep-an/cong-thuc-dinh-luong': '/bep-an/cong-thuc-dinh-luong:xem',
-  '/bep-an/diem-danh-an': '/bep-an/diem-danh-an:xem',
-  '/bep-an/de-xuat-mua': '/bep-an/de-xuat-mua:xem',
-  '/bep-an/kiem-soat-chi-phi': '/bep-an/kiem-soat-chi-phi:xem',
-
-  '/trung-tam-du-lieu/ke-hoach': '/trung-tam-du-lieu/ke-hoach:xem',
-  '/trung-tam-du-lieu/du-bao': '/trung-tam-du-lieu/du-bao:xem',
-  '/trung-tam-du-lieu/hop-dong': '/trung-tam-du-lieu/hop-dong:xem',
-  '/trung-tam-du-lieu/thu-tien-hop-dong': '/trung-tam-du-lieu/thu-tien-hop-dong:xem',
-  '/trung-tam-du-lieu/hd-ban-ra': '/trung-tam-du-lieu/hd-ban-ra:xem',
-
-  '/chung-tu/phieu-thu': '/chung-tu/phieu-thu:xem',
-  '/chung-tu/phieu-chi': '/chung-tu/phieu-chi:xem',
-  '/chung-tu/nhat-ky-chung': '/chung-tu/nhat-ky-chung:xem',
-  '/chung-tu/ket-chuyen-lai-lo': '/chung-tu/ket-chuyen-lai-lo:xem',
-
-  '/so-quy': '/so-quy:xem',
-
-  '/cong-no/phai-thu': '/cong-no/phai-thu:xem',
-  '/cong-no/phai-tra': '/cong-no/phai-tra:xem',
-
-  '/bao-cao/pnl': '/bao-cao/pnl:xem',
-  '/bao-cao/pnl-khong-khau-hao': '/bao-cao/pnl-khong-khau-hao:xem',
-  '/bao-cao/pnl-3-lop': '/bao-cao/pnl-3-lop:xem',
-  '/bao-cao/so-cai': '/bao-cao/so-cai:xem',
-  '/bao-cao/so-chi-tiet-tai-khoan': '/bao-cao/so-chi-tiet-tai-khoan:xem',
-  '/bao-cao/bang-can-doi': '/bao-cao/bang-can-doi:xem',
-  '/bao-cao/tai-chinh': '/bao-cao/tai-chinh:xem',
-  '/bao-cao/hop-dong': '/bao-cao/hop-dong:xem',
-  '/bao-cao/doanh-thu': '/bao-cao/doanh-thu:xem',
-
-  '/thue/bang-ke-mua-vao': '/thue/bang-ke-mua-vao:xem',
-  '/thue/bang-ke-ban-ra': '/thue/bang-ke-ban-ra:xem',
-  '/thue/tong-hop': '/thue/tong-hop:xem',
-  '/thue/bao-cao-tndn': '/thue/bao-cao-tndn:xem',
-
-  '/quy-trinh': '/quy-trinh:xem',
-  '/bieu-mau': '/bieu-mau:xem',
-  '/chinh-sach': '/chinh-sach:xem',
-  '/huong-dan': '/huong-dan:xem',
-
+/**
+ * Trang cấu hình — vào từ nút bánh răng, không nằm trong menu chính nên catalog
+ * không sinh, phải khai tay. Đúng 3 khoá đang có; '/cau-hinh/linh-vuc',
+ * '/cau-hinh/tenant', '/cau-hinh/sao-chep-danh-muc' KHÔNG khai ở đây — chúng
+ * chưa bao giờ là khoá quyền (App.tsx để các route đó không kèm
+ * requiredPermission), thêm vào là dựng rào chắn mới cho người đang dùng được.
+ */
+const QUYEN_CAU_HINH: Record<string, string> = {
   '/cau-hinh/phan-quyen': '/cau-hinh/phan-quyen:xem',
   '/cau-hinh/vai-tro': '/cau-hinh/vai-tro:xem',
   '/cau-hinh/thanh-vien': '/cau-hinh/thanh-vien:xem',
+};
+
+/**
+ * Ngoại lệ lịch sử duy nhất: route '/' đòi khoá '/tong-quan:xem' chứ không phải
+ * '/:xem'. Người dùng thật đang cầm khoá '/tong-quan:xem'; đổi là cả công ty
+ * mất Bảng điều hành (useVisibleMenu.cacKhoaQuyen chấp nhận cả hai vì lẽ đó).
+ */
+const QUYEN_KE_THUA: Record<string, string> = {
+  '/': '/tong-quan:xem',
+};
+
+/** Mỗi route sinh đúng một khoá `<route>:xem`. */
+function sinhTuCatalog(): Record<string, string> {
+  const ra: Record<string, string> = {};
+  for (const key of [...permissionKeys(), ...DANH_MUC_ROUTES]) {
+    ra[key] = `${key}:xem`;
+  }
+  return ra;
+}
+
+export const routePermissions: Record<string, string> = {
+  ...sinhTuCatalog(),
+  ...QUYEN_KE_THUA,
+  ...QUYEN_CAU_HINH,
 };
 
 export const getRoutePermission = (path: string): string | undefined => {

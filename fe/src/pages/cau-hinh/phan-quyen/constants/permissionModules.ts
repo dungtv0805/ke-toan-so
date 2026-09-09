@@ -1,3 +1,12 @@
+import {
+  MENU_MODULES,
+  MENU_LEAVES,
+  permKeyOf,
+  coKhoaQuyenRieng,
+  type MenuLeaf,
+} from "@/config/menuCatalog";
+import { DANH_MUC_GROUPS } from "@/config/danhMucCatalog";
+
 export interface PermissionModule {
   key: string;
   label: string;
@@ -15,149 +24,112 @@ export const PERMISSION_ACTIONS: { key: PermissionAction; label: string }[] = [
   { key: 'xuat', label: 'Xuất' },
 ];
 
-export const permissionModules: PermissionModule[] = [
-  {
-    key: 'dieu-hanh',
-    label: 'ĐIỀU HÀNH',
-    isSection: true,
-    children: [
-      { key: '/tong-quan', label: 'Tổng quan' },
-      {
-        key: '/phan-tich',
-        label: 'Phân tích',
-        children: [
-          { key: '/phan-tich/bao-cao-tai-chinh', label: 'Kế toán' },
-          { key: '/phan-tich/ban-hang', label: 'Bán hàng' },
-          { key: '/phan-tich/mua-hang', label: 'Mua hàng' },
-          { key: '/phan-tich/cong-no', label: 'Công nợ' },
-          { key: '/phan-tich/dong-tien', label: 'Dòng tiền' },
-          { key: '/phan-tich/ton-kho', label: 'Tồn kho' },
-          { key: '/phan-tich/thanh-khoan', label: 'Khả năng thanh khoản' },
-        ],
-      },
-    ],
-  },
-  {
-    key: 'ke-toan',
-    label: 'KẾ TOÁN',
-    isSection: true,
-    children: [
-      {
-        key: '/bao-cao',
-        label: 'Báo cáo',
-        children: [
-          { key: '/bao-cao/tai-chinh', label: 'Báo cáo tài chính' },
-          { key: '/bao-cao/so-chi-tiet-tai-khoan', label: 'Sổ chi tiết tài khoản' },
-          { key: '/bao-cao/so-chi-tiet-cong-no', label: 'Sổ chi tiết công nợ' },
-          { key: '/bao-cao/so-chi-tiet-phat-sinh', label: 'Sổ chi tiết phát sinh' },
-          { key: '/bao-cao/bang-tong-hop', label: 'Tổng hợp công nợ' },
-          { key: '/bao-cao/hop-dong', label: 'Báo cáo bán hàng (hợp đồng)' },
-          { key: '/bao-cao/doanh-thu', label: 'Báo cáo doanh thu' },
-          { key: '/bao-cao/pnl-khong-khau-hao', label: 'P&L không khấu hao' },
-          { key: '/bao-cao/pnl-3-lop', label: 'P&L so sánh KH-DB-TH' },
-        ],
-      },
-      {
-        key: '/thue',
-        label: 'Thuế',
-        children: [
-          { key: '/thue/bang-ke-mua-vao', label: 'Bảng kê mua vào' },
-          { key: '/thue/bang-ke-ban-ra', label: 'Bảng kê bán ra' },
-          { key: '/thue/tong-hop', label: 'Tổng hợp thuế' },
-          { key: '/thue/bao-cao-tndn', label: 'Báo cáo nhanh thuế TNDN' },
-        ],
-      },
-      {
-        key: '/trung-tam-du-lieu',
-        label: 'Trung tâm dữ liệu',
-        children: [
-          { key: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch' },
-          { key: '/trung-tam-du-lieu/du-bao', label: 'Dự báo' },
-          { key: '/chung-tu/nhat-ky-chung', label: 'Thực hiện' },
-          // Nhóm "Chứng từ" đã gỡ khỏi sidebar lẫn ma trận này; 2 trang phiếu còn
-          // sống nên quyền của chúng chuyển về đây, KHÔNG được xóa theo.
-          { key: '/chung-tu/phieu-thu', label: 'Phiếu thu' },
-          { key: '/chung-tu/phieu-chi', label: 'Phiếu chi' },
-          { key: '/chung-tu/ket-chuyen-lai-lo', label: 'Kết chuyển lãi lỗ' },
-          { key: '/trung-tam-du-lieu/tai-san', label: 'Quản lý Tài sản' },
-          { key: '/trung-tam-du-lieu/hop-dong', label: 'Bán hàng' },
-          { key: '/trung-tam-du-lieu/thu-tien-hop-dong', label: 'Thu tiền hợp đồng' },
-          { key: '/trung-tam-du-lieu/hd-ban-ra', label: 'Hóa đơn bán ra' },
-        ],
-      },
-      {
-        key: '/kho',
-        label: 'Kho',
-        children: [
-          { key: '/trung-tam-du-lieu/hang-hoa', label: 'Hàng hóa' },
-          { key: '/trung-tam-du-lieu/nguyen-lieu', label: 'Nguyên vật liệu' },
-          { key: '/trung-tam-du-lieu/dung-cu', label: 'Dụng cụ' },
-          { key: '/trung-tam-du-lieu/van-phong-pham', label: 'Văn phòng phẩm' },
-          { key: '/kho/nhap-kho', label: 'Nhập kho' },
-          { key: '/kho/xuat-kho', label: 'Xuất kho' },
-          { key: '/kho/chuyen-kho', label: 'Chuyển kho' },
-        ],
-      },
-    ],
-  },
-  // Mục "BẾP ĂN" đã gỡ khỏi menu lẫn ma trận này. Route + routePermissions vẫn còn
-  // nên trang vào được bằng URL (giống Phiếu thu / Phiếu chi trước đây).
-  {
-    key: 'thu-vien',
-    label: 'THƯ VIỆN',
-    isSection: true,
-    children: [
-      {
-        key: '/danh-muc',
-        label: 'Danh mục',
-        children: [
-          { key: '/danh-muc/tai-khoan', label: 'Tài khoản' },
-          { key: '/danh-muc/doi-tuong', label: 'Đối tượng' },
-          { key: '/danh-muc/du-an', label: 'Dự án' },
-          { key: '/danh-muc/san-pham', label: 'Sản phẩm' },
-          { key: '/danh-muc/nhom-san-pham', label: 'Nhóm sản phẩm' },
-          { key: '/danh-muc/hop-dong', label: 'Hợp đồng' },
-          { key: '/danh-muc/bo-phan', label: 'Bộ phận' },
-          { key: '/danh-muc/khoan-muc', label: 'Khoản mục' },
-          { key: '/danh-muc/so-du-dau-ky', label: 'Số dư đầu kỳ' },
-          { key: '/danh-muc/kho', label: 'Kho' },
-          { key: '/danh-muc/hang-hoa-vat-tu', label: 'Hàng hóa vật tư' },
-          { key: '/danh-muc/don-vi-tinh', label: 'Đơn vị tính' },
-          { key: '/danh-muc/ly-do-khong-hop-le', label: 'Lý do không hợp lệ' },
-          { key: '/danh-muc/nhom-vat-tu', label: 'Nhóm vật tư' },
-          { key: '/danh-muc/chu-dau-tu', label: 'Chủ đầu tư' },
-          { key: '/danh-muc/nhom-khoan-muc', label: 'Nhóm khoản mục' },
-          { key: '/danh-muc/ngan-hang', label: 'Ngân hàng & Quỹ' },
-          { key: '/danh-muc/dong-tien', label: 'Dòng tiền' },
-          { key: '/danh-muc/nhom-dong-tien', label: 'Nhóm dòng tiền' },
-          { key: '/danh-muc/nhom-khuyen-mai', label: 'Nhóm khuyến mại' },
-          { key: '/danh-muc/nhom-quan-ly', label: 'Nhóm quản lý' },
-          { key: '/danh-muc/loai-chung-tu', label: 'Loại chứng từ' },
-          { key: '/danh-muc/loai-giao-dich', label: 'Loại giao dịch' },
-          { key: '/danh-muc/quy-chuan', label: 'Quy chuẩn hạch toán' },
-          { key: '/danh-muc/ho-so-chung-tu', label: 'Hồ sơ chứng từ' },
-          { key: '/danh-muc/tai-khoan-ket-chuyen', label: 'Tài khoản kết chuyển' },
-        ],
-      },
-      { key: '/so-quy', label: 'Sổ quỹ' },
-      { key: '/cong-no/phai-thu', label: 'Phải thu' },
-      { key: '/cong-no/phai-tra', label: 'Phải trả' },
-      { key: '/quy-trinh', label: 'Quy trình' },
-      { key: '/chinh-sach', label: 'Chính sách' },
-      { key: '/bieu-mau', label: 'Biểu mẫu' },
-      { key: '/huong-dan', label: 'Hướng dẫn' },
-    ],
-  },
-  {
-    key: 'cau-hinh',
-    label: 'CẤU HÌNH',
-    isSection: true,
-    children: [
-      // Phải khớp với BE PERMISSION_MODULES (tenant.service.ts) — nếu thiếu ở đây,
-      // mỗi lần lưu trên trang Phân quyền sẽ xoá mất các quyền này khỏi role.
-      { key: '/cau-hinh/vai-tro', label: 'Quản lý Vai trò' },
-      { key: '/cau-hinh/phan-quyen', label: 'Phân quyền' },
-      { key: '/cau-hinh/thanh-vien', label: 'Quản lý Thành viên' },
-    ],
-  },
-];
+/**
+ * Trang chủ: route là '/', nhưng khoá quyền đã cấp cho người dùng thật từ
+ * trước tới nay là '/tong-quan' (routePermissions ánh xạ '/' → '/tong-quan:xem',
+ * App.tsx và useVisibleMenu cũng đi theo khoá đó). Để nguyên '/' thì ma trận
+ * sinh ra '/:xem' — khoá chưa từng tồn tại — và '/tong-quan:xem' bị xoá khỏi
+ * mọi vai trò ở lần lưu kế tiếp, tức cả công ty mất Bảng điều hành.
+ */
+const KHOA_MA_TRAN: Record<string, string> = { '/': '/tong-quan' };
+
+const khoaCua = (leaf: MenuLeaf): string => {
+  const k = permKeyOf(leaf);
+  return KHOA_MA_TRAN[k] ?? k;
+};
+
+/**
+ * Nhãn riêng cho ma trận khi một khoá quyền cấp cho NHIỀU mục sidebar.
+ * Sidebar tách 4 báo cáo tài chính thành 4 mục nhưng chúng dùng chung một
+ * khoá; nếu ma trận hiện tên của mục đầu tiên thì admin tưởng mình chỉ cấp
+ * một báo cáo, và không tìm ra dòng nào để thu hồi ba cái kia.
+ *
+ * Hai khoá Kế hoạch/Dự báo cũng vậy: mỗi khoá gộp 4 mục sidebar của 4 phân hệ
+ * khác nhau (Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản) qua `?tab=`, và
+ * ma trận chỉ hiện nhãn của phân hệ khai nó TRƯỚC (Vốn & dòng tiền, do đứng
+ * đầu MENU_MODULES) — admin dò theo "Kế hoạch bán hàng" ở ma trận sẽ không
+ * thấy dòng nào tên như vậy.
+ */
+const NHAN_MA_TRAN: Record<string, string> = {
+  '/bao-cao/tai-chinh': 'Báo cáo tài chính (cả 4 tab)',
+  '/trung-tam-du-lieu/ke-hoach':
+    'Kế hoạch (dùng chung: Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản)',
+  '/trung-tam-du-lieu/du-bao':
+    'Dự báo (dùng chung: Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản)',
+};
+
+/**
+ * Trang cấu hình vào từ nút bánh răng, không nằm trong MENU_MODULES nên phải
+ * khai tay. Phải khớp với BE PERMISSION_MODULES (tenant.service.ts) — thiếu ở
+ * đây thì mỗi lần lưu trên trang Phân quyền sẽ xoá các quyền này khỏi vai trò.
+ */
+const PHAN_HE_CAU_HINH: PermissionModule = {
+  key: 'cau-hinh',
+  label: 'Cấu hình',
+  isSection: true,
+  children: [
+    { key: '/cau-hinh/vai-tro', label: 'Quản lý Vai trò' },
+    { key: '/cau-hinh/phan-quyen', label: 'Phân quyền' },
+    { key: '/cau-hinh/thanh-vien', label: 'Quản lý Thành viên' },
+  ],
+};
+
+/**
+ * Ma trận phân quyền SINH từ menuCatalog — không chép tay nữa. Thêm trang mới
+ * vào menuCatalog là ma trận tự có.
+ *
+ * Quy tắc:
+ * - Cấp 1 = phân hệ (`isSection`), đúng thứ tự rail; phân hệ không còn khoá
+ *   nào của riêng nó thì không hiện (Tiền lương: mọi trang hoặc dùng chung
+ *   route Kế hoạch/Dự báo, hoặc chưa có quyền nào được cấp).
+ * - Mục `ok` vào hết, kể cả `legacy` — trang còn sống thì quyền còn hiệu lực.
+ * - Mục `soon` chỉ vào khi có cờ `quyenDaCap` (quyền đã cấp cho vai trò từ
+ *   trước). Bỏ chúng ra là xoá quyền khỏi vai trò khi admin bấm Lưu.
+ * - Khử trùng theo khoá trên TOÀN ma trận, không theo từng phân hệ: 8 mục
+ *   `?tab=` của Kế hoạch/Dự báo quy về 2 khoá và nằm rải ở 4 phân hệ. Khoá
+ *   trùng làm `convertPermissionsToMatrix` sinh hai dòng cùng moduleKey (tick
+ *   một dòng không đồng bộ dòng kia) và `convertMatrixToPermissions` ghi trùng
+ *   chuỗi quyền. Mục dùng chung route thuộc về phân hệ khai nó TRƯỚC.
+ * - Phân hệ Danh mục: 26 trang con của danhMucCatalog, giữ nhóm nhỏ, RỒI mới
+ *   tới các mục còn lại mang module 'danh-muc' (/quy-trinh, /chinh-sach,
+ *   /bieu-mau, /huong-dan — quyền thật, không được bỏ).
+ */
+function dungMaTran(): PermissionModule[] {
+  const daCo = new Set<string>();
+  const phanHe: PermissionModule[] = [];
+
+  for (const m of MENU_MODULES) {
+    const con: PermissionModule[] = [];
+
+    if (m.id === 'danh-muc') {
+      for (const nhom of DANH_MUC_GROUPS) {
+        const links = nhom.links.filter((l) => !daCo.has(l.path));
+        links.forEach((l) => daCo.add(l.path));
+        if (links.length === 0) continue;
+        con.push({
+          key: `danh-muc/${nhom.title}`,
+          label: nhom.title,
+          children: links.map((l) => ({ key: l.path, label: l.label })),
+        });
+      }
+    }
+
+    for (const leaf of MENU_LEAVES) {
+      if (leaf.module !== m.id) continue;
+      if (leaf.status !== 'ok' && !leaf.quyenDaCap) continue;
+      if (!coKhoaQuyenRieng(leaf)) continue;
+      const key = khoaCua(leaf);
+      if (daCo.has(key)) continue;
+      daCo.add(key);
+      con.push({ key, label: NHAN_MA_TRAN[key] ?? leaf.label });
+    }
+
+    if (con.length === 0) continue;
+    phanHe.push({ key: m.id, label: m.label, isSection: true, children: con });
+  }
+
+  phanHe.push(PHAN_HE_CAU_HINH);
+  return phanHe;
+}
+
+export const permissionModules: PermissionModule[] = dungMaTran();

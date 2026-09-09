@@ -52,6 +52,19 @@ export interface MenuLeaf {
    * route con. Đánh cờ này để `permissionKeys()` không sinh khoá mới.
    */
   khongCoQuyenRieng?: true;
+  /**
+   * Trang CHƯA có (`status: 'soon'`) nhưng khoá quyền của nó ĐÃ được cấp cho
+   * vai trò từ trước — nó có mặt trong ma trận Phân quyền hiện hành.
+   *
+   * Trang Phân quyền lưu bằng cách ghi đè TOÀN BỘ danh sách quyền của vai trò
+   * (`convertMatrixToPermissions` dựng lại từ đúng các lá của ma trận), nên
+   * khoá nào rơi khỏi ma trận là bị xoá khỏi mọi vai trò ngay lần lưu kế tiếp.
+   * Cờ này giữ chúng ở lại.
+   *
+   * KHÔNG ảnh hưởng `permissionKeys()` / `routePermissions`: hai chỗ đó vẫn chỉ
+   * nhận mục `ok`, đúng như trước.
+   */
+  quyenDaCap?: true;
 }
 
 export const MENU_MODULES: MenuModule[] = [
@@ -74,25 +87,32 @@ export const MENU_LEAVES: MenuLeaf[] = [
   { key: '/', label: 'Bảng điều hành', module: 'tong-quan', status: 'ok', icon: <DashboardOutlined /> },
 
   // ===== 2. Phân tích (9) =====
-  { key: '/phan-tich/ban-hang', label: 'Bán hàng', module: 'phan-tich', status: 'soon', icon: <ShoppingCartOutlined /> },
-  { key: '/phan-tich/mua-hang', label: 'Mua hàng', module: 'phan-tich', status: 'soon', icon: <ShoppingOutlined /> },
-  { key: '/phan-tich/cong-no', label: 'Công nợ', module: 'phan-tich', status: 'soon', icon: <ReconciliationOutlined /> },
-  { key: '/phan-tich/dong-tien', label: 'Dòng tiền', module: 'phan-tich', status: 'soon', icon: <DollarOutlined /> },
-  { key: '/phan-tich/ton-kho', label: 'Tồn kho', module: 'phan-tich', status: 'soon', icon: <InboxOutlined /> },
-  { key: '/phan-tich/bao-cao-tai-chinh', label: 'P&L', module: 'phan-tich', status: 'soon', icon: <PieChartOutlined /> },
+  { key: '/phan-tich/ban-hang', label: 'Bán hàng', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <ShoppingCartOutlined /> },
+  { key: '/phan-tich/mua-hang', label: 'Mua hàng', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <ShoppingOutlined /> },
+  { key: '/phan-tich/cong-no', label: 'Công nợ', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <ReconciliationOutlined /> },
+  { key: '/phan-tich/dong-tien', label: 'Dòng tiền', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <DollarOutlined /> },
+  { key: '/phan-tich/ton-kho', label: 'Tồn kho', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <InboxOutlined /> },
+  { key: '/phan-tich/bao-cao-tai-chinh', label: 'P&L', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <PieChartOutlined /> },
   { key: '/bao-cao/pnl-khong-khau-hao', label: 'P&L không khấu hao', module: 'phan-tich', status: 'ok', icon: <PieChartOutlined /> },
   { key: '/bao-cao/pnl-3-lop', label: 'P&L so sánh KH-DB-TH', module: 'phan-tich', status: 'ok', icon: <PieChartOutlined /> },
-  { key: '/phan-tich/thanh-khoan', label: 'Khả năng thanh khoản', module: 'phan-tich', status: 'soon', icon: <StockOutlined /> },
+  { key: '/phan-tich/thanh-khoan', label: 'Khả năng thanh khoản', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <StockOutlined /> },
 
-  // ===== 3. Tổng hợp (9 ở đợt A — cụm BCTC còn 1 mục, đợt C tách thành 4) =====
+  // ===== 3. Tổng hợp (13 — cụm BCTC tách thành 6 mục ở đợt C) =====
   { key: '/bao-cao/so-chi-tiet-tai-khoan', label: 'Sổ chi tiết tài khoản', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'ok', icon: <AccountBookOutlined /> },
-  { key: '/bao-cao/so-chi-tiet-cong-no', label: 'Sổ chi tiết công nợ', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'soon', icon: <FileSearchOutlined /> },
-  { key: '/bao-cao/so-chi-tiet-phat-sinh', label: 'Sổ chi tiết phát sinh', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'soon', icon: <ProfileOutlined /> },
+  { key: '/bao-cao/so-chi-tiet-cong-no', label: 'Sổ chi tiết công nợ', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'soon', quyenDaCap: true, icon: <FileSearchOutlined /> },
+  { key: '/bao-cao/so-chi-tiet-phat-sinh', label: 'Sổ chi tiết phát sinh', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'soon', quyenDaCap: true, icon: <ProfileOutlined /> },
   { key: '/chung-tu/nhat-ky-chung', label: 'Sổ nhật ký chung', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'ok', icon: <AuditOutlined /> },
   { key: '/bao-cao/bang-tong-hop', label: 'Tổng hợp công nợ', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'ok', icon: <TableOutlined /> },
   { key: '/tong-hop/quyet-toan-tam-ung', label: 'Quyết toán tạm ứng', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'soon', icon: <FileTextOutlined /> },
   { key: '/chung-tu/ket-chuyen-lai-lo', label: 'Kết chuyển', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'ok', icon: <SwapOutlined /> },
-  { key: '/bao-cao/tai-chinh', label: 'Báo cáo tài chính', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'ok', icon: <PieChartOutlined /> },
+  // Bốn mục dưới cùng trỏ trang /bao-cao/tai-chinh, chỉ khác `?tab=` — trang có
+  // đúng 4 tab đó. permKey giữ nguyên '/bao-cao/tai-chinh' để KHÔNG sinh khoá
+  // quyền mới; tách mục chỉ là chuyện điều hướng.
+  { key: '/bao-cao/tai-chinh?tab=can-doi-ke-toan', permKey: '/bao-cao/tai-chinh', label: 'Bảng cân đối kế toán', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'ok', icon: <PieChartOutlined /> },
+  { key: '/bao-cao/tai-chinh?tab=ket-qua-kinh-doanh', permKey: '/bao-cao/tai-chinh', label: 'Kết quả kinh doanh', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'ok', icon: <BarChartOutlined /> },
+  { key: '/bao-cao/tai-chinh?tab=can-doi-tai-khoan', permKey: '/bao-cao/tai-chinh', label: 'Bảng cân đối tài khoản', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'ok', icon: <TableOutlined /> },
+  { key: '/bao-cao/tai-chinh?tab=so-sanh-lai-lo', permKey: '/bao-cao/tai-chinh', label: 'So sánh lãi lỗ', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'ok', icon: <PieChartOutlined /> },
+  { key: '/bao-cao/tai-chinh/luu-chuyen-tien-te', label: 'Lưu chuyển tiền tệ', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'soon', icon: <SwapOutlined /> },
   { key: '/bao-cao/tai-chinh/thuyet-minh', label: 'Thuyết minh', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'soon', icon: <FileTextOutlined /> },
 
   // ===== 4. Vốn & dòng tiền (5) =====
@@ -148,7 +168,7 @@ export const MENU_LEAVES: MenuLeaf[] = [
   { key: '/trung-tam-du-lieu/ke-hoach?tab=tai-san', permKey: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch tài sản', module: 'tai-san', status: 'ok', icon: <ScheduleOutlined /> },
   { key: '/trung-tam-du-lieu/du-bao?tab=tai-san', permKey: '/trung-tam-du-lieu/du-bao', label: 'Dự báo tài sản', module: 'tai-san', status: 'ok', icon: <RiseOutlined /> },
   { key: '/tai-san/danh-muc', label: 'Danh mục tài sản', module: 'tai-san', status: 'soon', icon: <DatabaseOutlined /> },
-  { key: '/trung-tam-du-lieu/tai-san', label: 'Tài sản', module: 'tai-san', status: 'soon', icon: <CarOutlined /> },
+  { key: '/trung-tam-du-lieu/tai-san', label: 'Tài sản', module: 'tai-san', status: 'soon', quyenDaCap: true, icon: <CarOutlined /> },
   { key: '/tai-san/khau-hao', label: 'Tính khấu hao', module: 'tai-san', status: 'soon', icon: <FundOutlined /> },
   { key: '/tai-san/dieu-chuyen', label: 'Điều chuyển', module: 'tai-san', status: 'soon', icon: <SwapOutlined /> },
   { key: '/tai-san/ghi-giam', label: 'Ghi giảm TS', module: 'tai-san', status: 'soon', icon: <FileTextOutlined /> },
@@ -233,18 +253,26 @@ export const labelByPath = (path: string): string | undefined =>
  *  KHÔNG loại cả phân hệ: '/quy-trinh', '/chinh-sach', '/bieu-mau',
  *  '/huong-dan' cũng mang module 'danh-muc' nhưng CÓ khóa quyền thật trong
  *  routePermissions — loại chúng là xoá quyền đang sống khỏi ma trận. */
-export const permissionKeys = (): string[] => {
-  const routeGop = new Set(
-    MENU_MODULES.filter((m) => m.aggregateRoutes && m.route).map((m) => m.route as string),
-  );
-  return Array.from(
+const ROUTE_GOP = new Set(
+  MENU_MODULES.filter((m) => m.aggregateRoutes && m.route).map((m) => m.route as string),
+);
+
+/**
+ * Mục có khoá quyền RIÊNG. Đúng hai điều kiện loại trừ của `permissionKeys()`,
+ * tách ra để ma trận Phân quyền dùng lại y hệt — hai nơi lệch nhau là sinh
+ * khoá lạ hoặc đánh rơi khoá đang sống.
+ */
+export const coKhoaQuyenRieng = (l: MenuLeaf): boolean =>
+  !ROUTE_GOP.has(l.key) && !l.khongCoQuyenRieng;
+
+export const permissionKeys = (): string[] =>
+  Array.from(
     new Set(
       MENU_LEAVES
-        .filter((l) => l.status === 'ok' && !routeGop.has(l.key) && !l.khongCoQuyenRieng)
+        .filter((l) => l.status === 'ok' && coKhoaQuyenRieng(l))
         .map(permKeyOf),
     ),
   );
-};
 
 // ===== Tương thích ngược — useEffectiveMenuKeys và trang Danh mục đang dùng =====
 export interface MenuCatalogEntry {
