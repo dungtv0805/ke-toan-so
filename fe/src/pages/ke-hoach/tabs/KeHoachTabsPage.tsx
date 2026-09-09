@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Button,
   ConfigProvider,
@@ -27,6 +28,14 @@ const { Text } = Typography;
 /** Chuỗi rỗng = không lọc phiên bản. Không dùng undefined: antd hiện ô trống, mất nhãn. */
 const TAT_CA_PHIEN_BAN = "";
 
+const TAB_HOP_LE = [
+  "ban-hang", "nhan-su", "kqkd", "dong-tien", "tai-san", "nguon-von", "chi-tiet",
+] as const;
+
+/** Tab mở đầu, lấy từ ?tab= trên URL. Tab lạ thì về mặc định cũ. */
+export const tabBanDau = (tab: string | null): string =>
+  tab && (TAB_HOP_LE as readonly string[]).includes(tab) ? tab : "ban-hang";
+
 /**
  * Sáu sheet của file thiết kế, một báo cáo P&L, và lưới bút toán "Chi tiết".
  *
@@ -50,7 +59,8 @@ const tabOptions = (loaiKeHoach: LoaiKeHoach) => [
 const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
   loaiKeHoach,
 }) => {
-  const [activeTab, setActiveTab] = useState("ban-hang");
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() => tabBanDau(searchParams.get("tab")));
   const [nam, setNam] = useState(() => new Date().getFullYear());
   // Gộp nhiều phiên bản kế hoạch vào một bảng KQKD là cộng trùng — cho chọn được.
   const [phienBan, setPhienBan] = useState<string>(TAT_CA_PHIEN_BAN);
