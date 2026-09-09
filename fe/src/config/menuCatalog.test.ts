@@ -12,6 +12,8 @@ import {
   type PermissionModule,
 } from '@/pages/cau-hinh/phan-quyen/constants/permissionModules';
 import keysTruocDoi from './__snapshots__/permission-keys-truoc-doi.json';
+import routeTruocDoi from './__snapshots__/route-permissions-truoc-doi.json';
+import maTranTruocDoi from '@/pages/cau-hinh/phan-quyen/constants/__snapshots__/matrix-keys-truoc-doi.json';
 
 /**
  * Đọc App.tsx bằng AST của chính TypeScript, KHÔNG dùng regex theo dòng.
@@ -185,5 +187,29 @@ describe('phân quyền — không cấp lại', () => {
       (k) => !daKhai.has(k) && !k.startsWith('/cau-hinh/'),
     );
     expect(roiRung).toEqual([]);
+  });
+});
+
+/**
+ * `routePermissions` giờ SINH từ catalog, nên hai test ở trên
+ * ("mọi khoá routePermissions đều được permissionKeys() sinh lại" và "không key
+ * nào bị catalog bỏ rơi") đã thành vòng tròn — chúng chỉ còn canh phần khai tay.
+ * Chốt chặn thật nằm ở đây: đối chiếu với ẢNH CHỤP ĐÓNG BĂNG của bảng cũ.
+ * KHÔNG sinh lại hai file snapshot này.
+ */
+describe('routePermissions — ảnh chụp đóng băng', () => {
+  const cu = routeTruocDoi as Record<string, string>;
+
+  it('mọi cặp route→quyền cũ còn NGUYÊN, cả giá trị', () => {
+    const lech = Object.entries(cu)
+      .filter(([k, v]) => routePermissions[k] !== v)
+      .map(([k, v]) => `${k}: ${v} → ${routePermissions[k]}`);
+    expect(lech).toEqual([]);
+  });
+
+  it('route mới thêm chỉ được dùng khoá quyền ĐÃ TỒN TẠI', () => {
+    const daCo = new Set([...(maTranTruocDoi as string[]), ...Object.keys(cu)]);
+    const la = Object.keys(routePermissions).filter((k) => !daCo.has(k));
+    expect(la).toEqual([]);
   });
 });
