@@ -90,10 +90,14 @@
     --shadow-card: 0 1px 3px 0 hsl(220 13% 91% / 0.5), 0 1px 2px -1px hsl(220 13% 91% / 0.5);
     --shadow-card-hover: 0 10px 15px -3px hsl(220 13% 91% / 0.3), 0 4px 6px -4px hsl(220 13% 91% / 0.3);
 
-    /* Thang chữ — #1D1D1F / #6E6E73 / #98989D */
+    /* Thang chữ — #1D1D1F / #6E6E73 / #8A8A8F */
     --ink: 240 4% 12%;
     --ink-2: 240 2% 44%;
-    --ink-3: 240 2% 60%;
+    /* Bậc "chữ mờ" phải trùng ĐÚNG colorTextTertiary khai trong App.tsx
+       (#8A8A8F): cùng một vai trò mà hai sắc xám khác nhau thì chữ mờ của
+       antd và chữ mờ của Tailwind đặt cạnh nhau sẽ lệch tông. Giá trị cũ
+       240 2% 60% ra #98989D — chính mã đã bị loại vì chỉ đạt 2.87:1. */
+    --ink-3: 240 2% 55%; /* #8A8A8F */
 
     /* Link, mã chứng từ — #007AFF / #E8F2FF */
     --blue: 211 100% 50%;
