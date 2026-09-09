@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MENU_LEAVES, pathOf, type ModuleId } from '@/config/menuCatalog';
 
 export const KHOA_THU_GON = (userId?: string) =>
@@ -29,8 +29,20 @@ export function moduleTheoPath(pathname: string): ModuleId | undefined {
   return khop?.module;
 }
 
-export function useSidebarState(userId?: string) {
+/** Màn hình nhập liệu (tạo mới/sửa) — sidebar tự thu gọn để nhường chỗ form. */
+export function laManHinhNhapLieu(pathname: string): boolean {
+  return pathname.includes('/tao-moi') || pathname.includes('/sua');
+}
+
+/**
+ * `pathname` truyền tay thay vì gọi `useLocation()` ngay trong hook — để hook
+ * này vẫn dùng được ngoài Router (test hiện có gọi `renderHook` không bọc
+ * Router). Sidebar (nơi duy nhất gọi hook) đã tự có `useLocation()`, truyền
+ * xuống là đủ.
+ */
+export function useSidebarState(userId?: string, pathname?: string) {
   const [thuGon, datThuGonState] = useState<boolean>(() => {
+    if (laManHinhNhapLieu(window.location.pathname)) return true;
     try {
       return localStorage.getItem(KHOA_THU_GON(userId)) === 'true';
     } catch {
@@ -62,6 +74,19 @@ export function useSidebarState(userId?: string) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [userId]);
+
+  // Tự thu gọn khi ĐIỀU HƯỚNG vào màn hình nhập liệu (không phải lần render
+  // đầu — trạng thái ban đầu đã xử lý ở useState phía trên). Giống hệt effect
+  // cũ từng nằm ở MainLayout trước khi sidebar tự giữ trạng thái thu gọn.
+  const prevPathnameRef = useRef(pathname);
+  useEffect(() => {
+    if (pathname !== undefined && prevPathnameRef.current !== pathname) {
+      if (laManHinhNhapLieu(pathname) && !thuGon) {
+        datThuGon(true);
+      }
+      prevPathnameRef.current = pathname;
+    }
+  }, [pathname, thuGon, datThuGon]);
 
   return { thuGon, datThuGon, moduleDangChon, chonModule, moduleTheoUrl: moduleTheoPath };
 }

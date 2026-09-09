@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { moduleTheoPath, useSidebarState, KHOA_THU_GON } from './useSidebarState';
+import {
+  moduleTheoPath,
+  useSidebarState,
+  laManHinhNhapLieu,
+  KHOA_THU_GON,
+} from './useSidebarState';
 
 describe('moduleTheoPath', () => {
   it('tìm ra phân hệ của một trang', () => {
@@ -19,8 +24,23 @@ describe('moduleTheoPath', () => {
   });
 });
 
+describe('laManHinhNhapLieu', () => {
+  it('nhận diện màn tạo mới và sửa', () => {
+    expect(laManHinhNhapLieu('/kho/nhap-kho/tao-moi')).toBe(true);
+    expect(laManHinhNhapLieu('/kho/nhap-kho/abc123/sua')).toBe(true);
+  });
+
+  it('màn danh sách/xem thường không tính', () => {
+    expect(laManHinhNhapLieu('/kho/nhap-kho')).toBe(false);
+    expect(laManHinhNhapLieu('/')).toBe(false);
+  });
+});
+
 describe('useSidebarState', () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    window.history.pushState({}, '', '/');
+  });
 
   it('mặc định mở panel', () => {
     const { result } = renderHook(() => useSidebarState('u1'));
@@ -34,5 +54,22 @@ describe('useSidebarState', () => {
 
     const khac = renderHook(() => useSidebarState('u2'));
     expect(khac.result.current.thuGon).toBe(false);
+  });
+
+  it('vào thẳng một màn nhập liệu thì khởi tạo ở trạng thái thu gọn', () => {
+    window.history.pushState({}, '', '/kho/nhap-kho/tao-moi');
+    const { result } = renderHook(() => useSidebarState('u1'));
+    expect(result.current.thuGon).toBe(true);
+  });
+
+  it('điều hướng SANG màn nhập liệu thì tự thu gọn', () => {
+    const { result, rerender } = renderHook(
+      ({ pathname }) => useSidebarState('u1', pathname),
+      { initialProps: { pathname: '/kho/nhap-kho' } },
+    );
+    expect(result.current.thuGon).toBe(false);
+
+    rerender({ pathname: '/kho/nhap-kho/tao-moi' });
+    expect(result.current.thuGon).toBe(true);
   });
 });

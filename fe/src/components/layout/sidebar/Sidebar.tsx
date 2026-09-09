@@ -16,7 +16,7 @@ export const Sidebar: React.FC = () => {
   // Lấy luôn moduleDangChon/chonModule từ hook — không tự khai useState
   // trùng (review Task 8, Important 1).
   const { thuGon, datThuGon, moduleTheoUrl, moduleDangChon, chonModule } =
-    useSidebarState(user?.id);
+    useSidebarState(user?.id, pathname);
 
   // URL đổi thì bỏ lựa chọn thủ công, để panel/rail bám theo trang đang xem.
   // Bấm icon rail của phân hệ nghiệp vụ KHÔNG đổi URL nên lựa chọn đó vẫn

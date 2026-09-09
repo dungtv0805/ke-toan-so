@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Layout,
   Avatar,
@@ -37,14 +37,7 @@ const IS_MOBILE_OR_TABLET =
   /android|iphone|ipod|ipad/i.test(navigator.userAgent) ||
   (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 
-// Helper function to check if current route is a form screen (create/edit)
-const isFormScreen = (pathname: string): boolean => {
-  return pathname.includes('/tao-moi') || pathname.includes('/sua');
-};
-
 const MainLayout: React.FC = () => {
-  // Initialize collapsed based on current URL - if on form screen, start collapsed
-  const [collapsed, setCollapsed] = useState(() => isFormScreen(window.location.pathname));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
@@ -71,27 +64,10 @@ const MainLayout: React.FC = () => {
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
   }, [darkMode]);
 
-  // Track previous pathname to detect navigation
-  const prevPathnameRef = useRef(location.pathname);
-
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
-
-  // Auto collapse sidebar when navigating to form screens (create/edit)
-  // Ghi chú: sidebar mới tự giữ trạng thái thu gọn (useSidebarState +
-  // localStorage) nên `collapsed` ở đây tạm thời không điều khiển gì trên màn
-  // hình. Giữ lại theo yêu cầu Task 12; nối vào sidebar mới là việc đợt sau.
-  useEffect(() => {
-    // Skip on initial render (when prev === current)
-    if (prevPathnameRef.current !== location.pathname) {
-      if (!isMobile && !collapsed && isFormScreen(location.pathname)) {
-        setCollapsed(true);
-      }
-      prevPathnameRef.current = location.pathname;
-    }
-  }, [location.pathname, isMobile, collapsed]);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
