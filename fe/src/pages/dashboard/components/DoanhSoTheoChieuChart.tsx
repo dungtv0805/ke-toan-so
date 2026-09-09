@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, Select, Empty } from 'antd';
 import { TeamOutlined } from '@ant-design/icons';
 import { BarChart, Bar, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { formatCurrency, DASH_COLORS, nhanTrieu } from './format';
+import { formatCurrency, DASH_COLORS, CHART_GRID, nhanTrieu } from './format';
 import type { DoanhSoChieuRow } from '@/services/doanhSoService';
 
 /**
@@ -43,7 +43,7 @@ const DoanhSoTheoChieuChart: React.FC<Props> = ({ data, dimension, onDimensionCh
       ) : (
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={rows} layout="vertical" margin={{ top: 8, right: 56, left: 8, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} horizontal={false} />
             <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={nhanTrieu} />
             <YAxis type="category" dataKey="ten" width={150} tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: number) => formatCurrency(v)} />

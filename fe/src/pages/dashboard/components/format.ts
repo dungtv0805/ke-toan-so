@@ -66,11 +66,28 @@ export const nhanLatCat = (value?: number | null, tong?: number): string => {
   return `${Math.round(tyLe * 100)}% · ${nhanTrieu(value)} tr`;
 };
 
-/** Dashboard color tokens (CSS vars). */
+/**
+ * Bảng màu biểu đồ — BẮT BUỘC là mã hex, KHÔNG được dùng `hsl(var(--token))`.
+ *
+ * Recharts đưa `fill` / `stroke` xuống thành THUỘC TÍNH TRÌNH BÀY của SVG
+ * (`<path stroke="…">`), mà `var()` chỉ được thay ở computed-value time cho
+ * khai báo CSS — trong presentation attribute nó KHÔNG giải được, trình duyệt
+ * coi giá trị là không hợp lệ và bỏ qua, nên cột/đường biến mất khỏi biểu đồ.
+ * Token vẫn chạy bình thường trong `style={{ fill }}` và trong className.
+ *
+ * Mỗi màu dưới đây là giá trị bản SÁNG của token ghi ở comment; sửa token thì
+ * sửa cả ở đây.
+ */
 export const DASH_COLORS = {
-  revenue: 'hsl(var(--success))',
-  expense: 'hsl(var(--destructive))',
-  balance: 'hsl(var(--primary))',
-  accent: 'hsl(var(--brand-gold))',
-  muted: 'hsl(var(--muted-foreground))',
+  revenue: '#1F9254', // = --success / --green
+  expense: '#D93025', // = --destructive / --red
+  balance: '#1F7769', // = --primary
+  accent: '#B6954E', // = --brand-gold
+  muted: '#6E6E73', // = --muted-foreground / --ink-2
 };
+
+/**
+ * Lưới nền + đường trục của biểu đồ. Xám trung tính pha alpha để đọc được trên
+ * cả nền sáng lẫn nền tối (hex vì lý do nêu ở DASH_COLORS).
+ */
+export const CHART_GRID = '#8A8A8F59'; // xám 35% alpha

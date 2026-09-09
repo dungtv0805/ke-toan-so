@@ -13,12 +13,14 @@ import { tienTheoTaiKhoan } from '../trialBalanceDerive';
 import { formatCurrency, nhanLatCat } from '../components/format';
 import type { TabProps } from './TabProps';
 
+// HEX bắt buộc: mảng này đi vào `fill=` của <Cell>, tức thuộc tính trình bày
+// của SVG, nơi hsl(var(--token)) không giải được nên lát cắt sẽ không được tô.
 const PIE_PALETTE = [
-  'hsl(var(--primary))',
-  'hsl(var(--brand-gold))',
-  'hsl(var(--success))',
-  'hsl(var(--destructive))',
-  'hsl(var(--muted-foreground))',
+  '#1F7769', // = --primary
+  '#B6954E', // = --brand-gold
+  '#1F9254', // = --success / --green
+  '#D93025', // = --destructive / --red
+  '#6E6E73', // = --muted-foreground / --ink-2
 ];
 
 const Donut: React.FC<{ title: string; data: { ten: string; soTien: number }[] }> = ({ title, data }) => {

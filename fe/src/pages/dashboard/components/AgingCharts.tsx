@@ -7,12 +7,15 @@ import { dashboardService, type AgingBuckets } from '@/services/dashboardService
 import { formatCurrency, nhanLatCat } from './format';
 
 // chưa đến hạn = navy; quá hạn đậm dần vàng -> cam -> đỏ
+// Toàn bộ là HEX vì mảng này đi vào `fill=` của <Cell> — tức thuộc tính trình
+// bày của SVG, nơi hsl(var(--token)) KHÔNG giải được (var() chỉ được thay ở
+// computed-value time cho khai báo CSS), lát cắt sẽ không được tô.
 const AGING_COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--brand-gold))',
+  '#1F7769', // = --primary
+  '#B6954E', // = --brand-gold
   '#fa8c16',
   '#fa541c',
-  'hsl(var(--destructive))',
+  '#D93025', // = --destructive / --red
 ];
 
 interface Slice {

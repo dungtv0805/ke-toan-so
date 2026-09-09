@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LineChart, Line, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { dashboardService } from '@/services/dashboardService';
 import { sliceToRange } from '@/components/shared/period';
-import { formatCurrency, DASH_COLORS, nhanTrieu } from './format';
+import { formatCurrency, DASH_COLORS, CHART_GRID, nhanTrieu } from './format';
 
 interface Props { year: number; startMonth: number; endMonth: number; }
 
@@ -33,7 +33,7 @@ const CongNoChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
       ) : (
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={data} margin={{ left: -10, right: 8, top: 18 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
             <XAxis dataKey="thang" tickFormatter={(v) => `${isWeekly ? 'Tuần' : 'Th'} ${v}`} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={nhanTrieu} stroke={DASH_COLORS.muted} tick={{ fontSize: 11 }} width={42} />
             <Tooltip formatter={(value: number) => formatCurrency(value)} labelFormatter={(l) => `${isWeekly ? 'Tuần' : 'Tháng'} ${l}`} />

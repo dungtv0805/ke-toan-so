@@ -6,15 +6,20 @@ import {
 } from 'recharts';
 
 // Bảng màu mini-preview mô phỏng đúng các biểu đồ thật trên Tổng quan — mỗi màu
-// phân biệt một chuỗi dữ liệu trong preview, GIỮ NGUYÊN. ORANGE/NAVY/GOLD trùng giá
-// trị token --chart-orange/--chart-navy/--chart-gold nên quy về token; các màu còn lại
-// (TEAL, GRAY, RED, và các mã lẻ trong PreviewDonut/PreviewCanDoi) không có token tương
-// ứng, giữ nguyên hex.
+// phân biệt một chuỗi dữ liệu trong preview, GIỮ NGUYÊN.
+//
+// TẤT CẢ phải là HEX, kể cả ba màu có token tương ứng (--chart-orange /
+// --chart-navy / --chart-gold): các hằng này đi vào `stroke=` / `fill=` của
+// recharts, tức THUỘC TÍNH TRÌNH BÀY của SVG, nơi `var()` không được thay thế
+// (var() chỉ giải ở computed-value time cho khai báo CSS) — dùng token thì
+// đường và lát cắt donut không vẽ ra. Trong `style={{ background }}` bên dưới
+// (PreviewCanDoi, PreviewNvcs) token vẫn chạy, nhưng dùng chung một hằng số nên
+// phải chọn dạng chạy được ở CẢ HAI chỗ → hex.
 const TEAL = '#2BC4A8';
 const GRAY = '#C9CDD4';
-const ORANGE = 'hsl(var(--chart-orange))';
-const NAVY = 'hsl(var(--chart-navy))';
-const GOLD = 'hsl(var(--chart-gold))';
+const ORANGE = '#F2994A'; // = --chart-orange
+const NAVY = '#1F3864'; // = --chart-navy
+const GOLD = '#C9A227'; // = --chart-gold
 const RED = '#D6453B';
 
 // Kích thước cố định cho preview (không dùng ResponsiveContainer — trong Modal nó
