@@ -6,6 +6,10 @@ describe('tabBanDau', () => {
     expect(tabBanDau(null)).toBe('ban-hang');
   });
 
+  it('?tab= rỗng thì mở Bán hàng như cũ', () => {
+    expect(tabBanDau('')).toBe('ban-hang');
+  });
+
   it('mở đúng tab được yêu cầu', () => {
     expect(tabBanDau('nhan-su')).toBe('nhan-su');
     expect(tabBanDau('dong-tien')).toBe('dong-tien');

@@ -61,6 +61,15 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
 }) => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => tabBanDau(searchParams.get("tab")));
+  // URL đổi ?tab= mà không remount (4 mục menu cùng trỏ trang này) nên phải
+  // đồng bộ tay. Bấm tab thủ công không đổi URL nên effect này không đá nhau
+  // với thao tác người dùng.
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && (TAB_HOP_LE as readonly string[]).includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
   const [nam, setNam] = useState(() => new Date().getFullYear());
   // Gộp nhiều phiên bản kế hoạch vào một bảng KQKD là cộng trùng — cho chọn được.
   const [phienBan, setPhienBan] = useState<string>(TAT_CA_PHIEN_BAN);
