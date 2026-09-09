@@ -19,8 +19,10 @@ export const MenuItemList: React.FC<Props> = ({ leaves, activePath, onSelect }) 
   return (
     <div className="flex flex-col">
       {leaves.map((leaf) => {
-        const moCluster = leaf.cluster && leaf.cluster !== clusterDangVe;
-        if (leaf.cluster) clusterDangVe = leaf.cluster;
+        const moCluster = !!leaf.cluster && leaf.cluster !== clusterDangVe;
+        // Tracker phải là cụm của mục ngay trước, không phải cụm không rỗng gần nhất.
+        // Nếu không, khối cụm lặp lại (cụm A → mục không cụm → cụm A) sẽ mất tiêu đề lần 2.
+        clusterDangVe = leaf.cluster;
         const dangMo = pathOf(leaf) === activePath;
         const soon = leaf.status === 'soon';
 
@@ -45,7 +47,7 @@ export const MenuItemList: React.FC<Props> = ({ leaves, activePath, onSelect }) 
               ].join(' ')}
             >
               {leaf.icon && <span className="shrink-0 text-[12px]">{leaf.icon}</span>}
-              <span className="flex-1 truncate">{leaf.label}</span>
+              <span className="min-w-0 flex-1 truncate">{leaf.label}</span>
               {soon && <span className="coming-soon-dot" />}
             </button>
           </React.Fragment>
@@ -54,5 +56,3 @@ export const MenuItemList: React.FC<Props> = ({ leaves, activePath, onSelect }) 
     </div>
   );
 };
-
-export default MenuItemList;

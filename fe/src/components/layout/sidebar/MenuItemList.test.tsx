@@ -46,4 +46,24 @@ describe('MenuItemList', () => {
     fireEvent.click(screen.getByText('Kế hoạch bán hàng'));
     expect(onSelect).toHaveBeenCalledWith('/trung-tam-du-lieu/ke-hoach?tab=ban-hang');
   });
+
+  it('danh sách xen kẽ: cụm A → mục không cụm → cụm A phải vẽ tiêu đề A hai lần', () => {
+    const ds: MenuLeaf[] = [
+      { key: '/a1', label: 'A1', module: 'mod', cluster: 'A', status: 'ok' },
+      { key: '/b', label: 'B không cụm', module: 'mod', status: 'ok' },
+      { key: '/a2', label: 'A2', module: 'mod', cluster: 'A', status: 'ok' },
+    ];
+    render(<MenuItemList leaves={ds} activePath="/" onSelect={() => {}} />);
+    expect(screen.getAllByText('A')).toHaveLength(2);
+  });
+
+  it('nhãn dài phải có min-w-0 để truncate hoạt động', () => {
+    const ds: MenuLeaf[] = [
+      { key: '/long', label: 'Nhãn rất rất rất rất rất dài vượt quá bề rộng nút', module: 'mod', status: 'ok' },
+    ];
+    render(<MenuItemList leaves={ds} activePath="/" onSelect={() => {}} />);
+    const labelSpan = screen.getByText(/Nhãn rất rất/);
+    expect(labelSpan.className).toContain('min-w-0');
+    expect(labelSpan.className).toContain('truncate');
+  });
 });
