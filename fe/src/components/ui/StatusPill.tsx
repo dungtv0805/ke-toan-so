@@ -3,6 +3,17 @@ import React from 'react';
 export type PillTone = 'ok' | 'cho' | 'tu-choi' | 'nhap' | 'dang' | 'trung-tinh';
 
 /**
+ * `nhap` và `trung-tinh` CỐ Ý dùng chung một tông — không phải sót.
+ *
+ * "Nháp" trong hệ thống nghĩa là chứng từ chưa mang trạng thái nghiệp vụ nào,
+ * tức đúng là trạng thái trung tính; bịa thêm một sắc xám thứ hai chỉ tạo ra
+ * một khác biệt mà nghiệp vụ không có, và người đọc bảng sẽ đi tìm ý nghĩa của
+ * nó. Viết thành MỘT hằng số dùng chung để hai tông không thể lệch nhau về sau
+ * (trước đây là hai chuỗi class chép tay giống hệt); ai cần tách thì đổi ở đây.
+ */
+const XAM_TRUNG_TINH = 'bg-[hsl(var(--muted))] text-[hsl(var(--ink-2))]';
+
+/**
  * NỀN dùng màu gốc pha loãng, CHỮ dùng bản "mực" (--*-ink) tối hơn.
  *
  * Chữ pill chỉ 10.5px — theo WCAG đây là chữ thường, ngưỡng tương phản 4.5:1
@@ -17,9 +28,9 @@ const TONE: Record<PillTone, string> = {
   ok: 'bg-[hsl(var(--green)/0.12)] text-[hsl(var(--green-ink))]',
   cho: 'bg-[hsl(var(--amber)/0.12)] text-[hsl(var(--amber-ink))]',
   'tu-choi': 'bg-[hsl(var(--red)/0.12)] text-[hsl(var(--red-ink))]',
-  nhap: 'bg-[hsl(var(--muted))] text-[hsl(var(--ink-2))]',
+  nhap: XAM_TRUNG_TINH,
   dang: 'bg-[hsl(var(--blue-soft))] text-[hsl(var(--blue-ink))]',
-  'trung-tinh': 'bg-[hsl(var(--muted))] text-[hsl(var(--ink-2))]',
+  'trung-tinh': XAM_TRUNG_TINH,
 };
 
 /** Nhãn trạng thái dạng viên thuốc — một kiểu duy nhất cho cả dự án. */
