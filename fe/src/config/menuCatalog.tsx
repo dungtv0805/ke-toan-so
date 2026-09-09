@@ -228,16 +228,19 @@ export const labelByPath = (path: string): string | undefined =>
   MENU_LEAVES.find((l) => pathOf(l) === path)?.label;
 
 /** Mọi khóa quyền sinh từ catalog (mục soon không sinh — chưa có gì để cấp).
- *  Mục thuộc phân hệ gộp (vd '/danh-muc') bị bỏ qua: bản thân nó chưa bao giờ
- *  là một khóa quyền — quyền của nó suy từ các route con trong aggregateRoutes. */
+ *  Loại ĐÚNG route của phân hệ gộp (vd '/danh-muc'): riêng nó chưa bao giờ là
+ *  một khóa quyền — quyền của nó suy từ các route con trong aggregateRoutes.
+ *  KHÔNG loại cả phân hệ: '/quy-trinh', '/chinh-sach', '/bieu-mau',
+ *  '/huong-dan' cũng mang module 'danh-muc' nhưng CÓ khóa quyền thật trong
+ *  routePermissions — loại chúng là xoá quyền đang sống khỏi ma trận. */
 export const permissionKeys = (): string[] => {
-  const phanHeGop = new Set(
-    MENU_MODULES.filter((m) => m.aggregateRoutes).map((m) => m.id),
+  const routeGop = new Set(
+    MENU_MODULES.filter((m) => m.aggregateRoutes && m.route).map((m) => m.route as string),
   );
   return Array.from(
     new Set(
       MENU_LEAVES
-        .filter((l) => l.status === 'ok' && !phanHeGop.has(l.module) && !l.khongCoQuyenRieng)
+        .filter((l) => l.status === 'ok' && !routeGop.has(l.key) && !l.khongCoQuyenRieng)
         .map(permKeyOf),
     ),
   );

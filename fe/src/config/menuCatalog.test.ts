@@ -162,6 +162,20 @@ describe('phân quyền — không cấp lại', () => {
     expect(thieu).toEqual([]);
   });
 
+  /**
+   * Chiều ngược của test dưới: không chỉ "có khai trong MENU_LEAVES" mà phải
+   * được `permissionKeys()` SINH RA. Đợt sau sinh ma trận phân quyền từ hàm
+   * này — khoá nào rơi khỏi đây thì biến khỏi ma trận, và mỗi lần lưu trang
+   * Phân quyền sẽ xoá nó khỏi vai trò.
+   */
+  it('mọi khoá routePermissions đều được permissionKeys() sinh lại', () => {
+    const sinhRa = new Set([...permissionKeys(), ...DANH_MUC_ROUTES]);
+    const roiRung = Object.keys(routePermissions).filter(
+      (k) => !sinhRa.has(k) && !k.startsWith('/cau-hinh/'),
+    );
+    expect(roiRung).toEqual([]);
+  });
+
   it('không key nào trong routePermissions bị catalog bỏ rơi', () => {
     const daKhai = new Set([
       ...MENU_LEAVES.map(permKeyOf),
