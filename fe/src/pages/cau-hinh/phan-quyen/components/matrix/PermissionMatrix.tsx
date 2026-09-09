@@ -67,52 +67,64 @@ const NEN_TIEU_DE_NHOM = "hsl(var(--border))";
 const NEN_HANG_CHA = "hsl(var(--muted))";
 const NEN_HANG_LA_CHAN = "hsl(var(--muted) / 0.45)";
 
-function SectionRow({ mod }: { mod: PermissionModule }) {
-  return (
-    <tr>
-      <td
-        colSpan={7}
-        style={{
-          backgroundColor: NEN_TIEU_DE_NHOM,
-          fontWeight: 700,
-          padding: "10px 12px",
-          fontSize: 13,
-          letterSpacing: "0.5px",
-        }}
-      >
-        {mod.label}
-      </td>
-    </tr>
-  );
-}
+const VIEN_DUOI = "1px solid hsl(var(--border))";
 
-function ParentRow({
+/**
+ * Hàng gộp — dùng chung cho hàng TIÊU ĐỀ NHÓM (phân hệ, `isSection`) và hàng
+ * CHA (nhóm nhỏ trong Danh mục). Hai hàng chỉ khác nền, cỡ chữ và thụt lề; ô
+ * tick "cả nhóm" thì y hệt nhau, nên gộp thay vì nuôi hai cơ chế.
+ *
+ * Trước đây hàng tiêu đề nhóm là một ô `colSpan={7}` KHÔNG có ô tick. Hồi còn
+ * 3 nhóm kỹ thuật thì ít ai để ý; từ khi ma trận tách theo 12 phân hệ nghiệp
+ * vụ, 11 nhóm không tick cả nhóm được nghĩa là admin phải tick tay từng khoá.
+ *
+ * `togglePermission` đã sẵn sàng nhận khoá của một nhóm: nó tìm module theo
+ * khoá rồi gom mọi lá con (`collectLeafModules`) — không cần đường xử lý riêng.
+ */
+function NhomRow({
   mod,
   permissions,
   handler,
   depth,
+  laTieuDeNhom,
 }: {
   mod: PermissionModule;
   permissions: ModulePermission[];
   handler: ReturnType<typeof usePhanQuyenHandler>;
   depth: number;
+  laTieuDeNhom?: boolean;
 }) {
   const leafKeys = collectLeafModules([mod]);
   const allState = getAllState(permissions, leafKeys);
+  const nenHang = laTieuDeNhom
+    ? NEN_TIEU_DE_NHOM
+    : depth === 1
+      ? NEN_HANG_CHA
+      : undefined;
+  const vien = laTieuDeNhom ? undefined : VIEN_DUOI;
 
   return (
-    <tr style={{ backgroundColor: depth === 1 ? NEN_HANG_CHA : undefined }}>
+    <tr style={{ backgroundColor: nenHang }}>
       <td
-        style={{
-          padding: "8px 12px",
-          paddingLeft: 12 + depth * 20,
-          fontWeight: 600,
-          borderBottom: "1px solid hsl(var(--border))",
-        }}
+        style={
+          laTieuDeNhom
+            ? {
+                padding: "10px 12px",
+                fontWeight: 700,
+                fontSize: 13,
+                letterSpacing: "0.5px",
+              }
+            : {
+                padding: "8px 12px",
+                paddingLeft: 12 + depth * 20,
+                fontWeight: 600,
+                borderBottom: VIEN_DUOI,
+              }
+        }
       >
         {mod.label}
       </td>
-      <td style={{ textAlign: "center", borderBottom: "1px solid hsl(var(--border))" }}>
+      <td style={{ textAlign: "center", borderBottom: vien }}>
         <Checkbox
           checked={allState.checked}
           indeterminate={allState.indeterminate}
@@ -129,7 +141,7 @@ function ParentRow({
         return (
           <td
             key={action.key}
-            style={{ textAlign: "center", borderBottom: "1px solid hsl(var(--border))" }}
+            style={{ textAlign: "center", borderBottom: vien }}
           >
             <Checkbox
               checked={state.checked}
@@ -221,7 +233,16 @@ function renderModuleRows(
 
   for (const mod of modules) {
     if (mod.isSection) {
-      rows.push(<SectionRow key={`section-${mod.key}`} mod={mod} />);
+      rows.push(
+        <NhomRow
+          key={`section-${mod.key}`}
+          mod={mod}
+          permissions={permissions}
+          handler={handler}
+          depth={depth}
+          laTieuDeNhom
+        />
+      );
       if (mod.children) {
         rows.push(
           ...renderModuleRows(mod.children, permissions, handler, depth, counter)
@@ -229,7 +250,7 @@ function renderModuleRows(
       }
     } else if (mod.children) {
       rows.push(
-        <ParentRow
+        <NhomRow
           key={`parent-${mod.key}`}
           mod={mod}
           permissions={permissions}
