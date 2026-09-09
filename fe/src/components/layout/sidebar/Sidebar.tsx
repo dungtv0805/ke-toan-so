@@ -87,10 +87,12 @@ export const Sidebar: React.FC = () => {
     const m = modules.find((x) => x.module.id === id);
     if (!m) return;
     // Nhóm 1 mục (Tổng quan, Danh mục) → vào thẳng trang, không mở panel.
-    // KHÔNG set lựa chọn thủ công ở đây — `current` đã tự suy đúng từ URL
-    // mới, set thêm chỉ là dư thừa (và sẽ bị effect ở trên xoá ngay khi URL
-    // đổi).
+    // Xoá lựa chọn thủ công NGAY, cùng lúc với navigate() — nếu chỉ trông
+    // chờ effect [pathname] xoá sau khi URL đổi thì panel cũ (nếu đang ghim
+    // một phân hệ khác) hiện sai đúng một khung hình trước khi effect kịp
+    // chạy.
     if (m.module.route) {
+      chonModule(undefined);
       navigate(m.module.route);
       return;
     }
