@@ -179,7 +179,26 @@ export const MENU_LEAVES: MenuLeaf[] = [
   { key: '/chinh-sach', label: 'Chính sách', module: 'danh-muc', status: 'ok', legacy: true },
   { key: '/bieu-mau', label: 'Biểu mẫu', module: 'danh-muc', status: 'ok', legacy: true },
   { key: '/huong-dan', label: 'Hướng dẫn', module: 'danh-muc', status: 'ok', legacy: true },
-  { key: '/cau-hinh/linh-vuc', label: 'Lĩnh vực', module: 'danh-muc', status: 'ok', legacy: true },
+
+  // ===== Route giữ chỗ có sẵn từ trước — ComingSoon, không lên sidebar =====
+  { key: '/chung-tu/phieu-nhap', label: 'Phiếu nhập', module: 'kho', status: 'soon', legacy: true },
+  { key: '/chung-tu/phieu-xuat', label: 'Phiếu xuất', module: 'kho', status: 'soon', legacy: true },
+  { key: '/chung-tu/phieu-luong', label: 'Phiếu lương', module: 'tien-luong', status: 'soon', legacy: true },
+  { key: '/chung-tu/bang-tinh-luong', label: 'Bảng tính lương', module: 'tien-luong', status: 'soon', legacy: true },
+  { key: '/chung-tu/bang-cham-cong', label: 'Bảng chấm công', module: 'tien-luong', status: 'soon', legacy: true },
+  { key: '/chung-tu/cham-cong-lam-them', label: 'Bảng chấm công làm thêm giờ', module: 'tien-luong', status: 'soon', legacy: true },
+  { key: '/chung-tu/phan-bo-khau-hao', label: 'Bảng phân bổ khấu hao TSCĐ', module: 'tai-san', status: 'soon', legacy: true },
+  { key: '/chung-tu/phieu-ke-toan', label: 'Phiếu kế toán', module: 'tong-hop', status: 'soon', legacy: true },
+  { key: '/chung-tu/de-nghi-thanh-toan', label: 'Đề nghị thanh toán', module: 'von-dong-tien', status: 'soon', legacy: true },
+  { key: '/kho/kiem-ke', label: 'Kiểm kê kho', module: 'kho', status: 'soon', legacy: true },
+  { key: '/trung-tam-du-lieu/nhan-su', label: 'Quản lý Nhân sự', module: 'tien-luong', status: 'soon', legacy: true },
+  { key: '/trung-tam-du-lieu/luong-bhxh', label: 'Lương & BHXH', module: 'tien-luong', status: 'soon', legacy: true },
+
+  // ===== Route index tự-điều-hướng — không phải trang riêng, không cần quyền riêng =====
+  // App.tsx: <Route path="thue"><Route index element={<ThueIndexRoute />} />...
+  // ThueIndexRoute bare (không ProtectedRoute) — tự chuyển sang trang con đầu
+  // tiên user có quyền xem. Không sinh khóa quyền của riêng nó.
+  { key: '/thue', label: 'Thuế', module: 'thue', status: 'soon', legacy: true },
 ];
 
 /** Đường dẫn để navigate (gồm cả query nếu có). */
@@ -202,11 +221,21 @@ export const leafByKey = (key: string): MenuLeaf | undefined =>
 export const labelByPath = (path: string): string | undefined =>
   MENU_LEAVES.find((l) => pathOf(l) === path)?.label;
 
-/** Mọi khóa quyền sinh từ catalog (mục soon không sinh — chưa có gì để cấp). */
-export const permissionKeys = (): string[] =>
-  Array.from(
-    new Set(MENU_LEAVES.filter((l) => l.status === 'ok').map(permKeyOf)),
+/** Mọi khóa quyền sinh từ catalog (mục soon không sinh — chưa có gì để cấp).
+ *  Mục thuộc phân hệ gộp (vd '/danh-muc') bị bỏ qua: bản thân nó chưa bao giờ
+ *  là một khóa quyền — quyền của nó suy từ các route con trong aggregateRoutes. */
+export const permissionKeys = (): string[] => {
+  const phanHeGop = new Set(
+    MENU_MODULES.filter((m) => m.aggregateRoutes).map((m) => m.id),
   );
+  return Array.from(
+    new Set(
+      MENU_LEAVES
+        .filter((l) => l.status === 'ok' && !phanHeGop.has(l.module))
+        .map(permKeyOf),
+    ),
+  );
+};
 
 // ===== Tương thích ngược — useEffectiveMenuKeys và trang Danh mục đang dùng =====
 export interface MenuCatalogEntry {
