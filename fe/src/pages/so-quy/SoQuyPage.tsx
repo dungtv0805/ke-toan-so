@@ -335,7 +335,7 @@ const SoQuyPage: React.FC = () => {
                   value={stats.tongThu}
                   prefix={<ArrowDownOutlined />}
                   formatter={(value) => formatShortCurrency(Number(value))}
-                  valueStyle={{ color: '#52c41a' }}
+                  valueStyle={{ color: 'hsl(var(--green))' }}
                 />
               </Card>
             </Col>
@@ -346,7 +346,7 @@ const SoQuyPage: React.FC = () => {
                   value={stats.tongChi}
                   prefix={<ArrowUpOutlined />}
                   formatter={(value) => formatShortCurrency(Number(value))}
-                  valueStyle={{ color: '#ef4444' }}
+                  valueStyle={{ color: 'hsl(var(--red))' }}
                 />
               </Card>
             </Col>
@@ -357,7 +357,7 @@ const SoQuyPage: React.FC = () => {
                   value={stats.tonCuoiKy}
                   prefix={<WalletOutlined />}
                   formatter={(value) => formatShortCurrency(Number(value))}
-                  valueStyle={{ color: stats.tonCuoiKy >= 0 ? '#1890ff' : '#ef4444' }}
+                  valueStyle={{ color: stats.tonCuoiKy >= 0 ? 'hsl(var(--blue))' : 'hsl(var(--red))' }}
                 />
               </Card>
             </Col>
