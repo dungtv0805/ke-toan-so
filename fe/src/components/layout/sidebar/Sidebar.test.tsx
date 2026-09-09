@@ -80,4 +80,14 @@ describe('Sidebar', () => {
     expect(screen.queryByText('Nhập kho')).toBeNull();
     expect(screen.queryByText('Xuất kho')).toBeNull();
   });
+
+  it('⌘K mở panel khi sidebar đang thu gọn', () => {
+    localStorage.setItem('sidebar-thu-gon:u1', 'true');
+    render(<MemoryRouter initialEntries={['/kho/nhap-kho']}><Sidebar /></MemoryRouter>);
+    expect(screen.queryByText('Nhập kho')).toBeNull();
+
+    fireEvent.keyDown(window, { key: 'k', metaKey: true });
+
+    expect(screen.getByText('Nhập kho')).toBeTruthy();
+  });
 });

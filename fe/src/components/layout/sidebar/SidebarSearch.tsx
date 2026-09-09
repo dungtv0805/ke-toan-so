@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { SearchOutlined } from '@ant-design/icons';
 import type { MenuLeaf } from '@/config/menuCatalog';
 import type { VisibleModule } from '@/hooks/useVisibleMenu';
@@ -28,26 +28,37 @@ export function timMuc(modules: VisibleModule[], tuKhoa: string): KetQuaTim[] {
   return ra;
 }
 
+/**
+ * Cờ "hãy lấy con trỏ", tăng dần, phát ra từ Sidebar mỗi lần bấm ⌘K. Sidebar
+ * là nơi duy nhất luôn được mount nên phải là nơi bắt phím (panel/ô tìm này
+ * có thể đang ẩn lúc bấm) — Context thay cho việc truyền prop xuyên qua
+ * ModulePanel, vì ModulePanel chỉ chuyển tiếp đúng modules/onSelect và không
+ * nằm trong phạm vi sửa của việc này.
+ */
+export const TimNhanhFocusContext = createContext(0);
+
 interface Props {
   modules: VisibleModule[];
   onSelect: (key: string) => void;
+  /** Đổi giá trị (vd. tăng dần) để tự lấy con trỏ vào ô tìm — dùng khi có
+   *  Provider bọc ngoài (Sidebar); truyền tay được nếu dựng SidebarSearch
+   *  độc lập không qua Context. */
+  focusTick?: number;
 }
 
-export const SidebarSearch: React.FC<Props> = ({ modules, onSelect }) => {
+export const SidebarSearch: React.FC<Props> = ({ modules, onSelect, focusTick }) => {
   const [tuKhoa, datTuKhoa] = useState('');
   const oRef = useRef<HTMLInputElement>(null);
   const ketQua = timMuc(modules, tuKhoa);
+  const focusTickContext = useContext(TimNhanhFocusContext);
+  const tick = focusTick ?? focusTickContext;
 
+  // Không tự bắt ⌘K ở đây nữa — Sidebar bắt (luôn mount), rồi báo qua `tick`.
+  // Hai chỗ cùng nghe một phím sẽ đá nhau (mở/đóng lộn xộn khi cả hai cùng
+  // preventDefault).
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        oRef.current?.focus();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+    if (tick) oRef.current?.focus();
+  }, [tick]);
 
   return (
     <div className="relative">

@@ -7,6 +7,7 @@ import { SidebarRail } from './SidebarRail';
 import { ModulePanel } from './ModulePanel';
 import { ModuleFlyout } from './ModuleFlyout';
 import { useSidebarState } from './useSidebarState';
+import { TimNhanhFocusContext } from './SidebarSearch';
 
 export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
@@ -50,6 +51,31 @@ export const Sidebar: React.FC = () => {
     document.documentElement.style.setProperty('--sidebar-w', `${beRong}px`);
   }, [beRong]);
 
+  // ⌘K/Ctrl+K: bắt ở đây (Sidebar luôn mount, không như panel/SidebarSearch
+  // có lúc bị ẩn hẳn). Nếu panel đang không hiện thì mở ra, và nếu phân hệ
+  // đang chọn là phân hệ có `route` riêng (Tổng quan, Danh mục — không có gì
+  // để hiện trong panel) thì chuyển sang phân hệ đầu tiên KHÔNG có route
+  // trong danh sách đang hiện, để panel có nội dung mà mở. Sau đó luôn tăng
+  // `focusTick` để ô tìm tự lấy con trỏ (qua Context, xem SidebarSearch).
+  const [focusTick, setFocusTick] = useState(0);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        if (!panelSeHien) {
+          datThuGon(false);
+          if (current?.module.route) {
+            const dauTien = modules.find((m) => !m.module.route);
+            if (dauTien) chonModule(dauTien.module.id);
+          }
+        }
+        setFocusTick((t) => t + 1);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [panelSeHien, current, modules, datThuGon, chonModule]);
+
   // Đổi tên khỏi `chonModule` để không trùng setter cùng tên lấy từ hook.
   const bamRail = (id: ModuleId) => {
     const m = modules.find((x) => x.module.id === id);
@@ -69,34 +95,36 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside
-      className="relative flex h-screen shrink-0"
-      style={{ width: beRong }}
-    >
-      <SidebarRail
-        modules={modules}
-        activeModule={dangMo}
-        onPick={bamRail}
-        onHover={thuGon ? datFlyout : undefined}
-      />
-      {!thuGon && current && !current.module.route && (
-        <ModulePanel
-          current={current}
-          allModules={modules}
-          activePath={pathname}
-          onSelect={navigate}
-          onCollapse={() => datThuGon(true)}
+    <TimNhanhFocusContext.Provider value={focusTick}>
+      <aside
+        className="relative flex h-screen shrink-0"
+        style={{ width: beRong }}
+      >
+        <SidebarRail
+          modules={modules}
+          activeModule={dangMo}
+          onPick={bamRail}
+          onHover={thuGon ? datFlyout : undefined}
         />
-      )}
-      {thuGon && flyoutModule && !flyoutModule.module.route && (
-        <ModuleFlyout
-          current={flyoutModule}
-          activePath={pathname}
-          onSelect={navigate}
-          onClose={() => datFlyout(undefined)}
-        />
-      )}
-    </aside>
+        {!thuGon && current && !current.module.route && (
+          <ModulePanel
+            current={current}
+            allModules={modules}
+            activePath={pathname}
+            onSelect={navigate}
+            onCollapse={() => datThuGon(true)}
+          />
+        )}
+        {thuGon && flyoutModule && !flyoutModule.module.route && (
+          <ModuleFlyout
+            current={flyoutModule}
+            activePath={pathname}
+            onSelect={navigate}
+            onClose={() => datFlyout(undefined)}
+          />
+        )}
+      </aside>
+    </TimNhanhFocusContext.Provider>
   );
 };
 
