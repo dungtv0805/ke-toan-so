@@ -8,8 +8,9 @@ export interface KetQuaTim {
   moduleLabel: string;
 }
 
+// Bỏ dấu tiếng Việt. Dùng escape [\u0300-\u036f] thay ký tự tổ hợp thật để tránh công cụ chuẩn hoá xoá mất chúng im lặng.
 const boDau = (s: string) =>
-  s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase();
+  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
 
 /** Tìm xuyên mọi mục đang hiện. Tối đa 8 kết quả cho vừa panel. */
 export function timMuc(modules: VisibleModule[], tuKhoa: string): KetQuaTim[] {
