@@ -51,6 +51,14 @@ describe('locMuc', () => {
     const ds = [muc('/bao-cao/so-cai', { legacy: true })];
     expect(locMuc(ds, ['/bao-cao'], () => true, false)).toEqual([]);
   });
+
+  it('user chỉ có quyền /tong-quan:xem (không có /:xem) vẫn phải thấy Bảng điều hành', () => {
+    const leaf: MenuLeaf = {
+      key: '/', label: 'Bảng điều hành', module: 'tong-quan', status: 'ok',
+    };
+    const ra = locMuc([leaf], ['/'], (p) => p === '/tong-quan:xem', false);
+    expect(ra).toHaveLength(1);
+  });
 });
 
 describe('cacKhoaQuyen', () => {
