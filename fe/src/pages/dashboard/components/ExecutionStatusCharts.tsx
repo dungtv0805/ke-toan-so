@@ -55,7 +55,7 @@ const Legend: React.FC<{ color: string; muc: MucSoSanh }> = ({ color, muc }) => 
   <div className="space-y-1 text-xs">
     {([
       ['Thực hiện', color, muc.thucHien],
-      ['Kế hoạch', '#6E6E73', muc.keHoach], // = --muted-foreground
+      ['Kế hoạch', 'hsl(var(--muted-foreground))', muc.keHoach],
       ['Chênh lệch', color, muc.chenhLech],
     ] as [string, string, number][]).map(([label, c, value]) => (
       <div key={label} className="flex items-center justify-between gap-4">
