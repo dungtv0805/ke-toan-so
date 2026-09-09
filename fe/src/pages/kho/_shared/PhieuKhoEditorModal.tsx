@@ -404,7 +404,7 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
                 <Text type="secondary" style={{ fontSize: 13 }}>
                   Tổng cộng:{' '}
                 </Text>
-                <Text strong style={{ fontSize: 14, color: '#1f7769' }}>
+                <Text strong style={{ fontSize: 14, color: 'hsl(var(--primary))' }}>
                   {formatCurrency(tongTien)}
                 </Text>
               </div>
