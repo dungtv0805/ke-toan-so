@@ -104,6 +104,19 @@
     --red: 4 71% 50%;
     --amber: 36 100% 35%;
 
+    /* ------------------------------------------------------------------
+     * BẢN "MỰC" của bốn màu trên: dùng làm MÀU CHỮ trên nền pill nhạt cùng
+     * tông (StatusPill). Bản gốc chỉ đạt ~3.4–4.0:1 ở cỡ chữ 10.5px — dưới
+     * ngưỡng 4.5:1 của WCAG AA cho chữ thường. Hạ độ sáng (không hạ alpha:
+     * alpha chỉ làm chữ nhạt thêm) để mỗi tông đạt ≥4.5:1 trên chính nền
+     * pill của nó, đo cả trên card trắng lẫn nền trang #F5F5F7.
+     *   green-ink 4.91 · amber-ink 4.93 · red-ink 4.87 · blue-ink 4.91
+     * ------------------------------------------------------------------ */
+    --green-ink: 148 65% 28%; /* #197644 */
+    --amber-ink: 36 100% 29%; /* #945900 */
+    --red-ink: 4 71% 44%; /* #C02B21 */
+    --blue-ink: 211 100% 41%; /* #0065D1 */
+
     /* Biểu đồ — #F2994A / #1F3864 / #C9A227 */
     --chart-orange: 28 87% 62%;
     --chart-navy: 220 51% 26%;
@@ -158,6 +171,14 @@
     --green: 148 50% 48%;
     --red: 4 71% 62%;
     --amber: 36 80% 55%;
+
+    /* Bản "mực" ở nền tối đi NGƯỢC chiều: phải SÁNG hơn nền pill, không tối
+       hơn. green/amber đã đủ nên giữ nguyên giá trị; red/blue phải nâng.
+       green-ink 4.79 · amber-ink 5.39 · red-ink 4.93 · blue-ink 4.82 */
+    --green-ink: 148 50% 48%;
+    --amber-ink: 36 80% 55%;
+    --red-ink: 4 71% 70%;
+    --blue-ink: 211 100% 66%;
     --chart-orange: 28 87% 62%;
     --chart-navy: 220 45% 55%;
     --chart-gold: 45 71% 55%;
