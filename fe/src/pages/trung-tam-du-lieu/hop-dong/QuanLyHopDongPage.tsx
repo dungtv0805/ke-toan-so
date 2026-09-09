@@ -569,14 +569,15 @@ export default function QuanLyHopDongPage() {
 
       <Row gutter={[12, 12]}>
         {[
-          { title: 'Doanh số', value: baoCao.doanhSo, color: '#1677ff' },
-          { title: 'DT chưa thực hiện', value: baoCao.dtChuaThucHien, color: '#fa8c16' },
-          { title: 'DT đã thực hiện', value: baoCao.dtDaThucHien, color: '#52c41a' },
+          // 'Tiền thuế' giữ màu tím cứng — không có token tím tương ứng trong bộ token hiện tại.
+          { title: 'Doanh số', value: baoCao.doanhSo, color: 'hsl(var(--blue))' },
+          { title: 'DT chưa thực hiện', value: baoCao.dtChuaThucHien, color: 'hsl(var(--amber))' },
+          { title: 'DT đã thực hiện', value: baoCao.dtDaThucHien, color: 'hsl(var(--green))' },
           { title: 'Tiền thuế', value: baoCao.tienThue, color: '#722ed1' },
-          { title: 'Tiền đã thu', value: baoCao.daThu, color: '#52c41a' },
-          { title: 'Còn phải thu', value: baoCao.conPhaiThu, color: '#fa8c16' },
-          { title: 'Đã xuất hóa đơn', value: baoCao.daXuatHoaDon, color: '#1677ff' },
-          { title: 'Chưa xuất hóa đơn', value: baoCao.chuaXuatHoaDon, color: '#fa8c16' },
+          { title: 'Tiền đã thu', value: baoCao.daThu, color: 'hsl(var(--green))' },
+          { title: 'Còn phải thu', value: baoCao.conPhaiThu, color: 'hsl(var(--amber))' },
+          { title: 'Đã xuất hóa đơn', value: baoCao.daXuatHoaDon, color: 'hsl(var(--blue))' },
+          { title: 'Chưa xuất hóa đơn', value: baoCao.chuaXuatHoaDon, color: 'hsl(var(--amber))' },
         ].map((c) => (
           <Col xs={12} sm={8} md={6} lg={3} key={c.title}>
             <Card className="stat-card" size="small">
@@ -585,7 +586,7 @@ export default function QuanLyHopDongPage() {
                 title={<span style={{ fontSize: 12 }}>{c.title}</span>}
                 value={c.value}
                 formatter={(v) => fmtTrieu(Number(v))}
-                suffix={<span style={{ fontSize: 12, color: '#8c8c8c' }}>tr</span>}
+                suffix={<span style={{ fontSize: 12, color: 'hsl(var(--ink-2))' }}>tr</span>}
                 valueStyle={{ fontSize: 16, color: c.color }}
               />
             </Card>
