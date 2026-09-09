@@ -455,6 +455,29 @@ Expected: FAIL. Đọc kỹ từng lỗi:
 
 Chỉ sửa `menuCatalog.tsx`. **Không nới lỏng test.** Nếu tin là test sai thì dừng lại hỏi, đừng tự đổi.
 
+Test 2 sẽ liệt kê đúng 12 route giữ chỗ đang sống trong `App.tsx` mà catalog chưa khai.
+Chúng đều là route trỏ `ComingSoonPage` từ trước, không phải trang thật, nên khai
+`status: 'soon'` **kèm** `legacy: true` — vừa không lọt vào sidebar, vừa không sinh key quyền:
+
+```tsx
+  // ===== Route giữ chỗ có sẵn từ trước — ComingSoon, không lên sidebar =====
+  { key: '/chung-tu/phieu-nhap', label: 'Phiếu nhập', module: 'kho', status: 'soon', legacy: true },
+  { key: '/chung-tu/phieu-xuat', label: 'Phiếu xuất', module: 'kho', status: 'soon', legacy: true },
+  { key: '/chung-tu/phieu-luong', label: 'Phiếu lương', module: 'tien-luong', status: 'soon', legacy: true },
+  { key: '/chung-tu/bang-tinh-luong', label: 'Bảng tính lương', module: 'tien-luong', status: 'soon', legacy: true },
+  { key: '/chung-tu/bang-cham-cong', label: 'Bảng chấm công', module: 'tien-luong', status: 'soon', legacy: true },
+  { key: '/chung-tu/cham-cong-lam-them', label: 'Bảng chấm công làm thêm giờ', module: 'tien-luong', status: 'soon', legacy: true },
+  { key: '/chung-tu/phan-bo-khau-hao', label: 'Bảng phân bổ khấu hao TSCĐ', module: 'tai-san', status: 'soon', legacy: true },
+  { key: '/chung-tu/phieu-ke-toan', label: 'Phiếu kế toán', module: 'tong-hop', status: 'soon', legacy: true },
+  { key: '/chung-tu/de-nghi-thanh-toan', label: 'Đề nghị thanh toán', module: 'von-dong-tien', status: 'soon', legacy: true },
+  { key: '/kho/kiem-ke', label: 'Kiểm kê kho', module: 'kho', status: 'soon', legacy: true },
+  { key: '/trung-tam-du-lieu/nhan-su', label: 'Quản lý Nhân sự', module: 'tien-luong', status: 'soon', legacy: true },
+  { key: '/trung-tam-du-lieu/luong-bhxh', label: 'Lương & BHXH', module: 'tien-luong', status: 'soon', legacy: true },
+```
+
+`/kho/kiem-ke` và `/chung-tu/phieu-ke-toan` vẫn vào được từ thanh ngang `KHO_NAV` /
+`CHUNG_TU_NAV` — giữ nguyên, không đụng `sectionNavs.tsx`.
+
 Run: `cd fe && npx vitest run src/config/menuCatalog.test.ts`
 Expected: PASS, 7 test.
 
@@ -1377,8 +1400,7 @@ export const Sidebar: React.FC = () => {
   const { pathname } = useLocation();
   const { user } = useAuth();
   const modules = useVisibleMenu();
-  const { thuGon, datThuGon } = useSidebarState(user?.id);
-  const { moduleTheoUrl } = useSidebarState(user?.id);
+  const { thuGon, datThuGon, moduleTheoUrl } = useSidebarState(user?.id);
 
   const moduleTheoTrang = moduleTheoUrl(pathname);
   const [moduleChon, datModuleChon] = useState<ModuleId | undefined>();
@@ -1892,30 +1914,29 @@ import { Sidebar, MobileMenu } from './sidebar';
 
   <Layout
     style={{
-      marginLeft: isMobile ? 0 : undefined,
+      marginLeft: isMobile ? 0 : 'var(--sidebar-w, 258px)',
       transition: 'margin-left 0.2s ease',
       minHeight: '100vh',
     }}
-    className={isMobile ? '' : 'ml-[258px] data-[thu-gon=true]:ml-[62px]'}
   >
     {/* Header và Content giữ nguyên y như cũ */}
   </Layout>
 </Layout>
 ```
 
-Chiều rộng chừa cho sidebar phải theo đúng trạng thái thu gọn. Cách gọn nhất: `Sidebar` báo bề rộng ra ngoài qua biến CSS. Trong `Sidebar.tsx`, thay `<aside style={{ width: ... }}>` bằng:
+`MainLayout` không được tự đoán bề rộng sidebar — trạng thái thu gọn nằm trong
+`Sidebar`. Cho `Sidebar` công bố bề rộng ra biến CSS, `MainLayout` chỉ đọc.
+Trong `Sidebar.tsx`, thêm effect ngay trước `return`:
 
 ```tsx
-<aside
-  className="relative flex h-screen shrink-0"
-  style={{ width: thuGon ? 62 : 258 }}
-  ref={(el) => {
-    if (el) document.documentElement.style.setProperty('--sidebar-w', `${thuGon ? 62 : 258}px`);
-  }}
->
+  const beRong = thuGon ? 62 : 258;
+  useEffect(() => {
+    document.documentElement.style.setProperty('--sidebar-w', `${beRong}px`);
+  }, [beRong]);
 ```
 
-và trong `MainLayout` dùng `style={{ marginLeft: isMobile ? 0 : 'var(--sidebar-w, 258px)' }}`.
+và đổi thẻ bọc thành `<aside className="relative flex h-screen shrink-0" style={{ width: beRong }}>`.
+Nhớ thêm `useEffect` vào dòng import React.
 
 - [ ] **Step 3: Xoá CSS sidebar cũ**
 

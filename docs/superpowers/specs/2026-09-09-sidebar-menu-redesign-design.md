@@ -529,10 +529,42 @@ Chỉ là sidebar sẽ hiện nhiều chấm cam hơn bản đồ vẽ, và đó
 FE **không có service nào** cung cấp mấy số này, và spec cấm đổi backend (§8).
 Đợt này để trống chỗ đó trong `ModulePanel`; thẻ là việc của một đợt sau, cần API mới.
 
-### 14.3 Số mục: 70 → 72
+### 14.3 Số mục: 70 → 74 (đợt A) → 77 (sau đợt C)
 
-§3 cộng ra 70 khi Phiếu thu/Phiếu chi còn "chờ chốt". Chốt đưa cả hai vào
-Vốn & dòng tiền → **72 mục lá**: 1 · 8 · 12 · 5 · 8 · 9 · 7 · 6 · 7 · 4 · 4 · 1.
+§3 cộng ra 70 khi vài mục còn treo. Sau khi chốt §9 và đối chiếu code, con số thật:
+
+| Phân hệ | §3 | Chốt | Chênh vì |
+|---|---|---|---|
+| Tổng quan | 1 | 1 | |
+| Phân tích | 8 | **9** | `/bao-cao/pnl-3-lop` về đây (§9), là trang chạy thật nên không gộp được vào mục P&L |
+| Tổng hợp | 12 | **9** → 12 | đợt A giữ `/bao-cao/tai-chinh` là **1 mục**; đợt C tách thành 4 (§15) |
+| Vốn & dòng tiền | 3+2 | **5** | Phiếu thu + Phiếu chi |
+| Mua hàng | 8 | 8 | |
+| Bán hàng | 9 | **10** | `/bao-cao/doanh-thu` là trang chạy thật, phải có lối vào (§9) |
+| Tiền lương | 7 | 7 | |
+| Kho | 6 | **9** | + Hàng hóa · Nguyên vật liệu · Văn phòng phẩm (§9), cụm "NHÓM HÀNG" |
+| Tài sản | 7 | 7 | |
+| CCDC | 4 | 4 | |
+| Thuế | 4 | 4 | |
+| Danh mục | 1 | 1 | 26 trang con lấy từ `danhMucCatalog.ts` (§10.5) |
+| **Tổng** | 70 | **74** → 77 | |
+
+### 14.4 Mỗi đợt không được làm mất lối vào trang đang chạy
+
+Ràng buộc bắt buộc khi xếp đợt: một trang đang chạy thật thì **không đợt nào** được để
+nó rơi khỏi sidebar rồi đợi đợt sau mới trả lại. Hai chỗ dễ vướng:
+
+- **`/bao-cao/tai-chinh`** — đợt A để nguyên **1 mục** trong cụm BÁO CÁO TÀI CHÍNH.
+  Nếu đợt A khai luôn 4 mục con `soon` thì 4 tab đang dùng được biến thành 4 trang
+  ComingSoon. Đợt C tách route xong mới đổi catalog.
+- **Kế hoạch / Dự báo** — §4 gỡ 2 mục đứng riêng. Đợt A thay bằng mục theo phân hệ trỏ
+  `/trung-tam-du-lieu/ke-hoach?tab=<tab>`, và `KeHoachTabsPage` đọc `?tab` để chọn tab
+  đầu (đổi 3 dòng khởi tạo state, không đụng logic tính toán). Nhờ vậy mục
+  "Kế hoạch bán hàng" chạy được ngay từ đợt A thay vì phải chờ đợt C.
+
+Với hai chỗ này, `key` của mục lá được phép mang query string; khóa quyền khi đó khai
+riêng bằng `permKey` (ví dụ key `/trung-tam-du-lieu/ke-hoach?tab=nhan-su`,
+`permKey: '/trung-tam-du-lieu/ke-hoach'`) — quyền vẫn là key cũ, đúng cam kết §13.
 
 ## 15. Chia đợt — thay §7
 
