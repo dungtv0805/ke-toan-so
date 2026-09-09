@@ -32,8 +32,8 @@ export const SidebarRail: React.FC<Props> = ({
           className={[
             'flex h-[40px] w-[50px] flex-col items-center justify-center gap-[2px] rounded-[8px] transition-colors',
             dangMo
-              ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
-              : 'text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]',
+              ? 'bg-[hsl(var(--sidebar-primary))] text-[hsl(var(--sidebar-primary-foreground))]'
+              : 'text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]',
           ].join(' ')}
         >
           <span className="text-[17px] leading-none">{module.icon}</span>
