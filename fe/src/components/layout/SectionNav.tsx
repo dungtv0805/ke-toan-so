@@ -36,7 +36,7 @@ export const SectionNav: React.FC<Props> = ({ items, className }) => {
 
   return (
     <div
-      className={`flex items-center gap-1 overflow-x-auto border-b border-border pb-1.5 ${className ?? ""}`}
+      className={`flex items-center gap-[6px] overflow-x-auto border-b border-[hsl(var(--border))] pb-[6px] ${className ?? ""}`}
     >
       {visible.map((it) => {
         const active =
@@ -47,10 +47,10 @@ export const SectionNav: React.FC<Props> = ({ items, className }) => {
             key={it.path}
             type="button"
             onClick={() => navigate(it.path)}
-            className={`flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`flex h-[24px] shrink-0 items-center gap-[6px] rounded-[7px] px-[10px] text-[11px] font-medium transition-colors ${
               active
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
+                : "text-[hsl(var(--ink-2))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--ink))]"
             }`}
           >
             {it.icon}
