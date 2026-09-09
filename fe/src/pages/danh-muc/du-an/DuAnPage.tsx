@@ -522,7 +522,7 @@ const DuAnPage: React.FC = () => {
               title="Đang thực hiện"
               value={stats.dangThucHien}
               prefix={<PlayCircleOutlined className="text-blue-500" />}
-              valueStyle={{ color: "#1890ff" }}
+              valueStyle={{ color: "hsl(var(--blue))" }}
             />
           </Card>
         </Col>
@@ -532,7 +532,7 @@ const DuAnPage: React.FC = () => {
               title="Hoàn thành"
               value={stats.hoanThanh}
               prefix={<CheckCircleOutlined className="text-green-500" />}
-              valueStyle={{ color: "#22c55e" }}
+              valueStyle={{ color: "hsl(var(--green))" }}
             />
           </Card>
         </Col>
@@ -542,7 +542,7 @@ const DuAnPage: React.FC = () => {
               title="Tạm dừng"
               value={stats.tamDung}
               prefix={<PauseCircleOutlined className="text-orange-500" />}
-              valueStyle={{ color: "#f97316" }}
+              valueStyle={{ color: "hsl(var(--amber))" }}
             />
           </Card>
         </Col>
