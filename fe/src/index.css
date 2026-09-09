@@ -139,7 +139,12 @@
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 33% 17%;
+    /* Thang bề mặt bản tối PHẢI tách bậc: trước đây --card, --muted và --border
+       cùng là 217 33% 17% nên viền `.action-icon-btn` vô hình, StatusPill tông
+       xám mất hình dạng và zebra bảng biến mất hẳn. Thứ tự sáng dần:
+       background 11% → card 17% → muted 23% → border 34%.
+       Tương phản: card/background 1.21 · muted/card 1.23 · border/card 1.87. */
+    --muted: 217 30% 23%;
     --muted-foreground: 240 3% 70%; /* = --ink-2 (dark) */
 
     --accent: 217 33% 17%;
@@ -148,8 +153,8 @@
     --destructive: 4 71% 62%; /* = --red (dark) */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
+    --border: 217 24% 34%;
+    --input: 217 24% 34%;
     --ring: 170 59% 29%;
 
     --sidebar-background: 240 5% 12%;

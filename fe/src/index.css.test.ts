@@ -76,6 +76,15 @@ describe('design token', () => {
     }
   });
 
+  it('thang bề mặt bản tối phải tách bậc, không được trùng nhau', () => {
+    // Ba token này từng CÙNG là 217 33% 17%: viền .action-icon-btn vô hình,
+    // StatusPill tông xám mất hình dạng, zebra bảng biến mất.
+    const bac = ['card', 'muted', 'border'].map((t) => bienToi(t));
+    expect(new Set(bac).size, `--card/--muted/--border trùng nhau: ${bac.join(' | ')}`).toBe(3);
+    // --input là viền ô nhập, phải đi cùng --border chứ không cùng nền card.
+    expect(bienToi('input')).toBe(bienToi('border'));
+  });
+
   it('bí danh cũ và tên mới cũng phải trùng nhau ở khối tối', () => {
     expect(bienToi('foreground')).toBe(bienToi('ink'));
     expect(bienToi('muted-foreground')).toBe(bienToi('ink-2'));
