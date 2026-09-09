@@ -104,8 +104,16 @@ export const Sidebar: React.FC = () => {
       return;
     }
     // Bấm lại icon đang chọn → đóng/mở panel.
-    if (id === dangMo && !thuGon) datThuGon(true);
-    else datThuGon(false);
+    if (id === dangMo && !thuGon) {
+      datThuGon(true);
+    } else {
+      // Mở panel bằng chuột: SidebarSearch mount lại và effect [tick] của nó
+      // chạy ngay với giá trị còn sót từ lần ⌘K trước (cờ chỉ tăng, không bao
+      // giờ về 0) → ô tìm cướp con trỏ dù người dùng chỉ bấm icon rail. Đặt
+      // lại về 0 TRƯỚC khi đổi phân hệ.
+      setFocusTick(0);
+      datThuGon(false);
+    }
     chonModule(id);
   };
 

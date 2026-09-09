@@ -108,6 +108,22 @@ describe('Sidebar', () => {
     expect(screen.queryByText('Xuất kho')).toBeNull();
   });
 
+  /**
+   * Cờ `focusTick` chỉ tăng, không bao giờ về 0. Sau một lần ⌘K, mở lại panel
+   * bằng chuột làm SidebarSearch mount lại và effect [tick] chạy với giá trị
+   * còn khác 0 → ô tìm cướp con trỏ dù người dùng chỉ bấm icon rail.
+   */
+  it('bấm rail mở lại panel KHÔNG cướp con trỏ, dù trước đó đã bấm ⌘K', () => {
+    render(<MemoryRouter initialEntries={['/kho/nhap-kho']}><Sidebar /></MemoryRouter>);
+    fireEvent.keyDown(window, { key: 'k', metaKey: true });
+    expect(document.activeElement).toBe(screen.getByPlaceholderText('Tìm nhanh'));
+
+    fireEvent.click(screen.getByTitle(/^Kho —/)); // thu gọn
+    fireEvent.click(screen.getByTitle(/^Kho —/)); // mở lại bằng chuột
+
+    expect(document.activeElement).not.toBe(screen.getByPlaceholderText('Tìm nhanh'));
+  });
+
   it('⌘K mở panel khi sidebar đang thu gọn', () => {
     localStorage.setItem('sidebar-thu-gon:u1', 'true');
     render(<MemoryRouter initialEntries={['/kho/nhap-kho']}><Sidebar /></MemoryRouter>);
