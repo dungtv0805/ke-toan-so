@@ -58,6 +58,9 @@ export const MobileMenu: React.FC<Props> = ({ open, onClose }) => {
             <button
               key={module.id}
               type="button"
+              // Nhánh không có route mở ra danh sách con (lớp 2) — báo cho
+              // trình đọc màn hình biết, nếu không chỉ nghe được "Kho, 9".
+              aria-haspopup={module.route ? undefined : 'true'}
               onClick={() => {
                 if (module.route) {
                   navigate(module.route);
