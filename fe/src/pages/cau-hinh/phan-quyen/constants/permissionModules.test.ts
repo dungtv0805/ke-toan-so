@@ -100,3 +100,41 @@ describe('ma trận — không cấp lại, không đánh rơi', () => {
     expect(la).toEqual([]);
   });
 });
+
+/**
+ * Khoá nào bị nhiều mục sidebar dùng chung thì ma trận chỉ hiện được một dòng
+ * cho nó — nếu dòng đó mang nhãn của MỘT mục (vd 'Bảng cân đối kế toán') thì
+ * admin tưởng tick vào là chỉ cấp báo cáo đó, và không tìm ra dòng nào để thu
+ * hồi riêng ba báo cáo còn lại. Test này khẳng định các khoá dùng chung phải
+ * mang nhãn nêu rõ "dùng chung", không phải nhãn của mục đầu tiên khai nó.
+ */
+describe('ma trận — nhãn khoá dùng chung nhiều mục sidebar', () => {
+  const timTheoKey = (
+    ds: PermissionModule[],
+    key: string,
+  ): PermissionModule | undefined => {
+    for (const m of ds) {
+      if (m.key === key) return m;
+      if (m.children) {
+        const found = timTheoKey(m.children, key);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  };
+
+  it.each([
+    ['/bao-cao/tai-chinh', 'Báo cáo tài chính (cả 4 tab)'],
+    [
+      '/trung-tam-du-lieu/ke-hoach',
+      'Kế hoạch (dùng chung: Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản)',
+    ],
+    [
+      '/trung-tam-du-lieu/du-bao',
+      'Dự báo (dùng chung: Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản)',
+    ],
+  ])('khoá %s hiện nhãn đè "%s", không phải nhãn mục đầu tiên', (key, nhan) => {
+    const dong = timTheoKey(permissionModules, key);
+    expect(dong?.label).toBe(nhan);
+  });
+});

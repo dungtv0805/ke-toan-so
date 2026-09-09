@@ -39,6 +39,26 @@ const khoaCua = (leaf: MenuLeaf): string => {
 };
 
 /**
+ * Nhãn riêng cho ma trận khi một khoá quyền cấp cho NHIỀU mục sidebar.
+ * Sidebar tách 4 báo cáo tài chính thành 4 mục nhưng chúng dùng chung một
+ * khoá; nếu ma trận hiện tên của mục đầu tiên thì admin tưởng mình chỉ cấp
+ * một báo cáo, và không tìm ra dòng nào để thu hồi ba cái kia.
+ *
+ * Hai khoá Kế hoạch/Dự báo cũng vậy: mỗi khoá gộp 4 mục sidebar của 4 phân hệ
+ * khác nhau (Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản) qua `?tab=`, và
+ * ma trận chỉ hiện nhãn của phân hệ khai nó TRƯỚC (Vốn & dòng tiền, do đứng
+ * đầu MENU_MODULES) — admin dò theo "Kế hoạch bán hàng" ở ma trận sẽ không
+ * thấy dòng nào tên như vậy.
+ */
+const NHAN_MA_TRAN: Record<string, string> = {
+  '/bao-cao/tai-chinh': 'Báo cáo tài chính (cả 4 tab)',
+  '/trung-tam-du-lieu/ke-hoach':
+    'Kế hoạch (dùng chung: Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản)',
+  '/trung-tam-du-lieu/du-bao':
+    'Dự báo (dùng chung: Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản)',
+};
+
+/**
  * Trang cấu hình vào từ nút bánh răng, không nằm trong MENU_MODULES nên phải
  * khai tay. Phải khớp với BE PERMISSION_MODULES (tenant.service.ts) — thiếu ở
  * đây thì mỗi lần lưu trên trang Phân quyền sẽ xoá các quyền này khỏi vai trò.
@@ -101,7 +121,7 @@ function dungMaTran(): PermissionModule[] {
       const key = khoaCua(leaf);
       if (daCo.has(key)) continue;
       daCo.add(key);
-      con.push({ key, label: leaf.label });
+      con.push({ key, label: NHAN_MA_TRAN[key] ?? leaf.label });
     }
 
     if (con.length === 0) continue;
