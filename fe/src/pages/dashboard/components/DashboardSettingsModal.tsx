@@ -5,11 +5,16 @@ import {
   RadialBarChart, RadialBar, PolarAngleAxis,
 } from 'recharts';
 
+// Bảng màu mini-preview mô phỏng đúng các biểu đồ thật trên Tổng quan — mỗi màu
+// phân biệt một chuỗi dữ liệu trong preview, GIỮ NGUYÊN. ORANGE/NAVY/GOLD trùng giá
+// trị token --chart-orange/--chart-navy/--chart-gold nên quy về token; các màu còn lại
+// (TEAL, GRAY, RED, và các mã lẻ trong PreviewDonut/PreviewCanDoi) không có token tương
+// ứng, giữ nguyên hex.
 const TEAL = '#2BC4A8';
 const GRAY = '#C9CDD4';
-const ORANGE = '#F2994A';
-const NAVY = '#1F3864';
-const GOLD = '#C9A227';
+const ORANGE = 'hsl(var(--chart-orange))';
+const NAVY = 'hsl(var(--chart-navy))';
+const GOLD = 'hsl(var(--chart-gold))';
 const RED = '#D6453B';
 
 // Kích thước cố định cho preview (không dùng ResponsiveContainer — trong Modal nó
