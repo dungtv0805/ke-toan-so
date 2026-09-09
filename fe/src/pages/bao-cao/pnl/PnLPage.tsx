@@ -160,7 +160,7 @@ const PnLPage: React.FC = () => {
       render: (text: string, record: PnLRow) => (
         <span style={{
           fontWeight: record.isCategory || record.isSummary ? 600 : 400,
-          color: record.isSummary ? '#1890ff' : 'inherit',
+          color: record.isSummary ? 'hsl(var(--blue))' : 'inherit',
         }}>
           {text}
         </span>
@@ -174,7 +174,7 @@ const PnLPage: React.FC = () => {
       align: 'right',
       render: (value: number, record: PnLRow) => (
         <span style={{
-          color: value < 0 ? '#ff4d4f' : value > 0 ? '#52c41a' : 'inherit',
+          color: value < 0 ? 'hsl(var(--red))' : value > 0 ? 'hsl(var(--green))' : 'inherit',
           fontWeight: record.isCategory || record.isSummary ? 600 : 400,
         }}>
           {value !== 0 ? formatCurrency(value) : '-'}
@@ -232,7 +232,7 @@ const PnLPage: React.FC = () => {
                 title="Doanh thu"
                 value={summary?.tongDoanhThu ?? 0}
                 formatter={(val) => formatCurrencyShort(val as number)}
-                valueStyle={{ color: '#1890ff' }}
+                valueStyle={{ color: 'hsl(var(--blue))' }}
                 prefix={<DollarOutlined />}
               />
             </Card>
@@ -243,7 +243,7 @@ const PnLPage: React.FC = () => {
                 title="Chi phí"
                 value={summary?.tongChiPhi ?? 0}
                 formatter={(val) => formatCurrencyShort(val as number)}
-                valueStyle={{ color: '#ff4d4f' }}
+                valueStyle={{ color: 'hsl(var(--red))' }}
               />
             </Card>
           </Col>
@@ -253,7 +253,7 @@ const PnLPage: React.FC = () => {
                 title="LN trước thuế"
                 value={summary?.loiNhuanTruocThue ?? 0}
                 formatter={(val) => formatCurrencyShort(val as number)}
-                valueStyle={{ color: (summary?.loiNhuanTruocThue ?? 0) >= 0 ? '#1890ff' : '#ff4d4f' }}
+                valueStyle={{ color: (summary?.loiNhuanTruocThue ?? 0) >= 0 ? 'hsl(var(--blue))' : 'hsl(var(--red))' }}
               />
             </Card>
           </Col>
@@ -263,7 +263,7 @@ const PnLPage: React.FC = () => {
                 title="LN sau thuế"
                 value={summary?.loiNhuanSauThue ?? 0}
                 formatter={(val) => formatCurrencyShort(val as number)}
-                valueStyle={{ color: (summary?.loiNhuanSauThue ?? 0) >= 0 ? '#52c41a' : '#ff4d4f' }}
+                valueStyle={{ color: (summary?.loiNhuanSauThue ?? 0) >= 0 ? 'hsl(var(--green))' : 'hsl(var(--red))' }}
                 prefix={(summary?.loiNhuanSauThue ?? 0) >= 0 ? <RiseOutlined /> : <FallOutlined />}
                 suffix={<span style={{ fontSize: 12 }}>({(summary?.tyLeLoiNhuanRong ?? 0).toFixed(1)}%)</span>}
               />
