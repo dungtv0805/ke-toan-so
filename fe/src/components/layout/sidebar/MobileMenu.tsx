@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useVisibleMenu } from '@/hooks/useVisibleMenu';
 import type { ModuleId } from '@/config/menuCatalog';
 import { MenuItemList } from './MenuItemList';
+import { HelpMenu } from './HelpMenu';
 
 interface Props {
   open: boolean;
@@ -83,6 +84,15 @@ export const MobileMenu: React.FC<Props> = ({ open, onClose }) => {
               )}
             </button>
           ))}
+          {/* Panel không tồn tại trên điện thoại — 4 trang thư viện phải có
+              lối vào ngay ở lớp 1, nếu không chỉ vào được bằng cách gõ URL. */}
+          <HelpMenu
+            bienThe="mobile"
+            onSelect={(key) => {
+              navigate(key);
+              dong();
+            }}
+          />
         </div>
       )}
     </Drawer>

@@ -27,7 +27,34 @@ describe('Sidebar', () => {
     // đếm getAllByRole('button') trên toàn cây sẽ luôn ≥ 12 bất kể rail
     // đúng hay sai (review Task 8, Important 2).
     const rail = screen.getByRole('navigation', { name: 'Phân hệ' });
-    expect(within(rail).getAllByRole('button')).toHaveLength(12);
+    // Rail còn một ô Trợ giúp cố định ở đáy — loại nó ra để phép đếm vẫn nói
+    // đúng về số phân hệ chứ không chỉ về tổng số nút.
+    const oPhanHe = within(rail)
+      .getAllByRole('button')
+      .filter((b) => b.getAttribute('aria-label') !== 'Trợ giúp & phản hồi');
+    expect(oPhanHe).toHaveLength(12);
+  });
+
+  /**
+   * Panel KHÔNG hiện trong 3 tình huống (điện thoại, thu gọn, phân hệ có
+   * route) — mà HelpMenu chỉ nằm ở đáy panel thì 4 trang thư viện mất lối
+   * vào. Rail luôn render nên ô Trợ giúp ở đáy rail là lối vào bảo đảm.
+   */
+  it('rail luôn có ô Trợ giúp, kể cả ở trang có route (Bảng điều hành) và khi thu gọn', () => {
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/']}><Sidebar /></MemoryRouter>,
+    );
+    const rail = screen.getByRole('navigation', { name: 'Phân hệ' });
+    expect(within(rail).getByLabelText('Trợ giúp & phản hồi')).toBeTruthy();
+    // Ở '/' panel không render — nhãn chữ của HelpMenu panel vắng mặt, chỉ
+    // còn ô chỉ-icon trên rail.
+    expect(screen.queryByText('Trợ giúp & phản hồi')).toBeNull();
+    unmount();
+
+    localStorage.setItem('sidebar-thu-gon:u1', 'true');
+    render(<MemoryRouter initialEntries={['/kho/nhap-kho']}><Sidebar /></MemoryRouter>);
+    const railThuGon = screen.getByRole('navigation', { name: 'Phân hệ' });
+    expect(within(railThuGon).getByLabelText('Trợ giúp & phản hồi')).toBeTruthy();
   });
 
   it('panel mở đúng phân hệ của trang đang xem', () => {

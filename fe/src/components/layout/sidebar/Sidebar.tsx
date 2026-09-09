@@ -6,6 +6,7 @@ import type { ModuleId } from '@/config/menuCatalog';
 import { SidebarRail } from './SidebarRail';
 import { ModulePanel } from './ModulePanel';
 import { ModuleFlyout } from './ModuleFlyout';
+import { HelpMenu } from './HelpMenu';
 import { useSidebarState } from './useSidebarState';
 import { TimNhanhFocusContext } from './SidebarSearch';
 
@@ -119,6 +120,7 @@ export const Sidebar: React.FC = () => {
           activeModule={dangMo}
           onPick={bamRail}
           onHover={thuGon ? datFlyout : undefined}
+          footer={<HelpMenu bienThe="rail" onSelect={navigate} />}
         />
         {!thuGon && current && !current.module.route && (
           <ModulePanel

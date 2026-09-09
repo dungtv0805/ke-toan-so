@@ -25,6 +25,13 @@ describe('MobileMenu', () => {
     expect(screen.getByText('NHÓM HÀNG')).toBeTruthy();
   });
 
+  // Trên điện thoại không có ModulePanel nên đây là lối vào duy nhất tới 4
+  // trang thư viện (Quy trình / Chính sách / Biểu mẫu / Hướng dẫn).
+  it('lớp 1 có hàng Trợ giúp ở cuối', () => {
+    render(<MemoryRouter><MobileMenu open onClose={() => {}} /></MemoryRouter>);
+    expect(screen.getByLabelText('Trợ giúp & phản hồi')).toBeTruthy();
+  });
+
   it('nút quay lại đưa về lớp 1', () => {
     render(<MemoryRouter><MobileMenu open onClose={() => {}} /></MemoryRouter>);
     fireEvent.click(screen.getByText('Kho'));

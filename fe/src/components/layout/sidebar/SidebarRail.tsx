@@ -7,11 +7,16 @@ interface Props {
   activeModule?: ModuleId;
   onPick: (id: ModuleId) => void;
   onHover?: (id: ModuleId | undefined) => void;
+  /** Ô cố định ở ĐÁY rail (mục Trợ giúp). Rail luôn được render — kể cả khi
+   *  panel ẩn vì thu gọn hoặc vì phân hệ đang chọn có route riêng — nên đây
+   *  là lối vào bảo đảm cho 4 trang thư viện. SidebarRail vẫn không tự import
+   *  HelpMenu: nó không đọc context nào, để test dựng được độc lập. */
+  footer?: React.ReactNode;
 }
 
 /** Cột 62px bên trái. Không bao giờ cuộn — 12 ô cao 40px vừa mọi màn hình ≥ 640px. */
 export const SidebarRail: React.FC<Props> = ({
-  modules, activeModule, onPick, onHover,
+  modules, activeModule, onPick, onHover, footer,
 }) => (
   <nav
     aria-label="Phân hệ"
@@ -43,6 +48,7 @@ export const SidebarRail: React.FC<Props> = ({
         </button>
       );
     })}
+    {footer && <div className="mt-auto pt-[4px]">{footer}</div>}
   </nav>
 );
 
