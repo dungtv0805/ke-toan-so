@@ -105,22 +105,31 @@ const App = () => (
       locale={viVN}
       theme={{
         token: {
-          // Màu thương hiệu MasterCEO: teal logo (gold #b6954e dùng làm accent).
+          // Màu thương hiệu MasterCEO — giữ nguyên.
           colorPrimary: '#1f7769',
-          // Đồng bộ toàn dự án: bo góc = 0 (giữ tròn cho avatar/chấm/spinner riêng).
-          borderRadius: 0,
-          borderRadiusLG: 0,
-          borderRadiusSM: 0,
-          borderRadiusXS: 0,
-          // Đợt 2: chiều cao control đồng nhất (compact).
+          // Bo góc theo 07-design-system: nút/ô nhập 7 · thẻ/bảng 9 · nhỏ 6.
+          borderRadius: 7,
+          borderRadiusLG: 9,
+          borderRadiusSM: 6,
+          borderRadiusXS: 4,
+          // Mật độ cao: nội dung bảng 11px.
+          fontSize: 11,
+          // Chiều cao control giữ như đợt trước.
           controlHeight: 28,
           controlHeightSM: 24,
           controlHeightLG: 36,
+          colorBorder: '#E5E5EA',
+          colorText: '#1D1D1F',
+          colorTextSecondary: '#6E6E73',
+          colorTextTertiary: '#98989D',
+          colorBgLayout: '#F5F5F7',
         },
         components: {
           // Card header + body padding 12px đồng bộ nhịp 12
           // (var --ant-card-header-padding / --ant-card-body-padding).
-          Card: { headerPadding: 12, bodyPadding: 12 },
+          Card: { headerPadding: 12, bodyPadding: 12, borderRadiusLG: 9 },
+          Modal: { borderRadiusLG: 14 },
+          Table: { borderRadius: 9, headerBorderRadius: 9, cellPaddingBlockSM: 3 },
         },
       }}
     >
