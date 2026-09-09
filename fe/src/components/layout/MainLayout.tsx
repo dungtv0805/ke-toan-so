@@ -26,6 +26,7 @@ import { TenantSwitcher } from "./TenantSwitcher";
 import { AppSwitcher } from "./AppSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sidebar, MobileMenu } from "./sidebar";
+import { BE_RONG_MO } from "./sidebar/Sidebar";
 
 const { Header, Content } = Layout;
 
@@ -195,7 +196,7 @@ const MainLayout: React.FC = () => {
       {/* Main Content Area */}
       <Layout
         style={{
-          marginLeft: isMobile ? 0 : "var(--sidebar-w, 258px)",
+          marginLeft: isMobile ? 0 : `var(--sidebar-w, ${BE_RONG_MO}px)`,
           transition: "margin-left 0.2s ease",
           minHeight: "100vh",
         }}

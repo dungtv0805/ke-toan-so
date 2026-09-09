@@ -9,6 +9,12 @@ import { ModuleFlyout } from './ModuleFlyout';
 import { useSidebarState } from './useSidebarState';
 import { TimNhanhFocusContext } from './SidebarSearch';
 
+/** Bề rộng sidebar — panel mở (rail + ModulePanel) và thu gọn (chỉ rail).
+ *  Nguồn duy nhất; MainLayout dùng lại để đặt giá trị mặc định cho biến CSS
+ *  --sidebar-w, tránh lệch nhau khi đổi bề rộng sau này. */
+export const BE_RONG_MO = 258;
+export const BE_RONG_THU_GON = 62;
+
 export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -46,7 +52,7 @@ export const Sidebar: React.FC = () => {
   const panelSeHien = !thuGon && !!current && !current.module.route;
   // Bề rộng phải khớp với việc panel có thật render hay không — nếu không
   // MainLayout sẽ chừa thừa 196px trống khi panel bị ẩn vì phân hệ có route.
-  const beRong = panelSeHien ? 258 : 62;
+  const beRong = panelSeHien ? BE_RONG_MO : BE_RONG_THU_GON;
   // useLayoutEffect (KHÔNG phải useEffect): MainLayout vẽ content bằng
   // var(--sidebar-w, 258px) NGAY LẦN VẼ ĐẦU — useEffect chạy sau khi trình
   // duyệt đã sơn khung hình đó, nên ai đang thu gọn sẽ thấy content nháy
