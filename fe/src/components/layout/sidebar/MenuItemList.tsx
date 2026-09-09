@@ -48,7 +48,7 @@ export const MenuItemList: React.FC<Props> = ({
         return (
           <React.Fragment key={leaf.key}>
             {moCluster && (
-              <div className="px-[7px] pb-[3px] pt-[10px] text-[8.5px] font-bold tracking-[0.6px] text-[hsl(var(--muted-foreground))]">
+              <div className="px-[7px] pb-[3px] pt-[10px] text-[8.5px] font-bold tracking-[0.6px] text-[hsl(var(--sidebar-foreground)/0.65)]">
                 {leaf.cluster}
               </div>
             )}
@@ -60,8 +60,8 @@ export const MenuItemList: React.FC<Props> = ({
                 'flex h-[19px] w-full items-center gap-[6px] rounded-[6px] px-[7px] py-[3.5px]',
                 'text-left text-[11.5px] leading-none transition-colors',
                 dangMo
-                  ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-medium'
-                  : 'text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]',
+                  ? 'bg-[hsl(var(--sidebar-primary))] text-[hsl(var(--sidebar-primary-foreground))] font-medium'
+                  : 'text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]',
                 soon ? 'menu-item-coming-soon' : '',
               ].join(' ')}
             >

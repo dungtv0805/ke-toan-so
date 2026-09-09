@@ -22,7 +22,7 @@ export const ModuleFlyout: React.FC<Props> = ({
     role="dialog"
     aria-label={current.module.label}
     onMouseLeave={onClose}
-    className="absolute left-[62px] top-0 z-[120] w-[196px] rounded-r-[9px] border border-[hsl(var(--border))] bg-[hsl(var(--sidebar-panel))] px-[8px] py-[10px] shadow-lg"
+    className="absolute left-[62px] top-0 z-[120] w-[196px] rounded-r-[9px] border border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-panel))] px-[8px] py-[10px] shadow-lg"
   >
     <div className="mb-[6px] text-[15px] font-bold leading-none">
       {current.module.label}

@@ -50,6 +50,9 @@ export default {
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
+          // Nền cột panel 196px cạnh rail — token đã có trong index.css nhưng
+          // khối này thiếu khoá, nên chỉ dùng được qua giá trị tuỳ ý.
+          panel: "hsl(var(--sidebar-panel))",
           foreground: "hsl(var(--sidebar-foreground))",
           primary: "hsl(var(--sidebar-primary))",
           "primary-foreground": "hsl(var(--sidebar-primary-foreground))",

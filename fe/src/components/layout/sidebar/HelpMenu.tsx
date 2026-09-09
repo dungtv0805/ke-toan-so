@@ -48,13 +48,13 @@ export type BienTheTroGiup = 'panel' | 'rail' | 'mobile';
 const LOP: Record<BienTheTroGiup, string> = {
   panel:
     'flex h-[22px] w-full items-center gap-[6px] rounded-[6px] px-[7px] text-[11px]'
-    + ' text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]',
+    + ' text-[hsl(var(--sidebar-foreground)/0.65)] hover:bg-[hsl(var(--sidebar-accent))]',
   rail:
     'flex h-[40px] w-[50px] flex-col items-center justify-center rounded-[8px] transition-colors'
     + ' text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]',
   mobile:
     'flex h-[36px] w-full items-center gap-[8px] rounded-[7px] px-[8px] text-[12.5px]'
-    + ' text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]',
+    + ' text-[hsl(var(--sidebar-foreground)/0.65)] hover:bg-[hsl(var(--sidebar-accent))]',
 };
 
 interface Props {

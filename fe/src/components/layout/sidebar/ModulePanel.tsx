@@ -21,7 +21,7 @@ interface Props {
 export const ModulePanel: React.FC<Props> = ({
   current, allModules, activePath, activeSearch, onSelect, onCollapse,
 }) => (
-  <div className="flex w-[196px] shrink-0 flex-col gap-[8px] border-r border-[hsl(var(--border))] bg-[hsl(var(--sidebar-panel))] px-[8px] py-[10px]">
+  <div className="flex w-[196px] shrink-0 flex-col gap-[8px] border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-panel))] px-[8px] py-[10px]">
     <div className="flex items-center justify-between">
       <span className="text-[15px] font-bold leading-none">{current.module.label}</span>
       {onCollapse && (
@@ -29,7 +29,7 @@ export const ModulePanel: React.FC<Props> = ({
           type="button"
           aria-label="Thu gọn menu"
           onClick={onCollapse}
-          className="rounded-[6px] p-[3px] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]"
+          className="rounded-[6px] p-[3px] text-[hsl(var(--sidebar-foreground)/0.65)] hover:bg-[hsl(var(--sidebar-accent))]"
         >
           <MenuFoldOutlined className="text-[12px]" />
         </button>

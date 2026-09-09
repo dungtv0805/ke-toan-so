@@ -40,7 +40,7 @@ export const MobileMenu: React.FC<Props> = ({ open, onClose }) => {
             type="button"
             aria-label="Quay lại danh sách phân hệ"
             onClick={() => datDangXem(undefined)}
-            className="mb-[8px] flex items-center gap-[6px] text-[11.5px] text-[hsl(var(--muted-foreground))]"
+            className="mb-[8px] flex items-center gap-[6px] text-[11.5px] text-[hsl(var(--sidebar-foreground)/0.65)]"
           >
             <ArrowLeftOutlined /> Tất cả phân hệ
           </button>
@@ -71,16 +71,16 @@ export const MobileMenu: React.FC<Props> = ({ open, onClose }) => {
                   datDangXem(module.id);
                 }
               }}
-              className="flex h-[36px] items-center gap-[8px] rounded-[7px] px-[8px] text-[12.5px] hover:bg-[hsl(var(--muted))]"
+              className="flex h-[36px] items-center gap-[8px] rounded-[7px] px-[8px] text-[12.5px] hover:bg-[hsl(var(--sidebar-accent))]"
             >
               <span className="text-[15px]">{module.icon}</span>
               <span className="flex-1 text-left">{module.label}</span>
               {!module.route && (
                 <>
-                  <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                  <span className="text-[10px] text-[hsl(var(--sidebar-foreground)/0.65)]">
                     {leaves.length}
                   </span>
-                  <RightOutlined className="text-[9px] text-[hsl(var(--muted-foreground))]" />
+                  <RightOutlined className="text-[9px] text-[hsl(var(--sidebar-foreground)/0.65)]" />
                 </>
               )}
             </button>

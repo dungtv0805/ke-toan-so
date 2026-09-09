@@ -62,21 +62,21 @@ export const SidebarSearch: React.FC<Props> = ({ modules, onSelect, focusTick })
 
   return (
     <div className="relative">
-      <div className="flex h-[24px] items-center gap-[6px] rounded-[7px] border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-[7px]">
-        <SearchOutlined className="text-[11px] text-[hsl(var(--muted-foreground))]" />
+      <div className="flex h-[24px] items-center gap-[6px] rounded-[7px] border border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-panel))] px-[7px]">
+        <SearchOutlined className="text-[11px] text-[hsl(var(--sidebar-foreground)/0.65)]" />
         <input
           ref={oRef}
           value={tuKhoa}
           onChange={(e) => datTuKhoa(e.target.value)}
           placeholder="Tìm nhanh"
           aria-label="Tìm nhanh trong menu"
-          className="w-full bg-transparent text-[11px] outline-none placeholder:text-[hsl(var(--muted-foreground))]"
+          className="w-full bg-transparent text-[11px] outline-none placeholder:text-[hsl(var(--sidebar-foreground)/0.65)]"
         />
-        <span className="text-[9px] text-[hsl(var(--muted-foreground))]">⌘K</span>
+        <span className="text-[9px] text-[hsl(var(--sidebar-foreground)/0.65)]">⌘K</span>
       </div>
 
       {ketQua.length > 0 && (
-        <div className="absolute left-0 right-0 top-[28px] z-50 rounded-[9px] border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-[4px] shadow-lg">
+        <div className="absolute left-0 right-0 top-[28px] z-50 rounded-[9px] border border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-panel))] p-[4px] shadow-lg">
           {ketQua.map(({ leaf, moduleLabel }) => (
             <button
               key={leaf.key}
@@ -85,10 +85,10 @@ export const SidebarSearch: React.FC<Props> = ({ modules, onSelect, focusTick })
                 onSelect(leaf.key);
                 datTuKhoa('');
               }}
-              className="flex w-full flex-col items-start rounded-[6px] px-[7px] py-[3px] text-left hover:bg-[hsl(var(--muted))]"
+              className="flex w-full flex-col items-start rounded-[6px] px-[7px] py-[3px] text-left hover:bg-[hsl(var(--sidebar-accent))]"
             >
               <span className="text-[11.5px] leading-tight">{leaf.label}</span>
-              <span className="text-[9px] text-[hsl(var(--muted-foreground))]">{moduleLabel}</span>
+              <span className="text-[9px] text-[hsl(var(--sidebar-foreground)/0.65)]">{moduleLabel}</span>
             </button>
           ))}
         </div>
