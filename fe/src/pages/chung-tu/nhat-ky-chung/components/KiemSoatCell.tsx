@@ -153,7 +153,7 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
       {trangThai === "KHONG_DUOC_TRU" && (
         <>
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 12, color: "#666", marginBottom: 2 }}>
+            <div style={{ fontSize: 12, color: "hsl(var(--ink-2))", marginBottom: 2 }}>
               Nhóm chi phí
             </div>
             <Select<NhomChiPhi>
@@ -165,7 +165,7 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
             />
           </div>
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 12, color: "#666", marginBottom: 2 }}>
+            <div style={{ fontSize: 12, color: "hsl(var(--ink-2))", marginBottom: 2 }}>
               Số tiền không trừ
             </div>
             <InputNumber
@@ -185,7 +185,7 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
 
       {(trangThai === "KHONG_DUOC_TRU" || trangThai === "CHUA_HOP_LE") && (
         <div style={{ marginBottom: 8 }}>
-          <div style={{ fontSize: 12, color: "#666", marginBottom: 2 }}>
+          <div style={{ fontSize: 12, color: "hsl(var(--ink-2))", marginBottom: 2 }}>
             {trangThai === "CHUA_HOP_LE"
               ? "Lý do chưa hợp lệ (chọn nhiều)"
               : "Lý do không hợp lệ (chọn nhiều)"}
@@ -206,7 +206,7 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
       )}
 
       <div style={{ marginBottom: 8 }}>
-        <div style={{ fontSize: 12, color: "#666", marginBottom: 2 }}>
+        <div style={{ fontSize: 12, color: "hsl(var(--ink-2))", marginBottom: 2 }}>
           Ý kiến phê duyệt
         </div>
         <Input.TextArea
@@ -219,7 +219,7 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
       </div>
 
       {(entry.kiemSoat?.nguoiKiemSoat || entry.kiemSoat?.ngayKiemSoat) && (
-        <div style={{ fontSize: 11, color: "#999", marginBottom: 8 }}>
+        <div style={{ fontSize: 11, color: "hsl(var(--ink-2))", marginBottom: 8 }}>
           Kiểm soát bởi {entry.kiemSoat?.nguoiKiemSoat || "-"}
           {entry.kiemSoat?.ngayKiemSoat
             ? ` · ${formatDate(entry.kiemSoat.ngayKiemSoat)}`
@@ -259,7 +259,7 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
         Không được trừ
       </Tag>
     ) : (
-      <span style={{ cursor: "pointer", color: "#999" }}>—</span>
+      <span style={{ cursor: "pointer", color: "hsl(var(--ink-2))" }}>—</span>
     );
 
   // Nội dung xem nhanh khi hover (chỉ đọc).
@@ -287,7 +287,7 @@ export function KiemSoatCell({ entry, onSaved }: KiemSoatCellProps) {
         hoverLyDo.length > 0 && <div>Lý do: {hoverLyDo.join(", ")}</div>}
       {ks.yKien && <div>Ý kiến: {ks.yKien}</div>}
       {(ks.nguoiKiemSoat || ks.ngayKiemSoat) && (
-        <div style={{ fontSize: 11, color: "#bbb", marginTop: 2 }}>
+        <div style={{ fontSize: 11, color: "hsl(var(--ink-3))", marginTop: 2 }}>
           Bởi {ks.nguoiKiemSoat || "-"}
           {ks.ngayKiemSoat ? ` · ${formatDate(ks.ngayKiemSoat)}` : ""}
         </div>
