@@ -114,6 +114,13 @@ const App = () => (
           borderRadiusXS: 4,
           // Mật độ cao: nội dung bảng 11px.
           fontSize: 11,
+          // antd suy cả thang chữ từ fontSize, nên base 11 kéo fontSizeSM
+          // xuống 10 (mặc định 12) — cỡ chữ của Tag/Badge, và fontSizeIcon
+          // (= fontSizeSM) xuống 10. Tiếng Việt có dấu ở 10px khó đọc, nên
+          // ghim lại 11. Các cỡ khác bị kéo theo nhưng vẫn giữ đúng thứ tự
+          // và vẫn đọc được (fontSizeLG 12 · Heading5 12 · Heading4 16),
+          // nên để nguyên.
+          fontSizeSM: 11,
           // Chiều cao control giữ như đợt trước.
           controlHeight: 28,
           controlHeightSM: 24,
