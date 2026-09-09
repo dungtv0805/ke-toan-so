@@ -35,4 +35,15 @@ describe('design token', () => {
     expect(bien('red')).toBeDefined();
     expect(bien('amber')).toBeDefined();
   });
+
+  it('bí danh cũ và tên mới phải cùng một màu', () => {
+    // Tailwind phơi bộ cũ thành class có tên và ~140 chỗ trong src/ đang gọi;
+    // nếu hai bên lệch nhau thì cùng một nghĩa lại ra hai màu.
+    expect(bien('foreground')).toBe(bien('ink'));
+    expect(bien('muted-foreground')).toBe(bien('ink-2'));
+    expect(bien('destructive')).toBe(bien('red'));
+    expect(bien('success')).toBe(bien('green'));
+    expect(bien('warning')).toBe(bien('amber'));
+    expect(bien('info')).toBe(bien('blue'));
+  });
 });
