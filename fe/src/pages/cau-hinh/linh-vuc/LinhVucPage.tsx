@@ -115,7 +115,7 @@ const LinhVucPage = () => {
     form.setFieldsValue({
       isActive: true,
       icon: 'AppstoreOutlined',
-      color: '#1f7769',
+      color: 'hsl(var(--primary))',
       order: 0,
     });
     setModalVisible(true);
