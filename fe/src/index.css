@@ -155,7 +155,10 @@
     --accent-foreground: 210 40% 98%;
 
     --destructive: 4 71% 62%; /* = --red (dark) */
-    --destructive-foreground: 210 40% 98%;
+    /* Nền đỏ bản tối SÁNG hơn bản sáng (#E36259 so với #C4281A), nên chữ gần
+       trắng chỉ còn 3.25:1. Đổi sang màu tối gần đen (= --ink bản sáng,
+       #1D1D20) đạt 4.93:1 trên #E36259 — vẫn giữ --destructive = --red. */
+    --destructive-foreground: 240 4% 12%;
 
     --border: 217 24% 34%;
     --input: 217 24% 34%;
