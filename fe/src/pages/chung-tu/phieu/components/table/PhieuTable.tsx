@@ -34,7 +34,7 @@ export function usePhieuTableColumns(): ColumnType<ChungTu>[] {
     }
   };
 
-  const moneyColor = config.loai === "PHIEU_THU" ? "#16a34a" : "#dc2626";
+  const moneyColor = config.loai === "PHIEU_THU" ? "hsl(var(--green))" : "hsl(var(--red))";
 
   return [
     {
