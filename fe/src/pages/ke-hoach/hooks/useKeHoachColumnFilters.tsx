@@ -31,7 +31,7 @@ export function useKeHoachColumnFilters() {
         filtered: active,
         // Kính lúp = "bấm để tìm/lọc"; đang lọc thì đổi thành phễu, đúng quy ước Excel.
         filterIcon: active ? (
-          <FilterFilled style={{ color: "#217346" }} />
+          <FilterFilled style={{ color: "var(--xl-green)" }} />
         ) : (
           <SearchOutlined />
         ),
