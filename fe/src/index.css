@@ -19,7 +19,7 @@
      * bên thì sửa cả bên kia (src/index.css.test.ts canh việc này).
      * --------------------------------------------------------------- */
     /* Main backgrounds — nền trang #F5F5F7 */
-    --background: 240 6% 96%;
+    --background: 240 11% 96.5%; /* #F5F5F7 */
     --foreground: 240 4% 12%; /* = --ink */
 
     /* Cards - White with subtle shadow */
@@ -97,7 +97,7 @@
 
     /* Link, mã chứng từ — #007AFF / #E8F2FF */
     --blue: 211 100% 50%;
-    --blue-soft: 213 100% 95%;
+    --blue-soft: 214 100% 95.5%; /* #E8F2FF */
 
     /* Tăng / giảm / cảnh báo — #1F9254 / #D93025 / #B26A00 */
     --green: 148 65% 35%;
@@ -107,7 +107,7 @@
     /* Biểu đồ — #F2994A / #1F3864 / #C9A227 */
     --chart-orange: 28 87% 62%;
     --chart-navy: 220 51% 26%;
-    --chart-gold: 45 71% 47%;
+    --chart-gold: 45.5 67.5% 47%; /* #C9A227 */
   }
 
   .dark {
