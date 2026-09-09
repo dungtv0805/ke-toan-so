@@ -90,7 +90,7 @@ const doiTuongLabel = (dt: {
 const CurrencyCell: React.FC<{ value: number; bold?: boolean }> = ({ value, bold }) => (
   <span
     style={{
-      color: value < 0 ? '#ff4d4f' : value > 0 ? '#52c41a' : 'inherit',
+      color: value < 0 ? 'hsl(var(--red))' : value > 0 ? 'hsl(var(--green))' : 'inherit',
       fontWeight: bold ? 600 : 400,
     }}
   >
@@ -447,7 +447,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
         record.__isDoiTuong ? (
           <Typography.Link onClick={() => openSoChiTietFor('', record.__ma, true)}>{text}</Typography.Link>
         ) : (
-          <span style={{ fontWeight: record.isSection ? 700 : record.isTotal || record.__isParent ? 600 : 400, color: record.isSection ? '#1890ff' : 'inherit' }}>{text}</span>
+          <span style={{ fontWeight: record.isSection ? 700 : record.isTotal || record.__isParent ? 600 : 400, color: record.isSection ? 'hsl(var(--blue))' : 'inherit' }}>{text}</span>
         ),
     },
     { title: 'Mã số', dataIndex: 'ma', key: 'ma', width: 80, align: 'center' },
@@ -472,8 +472,8 @@ const BaoCaoTaiChinhPage: React.FC = () => {
         const diff = cuoiKy - dauNam;
         return (
           <Space>
-            <span style={{ color: diff >= 0 ? '#52c41a' : '#ff4d4f' }}>{formatCurrencyShort(diff)}</span>
-            {diff !== 0 && (diff > 0 ? <RiseOutlined style={{ color: '#52c41a' }} /> : <FallOutlined style={{ color: '#ff4d4f' }} />)}
+            <span style={{ color: diff >= 0 ? 'hsl(var(--green))' : 'hsl(var(--red))' }}>{formatCurrencyShort(diff)}</span>
+            {diff !== 0 && (diff > 0 ? <RiseOutlined style={{ color: 'hsl(var(--green))' }} /> : <FallOutlined style={{ color: 'hsl(var(--red))' }} />)}
           </Space>
         );
       },
@@ -536,7 +536,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
     {
       title: 'Khoản mục', dataIndex: 'khoanMuc', key: 'khoanMuc', width: 350,
       render: (text: string, record: PnLCompRow) => (
-        <span style={{ fontWeight: record.isCategory || record.isSummary ? 600 : 400, color: record.isSummary ? '#1890ff' : 'inherit' }}>{text}</span>
+        <span style={{ fontWeight: record.isCategory || record.isSummary ? 600 : 400, color: record.isSummary ? 'hsl(var(--blue))' : 'inherit' }}>{text}</span>
       ),
     },
     {
@@ -551,8 +551,8 @@ const BaoCaoTaiChinhPage: React.FC = () => {
       title: 'Biến động', dataIndex: 'bienDong', key: 'bienDong', width: 150, align: 'right',
       render: (v: number) => (
         <Space>
-          <span style={{ color: v >= 0 ? '#52c41a' : '#ff4d4f' }}>{formatCurrencyShort(v)}</span>
-          {v !== 0 && (v > 0 ? <RiseOutlined style={{ color: '#52c41a' }} /> : <FallOutlined style={{ color: '#ff4d4f' }} />)}
+          <span style={{ color: v >= 0 ? 'hsl(var(--green))' : 'hsl(var(--red))' }}>{formatCurrencyShort(v)}</span>
+          {v !== 0 && (v > 0 ? <RiseOutlined style={{ color: 'hsl(var(--green))' }} /> : <FallOutlined style={{ color: 'hsl(var(--red))' }} />)}
         </Space>
       ),
     },
@@ -560,7 +560,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
       title: '% Biến động', dataIndex: 'phanTramBienDong', key: 'phanTramBienDong', width: 120, align: 'right',
       render: (v: number | null) => {
         if (v === null) return '-';
-        return <span style={{ color: v >= 0 ? '#52c41a' : '#ff4d4f' }}>{v >= 0 ? '+' : ''}{v.toFixed(1)}%</span>;
+        return <span style={{ color: v >= 0 ? 'hsl(var(--green))' : 'hsl(var(--red))' }}>{v >= 0 ? '+' : ''}{v.toFixed(1)}%</span>;
       },
     },
   ];
@@ -617,12 +617,12 @@ const BaoCaoTaiChinhPage: React.FC = () => {
         <Row gutter={8} style={{ marginBottom: 4 }}>
         <Col span={6}>
           <Card className="stat-card" size="small" bodyStyle={{ padding: '4px 12px' }}>
-            <Statistic title="Tổng tài sản" value={bsState.stats?.tongTaiSan ?? 0} formatter={(val) => formatCurrencyShort(val as number)} prefix={<BankOutlined style={{ color: '#1890ff' }} />} valueStyle={{ fontSize: 16 }} />
+            <Statistic title="Tổng tài sản" value={bsState.stats?.tongTaiSan ?? 0} formatter={(val) => formatCurrencyShort(val as number)} prefix={<BankOutlined style={{ color: 'hsl(var(--blue))' }} />} valueStyle={{ fontSize: 16 }} />
           </Card>
         </Col>
         <Col span={6}>
           <Card className="stat-card stat-card-success" size="small" bodyStyle={{ padding: '4px 12px' }}>
-            <Statistic title="Doanh thu" value={doanhThu} formatter={(val) => formatCurrencyShort(val as number)} prefix={<DollarOutlined style={{ color: '#52c41a' }} />} valueStyle={{ fontSize: 16 }} />
+            <Statistic title="Doanh thu" value={doanhThu} formatter={(val) => formatCurrencyShort(val as number)} prefix={<DollarOutlined style={{ color: 'hsl(var(--green))' }} />} valueStyle={{ fontSize: 16 }} />
           </Card>
         </Col>
         <Col span={6}>
@@ -631,7 +631,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
               title="Lợi nhuận sau thuế"
               value={loiNhuanSauThue}
               formatter={(val) => formatCurrencyShort(val as number)}
-              valueStyle={{ color: loiNhuanSauThue >= 0 ? '#52c41a' : '#ff4d4f', fontSize: 16 }}
+              valueStyle={{ color: loiNhuanSauThue >= 0 ? 'hsl(var(--green))' : 'hsl(var(--red))', fontSize: 16 }}
               prefix={loiNhuanSauThue >= 0 ? <RiseOutlined /> : <FallOutlined />}
             />
           </Card>
@@ -641,7 +641,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
             <Statistic
               title="Cân đối phát sinh"
               value={tbState.soCaiStats?.canDoi ? 'Cân đối' : 'Lệch'}
-              valueStyle={{ color: tbState.soCaiStats?.canDoi ? '#52c41a' : '#ff4d4f', fontSize: 16 }}
+              valueStyle={{ color: tbState.soCaiStats?.canDoi ? 'hsl(var(--green))' : 'hsl(var(--red))', fontSize: 16 }}
               prefix={tbState.soCaiStats?.canDoi ? <CheckCircleOutlined /> : <WarningOutlined />}
             />
           </Card>
@@ -688,7 +688,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
                     );
                     return (
                       <Table.Summary fixed>
-                        <Table.Summary.Row style={{ fontWeight: 700, background: '#fafafa' }}>
+                        <Table.Summary.Row style={{ fontWeight: 700, background: 'hsl(var(--muted))' }}>
                           <Table.Summary.Cell index={0} colSpan={2}>Tổng cộng</Table.Summary.Cell>
                           <Table.Summary.Cell index={2} align="right">{formatCurrency(totals.soDuDauKyNo)}</Table.Summary.Cell>
                           <Table.Summary.Cell index={3} align="right">{formatCurrency(totals.soDuDauKyCo)}</Table.Summary.Cell>
