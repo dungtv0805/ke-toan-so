@@ -24,6 +24,8 @@ import type { MenuProps } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
 import { TenantSwitcher } from "./TenantSwitcher";
 import { AppSwitcher } from "./AppSwitcher";
+import { OIconApp } from "@/components/icons/OIconApp";
+import { CURRENT_APP_ID } from "@/services/identitySession";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sidebar, MobileMenu } from "./sidebar";
 import { BE_RONG_MO } from "./sidebar/Sidebar";
@@ -221,18 +223,18 @@ const MainLayout: React.FC = () => {
                 className="!text-foreground"
               />
             )}
-            {/* Mobile Logo */}
-            {isMobile && (
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-sm">
-                    KT
-                  </span>
-                </div>
-              </div>
-            )}
-            {/* App Switcher — chuyển sang Giao việc / app khác (giữ nguyên công ty) */}
+            {/* App Switcher — lưới 9 chấm, mở màn chọn ứng dụng */}
             <AppSwitcher />
+
+            {/* Nhận diện app đang mở: ô icon + tên app. Tên CÔNG TY nằm bên
+                phải header (TenantSwitcher), đừng nhầm hai thứ. Ô 28px này
+                thay luôn khối "KT" cũ trên mobile. */}
+            <div className="flex items-center gap-2">
+              <OIconApp appId={CURRENT_APP_ID} size={28} />
+              <span className="hidden sm:inline text-sm font-bold text-foreground">
+                Tài chính
+              </span>
+            </div>
           </div>
 
           {/* Center: Search Bar - Hide on small mobile */}

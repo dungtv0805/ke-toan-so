@@ -97,6 +97,34 @@ function Harness() {
 
       <section>
         <h3 style={{ fontSize: 14, marginBottom: 8 }}>
+          6 — Header trái: lưới 9 chấm + ô icon app 28px + tên app
+        </h3>
+        <div
+          style={{
+            height: 48,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 16px",
+            background: "hsl(var(--card))",
+            borderBottom: "1px solid hsl(var(--border))",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <IconLuoiApp size={18} />
+            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <OIconApp appId="ke-toan" size={28} />
+              <span style={{ fontSize: 14, fontWeight: 700 }}>Tài chính</span>
+            </span>
+          </div>
+          <span style={{ fontSize: 12, color: "#6E6E73" }}>
+            🏦 XD Điện Thanh Long ▾ &nbsp; ⚙ &nbsp; 👤
+          </span>
+        </div>
+      </section>
+
+      <section>
+        <h3 style={{ fontSize: 14, marginBottom: 8 }}>
           5 — Modal "Chọn ứng dụng": Tài chính đang dùng, Nhân sự chưa bật cho công ty
         </h3>
         <div
