@@ -12,16 +12,21 @@ export interface KetQuaTim {
 const boDau = (s: string) =>
   s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
 
-/** Tìm xuyên mọi mục đang hiện. Tối đa 8 kết quả cho vừa panel. */
+/**
+ * Tìm xuyên mọi mục đang hiện. Mỗi từ gõ vào phải có mặt trong "tên mục + tên
+ * phân hệ" — gõ "quy trình kho" ra đúng Quy trình của Kho, vì 10 phân hệ cùng
+ * có mục tên "Quy trình". Tối đa 12 kết quả: đủ cho cả 10 mục "Quy trình".
+ */
 export function timMuc(modules: VisibleModule[], tuKhoa: string): KetQuaTim[] {
-  const q = boDau(tuKhoa.trim());
-  if (!q) return [];
+  const tu = boDau(tuKhoa.trim()).split(/\s+/).filter(Boolean);
+  if (tu.length === 0) return [];
   const ra: KetQuaTim[] = [];
   for (const { module, leaves } of modules) {
     for (const leaf of leaves) {
-      if (boDau(leaf.label).includes(q) || boDau(module.label).includes(q)) {
+      const chu = `${boDau(leaf.label)} ${boDau(module.label)}`;
+      if (tu.every((t) => chu.includes(t))) {
         ra.push({ leaf, moduleLabel: module.label });
-        if (ra.length === 8) return ra;
+        if (ra.length === 12) return ra;
       }
     }
   }

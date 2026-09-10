@@ -5,8 +5,10 @@
 // trên MỌI vai trò, giữ nguyên từng hành động (xem/them/sua/xoa/xuat):
 //   - có `/quy-trinh:<a>`  → thêm `/<phân hệ>/quy-trinh:<a>` cho 9 phân hệ
 //   - có `/huong-dan:<a>`  → thêm `/<phân hệ>/huong-dan:<a>` cho 9 phân hệ
-//   - có `/phan-tich/bao-cao-tai-chinh:<a>` (mục "P&L" cũ, trang chưa có)
-//     → thêm `/bao-cao/pnl:<a>` (mục "P&L" mới trỏ trang P&L thật)
+//   (KHÔNG suy `/bao-cao/pnl` từ `/phan-tich/bao-cao-tai-chinh`: khoá cũ chỉ trỏ
+//    trang "đang phát triển" nên từng được cấp rộng — cả vai trò "Khách hàng";
+//    suy ra là mở số liệu lãi lỗ thật cho họ. Đã chạy nhầm luật đó 10/09 rồi rút
+//    lại; P&L do admin cấp chủ động trong Phân quyền.)
 //   - vai trò Admin đang mang BỘ CẤP PHÁT ĐẦY ĐỦ (>= 300 quyền, sinh bởi
 //     generateAllPermissions lúc tạo công ty) → nâng lên đủ bộ mới, đúng như
 //     công ty tạo mới hôm nay nhận được. Admin đã bị thu hẹp thì không đụng.
@@ -36,9 +38,6 @@
           if (!co[k]) them.push(k);
         });
       });
-      if (co['/phan-tich/bao-cao-tai-chinh:' + a] && !co['/bao-cao/pnl:' + a]) {
-        them.push('/bao-cao/pnl:' + a);
-      }
     });
     if (/^admin$/i.test(d.vaiTro || '') && p.length >= 300) {
       MODULES.forEach(function (m) {
