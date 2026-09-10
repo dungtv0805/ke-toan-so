@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -34,6 +33,7 @@ import {
   PaperClipOutlined,
 } from "@ant-design/icons";
 import { FilterBar } from "@/components/common/FilterBar";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import dayjs, { Dayjs } from "dayjs";
@@ -1000,7 +1000,7 @@ function HopDongPageInner() {
           }
         />
 
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
@@ -1016,8 +1016,7 @@ function HopDongPageInner() {
           onChange={(pag) =>
             handleTableChange({ current: pag.current, pageSize: pag.pageSize })
           }
-          scroll={{ x: 1600, y: "calc(100vh - 400px)" }}
-          size="middle"
+          buTruDoc={400}
         />
       </Card>
 

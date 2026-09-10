@@ -1,5 +1,6 @@
 import React, { useMemo, useCallback, useEffect, useState } from "react";
-import { Table, Tag, Space, Button, Popconfirm, Tabs, Tooltip, Segmented } from "antd";
+import { Tag, Space, Button, Popconfirm, Tabs, Tooltip, Segmented } from "antd";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import {
   EditOutlined,
   DeleteOutlined,
@@ -324,9 +325,9 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
   );
 
   /** Một bảng cho cả hai chế độ — khác nhau đúng ở cột, dữ liệu và checkbox. */
-  const renderBang = (columnsDanhSach: ColumnsType<QuyChuan>, scrollX: number) =>
+  const renderBang = (columnsDanhSach: ColumnsType<QuyChuan>) =>
     laCay ? (
-      <Table<HangCay<QuyChuan>>
+      <BangDuLieu<HangCay<QuyChuan>>
         columns={treeColumns}
         dataSource={treeData}
         rowKey="id"
@@ -339,11 +340,10 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
         rowClassName={hangCayClassName}
         pagination={paginationConfig}
         onChange={handleTableChange}
-        size="middle"
-        scroll={{ x: 1550, y: "calc(100vh - 250px)" }}
+        buTruDoc={250}
       />
     ) : (
-      <Table<QuyChuan>
+      <BangDuLieu<QuyChuan>
         columns={columnsDanhSach}
         dataSource={quyChaunList}
         rowKey="id"
@@ -351,8 +351,7 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
         rowSelection={rowSelection}
         pagination={paginationConfig}
         onChange={handleTableChange}
-        size="middle"
-        scroll={{ x: scrollX, y: "calc(100vh - 250px)" }}
+        buTruDoc={250}
       />
     );
 
@@ -387,7 +386,7 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
     {
       key: "all",
       label: `Tất cả (${tabCounts.all})`,
-      children: renderBang(cfgColumns, 1650),
+      children: renderBang(cfgColumns),
     },
     ...loaiGiaoDichOptions.map((option) => ({
       key: option.value,
@@ -397,7 +396,7 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
           {option.label}
         </Space>
       ),
-      children: renderBang(columnsWithoutLoai, 1550),
+      children: renderBang(columnsWithoutLoai),
     })),
   ];
 
@@ -407,7 +406,7 @@ export const QuyChaunTable: React.FC<QuyChaunTableProps> = ({
     return (
       <div className="space-y-2">
         <div className="flex justify-end">{chuyenCheDo}</div>
-        {renderBang(columnsWithoutLoai, 1550)}
+        {renderBang(columnsWithoutLoai)}
       </div>
     );
   }

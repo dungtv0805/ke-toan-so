@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -26,6 +25,7 @@ import {
   RiseOutlined,
 } from "@ant-design/icons";
 import { nhomKhoanMucService, NhomKhoanMuc, NhomKhoanMucStats } from "@/services/nhomKhoanMucService";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
@@ -302,13 +302,13 @@ const NhomKhoanMucPage: React.FC = () => {
           }
         />
 
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           rowSelection={rowSelection}
           loading={loading}
-          scroll={{ x: 800, y: "calc(100vh - 350px)" }}
+          buTruDoc={350}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
