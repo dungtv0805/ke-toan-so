@@ -1,10 +1,10 @@
-# Đồng bộ giao diện danh mục — loading, bảng, icon
+# Đồng bộ giao diện — loading, bảng danh mục, bộ nhận diện app
 
 Ngày: 10/09/2026
 
 ## Vấn đề
 
-Ba thứ lệch nhau giữa 26 trang danh mục:
+Bốn thứ đang lệch:
 
 1. **Loading**: mọi trang dùng `loading` mặc định của antd Table — spinner tròn che
    bảng, dữ liệu đang xem mờ đi mỗi lần lọc hay lưu xong.
@@ -12,8 +12,11 @@ Ba thứ lệch nhau giữa 26 trang danh mục:
    900, 1000, 1400, 1550, 1600), `size` thì trang bỏ trống (antd mặc định dòng
    cao nhất), trang khai `middle`, hai trang khai `small`. Cùng một màn hình,
    trang thì cột giãn toác, trang thì phải cuộn ngang, dòng cao thấp khác nhau.
-3. **Icon** import/export là icon antd đơn sắc, và icon trên màn "Chọn ứng dụng"
-   là icon antd chung chung (`CalculatorOutlined`, `CheckSquareOutlined`).
+3. **Icon import/export** là icon antd đơn sắc, không nhận ra ngay là Excel.
+4. **Nhận diện app**: icon trên màn "Chọn ứng dụng" là icon antd chung chung
+   (`CalculatorOutlined`, `CheckSquareOutlined`, `TeamOutlined`), mỗi app một màu
+   đơn sắc, không có quy cách chung; header app con chỉ có một icon lưới trơ trọi,
+   không cho biết đang ở app nào.
 
 ## Phạm vi
 
@@ -21,12 +24,12 @@ Ba thứ lệch nhau giữa 26 trang danh mục:
 
 - Component bảng dùng chung `BangDuLieu` + áp cho 26 trang `pages/danh-muc/`.
 - Icon SVG màu cho nút Import Excel / Xuất Excel.
-- Icon SVG riêng cho từng app ở màn chọn ứng dụng, sửa cả `ke-toan-so` và
-  `identity-service/portal`.
+- Bộ nhận diện app: glyph 3 app + component ô icon theo quy cách, modal "Chọn
+  ứng dụng" vẽ lại, header trái. Sửa cả `ke-toan-so` và `identity-service/portal`
+  trong cùng một đợt.
 
 **Ngoài phạm vi đợt này**
 
-- Bố cục header (logo + tên công ty + nút chọn app) — chờ ảnh phác từ người dùng.
 - Đổi icon các nút hành động Thêm / Sửa / Xoá sang bộ khác. Chấp nhận việc nút
   Excel màu sẽ lệch tông với các nút antd đơn sắc cùng hàng.
 - Bảng ngoài `pages/danh-muc/` (chứng từ, sổ sách, báo cáo) — giữ nguyên.
@@ -136,25 +139,92 @@ Sửa đúng hai chỗ, mọi trang danh mục ăn theo:
 Nút Xuất Excel có trạng thái `loading` của antd Button (thay icon bằng spinner);
 giữ nguyên hành vi đó.
 
-## Hạng mục 3 — Icon app ở màn chọn ứng dụng
+## Hạng mục 3 — Bộ nhận diện app
 
-Hai SVG mới, một cho **Tài chính**, một cho **Giao việc**, thay
-`CalculatorOutlined` / `CheckSquareOutlined`. Nền tile giữ nguyên màu hiện có
-(`#1f7769` cho Tài chính, `#2f6fed` cho Giao việc), icon vẽ nét trắng để nổi trên
-nền màu.
+Thay cho "đổi hai icon" ban đầu. Bản vẽ Pencil ngày 10/09/2026 đã chốt quy cách;
+phần này chỉ ghi lại để code bám theo.
 
-Phải sửa **cả hai repo**, nếu không hai nơi hiện icon khác nhau:
+### Nguồn icon
 
-- `ke-toan-so/fe/src/components/layout/AppSwitcher.tsx` — hằng `APP_STYLE`.
-- `identity-service/portal/src/screens/AppPicker.tsx`.
+`design/icons/` trong repo `ke-toan-so` là **nguồn duy nhất**. Từ đây sinh
+component React cho cả hai repo; sửa icon thì sửa file gốc trước.
 
-Mỗi bên có một file icon riêng với nội dung giống hệt (hai repo không dùng chung
-package). Đầu mỗi file ghi comment chỉ chéo sang đường dẫn file bên kia, để lần
-sau ai sửa một bên biết phải sửa bên kia — đúng kiểu comment "KHỚP portal
-Identity (AppPicker)" đã có sẵn trong `AppSwitcher.tsx`.
+| File | Trạng thái |
+|---|---|
+| `ke-toan.svg` | Đã bóc từ bản vẽ, đã dựng thử ra đúng hình |
+| `giao-viec.svg` | Đã bóc từ bản vẽ, đã dựng thử ra đúng hình |
+| `nhan-su.svg` | Đã bóc từ bản vẽ, đã dựng thử ra đúng hình |
+| `masterceo-mark.svg` | **CÒN THIẾU** — chờ người dùng cấp, chỉ dấu M, không kèm chữ |
 
-`identity-service/portal/src/screens/AppPicker.test.tsx` đã có sẵn; phải chạy và
-giữ xanh sau khi đổi.
+Ba app khớp đúng ba `appId` đang có bên Identity: `ke-toan`, `giao-viec`,
+`nhan-su`. `appId` là khoá SSO, không đổi.
+
+### Quy cách ô icon
+
+| Mục | Quy tắc |
+|---|---|
+| Bo góc | 27% cạnh ô |
+| Glyph | 55% cạnh ô, trắng đặc, không viền, không đổ bóng |
+| Nền | gradient 305°, hai hue lệch nhau 30–45° |
+| Bóng ô | `0 5 14`, màu cuối của app ở 40% |
+| Lớp sáng | radial trắng 40% ở góc trên-trái |
+| Dưới 24px | bỏ gradient và lớp sáng, dùng màu đầu đặc |
+| Nền tối | giữ nguyên, KHÔNG đảo màu |
+| Một màu (in, dấu mộc) | glyph đặc màu app trên nền trắng |
+| Cấm | đặt glyph app này lên màu app khác |
+
+Cỡ dùng: 88 (trang chọn app), 64 (thẻ trong modal), 40 (đầu sidebar),
+28 (thanh trên), 20 (danh sách), 16 (favicon).
+
+Gradient theo app — **đổi so với màu đơn đang dùng**:
+
+| App | Gradient | Nền thẻ | Bóng |
+|---|---|---|---|
+| Tài chính | `#1FD1A3` → `#0E7490` | `#E9FBF5` | `#0E749059` |
+| Giao việc | `#4F8CFF` → `#7C3AED` | `#F0F3FF` | `#7C3AED59` |
+| Nhân sự | `#FFA63D` → `#F2536D` | `#FFF3EC` | `#F2536D59` |
+
+Dựng bằng một component `OIconApp` nhận `appId` + `size`, tự áp đủ quy tắc trên
+theo cỡ (kể cả nhánh dưới 24px). Không rải màu và bo góc rải rác trong từng chỗ
+gọi — mỗi lần rải là một lần lệch.
+
+### Modal "Chọn ứng dụng"
+
+Vẽ lại theo bản Pencil: sheet 560px bo 14, tiêu đề 18px đậm + phụ đề "Dùng chung
+một tài khoản MasterCEO", nút đóng tròn 24px, hàng thẻ app chia đều. App đang
+dùng có viền 2px màu app + huy hiệu "Đang dùng" nền gradient; app khác viền mảnh
++ chữ "Mở" màu app. App chưa bật cho công ty giữ nguyên trạng thái mờ + không bấm
+được như hiện tại.
+
+Chân modal: nền `#FBFBFD`, viền trên, bên trái là icon toà nhà + tên công ty
+đang dùng, bên phải là "Đổi công ty" màu `#007AFF`.
+
+`TenantSwitcher` ở góc phải header **vẫn giữ nguyên** — hai lối vào cùng một việc,
+theo quyết định của người dùng.
+
+### Header
+
+`ke-toan-so` (và các app con khác về sau):
+
+`[lưới 9 chấm] [ô icon app 28px] [tên app]`
+
+- Lưới 9 chấm thay `AppstoreOutlined`, giữ nguyên hành vi mở modal chọn ứng dụng.
+- Ô 28px là icon của **chính app đang mở** (Tài chính → gradient teal).
+- Chữ là tên app ("Tài chính"), không phải tên công ty, không phải "Master CEO".
+
+Portal Identity giữ bố cục header sẵn có nhưng thay `logo.jpg` bằng
+`masterceo-mark.svg`: `[lưới] [dấu M] [Master CEO]`.
+
+### Hai repo, cùng một đợt
+
+| Repo | Chỗ sửa |
+|---|---|
+| `ke-toan-so/fe` | `components/layout/AppSwitcher.tsx` (icon lưới + modal), `components/layout/MainLayout.tsx` (header trái), component `OIconApp` mới |
+| `identity-service/portal` | `src/screens/AppPicker.tsx` (`APP_META`, header, thẻ app 88px), component `OIconApp` bản sao |
+
+Hai repo không dùng chung package, nên `OIconApp` tồn tại hai bản giống hệt. Đầu
+mỗi file ghi comment chỉ chéo sang đường dẫn bên kia — theo đúng kiểu comment
+"KHỚP portal Identity (AppPicker)" đã có sẵn trong `AppSwitcher.tsx`.
 
 ## Kiểm thử và nghiệm thu
 
@@ -163,7 +233,11 @@ giữ xanh sau khi đổi.
 - `BangDuLieu`: test dựng component — đang tải thì có dải chạy và bảng vẫn giữ
   dòng cũ; không tải thì dải trong suốt; `loading` không rò xuống `Table`;
   `dataSource` rỗng khi đang tải thì không hiện chữ "Không có dữ liệu".
-- Chạy `AppPicker.test.tsx` bên `identity-service/portal`.
+- `OIconApp`: test theo cỡ — dưới 24px thì không có gradient và không có lớp
+  sáng; từ 24px trở lên thì có; bo góc đúng 27% cạnh; `appId` lạ không rơi vào
+  màu của app khác.
+- Chạy `AppPicker.test.tsx` bên `identity-service/portal` — test này có sẵn và
+  phải giữ xanh.
 - Baseline: BE `yarn test` vốn đã đỏ sẵn 13 suite và `tsc` lỗi sẵn cả hai phía —
   đợt này chỉ chạm FE, so sánh với baseline chứ không lấy "test xanh hết" làm
   mốc.
@@ -173,7 +247,9 @@ giữ xanh sau khi đổi.
 - Bảng ít cột và bảng nhiều cột trên cùng một màn hình rộng.
 - Hai trang có cột ghim: kéo cuộn ngang, kiểm hàng tiêu đề không trườn lệch khỏi
   thân bảng.
-- Chế độ tối: dải loading và icon Excel còn đọc được.
+- Chế độ tối: dải loading và icon Excel còn đọc được; ô icon app giữ nguyên
+  màu, không bị đảo.
+- Bộ icon ở cả 6 cỡ, đặt cạnh nhau, xem có nhất quán không.
 
 ## Rủi ro
 
@@ -183,4 +259,6 @@ giữ xanh sau khi đổi.
 | Cột ghim vỡ hàng tiêu đề khi đổi `scroll.x` | Nghiệm thu tay hai trang có ghim, dùng harness đã có |
 | Icon Excel màu lệch tông với nút antd cùng hàng | Người dùng đã chấp nhận; để lại ghi chú, muốn đồng bộ thì làm đợt sau |
 | Hai repo lệch icon app nếu chỉ sửa một bên | Sửa cùng đợt, comment chỉ chéo ở cả hai file |
+| Thiếu `masterceo-mark.svg` chặn phần header portal | Ba hạng mục kia không phụ thuộc file này; làm trước, ghép dấu M sau khi có |
+| Đổi màu app từ đơn sắc sang gradient đụng chỗ khác đang dùng màu cũ | Rà `#1f7769` / `#2f6fed` / `#b6954e` ở cả hai repo trước khi đổi |
 | Sửa 26 file dễ sót một trang | Mọi bảng trong `pages/danh-muc/` đều đi qua `BangDuLieu`, kể cả bảng lồng và bảng đặc biệt (truyền prop riêng). Xong đợt, `grep -rn "<Table" fe/src/pages/danh-muc/` phải không còn kết quả nào |
