@@ -1,4 +1,5 @@
 import { ExpandCollapseButtons } from '@/components/common/ExpandCollapseButtons';
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { doiTuongService } from '@/services/doiTuongService';
 import { nganHangService } from '@/services/nganHangService';
@@ -147,7 +148,7 @@ const SoDuDauKyPage: React.FC = () => {
 
   // Lọc theo cột ở header + cố định cột. Lọc trên CÂY (không lọc phẳng) để giữ dòng TK cha và
   // cộng lại số tổng của cha theo đúng những dòng còn hiển thị.
-  const { filters, filtering, hasPinned, filterable } =
+  const { filters, filtering, filterable } =
     useTableColumnFilters('danh-muc-so-du-dau-ky');
   const viewTree = useMemo(() => filterSoDuTree(tree, filters), [tree, filters]);
 
@@ -382,11 +383,10 @@ const SoDuDauKyPage: React.FC = () => {
             onCollapseAll={() => setExpandedKeys([])}
           />
         </Space>
-        <Table<SoDuTreeNode>
+        <BangDuLieu<SoDuTreeNode>
           rowKey="__key" loading={loading} dataSource={viewTree} columns={columns}
-          pagination={false} size="small"
-          // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
-          scroll={{ x: hasPinned ? 'max-content' : undefined, y: 'calc(100vh - 400px)' }}
+          pagination={false}
+          buTruDoc={400}
           expandable={{
             expandedRowKeys: viewExpandedKeys,
             onExpandedRowsChange: (keys) => setExpandedKeys([...keys]),

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -19,6 +18,7 @@ import {
   GiftOutlined,
 } from "@ant-design/icons";
 import { NhomKhuyenMai } from "@/types";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { FilterBar } from "@/components/common/FilterBar";
 import {
   NhomKhuyenMaiHandlerProvider,
@@ -237,13 +237,12 @@ function NhomKhuyenMaiPageInner() {
           }
         />
 
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           rowSelection={rowSelection}
           loading={loading}
-          scroll={{ y: "calc(100vh - 285px)" }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
@@ -254,7 +253,6 @@ function NhomKhuyenMaiPageInner() {
           onChange={(pag) =>
             handleTableChange({ current: pag.current, pageSize: pag.pageSize })
           }
-          size="middle"
         />
       </Card>
 

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -19,6 +18,7 @@ import {
   BankOutlined,
 } from "@ant-design/icons";
 import { ChuDauTu } from "@/types";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import {
   ChuDauTuHandlerProvider,
   useChuDauTuHandler,
@@ -238,7 +238,7 @@ function ChuDauTuPageInner() {
           }
         />
 
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
@@ -254,8 +254,6 @@ function ChuDauTuPageInner() {
           onChange={(pag) =>
             handleTableChange({ current: pag.current, pageSize: pag.pageSize })
           }
-          scroll={{ y: "calc(100vh - 285px)" }}
-          size="middle"
         />
       </Card>
 

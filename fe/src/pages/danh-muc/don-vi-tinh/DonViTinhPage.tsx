@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -26,6 +25,7 @@ import { donViTinhService } from "@/services/donViTinhService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useBulkDelete } from "@/components/table/useBulkDelete";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
@@ -334,13 +334,12 @@ const DonViTinhPage: React.FC = () => {
           }
         />
 
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           rowSelection={rowSelection}
           loading={loading}
-          scroll={{ x: 700, y: "calc(100vh - 285px)" }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,

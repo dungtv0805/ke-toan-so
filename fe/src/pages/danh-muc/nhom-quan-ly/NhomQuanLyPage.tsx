@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -19,6 +18,7 @@ import {
   TeamOutlined,
 } from "@ant-design/icons";
 import { NhomQuanLy } from "@/types";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { FilterBar } from "@/components/common/FilterBar";
 import {
   NhomQuanLyHandlerProvider,
@@ -235,13 +235,12 @@ function NhomQuanLyPageInner() {
           }
         />
 
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           rowSelection={rowSelection}
           loading={loading}
-          scroll={{ y: "calc(100vh - 285px)" }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
@@ -252,7 +251,6 @@ function NhomQuanLyPageInner() {
           onChange={(pag) =>
             handleTableChange({ current: pag.current, pageSize: pag.pageSize })
           }
-          size="middle"
         />
       </Card>
 

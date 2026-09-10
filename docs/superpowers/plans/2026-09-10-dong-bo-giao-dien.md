@@ -10,6 +10,27 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-10-dong-bo-giao-dien-design.md`
 
+## Tình trạng (10/09/2026)
+
+Task 1–11, 13, 14 đã xong; **Task 12 còn chặn** vì thiếu
+`design/icons/masterceo-mark.svg`.
+
+Ba việc phát sinh so với kế hoạch, đã làm:
+
+- Đổi tên `bangDuLieu.ts` → `chuanBang.ts` và `oIconApp.ts` → `quyCachIconApp.ts`:
+  đặt cạnh `BangDuLieu.tsx` / `OIconApp.tsx` thì trên macOS hai đường dẫn trỏ lẫn
+  vào nhau, import ra `undefined`. Đổi tên xong phải `rm -rf node_modules/.vite`.
+- Tách `ManChonUngDung.tsx` khỏi `AppSwitcher.tsx` (hiển thị tách khỏi lấy dữ
+  liệu) để dựng được ở trang nghiệm thu mà không cần đăng nhập.
+- Thêm `bang-du-lieu.harness.html` + `src/dev/BangDuLieuHarness.tsx` — trang
+  nghiệm thu 6 mục, có công tắc "đang tải" và "chế độ tối".
+
+Ba lỗi bắt được bằng mắt mà test không bắt: mũi tên Excel đè lên thân icon;
+ô bảng tính chìm vào nút nền đậm; dải loading tàng hình ở nền tối.
+
+**Còn phải nghiệm thu tay** (nằm sau đăng nhập, harness không tới được): cột
+ghim ở `Tài khoản` và `Số dư đầu kỳ`; modal chọn ứng dụng thật; header thật.
+
 ## Global Constraints
 
 - **Baseline FE xanh**: `cd fe && npx vitest run` hiện là **169 file / 1303 test, pass hết**. Mọi task phải giữ con số này không giảm. BE không đụng tới trong đợt này.
@@ -41,8 +62,8 @@
 | File | Trách nhiệm |
 |---|---|
 | `src/components/table/BangDuLieu.tsx` | Bọc `Table`: dải loading, chuẩn `size`/`scroll` |
-| `src/components/table/bangDuLieu.ts` | `tinhScroll()` — hàm thuần, test ở môi trường node |
-| `src/components/table/__tests__/bangDuLieu.test.ts` | Test `tinhScroll` |
+| `src/components/table/chuanBang.ts` | `tinhScroll()` — hàm thuần, test ở môi trường node |
+| `src/components/table/__tests__/chuanBang.test.ts` | Test `tinhScroll` |
 | `src/components/table/__tests__/BangDuLieu.render.test.tsx` | Test dựng component |
 | `src/components/icons/ExcelIcons.tsx` | `IconNhapExcel`, `IconXuatExcel` |
 | `src/components/icons/AppGlyphs.tsx` | 3 glyph app dạng component React |
@@ -74,9 +95,13 @@
 
 ### Task 1: `tinhScroll` — hàm thuần chuẩn hoá `scroll`
 
+> Tên file là `chuanBang.ts`, KHÔNG phải `bangDuLieu.ts`: hệ tệp macOS không
+> phân biệt hoa thường, nên `bangDuLieu.ts` và `BangDuLieu.tsx` trỏ lẫn vào nhau
+> và import ra `undefined`.
+
 **Files:**
-- Create: `fe/src/components/table/bangDuLieu.ts`
-- Test: `fe/src/components/table/__tests__/bangDuLieu.test.ts`
+- Create: `fe/src/components/table/chuanBang.ts`
+- Test: `fe/src/components/table/__tests__/chuanBang.test.ts`
 
 **Interfaces:**
 - Produces: `tinhScroll(buTruDoc: number, scroll?: TableProps<any>["scroll"]): { x: number | string; y: number | string }`
@@ -85,7 +110,7 @@
 
 ```ts
 import { describe, it, expect } from 'vitest';
-import { tinhScroll } from '../bangDuLieu';
+import { tinhScroll } from '../chuanBang';
 
 describe('tinhScroll', () => {
   it('mặc định: cuộn ngang theo nội dung, cao theo bù trừ', () => {
@@ -108,8 +133,8 @@ describe('tinhScroll', () => {
 
 - [ ] **Step 2: Chạy để chắc chắn nó đỏ**
 
-Run: `cd fe && npx vitest run src/components/table/__tests__/bangDuLieu.test.ts`
-Expected: FAIL — `Failed to resolve import "../bangDuLieu"`
+Run: `cd fe && npx vitest run src/components/table/__tests__/chuanBang.test.ts`
+Expected: FAIL — `Failed to resolve import "../chuanBang"`
 
 - [ ] **Step 3: Viết bản cài đặt tối thiểu**
 
@@ -139,13 +164,13 @@ export function tinhScroll(
 
 - [ ] **Step 4: Chạy lại cho xanh**
 
-Run: `cd fe && npx vitest run src/components/table/__tests__/bangDuLieu.test.ts`
+Run: `cd fe && npx vitest run src/components/table/__tests__/chuanBang.test.ts`
 Expected: PASS — 4 test
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add fe/src/components/table/bangDuLieu.ts fe/src/components/table/__tests__/bangDuLieu.test.ts
+git add fe/src/components/table/bangDuLieu.ts fe/src/components/table/__tests__/chuanBang.test.ts
 git commit -m "feat(bang): tinhScroll — chuẩn cuộn dùng chung cho bảng danh mục"
 ```
 
@@ -296,7 +321,7 @@ Expected: FAIL — `Failed to resolve import "../BangDuLieu"`
 ```tsx
 import { Table } from 'antd';
 import type { TableProps } from 'antd';
-import { BU_TRU_DOC_MAC_DINH, tinhScroll } from './bangDuLieu';
+import { BU_TRU_DOC_MAC_DINH, tinhScroll } from './chuanBang';
 
 export type BangDuLieuProps<T> = Omit<TableProps<T>, 'loading'> & {
   /** Đang nạp dữ liệu. KHÔNG truyền xuống antd — xem chú thích dưới. */

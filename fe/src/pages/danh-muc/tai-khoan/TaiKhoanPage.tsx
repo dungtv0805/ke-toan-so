@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -26,6 +25,7 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { FilterBar } from "@/components/common/FilterBar";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
@@ -137,7 +137,7 @@ const TaiKhoanPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(100);
 
   // Lọc theo cột ở header + cố định cột
-  const { filterable, matches, hasPinned } = useTableColumnFilters("danh-muc-tai-khoan");
+  const { filterable, matches } = useTableColumnFilters("danh-muc-tai-khoan");
 
   const exportConfig: ExportDanhMucConfig = useMemo(() => ({
     fileName: "danh-muc-tai-khoan",
@@ -483,7 +483,7 @@ const TaiKhoanPage: React.FC = () => {
         />
 
         {/* Table */}
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={filteredData}
           rowKey="id"
@@ -495,9 +495,6 @@ const TaiKhoanPage: React.FC = () => {
             pageSizeOptions: ["25", "50", "100", "200"],
             onChange: (_page, newPageSize) => setPageSize(newPageSize),
           }}
-          size="middle"
-          // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
-          scroll={{ x: hasPinned ? "max-content" : 900, y: "calc(100vh - 285px)" }}
         />
       </Card>
 

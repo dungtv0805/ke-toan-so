@@ -2744,3 +2744,46 @@ body.kh-dang-keo-cot {
 .action-icon-btn--danger:hover {
   color: hsl(var(--red));
 }
+
+/* ── Dải loading của BangDuLieu ───────────────────────────────────────────
+   Thay cho spinner che bảng của antd: dữ liệu cũ ở nguyên chỗ, chỉ có dải
+   mảnh chạy trên đầu. Khi rảnh dải vẫn chiếm đúng 2px (trong suốt) để bảng
+   không nhảy lên xuống mỗi lần tải. */
+.bdl-thanh {
+  height: 2px;
+  overflow: hidden;
+  background: transparent;
+}
+
+.bdl-thanh[data-dang-tai='1']::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: 40%;
+  background: hsl(var(--primary));
+  animation: bdl-chay 1.1s ease-in-out infinite;
+}
+
+@keyframes bdl-chay {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+/* Nền tối: `--primary` CỐ Ý không đổi giữa hai chế độ (có test canh điều đó ở
+   index.css.test.ts), mà teal 29% độ sáng thì chìm hẳn vào nền tối — dải chạy
+   coi như tàng hình. Làm sáng riêng cho dải này, không đụng tới token. */
+.dark .bdl-thanh[data-dang-tai='1']::after {
+  background: hsl(170 59% 58%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bdl-thanh[data-dang-tai='1']::after {
+    width: 100%;
+    animation: none;
+    opacity: 0.55;
+  }
+}

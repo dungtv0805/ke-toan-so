@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -26,6 +25,7 @@ import {
   type ChieuNhomDongTien,
 } from "@/services/nhomDongTienService";
 import { FilterBar } from "@/components/common/FilterBar";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 import { useFieldLabels } from "@/components/glossary/useFieldLabels";
 import { z } from "zod";
@@ -285,13 +285,13 @@ const NhomDongTienPage: React.FC = () => {
           }
         />
 
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           rowSelection={rowSelection}
           loading={loading}
-          scroll={{ x: 800, y: "calc(100vh - 300px)" }}
+          buTruDoc={300}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,

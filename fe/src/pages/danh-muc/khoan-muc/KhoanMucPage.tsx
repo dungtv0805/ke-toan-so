@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -27,6 +26,7 @@ import {
   TagOutlined,
 } from "@ant-design/icons";
 import { FilterBar } from "@/components/common/FilterBar";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { KhoanMuc } from "@/types";
 import { khoanMucService, KhoanMucStats } from "@/services/khoanMucService";
 import { nhomKhoanMucService, NhomKhoanMuc } from "@/services/nhomKhoanMucService";
@@ -510,7 +510,7 @@ const KhoanMucPage: React.FC = () => {
           }
         />
 
-        <Table
+        <BangDuLieu
           columns={(laCay ? cotCay : cfgColumns) as never}
           dataSource={(laCay ? duLieuCay : data) as never}
           rowKey="id"
@@ -518,7 +518,6 @@ const KhoanMucPage: React.FC = () => {
           rowClassName={laCay ? rowClassName : undefined}
           rowSelection={laCay ? undefined : rowSelection}
           loading={loading}
-          scroll={{ x: 800, y: "calc(100vh - 285px)" }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,

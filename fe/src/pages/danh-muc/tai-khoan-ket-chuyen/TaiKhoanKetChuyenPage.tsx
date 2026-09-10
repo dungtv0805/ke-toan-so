@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   InputNumber,
@@ -28,6 +27,7 @@ import {
   LoaiKetChuyen,
 } from "@/services/taiKhoanKetChuyenService";
 import { taiKhoanService } from "@/services/taiKhoanService";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { NHAN_BEN, NHAN_LOAI, goiYMaKetChuyen } from "./ketChuyenLabels";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
@@ -332,13 +332,13 @@ const TaiKhoanKetChuyenPage: React.FC = () => {
           }
         />
 
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           rowSelection={rowSelection}
           loading={loading}
-          scroll={{ x: 1400, y: "calc(100vh - 300px)" }}
+          buTruDoc={300}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
