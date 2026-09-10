@@ -201,11 +201,12 @@ dùng có viền 2px màu app + huy hiệu "Đang dùng" nền gradient; app kh�
 + chữ "Mở" màu app. App chưa bật cho công ty giữ nguyên trạng thái mờ + không bấm
 được như hiện tại.
 
-Chân modal: nền `#FBFBFD`, viền trên, bên trái là icon toà nhà + tên công ty
-đang dùng, bên phải là "Đổi công ty" màu `#007AFF`.
+Chân modal: nền `#FBFBFD`, viền trên, icon toà nhà + tên công ty đang dùng.
+KHÔNG có liên kết "Đổi công ty" — bản vẽ có, nhưng `TenantSwitcher` ở góc phải
+header đã làm đúng việc đó rồi, để hai lối vào là thừa (bỏ 10/09/2026).
 
-`TenantSwitcher` ở góc phải header **vẫn giữ nguyên** — hai lối vào cùng một việc,
-theo quyết định của người dùng.
+Modal phải đặt `closable={false}`: bản vẽ đã có nút X tròn riêng, để antd vẽ
+thêm nút đóng của nó nữa thì màn hiện HAI dấu X chồng nhau.
 
 ### Header
 

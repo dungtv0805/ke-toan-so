@@ -56,7 +56,17 @@ export function AppSwitcher() {
         <IconLuoiApp size={18} />
       </Button>
 
-      <Modal open={open} onCancel={() => setOpen(false)} footer={null} width={560} centered destroyOnHidden>
+      <Modal
+        open={open}
+        onCancel={() => setOpen(false)}
+        footer={null}
+        width={560}
+        centered
+        destroyOnHidden
+        // Bản vẽ có nút X tròn riêng trong ManChonUngDung; để antd vẽ thêm nút
+        // đóng của nó nữa thì màn hiện HAI dấu X chồng nhau.
+        closable={false}
+      >
         <ManChonUngDung
           danhSach={list}
           appHienTai={CURRENT_APP_ID}

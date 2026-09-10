@@ -17,7 +17,6 @@ export interface ManChonUngDungProps {
   tenCongTy?: string;
   onChon: (appId: string) => void;
   onDong: () => void;
-  onDoiCongTy?: () => void;
 }
 
 /**
@@ -36,7 +35,6 @@ export function ManChonUngDung({
   tenCongTy,
   onChon,
   onDong,
-  onDoiCongTy,
 }: ManChonUngDungProps) {
   return (
     <>
@@ -125,7 +123,7 @@ export function ManChonUngDung({
 
       {/* Chân modal chạm mép: antd 6 để đệm mặc định 24px ngang, 20px dưới. */}
       <div
-        className="flex items-center justify-between"
+        className="flex items-center"
         style={{
           margin: '0 -24px -20px',
           padding: '10px 16px',
@@ -136,15 +134,6 @@ export function ManChonUngDung({
         <span className="flex items-center gap-[7px]" style={{ fontSize: 11.5, color: '#6E6E73' }}>
           <BankOutlined style={{ color: '#98989D' }} />
           {tenCongTy ?? '—'}
-        </span>
-        <span
-          role="button"
-          tabIndex={0}
-          onClick={onDoiCongTy}
-          onKeyDown={(e) => e.key === 'Enter' && onDoiCongTy?.()}
-          style={{ fontSize: 11.5, fontWeight: 600, color: '#007AFF', cursor: 'pointer' }}
-        >
-          Đổi công ty
         </span>
       </div>
     </>
