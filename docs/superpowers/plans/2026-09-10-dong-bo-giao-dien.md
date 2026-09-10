@@ -10,6 +10,27 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-10-dong-bo-giao-dien-design.md`
 
+## Tình trạng (10/09/2026)
+
+Task 1–11, 13, 14 đã xong; **Task 12 còn chặn** vì thiếu
+`design/icons/masterceo-mark.svg`.
+
+Ba việc phát sinh so với kế hoạch, đã làm:
+
+- Đổi tên `bangDuLieu.ts` → `chuanBang.ts` và `oIconApp.ts` → `quyCachIconApp.ts`:
+  đặt cạnh `BangDuLieu.tsx` / `OIconApp.tsx` thì trên macOS hai đường dẫn trỏ lẫn
+  vào nhau, import ra `undefined`. Đổi tên xong phải `rm -rf node_modules/.vite`.
+- Tách `ManChonUngDung.tsx` khỏi `AppSwitcher.tsx` (hiển thị tách khỏi lấy dữ
+  liệu) để dựng được ở trang nghiệm thu mà không cần đăng nhập.
+- Thêm `bang-du-lieu.harness.html` + `src/dev/BangDuLieuHarness.tsx` — trang
+  nghiệm thu 6 mục, có công tắc "đang tải" và "chế độ tối".
+
+Ba lỗi bắt được bằng mắt mà test không bắt: mũi tên Excel đè lên thân icon;
+ô bảng tính chìm vào nút nền đậm; dải loading tàng hình ở nền tối.
+
+**Còn phải nghiệm thu tay** (nằm sau đăng nhập, harness không tới được): cột
+ghim ở `Tài khoản` và `Số dư đầu kỳ`; modal chọn ứng dụng thật; header thật.
+
 ## Global Constraints
 
 - **Baseline FE xanh**: `cd fe && npx vitest run` hiện là **169 file / 1303 test, pass hết**. Mọi task phải giữ con số này không giảm. BE không đụng tới trong đợt này.
