@@ -176,6 +176,11 @@ Ba app khớp đúng ba `appId` đang có bên Identity: `ke-toan`, `giao-viec`,
 Cỡ dùng: 88 (trang chọn app), 64 (thẻ trong modal), 40 (đầu sidebar),
 28 (thanh trên), 20 (danh sách), 16 (favicon).
 
+Lưu ý về cỡ 88: thẻ app trên portal hiện là thẻ NẰM NGANG với ô icon tròn 52px
+(`.picker__card-icon`), không phải ô vuông 88px. Đợt này chỉ thay ô icon cho
+đúng bộ nhận diện và giữ nguyên bố cục thẻ; đổi sang thẻ dọc 88px sẽ phải bỏ
+phần mô tả app, nên cần một bản vẽ riêng cho trang portal trước khi làm.
+
 Gradient theo app — **đổi so với màu đơn đang dùng**:
 
 | App | Gradient | Nền thẻ | Bóng |
@@ -220,7 +225,7 @@ Portal Identity giữ bố cục header sẵn có nhưng thay `logo.jpg` bằng
 | Repo | Chỗ sửa |
 |---|---|
 | `ke-toan-so/fe` | `components/layout/AppSwitcher.tsx` (icon lưới + modal), `components/layout/MainLayout.tsx` (header trái), component `OIconApp` mới |
-| `identity-service/portal` | `src/screens/AppPicker.tsx` (`APP_META`, header, thẻ app 88px), component `OIconApp` bản sao |
+| `identity-service/portal` | `src/screens/AppPicker.tsx` (`APP_META`, header, ô icon trong thẻ app), component `OIconApp` bản sao |
 
 Hai repo không dùng chung package, nên `OIconApp` tồn tại hai bản giống hệt. Đầu
 mỗi file ghi comment chỉ chéo sang đường dẫn bên kia — theo đúng kiểu comment
