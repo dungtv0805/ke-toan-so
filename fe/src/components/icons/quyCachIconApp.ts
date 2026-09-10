@@ -1,7 +1,7 @@
 /**
  * Quy cách ô icon app — bản vẽ Pencil 10/09/2026.
  *
- * BẢN SAO Ở: identity-service/portal/src/components/oIconApp.ts
+ * BẢN SAO Ở: identity-service/portal/src/components/quyCachIconApp.ts
  * Hai repo không dùng chung package; sửa một bên thì phải sửa bên kia, nếu
  * không hai nơi hiện icon khác nhau.
  *

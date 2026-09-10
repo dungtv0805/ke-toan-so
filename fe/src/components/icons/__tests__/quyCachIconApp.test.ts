@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { layMauApp, quyCachO, MAU_APP } from '../oIconApp';
+import { layMauApp, quyCachO, MAU_APP } from '../quyCachIconApp';
 
 describe('quyCachO', () => {
   it('bo góc 27% cạnh, glyph 55% cạnh', () => {

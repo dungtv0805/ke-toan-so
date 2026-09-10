@@ -5,6 +5,11 @@ import "@/index.css";
 import { Button } from "antd";
 import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { IconNhapExcel, IconXuatExcel } from "@/components/icons/ExcelIcons";
+import { OIconApp } from "@/components/icons/OIconApp";
+import { IconLuoiApp } from "@/components/icons/IconLuoiApp";
+
+const CO_ICON = [88, 64, 40, 28, 24, 20, 16];
+const APP_ICON = ["ke-toan", "giao-viec", "nhan-su", "app-la"];
 
 /**
  * TRANG NGHIỆM THU `BangDuLieu`. Chạy `npm run dev` rồi mở
@@ -81,6 +86,30 @@ function Harness() {
           pagination={false}
           buTruDoc={520}
         />
+      </section>
+
+      <section>
+        <h3 style={{ fontSize: 14, marginBottom: 8 }}>
+          4 — Bộ icon app: 88/64/40/28 phải có gradient + lớp sáng; 20/16 màu đặc;
+          hàng cuối (app lạ) phải xám, KHÔNG mượn màu app khác
+        </h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {APP_ICON.map((appId) => (
+            <div key={appId} style={{ display: "flex", alignItems: "flex-end", gap: 16 }}>
+              {CO_ICON.map((size) => (
+                <div key={size} style={{ textAlign: "center" }}>
+                  <OIconApp appId={appId} size={size} />
+                  <div style={{ fontSize: 9, marginTop: 4, color: "#888" }}>{size}</div>
+                </div>
+              ))}
+              <span style={{ fontSize: 12, marginLeft: 8 }}>{appId}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 8 }}>
+          <IconLuoiApp size={18} />
+          <span style={{ fontSize: 12 }}>lưới 9 chấm (18px)</span>
+        </div>
       </section>
 
       <section>
