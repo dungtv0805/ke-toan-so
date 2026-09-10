@@ -2799,3 +2799,58 @@ body.kh-dang-keo-cot {
 .dark .mau-nhom {
   color: color-mix(in srgb, var(--mau) 52%, #ffffff);
 }
+
+/* ── Màn chờ MasterCeo ────────────────────────────────────────────────────
+   Dấu M thở nhẹ, dưới là đúng dải 2px của BangDuLieu (dùng lại cùng nhịp
+   `bdl-chay` để cả app chỉ có MỘT chuyển động "đang tải"). */
+.mc-cho-tho {
+  animation: mc-tho 1.6s ease-in-out infinite;
+}
+
+@keyframes mc-tho {
+  0%,
+  100% {
+    /* Đáy 0.6 chứ không thấp hơn: tụt sâu thì dấu M teal nhợt hẳn ở nền sáng
+       và chìm vào nền ở chế độ tối, trông như ảnh hỏng hơn là đang tải. */
+    opacity: 0.6;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.mc-cho-dai {
+  width: 132px;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: hsl(var(--muted));
+}
+
+.mc-cho-dai::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: 40%;
+  background: hsl(var(--primary));
+  animation: bdl-chay 1.1s ease-in-out infinite;
+}
+
+.dark .mc-cho-dai::after {
+  background: hsl(170 59% 58%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-cho-tho {
+    animation: none;
+    opacity: 1;
+  }
+
+  .mc-cho-dai::after {
+    width: 100%;
+    animation: none;
+    opacity: 0.55;
+  }
+}

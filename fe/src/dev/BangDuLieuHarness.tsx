@@ -10,6 +10,7 @@ import { IconLuoiApp } from "@/components/icons/IconLuoiApp";
 import { ManChonUngDung } from "@/components/layout/ManChonUngDung";
 import { MemoryRouter } from "react-router-dom";
 import { LuoiDanhMuc } from "@/pages/danh-muc/LuoiDanhMuc";
+import { ManChoMasterCeo } from "@/components/common/ManChoMasterCeo";
 import { DANH_MUC_GROUPS } from "@/config/danhMucCatalog";
 
 const APP_MAU = [
@@ -109,6 +110,19 @@ function Harness() {
           pagination={false}
           buTruDoc={520}
         />
+      </section>
+
+      <section>
+        <h3 style={{ fontSize: 14, marginBottom: 8 }}>
+          8 — Màn chờ MasterCeo: dấu M thở nhẹ + dải 2px, KHÔNG dùng Spin của antd
+        </h3>
+        <div style={{ border: "1px solid hsl(var(--border))", borderRadius: 9, overflow: "hidden" }}>
+          <div style={{ height: 260, overflow: "hidden" }}>
+            <div style={{ transform: "translateY(-50%)", marginTop: 130 }}>
+              <ManChoMasterCeo chu="Đang kiểm tra đăng nhập…" />
+            </div>
+          </div>
+        </div>
       </section>
 
       <section>

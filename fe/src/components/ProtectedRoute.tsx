@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { Spin, Result, Button } from 'antd';
+import { Result, Button } from 'antd';
 import { useAuth } from '@/contexts/AuthContext';
+import { ManChoMasterCeo } from '@/components/common/ManChoMasterCeo';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -15,11 +16,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const location = useLocation();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Spin size="large" tip="Đang kiểm tra đăng nhập..." />
-      </div>
-    );
+    return <ManChoMasterCeo chu="Đang kiểm tra đăng nhập…" />;
   }
 
   if (!isAuthenticated) {
