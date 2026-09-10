@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -25,6 +24,7 @@ import {
   ReloadOutlined,
 } from "@ant-design/icons";
 import { HangHoaVatTu, TinhChatVatTu, DonViTinh, NhomVatTu } from "@/types";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { hangHoaVatTuService } from "@/services/hangHoaVatTuService";
 import { donViTinhService } from "@/services/donViTinhService";
 import { nhomVatTuService } from "@/services/nhomVatTuService";
@@ -435,13 +435,12 @@ const HangHoaVatTuPage: React.FC = () => {
           }
         />
 
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           rowSelection={rowSelection}
           loading={loading}
-          scroll={{ x: 900, y: "calc(100vh - 285px)" }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,

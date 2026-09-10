@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -24,6 +23,7 @@ import {
   SwapOutlined,
 } from "@ant-design/icons";
 import { FilterBar } from "@/components/common/FilterBar";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { LoaiGiaoDich } from "@/types";
 import { loaiGiaoDichService, LoaiGiaoDichStats } from "@/services/loaiGiaoDichService";
 import { loaiChungTuService, LoaiChungTuType, PhanLoaiChungTu } from "@/services/loaiChungTuService";
@@ -374,15 +374,12 @@ const LoaiGiaoDichPage: React.FC = () => {
           }
         />
 
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           rowSelection={rowSelection}
           loading={loading}
-          scroll={{
-            y: "calc(100vh - 285px)",
-          }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,

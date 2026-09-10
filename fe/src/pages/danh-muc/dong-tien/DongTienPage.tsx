@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -30,6 +29,7 @@ import {
   TagOutlined,
 } from "@ant-design/icons";
 import { DongTien } from "@/types";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { dongTienService, DongTienStats } from "@/services/dongTienService";
 import { nhomDongTienService, NhomDongTien } from "@/services/nhomDongTienService";
 import { loaiDongTienOptions } from "@/mock-data/dong-tien";
@@ -475,7 +475,7 @@ const DongTienPage: React.FC = () => {
 
         <div className="mb-2 flex justify-end">{chuyenCheDo}</div>
 
-        <Table
+        <BangDuLieu
           columns={(laCay ? cotCay : cfgColumns) as never}
           dataSource={(laCay ? duLieuCay : data) as never}
           rowKey="id"
@@ -483,7 +483,6 @@ const DongTienPage: React.FC = () => {
           rowClassName={laCay ? rowClassName : undefined}
           rowSelection={laCay ? undefined : rowSelection}
           loading={loading}
-          scroll={{ x: 800, y: "calc(100vh - 285px)" }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,

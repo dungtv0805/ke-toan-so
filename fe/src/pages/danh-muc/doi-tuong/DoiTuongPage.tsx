@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -33,6 +32,7 @@ import {
   MailOutlined,
 } from "@ant-design/icons";
 import { FilterBar } from "@/components/common/FilterBar";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { DoiTuong } from "@/types";
 import { doiTuongService } from "@/services/doiTuongService";
 import { loaiDoiTuong } from "@/mock-data/doi-tuong";
@@ -611,7 +611,7 @@ const DoiTuongPage: React.FC = () => {
         />
 
         {/* Table */}
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
@@ -628,8 +628,6 @@ const DoiTuongPage: React.FC = () => {
           onChange={(pag) =>
             handleTableChange({ current: pag.current, pageSize: pag.pageSize })
           }
-          size="middle"
-          scroll={{ x: 900, y: "calc(100vh - 285px)" }}
         />
       </Card>
 

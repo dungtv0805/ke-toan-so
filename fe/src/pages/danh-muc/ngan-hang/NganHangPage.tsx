@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -23,6 +22,7 @@ import {
   ExportOutlined,
 } from "@ant-design/icons";
 import { TaiKhoanNganHang } from "@/types";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { FilterBar } from "@/components/common/FilterBar";
 import { nganHangService } from "@/services/nganHangService";
 import { z } from "zod";
@@ -367,13 +367,12 @@ const NganHangPage: React.FC = () => {
           }
         />
 
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           rowSelection={rowSelection}
           loading={loading}
-          scroll={{ x: 1000, y: "calc(100vh - 285px)" }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,

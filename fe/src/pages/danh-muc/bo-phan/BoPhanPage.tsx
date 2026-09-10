@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -24,6 +23,7 @@ import {
   ApartmentOutlined,
 } from "@ant-design/icons";
 import { BoPhan } from "@/types";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { boPhanService, BoPhanStats } from "@/services/boPhanService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
@@ -320,15 +320,12 @@ const BoPhanPage: React.FC = () => {
           }
         />
 
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           rowSelection={rowSelection}
           loading={loading}
-          scroll={{
-            y: "calc(100vh - 285px)",
-          }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,

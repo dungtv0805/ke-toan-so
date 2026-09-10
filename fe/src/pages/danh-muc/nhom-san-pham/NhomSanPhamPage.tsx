@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -22,6 +21,7 @@ import {
   ReloadOutlined,
 } from "@ant-design/icons";
 import { NhomSanPham } from "@/types";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { nhomSanPhamService } from "@/services/nhomSanPhamService";
 import { z } from "zod";
 import { usePagePermission } from "@/hooks/usePagePermission";
@@ -334,13 +334,12 @@ const NhomSanPhamPage: React.FC = () => {
           }
         />
 
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           rowSelection={rowSelection}
           loading={loading}
-          scroll={{ x: 700, y: "calc(100vh - 285px)" }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,

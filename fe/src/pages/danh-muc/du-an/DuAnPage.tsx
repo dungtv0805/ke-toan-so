@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
-  Table,
   Button,
   Input,
   Space,
@@ -35,6 +34,7 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { DuAn, ChuDauTu } from "@/types";
+import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { duAnService, DuAnStats } from "@/services/duAnService";
 import { chuDauTuService } from "@/services/chuDauTuService";
 import { trangThaiDuAnOptions } from "@/mock-data/du-an";
@@ -620,13 +620,12 @@ const DuAnPage: React.FC = () => {
           }
         />
 
-        <Table
+        <BangDuLieu
           columns={cfgColumns}
           dataSource={data}
           rowKey="id"
           rowSelection={rowSelection}
           loading={loading}
-          scroll={{ x: 1000, y: "calc(100vh - 285px)" }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
