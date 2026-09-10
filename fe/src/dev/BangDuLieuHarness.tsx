@@ -69,9 +69,22 @@ const COT_NHIEU: ColumnsType<Dong> = [
 
 function Harness() {
   const [dangTai, setDangTai] = React.useState(false);
+  const [toi, setToi] = React.useState(false);
+
+  // Chế độ tối bật bằng lớp `dark` trên <html> — giống MainLayout.
+  React.useEffect(() => {
+    document.documentElement.classList.toggle("dark", toi);
+    document.body.style.background = toi ? "hsl(222 47% 11%)" : "";
+    document.body.style.color = toi ? "hsl(0 0% 95%)" : "";
+  }, [toi]);
 
   return (
     <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 28 }}>
+      <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13 }}>
+        <input type="checkbox" checked={toi} onChange={(e) => setToi(e.target.checked)} />
+        Chế độ tối (ô icon app phải GIỮ NGUYÊN màu, không đảo; dải loading và icon
+        Excel phải còn đọc được)
+      </label>
       <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13 }}>
         <input
           type="checkbox"

@@ -2773,6 +2773,13 @@ body.kh-dang-keo-cot {
   }
 }
 
+/* Nền tối: `--primary` CỐ Ý không đổi giữa hai chế độ (có test canh điều đó ở
+   index.css.test.ts), mà teal 29% độ sáng thì chìm hẳn vào nền tối — dải chạy
+   coi như tàng hình. Làm sáng riêng cho dải này, không đụng tới token. */
+.dark .bdl-thanh[data-dang-tai='1']::after {
+  background: hsl(170 59% 58%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bdl-thanh[data-dang-tai='1']::after {
     width: 100%;
