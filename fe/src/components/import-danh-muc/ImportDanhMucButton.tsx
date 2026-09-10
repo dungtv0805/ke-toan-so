@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "antd";
-import { FileExcelOutlined } from "@ant-design/icons";
+import { IconNhapExcel } from "@/components/icons/ExcelIcons";
 import { ImportDanhMucModal } from "./ImportDanhMucModal";
 import type { ImportDanhMucConfig } from "./types";
 
@@ -32,7 +32,7 @@ export function ImportDanhMucButton({
 
   return (
     <>
-      <Button icon={<FileExcelOutlined />} onClick={() => setOpen(true)}>
+      <Button icon={<IconNhapExcel />} onClick={() => setOpen(true)}>
         Import Excel
       </Button>
       <ImportDanhMucModal

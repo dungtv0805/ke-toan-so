@@ -2,7 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import type { ColumnsType } from "antd/es/table";
 import "@/index.css";
+import { Button } from "antd";
 import { BangDuLieu } from "@/components/table/BangDuLieu";
+import { IconNhapExcel, IconXuatExcel } from "@/components/icons/ExcelIcons";
 
 /**
  * TRANG NGHIỆM THU `BangDuLieu`. Chạy `npm run dev` rồi mở
@@ -79,6 +81,24 @@ function Harness() {
           pagination={false}
           buTruDoc={520}
         />
+      </section>
+
+      <section>
+        <h3 style={{ fontSize: 14, marginBottom: 8 }}>
+          3 — Icon Excel trên nút: mũi tên vào / ra, ô bảng tính xanh
+        </h3>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Button icon={<IconNhapExcel />}>Import Excel</Button>
+          <Button icon={<IconXuatExcel />}>Xuất Excel</Button>
+          <Button type="primary" icon={<IconXuatExcel />}>
+            Nút nền đậm
+          </Button>
+          <span style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 16 }}>
+            <IconNhapExcel size={48} />
+            <IconXuatExcel size={48} />
+            <span style={{ fontSize: 11, color: "#666" }}>(phóng to để soi)</span>
+          </span>
+        </div>
       </section>
 
       <section>

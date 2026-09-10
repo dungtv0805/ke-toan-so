@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button, message } from "antd";
-import { ExportOutlined } from "@ant-design/icons";
+import { IconXuatExcel } from "@/components/icons/ExcelIcons";
 import { exportToExcel, ExcelColumn, ExcelRow } from "@/utils/exportExcel";
 import { gomTheoNhom, type MucNhom } from "@/components/table/bang-cay";
 
@@ -82,7 +82,7 @@ export const ExportDanhMucButton: React.FC<ExportDanhMucButtonProps> = ({
   };
 
   return (
-    <Button icon={<ExportOutlined />} loading={loading} onClick={handleExport}>
+    <Button icon={<IconXuatExcel />} loading={loading} onClick={handleExport}>
       Xuất Excel
     </Button>
   );
