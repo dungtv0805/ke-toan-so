@@ -7,6 +7,13 @@ import { BangDuLieu } from "@/components/table/BangDuLieu";
 import { IconNhapExcel, IconXuatExcel } from "@/components/icons/ExcelIcons";
 import { OIconApp } from "@/components/icons/OIconApp";
 import { IconLuoiApp } from "@/components/icons/IconLuoiApp";
+import { ManChonUngDung } from "@/components/layout/ManChonUngDung";
+
+const APP_MAU = [
+  { appId: "ke-toan", name: "Tài chính" },
+  { appId: "giao-viec", name: "Giao việc" },
+  { appId: "nhan-su", name: "Nhân sự" },
+];
 
 const CO_ICON = [88, 64, 40, 28, 24, 20, 16];
 const APP_ICON = ["ke-toan", "giao-viec", "nhan-su", "app-la"];
@@ -86,6 +93,32 @@ function Harness() {
           pagination={false}
           buTruDoc={520}
         />
+      </section>
+
+      <section>
+        <h3 style={{ fontSize: 14, marginBottom: 8 }}>
+          5 — Modal "Chọn ứng dụng": Tài chính đang dùng, Nhân sự chưa bật cho công ty
+        </h3>
+        <div
+          style={{
+            width: 560,
+            background: "#fff",
+            border: "1px solid #E5E5EA",
+            borderRadius: 14,
+            padding: "20px 24px",
+            boxShadow: "0 12px 36px #00000024",
+            overflow: "hidden",
+          }}
+        >
+          <ManChonUngDung
+            danhSach={APP_MAU}
+            appHienTai="ke-toan"
+            daBat={(id) => id !== "nhan-su"}
+            tenCongTy="XD Điện Thanh Long"
+            onChon={() => {}}
+            onDong={() => {}}
+          />
+        </div>
       </section>
 
       <section>
