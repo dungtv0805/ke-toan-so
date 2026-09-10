@@ -1,8 +1,11 @@
+/* @import PHẢI đứng đầu file — đặt sau @tailwind thì trình duyệt bỏ qua và
+   font Inter không bao giờ được tải (chữ rơi về font hệ thống). */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* Design system theo giao diện tham khảo - Clean & Modern */
 
