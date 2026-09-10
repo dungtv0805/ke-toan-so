@@ -33,13 +33,14 @@ const TONE: Record<PillTone, string> = {
   'trung-tinh': XAM_TRUNG_TINH,
 };
 
-/** Nhãn trạng thái dạng viên thuốc — một kiểu duy nhất cho cả dự án. */
+/** Nhãn trạng thái dạng viên thuốc — một kiểu duy nhất cho cả dự án.
+ *  Không bao giờ xuống dòng: pill vỡ thành hai dòng khi đặt cạnh nút trong ô hẹp. */
 export const StatusPill: React.FC<{
   tone: PillTone;
   children: React.ReactNode;
 }> = ({ tone, children }) => (
   <span
-    className={`inline-flex items-center rounded-full px-[8px] py-[2px] text-[10.5px] font-medium leading-none ${
+    className={`inline-flex items-center whitespace-nowrap rounded-full px-[8px] py-[2px] text-[10.5px] font-medium leading-none ${
       TONE[tone] ?? TONE['trung-tinh']
     }`}
   >
