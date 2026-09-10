@@ -157,10 +157,6 @@ export const ChuyenKhoPage = loadable(() => import('./kho/chuyen-kho/ChuyenKhoPa
   fallback: <PageLoader />
 });
 
-export const KhoNhomHangPage = loadable(() => import('./kho/KhoNhomHangPage'), {
-  fallback: <PageLoader />
-});
-
 // Chứng từ
 export const PhieuThuPage = loadable(() => import('./chung-tu/phieu-thu/PhieuThuPage'), {
   fallback: <PageLoader />
@@ -260,6 +256,10 @@ export const Pnl3LopPage = loadable(
 
 // Thư viện tài liệu
 export const QuyTrinhPage = loadable(() => import('./thu-vien/QuyTrinhPage'), {
+  fallback: <PageLoader />
+});
+
+export const TaiLieuPhanHePage = loadable(() => import('./thu-vien/TaiLieuPhanHePage'), {
   fallback: <PageLoader />
 });
 

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, Select, Space, Table, Typography, message } from 'antd';
 import { FilterBar } from '@/components/common/FilterBar';
+import { SectionNav } from '@/components/layout/SectionNav';
+import { BAN_HANG_NAV } from '@/config/sectionNavs';
 import type { ColumnsType } from 'antd/es/table';
 import { ExportOutlined, RiseOutlined } from '@ant-design/icons';
 import {
@@ -118,6 +120,7 @@ export default function BaoCaoDoanhThuPage() {
     // KHÔNG bọc thêm padding: MainLayout đã cho Content padding 12px, thêm p-4 ở đây thành
     // 28px và trang này lệch hẳn so với mọi trang báo cáo khác.
     <div>
+      <SectionNav items={BAN_HANG_NAV} className="mb-3" />
       <FilterBar
         className="mb-3"
         filters={

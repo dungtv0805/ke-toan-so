@@ -10,6 +10,7 @@ import {
   BarChartOutlined,
   FileTextOutlined,
   TableOutlined,
+  RiseOutlined,
 } from "@ant-design/icons";
 import type { SectionNavItem } from "@/components/layout/SectionNav";
 
@@ -70,5 +71,8 @@ export const BAN_HANG_NAV: SectionNavItem[] = [
     icon: <FileProtectOutlined />,
   },
   { label: "Báo cáo", path: "/bao-cao/hop-dong", icon: <BarChartOutlined /> },
+  // Sheet "Menu tài chính" không đặt Báo cáo doanh thu lên sidebar — lối vào
+  // duy nhất của trang (đang chạy thật) là thanh ngang này.
+  { label: "Báo cáo doanh thu", path: "/bao-cao/doanh-thu", icon: <RiseOutlined /> },
   { label: "Hợp đồng", path: "/danh-muc/hop-dong", icon: <FileTextOutlined /> },
 ];

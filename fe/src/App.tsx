@@ -29,7 +29,6 @@ import {
   NhapKhoPage,
   XuatKhoPage,
   ChuyenKhoPage,
-  KhoNhomHangPage,
   DuAnPage,
   BoPhanPage,
   KhoanMucPage,
@@ -70,6 +69,7 @@ import {
   BaoCaoTaiChinhPage,
 
   QuyTrinhPage,
+  TaiLieuPhanHePage,
   BieuMauPage,
   ChinhSachPage,
   HuongDanPage,
@@ -99,6 +99,18 @@ import ThueIndexRoute from "./pages/thue/ThueIndexRoute";
 
 const queryClient = new QueryClient();
 
+/**
+ * Thư viện Quy trình / Hướng dẫn RIÊNG của từng phân hệ (menuCatalog cờ
+ * `thuVien`). `key` bắt buộc: hai route cùng render một component ở cùng chỗ
+ * trong cây, không có key thì React giữ nguyên instance khi chuyển
+ * /kho/quy-trinh → /thue/quy-trinh (bộ lọc, cột ghim của bảng trước còn dính).
+ */
+const thuVien = (duongDan: string) => (
+  <ProtectedRoute requiredPermission={`${duongDan}:xem`}>
+    <TaiLieuPhanHePage key={duongDan} duongDan={duongDan} />
+  </ProtectedRoute>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ConfigProvider
@@ -107,6 +119,11 @@ const App = () => (
         token: {
           // Màu thương hiệu MasterCEO — giữ nguyên.
           colorPrimary: '#1f7769',
+          // Inter (nạp ở đầu index.css). antd tự đặt font-family hệ thống lên mọi
+          // component, nên khai ở body là CHƯA đủ — thiếu dòng này thì Inter được
+          // tải về mà không chỗ nào dùng. Inter đo hẹp hơn SF/Segoe ở 8.5–11px
+          // nên nhãn rail và cột bảng không bị cắt thêm.
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
           // Bo góc theo 07-design-system: nút/ô nhập 7 · thẻ/bảng 9 · nhỏ 6.
           borderRadius: 7,
           borderRadiusLG: 9,
@@ -462,6 +479,11 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
+                  <Route path="quy-trinh" element={thuVien("/kho/quy-trinh")} />
+                  <Route path="huong-dan" element={thuVien("/kho/huong-dan")} />
+                  <Route path="ke-hoach" element={<ComingSoonPage />} />
+                  <Route path="du-bao" element={<ComingSoonPage />} />
+                  <Route path="bao-cao" element={<ComingSoonPage />} />
                   {/* Kiểm kê kho — mới có mục trên thanh ngang, chức năng làm sau */}
                   <Route path="kiem-ke" element={<ComingSoonPage />} />
                   <Route path="tinh-gia-xuat" element={<ComingSoonPage />} />
@@ -543,7 +565,6 @@ const App = () => (
                     }
                   />
                   <Route path="so-chi-tiet-cong-no" element={<ComingSoonPage />} />
-                  <Route path="so-chi-tiet-phat-sinh" element={<ComingSoonPage />} />
                   <Route
                     path="bang-tong-hop"
                     element={
@@ -592,6 +613,10 @@ const App = () => (
                 <Route path="thue">
                   {/* Sidebar chỉ còn 1 mục "Thuế" → /thue tự đưa vào trang con. */}
                   <Route index element={<ThueIndexRoute />} />
+                  <Route path="quy-trinh" element={thuVien("/thue/quy-trinh")} />
+                  <Route path="huong-dan" element={thuVien("/thue/huong-dan")} />
+                  <Route path="ke-hoach" element={<ComingSoonPage />} />
+                  <Route path="du-bao" element={<ComingSoonPage />} />
                   <Route
                     path="bang-ke-mua-vao"
                     element={
@@ -628,13 +653,11 @@ const App = () => (
 
                 {/* Phân tích - Coming Soon */}
                 <Route path="phan-tich">
-                  <Route path="bao-cao-tai-chinh" element={<ComingSoonPage />} />
-                  <Route path="ban-hang" element={<ComingSoonPage />} />
-                  <Route path="mua-hang" element={<ComingSoonPage />} />
                   <Route path="cong-no" element={<ComingSoonPage />} />
                   <Route path="dong-tien" element={<ComingSoonPage />} />
                   <Route path="ton-kho" element={<ComingSoonPage />} />
                   <Route path="thanh-khoan" element={<ComingSoonPage />} />
+                  <Route path="chi-so-tai-chinh" element={<ComingSoonPage />} />
                 </Route>
 
                 {/* Trung tâm dữ liệu - Coming Soon */}
@@ -672,11 +695,7 @@ const App = () => (
                     }
                   />
                   <Route path="tai-san" element={<ComingSoonPage />} />
-                  {/* 4 nhóm hàng hiện nằm dưới menu Kho — kèm thanh ngang phiếu kho */}
-                  <Route path="hang-hoa" element={<KhoNhomHangPage />} />
-                  <Route path="nguyen-lieu" element={<KhoNhomHangPage />} />
-                  <Route path="dung-cu" element={<KhoNhomHangPage />} />
-                  <Route path="van-phong-pham" element={<KhoNhomHangPage />} />
+                  <Route path="dung-cu" element={<ComingSoonPage />} />
                   <Route path="hop-dong" element={
                     <ProtectedRoute requiredPermission="/trung-tam-du-lieu/hop-dong:xem">
                       <QuanLyHopDongPage />
@@ -771,11 +790,29 @@ const App = () => (
                 </Route>
 
                 {/* Mục đã lên sidebar nhưng chưa có màn hình — ra thẳng trang "đang phát triển".
-                    Danh sách sinh từ menuCatalog; thêm mục soon mới thì thêm một dòng ở đây. */}
-                <Route path="tong-hop/quyet-toan-tam-ung" element={<ComingSoonPage />} />
+                    Danh sách sinh từ menuCatalog; thêm mục soon mới thì thêm một dòng ở đây.
+                    Quy trình / Hướng dẫn mỗi phân hệ là trang THẬT (thư viện riêng). */}
+                <Route path="tong-hop">
+                  <Route path="quy-trinh" element={thuVien("/tong-hop/quy-trinh")} />
+                  <Route path="huong-dan" element={thuVien("/tong-hop/huong-dan")} />
+                  <Route path="thuc-hien" element={<ComingSoonPage />} />
+                  <Route path="quyet-toan-tam-ung" element={<ComingSoonPage />} />
+                  <Route path="bu-tru-cong-no" element={<ComingSoonPage />} />
+                  <Route path="khoa-so" element={<ComingSoonPage />} />
+                </Route>
                 <Route path="bao-cao/tai-chinh/luu-chuyen-tien-te" element={<ComingSoonPage />} />
                 <Route path="bao-cao/tai-chinh/thuyet-minh" element={<ComingSoonPage />} />
+                <Route path="von-dong-tien">
+                  <Route path="quy-trinh" element={thuVien("/von-dong-tien/quy-trinh")} />
+                  <Route path="huong-dan" element={thuVien("/von-dong-tien/huong-dan")} />
+                  <Route path="bao-cao" element={<ComingSoonPage />} />
+                  <Route path="kiem-ke" element={<ComingSoonPage />} />
+                  <Route path="vay" element={<ComingSoonPage />} />
+                  <Route path="von" element={<ComingSoonPage />} />
+                </Route>
                 <Route path="mua-hang">
+                  <Route path="quy-trinh" element={thuVien("/mua-hang/quy-trinh")} />
+                  <Route path="huong-dan" element={thuVien("/mua-hang/huong-dan")} />
                   <Route path="ke-hoach" element={<ComingSoonPage />} />
                   <Route path="du-bao" element={<ComingSoonPage />} />
                   <Route path="hop-dong" element={<ComingSoonPage />} />
@@ -785,28 +822,42 @@ const App = () => (
                   <Route path="bao-cao" element={<ComingSoonPage />} />
                 </Route>
                 <Route path="ban-hang">
-                  <Route path="don-hang" element={<ComingSoonPage />} />
+                  <Route path="quy-trinh" element={thuVien("/ban-hang/quy-trinh")} />
+                  <Route path="huong-dan" element={thuVien("/ban-hang/huong-dan")} />
                   <Route path="so-chi-tiet" element={<ComingSoonPage />} />
                   <Route path="tong-hop" element={<ComingSoonPage />} />
-                  <Route path="nhac-no" element={<ComingSoonPage />} />
                 </Route>
                 <Route path="tien-luong">
-                  <Route path="tinh-luong" element={<ComingSoonPage />} />
-                  <Route path="so-chi-tiet" element={<ComingSoonPage />} />
-                  <Route path="bhxh" element={<ComingSoonPage />} />
-                  <Route path="cong-no" element={<ComingSoonPage />} />
+                  <Route path="quy-trinh" element={thuVien("/tien-luong/quy-trinh")} />
+                  <Route path="huong-dan" element={thuVien("/tien-luong/huong-dan")} />
                   <Route path="bao-cao" element={<ComingSoonPage />} />
+                  <Route path="cham-cong" element={<ComingSoonPage />} />
+                  <Route path="tinh-luong" element={<ComingSoonPage />} />
+                  <Route path="tra-luong" element={<ComingSoonPage />} />
+                  <Route path="hach-toan" element={<ComingSoonPage />} />
+                  <Route path="bhxh" element={<ComingSoonPage />} />
+                  <Route path="thue-tncn" element={<ComingSoonPage />} />
                 </Route>
                 <Route path="tai-san">
-                  <Route path="danh-muc" element={<ComingSoonPage />} />
+                  <Route path="quy-trinh" element={thuVien("/tai-san/quy-trinh")} />
+                  <Route path="huong-dan" element={thuVien("/tai-san/huong-dan")} />
+                  <Route path="bao-cao" element={<ComingSoonPage />} />
+                  <Route path="phan-bo-khau-hao" element={<ComingSoonPage />} />
                   <Route path="khau-hao" element={<ComingSoonPage />} />
                   <Route path="dieu-chuyen" element={<ComingSoonPage />} />
-                  <Route path="ghi-giam" element={<ComingSoonPage />} />
                 </Route>
                 <Route path="ccdc">
+                  <Route path="quy-trinh" element={thuVien("/ccdc/quy-trinh")} />
+                  <Route path="huong-dan" element={thuVien("/ccdc/huong-dan")} />
+                  <Route path="ke-hoach" element={<ComingSoonPage />} />
+                  <Route path="du-bao" element={<ComingSoonPage />} />
+                  <Route path="bao-cao" element={<ComingSoonPage />} />
                   <Route path="phan-bo" element={<ComingSoonPage />} />
                   <Route path="dieu-chuyen" element={<ComingSoonPage />} />
-                  <Route path="danh-muc" element={<ComingSoonPage />} />
+                </Route>
+                <Route path="cong-yeu-cau">
+                  <Route path="thanh-toan" element={<ComingSoonPage />} />
+                  <Route path="xuat-hoa-don" element={<ComingSoonPage />} />
                 </Route>
               </Route>
 

@@ -2,7 +2,6 @@ import React from 'react';
 import { MenuFoldOutlined } from '@ant-design/icons';
 import { MenuItemList } from './MenuItemList';
 import { SidebarSearch } from './SidebarSearch';
-import { HelpMenu } from './HelpMenu';
 import type { VisibleModule } from '@/hooks/useVisibleMenu';
 
 interface Props {
@@ -38,17 +37,16 @@ export const ModulePanel: React.FC<Props> = ({
 
     <SidebarSearch modules={allModules} onSelect={onSelect} />
 
-    <MenuItemList
-      leaves={current.leaves}
-      activePath={activePath}
-      activeSearch={activeSearch}
-      onSelect={onSelect}
-    />
-
-    {/* Thẻ "Kỳ kế toán" sẽ nằm ở đây khi có API — spec §14.2 */}
-    <div className="flex-1" />
-
-    <HelpMenu onSelect={onSelect} />
+    {/* Tổng hợp có ~21 dòng — cuộn trong cột, không đẩy trang. */}
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <MenuItemList
+        leaves={current.leaves}
+        activePath={activePath}
+        activeSearch={activeSearch}
+        onSelect={onSelect}
+      />
+    </div>
+    {/* Thẻ "Kỳ kế toán" sẽ nằm ở đáy khi có API — spec §14.2 */}
   </div>
 );
 

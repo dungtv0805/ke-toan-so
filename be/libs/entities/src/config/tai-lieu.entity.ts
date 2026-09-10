@@ -1,11 +1,14 @@
 import { Entity, Column, Index } from 'typeorm';
 import { BaseEntity } from '../base.entity';
 
-export type TaiLieuCategory = 'bieu-mau' | 'chinh-sach' | 'huong-dan';
+/** 'quy-trinh' | 'bieu-mau' | 'chinh-sach' | 'huong-dan' hoặc thư viện riêng của
+ *  phân hệ dạng '<phân hệ>/quy-trinh' — danh sách hợp lệ ở TAI_LIEU_CATEGORIES. */
+export type TaiLieuCategory = string;
 export type TaiLieuType = 'file' | 'youtube';
 
 /**
- * Tài liệu trong Thư viện tài liệu (Biểu mẫu / Chính sách / Hướng dẫn).
+ * Tài liệu trong Thư viện tài liệu (Quy trình / Biểu mẫu / Chính sách / Hướng dẫn,
+ * chung hoặc riêng từng phân hệ).
  * Tenant-aware qua BaseEntity (tenantId) + TenantProxy của DatabaseModule.
  * type='file' → lưu file qua StorageService (GridFS), giữ storageKey.
  * type='youtube' → chỉ lưu link + id video.

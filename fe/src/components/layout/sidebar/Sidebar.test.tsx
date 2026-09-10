@@ -21,40 +21,39 @@ describe('Sidebar', () => {
     localStorage.clear();
   });
 
-  it('rail hiện đúng 12 phân hệ với SuperAdmin', () => {
+  it('rail hiện đúng 15 phân hệ theo thứ tự sheet "Menu tài chính" với SuperAdmin', () => {
     render(<MemoryRouter initialEntries={['/kho/nhap-kho']}><Sidebar /></MemoryRouter>);
     // Scope vào đúng thanh rail — panel Kho tự render thêm ~11 nút mục con,
-    // đếm getAllByRole('button') trên toàn cây sẽ luôn ≥ 12 bất kể rail
+    // đếm getAllByRole('button') trên toàn cây sẽ luôn lớn hơn bất kể rail
     // đúng hay sai (review Task 8, Important 2).
     const rail = screen.getByRole('navigation', { name: 'Phân hệ' });
-    // Rail còn một ô Trợ giúp cố định ở đáy — loại nó ra để phép đếm vẫn nói
-    // đúng về số phân hệ chứ không chỉ về tổng số nút.
-    const oPhanHe = within(rail)
-      .getAllByRole('button')
-      .filter((b) => b.getAttribute('aria-label') !== 'Trợ giúp & phản hồi');
-    expect(oPhanHe).toHaveLength(12);
+    expect(within(rail).getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual([
+      'Tổng quan', 'Phân tích', 'Tổng hợp', 'Vốn & dòng tiền', 'Mua hàng', 'Bán hàng',
+      'Tiền lương', 'Kho', 'Tài sản', 'Công cụ dụng cụ', 'Thuế',
+      'Cổng yêu cầu thanh toán', 'Cổng yêu cầu xuất hóa đơn', 'Thư viện', 'Danh mục',
+    ]);
+  });
+
+  it('Thư viện là một phân hệ trên rail, mở panel 4 thư viện chung', () => {
+    render(<MemoryRouter initialEntries={['/chinh-sach']}><Sidebar /></MemoryRouter>);
+    for (const nhan of ['Quy trình', 'Chính sách', 'Biểu mẫu', 'Hướng dẫn']) {
+      expect(screen.getByText(nhan)).toBeTruthy();
+    }
   });
 
   /**
-   * Panel KHÔNG hiện trong 3 tình huống (điện thoại, thu gọn, phân hệ có
-   * route) — mà HelpMenu chỉ nằm ở đáy panel thì 4 trang thư viện mất lối
-   * vào. Rail luôn render nên ô Trợ giúp ở đáy rail là lối vào bảo đảm.
+   * Sáu mục Kế hoạch/Dự báo cùng một pathname, chỉ khác `?tab=`. Khớp theo
+   * pathname thì mục khai đầu tiên (Phân tích) luôn thắng → vào Kế hoạch từ
+   * Bán hàng mà panel nhảy sang Phân tích.
    */
-  it('rail luôn có ô Trợ giúp, kể cả ở trang có route (Bảng điều hành) và khi thu gọn', () => {
-    const { unmount } = render(
-      <MemoryRouter initialEntries={['/']}><Sidebar /></MemoryRouter>,
+  it('Kế hoạch mở từ Bán hàng thì panel ở lại Bán hàng, không nhảy sang Phân tích', () => {
+    render(
+      <MemoryRouter initialEntries={['/trung-tam-du-lieu/ke-hoach?tab=ban-hang']}>
+        <Sidebar />
+      </MemoryRouter>,
     );
-    const rail = screen.getByRole('navigation', { name: 'Phân hệ' });
-    expect(within(rail).getByLabelText('Trợ giúp & phản hồi')).toBeTruthy();
-    // Ở '/' panel không render — nhãn chữ của HelpMenu panel vắng mặt, chỉ
-    // còn ô chỉ-icon trên rail.
-    expect(screen.queryByText('Trợ giúp & phản hồi')).toBeNull();
-    unmount();
-
-    localStorage.setItem('sidebar-thu-gon:u1', 'true');
-    render(<MemoryRouter initialEntries={['/kho/nhap-kho']}><Sidebar /></MemoryRouter>);
-    const railThuGon = screen.getByRole('navigation', { name: 'Phân hệ' });
-    expect(within(railThuGon).getByLabelText('Trợ giúp & phản hồi')).toBeTruthy();
+    expect(screen.getByText('Hợp đồng bán')).toBeTruthy();
+    expect(screen.queryByText('P&L Kế hoạch')).toBeNull();
   });
 
   it('panel mở đúng phân hệ của trang đang xem', () => {
@@ -74,9 +73,9 @@ describe('Sidebar', () => {
     // Không dò bằng text "Tổng quan" — rail cũng hiện railLabel y hệt chữ
     // đó, nên có mặt/vắng mặt panel đều làm getByText/queryByText gặp 1-2
     // phần tử trùng tên và không phân biệt được (queryByText ném lỗi khi có
-    // ≥2 khớp thay vì trả về phần tử đầu). "Trợ giúp & phản hồi" (HelpMenu)
-    // chỉ nằm trong ModulePanel → vắng mặt nghĩa là panel không render.
-    expect(screen.queryByText('Trợ giúp & phản hồi')).toBeNull();
+    // ≥2 khớp thay vì trả về phần tử đầu). Nút "Thu gọn menu" chỉ nằm trong
+    // ModulePanel → vắng mặt nghĩa là panel không render.
+    expect(screen.queryByLabelText('Thu gọn menu')).toBeNull();
   });
 
   it('bấm rail vào phân hệ có route (Danh mục) thì điều hướng, panel không đổi sang Danh mục', () => {
@@ -89,7 +88,7 @@ describe('Sidebar', () => {
     // panel tự ẩn. Không panel nào bung ra — không phải Kho cũ (đã điều
     // hướng khỏi trang Kho), càng không phải một panel "Danh mục" rỗng
     // nghĩa.
-    expect(screen.queryByText('Trợ giúp & phản hồi')).toBeNull();
+    expect(screen.queryByLabelText('Thu gọn menu')).toBeNull();
     expect(screen.queryByText('Nhập kho')).toBeNull();
   });
 
@@ -100,10 +99,10 @@ describe('Sidebar', () => {
     // Mô phỏng đúng lỗi Critical 2: chọn một mục ở phân hệ KHÁC qua Tìm
     // nhanh (không đi qua bamRail/onPick của rail) — URL đổi, panel phải đi
     // theo chứ không kẹt lại ở phân hệ Kho.
-    fireEvent.change(screen.getByPlaceholderText('Tìm nhanh'), { target: { value: 'Phiếu thu' } });
-    fireEvent.click(screen.getByText('Phiếu thu'));
+    fireEvent.change(screen.getByPlaceholderText('Tìm nhanh'), { target: { value: 'Thu tiền' } });
+    fireEvent.click(screen.getByText('Thu tiền'));
 
-    expect(screen.getByText('Phiếu thu')).toBeTruthy();
+    expect(screen.getByText('Thu tiền')).toBeTruthy();
     expect(screen.queryByText('Nhập kho')).toBeNull();
     expect(screen.queryByText('Xuất kho')).toBeNull();
   });

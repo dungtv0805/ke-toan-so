@@ -22,6 +22,20 @@ describe('moduleTheoPath', () => {
   it('đường dẫn lạ hoắc trả undefined', () => {
     expect(moduleTheoPath('/khong-ton-tai')).toBeUndefined();
   });
+
+  it('cùng pathname Kế hoạch/Dự báo thì phân hệ theo đúng ?tab=', () => {
+    expect(moduleTheoPath('/trung-tam-du-lieu/ke-hoach', '?tab=kqkd')).toBe('phan-tich');
+    expect(moduleTheoPath('/trung-tam-du-lieu/ke-hoach', '?tab=chi-tiet')).toBe('tong-hop');
+    expect(moduleTheoPath('/trung-tam-du-lieu/ke-hoach', '?tab=ban-hang')).toBe('ban-hang');
+    expect(moduleTheoPath('/trung-tam-du-lieu/du-bao', '?tab=nhan-su&trang=2')).toBe('tien-luong');
+    expect(moduleTheoPath('/trung-tam-du-lieu/du-bao', '?tab=tai-san')).toBe('tai-san');
+  });
+
+  it('thư viện riêng của phân hệ thuộc đúng phân hệ đó, thư viện chung thuộc Thư viện', () => {
+    expect(moduleTheoPath('/kho/quy-trinh')).toBe('kho');
+    expect(moduleTheoPath('/tong-hop/huong-dan')).toBe('tong-hop');
+    expect(moduleTheoPath('/quy-trinh')).toBe('thu-vien');
+  });
 });
 
 describe('laManHinhNhapLieu', () => {

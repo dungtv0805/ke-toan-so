@@ -6,6 +6,10 @@ import {
 import { DANH_MUC_ROUTES } from '@/config/danhMucCatalog';
 import maTranTruocDoi from './__snapshots__/matrix-keys-truoc-doi.json';
 import routeTruocDoi from '@/config/__snapshots__/route-permissions-truoc-doi.json';
+import khoaMoi from '@/config/__snapshots__/khoa-moi-menu-tai-chinh.json';
+import khoaBo from '@/config/__snapshots__/khoa-bo-menu-tai-chinh.json';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const moiKey = (ds: PermissionModule[] = permissionModules): string[] =>
   ds.flatMap((m) => (m.children ? moiKey(m.children) : [m.key]));
@@ -29,7 +33,7 @@ describe('permissionModules sinh từ catalog', () => {
     const nhan = permissionModules.map((m) => m.label);
     expect(nhan[nhan.length - 1]).toBe('Cấu hình');
 
-    // Phân hệ không còn khoá riêng nào thì không hiện (Tiền lương). Phần còn
+    // Phân hệ không có khoá riêng nào thì không hiện (hai Cổng yêu cầu). Phần còn
     // lại phải giữ NGUYÊN thứ tự của rail.
     const cuaRail = nhan.slice(0, -1);
     const thuTuRail = MENU_MODULES.map((m) => m.label);
@@ -51,16 +55,32 @@ describe('permissionModules sinh từ catalog', () => {
     expect(trongMaTran.has('/bao-cao/so-cai')).toBe(true);
   });
 
-  it('phân hệ Danh mục liệt kê đủ 26 trang con', () => {
-    const dm = permissionModules.find((m) => m.label === 'Danh mục')!;
-    const keys = new Set(moiKey(dm.children ?? []));
-    expect(DANH_MUC_ROUTES.filter((r) => !keys.has(r))).toEqual([]);
+  it('đủ 26 trang danh mục con, mỗi trang đúng một dòng (ở Danh mục hoặc phân hệ sheet đặt nó)', () => {
+    const keys = moiKey();
+    const thieuHoacLap = DANH_MUC_ROUTES.filter(
+      (r) => keys.filter((k) => k === r).length !== 1,
+    );
+    expect(thieuHoacLap).toEqual([]);
   });
 
-  it('4 mục thư viện mang module danh-muc KHÔNG bị nhóm Danh mục nuốt mất', () => {
-    const trongMaTran = new Set(moiKey());
-    for (const k of ['/quy-trinh', '/chinh-sach', '/bieu-mau', '/huong-dan']) {
-      expect(trongMaTran.has(k)).toBe(true);
+  it('Hệ thống tài khoản / Quy chuẩn / TK kết chuyển nằm ở Tổng hợp, không lặp ở Danh mục', () => {
+    const tongHop = new Set(moiKey(permissionModules.find((m) => m.label === 'Tổng hợp')!.children));
+    for (const k of ['/danh-muc/tai-khoan', '/danh-muc/quy-chuan', '/danh-muc/tai-khoan-ket-chuyen']) {
+      expect(tongHop.has(k)).toBe(true);
+    }
+  });
+
+  it('4 trang Thư viện chung nằm ở phân hệ Thư viện', () => {
+    const tv = permissionModules.find((m) => m.label === 'Thư viện')!;
+    expect(moiKey(tv.children)).toEqual(['/quy-trinh', '/chinh-sach', '/bieu-mau', '/huong-dan']);
+  });
+
+  it('mỗi phân hệ nghiệp vụ có quyền Quy trình + Hướng dẫn RIÊNG', () => {
+    for (const goc of ['tong-hop', 'von-dong-tien', 'mua-hang', 'ban-hang', 'tien-luong', 'kho', 'tai-san', 'ccdc', 'thue']) {
+      const ph = permissionModules.find((m) => m.key === goc)!;
+      expect(moiKey(ph.children)).toEqual(
+        expect.arrayContaining([`/${goc}/quy-trinh`, `/${goc}/huong-dan`]),
+      );
     }
   });
 
@@ -89,15 +109,44 @@ describe('permissionModules sinh từ catalog', () => {
  * Hai file snapshot là ảnh chụp ĐÓNG BĂNG trước đợt sửa, KHÔNG sinh lại.
  */
 describe('ma trận — không cấp lại, không đánh rơi', () => {
-  it('không khoá nào của ma trận cũ biến mất', () => {
+  it('không khoá nào của ma trận cũ biến mất (trừ 7 khoá bỏ có chủ ý)', () => {
     const bayGio = new Set(moiKey());
-    const mat = (maTranTruocDoi as string[]).filter((k) => !bayGio.has(k));
+    const bo = new Set(khoaBo as string[]);
+    const mat = (maTranTruocDoi as string[]).filter((k) => !bayGio.has(k) && !bo.has(k));
     expect(mat).toEqual([]);
   });
 
-  it('không sinh khoá quyền chưa từng tồn tại', () => {
-    const la = moiKey().filter((k) => !KHOA_DA_CO.has(k));
+  it('không sinh khoá quyền chưa từng tồn tại (trừ 18 khoá thư viện phân hệ)', () => {
+    const moi = new Set(khoaMoi as string[]);
+    const la = moiKey().filter((k) => !KHOA_DA_CO.has(k) && !moi.has(k));
     expect(la).toEqual([]);
+  });
+});
+
+/**
+ * BE `PERMISSION_MODULES` là thứ cấp quyền cho công ty TẠO MỚI (và danh sách
+ * category Thư viện hợp lệ của config-service suy từ nó). Lệch với ma trận là:
+ * thiếu → công ty mới không có quyền trang đó; thừa → quyền "ma" không dòng
+ * nào trong ma trận thu hồi được. Đọc thẳng file BE, so hai chiều.
+ */
+describe('ma trận ↔ BE PERMISSION_MODULES', () => {
+  const file = path.resolve(__dirname, '../../../../../../be/libs/core/src/permissions/all-permissions.ts');
+  const src = fs.readFileSync(file, 'utf8');
+  const dau = src.indexOf('export const PERMISSION_MODULES');
+  const khoi = src.slice(dau, src.indexOf('];', dau));
+  const be = [...khoi.matchAll(/'([^']+)'/g)].map((m) => m[1]);
+
+  it('BE không lặp khoá', () => {
+    expect(be.length).toBe(new Set(be).size);
+  });
+
+  it('hai bên đúng cùng một tập khoá', () => {
+    const fe = new Set(moiKey());
+    const beSet = new Set(be);
+    expect({
+      beThieu: [...fe].filter((k) => !beSet.has(k)),
+      beThua: be.filter((k) => !fe.has(k)),
+    }).toEqual({ beThieu: [], beThua: [] });
   });
 });
 
@@ -127,11 +176,11 @@ describe('ma trận — nhãn khoá dùng chung nhiều mục sidebar', () => {
     ['/bao-cao/tai-chinh', 'Báo cáo tài chính (cả 4 tab)'],
     [
       '/trung-tam-du-lieu/ke-hoach',
-      'Kế hoạch (dùng chung: Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản)',
+      'Kế hoạch (dùng chung: P&L Kế hoạch, Tổng hợp, Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản)',
     ],
     [
       '/trung-tam-du-lieu/du-bao',
-      'Dự báo (dùng chung: Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản)',
+      'Dự báo (dùng chung: P&L Dự báo, Tổng hợp, Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản)',
     ],
   ])('khoá %s hiện nhãn đè "%s", không phải nhãn mục đầu tiên', (key, nhan) => {
     const dong = timTheoKey(permissionModules, key);

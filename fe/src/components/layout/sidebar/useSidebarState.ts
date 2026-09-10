@@ -20,8 +20,24 @@ const LEAVES_THEO_DO_DAI = [...MENU_LEAVES].sort(
   (a, b) => pathOf(b).length - pathOf(a).length,
 );
 
-/** Phân hệ chứa một pathname. Khớp dài nhất trước để '/' không nuốt hết. */
-export function moduleTheoPath(pathname: string): ModuleId | undefined {
+/**
+ * Phân hệ chứa một URL. Khớp dài nhất trước để '/' không nuốt hết.
+ *
+ * Trang Kế hoạch / Dự báo được SÁU phân hệ trỏ tới, chỉ khác `?tab=` — so
+ * mỗi pathname thì mục khai đầu tiên (Phân tích) luôn thắng, bấm "Kế hoạch"
+ * ở Bán hàng xong panel nhảy sang Phân tích. Nên ưu tiên mục mang query khớp
+ * đủ `search` trước, rồi mới rơi về khớp theo pathname.
+ */
+export function moduleTheoPath(pathname: string, search = ''): ModuleId | undefined {
+  if (search) {
+    const dangCo = new URLSearchParams(search);
+    const khopTab = MENU_LEAVES.find((l) => {
+      const [p, q] = l.key.split('?');
+      return !!q && p === pathname
+        && [...new URLSearchParams(q)].every(([k, v]) => dangCo.get(k) === v);
+    });
+    if (khopTab) return khopTab.module;
+  }
   const khop = LEAVES_THEO_DO_DAI.find((l) => {
     const p = pathOf(l);
     return p === '/' ? pathname === '/' : pathname.startsWith(p);

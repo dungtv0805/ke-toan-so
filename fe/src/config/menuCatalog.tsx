@@ -7,15 +7,26 @@ import {
   AccountBookOutlined, FileSearchOutlined, ProfileOutlined, TableOutlined,
   AuditOutlined, SwapOutlined, ScheduleOutlined, CreditCardOutlined,
   WalletOutlined, FileProtectOutlined, FileTextOutlined, BarChartOutlined,
-  AppstoreOutlined, ContainerOutlined, SnippetsOutlined, FileAddOutlined,
-  FileDoneOutlined, BellOutlined, SafetyCertificateOutlined, FundOutlined,
+  FileAddOutlined,
+  FileDoneOutlined, SafetyCertificateOutlined, FundOutlined,
+  NodeIndexOutlined, QuestionCircleOutlined, FormOutlined, FolderOpenOutlined,
+  PayCircleOutlined, LockOutlined, InteractionOutlined, BankOutlined,
+  GoldOutlined, CheckSquareOutlined, PercentageOutlined, CalendarOutlined,
+  SolutionOutlined, FileSyncOutlined,
 } from '@ant-design/icons';
 import { DANH_MUC_GROUPS, DANH_MUC_ROUTES } from './danhMucCatalog';
 
+/**
+ * Thứ tự + nội dung bám ĐÚNG sheet "Menu tài chính" của
+ * `docs/THIẾT KẾ_KẾ TOÁN.xlsx` (cột A = phân hệ, cột B = mục con). Riêng
+ * "Báo cáo tài chính" tuy nằm cột A nhưng sheet "TỔNG HỢP" xếp nó là một mục
+ * CỦA Tổng hợp → là cụm cuối trong phân hệ Tổng hợp, không lên rail.
+ */
 export type ModuleId =
   | 'tong-quan' | 'phan-tich' | 'tong-hop' | 'von-dong-tien'
   | 'mua-hang' | 'ban-hang' | 'tien-luong' | 'kho'
-  | 'tai-san' | 'ccdc' | 'thue' | 'danh-muc';
+  | 'tai-san' | 'ccdc' | 'thue'
+  | 'yc-thanh-toan' | 'yc-xuat-hoa-don' | 'thu-vien' | 'danh-muc';
 
 export interface MenuModule {
   id: ModuleId;
@@ -65,127 +76,191 @@ export interface MenuLeaf {
    * nhận mục `ok`, đúng như trước.
    */
   quyenDaCap?: true;
+  /**
+   * Thư viện tài liệu RIÊNG của một phân hệ (Quy trình / Hướng dẫn — sheet
+   * thiết kế ghi "Dạng tải file lên"). Category lưu ở BE = route bỏ '/' đầu,
+   * nên quyền BE tự suy đúng khoá `<route>:<action>` (DocPermService).
+   */
+  thuVien?: true;
 }
 
 export const MENU_MODULES: MenuModule[] = [
-  { id: 'tong-quan',     label: 'Tổng quan',          railLabel: 'Tổng quan', icon: <DashboardOutlined />, route: '/' },
-  { id: 'phan-tich',     label: 'Phân tích',          railLabel: 'Phân tích', icon: <LineChartOutlined /> },
-  { id: 'tong-hop',      label: 'Tổng hợp',           railLabel: 'Tổng hợp',  icon: <BookOutlined /> },
-  { id: 'von-dong-tien', label: 'Vốn & dòng tiền',    railLabel: 'Dòng tiền', icon: <DollarOutlined /> },
-  { id: 'mua-hang',      label: 'Mua hàng',           railLabel: 'Mua hàng',  icon: <ShoppingOutlined /> },
-  { id: 'ban-hang',      label: 'Bán hàng',           railLabel: 'Bán hàng',  icon: <ShoppingCartOutlined /> },
-  { id: 'tien-luong',    label: 'Tiền lương',         railLabel: 'Tiền lương', icon: <TeamOutlined /> },
-  { id: 'kho',           label: 'Kho',                railLabel: 'Kho',       icon: <InboxOutlined /> },
-  { id: 'tai-san',       label: 'Tài sản',            railLabel: 'Tài sản',   icon: <CarOutlined /> },
-  { id: 'ccdc',          label: 'Công cụ dụng cụ',    railLabel: 'CCDC',      icon: <ToolOutlined /> },
-  { id: 'thue',          label: 'Thuế',               railLabel: 'Thuế',      icon: <CalculatorOutlined /> },
-  { id: 'danh-muc',      label: 'Danh mục',           railLabel: 'Danh mục',  icon: <DatabaseOutlined />, route: '/danh-muc', aggregateRoutes: DANH_MUC_ROUTES },
+  { id: 'tong-quan',       label: 'Tổng quan',                 railLabel: 'Tổng quan',  icon: <DashboardOutlined />, route: '/' },
+  { id: 'phan-tich',       label: 'Phân tích',                 railLabel: 'Phân tích',  icon: <LineChartOutlined /> },
+  { id: 'tong-hop',        label: 'Tổng hợp',                  railLabel: 'Tổng hợp',   icon: <BookOutlined /> },
+  { id: 'von-dong-tien',   label: 'Vốn & dòng tiền',           railLabel: 'Dòng tiền',  icon: <DollarOutlined /> },
+  { id: 'mua-hang',        label: 'Mua hàng',                  railLabel: 'Mua hàng',   icon: <ShoppingOutlined /> },
+  { id: 'ban-hang',        label: 'Bán hàng',                  railLabel: 'Bán hàng',   icon: <ShoppingCartOutlined /> },
+  { id: 'tien-luong',      label: 'Tiền lương',                railLabel: 'Tiền lương', icon: <TeamOutlined /> },
+  { id: 'kho',             label: 'Kho',                       railLabel: 'Kho',        icon: <InboxOutlined /> },
+  { id: 'tai-san',         label: 'Tài sản',                   railLabel: 'Tài sản',    icon: <CarOutlined /> },
+  { id: 'ccdc',            label: 'Công cụ dụng cụ',           railLabel: 'CCDC',       icon: <ToolOutlined /> },
+  { id: 'thue',            label: 'Thuế',                      railLabel: 'Thuế',       icon: <CalculatorOutlined /> },
+  { id: 'yc-thanh-toan',   label: 'Cổng yêu cầu thanh toán',   railLabel: 'YC T.toán',  icon: <PayCircleOutlined />, route: '/cong-yeu-cau/thanh-toan' },
+  { id: 'yc-xuat-hoa-don', label: 'Cổng yêu cầu xuất hóa đơn', railLabel: 'YC H.đơn',   icon: <FileSyncOutlined />, route: '/cong-yeu-cau/xuat-hoa-don' },
+  { id: 'thu-vien',        label: 'Thư viện',                  railLabel: 'Thư viện',   icon: <FolderOpenOutlined /> },
+  { id: 'danh-muc',        label: 'Danh mục',                  railLabel: 'Danh mục',   icon: <DatabaseOutlined />, route: '/danh-muc', aggregateRoutes: DANH_MUC_ROUTES },
+];
+
+/**
+ * Hai mục mở đầu 9 phân hệ nghiệp vụ — sheet thiết kế ghi "Dạng tải file lên".
+ * Mỗi phân hệ một thư viện RIÊNG (không dùng chung Thư viện › Quy trình), mỗi
+ * mục một khoá quyền riêng `<gốc>/quy-trinh`, `<gốc>/huong-dan`.
+ */
+const thuVienCua = (module: ModuleId, goc: string): MenuLeaf[] => [
+  { key: `${goc}/quy-trinh`, label: 'Quy trình', module, status: 'ok', thuVien: true, icon: <NodeIndexOutlined /> },
+  { key: `${goc}/huong-dan`, label: 'Hướng dẫn', module, status: 'ok', thuVien: true, icon: <QuestionCircleOutlined /> },
+];
+
+/**
+ * Kế hoạch / Dự báo của một phân hệ = MỘT TAB của trang Kế hoạch / Dự báo.
+ * Hai khoá quyền dùng chung (`/trung-tam-du-lieu/ke-hoach`, `/du-bao`) — tách
+ * mục chỉ là chuyện điều hướng, không sinh khoá mới.
+ */
+const keHoachTab = (module: ModuleId, tab: string, nhan = ['Kế hoạch', 'Dự báo']): MenuLeaf[] => [
+  { key: `/trung-tam-du-lieu/ke-hoach?tab=${tab}`, permKey: '/trung-tam-du-lieu/ke-hoach', label: nhan[0], module, status: 'ok', icon: <ScheduleOutlined /> },
+  { key: `/trung-tam-du-lieu/du-bao?tab=${tab}`, permKey: '/trung-tam-du-lieu/du-bao', label: nhan[1], module, status: 'ok', icon: <RiseOutlined /> },
 ];
 
 export const MENU_LEAVES: MenuLeaf[] = [
-  // ===== 1. Tổng quan (1) =====
+  // ===== Tổng quan =====
   { key: '/', label: 'Bảng điều hành', module: 'tong-quan', status: 'ok', icon: <DashboardOutlined /> },
 
-  // ===== 2. Phân tích (9) =====
-  { key: '/phan-tich/ban-hang', label: 'Bán hàng', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <ShoppingCartOutlined /> },
-  { key: '/phan-tich/mua-hang', label: 'Mua hàng', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <ShoppingOutlined /> },
+  // ===== Phân tích (10) — sheet "PHÂN TÍCH": KH · DB · Thực hiện · So sánh =====
+  ...keHoachTab('phan-tich', 'kqkd', ['P&L Kế hoạch', 'P&L Dự báo']),
+  { key: '/bao-cao/pnl', label: 'P&L', module: 'phan-tich', status: 'ok', icon: <PieChartOutlined /> },
+  { key: '/bao-cao/pnl-3-lop', label: 'So sánh', module: 'phan-tich', status: 'ok', icon: <BarChartOutlined /> },
+  { key: '/bao-cao/pnl-khong-khau-hao', label: 'P&L không khấu hao', module: 'phan-tich', status: 'ok', icon: <PieChartOutlined /> },
   { key: '/phan-tich/cong-no', label: 'Công nợ', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <ReconciliationOutlined /> },
   { key: '/phan-tich/dong-tien', label: 'Dòng tiền', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <DollarOutlined /> },
   { key: '/phan-tich/ton-kho', label: 'Tồn kho', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <InboxOutlined /> },
-  { key: '/phan-tich/bao-cao-tai-chinh', label: 'P&L', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <PieChartOutlined /> },
-  { key: '/bao-cao/pnl-khong-khau-hao', label: 'P&L không khấu hao', module: 'phan-tich', status: 'ok', icon: <PieChartOutlined /> },
-  { key: '/bao-cao/pnl-3-lop', label: 'P&L so sánh KH-DB-TH', module: 'phan-tich', status: 'ok', icon: <PieChartOutlined /> },
-  { key: '/phan-tich/thanh-khoan', label: 'Khả năng thanh khoản', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <StockOutlined /> },
+  { key: '/phan-tich/thanh-khoan', label: 'Khả năng thanh toán', module: 'phan-tich', status: 'soon', quyenDaCap: true, icon: <StockOutlined /> },
+  { key: '/phan-tich/chi-so-tai-chinh', label: 'Chỉ số tài chính', module: 'phan-tich', status: 'soon', icon: <FundOutlined /> },
 
-  // ===== 3. Tổng hợp (13 — cụm BCTC tách thành 6 mục ở đợt C) =====
-  { key: '/bao-cao/so-chi-tiet-tai-khoan', label: 'Sổ chi tiết tài khoản', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'ok', icon: <AccountBookOutlined /> },
-  { key: '/bao-cao/so-chi-tiet-cong-no', label: 'Sổ chi tiết công nợ', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'soon', quyenDaCap: true, icon: <FileSearchOutlined /> },
-  { key: '/bao-cao/so-chi-tiet-phat-sinh', label: 'Sổ chi tiết phát sinh', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'soon', quyenDaCap: true, icon: <ProfileOutlined /> },
-  { key: '/chung-tu/nhat-ky-chung', label: 'Sổ nhật ký chung', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'ok', icon: <AuditOutlined /> },
-  { key: '/bao-cao/bang-tong-hop', label: 'Tổng hợp công nợ', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'ok', icon: <TableOutlined /> },
-  { key: '/tong-hop/quyet-toan-tam-ung', label: 'Quyết toán tạm ứng', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'soon', icon: <FileTextOutlined /> },
-  { key: '/chung-tu/ket-chuyen-lai-lo', label: 'Kết chuyển', module: 'tong-hop', cluster: 'SỔ SÁCH & TỔNG HỢP', status: 'ok', icon: <SwapOutlined /> },
-  // Bốn mục dưới cùng trỏ trang /bao-cao/tai-chinh, chỉ khác `?tab=` — trang có
-  // đúng 4 tab đó. permKey giữ nguyên '/bao-cao/tai-chinh' để KHÔNG sinh khoá
-  // quyền mới; tách mục chỉ là chuyện điều hướng.
+  // ===== Tổng hợp (16 + cụm Báo cáo tài chính 5) =====
+  ...thuVienCua('tong-hop', '/tong-hop'),
+  // Sheet "TỔNG HỢP": Kế hoạch = "Chi tiết kế hoạch", Dự báo = "Chi tiết dự báo".
+  ...keHoachTab('tong-hop', 'chi-tiet'),
+  { key: '/tong-hop/thuc-hien', label: 'Thực hiện', module: 'tong-hop', status: 'soon', icon: <CheckSquareOutlined /> },
+  { key: '/tong-hop/quyet-toan-tam-ung', label: 'Quyết toán tạm ứng', module: 'tong-hop', status: 'soon', icon: <FileTextOutlined /> },
+  { key: '/tong-hop/bu-tru-cong-no', label: 'Bù trừ công nợ', module: 'tong-hop', status: 'soon', icon: <InteractionOutlined /> },
+  { key: '/chung-tu/ket-chuyen-lai-lo', label: 'Kết chuyển lãi lỗ', module: 'tong-hop', status: 'ok', icon: <SwapOutlined /> },
+  { key: '/tong-hop/khoa-so', label: 'Khóa sổ', module: 'tong-hop', status: 'soon', icon: <LockOutlined /> },
+  { key: '/chung-tu/nhat-ky-chung', label: 'Sổ nhật ký chung', module: 'tong-hop', status: 'ok', icon: <AuditOutlined /> },
+  { key: '/bao-cao/so-chi-tiet-tai-khoan', label: 'Sổ chi tiết tài khoản', module: 'tong-hop', status: 'ok', icon: <AccountBookOutlined /> },
+  { key: '/bao-cao/so-chi-tiet-cong-no', label: 'Sổ chi tiết công nợ', module: 'tong-hop', status: 'soon', quyenDaCap: true, icon: <FileSearchOutlined /> },
+  { key: '/bao-cao/bang-tong-hop', label: 'Tổng hợp công nợ', module: 'tong-hop', status: 'ok', icon: <TableOutlined /> },
+  // Ba trang Danh mục kế toán, sheet đặt dưới Tổng hợp. Khoá quyền là khoá
+  // Danh mục sẵn có — ma trận hiện chúng ở Tổng hợp (khử trùng giữ chỗ khai trước).
+  { key: '/danh-muc/tai-khoan', label: 'Hệ thống tài khoản', module: 'tong-hop', status: 'ok', icon: <DatabaseOutlined /> },
+  { key: '/danh-muc/quy-chuan', label: 'Quy chuẩn hạch toán', module: 'tong-hop', status: 'ok', icon: <SolutionOutlined /> },
+  { key: '/danh-muc/tai-khoan-ket-chuyen', label: 'Tài khoản kết chuyển', module: 'tong-hop', status: 'ok', icon: <SwapOutlined /> },
+  // Ba mục đầu trỏ trang /bao-cao/tai-chinh, chỉ khác `?tab=`. permKey giữ
+  // '/bao-cao/tai-chinh' để KHÔNG sinh khoá quyền mới. Tab "So sánh lãi lỗ"
+  // vẫn còn trong trang, sheet không đặt nó lên menu.
   { key: '/bao-cao/tai-chinh?tab=can-doi-ke-toan', permKey: '/bao-cao/tai-chinh', label: 'Bảng cân đối kế toán', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'ok', icon: <PieChartOutlined /> },
   { key: '/bao-cao/tai-chinh?tab=ket-qua-kinh-doanh', permKey: '/bao-cao/tai-chinh', label: 'Kết quả kinh doanh', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'ok', icon: <BarChartOutlined /> },
   { key: '/bao-cao/tai-chinh?tab=can-doi-tai-khoan', permKey: '/bao-cao/tai-chinh', label: 'Bảng cân đối tài khoản', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'ok', icon: <TableOutlined /> },
-  { key: '/bao-cao/tai-chinh?tab=so-sanh-lai-lo', permKey: '/bao-cao/tai-chinh', label: 'So sánh lãi lỗ', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'ok', icon: <PieChartOutlined /> },
   { key: '/bao-cao/tai-chinh/luu-chuyen-tien-te', label: 'Lưu chuyển tiền tệ', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'soon', icon: <SwapOutlined /> },
   { key: '/bao-cao/tai-chinh/thuyet-minh', label: 'Thuyết minh', module: 'tong-hop', cluster: 'BÁO CÁO TÀI CHÍNH', status: 'soon', icon: <FileTextOutlined /> },
 
-  // ===== 4. Vốn & dòng tiền (5) =====
-  { key: '/trung-tam-du-lieu/ke-hoach?tab=dong-tien', permKey: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch ngân sách', module: 'von-dong-tien', status: 'ok', icon: <ScheduleOutlined /> },
-  { key: '/trung-tam-du-lieu/du-bao?tab=dong-tien', permKey: '/trung-tam-du-lieu/du-bao', label: 'Dự báo ngân sách', module: 'von-dong-tien', status: 'ok', icon: <RiseOutlined /> },
+  // ===== Vốn & dòng tiền (11) =====
+  ...thuVienCua('von-dong-tien', '/von-dong-tien'),
+  ...keHoachTab('von-dong-tien', 'dong-tien'),
+  { key: '/von-dong-tien/bao-cao', label: 'Báo cáo', module: 'von-dong-tien', status: 'soon', icon: <BarChartOutlined /> },
+  { key: '/chung-tu/phieu-thu', label: 'Thu tiền', module: 'von-dong-tien', status: 'ok', icon: <CreditCardOutlined /> },
+  { key: '/chung-tu/phieu-chi', label: 'Chi tiền', module: 'von-dong-tien', status: 'ok', icon: <WalletOutlined /> },
+  { key: '/von-dong-tien/kiem-ke', label: 'Kiểm kê', module: 'von-dong-tien', status: 'soon', icon: <ReconciliationOutlined /> },
   { key: '/so-quy', label: 'Sổ quỹ', module: 'von-dong-tien', status: 'ok', icon: <WalletOutlined /> },
-  { key: '/chung-tu/phieu-thu', label: 'Phiếu thu', module: 'von-dong-tien', status: 'ok', icon: <CreditCardOutlined /> },
-  { key: '/chung-tu/phieu-chi', label: 'Phiếu chi', module: 'von-dong-tien', status: 'ok', icon: <WalletOutlined /> },
+  { key: '/von-dong-tien/vay', label: 'Vay, Cho vay', module: 'von-dong-tien', status: 'soon', icon: <BankOutlined /> },
+  { key: '/von-dong-tien/von', label: 'Vốn', module: 'von-dong-tien', status: 'soon', icon: <GoldOutlined /> },
 
-  // ===== 5. Mua hàng (8) =====
-  { key: '/mua-hang/ke-hoach', label: 'Kế hoạch mua hàng', module: 'mua-hang', status: 'soon', icon: <ScheduleOutlined /> },
-  { key: '/mua-hang/du-bao', label: 'Dự báo mua hàng', module: 'mua-hang', status: 'soon', icon: <RiseOutlined /> },
+  // ===== Mua hàng (10) =====
+  ...thuVienCua('mua-hang', '/mua-hang'),
+  { key: '/mua-hang/ke-hoach', label: 'Kế hoạch', module: 'mua-hang', status: 'soon', icon: <ScheduleOutlined /> },
+  { key: '/mua-hang/du-bao', label: 'Dự báo', module: 'mua-hang', status: 'soon', icon: <RiseOutlined /> },
+  { key: '/mua-hang/bao-cao', label: 'Báo cáo', module: 'mua-hang', status: 'soon', icon: <BarChartOutlined /> },
   { key: '/mua-hang/hop-dong', label: 'Hợp đồng mua', module: 'mua-hang', status: 'soon', icon: <FileProtectOutlined /> },
   { key: '/mua-hang/mua-hang', label: 'Mua hàng', module: 'mua-hang', status: 'soon', icon: <ShoppingOutlined /> },
   { key: '/mua-hang/so-chi-tiet', label: 'Sổ chi tiết mua hàng', module: 'mua-hang', status: 'soon', icon: <ProfileOutlined /> },
   { key: '/mua-hang/tong-hop', label: 'Tổng hợp mua hàng', module: 'mua-hang', status: 'soon', icon: <TableOutlined /> },
   { key: '/cong-no/phai-tra', label: 'Công nợ phải trả', module: 'mua-hang', status: 'ok', icon: <ReconciliationOutlined /> },
-  { key: '/mua-hang/bao-cao', label: 'Báo cáo', module: 'mua-hang', status: 'soon', icon: <BarChartOutlined /> },
 
-  // ===== 6. Bán hàng (10) =====
-  { key: '/trung-tam-du-lieu/ke-hoach?tab=ban-hang', permKey: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch bán hàng', module: 'ban-hang', status: 'ok', icon: <ScheduleOutlined /> },
-  { key: '/trung-tam-du-lieu/du-bao?tab=ban-hang', permKey: '/trung-tam-du-lieu/du-bao', label: 'Dự báo bán hàng', module: 'ban-hang', status: 'ok', icon: <RiseOutlined /> },
-  { key: '/trung-tam-du-lieu/hop-dong', label: 'Hợp đồng bán', module: 'ban-hang', status: 'ok', icon: <FileProtectOutlined /> },
-  { key: '/ban-hang/don-hang', label: 'Đơn hàng', module: 'ban-hang', status: 'soon', icon: <FileDoneOutlined /> },
+  // ===== Bán hàng (10) =====
+  // "Bán hàng" = trang quản lý đơn hàng, "Hợp đồng bán" = danh mục hợp đồng —
+  // đúng như thanh ngang BAN_HANG_NAV đã gọi hai trang này từ trước.
+  ...thuVienCua('ban-hang', '/ban-hang'),
+  ...keHoachTab('ban-hang', 'ban-hang'),
+  { key: '/bao-cao/hop-dong', label: 'Báo cáo', module: 'ban-hang', status: 'ok', icon: <BarChartOutlined /> },
+  { key: '/danh-muc/hop-dong', label: 'Hợp đồng bán', module: 'ban-hang', status: 'ok', icon: <FileProtectOutlined /> },
+  { key: '/trung-tam-du-lieu/hop-dong', label: 'Bán hàng', module: 'ban-hang', status: 'ok', icon: <FileDoneOutlined /> },
   { key: '/ban-hang/so-chi-tiet', label: 'Sổ chi tiết bán hàng', module: 'ban-hang', status: 'soon', icon: <ProfileOutlined /> },
   { key: '/ban-hang/tong-hop', label: 'Tổng hợp bán hàng', module: 'ban-hang', status: 'soon', icon: <TableOutlined /> },
   { key: '/cong-no/phai-thu', label: 'Công nợ phải thu', module: 'ban-hang', status: 'ok', icon: <ReconciliationOutlined /> },
-  { key: '/bao-cao/hop-dong', label: 'Báo cáo', module: 'ban-hang', status: 'ok', icon: <BarChartOutlined /> },
-  { key: '/bao-cao/doanh-thu', label: 'Báo cáo doanh thu', module: 'ban-hang', status: 'ok', icon: <RiseOutlined /> },
-  { key: '/ban-hang/nhac-no', label: 'Nhắc nợ', module: 'ban-hang', status: 'soon', icon: <BellOutlined /> },
 
-  // ===== 7. Tiền lương (7) =====
-  { key: '/trung-tam-du-lieu/ke-hoach?tab=nhan-su', permKey: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch tiền lương', module: 'tien-luong', status: 'ok', icon: <ScheduleOutlined /> },
-  { key: '/trung-tam-du-lieu/du-bao?tab=nhan-su', permKey: '/trung-tam-du-lieu/du-bao', label: 'Dự báo tiền lương', module: 'tien-luong', status: 'ok', icon: <RiseOutlined /> },
-  { key: '/tien-luong/tinh-luong', label: 'Tính lương', module: 'tien-luong', status: 'soon', icon: <CalculatorOutlined /> },
-  { key: '/tien-luong/so-chi-tiet', label: 'Sổ chi tiết tiền lương', module: 'tien-luong', status: 'soon', icon: <ProfileOutlined /> },
-  { key: '/tien-luong/bhxh', label: 'BHXH', module: 'tien-luong', status: 'soon', icon: <SafetyCertificateOutlined /> },
-  { key: '/tien-luong/cong-no', label: 'Công nợ lương', module: 'tien-luong', status: 'soon', icon: <ReconciliationOutlined /> },
+  // ===== Tiền lương (11) — Chấm công / Tính lương sheet ghi "lấy từ bên nhân sự" =====
+  ...thuVienCua('tien-luong', '/tien-luong'),
+  ...keHoachTab('tien-luong', 'nhan-su'),
   { key: '/tien-luong/bao-cao', label: 'Báo cáo', module: 'tien-luong', status: 'soon', icon: <BarChartOutlined /> },
+  { key: '/tien-luong/cham-cong', label: 'Chấm công', module: 'tien-luong', status: 'soon', icon: <CalendarOutlined /> },
+  { key: '/tien-luong/tinh-luong', label: 'Tính lương', module: 'tien-luong', status: 'soon', icon: <CalculatorOutlined /> },
+  { key: '/tien-luong/tra-luong', label: 'Trả lương', module: 'tien-luong', status: 'soon', icon: <WalletOutlined /> },
+  { key: '/tien-luong/hach-toan', label: 'Hạch toán lương', module: 'tien-luong', status: 'soon', icon: <AuditOutlined /> },
+  { key: '/tien-luong/bhxh', label: 'Nộp bảo hiểm', module: 'tien-luong', status: 'soon', icon: <SafetyCertificateOutlined /> },
+  { key: '/tien-luong/thue-tncn', label: 'Thuế TNCN', module: 'tien-luong', status: 'soon', icon: <PercentageOutlined /> },
 
-  // ===== 8. Kho (9) =====
+  // ===== Kho (11) =====
+  ...thuVienCua('kho', '/kho'),
+  { key: '/kho/ke-hoach', label: 'Kế hoạch', module: 'kho', status: 'soon', icon: <ScheduleOutlined /> },
+  { key: '/kho/du-bao', label: 'Dự báo', module: 'kho', status: 'soon', icon: <RiseOutlined /> },
+  { key: '/kho/bao-cao', label: 'Báo cáo', module: 'kho', status: 'soon', icon: <BarChartOutlined /> },
   { key: '/kho/nhap-kho', label: 'Nhập kho', module: 'kho', status: 'ok', icon: <FileAddOutlined /> },
   { key: '/kho/xuat-kho', label: 'Xuất kho', module: 'kho', status: 'ok', icon: <FileDoneOutlined /> },
   { key: '/kho/chuyen-kho', label: 'Chuyển kho', module: 'kho', status: 'ok', icon: <SwapOutlined /> },
   { key: '/kho/tinh-gia-xuat', label: 'Tính giá xuất kho', module: 'kho', status: 'soon', icon: <CalculatorOutlined /> },
   { key: '/kho/tong-hop-xuat', label: 'Tổng hợp xuất kho', module: 'kho', status: 'soon', icon: <TableOutlined /> },
   { key: '/kho/nhap-xuat-ton', label: 'Báo cáo nhập xuất tồn', module: 'kho', status: 'soon', icon: <BarChartOutlined /> },
-  { key: '/trung-tam-du-lieu/hang-hoa', label: 'Hàng hóa', module: 'kho', cluster: 'NHÓM HÀNG', status: 'ok', icon: <AppstoreOutlined /> },
-  { key: '/trung-tam-du-lieu/nguyen-lieu', label: 'Nguyên vật liệu', module: 'kho', cluster: 'NHÓM HÀNG', status: 'ok', icon: <ContainerOutlined /> },
-  { key: '/trung-tam-du-lieu/van-phong-pham', label: 'Văn phòng phẩm', module: 'kho', cluster: 'NHÓM HÀNG', status: 'ok', icon: <SnippetsOutlined /> },
 
-  // ===== 9. Tài sản (7) =====
-  { key: '/trung-tam-du-lieu/ke-hoach?tab=tai-san', permKey: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch tài sản', module: 'tai-san', status: 'ok', icon: <ScheduleOutlined /> },
-  { key: '/trung-tam-du-lieu/du-bao?tab=tai-san', permKey: '/trung-tam-du-lieu/du-bao', label: 'Dự báo tài sản', module: 'tai-san', status: 'ok', icon: <RiseOutlined /> },
-  { key: '/tai-san/danh-muc', label: 'Danh mục tài sản', module: 'tai-san', status: 'soon', icon: <DatabaseOutlined /> },
-  { key: '/trung-tam-du-lieu/tai-san', label: 'Tài sản', module: 'tai-san', status: 'soon', quyenDaCap: true, icon: <CarOutlined /> },
-  { key: '/tai-san/khau-hao', label: 'Tính khấu hao', module: 'tai-san', status: 'soon', icon: <FundOutlined /> },
+  // ===== Tài sản (9) =====
+  ...thuVienCua('tai-san', '/tai-san'),
+  ...keHoachTab('tai-san', 'tai-san'),
+  { key: '/tai-san/bao-cao', label: 'Báo cáo', module: 'tai-san', status: 'soon', icon: <BarChartOutlined /> },
+  { key: '/trung-tam-du-lieu/tai-san', label: 'Quản lý tài sản', module: 'tai-san', status: 'soon', quyenDaCap: true, icon: <CarOutlined /> },
+  { key: '/tai-san/phan-bo-khau-hao', label: 'Phân bổ khấu hao', module: 'tai-san', status: 'soon', icon: <FundOutlined /> },
+  { key: '/tai-san/khau-hao', label: 'Tính khấu hao', module: 'tai-san', status: 'soon', icon: <CalculatorOutlined /> },
   { key: '/tai-san/dieu-chuyen', label: 'Điều chuyển', module: 'tai-san', status: 'soon', icon: <SwapOutlined /> },
-  { key: '/tai-san/ghi-giam', label: 'Ghi giảm TS', module: 'tai-san', status: 'soon', icon: <FileTextOutlined /> },
 
-  // ===== 10. Công cụ dụng cụ (4) =====
-  { key: '/trung-tam-du-lieu/dung-cu', label: 'Công cụ dụng cụ', module: 'ccdc', status: 'ok', icon: <ToolOutlined /> },
-  { key: '/ccdc/phan-bo', label: 'Bảng phân bổ', module: 'ccdc', status: 'soon', icon: <TableOutlined /> },
+  // ===== Công cụ dụng cụ (8) =====
+  ...thuVienCua('ccdc', '/ccdc'),
+  { key: '/ccdc/ke-hoach', label: 'Kế hoạch', module: 'ccdc', status: 'soon', icon: <ScheduleOutlined /> },
+  { key: '/ccdc/du-bao', label: 'Dự báo', module: 'ccdc', status: 'soon', icon: <RiseOutlined /> },
+  { key: '/ccdc/bao-cao', label: 'Báo cáo', module: 'ccdc', status: 'soon', icon: <BarChartOutlined /> },
+  // Trang cũ chỉ là khung "đang phát triển" → đánh soon cho khỏi nói dối;
+  // khoá quyền đã cấp từ trước nên giữ trong ma trận.
+  { key: '/trung-tam-du-lieu/dung-cu', label: 'Quản lý công cụ dụng cụ', module: 'ccdc', status: 'soon', quyenDaCap: true, icon: <ToolOutlined /> },
+  { key: '/ccdc/phan-bo', label: 'Phân bổ', module: 'ccdc', status: 'soon', icon: <TableOutlined /> },
   { key: '/ccdc/dieu-chuyen', label: 'Điều chuyển', module: 'ccdc', status: 'soon', icon: <SwapOutlined /> },
-  { key: '/ccdc/danh-muc', label: 'Danh mục dụng cụ', module: 'ccdc', status: 'soon', icon: <DatabaseOutlined /> },
 
-  // ===== 11. Thuế (4) =====
+  // ===== Thuế (8) =====
+  ...thuVienCua('thue', '/thue'),
+  { key: '/thue/ke-hoach', label: 'Kế hoạch', module: 'thue', status: 'soon', icon: <ScheduleOutlined /> },
+  { key: '/thue/du-bao', label: 'Dự báo', module: 'thue', status: 'soon', icon: <RiseOutlined /> },
+  { key: '/thue/bao-cao-tndn', label: 'Tạm tính Thuế TNDN', module: 'thue', status: 'ok', icon: <BarChartOutlined /> },
+  { key: '/thue/tong-hop', label: 'Tổng hợp', module: 'thue', status: 'ok', icon: <TableOutlined /> },
   { key: '/thue/bang-ke-mua-vao', label: 'Bảng kê mua vào', module: 'thue', status: 'ok', icon: <FileAddOutlined /> },
   { key: '/thue/bang-ke-ban-ra', label: 'Bảng kê bán ra', module: 'thue', status: 'ok', icon: <FileDoneOutlined /> },
-  { key: '/thue/tong-hop', label: 'Bảng tổng hợp thuế', module: 'thue', status: 'ok', icon: <TableOutlined /> },
-  { key: '/thue/bao-cao-tndn', label: 'Báo cáo tạm tính TNDN', module: 'thue', status: 'ok', icon: <BarChartOutlined /> },
 
-  // ===== 12. Danh mục (1) — 26 trang con lấy từ danhMucCatalog.ts =====
+  // ===== Hai cổng yêu cầu — phân hệ 1 mục, bấm rail vào thẳng =====
+  { key: '/cong-yeu-cau/thanh-toan', label: 'Cổng yêu cầu thanh toán', module: 'yc-thanh-toan', status: 'soon', icon: <PayCircleOutlined /> },
+  { key: '/cong-yeu-cau/xuat-hoa-don', label: 'Cổng yêu cầu xuất hóa đơn', module: 'yc-xuat-hoa-don', status: 'soon', icon: <FileSyncOutlined /> },
+
+  // ===== Thư viện (4) — thư viện chung toàn công ty =====
+  { key: '/quy-trinh', label: 'Quy trình', module: 'thu-vien', status: 'ok', icon: <NodeIndexOutlined /> },
+  { key: '/chinh-sach', label: 'Chính sách', module: 'thu-vien', status: 'ok', icon: <SafetyCertificateOutlined /> },
+  { key: '/bieu-mau', label: 'Biểu mẫu', module: 'thu-vien', status: 'ok', icon: <FormOutlined /> },
+  { key: '/huong-dan', label: 'Hướng dẫn', module: 'thu-vien', status: 'ok', icon: <QuestionCircleOutlined /> },
+
+  // ===== Danh mục (1) — 26 trang con lấy từ danhMucCatalog.ts =====
   { key: '/danh-muc', label: 'Danh mục', module: 'danh-muc', status: 'ok', icon: <DatabaseOutlined /> },
 
   // ===== LEGACY — giữ route + giữ quyền, KHÔNG hiện trên sidebar =====
@@ -196,15 +271,13 @@ export const MENU_LEAVES: MenuLeaf[] = [
   { key: '/bep-an/kiem-soat-chi-phi', label: 'Kiểm soát chi phí', module: 'tong-hop', status: 'ok', legacy: true },
   { key: '/trung-tam-du-lieu/thu-tien-hop-dong', label: 'Thu tiền hợp đồng', module: 'ban-hang', status: 'ok', legacy: true },
   { key: '/trung-tam-du-lieu/hd-ban-ra', label: 'Hóa đơn bán ra', module: 'ban-hang', status: 'ok', legacy: true },
+  // Sheet không đặt lên menu; trang chạy thật nên vẫn vào được từ thanh ngang
+  // Bán hàng (BAN_HANG_NAV).
+  { key: '/bao-cao/doanh-thu', label: 'Báo cáo doanh thu', module: 'ban-hang', status: 'ok', legacy: true },
   { key: '/bao-cao/so-cai', label: 'Sổ cái', module: 'tong-hop', status: 'ok', legacy: true },
-  { key: '/bao-cao/pnl', label: 'P&L', module: 'phan-tich', status: 'ok', legacy: true },
   { key: '/bao-cao/bang-can-doi', label: 'Bảng cân đối', module: 'tong-hop', status: 'ok', legacy: true },
-  { key: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch', module: 'von-dong-tien', status: 'ok', legacy: true },
-  { key: '/trung-tam-du-lieu/du-bao', label: 'Dự báo', module: 'von-dong-tien', status: 'ok', legacy: true },
-  { key: '/quy-trinh', label: 'Quy trình', module: 'danh-muc', status: 'ok', legacy: true },
-  { key: '/chinh-sach', label: 'Chính sách', module: 'danh-muc', status: 'ok', legacy: true },
-  { key: '/bieu-mau', label: 'Biểu mẫu', module: 'danh-muc', status: 'ok', legacy: true },
-  { key: '/huong-dan', label: 'Hướng dẫn', module: 'danh-muc', status: 'ok', legacy: true },
+  { key: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch', module: 'tong-hop', status: 'ok', legacy: true },
+  { key: '/trung-tam-du-lieu/du-bao', label: 'Dự báo', module: 'tong-hop', status: 'ok', legacy: true },
 
   // ===== Route giữ chỗ có sẵn từ trước — ComingSoon, không lên sidebar =====
   { key: '/chung-tu/phieu-nhap', label: 'Phiếu nhập', module: 'kho', status: 'soon', legacy: true },
@@ -250,9 +323,7 @@ export const labelByPath = (path: string): string | undefined =>
 /** Mọi khóa quyền sinh từ catalog (mục soon không sinh — chưa có gì để cấp).
  *  Loại ĐÚNG route của phân hệ gộp (vd '/danh-muc'): riêng nó chưa bao giờ là
  *  một khóa quyền — quyền của nó suy từ các route con trong aggregateRoutes.
- *  KHÔNG loại cả phân hệ: '/quy-trinh', '/chinh-sach', '/bieu-mau',
- *  '/huong-dan' cũng mang module 'danh-muc' nhưng CÓ khóa quyền thật trong
- *  routePermissions — loại chúng là xoá quyền đang sống khỏi ma trận. */
+ *  KHÔNG loại theo phân hệ: chỉ đúng route gộp, mục con của nó vẫn có khoá. */
 const ROUTE_GOP = new Set(
   MENU_MODULES.filter((m) => m.aggregateRoutes && m.route).map((m) => m.route as string),
 );
@@ -283,13 +354,14 @@ export interface MenuCatalogEntry {
 
 /**
  * Khử trùng theo `key`, GIỮ BẢN ĐẦU TIÊN. Bắt buộc: MENU_CATALOG quy mọi mục
- * về `pathOf`, nên 8 mục mang `?tab=` (Kế hoạch/Dự báo của 4 phân hệ) cộng 2
- * mục legacy cùng tên dồn về đúng 2 path. Để nguyên thì trang Lĩnh vực dựng
+ * về `pathOf`, nên các mục mang `?tab=` (Kế hoạch/Dự báo của nhiều phân hệ)
+ * cộng 2 mục legacy cùng tên dồn về đúng 2 path; ba trang Danh mục đặt ở Tổng
+ * hợp cũng trùng với route danh mục con. Để nguyên thì trang Lĩnh vực dựng
  * <Tree> với key trùng (antd báo lỗi, trạng thái tick không xác định) và lưu
  * cùng một key nhiều lần xuống `menuKeys` trong MongoDB.
  *
  * Giữ bản ĐẦU TIÊN để `parentLabel` là phân hệ đầu tiên khai mục đó —
- * '/trung-tam-du-lieu/ke-hoach' về 'Vốn & dòng tiền', đúng thứ tự khai báo.
+ * '/trung-tam-du-lieu/ke-hoach' về 'Phân tích', đúng thứ tự khai báo.
  */
 const khuTrungTheoKey = (ds: MenuCatalogEntry[]): MenuCatalogEntry[] => {
   const daCo = new Set<string>();

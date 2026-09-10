@@ -7,20 +7,18 @@ interface Props {
   activeModule?: ModuleId;
   onPick: (id: ModuleId) => void;
   onHover?: (id: ModuleId | undefined) => void;
-  /** Ô cố định ở ĐÁY rail (mục Trợ giúp). Rail luôn được render — kể cả khi
-   *  panel ẩn vì thu gọn hoặc vì phân hệ đang chọn có route riêng — nên đây
-   *  là lối vào bảo đảm cho 4 trang thư viện. SidebarRail vẫn không tự import
-   *  HelpMenu: nó không đọc context nào, để test dựng được độc lập. */
+  /** Ô cố định ở ĐÁY rail. */
   footer?: React.ReactNode;
 }
 
-/** Cột 62px bên trái. Không bao giờ cuộn — 12 ô cao 40px vừa mọi màn hình ≥ 640px. */
+/** Cột 62px bên trái. 15 ô cao 40px ≈ 650px — màn laptop thấp thì cuộn dọc
+ *  (ẩn thanh cuộn) chứ không cắt mất phân hệ cuối (Thư viện, Danh mục). */
 export const SidebarRail: React.FC<Props> = ({
   modules, activeModule, onPick, onHover, footer,
 }) => (
   <nav
     aria-label="Phân hệ"
-    className="flex w-[62px] shrink-0 flex-col gap-[2px] overflow-hidden border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] px-[6px] py-[8px]"
+    className="flex w-[62px] shrink-0 flex-col gap-[2px] overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] px-[6px] py-[8px]"
   >
     {modules.map(({ module, leaves }) => {
       const dangMo = module.id === activeModule;

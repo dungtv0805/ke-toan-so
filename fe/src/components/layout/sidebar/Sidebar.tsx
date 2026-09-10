@@ -6,7 +6,6 @@ import type { ModuleId } from '@/config/menuCatalog';
 import { SidebarRail } from './SidebarRail';
 import { ModulePanel } from './ModulePanel';
 import { ModuleFlyout } from './ModuleFlyout';
-import { HelpMenu } from './HelpMenu';
 import { useSidebarState } from './useSidebarState';
 import { TimNhanhFocusContext } from './SidebarSearch';
 
@@ -32,11 +31,12 @@ export const Sidebar: React.FC = () => {
   // đổi URL — panel phải đi theo trang mới chứ không kẹt lại ở phân hệ cũ
   // (review Task 8, Critical 2). `chonModule` là setter của useState nên ổn
   // định qua các lần render, đưa vào mảng phụ thuộc an toàn.
+  // `search` cũng tính: sáu mục Kế hoạch/Dự báo cùng pathname, khác `?tab=`.
   useEffect(() => {
     chonModule(undefined);
-  }, [pathname, chonModule]);
+  }, [pathname, search, chonModule]);
 
-  const moduleTheoTrang = moduleTheoUrl(pathname);
+  const moduleTheoTrang = moduleTheoUrl(pathname, search);
   const [flyout, datFlyout] = useState<ModuleId | undefined>();
 
   const dangMo = moduleDangChon ?? moduleTheoTrang ?? modules[0]?.module.id;
@@ -128,7 +128,6 @@ export const Sidebar: React.FC = () => {
           activeModule={dangMo}
           onPick={bamRail}
           onHover={thuGon ? datFlyout : undefined}
-          footer={<HelpMenu bienThe="rail" onSelect={navigate} />}
         />
         {!thuGon && current && !current.module.route && (
           <ModulePanel

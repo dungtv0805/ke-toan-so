@@ -44,23 +44,22 @@ const khoaCua = (leaf: MenuLeaf): string => {
  * khoá; nếu ma trận hiện tên của mục đầu tiên thì admin tưởng mình chỉ cấp
  * một báo cáo, và không tìm ra dòng nào để thu hồi ba cái kia.
  *
- * Hai khoá Kế hoạch/Dự báo cũng vậy: mỗi khoá gộp 4 mục sidebar của 4 phân hệ
- * khác nhau (Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản) qua `?tab=`, và
- * ma trận chỉ hiện nhãn của phân hệ khai nó TRƯỚC (Vốn & dòng tiền, do đứng
- * đầu MENU_MODULES) — admin dò theo "Kế hoạch bán hàng" ở ma trận sẽ không
- * thấy dòng nào tên như vậy.
+ * Hai khoá Kế hoạch/Dự báo cũng vậy: mỗi khoá gộp 6 mục sidebar của 6 phân hệ
+ * khác nhau qua `?tab=`, và ma trận chỉ hiện nhãn của phân hệ khai nó TRƯỚC
+ * (Phân tích) — admin dò theo "Kế hoạch" của Bán hàng ở ma trận sẽ không thấy
+ * dòng nào tên như vậy.
  */
 const NHAN_MA_TRAN: Record<string, string> = {
   '/bao-cao/tai-chinh': 'Báo cáo tài chính (cả 4 tab)',
   '/trung-tam-du-lieu/ke-hoach':
-    'Kế hoạch (dùng chung: Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản)',
+    'Kế hoạch (dùng chung: P&L Kế hoạch, Tổng hợp, Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản)',
   '/trung-tam-du-lieu/du-bao':
-    'Dự báo (dùng chung: Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản)',
+    'Dự báo (dùng chung: P&L Dự báo, Tổng hợp, Vốn & dòng tiền, Bán hàng, Tiền lương, Tài sản)',
 };
 
 /**
  * Trang cấu hình vào từ nút bánh răng, không nằm trong MENU_MODULES nên phải
- * khai tay. Phải khớp với BE PERMISSION_MODULES (tenant.service.ts) — thiếu ở
+ * khai tay. Phải khớp với BE PERMISSION_MODULES (libs/core/.../all-permissions.ts) — thiếu ở
  * đây thì mỗi lần lưu trên trang Phân quyền sẽ xoá các quyền này khỏi vai trò.
  */
 const PHAN_HE_CAU_HINH: PermissionModule = {
@@ -85,14 +84,15 @@ const PHAN_HE_CAU_HINH: PermissionModule = {
  * - Mục `ok` vào hết, kể cả `legacy` — trang còn sống thì quyền còn hiệu lực.
  * - Mục `soon` chỉ vào khi có cờ `quyenDaCap` (quyền đã cấp cho vai trò từ
  *   trước). Bỏ chúng ra là xoá quyền khỏi vai trò khi admin bấm Lưu.
- * - Khử trùng theo khoá trên TOÀN ma trận, không theo từng phân hệ: 8 mục
- *   `?tab=` của Kế hoạch/Dự báo quy về 2 khoá và nằm rải ở 4 phân hệ. Khoá
+ * - Khử trùng theo khoá trên TOÀN ma trận, không theo từng phân hệ: 12 mục
+ *   `?tab=` của Kế hoạch/Dự báo quy về 2 khoá và nằm rải ở 6 phân hệ. Khoá
  *   trùng làm `convertPermissionsToMatrix` sinh hai dòng cùng moduleKey (tick
  *   một dòng không đồng bộ dòng kia) và `convertMatrixToPermissions` ghi trùng
  *   chuỗi quyền. Mục dùng chung route thuộc về phân hệ khai nó TRƯỚC.
- * - Phân hệ Danh mục: 26 trang con của danhMucCatalog, giữ nhóm nhỏ, RỒI mới
- *   tới các mục còn lại mang module 'danh-muc' (/quy-trinh, /chinh-sach,
- *   /bieu-mau, /huong-dan — quyền thật, không được bỏ).
+ * - Phân hệ Danh mục: các trang con của danhMucCatalog, giữ nhóm nhỏ. Trang
+ *   danh mục nào sheet đã đặt vào phân hệ nghiệp vụ (Hệ thống tài khoản, Quy
+ *   chuẩn hạch toán, Tài khoản kết chuyển → Tổng hợp; Hợp đồng → Bán hàng) hiện
+ *   ở phân hệ đó, không lặp lại trong Danh mục.
  */
 function dungMaTran(): PermissionModule[] {
   const daCo = new Set<string>();
