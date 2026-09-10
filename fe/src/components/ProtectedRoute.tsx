@@ -12,8 +12,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requiredPermission,
 }) => {
-  const { user, isAuthenticated, isLoading, hasPermission } = useAuth();
+  const { user, isAuthenticated, isLoading, isLoggingOut, hasPermission } = useAuth();
   const location = useLocation();
+
+  // Đang đăng xuất: trang sắp rời đi, giữ màn chờ. Để rơi xuống nhánh
+  // !isAuthenticated bên dưới thì màn đăng nhập cục bộ loé lên trước khi trình
+  // duyệt kịp sang portal — đúng lỗi "đăng xuất nháy hai lần".
+  if (isLoggingOut) {
+    return <ManChoMasterCeo chu="Đang đăng xuất…" />;
+  }
 
   if (isLoading) {
     return <ManChoMasterCeo chu="Đang kiểm tra đăng nhập…" />;
