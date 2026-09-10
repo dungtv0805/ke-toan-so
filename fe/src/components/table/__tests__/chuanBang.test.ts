@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { tinhScroll } from '../bangDuLieu';
+import { tinhScroll } from '../chuanBang';
 
 describe('tinhScroll', () => {
   it('mặc định: cuộn ngang theo nội dung, cao theo bù trừ', () => {
