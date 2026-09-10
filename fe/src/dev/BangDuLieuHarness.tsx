@@ -8,6 +8,9 @@ import { IconNhapExcel, IconXuatExcel } from "@/components/icons/ExcelIcons";
 import { OIconApp } from "@/components/icons/OIconApp";
 import { IconLuoiApp } from "@/components/icons/IconLuoiApp";
 import { ManChonUngDung } from "@/components/layout/ManChonUngDung";
+import { MemoryRouter } from "react-router-dom";
+import { LuoiDanhMuc } from "@/pages/danh-muc/LuoiDanhMuc";
+import { DANH_MUC_GROUPS } from "@/config/danhMucCatalog";
 
 const APP_MAU = [
   { appId: "ke-toan", name: "Tài chính" },
@@ -106,6 +109,24 @@ function Harness() {
           pagination={false}
           buTruDoc={520}
         />
+      </section>
+
+      <section>
+        <h3 style={{ fontSize: 14, marginBottom: 8 }}>
+          7 — Trang Danh mục: thẻ nhóm, icon, không có số đếm bản ghi
+        </h3>
+        <MemoryRouter>
+          <div style={{ background: "hsl(var(--background))", padding: 18, borderRadius: 14 }}>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.4px" }}>Danh mục</div>
+              <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>
+                {DANH_MUC_GROUPS.reduce((n, g) => n + g.links.length, 0)} danh mục dùng chung cho
+                toàn bộ nghiệp vụ · chỉ cập nhật khi phát sinh
+              </div>
+            </div>
+            <LuoiDanhMuc nhom={DANH_MUC_GROUPS} />
+          </div>
+        </MemoryRouter>
       </section>
 
       <section>

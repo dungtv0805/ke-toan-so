@@ -2787,3 +2787,15 @@ body.kh-dang-keo-cot {
     opacity: 0.55;
   }
 }
+
+/* ── Màu nhấn của nhóm danh mục ───────────────────────────────────────────
+   Sáu màu nhấn (#1F7769, #475569…) đều là tông TỐI, đặt trên nền tối thì
+   huy hiệu "N mục" và icon nhóm gần như tàng hình. Pha thêm trắng riêng cho
+   chế độ tối; chế độ sáng giữ nguyên màu gốc của bản vẽ. */
+.mau-nhom {
+  color: var(--mau);
+}
+
+.dark .mau-nhom {
+  color: color-mix(in srgb, var(--mau) 52%, #ffffff);
+}
