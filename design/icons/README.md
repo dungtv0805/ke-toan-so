@@ -24,8 +24,15 @@ khoá SSO, không đổi được, nên bám theo nó là an toàn nhất.
 - `viewBox` vuông, gốc `0 0`.
 - Xuất dạng `path`, không dùng `<image>` nhúng ảnh raster.
 
-## Riêng dấu M MasterCeo
+## Riêng dấu M MasterCeo — CÒN THIẾU
 
 Vẽ đúng phần chữ M (teal + vàng), **bỏ chữ "MASTERCEO" bên dưới** — chữ đã có
 riêng bằng text trên header rồi, để trong ảnh nữa là lặp và ở 28px sẽ nhoè.
 Giữ nguyên hai màu, không cần đổi thành trắng.
+
+Vùng cần lấy, đo trên `fe/public/logo.jpg` (480×480): **x 130–350, y 77–248**.
+Dưới `y = 248` là khoảng trắng rồi tới dòng chữ "MASTERCEO" (y 284–337) — phần
+đó KHÔNG lấy.
+
+Chưa có file này thì header portal vẫn dùng `logo.jpg` như cũ (Task 12 trong
+`docs/superpowers/plans/2026-09-10-dong-bo-giao-dien.md` đang chờ).
