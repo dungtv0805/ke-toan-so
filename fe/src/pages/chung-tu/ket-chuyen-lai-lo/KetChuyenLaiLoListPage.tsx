@@ -16,8 +16,6 @@ import { PlusOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 
-import { SectionNav } from '@/components/layout/SectionNav';
-import { CHUNG_TU_NAV } from '@/config/sectionNavs';
 import { usePagePermission } from '@/hooks/usePagePermission';
 import { useManHinh } from '@/hooks/useManHinh';
 import { ketChuyenService, type LoKetChuyen } from '@/services/ketChuyenService';
@@ -184,7 +182,6 @@ const KetChuyenLaiLoListPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <SectionNav items={CHUNG_TU_NAV} />
 
       <Card
         title="Kết chuyển lãi lỗ"

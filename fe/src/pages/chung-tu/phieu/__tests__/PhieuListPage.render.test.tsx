@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import { PhieuListPage } from "../PhieuListPage";
 import { PHIEU_CONFIG } from "../phieuConfig";
 
-// Trang in (usePrintPhieu) đọc tenant, SectionNav đọc quyền — đều qua useAuth.
+// Trang in (usePrintPhieu) đọc tenant qua useAuth.
 vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => ({
     currentTenant: { tenantName: "Test Co" },

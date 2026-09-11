@@ -16,8 +16,6 @@ import { Link } from "react-router-dom";
 import dayjs from "dayjs";
 import { taxReportService, TongHopThue } from "@/services/taxService";
 import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
-import SectionNav from "@/components/layout/SectionNav";
-import { THUE_NAV } from "@/config/sectionNavs";
 import { useManHinh } from "@/hooks/useManHinh";
 
 const { Text, Title } = Typography;
@@ -127,7 +125,6 @@ const TongHopThuePage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <SectionNav items={THUE_NAV} />
       <Card>
         <Space className="mb-4" wrap>
           <Text strong>Kỳ:</Text>

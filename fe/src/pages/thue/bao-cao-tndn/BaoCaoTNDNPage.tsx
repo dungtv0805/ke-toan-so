@@ -20,8 +20,6 @@ import {
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
 import { filterTndnRows } from "./tndnFilter";
-import SectionNav from "@/components/layout/SectionNav";
-import { THUE_NAV } from "@/config/sectionNavs";
 import { useManHinh } from "@/hooks/useManHinh";
 import { RONG_COT_GHIM_DIEN_THOAI } from "@/components/table/ghimTheoManHinh";
 
@@ -293,7 +291,6 @@ const BaoCaoTNDNPage: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <SectionNav items={THUE_NAV} />
       <Card>
         <Space className="mb-4" wrap>
           <Title level={5} className="!mb-0">
