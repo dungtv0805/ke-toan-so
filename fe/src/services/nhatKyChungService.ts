@@ -80,6 +80,8 @@ export interface GetEntriesParams {
   nguoiGiaoDich?: string;
   /** HOP_LE | CHUA_HOP_LE | KHONG_DUOC_TRU | CHUA_KIEM_SOAT */
   kiemSoat?: string;
+  /** Mã số thuế đối tượng — khớp bên Nợ HOẶC bên Có (gợi ý gắn chứng từ ở bảng kê thuế). */
+  mst?: string;
 }
 
 /** Các tiêu chí lọc gửi lên BE (không gồm phân trang). */
@@ -103,6 +105,7 @@ const FILTER_KEYS = [
   'nhomKhuyenMai',
   'nguoiGiaoDich',
   'kiemSoat',
+  'mst',
 ] as const satisfies readonly (keyof GetEntriesParams)[];
 
 function toQueryParams(params: GetEntriesParams): Record<string, string> {
@@ -246,6 +249,19 @@ class NhatKyChungService extends ServiceBase {
       page += 1;
     }
     return all;
+  }
+
+  /**
+   * Đơn hàng của từng chứng từ, tra theo lô số phiếu (≤ 200). Chứng từ không lập
+   * theo đơn hàng thì vắng mặt. Số phiếu đi bằng query `?soPhieu=a,b` vì có thể
+   * chứa "/" (path param bị gateway giải mã → 404).
+   */
+  async donHangTheoSoPhieu(
+    soPhieuList: string[],
+  ): Promise<Record<string, { soHopDong: string; tenCongTrinh?: string }>> {
+    const ds = [...new Set(soPhieuList.filter(Boolean))];
+    if (!ds.length) return {};
+    return this.get({ endpoint: '/don-hang-theo-so-phieu', params: { soPhieu: ds.join(',') } });
   }
 
   /**

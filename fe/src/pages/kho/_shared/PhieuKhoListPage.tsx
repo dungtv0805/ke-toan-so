@@ -34,8 +34,6 @@ import { KhoTemplateModal } from './print/KhoTemplateModal';
 import { KHO_TEMPLATE_KEY } from './print/khoPrintTemplates';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useBulkDelete } from '@/components/table/useBulkDelete';
-import { SectionNav } from '@/components/layout/SectionNav';
-import { KHO_NAV } from '@/config/sectionNavs';
 import { nutLenh } from "@/components/common/nutLenh";
 
 const { RangePicker } = DatePicker;
@@ -244,7 +242,6 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
 
   return (
     <div className="space-y-3">
-      <SectionNav items={KHO_NAV} />
 
       <Card className="shadow-sm">
         {/* FilterBar — lớp `kho-loc*` chỉ để responsive-danh-sach.css bẻ dòng trên điện thoại. */}

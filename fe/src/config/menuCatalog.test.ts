@@ -248,7 +248,9 @@ const THEO_SHEET: Record<string, string[]> = {
   ],
   'von-dong-tien': ['Quy trình', 'Hướng dẫn', 'Kế hoạch', 'Dự báo', 'Báo cáo', 'Thu tiền', 'Chi tiền', 'Kiểm kê', 'Sổ quỹ', 'Vay, Cho vay', 'Vốn'],
   'mua-hang': ['Quy trình', 'Hướng dẫn', 'Kế hoạch', 'Dự báo', 'Báo cáo', 'Hợp đồng mua', 'Mua hàng', 'Sổ chi tiết mua hàng', 'Tổng hợp mua hàng', 'Công nợ phải trả'],
-  'ban-hang': ['Quy trình', 'Hướng dẫn', 'Kế hoạch', 'Dự báo', 'Báo cáo', 'Hợp đồng bán', 'Bán hàng', 'Sổ chi tiết bán hàng', 'Tổng hợp bán hàng', 'Công nợ phải thu'],
+  // "Báo cáo doanh thu" KHÔNG có trong sheet — thêm 11/09/2026 khi bỏ thanh ngang Bán
+  // hàng (lối vào duy nhất của trang). Xem chú thích ở menuCatalog.
+  'ban-hang': ['Quy trình', 'Hướng dẫn', 'Kế hoạch', 'Dự báo', 'Báo cáo', 'Báo cáo doanh thu', 'Hợp đồng bán', 'Bán hàng', 'Sổ chi tiết bán hàng', 'Tổng hợp bán hàng', 'Công nợ phải thu'],
   'tien-luong': ['Quy trình', 'Hướng dẫn', 'Kế hoạch', 'Dự báo', 'Báo cáo', 'Chấm công', 'Tính lương', 'Trả lương', 'Hạch toán lương', 'Nộp bảo hiểm', 'Thuế TNCN'],
   kho: ['Quy trình', 'Hướng dẫn', 'Kế hoạch', 'Dự báo', 'Báo cáo', 'Nhập kho', 'Xuất kho', 'Chuyển kho', 'Tính giá xuất kho', 'Tổng hợp xuất kho', 'Báo cáo nhập xuất tồn'],
   'tai-san': ['Quy trình', 'Hướng dẫn', 'Kế hoạch', 'Dự báo', 'Báo cáo', 'Quản lý tài sản', 'Phân bổ khấu hao', 'Tính khấu hao', 'Điều chuyển'],

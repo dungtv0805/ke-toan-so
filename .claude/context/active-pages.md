@@ -1,15 +1,12 @@
 # Active Pages — Sidebar → Route → API Map
 
-## Thanh ngang trong trang (SectionNav) — KHÔNG nằm trong sidebar
+## Thanh ngang trong trang (SectionNav) — ĐÃ BỎ (11/09/2026)
 
-Một số mục đã được gỡ khỏi dropdown sidebar và chuyển lên thanh ngang đầu trang
-(`fe/src/components/layout/SectionNav.tsx`, cấu hình ở `fe/src/config/sectionNavs.tsx`):
-
-| Thanh | Mục | Hiện trên trang |
-|-------|-----|-----------------|
-| `CHUNG_TU_NAV` | Phiếu thu, Phiếu chi, Phiếu kế toán (soon) | Dữ liệu tổng hợp + các trang phiếu |
-| `KHO_NAV` | Nhập kho, Xuất kho, Chuyển kho, Kiểm kê kho (soon) | Trang phiếu kho + 4 nhóm hàng trong Kho |
-| `BAN_HANG_NAV` | Bán hàng, Báo cáo | Quản lý hợp đồng + Báo cáo hợp đồng |
+Thanh ngang đầu trang (Thuế / Kho / Phiếu thu-chi-Kết chuyển / Bán hàng) đã gỡ hẳn —
+mọi mục đều có trong menu dọc (`fe/src/config/menuCatalog.tsx`). "Báo cáo doanh thu"
+(`/bao-cao/doanh-thu`) trước chỉ vào được từ thanh Bán hàng nên đã đưa lên menu dọc
+Bán hàng (lệch sheet "Menu tài chính"). Thứ tự ưu tiên khi vào `/thue` nằm ở
+`fe/src/pages/thue/ThueIndexRoute.tsx`.
 
 > Menu "Kho" trong sidebar giờ là 4 nhóm hàng (Hàng hóa / Nguyên vật liệu / Dụng cụ /
 > Văn phòng phẩm) dùng route `/trung-tam-du-lieu/*` — giữ key cũ để không phải cấp lại quyền.

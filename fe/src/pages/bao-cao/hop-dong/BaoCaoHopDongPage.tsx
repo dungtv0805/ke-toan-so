@@ -8,8 +8,6 @@ import { exportReportExcel } from '@/utils/exportReportExcel';
 import { buildHopDongSheets } from './hopDongExport';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
 import { filterHopDong } from './hopDongFilter';
-import { SectionNav } from '@/components/layout/SectionNav';
-import { BAN_HANG_NAV } from '@/config/sectionNavs';
 import { useManHinh } from '@/hooks/useManHinh';
 
 const { Text, Title } = Typography;
@@ -124,7 +122,6 @@ export default function BaoCaoHopDongPage() {
 
   return (
     <div className="space-y-3">
-      <SectionNav items={BAN_HANG_NAV} />
 
       <Card className="shadow-sm">
         <div className="flex items-center justify-between gap-2 mb-3">

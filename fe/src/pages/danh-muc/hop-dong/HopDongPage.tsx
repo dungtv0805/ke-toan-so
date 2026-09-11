@@ -52,8 +52,6 @@ import { hopDongService } from "@/services/hopDongService";
 import { THUE_SUAT_OPTIONS, tinhTienThue } from "@/services/taxService";
 import { ImportDanhMucButton } from "@/components/import-danh-muc";
 import { hopDongImportConfig } from "@/components/import-danh-muc/configs";
-import { SectionNav } from "@/components/layout/SectionNav";
-import { BAN_HANG_NAV } from "@/config/sectionNavs";
 import { sapXepTheoNhan } from "@/lib/sapXep";
 
 const { Title, Text } = Typography;
@@ -923,8 +921,6 @@ function HopDongPageInner() {
 
   return (
     <div className="space-y-3">
-      {/* Cùng thanh ngang với Bán hàng / Báo cáo — vào đây từ đó thì phải có đường về. */}
-      <SectionNav items={BAN_HANG_NAV} />
       {/* Điện thoại: 4 thẻ số liệu xếp 1 cột ăn gần hết màn đầu tiên → lưới 2×2.
           Khoảng dọc chỉ có tác dụng khi thẻ xuống hàng (< 768px); ≥ 768px vẫn một hàng. */}
       <Row gutter={[16, 16]}>

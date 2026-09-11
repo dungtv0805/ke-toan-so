@@ -2,7 +2,14 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { getRoutePermission } from "@/config/routePermissions";
-import { THUE_NAV } from "@/config/sectionNavs";
+
+/** Thứ tự ưu tiên khi vào thẳng /thue — trùng thứ tự 4 trang thuế trên menu dọc. */
+const TRANG_THUE = [
+  "/thue/bang-ke-mua-vao",
+  "/thue/bang-ke-ban-ra",
+  "/thue/tong-hop",
+  "/thue/bao-cao-tndn",
+];
 
 /**
  * Sidebar chỉ còn một mục "Thuế" trỏ vào /thue — trang này quyết định đi đâu.
@@ -14,11 +21,11 @@ const ThueIndexRoute: React.FC = () => {
   const { hasPermission, user } = useAuth();
 
   const dich =
-    THUE_NAV.find((it) => {
+    TRANG_THUE.find((path) => {
       if (user?.isSuperAdmin) return true;
-      const quyen = getRoutePermission(it.path);
+      const quyen = getRoutePermission(path);
       return quyen ? hasPermission(quyen) : true;
-    })?.path ?? THUE_NAV[0].path;
+    }) ?? TRANG_THUE[0];
 
   return <Navigate to={dich} replace />;
 };

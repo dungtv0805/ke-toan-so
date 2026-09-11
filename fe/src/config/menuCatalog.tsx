@@ -188,12 +188,16 @@ export const MENU_LEAVES: MenuLeaf[] = [
   { key: '/mua-hang/tong-hop', label: 'Tổng hợp mua hàng', module: 'mua-hang', status: 'soon', icon: <TableOutlined /> },
   { key: '/cong-no/phai-tra', label: 'Công nợ phải trả', module: 'mua-hang', status: 'ok', icon: <ReconciliationOutlined /> },
 
-  // ===== Bán hàng (10) =====
+  // ===== Bán hàng (11) =====
   // "Bán hàng" = trang quản lý đơn hàng, "Hợp đồng bán" = danh mục hợp đồng —
-  // đúng như thanh ngang BAN_HANG_NAV đã gọi hai trang này từ trước.
+  // đúng như thanh ngang Bán hàng (đã bỏ) từng gọi hai trang này.
   ...thuVienCua('ban-hang', '/ban-hang'),
   ...keHoachTab('ban-hang', 'ban-hang'),
   { key: '/bao-cao/hop-dong', label: 'Báo cáo', module: 'ban-hang', status: 'ok', icon: <BarChartOutlined /> },
+  // LỆCH sheet "Menu tài chính" (sheet không có mục này): trước đây chỉ vào được từ
+  // thanh ngang Bán hàng; thanh ngang đã bỏ (11/09/2026) nên đưa lên menu dọc để
+  // trang không mất lối vào. Khoá quyền giữ nguyên.
+  { key: '/bao-cao/doanh-thu', label: 'Báo cáo doanh thu', module: 'ban-hang', status: 'ok', icon: <RiseOutlined /> },
   { key: '/danh-muc/hop-dong', label: 'Hợp đồng bán', module: 'ban-hang', status: 'ok', icon: <FileProtectOutlined /> },
   { key: '/trung-tam-du-lieu/hop-dong', label: 'Bán hàng', module: 'ban-hang', status: 'ok', icon: <FileDoneOutlined /> },
   { key: '/ban-hang/so-chi-tiet', label: 'Sổ chi tiết bán hàng', module: 'ban-hang', status: 'soon', icon: <ProfileOutlined /> },
@@ -273,9 +277,6 @@ export const MENU_LEAVES: MenuLeaf[] = [
   { key: '/bep-an/kiem-soat-chi-phi', label: 'Kiểm soát chi phí', module: 'tong-hop', status: 'ok', legacy: true },
   { key: '/trung-tam-du-lieu/thu-tien-hop-dong', label: 'Thu tiền hợp đồng', module: 'ban-hang', status: 'ok', legacy: true },
   { key: '/trung-tam-du-lieu/hd-ban-ra', label: 'Hóa đơn bán ra', module: 'ban-hang', status: 'ok', legacy: true },
-  // Sheet không đặt lên menu; trang chạy thật nên vẫn vào được từ thanh ngang
-  // Bán hàng (BAN_HANG_NAV).
-  { key: '/bao-cao/doanh-thu', label: 'Báo cáo doanh thu', module: 'ban-hang', status: 'ok', legacy: true },
   { key: '/bao-cao/so-cai', label: 'Sổ cái', module: 'tong-hop', status: 'ok', legacy: true },
   { key: '/bao-cao/bang-can-doi', label: 'Bảng cân đối', module: 'tong-hop', status: 'ok', legacy: true },
   { key: '/trung-tam-du-lieu/ke-hoach', label: 'Kế hoạch', module: 'tong-hop', status: 'ok', legacy: true },

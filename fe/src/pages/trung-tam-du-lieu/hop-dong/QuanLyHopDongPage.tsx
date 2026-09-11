@@ -45,8 +45,6 @@ import { useManHinh } from '@/hooks/useManHinh';
 import GhiNhanDoanhThuSection from './GhiNhanDoanhThuSection';
 import ThuTienDonHangModal from './ThuTienDonHangModal';
 import TaoNhanhHopDongModal from './TaoNhanhHopDongModal';
-import { SectionNav } from '@/components/layout/SectionNav';
-import { BAN_HANG_NAV } from '@/config/sectionNavs';
 import { trongKy, tuPeriod, tuKhoangNgay } from './boLocThoiGian';
 import {
   CUSTOM_PERIOD,
@@ -568,7 +566,6 @@ export default function QuanLyHopDongPage() {
 
   return (
     <div className="space-y-3">
-      <SectionNav items={BAN_HANG_NAV} />
 
       {/* `hd-stats`: điện thoại xếp 8 thẻ thành một dải vuốt ngang (responsive-danh-sach.css)
           — lưới 2 cột × 4 dòng cao ~300px, đẩy bảng xuống quá nửa màn. */}

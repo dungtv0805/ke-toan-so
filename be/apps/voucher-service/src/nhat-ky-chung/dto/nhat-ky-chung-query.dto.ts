@@ -62,6 +62,11 @@ export class NhatKyChungQueryDto {
   @IsString()
   hopDong?: string;
 
+  /** Mã số thuế đối tượng — khớp bên Nợ HOẶC bên Có (gợi ý gắn chứng từ ở bảng kê thuế). */
+  @IsOptional()
+  @IsString()
+  mst?: string;
+
   /** Tài khoản — khớp bên Nợ HOẶC bên Có (bộ lọc "Tài khoản" gộp trên màn hình). */
   @IsOptional()
   @IsString()
