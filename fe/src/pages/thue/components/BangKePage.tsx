@@ -1,4 +1,4 @@
-import React, { useState, useEffect, type ReactNode } from "react";
+import React, { useState, useEffect, useMemo, type ReactNode } from "react";
 import {
   Card,
   Table,
@@ -41,9 +41,8 @@ import {
 } from "@/services/taxService";
 import type { ServiceBase } from "@/services/base/service-base";
 import { ImportBangKeModal, type ImportService } from "./import/ImportBangKeModal";
-import { GanChungTuModal } from "./GanChungTuModal";
-import SectionNav from "@/components/layout/SectionNav";
-import { THUE_NAV } from "@/config/sectionNavs";
+import { GanChungTuModal, type HoaDonGan } from "./GanChungTuModal";
+import { nhatKyChungService } from "@/services/nhatKyChungService";
 import { nutLenh } from "@/components/common/nutLenh";
 
 const { Text } = Typography;
@@ -99,6 +98,10 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
   const [importVisible, setImportVisible] = useState(false);
   const [ganVisible, setGanVisible] = useState(false);
   const [ganRecord, setGanRecord] = useState<BangKeRecord | null>(null);
+  // Đơn hàng của chứng từ đã gắn, suy lúc đọc từ chứng từ (bảng kê chỉ lưu số phiếu).
+  const [donHangCuaPhieu, setDonHangCuaPhieu] = useState<
+    Record<string, { soHopDong: string; tenCongTrinh?: string }>
+  >({});
   const [editingRecord, setEditingRecord] = useState<BangKeRecord | null>(null);
   const [form] = Form.useForm();
   const [pagination, setPagination] = useState({ current: 1, pageSize: 50, total: 0 });
@@ -152,6 +155,11 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
         lienKet: lienKetArg || undefined,
       });
       setData(result.data);
+      // Không chặn bảng: thiếu đơn hàng thì cột chỉ hiện số phiếu như trước.
+      nhatKyChungService
+        .donHangTheoSoPhieu(result.data.map((r) => r.soChungTu ?? ""))
+        .then(setDonHangCuaPhieu)
+        .catch(() => setDonHangCuaPhieu({}));
       setPagination({
         current: result.meta.page,
         pageSize: result.meta.limit,
@@ -230,6 +238,22 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
       message.error("Không thể xóa hóa đơn");
     }
   };
+
+  // Giữ nguyên tham chiếu trong lúc modal mở — modal nạp lại gợi ý mỗi khi đối tượng này đổi.
+  const hoaDonGan = useMemo<HoaDonGan | null>(
+    () =>
+      ganRecord
+        ? {
+            soHoaDon: ganRecord.soHoaDon,
+            ngayHoaDon: ganRecord.ngayHoaDon,
+            mst: ganRecord[mstField] || undefined,
+            tenDoiTac: ganRecord[tenField] || undefined,
+            tongThanhToan: Number(ganRecord.tongThanhToan) || 0,
+            giaTriChuaThue: Number(ganRecord.giaTriChuaThue) || 0,
+          }
+        : null,
+    [ganRecord, mstField, tenField],
+  );
 
   const handleGan = async (soPhieu: string) => {
     if (!ganRecord) return;
@@ -315,13 +339,27 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
     {
       title: "Chứng từ",
       key: "soChungTu",
-      width: 150,
+      width: 210,
       render: (_: unknown, r: BangKeRecord) =>
         r.soChungTu ? (
           <Space size={4}>
             <Tooltip title={`Số phiếu: ${r.soChungTu} — mở Thực hiện rồi tìm số này`}>
               <a onClick={() => window.open("/chung-tu/nhat-ky-chung", "_blank")}>{r.soChungTu}</a>
             </Tooltip>
+            {/* Đơn hàng đi theo chứng từ đã gắn — không lưu riêng trên bảng kê. */}
+            {donHangCuaPhieu[r.soChungTu] && (
+              <Tooltip
+                title={
+                  donHangCuaPhieu[r.soChungTu].tenCongTrinh
+                    ? `Đơn hàng ${donHangCuaPhieu[r.soChungTu].soHopDong} — ${donHangCuaPhieu[r.soChungTu].tenCongTrinh}`
+                    : `Đơn hàng của chứng từ ${r.soChungTu}`
+                }
+              >
+                <Tag color="blue" className="!mr-0">
+                  ĐH {donHangCuaPhieu[r.soChungTu].soHopDong}
+                </Tag>
+              </Tooltip>
+            )}
             {canEdit && (
               <Tooltip title="Gỡ liên kết — dòng hóa đơn vẫn còn">
                 <Button type="text" size="small" icon={<DisconnectOutlined />} onClick={() => handleGoLienKet(r)} />
@@ -385,7 +423,6 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
 
   return (
     <div className="space-y-3">
-      <SectionNav items={THUE_NAV} />
       <Card>
         <FilterBar
           // `bang-ke-loc`: 3 ô lọc nằm bên phần "actions" (không phải `filters`) nên quy
@@ -642,7 +679,9 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
       />
 
       <GanChungTuModal
+        key={ganRecord?.id ?? "dong"}
         open={ganVisible}
+        hoaDon={hoaDonGan}
         onCancel={() => {
           setGanVisible(false);
           setGanRecord(null);

@@ -3,3 +3,4 @@ export * from './summary-aggregation.helper';
 export * from './doi-tuong-aggregation.helper';
 export * from './tong-hop-don-hang.helper';
 export * from './kiem-soat-stats.helper';
+export * from './don-hang-theo-so-phieu.helper';

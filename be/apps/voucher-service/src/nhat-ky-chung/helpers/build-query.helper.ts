@@ -32,6 +32,7 @@ export function buildMongoQuery(
     nhomKhuyenMai,
     nguoiGiaoDich,
     kiemSoat,
+    mst,
   } = query;
   const mongoQuery: Record<string, unknown> = {};
 
@@ -71,6 +72,19 @@ export function buildMongoQuery(
       { 'danhMuc.doiTuong.ten': { $regex: escaped, $options: 'i' } },
       { 'danhMuc.doiTuong2.ma': { $regex: escaped, $options: 'i' } },
       { 'danhMuc.doiTuong2.ten': { $regex: escaped, $options: 'i' } },
+      // Tìm từ màn bảng kê thuế: người dùng gõ mã đơn hàng hoặc MST khách.
+      { 'danhMuc.hopDong.soHopDong': { $regex: escaped, $options: 'i' } },
+      { 'danhMuc.doiTuong.maSoThue': { $regex: escaped, $options: 'i' } },
+      { 'danhMuc.doiTuong2.maSoThue': { $regex: escaped, $options: 'i' } },
+    ]);
+  }
+
+  // Mã số thuế đối tượng (bên Nợ hoặc bên Có), khớp đúng — gợi ý chứng từ để
+  // gắn với một hóa đơn trong bảng kê thuế.
+  if (mst) {
+    orConditions.push([
+      { 'danhMuc.doiTuong.maSoThue': mst },
+      { 'danhMuc.doiTuong2.maSoThue': mst },
     ]);
   }
 

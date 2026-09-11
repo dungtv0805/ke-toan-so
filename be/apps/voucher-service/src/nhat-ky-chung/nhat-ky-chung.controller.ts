@@ -31,6 +31,7 @@ import {
   type UserPayload,
 } from '@app/auth';
 import { BadRequestException } from '@nestjs/common';
+import { tachDanhSachSoPhieu } from './helpers';
 
 @Controller('nhat-ky-chung')
 @UseGuards(JwtGuard, RoleGuard)
@@ -135,6 +136,14 @@ export class NhatKyChungController {
   @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
   async tongHopDonHang(@Query('nam', ParseIntPipe) nam: number) {
     return this.nhatKyChungService.tongHopDonHang(nam);
+  }
+
+  // Cũng phải đứng TRƯỚC @Get(':id'). Số phiếu có thể chứa "/" nên đi bằng
+  // query `?soPhieu=a,b` (path param bị gateway giải mã %2F → 404).
+  @Get('don-hang-theo-so-phieu')
+  @Roles('ADMIN', 'KE_TOAN_TRUONG', 'KE_TOAN_QUY', 'KE_TOAN_TONG_HOP', 'MANAGER', 'KIEM_SOAT')
+  async donHangTheoSoPhieu(@Query('soPhieu') soPhieu?: string) {
+    return this.nhatKyChungService.donHangTheoSoPhieu(tachDanhSachSoPhieu(soPhieu));
   }
 
   @Get(':id')

@@ -48,8 +48,34 @@ describe('buildMongoQuery', () => {
       });
     });
 
+    it('tìm được theo số hợp đồng (mã đơn hàng) và mã số thuế đối tượng', () => {
+      expect(orFields('DH128')).toEqual(
+        expect.arrayContaining([
+          'danhMuc.hopDong.soHopDong',
+          'danhMuc.doiTuong.maSoThue',
+          'danhMuc.doiTuong2.maSoThue',
+        ]),
+      );
+    });
+
     it('should not add $or when search is empty', () => {
       expect(buildMongoQuery({} as NhatKyChungQueryDto).$or).toBeUndefined();
+    });
+  });
+
+  describe('mst filter', () => {
+    it('khớp mã số thuế đối tượng bên Nợ hoặc bên Có, khớp đúng', () => {
+      const query = buildMongoQuery({ mst: '0101277953' } as NhatKyChungQueryDto);
+      expect(query.$or).toEqual([
+        { 'danhMuc.doiTuong.maSoThue': '0101277953' },
+        { 'danhMuc.doiTuong2.maSoThue': '0101277953' },
+      ]);
+    });
+
+    it('đi cùng search thì là hai điều kiện AND độc lập', () => {
+      const query = buildMongoQuery({ mst: '0101277953', search: 'PT' } as NhatKyChungQueryDto);
+      expect(query.$or).toBeUndefined();
+      expect((query.$and as unknown[]).length).toBe(2);
     });
   });
 
@@ -93,7 +119,7 @@ describe('buildMongoQuery', () => {
       expect(query.$or).toBeUndefined();
       const and = query.$and as Array<{ $or: unknown[] }>;
       expect(and).toHaveLength(2);
-      expect(and[0].$or).toHaveLength(8); // search: 4 field cũ + 4 field đối tượng
+      expect(and[0].$or).toHaveLength(11); // search: 4 field cũ + 4 field đối tượng + số HĐ + 2 MST
       expect(and[1].$or).toEqual([
         { 'danhMuc.doiTuong.ma': '0104918404-002' },
         { 'danhMuc.doiTuong2.ma': '0104918404-002' },

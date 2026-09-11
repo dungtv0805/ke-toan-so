@@ -172,7 +172,8 @@ Response: `{ success: true, data: { created: number, failed: [{ index: number, m
 ### /nhat-ky-chung (Journal Entries)
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | /nhat-ky-chung | List entries |
+| GET | /nhat-ky-chung | List entries (lọc thêm `mst` = MST đối tượng Nợ/Có; `search` khớp cả số HĐ + MST) |
+| GET | /nhat-ky-chung/don-hang-theo-so-phieu?soPhieu=a,b | Đơn hàng (soHopDong) của từng chứng từ — bảng kê thuế |
 | GET | /nhat-ky-chung/stats | Statistics |
 | GET | /nhat-ky-chung/aggregate-balance | Aggregate balance (for reporting) |
 | GET | /nhat-ky-chung/summary/:type | Summary by type |

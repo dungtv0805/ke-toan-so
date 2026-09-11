@@ -29,6 +29,9 @@ import {
   DoanhThuKhongDon,
   KIEM_SOAT_BUCKETS,
   buildStatsResponse,
+  donHangTheoSoPhieu,
+  DongDonHang,
+  DonHangCuaPhieu,
 } from './helpers';
 import { VoucherNumberService, LoaiResolverService } from '../shared';
 
@@ -415,6 +418,39 @@ export class NhatKyChungService {
       .toArray();
 
     return { success: true, data: gomTongHopDonHang(docs as DongHachToan[], nam) };
+  }
+
+  /**
+   * Đơn hàng (soHopDong) của một loạt chứng từ theo số phiếu — màn bảng kê thuế
+   * hiện "PT0033 · ĐH 128" cho hóa đơn đã gắn chứng từ. Suy lúc đọc từ snapshot
+   * `danhMuc.hopDong` nên hóa đơn gắn từ trước cũng tự có đơn hàng.
+   */
+  async donHangTheoSoPhieu(
+    soPhieuList: string[],
+  ): Promise<{ success: boolean; data: Record<string, DonHangCuaPhieu> }> {
+    if (!soPhieuList.length) return { success: true, data: {} };
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    const docs = await this.chungTuRepository
+      .aggregate([
+        {
+          $match: {
+            ...(tenantId ? { tenantId } : {}),
+            soPhieu: { $in: soPhieuList },
+            'danhMuc.hopDong.soHopDong': { $nin: [null, ''] },
+          },
+        },
+        { $sort: { soPhieu: 1, _id: 1 } },
+        {
+          $project: {
+            _id: 0,
+            soPhieu: 1,
+            soHopDong: '$danhMuc.hopDong.soHopDong',
+            tenCongTrinh: '$danhMuc.hopDong.tenCongTrinh',
+          },
+        },
+      ])
+      .toArray();
+    return { success: true, data: donHangTheoSoPhieu(docs as DongDonHang[]) };
   }
 
   async findById(id: string): Promise<{ success: boolean; data: ChungTu }> {
