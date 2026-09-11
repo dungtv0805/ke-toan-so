@@ -1,6 +1,8 @@
 import React from "react";
 import { Table, Empty, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
+import { useManHinh } from "@/hooks/useManHinh";
 import type { SoSanhKetQua, SoSanhRow } from "@/services/keHoachService";
 import { useKeHoachState } from "../KeHoachHandlerContext";
 import { KE_HOACH_VIEWS } from "./keHoachViews";
@@ -18,6 +20,10 @@ export const SoSanhTable: React.FC = () => {
   const [soSanh] = useKeHoachState("soSanh", null);
   const [loading] = useKeHoachState("soSanhLoading", false);
   const [view] = useKeHoachState("view", "list");
+  // Máy tính giữ con số đoán sẵn cũ; màn hẹp hơn hàng lọc xuống nhiều dòng nên
+  // đo chiều cao theo viewport thật, không thì dòng Tổng cộng bị cắt mất.
+  const laMayTinh = useManHinh() === "desktop";
+  const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
 
   const ketQua = soSanh as SoSanhKetQua | null;
   const tieuDe =
@@ -65,7 +71,9 @@ export const SoSanhTable: React.FC = () => {
 
   if (!loading && (!ketQua || ketQua.rows.length === 0)) {
     return (
-      <div className="excel-tab-content">
+      // Cùng ref với nhánh bảng: hook đo chỉ chạy một lần lúc mount, mount vào
+      // nhánh rỗng mà thiếu ref thì bảng hiện ra sau đó kẹt ở chiều cao mặc định.
+      <div ref={tableWrapRef} className="excel-tab-content">
         <Empty
           className="py-16"
           description={`Chưa có số liệu cho "${tieuDe}" trong kỳ đang lọc`}
@@ -75,7 +83,7 @@ export const SoSanhTable: React.FC = () => {
   }
 
   return (
-    <div className="excel-tab-content">
+    <div ref={tableWrapRef} className="excel-tab-content">
     <Table<SoSanhRow>
       rowKey="key"
       size="small"
@@ -85,7 +93,10 @@ export const SoSanhTable: React.FC = () => {
       columns={columns}
       dataSource={ketQua?.rows ?? []}
       pagination={false}
-      scroll={{ x: "max-content", y: "calc(100vh - 320px)" }}
+      scroll={{
+        x: "max-content",
+        y: laMayTinh ? "calc(100vh - 320px)" : tableBodyHeight,
+      }}
       summary={() =>
         ketQua ? (
           <Table.Summary fixed>

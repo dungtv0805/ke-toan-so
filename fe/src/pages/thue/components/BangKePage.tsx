@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, type ReactNode } from "react";
 import {
   Card,
   Table,
@@ -18,6 +18,7 @@ import {
   Col,
   message,
 } from "antd";
+import type { ButtonProps } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
@@ -30,6 +31,8 @@ import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useManHinh } from "@/hooks/useManHinh";
+import { ghimTheoManHinh } from "@/components/table/ghimTheoManHinh";
 import {
   BangKeRecord,
   THUE_SUAT_OPTIONS,
@@ -41,6 +44,7 @@ import { ImportBangKeModal, type ImportService } from "./import/ImportBangKeModa
 import { GanChungTuModal } from "./GanChungTuModal";
 import SectionNav from "@/components/layout/SectionNav";
 import { THUE_NAV } from "@/config/sectionNavs";
+import { nutLenh } from "@/components/common/nutLenh";
 
 const { Text } = Typography;
 
@@ -79,6 +83,8 @@ const QUY_OPTIONS = [
 
 const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
   const { canCreate, canEdit, canDelete } = usePagePermission(routeKey);
+  const manHinh = useManHinh();
+  const dienThoai = manHinh === "mobile";
   const partnerLabel = variant === "mua" ? "Người bán" : "Người mua";
   const tenField = variant === "mua" ? "tenNguoiBan" : "tenNguoiMua";
   const mstField = variant === "mua" ? "mstNguoiBan" : "mstNguoiMua";
@@ -382,6 +388,9 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
       <SectionNav items={THUE_NAV} />
       <Card>
         <FilterBar
+          // `bang-ke-loc`: 3 ô lọc nằm bên phần "actions" (không phải `filters`) nên quy
+          // tắc co giãn chung không với tới — responsive-danh-sach.css xử lý riêng.
+          className="bang-ke-loc"
           search={{
             value: searchText,
             onChange: setSearchText,
@@ -435,24 +444,27 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
                 }}
                 style={{ width: 100 }}
               />
-              {canCreate && (
-                <Button icon={<ImportOutlined />} onClick={() => setImportVisible(true)}>
-                  Import Excel
-                </Button>
-              )}
+              {canCreate &&
+                nutLenh(dienThoai, "Import Excel", {
+                  icon: <ImportOutlined />,
+                  onClick: () => setImportVisible(true),
+                })}
               {bulkDeleteButton}
-              {canCreate && (
-                <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-                  Thêm hóa đơn
-                </Button>
-              )}
+              {canCreate &&
+                nutLenh(dienThoai, "Thêm hóa đơn", {
+                  type: "primary",
+                  icon: <PlusOutlined />,
+                  onClick: handleAdd,
+                })}
               {settingsButton}
             </>
           }
         />
 
         <Table
-          columns={cfgColumns}
+          // Điện thoại: cột "Thao tác" ghim phải thành cột thường. Màn khác trả lại
+          // đúng mảng cũ (dòng tổng bên dưới vẫn đếm theo cfgColumns — cùng thứ tự).
+          columns={ghimTheoManHinh(cfgColumns, manHinh)}
           dataSource={data}
           rowKey="id"
           loading={loading}

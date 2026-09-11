@@ -1,6 +1,8 @@
 import React from "react";
 import { Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
+import { useManHinh } from "@/hooks/useManHinh";
 import { useKqkdState } from "./KqkdHandlerContext";
 // Hai thư mục `lib` khác nhau: `./lib` là của riêng tab KQKD, `../lib` dùng chung
 // cho cả ba tab bảng.
@@ -99,28 +101,40 @@ const columns: ColumnsType<HangKqkd> = [
 export const KqkdTable: React.FC = () => {
   const [hang] = useKqkdState("hang", []);
   const [loading] = useKqkdState("loading", false);
+  // Máy tính giữ con số đoán sẵn cũ. Màn hẹp hơn thì thanh tab phía trên xuống
+  // 2–3 dòng, `100vh - 260px` cao hơn chỗ còn lại và mấy dòng cuối bị khung
+  // `overflow:hidden` cắt mất — đo theo viewport thật như các tab bảng khác.
+  const laMayTinh = useManHinh() === "desktop";
+  const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
 
   return (
-    <Table<HangKqkd>
-      className="excel-table"
-      columns={columns}
-      dataSource={hang}
-      rowKey="key"
-      loading={loading}
-      size="small"
-      bordered
-      pagination={false}
-      // Mặc định đóng hết: mở trang chỉ thấy các dòng mục.
-      expandable={{ defaultExpandedRowKeys: [] }}
-      scroll={{ x: "max-content", y: "calc(100vh - 260px)" }}
-      rowClassName={(row) =>
-        row.key === "HOA_VON"
-          ? "kh-hang-hoa-von"
-          : row.cap === 0
-            ? "kh-hang-tong"
-            : ""
-      }
-      locale={{ emptyText: "Chưa có dòng kế hoạch nào trong năm" }}
-    />
+    // Khung flex-1 thế chỗ `.excel-table` (vốn là flex-1) — máy tính vẫn thấy
+    // bảng chiếm đúng vùng cũ, không lệch pixel nào.
+    <div ref={tableWrapRef} className="flex flex-col flex-1 min-h-0">
+      <Table<HangKqkd>
+        className="excel-table"
+        columns={columns}
+        dataSource={hang}
+        rowKey="key"
+        loading={loading}
+        size="small"
+        bordered
+        pagination={false}
+        // Mặc định đóng hết: mở trang chỉ thấy các dòng mục.
+        expandable={{ defaultExpandedRowKeys: [] }}
+        scroll={{
+          x: "max-content",
+          y: laMayTinh ? "calc(100vh - 260px)" : tableBodyHeight,
+        }}
+        rowClassName={(row) =>
+          row.key === "HOA_VON"
+            ? "kh-hang-hoa-von"
+            : row.cap === 0
+              ? "kh-hang-tong"
+              : ""
+        }
+        locale={{ emptyText: "Chưa có dòng kế hoạch nào trong năm" }}
+      />
+    </div>
   );
 };

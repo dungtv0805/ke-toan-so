@@ -163,6 +163,9 @@ export function PhieuFormModal() {
       okText={editingPhieu ? "Cập nhật" : "Thêm mới"}
       cancelText="Hủy"
       width={720}
+      // `nl-modal-vua-man`: ≤ máy tính bảng popup sát mép trên, thân tự cuộn trong khung
+      // để hàng nút Lưu/Hủy luôn nằm trong màn (responsive-nhap-lieu.css).
+      className="nl-modal-vua-man"
     >
       <Form form={form} layout="vertical" size="small" className="mt-2">
         <Row gutter={12}>

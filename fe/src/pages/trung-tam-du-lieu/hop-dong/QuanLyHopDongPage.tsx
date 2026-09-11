@@ -40,6 +40,8 @@ import { usePagePermission } from '@/hooks/usePagePermission';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
+import { ghimTheoManHinh } from '@/components/table/ghimTheoManHinh';
+import { useManHinh } from '@/hooks/useManHinh';
 import GhiNhanDoanhThuSection from './GhiNhanDoanhThuSection';
 import ThuTienDonHangModal from './ThuTienDonHangModal';
 import TaoNhanhHopDongModal from './TaoNhanhHopDongModal';
@@ -155,6 +157,7 @@ export default function QuanLyHopDongPage() {
   // Tạo nhanh ghi vào danh mục Hợp đồng → xin quyền "thêm" của chính danh mục đó.
   const { canCreate: canCreateHopDong } = usePagePermission('/danh-muc/hop-dong');
   const fl = useFieldLabels('trungTamDuLieu.hopDong');
+  const manHinh = useManHinh();
 
   const [rows, setRows] = useState<TheoDoiHopDongRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -567,7 +570,9 @@ export default function QuanLyHopDongPage() {
     <div className="space-y-3">
       <SectionNav items={BAN_HANG_NAV} />
 
-      <Row gutter={[12, 12]}>
+      {/* `hd-stats`: điện thoại xếp 8 thẻ thành một dải vuốt ngang (responsive-danh-sach.css)
+          — lưới 2 cột × 4 dòng cao ~300px, đẩy bảng xuống quá nửa màn. */}
+      <Row gutter={[12, 12]} className="hd-stats">
         {[
           // 'Tiền thuế' giữ màu tím cứng — không có token tím tương ứng trong bộ token hiện tại.
           { title: 'Doanh số', value: baoCao.doanhSo, color: 'hsl(var(--blue))' },
@@ -647,7 +652,8 @@ export default function QuanLyHopDongPage() {
         />
 
         <Table<DongBang>
-          columns={groupedColumns}
+          // Điện thoại: chỉ giữ ghim "Số HĐ"; cột "Chức năng" ghim phải thành cột thường.
+          columns={ghimTheoManHinh(groupedColumns, manHinh)}
           dataSource={viewRows}
           rowKey="hopDongId"
           loading={loading}
@@ -676,7 +682,8 @@ export default function QuanLyHopDongPage() {
         title={current ? `Theo dõi: ${current.soHopDong}` : 'Theo dõi hợp đồng'}
         open={open}
         onClose={() => setOpen(false)}
-        width={760}
+        // 760px rộng hơn cả màn điện thoại → phủ kín màn.
+        width={manHinh === 'mobile' ? '100%' : 760}
         extra={
           canEdit && (
             <Button type="primary" loading={saving} onClick={handleSave}>
@@ -758,7 +765,8 @@ export default function QuanLyHopDongPage() {
               </Form.Item>
 
               <Divider orientation="left">Các khoản thu</Divider>
-              <div className="mb-2 flex items-center justify-between gap-2">
+              {/* Điện thoại: chú thích dài + nút "Thu tiền" không đứng chung một dòng được. */}
+              <div className="mb-2 flex items-center justify-between gap-2 dt:flex-wrap">
                 <Text type="secondary" className="text-xs">
                   Thu tiền tại đây sẽ tạo phiếu thu Nợ 112 / Có 3387 gắn sẵn đơn hàng và ghi vào Sổ thu tiền.
                 </Text>
@@ -770,10 +778,11 @@ export default function QuanLyHopDongPage() {
                   />
                 )}
               </div>
-              <Table size="small" rowKey={(r) => r.id || ''} columns={receiptCols} dataSource={receipts} pagination={false} locale={{ emptyText: 'Chưa có khoản thu' }} />
+              {/* Điện thoại: cột chữ (ellipsis, không width) còn vài chục px → cho cuộn ngang. */}
+              <Table size="small" rowKey={(r) => r.id || ''} columns={receiptCols} dataSource={receipts} pagination={false} locale={{ emptyText: 'Chưa có khoản thu' }} scroll={manHinh === 'mobile' ? { x: 440 } : undefined} />
 
               <Divider orientation="left">Hóa đơn bán ra</Divider>
-              <Table size="small" rowKey={(r) => r.id || ''} columns={invoiceCols} dataSource={invoices} pagination={false} locale={{ emptyText: 'Chưa có hóa đơn' }} />
+              <Table size="small" rowKey={(r) => r.id || ''} columns={invoiceCols} dataSource={invoices} pagination={false} locale={{ emptyText: 'Chưa có hóa đơn' }} scroll={manHinh === 'mobile' ? { x: 440 } : undefined} />
 
               <Divider orientation="left">Ghi nhận doanh thu</Divider>
               <GhiNhanDoanhThuSection

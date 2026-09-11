@@ -9,10 +9,12 @@ import {
   Modal,
   Row,
   Select,
+  Tooltip,
   Typography,
   message,
 } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
+import { useManHinh } from '@/hooks/useManHinh';
 import dayjs, { type Dayjs } from 'dayjs';
 import { TrangThaiHopDong, type DoiTuong, type SanPham } from '@/types';
 import { hopDongService } from '@/services/hopDongService';
@@ -63,6 +65,7 @@ interface Props {
  */
 export default function TaoNhanhHopDongModal({ onCreated }: Props) {
   const [open, setOpen] = useState(false);
+  const dienThoai = useManHinh() === 'mobile';
   const [saving, setSaving] = useState(false);
   const [doiTuongList, setDoiTuongList] = useState<DoiTuong[]>([]);
   const [sanPhamList, setSanPhamList] = useState<SanPham[]>([]);
@@ -131,9 +134,21 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
 
   return (
     <>
-      <Button type="primary" icon={<PlusOutlined />} onClick={openModal}>
-        Tạo hợp đồng
-      </Button>
+      {/* Điện thoại: nút trên hàng lọc chỉ còn icon, tên nút vào tooltip + aria-label. */}
+      {dienThoai ? (
+        <Tooltip title="Tạo hợp đồng">
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            aria-label="Tạo hợp đồng"
+            onClick={openModal}
+          />
+        </Tooltip>
+      ) : (
+        <Button type="primary" icon={<PlusOutlined />} onClick={openModal}>
+          Tạo hợp đồng
+        </Button>
+      )}
 
       <Modal
         title="Tạo nhanh hợp đồng"

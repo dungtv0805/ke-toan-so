@@ -52,8 +52,11 @@ export function FormHeader() {
         </div>
       )}
 
-      {/* Row 1: Các field cơ bản */}
-      <div className="flex flex-wrap gap-3 items-end mb-2">
+      {/* Row 1: Các field cơ bản. `nl-luoi-o-dau`: dưới 1024px (iPad dọc) sáu ô
+          với minWidth cứng xuống dòng lởm chởm (5 + 1 ô dài thượt) → xếp thành
+          lưới 3 cột, điện thoại 2 cột; iPad ngang và máy tính vẫn một hàng như cũ.
+          Xem responsive-nhap-lieu.css. */}
+      <div className="flex flex-wrap gap-3 items-end mb-2 nl-luoi-o-dau">
         {isEditing && header?.soPhieu && (
           <div className="nkc-field flex-1" style={{ minWidth: 80 }}>
             <label className="nkc-label">Số phiếu</label>

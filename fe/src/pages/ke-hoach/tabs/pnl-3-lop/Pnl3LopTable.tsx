@@ -2,6 +2,8 @@ import React, { useMemo } from "react";
 import { Empty, Select, Space, Table, Tooltip, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
+import { useManHinh } from "@/hooks/useManHinh";
+import { RONG_COT_GHIM_DIEN_THOAI } from "@/components/table/ghimTheoManHinh";
 import { capCot, CAP_CHINH, CAP_NAM, tien } from "../lib/cotChung";
 import {
   ghep3Lop,
@@ -29,6 +31,9 @@ export const Pnl3LopTable: React.FC = () => {
   const [loading] = usePnl3LopState("loading", false);
   const [ky] = usePnl3LopState("ky", "NAM");
   const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
+  // Điện thoại: cột "Chỉ tiêu" 380px là cả màn chỉ thấy tên, vuốt sang thì mất
+  // tên → ghim trái và hẹp lại (tên dài xuống dòng, không cắt "…").
+  const dienThoai = useManHinh() === "mobile";
 
   const rows = useMemo<Hang3Lop[]>(
     () => (baoCao ? ghep3Lop(baoCao, ky as Ky) : []),
@@ -40,7 +45,8 @@ export const Pnl3LopTable: React.FC = () => {
       title: "Chỉ tiêu",
       dataIndex: "nhan",
       key: "nhan",
-      width: 380,
+      width: dienThoai ? RONG_COT_GHIM_DIEN_THOAI : 380,
+      fixed: dienThoai ? ("left" as const) : undefined,
       ...capCot(CAP_CHINH),
       render: (v: string, row: Hang3Lop) => (
         <span className={row.cap === 0 ? "font-semibold" : undefined}>{v}</span>
@@ -121,7 +127,7 @@ export const Pnl3LopTable: React.FC = () => {
 
   return (
     <div className="excel-container">
-      <div className="excel-toolbar">
+      <div className="excel-toolbar dt:flex-wrap">
         <Space size={8}>
           <Text type="secondary" className="text-xs">
             Kỳ xem

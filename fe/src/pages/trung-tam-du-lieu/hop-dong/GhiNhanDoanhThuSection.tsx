@@ -3,6 +3,7 @@ import { Button, Col, Row, Table, Typography, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { useManHinh } from '@/hooks/useManHinh';
 import type { NhatKyChung, TheoDoiHopDongRow } from '@/types';
 import { nhatKyChungService } from '@/services/nhatKyChungService';
 import {
@@ -35,6 +36,7 @@ interface Props {
 export default function GhiNhanDoanhThuSection({ hopDong, canEdit, daThanhToan }: Props) {
   const [entries, setEntries] = useState<NhatKyChung[]>([]);
   const [loading, setLoading] = useState(false);
+  const dienThoai = useManHinh() === 'mobile';
 
   const { ghiNhan, daGhiNhan, chuaGhiNhan } = useMemo(
     () => tinhDoanhThuHopDong(entries),
@@ -112,6 +114,9 @@ export default function GhiNhanDoanhThuSection({ hopDong, canEdit, daThanhToan }
         loading={loading}
         columns={columns}
         dataSource={ghiNhan}
+        // Điện thoại: 3 cột cố định đã rộng hơn Drawer → cột "Diễn giải" (ellipsis,
+        // không width) bị bóp về 0. Cho bảng cuộn ngang, chừa diễn giải ~150px.
+        scroll={dienThoai ? { x: 540 } : undefined}
         pagination={false}
         locale={{ emptyText: 'Chưa ghi nhận doanh thu lần nào' }}
       />

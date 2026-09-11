@@ -11,7 +11,8 @@ export function StatsCards() {
   const moneyColor = isThu ? "hsl(var(--green))" : "hsl(var(--red))";
 
   return (
-    <Row gutter={16}>
+    // `phieu-stats`: điện thoại thu nhỏ số tiền cho khỏi tràn thẻ nửa màn (responsive-danh-sach.css).
+    <Row gutter={16} className="phieu-stats">
       <Col xs={12} sm={12} md={8}>
         <Card className="stat-card" size="small">
           <Statistic

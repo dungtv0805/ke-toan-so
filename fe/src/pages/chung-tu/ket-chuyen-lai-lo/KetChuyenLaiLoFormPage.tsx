@@ -30,6 +30,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { ketChuyenService } from '@/services/ketChuyenService';
 import { loaiGiaoDichService } from '@/services/loaiGiaoDichService';
 import type { LoaiGiaoDich } from '@/types';
+import { useManHinh } from '@/hooks/useManHinh';
 import { chonMacDinh, thieuLoaiGiaoDich, tienToSoPhieu } from './loaiGiaoDichLo';
 import {
   boKhoaDong,
@@ -49,6 +50,7 @@ const DATE_FMT = 'YYYY-MM-DD';
 
 const KetChuyenLaiLoFormPage: React.FC = () => {
   const navigate = useNavigate();
+  const dienThoai = useManHinh() === 'mobile';
 
   const [denNgay, setDenNgay] = useState<Dayjs>(dayjs());
   const [ngayHachToan, setNgayHachToan] = useState<Dayjs>(dayjs());
@@ -327,6 +329,9 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
           dataSource={dong}
           columns={columns}
           pagination={false}
+          // Điện thoại: ô Diễn giải + Số tiền 180px không co được nữa, bảng phải cuộn
+          // ngang trong thẻ thay vì đẩy cả trang tràn ra. Màn rộng hơn giữ như cũ.
+          scroll={dienThoai ? { x: 640 } : undefined}
           locale={{ emptyText: <Empty description="Không có dữ liệu" /> }}
           summary={() =>
             dong.length > 0 ? (
@@ -358,7 +363,12 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
         </Space>
       </Card>
 
-      <div style={{ textAlign: 'right' }}>
+      {/* ≤ máy tính bảng: bảng hạch toán dài thì nút Lưu trôi xuống đáy trang —
+          dính mép dưới vùng cuộn để lúc nào cũng bấm được. Máy tính giữ nguyên. */}
+      <div
+        className="max-xl:sticky max-xl:bottom-0 max-xl:z-10 max-xl:bg-background max-xl:py-2 max-xl:border-t max-xl:border-border"
+        style={{ textAlign: 'right' }}
+      >
         <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={handleSave}>
           Lưu
         </Button>

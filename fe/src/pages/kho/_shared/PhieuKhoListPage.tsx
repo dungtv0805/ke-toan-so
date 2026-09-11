@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import {
   Button,
   Card,
@@ -7,8 +7,10 @@ import {
   Popconfirm,
   Space,
   Table,
+  Tooltip,
   message,
 } from 'antd';
+import type { ButtonProps } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
@@ -23,6 +25,7 @@ import type { PhieuKho, LoaiPhieuKho } from '@/types';
 import { phieuKhoService } from '@/services/phieuKhoService';
 import { khoTemplateService } from '@/services/khoTemplateService';
 import { usePagePermission } from '@/hooks/usePagePermission';
+import { useManHinh } from '@/hooks/useManHinh';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { formatCurrency } from '@/pages/chung-tu/phieu/lib/format';
 import { PhieuKhoEditorModal } from './PhieuKhoEditorModal';
@@ -33,6 +36,7 @@ import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useBulkDelete } from '@/components/table/useBulkDelete';
 import { SectionNav } from '@/components/layout/SectionNav';
 import { KHO_NAV } from '@/config/sectionNavs';
+import { nutLenh } from "@/components/common/nutLenh";
 
 const { RangePicker } = DatePicker;
 
@@ -46,6 +50,7 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
   const { canCreate, canEdit, canDelete } = usePagePermission(route);
   const isAdmin = useIsAdmin();
   const printPhieu = usePrintKhoPhieu();
+  const dienThoai = useManHinh() === 'mobile';
 
   const [data, setData] = useState<PhieuKho[]>([]);
   const [loading, setLoading] = useState(false);
@@ -242,8 +247,9 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
       <SectionNav items={KHO_NAV} />
 
       <Card className="shadow-sm">
-        {/* FilterBar */}
+        {/* FilterBar — lớp `kho-loc*` chỉ để responsive-danh-sach.css bẻ dòng trên điện thoại. */}
         <div
+          className="kho-loc"
           style={{
             display: 'flex',
             gap: 8,
@@ -256,6 +262,7 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
             placeholder="Tìm theo số phiếu, diễn giải..."
             prefix={<SearchOutlined />}
             style={{ width: 260, height: 28 }}
+            className="kho-loc__tim"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onPressEnter={handleSearch}
@@ -264,6 +271,7 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
           />
           <RangePicker
             style={{ height: 28 }}
+            className="kho-loc__ngay"
             size="small"
             format="DD/MM/YYYY"
             placeholder={['Từ ngày', 'Đến ngày']}
@@ -277,38 +285,31 @@ export function PhieuKhoListPage({ loaiPhieu, tieuDe, route }: Props) {
               );
             }}
           />
-          <Button
-            size="small"
-            icon={<SearchOutlined />}
-            onClick={handleSearch}
-            style={{ height: 28 }}
-          >
-            Tìm
-          </Button>
-          <Space style={{ marginLeft: 'auto' }} size={8}>
+          {/* Điện thoại: bỏ `height: 28` cứng (nút/ô theo token cao 30–36 cho dễ chạm) */}
+          {nutLenh(dienThoai, 'Tìm', {
+            size: 'small',
+            icon: <SearchOutlined />,
+            onClick: handleSearch,
+            style: dienThoai ? undefined : { height: 28 },
+          })}
+          <Space style={{ marginLeft: 'auto' }} size={8} wrap={dienThoai || undefined}>
             {bulkDeleteButton}
             {settingsButton}
-            {isAdmin && (
-              <Button
-                size="small"
-                icon={<FileTextOutlined />}
-                style={{ height: 28 }}
-                onClick={() => setTemplateModalOpen(true)}
-              >
-                Mẫu in
-              </Button>
-            )}
-            {canCreate && (
-              <Button
-                type="primary"
-                size="small"
-                icon={<PlusOutlined />}
-                style={{ height: 28 }}
-                onClick={handleOpenCreate}
-              >
-                Lập {groupLabel.toLowerCase()}
-              </Button>
-            )}
+            {isAdmin &&
+              nutLenh(dienThoai, 'Mẫu in', {
+                size: 'small',
+                icon: <FileTextOutlined />,
+                style: dienThoai ? undefined : { height: 28 },
+                onClick: () => setTemplateModalOpen(true),
+              })}
+            {canCreate &&
+              nutLenh(dienThoai, `Lập ${groupLabel.toLowerCase()}`, {
+                type: 'primary',
+                size: 'small',
+                icon: <PlusOutlined />,
+                style: dienThoai ? undefined : { height: 28 },
+                onClick: handleOpenCreate,
+              })}
           </Space>
         </div>
 

@@ -1,6 +1,8 @@
 import React from "react";
 import { InputNumber, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import type { ManHinh } from "@/config/manHinh";
+import { ghimTheoManHinh } from "@/components/table/ghimTheoManHinh";
 import type { HangBang, LoaiHang } from "./tongHop";
 import { LECH_TOI_THIEU } from "./tongHop";
 
@@ -135,6 +137,51 @@ export function cotCaNam<T extends HangBang<unknown>>(): ColumnsType<T> {
  */
 export function ghimTrai<T>(cols: ColumnsType<T>): ColumnsType<T> {
   return cols.map((c) => ({ ...c, fixed: "left" as const }));
+}
+
+/** Cặp cột nhãn ghim trên điện thoại: 2 × 90 = 180px, còn ~190px cho số. */
+export const RONG_CAP_NHAN_DIEN_THOAI = 90;
+
+/**
+ * Thu hẹp vùng ghim theo loại màn hình. Gọi SAU `useCotCoGian` (bề rộng đã chốt).
+ *
+ * Vùng ghim đầy đủ (nhãn … CẢ NĂM) rộng 900–1170px — lớn hơn cả khung nội dung
+ * của iPad xoay ngang (~940–1100px). Ghim hết thì cột Quý/Tháng nằm vĩnh viễn
+ * dưới vùng ghim, kéo ngang cũng không lộ ra được ô nào để nhập.
+ *
+ * - Máy tính: trả lại nguyên mảng — bố cục gốc không đổi.
+ * - Máy tính bảng: chỉ ghim CẶP CỘT NHÃN (cột đầu tới cột `onCellNhanPhu`).
+ *   Phải giữ trọn cặp: hàng tổng/hàng nhóm gộp hai cột này bằng `colSpan`, mà
+ *   antd chỉ cho ô gộp dính khi CẢ HAI cột cùng ghim — ghim lẻ một cột là nhãn
+ *   nhóm trôi mất khi kéo ngang.
+ * - Điện thoại: VẪN giữ trọn cặp cột nhãn (cùng lý do colSpan ở trên), mỗi cột
+ *   thu về tối đa `RONG_CAP_NHAN_DIEN_THOAI`. Bảng không có cặp gộp thì theo quy
+ *   tắc chung `ghimTheoManHinh` (chỉ cột đầu, tối đa 140px).
+ *
+ * Làm trên mảng `columns` (state React), không đụng DOM — xem `GhimCotHarness`.
+ */
+export function ghimTheoManKeHoach<T>(
+  cols: ColumnsType<T>,
+  manHinh: ManHinh,
+): ColumnsType<T> {
+  if (manHinh === "desktop") return cols;
+  const cuoiCapNhan = cols.findIndex(
+    (c) => (c as { onCell?: unknown }).onCell === onCellNhanPhu,
+  );
+  if (manHinh === "mobile") {
+    if (cuoiCapNhan < 0) return ghimTheoManHinh(cols, "mobile") ?? cols;
+    return cols.map((c, i) => {
+      if (i > cuoiCapNhan) return c.fixed ? { ...c, fixed: undefined } : c;
+      return typeof c.width === "number" && c.width > RONG_CAP_NHAN_DIEN_THOAI
+        ? { ...c, width: RONG_CAP_NHAN_DIEN_THOAI, ellipsis: true }
+        : c;
+    });
+  }
+  // Bảng không có cặp nhãn gộp thì giữ đúng cột ghim đầu tiên.
+  const giuDen = cuoiCapNhan >= 0 ? cuoiCapNhan : cols.findIndex((c) => !!c.fixed);
+  return cols.map((c, i) =>
+    c.fixed && i > giuDen ? { ...c, fixed: undefined } : c,
+  );
 }
 
 /**

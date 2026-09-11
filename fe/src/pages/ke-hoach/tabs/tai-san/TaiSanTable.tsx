@@ -20,6 +20,7 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
 import { useCotCoGian } from "@/hooks/useCotCoGian";
+import { useManHinh } from "@/hooks/useManHinh";
 import { sapXepTheoNhan } from "@/lib/sapXep";
 import { dungCayBang, type HangBang, type MoTaHang } from "../lib/tongHop";
 import { demThayDoi, gopNhap, type DongHienThi } from "../lib/nhapBang";
@@ -27,6 +28,7 @@ import {
   CAP_CHINH,
   capCot,
   cotCaNam,
+  ghimTheoManKeHoach,
   ghimTrai,
   cotQuyVaThang,
   laHangGop,
@@ -62,6 +64,7 @@ export const TaiSanTable: React.FC = () => {
   const [dongMoi] = useTaiSanState("dongMoi", []);
   const [saving] = useTaiSanState("saving", false);
   const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
+  const manHinh = useManHinh();
 
   const daLuu = useMemo(
     () => data.map((d) => ({ id: d.id, val: valTuDong(d) })),
@@ -343,10 +346,14 @@ export const TaiSanTable: React.FC = () => {
    * Bề rộng nằm trong state React (không sửa thẳng DOM) — nhờ vậy antd
    * tính lại được offset của các cột ghim mỗi lần kéo giãn.
    */
-  const columns = useCotCoGian(KHOA_RONG_COT, cotGoc);
+  const columns = ghimTheoManKeHoach(
+    useCotCoGian(KHOA_RONG_COT, cotGoc),
+    // Vùng ghim đủ rộng hơn cả khung iPad — xem ghimTheoManKeHoach.
+    manHinh,
+  );
 
   return (
-    <div className="excel-container">
+    <div className="excel-container kh-khung-bang">
       <div className="excel-toolbar">
         <Space size={4}>
           <Button

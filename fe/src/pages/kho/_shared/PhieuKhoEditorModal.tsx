@@ -186,6 +186,9 @@ export function PhieuKhoEditorModal({ open, loaiPhieu, editingId, onClose, onSav
       open={open}
       title={modalTitle}
       width={1100}
+      // `nl-modal-vua-man`: ≤ máy tính bảng popup sát mép trên, thân tự cuộn trong khung
+      // để hàng nút Lưu/Hủy luôn nằm trong màn (responsive-nhap-lieu.css).
+      className="nl-modal-vua-man"
       onCancel={onClose}
       onOk={handleSave}
       okText={saving ? 'Đang lưu...' : 'Lưu'}

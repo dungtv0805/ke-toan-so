@@ -31,7 +31,9 @@ export const FormHeader: React.FC = () => {
 
   return (
     <div className="nkc-header-form">
-      <div className="flex flex-wrap gap-3 items-end mb-2">
+      {/* `nl-luoi-o-dau`: dưới 1280px xếp thành lưới 3 cột (điện thoại 2) —
+          xem responsive-nhap-lieu.css. Máy tính giữ hàng flex như cũ. */}
+      <div className="flex flex-wrap gap-3 items-end mb-2 nl-luoi-o-dau nl-luoi-o-dau--xl">
         <div className="nkc-field" style={{ minWidth: 120 }}>
           <label className="nkc-label">Loại</label>
           <Tag color={h.loaiKeHoach === "DU_BAO" ? "purple" : "blue"} className="mt-1">

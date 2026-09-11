@@ -7,6 +7,7 @@ import { hangHoaVatTuService } from '@/services/hangHoaVatTuService';
 import { khoService } from '@/services/khoService';
 import { formatCurrency } from '@/pages/chung-tu/phieu/lib/format';
 import { sapXepTheoNhan } from '@/lib/sapXep';
+import { useManCamUng, useManHinh } from '@/hooks/useManHinh';
 
 const CONTROL_HEIGHT = 28;
 
@@ -41,6 +42,10 @@ export function ChiTietTable({ value, onChange, loaiPhieu }: Props) {
   const [khoList, setKhoList] = useState<Kho[]>([]);
   const [loadingHH, setLoadingHH] = useState(false);
   const [loadingKho, setLoadingKho] = useState(false);
+  // Màn cảm ứng ≤ máy tính bảng: nút Xóa dòng to 32px (responsive-nhap-lieu.css),
+  // cột 40px trừ lề ô 16px chỉ còn 24px — phải nới cột theo.
+  const manHinh = useManHinh();
+  const nutTo = useManCamUng() && manHinh !== 'desktop';
 
   useEffect(() => {
     setLoadingHH(true);
@@ -254,7 +259,7 @@ export function ChiTietTable({ value, onChange, loaiPhieu }: Props) {
     {
       title: '',
       key: 'action',
-      width: 40,
+      width: nutTo ? 48 : 40,
       align: 'center',
       render: (_: unknown, _row: ChiTietPhieuKho, index: number) => (
         <Button
@@ -269,7 +274,7 @@ export function ChiTietTable({ value, onChange, loaiPhieu }: Props) {
   ];
 
   return (
-    <div>
+    <div className="nl-chi-tiet-kho">
       <Table<ChiTietPhieuKho>
         dataSource={value}
         columns={columns}
