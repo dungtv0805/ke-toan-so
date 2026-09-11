@@ -70,8 +70,8 @@ function KqkdPageInner({ loaiTruKhauHao, duongDanQuyen, tieuDe }: Props) {
 
   return (
     <div className="kqkd-page space-y-3">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-xl font-semibold dt:text-base">
           {tieuDe ?? "Báo cáo kết quả hoạt động kinh doanh"}
         </h1>
         {canExport && (
@@ -93,7 +93,7 @@ function KqkdPageInner({ loaiTruKhauHao, duongDanQuyen, tieuDe }: Props) {
       <KqkdFilter onFilter={handleFilter} loading={loading} />
 
       {kqkdData?.kyHienTai && kqkdData?.kyTruoc && (
-        <div className="flex gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
           <span>
             Kỳ hiện tại: {formatDate(kqkdData.kyHienTai.startDate)} –{" "}
             {formatDate(kqkdData.kyHienTai.endDate)}

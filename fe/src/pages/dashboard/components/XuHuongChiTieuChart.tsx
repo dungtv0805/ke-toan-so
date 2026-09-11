@@ -6,6 +6,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { dashboardService } from '@/services/dashboardService';
 import { formatCurrency, DASH_COLORS, CHART_GRID, nhanTrieu } from './format';
+import { useManHinh } from '@/hooks/useManHinh';
+import { hienNhanSo } from './bieuDoTheoManHinh';
 
 type ChiTieu = 'doanhThu' | 'chiPhi' | 'loiNhuan';
 
@@ -40,12 +42,13 @@ const XuHuongChiTieuChart: React.FC<Props> = ({ year, startMonth, endMonth }) =>
   const rows = data
     .filter((p) => p.thang >= startMonth && p.thang <= endMonth)
     .map((p) => ({ thang: `T${p.thang}`, value: p[chiTieu] }));
+  const coNhan = hienNhanSo(useManHinh(), rows.length);
 
   return (
     <Card
       title={<span className="text-sm sm:text-base"><LineChartOutlined className="text-primary mr-2" />Xu hướng theo tháng (theo TK 5xx/6xx)</span>}
       extra={
-        <Space>
+        <Space wrap>
           <Segmented size="small" value={chiTieu} options={OPTIONS} onChange={(v) => setChiTieu(v as ChiTieu)} />
           <Link to="/bao-cao/tai-chinh" className="text-xs">Xem chi tiết</Link>
         </Space>
@@ -58,7 +61,7 @@ const XuHuongChiTieuChart: React.FC<Props> = ({ year, startMonth, endMonth }) =>
           <YAxis tick={{ fontSize: 11 }} tickFormatter={nhanTrieu} />
           <Tooltip formatter={(v: number) => formatCurrency(v)} />
           <Line type="monotone" dataKey="value" name={OPTIONS.find((o) => o.value === chiTieu)?.label} stroke={MAU[chiTieu]} strokeWidth={2} dot={{ r: 2 }}>
-            <LabelList dataKey="value" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: MAU[chiTieu] }} />
+            {coNhan && <LabelList dataKey="value" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: MAU[chiTieu] }} />}
           </Line>
         </LineChart>
       </ResponsiveContainer>

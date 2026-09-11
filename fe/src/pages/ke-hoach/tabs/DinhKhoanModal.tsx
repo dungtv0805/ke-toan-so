@@ -4,6 +4,7 @@ import type { ColumnsType } from "antd/es/table";
 import { taiKhoanService } from "@/services/taiKhoanService";
 import type { TaiKhoan } from "@/types";
 import { sapXepTheoNhan } from "@/lib/sapXep";
+import { useManHinh } from "@/hooks/useManHinh";
 import {
   dinhKhoanKeHoachService,
   khoaDinhKhoan,
@@ -37,6 +38,7 @@ export const DinhKhoanModal: React.FC<{
   const [taiKhoanList, setTaiKhoanList] = useState<TaiKhoan[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const dienThoai = useManHinh() === "mobile";
 
   useEffect(() => {
     if (!moLen) return;
@@ -183,6 +185,9 @@ export const DinhKhoanModal: React.FC<{
       cancelText="Đóng"
       confirmLoading={saving}
       width={900}
+      // `nl-modal-vua-man`: ≤ máy tính bảng popup sát mép trên, thân tự cuộn trong khung
+      // để hàng nút Lưu/Hủy luôn nằm trong màn (responsive-nhap-lieu.css).
+      className="nl-modal-vua-man"
       destroyOnClose
     >
       <Space direction="vertical" size={12} className="w-full">
@@ -200,6 +205,9 @@ export const DinhKhoanModal: React.FC<{
           columns={columns}
           dataSource={rows}
           pagination={false}
+          // Ba cột 800px ở màn ~390px: không có scroll thì bảng đẩy tràn ngang cả
+          // popup. Máy tính bảng trở lên để bảng tự co như cũ.
+          scroll={dienThoai ? { x: 560 } : undefined}
         />
       </Space>
     </Modal>

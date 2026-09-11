@@ -8,9 +8,12 @@ export function PhanQuyenHeader() {
   const [roleOptions] = usePhanQuyenState("roleOptions", []);
 
   return (
-    <div className="flex justify-between items-center mb-6">
-      <h1 className="text-2xl font-bold">Thiết lập Phân quyền</h1>
+    // Điện thoại: tiêu đề 24px + ô chọn 240px không đứng chung một hàng 360px →
+    // xuống dòng, ô chọn vai trò giãn hết bề ngang cho dễ bấm.
+    <div className="flex justify-between items-center mb-6 dt:flex-wrap dt:gap-2 dt:mb-3">
+      <h1 className="text-2xl font-bold dt:text-xl">Thiết lập Phân quyền</h1>
       <Select
+        className="dt:!w-full"
         style={{ width: 240 }}
         placeholder="Chọn vai trò"
         value={selectedRoleId}

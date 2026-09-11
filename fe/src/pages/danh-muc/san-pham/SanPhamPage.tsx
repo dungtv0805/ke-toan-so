@@ -400,6 +400,7 @@ const SanPhamPage: React.FC = () => {
       {/* Table */}
       <Card>
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: handleSearch,
@@ -474,7 +475,7 @@ const SanPhamPage: React.FC = () => {
       >
         <Form form={form} layout="vertical" size="small" className="mt-2">
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="ma"
                 label={fl('ma', 'Mã sản phẩm')}
@@ -487,7 +488,7 @@ const SanPhamPage: React.FC = () => {
                 <Input placeholder="VD: SP001" />
               </Form.Item>
             </Col>
-            <Col span={16}>
+            <Col xs={24} sm={16}>
               <Form.Item
                 name="ten"
                 label={fl('ten', 'Tên sản phẩm')}
@@ -503,7 +504,7 @@ const SanPhamPage: React.FC = () => {
           </Row>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="nhom" label={fl('nhom', 'Nhóm sản phẩm')} className="mb-3">
                 <Select
                   placeholder="Chọn nhóm sản phẩm"
@@ -516,7 +517,7 @@ const SanPhamPage: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="donVi" label={fl('donVi', 'Đơn vị tính')} className="mb-3">
                 <Select
                   placeholder="Chọn đơn vị"
@@ -527,7 +528,7 @@ const SanPhamPage: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="giaBan"
                 label={fl('giaBan', 'Giá bán (VNĐ)')}

@@ -236,7 +236,7 @@ const BangCanDoiPage: React.FC = () => {
       >
         {/* Stats Cards */}
         <Row gutter={16} style={{ marginBottom: 24 }}>
-          <Col span={4}>
+          <Col xs={24} sm={12} md={4}>
             <Card size="small" className="stat-card">
               <Statistic
                 title="Tổng tài sản"
@@ -246,7 +246,7 @@ const BangCanDoiPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col span={4}>
+          <Col xs={24} sm={12} md={4}>
             <Card size="small" className="stat-card">
               <Statistic
                 title="TS ngắn hạn"
@@ -256,7 +256,7 @@ const BangCanDoiPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col span={4}>
+          <Col xs={24} sm={12} md={4}>
             <Card size="small" className="stat-card">
               <Statistic
                 title="TS dài hạn"
@@ -265,7 +265,7 @@ const BangCanDoiPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col span={4}>
+          <Col xs={24} sm={12} md={4}>
             <Card size="small" className="stat-card stat-card-destructive">
               <Statistic
                 title="Nợ phải trả"
@@ -275,7 +275,7 @@ const BangCanDoiPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col span={4}>
+          <Col xs={24} sm={12} md={4}>
             <Card size="small" className="stat-card stat-card-success">
               <Statistic
                 title="Vốn chủ sở hữu"
@@ -285,7 +285,7 @@ const BangCanDoiPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col span={4}>
+          <Col xs={24} sm={12} md={4}>
             <Card size="small" className="stat-card">
               <Statistic
                 title="Trạng thái"
@@ -375,7 +375,7 @@ const BangCanDoiPage: React.FC = () => {
               label: 'Cơ cấu tài sản & vốn',
               children: (
                 <Row gutter={16}>
-                  <Col span={12}>
+                  <Col xs={24} sm={12}>
                     <Card title="Cơ cấu Tài sản" size="small">
                       <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
@@ -402,7 +402,7 @@ const BangCanDoiPage: React.FC = () => {
                       </ResponsiveContainer>
                     </Card>
                   </Col>
-                  <Col span={12}>
+                  <Col xs={24} sm={12}>
                     <Card title="Cơ cấu Nguồn vốn" size="small">
                       <ResponsiveContainer width="100%" height={300}>
                         <PieChart>

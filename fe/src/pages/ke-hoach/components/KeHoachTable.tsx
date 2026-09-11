@@ -26,6 +26,7 @@ import { useColumnVisibility } from "@/components/table/useColumnVisibility";
 import { useTableColumnResize } from "@/hooks/useTableColumnResize";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useManCamUng, useManHinh } from "@/hooks/useManHinh";
 import {
   NHAN_BANG_NGUON,
   type KeHoachDong,
@@ -51,6 +52,12 @@ const renderEllipsisText = (text: string | undefined | null) => {
 
 const toOptions = (list: MucDanhMuc[] = []) =>
   sapXepTheoNhan(list.map((m) => ({ value: m.ma, label: `${m.ma} - ${m.ten}` })));
+
+/**
+ * Cột "Chức năng" trên màn cảm ứng ≤ máy tính bảng: ba nút 32px (responsive-nhap-lieu.css)
+ * + khe + lề ô 16px. Giữ 96 thì nút Xóa bị lớp `resizable-table` (overflow:hidden) cắt mất.
+ */
+const RONG_COT_CHUC_NANG_CAM_UNG = 124;
 
 /** Bề rộng mặc định từng cột (người dùng kéo tay được, lưu ở localStorage). */
 const DEFAULT_WIDTHS: Record<string, number> = {
@@ -105,6 +112,9 @@ export const KeHoachTable: React.FC = () => {
   const { withColumnFilter } = useKeHoachColumnFilters();
   const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
   useTableColumnResize("resizable-table", WIDTH_STORAGE_KEY);
+  const manHinh = useManHinh();
+  const camUng = useManCamUng();
+  const nutTo = camUng && manHinh !== "desktop";
 
   const duongDan =
     (loaiKeHoach as LoaiKeHoach) === "DU_BAO"
@@ -431,10 +441,13 @@ export const KeHoachTable: React.FC = () => {
       baseColumns.map((col) =>
         withColumnFilter({
           ...col,
-          width: DEFAULT_WIDTHS[col.key as string] || 120,
+          width:
+            nutTo && col.key === "action"
+              ? RONG_COT_CHUC_NANG_CAM_UNG
+              : DEFAULT_WIDTHS[col.key as string] || 120,
         } as ColumnType<KeHoachDong>),
       ),
-    [baseColumns, withColumnFilter],
+    [baseColumns, withColumnFilter, nutTo],
   );
 
   const labelOf = useCallback((col: ColumnType<KeHoachDong>): string | null => {
@@ -522,7 +535,9 @@ export const KeHoachTable: React.FC = () => {
           rowKey="id"
           size="small"
           bordered
-          className="excel-table resizable-table"
+          // `kh-bang-chi-tiet`: móc riêng cho responsive-nhap-lieu.css (nút 32px trên màn
+          // cảm ứng) — `resizable-table` còn dùng ở trang khác, không bám vào đó được.
+          className="excel-table resizable-table kh-bang-chi-tiet"
           loading={loading as boolean}
           columns={visibleColumns}
           dataSource={[...dongMoi, ...((data ?? []) as KeHoachDong[])]}

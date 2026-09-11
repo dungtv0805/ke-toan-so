@@ -25,7 +25,9 @@ import {
   Select,
   Space,
   Table,
+  Tooltip,
 } from "antd";
+import { useManHinh } from "@/hooks/useManHinh";
 import type { ColumnsType } from "antd/es/table";
 import dayjs, { Dayjs } from "dayjs";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -108,6 +110,8 @@ const BangTongHopCongNoPage: React.FC = () => {
   const { filters, filtering, hasPinned, filterable } = useTableColumnFilters(
     "bao-cao-bang-tong-hop-cong-no",
   );
+  const manHinh = useManHinh();
+  const dienThoai = manHinh === "mobile";
   const view = useMemo(() => filterCongNo(data, filters), [data, filters]);
 
   // Flatten mỗi TK: dòng TK + các dòng đối tượng.
@@ -296,7 +300,7 @@ const BangTongHopCongNoPage: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className="bc-dau-the-gon">
       <Card
         title={
           <div
@@ -311,17 +315,24 @@ const BangTongHopCongNoPage: React.FC = () => {
           </div>
         }
         extra={
-          <Space>
-            <Button icon={<PrinterOutlined />} onClick={handlePrint}>
-              In
-            </Button>
-            <Button
-              icon={<ExportOutlined />}
-              onClick={handleExport}
-              loading={exporting}
-            >
-              Xuất Excel
-            </Button>
+          // Điện thoại: "In" và "Xuất Excel" chỉ còn icon (nhãn vào tooltip +
+          // aria-label) để tiêu đề không bị ép thành "…"; nút chính giữ chữ.
+          <Space wrap>
+            <Tooltip title={dienThoai ? "In" : undefined}>
+              <Button icon={<PrinterOutlined />} onClick={handlePrint} aria-label="In">
+                {!dienThoai && "In"}
+              </Button>
+            </Tooltip>
+            <Tooltip title={dienThoai ? "Xuất Excel" : undefined}>
+              <Button
+                icon={<ExportOutlined />}
+                onClick={handleExport}
+                loading={exporting}
+                aria-label="Xuất Excel"
+              >
+                {!dienThoai && "Xuất Excel"}
+              </Button>
+            </Tooltip>
             <Button
               type="primary"
               icon={<ReloadOutlined />}
@@ -371,8 +382,10 @@ const BangTongHopCongNoPage: React.FC = () => {
           size="small"
           bordered
           // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
+          // Dưới 1280px cũng cần scroll.x: 8 cột (~1090px) không vừa màn, bảng
+          // không cuộn ngang thì tràn khỏi Card hoặc bị ép cột số xuống dòng.
           scroll={{
-            x: hasPinned ? "max-content" : undefined,
+            x: hasPinned || manHinh !== "desktop" ? "max-content" : undefined,
             y: "calc(100vh - 320px)",
           }}
           // Dòng TỔNG CỘNG ghim ngay dưới header, luôn thấy khi cuộn danh sách.

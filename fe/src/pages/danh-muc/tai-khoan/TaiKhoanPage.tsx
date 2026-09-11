@@ -439,6 +439,7 @@ const TaiKhoanPage: React.FC = () => {
       <Card className="shadow-sm">
         {/* Toolbar */}
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: setSearchText,
@@ -518,7 +519,7 @@ const TaiKhoanPage: React.FC = () => {
       >
         <Form form={form} layout="vertical" size="small" className="mt-2">
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="ma"
                 label={fl('ma', 'Mã tài khoản')}
@@ -531,7 +532,7 @@ const TaiKhoanPage: React.FC = () => {
                 <Input placeholder="VD: 111, 1111" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="parentId"
                 label={fl('parentId', 'Tài khoản cha')}
@@ -572,7 +573,7 @@ const TaiKhoanPage: React.FC = () => {
           </Form.Item>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="loai"
                 label={fl('loai', 'Loại tài khoản')}
@@ -585,7 +586,7 @@ const TaiKhoanPage: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="nhom"
                 label={fl('nhom', 'Nhóm tài khoản')}
@@ -617,7 +618,7 @@ const TaiKhoanPage: React.FC = () => {
             tooltip="Bắt buộc: không cho lưu chứng từ nếu thiếu. Cảnh báo: hỏi xác nhận rồi vẫn cho lưu.">
             <Row gutter={[8, 4]}>
               {FIELD_RULE_FIELDS.map((f) => (
-                <Col span={12} key={f.key}>
+                <Col xs={24} sm={12} key={f.key}>
                   <div className="flex items-center justify-between gap-2">
                     <Text className="text-xs">{f.label}</Text>
                     <Form.Item name={["fieldRules", f.key]} noStyle>

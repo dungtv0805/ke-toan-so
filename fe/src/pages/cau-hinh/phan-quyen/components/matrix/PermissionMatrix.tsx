@@ -70,6 +70,15 @@ const NEN_HANG_LA_CHAN = "hsl(var(--muted) / 0.45)";
 const VIEN_DUOI = "1px solid hsl(var(--border))";
 
 /**
+ * Nền của hàng, khai thêm dưới dạng biến CSS `--pq-nen` để ô tên module (ô dính
+ * trái khi cuộn ngang trên điện thoại — responsive-cau-hinh.css) phủ ĐÚNG màu
+ * hàng lên nền card đặc. Nền lá chẵn trong suốt 45%: để ô dính dùng thẳng màu đó
+ * thì các ô tick trượt qua bên dưới sẽ lộ ra. Máy tính không đọc biến này.
+ */
+const nenHangStyle = (nen: string | undefined): React.CSSProperties =>
+  ({ backgroundColor: nen, "--pq-nen": nen }) as React.CSSProperties;
+
+/**
  * Hàng gộp — dùng chung cho hàng TIÊU ĐỀ NHÓM (phân hệ, `isSection`) và hàng
  * CHA (nhóm nhỏ trong Danh mục). Hai hàng chỉ khác nền, cỡ chữ và thụt lề; ô
  * tick "cả nhóm" thì y hệt nhau, nên gộp thay vì nuôi hai cơ chế.
@@ -104,8 +113,9 @@ function NhomRow({
   const vien = laTieuDeNhom ? undefined : VIEN_DUOI;
 
   return (
-    <tr style={{ backgroundColor: nenHang }}>
+    <tr style={nenHangStyle(nenHang)}>
       <td
+        className="pq-o-ten"
         style={
           laTieuDeNhom
             ? {
@@ -180,8 +190,9 @@ function LeafRow({
   const someChecked = PERMISSION_ACTIONS.some((a) => perm.actions[a.key]);
 
   return (
-    <tr style={{ backgroundColor: isEven ? NEN_HANG_LA_CHAN : "hsl(var(--card))" }}>
+    <tr style={nenHangStyle(isEven ? NEN_HANG_LA_CHAN : "hsl(var(--card))")}>
       <td
+        className="pq-o-ten"
         style={{
           padding: "8px 12px",
           paddingLeft: 12 + depth * 20,
@@ -302,10 +313,14 @@ export function PermissionMatrix() {
 
   return (
     <Card
+      // `pq-ma-tran`: móc cho responsive-cau-hinh.css — điện thoại cuộn ngang bảng
+      // với cột Module dính trái; máy tính bảng trở lên y như cũ.
+      className="pq-ma-tran"
       style={{ height: "100%" }}
       styles={{ body: { height: "100%", padding: 0, overflow: "auto" } }}
     >
         <table
+          className="pq-ma-tran__bang"
           style={{
             width: "100%",
             borderCollapse: "collapse",
@@ -315,6 +330,7 @@ export function PermissionMatrix() {
           <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
             <tr style={{ backgroundColor: "hsl(var(--muted))" }}>
               <th
+                className="pq-o-ten"
                 style={{
                   textAlign: "left",
                   padding: "12px",

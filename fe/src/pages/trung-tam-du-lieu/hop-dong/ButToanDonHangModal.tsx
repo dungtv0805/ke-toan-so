@@ -135,7 +135,7 @@ export default function ButToanDonHangModal({
       >
         <Form form={form} layout="vertical" size="small" className="mt-3">
           <Row gutter={12}>
-            <Col span={10}>
+            <Col xs={24} sm={12} md={10}>
               <Form.Item
                 name="ngay"
                 label="Ngày"
@@ -145,7 +145,7 @@ export default function ButToanDonHangModal({
                 <DatePicker format="DD/MM/YYYY" className="w-full" />
               </Form.Item>
             </Col>
-            <Col span={14}>
+            <Col xs={24} sm={14}>
               <Form.Item
                 name="soTien"
                 label="Số tiền"
@@ -163,7 +163,7 @@ export default function ButToanDonHangModal({
             </Col>
           </Row>
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="taiKhoanNo"
                 label="TK Nợ"
@@ -172,7 +172,7 @@ export default function ButToanDonHangModal({
                 <Select showSearch optionFilterProp="label" options={taiKhoanOptions} />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="taiKhoanCo"
                 label="TK Có"

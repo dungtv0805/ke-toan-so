@@ -1,6 +1,8 @@
 import { Table } from 'antd';
 import type { TableProps } from 'antd';
 import { BU_TRU_DOC_MAC_DINH, tinhScroll } from './chuanBang';
+import { ghimTheoManHinh } from './ghimTheoManHinh';
+import { useManHinh } from '@/hooks/useManHinh';
 
 export type BangDuLieuProps<T> = Omit<TableProps<T>, 'loading'> & {
   /** Đang nạp dữ liệu. KHÔNG truyền xuống antd — xem chú thích dưới. */
@@ -29,8 +31,10 @@ export function BangDuLieu<T extends object>({
   buTruDoc = BU_TRU_DOC_MAC_DINH,
   scroll,
   locale,
+  columns,
   ...props
 }: BangDuLieuProps<T>) {
+  const manHinh = useManHinh();
   const chuaCoDong = !props.dataSource || props.dataSource.length === 0;
 
   // Lần tải đầu bảng còn rỗng: để antd báo "không có dữ liệu" lúc này là nói sai,
@@ -44,6 +48,7 @@ export function BangDuLieu<T extends object>({
         size="small"
         scroll={tinhScroll(buTruDoc, scroll)}
         locale={localeHieuLuc}
+        columns={ghimTheoManHinh(columns, manHinh)}
         {...props}
       />
     </div>

@@ -22,7 +22,7 @@ export function BasicInfoFields({ isEditing, form }: BasicInfoFieldsProps) {
   return (
     <>
       <Row gutter={12}>
-        <Col span={8}>
+        <Col xs={24} sm={12} md={8}>
           <Form.Item
             name="ngay"
             label="Ngày Phát Sinh CT"
@@ -32,7 +32,7 @@ export function BasicInfoFields({ isEditing, form }: BasicInfoFieldsProps) {
             <DatePicker format="DD/MM/YYYY" className="w-full" />
           </Form.Item>
         </Col>
-        <Col span={8}>
+        <Col xs={24} sm={12} md={8}>
           <Form.Item
             name="ngayGhiSo"
             label="Ngày ghi sổ"
@@ -41,7 +41,7 @@ export function BasicInfoFields({ isEditing, form }: BasicInfoFieldsProps) {
             <DatePicker format="DD/MM/YYYY" className="w-full" placeholder="Mặc định = ngày phát sinh" />
           </Form.Item>
         </Col>
-        <Col span={8}>
+        <Col xs={24} sm={12} md={8}>
           <Form.Item
             name="loai"
             label="Nghiệp vụ"
@@ -64,7 +64,7 @@ export function BasicInfoFields({ isEditing, form }: BasicInfoFieldsProps) {
             />
           </Form.Item>
         </Col>
-        <Col span={8}>
+        <Col xs={24} sm={12} md={8}>
           <Form.Item
             name="soTien"
             label="Số tiền"
@@ -112,7 +112,7 @@ export function BasicInfoFields({ isEditing, form }: BasicInfoFieldsProps) {
       
       <CollapsibleSection title="Thông tin bổ sung" defaultOpen={false}>
         <Row gutter={12}>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="nguoiGiaoDich"
               label="Người giao dịch"
@@ -122,7 +122,7 @@ export function BasicInfoFields({ isEditing, form }: BasicInfoFieldsProps) {
               <Input placeholder="Nhập tên người giao dịch" />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="diaChi"
               label="Địa chỉ"

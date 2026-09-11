@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Card, Table, Typography, message } from 'antd';
+import { Button, Card, Table, Tooltip, Typography, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { FileProtectOutlined, ExportOutlined } from '@ant-design/icons';
 import type { BaoCaoHopDongRow } from '@/types';
@@ -10,6 +10,7 @@ import { useTableColumnFilters } from '@/components/table/useTableColumnFilters'
 import { filterHopDong } from './hopDongFilter';
 import { SectionNav } from '@/components/layout/SectionNav';
 import { BAN_HANG_NAV } from '@/config/sectionNavs';
+import { useManHinh } from '@/hooks/useManHinh';
 
 const { Text, Title } = Typography;
 
@@ -22,6 +23,7 @@ export default function BaoCaoHopDongPage() {
   const [tong, setTong] = useState<BaoCaoHopDongRow | null>(null);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const dienThoai = useManHinh() === 'mobile';
 
   // Lọc cột "Năm" + các cột số ở header: chạy trên dữ liệu gốc rồi cộng lại dòng Tổng theo các năm còn hiện.
   const { filters, filterable } = useTableColumnFilters('bao-cao-hop-dong');
@@ -125,14 +127,18 @@ export default function BaoCaoHopDongPage() {
       <SectionNav items={BAN_HANG_NAV} />
 
       <Card className="shadow-sm">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
             <FileProtectOutlined className="text-primary" />
             <Title level={5} className="!mb-0">Báo cáo nhanh hợp đồng (theo năm)</Title>
           </div>
-          <Button icon={<ExportOutlined />} onClick={handleExport} loading={exporting}>
-            Xuất Excel
-          </Button>
+          {/* Điện thoại: nút chỉ còn icon (nhãn vào tooltip + aria-label) để tiêu đề
+              không bị ép xuống 3 dòng. */}
+          <Tooltip title={dienThoai ? 'Xuất Excel' : undefined}>
+            <Button icon={<ExportOutlined />} onClick={handleExport} loading={exporting} aria-label="Xuất Excel">
+              {!dienThoai && 'Xuất Excel'}
+            </Button>
+          </Tooltip>
         </div>
 
         <Table<BaoCaoHopDongRow>

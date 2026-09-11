@@ -5,6 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { dashboardService, type AgingBuckets } from '@/services/dashboardService';
 import { formatCurrency, nhanLatCat } from './format';
+import { useManHinh } from '@/hooks/useManHinh';
+import { banKinhDonut } from './bieuDoTheoManHinh';
 
 // chưa đến hạn = navy; quá hạn đậm dần vàng -> cam -> đỏ
 // Toàn bộ là HEX vì mảng này đi vào `fill=` của <Cell> — tức thuộc tính trình
@@ -35,6 +37,7 @@ function toSlices(b: AgingBuckets): Slice[] {
 
 const Donut: React.FC<{ data: Slice[] }> = ({ data }) => {
   const total = data.reduce((s, d) => s + Math.abs(d.soTien), 0);
+  const banKinh = banKinhDonut(useManHinh(), 48, 76);
   return (
     <ResponsiveContainer width="100%" height={280}>
       <PieChart>
@@ -44,8 +47,7 @@ const Donut: React.FC<{ data: Slice[] }> = ({ data }) => {
           nameKey="ten"
           cx="50%"
           cy="50%"
-          innerRadius={48}
-          outerRadius={76}
+          {...banKinh}
           paddingAngle={2}
           label={(entry) => nhanLatCat(entry.soTien, total)}
           labelLine={false}

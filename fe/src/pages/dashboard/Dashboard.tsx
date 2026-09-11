@@ -62,9 +62,12 @@ const Dashboard: React.FC = () => {
   const tabProps = { year, startMonth, endMonth };
 
   return (
-    <div className="space-y-3">
+    <div className="dashboard-page space-y-3">
+      {/* Điện thoại: khung giữa chỉ lề 8px nên mép tràn -12px lòi ra ngoài → trang
+          cuộn ngang 4px; hàng tab xuống dòng riêng nên thanh này cao ~110px — ghim
+          dính thì ăn mất 1/6 màn, nên để cuộn theo trang (static). */}
       <div
-        className="sticky z-20 flex flex-wrap items-center justify-between gap-2"
+        className="sticky z-20 flex flex-wrap items-center justify-between gap-2 dt:static dt:!-mx-2 dt:!px-2"
         style={{
           top: 0,
           marginInline: -12,
@@ -91,12 +94,15 @@ const Dashboard: React.FC = () => {
             },
           }}
         >
+          {/* Điện thoại: 5 tab (~560px) không vừa 390px → xuống hàng cuối, chiếm
+              trọn bề ngang và vuốt ngang (xem .dash-tab-chon trong
+              responsive-bao-cao.css); tiêu đề + chọn kỳ nằm chung hàng trên. */}
           <Segmented
             value={activeTab}
             onChange={(v) => setActiveTab(v as string)}
             options={TAB_OPTIONS}
             size="large"
-            className="font-semibold"
+            className="dash-tab-chon font-semibold dt:order-last"
           />
         </ConfigProvider>
         <Space wrap>
@@ -105,6 +111,7 @@ const Dashboard: React.FC = () => {
             onChange={setPeriod}
             options={PERIOD_OPTIONS}
             style={{ width: 180 }}
+            className="dt:!w-[150px]"
             showSearch
             optionFilterProp="label"
           />

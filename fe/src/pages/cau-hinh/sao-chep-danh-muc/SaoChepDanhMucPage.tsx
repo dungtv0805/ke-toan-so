@@ -57,19 +57,23 @@ export default function SaoChepDanhMucPage() {
   const tenantOpts = sapXepTheoNhan(tenants.map((t) => ({ value: t.id, label: t.name })));
 
   return (
-    <div style={{ padding: 24 }}>
+    // Điện thoại: khung giữa đã có lề 8px (responsive.css) — thêm 24px nữa là mất
+    // 1/6 bề ngang màn 360px.
+    <div style={{ padding: 24 }} className="dt:!p-0">
       <Title level={3}>Sao chép danh mục giữa công ty</Title>
       <Card>
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          <Space wrap>
+          {/* Điện thoại: hai ô chọn 360px xếp dọc và giãn đúng bề ngang thẻ; dạng
+              `Space wrap` thì mỗi ô vẫn cứng 360px, tràn khỏi màn. */}
+          <Space wrap className="dt:!flex dt:!flex-col dt:!items-stretch">
             <div>
               <Text>Công ty nguồn</Text><br />
-              <Select style={{ width: 360 }} placeholder="Chọn công ty nguồn" options={tenantOpts}
+              <Select style={{ width: 360 }} className="dt:!w-full" placeholder="Chọn công ty nguồn" options={tenantOpts}
                 value={source} onChange={(v) => { setSource(v); setPreview(null); setResult(null); }} showSearch optionFilterProp="label" />
             </div>
             <div>
               <Text>Công ty đích</Text><br />
-              <Select style={{ width: 360 }} placeholder="Chọn công ty đích" options={tenantOpts}
+              <Select style={{ width: 360 }} className="dt:!w-full" placeholder="Chọn công ty đích" options={tenantOpts}
                 value={target} onChange={(v) => { setTarget(v); setPreview(null); setResult(null); }} showSearch optionFilterProp="label" />
             </div>
           </Space>

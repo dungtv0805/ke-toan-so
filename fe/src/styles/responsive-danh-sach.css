@@ -1,0 +1,124 @@
+/* Responsive — riêng Đợt: danh-sach. Xem docs/superpowers/specs/2026-09-11-responsive-mobile-tablet-design.md.
+   Chỉ quy tắc trong @media (max-width: 767.98px) hoặc (max-width: 1279.98px); màn ≥1280 không đổi. */
+
+/* =====================================================================
+   ĐIỆN THOẠI (< 768px) — để XEM: hàng lọc gọn, thẻ số liệu không ăn hết
+   màn, bảng với tới được ngay dưới.
+   ===================================================================== */
+@media (max-width: 767.98px), (max-width: 1279.98px) and (max-height: 540px) {
+  /* ---------- Thực hiện (NKC): hàng lọc + nút lệnh ----------
+     Hàng này gánh tìm kiếm, kỳ, xóa lọc VÀ toàn bộ nút lệnh của bảng (portal từ
+     EntryListTab). Điện thoại xếp thành 3 dòng: [tìm] / [kỳ …… xóa lọc] /
+     [nút lệnh (chỉ icon) …… +]. */
+  .nkc-filter-bar {
+    padding: 6px;
+    gap: 6px;
+  }
+  .nkc-filter-bar__filters,
+  .nkc-filter-bar__actions {
+    width: 100%;
+  }
+  .nkc-filter-bar__actions {
+    justify-content: space-between;
+  }
+  /* Đè style={{ width: 180 }} inline */
+  .nkc-filter-bar .nkc-filter-bar__search {
+    flex: 1 1 100%;
+    width: 100% !important;
+  }
+  /* Ô tìm đã đứng riêng một dòng → vạch ngăn ngay sau nó thành vạch lẻ loi đầu dòng dưới */
+  .nkc-filter-bar__sep-tim {
+    display: none;
+  }
+  /* Ô kỳ (150px) + hai ô ngày (130px) co giãn chia đều dòng thay vì tràn */
+  .nkc-filter-bar .nkc-filter-bar__ky,
+  .nkc-filter-bar .nkc-filter-bar__ngay {
+    flex: 1 1 120px;
+    min-width: 0;
+    width: auto !important;
+  }
+
+  /* ---------- Thực hiện (NKC): 8 thẻ số liệu → một dải vuốt ngang ----------
+     Lưới 2 cột × 4 dòng (index.css ≤780px) cao ~210px, cộng hàng lọc là hết màn,
+     bảng bị đẩy khỏi tầm nhìn. Một dải ~52px, thẻ 140px để thẻ thứ ba lộ một nửa
+     — người dùng thấy ngay là còn thẻ để vuốt. */
+  .nkc-stats {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .nkc-stats::-webkit-scrollbar {
+    display: none;
+  }
+  .nkc-stat {
+    flex: 0 0 140px;
+    scroll-snap-align: start;
+  }
+
+  /* ---------- Bán hàng (QuanLyHopDongPage): 8 thẻ số liệu → dải vuốt ngang ----------
+     Col xs={12} xếp 2 cột × 4 dòng (~300px). Cùng cách với NKC ở trên. */
+  .hd-stats.ant-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .hd-stats.ant-row::-webkit-scrollbar {
+    display: none;
+  }
+  .hd-stats.ant-row > .ant-col {
+    flex: 0 0 140px;
+    max-width: 140px;
+    scroll-snap-align: start;
+  }
+
+  /* ---------- Phiếu thu/chi: 2 thẻ nửa màn ----------
+     index.css (≤640) để số 18px: "1.234.567.890 ₫" + icon tràn thẻ ~170px và bị
+     cắt (thẻ overflow:hidden). */
+  .phieu-stats .ant-statistic-content-value {
+    font-size: 15px !important;
+  }
+  .phieu-stats .ant-statistic-content {
+    overflow-wrap: anywhere;
+  }
+
+  /* ---------- Nhập/Xuất/Chuyển kho: hàng lọc tự dựng (không dùng FilterBar chung) ----------
+     Ô tìm 260px + khoảng ngày đặt `height: 28` inline — thấp hơn nút theo token
+     điện thoại (30–36px) và chữ 16px (responsive.css) bị chật. */
+  .kho-loc .kho-loc__tim {
+    flex: 1 1 100%;
+    width: 100% !important;
+    height: auto !important;
+  }
+  .kho-loc .kho-loc__ngay {
+    flex: 1 1 200px;
+    min-width: 0;
+    height: auto !important;
+  }
+
+  /* ---------- Bảng kê mua vào / bán ra ----------
+     Ô quý / liên kết / năm nằm trong phần "actions" của FilterBar chung nên quy tắc
+     co giãn của responsive.css (chỉ nhắm .filter-bar__main) không áp → tự co ở đây,
+     ba ô chia đều một dòng. */
+  .bang-ke-loc .filter-bar__actions > .ant-select,
+  .bang-ke-loc .filter-bar__actions > .ant-input-number {
+    flex: 1 1 90px;
+    min-width: 0;
+    width: auto !important;
+  }
+}
+
+/* =====================================================================
+   ≤ MÁY TÍNH BẢNG (< 1280px) — màn cảm ứng.
+   ===================================================================== */
+@media (max-width: 1279.98px) {
+  /* Ô sửa tại chỗ của NKC mở bằng double-click. Trên màn cảm ứng chạm đúp mặc
+     định là phóng to trang → trình duyệt nuốt mất cú chạm. `manipulation` tắt
+     riêng cử chỉ đó (vẫn cuộn/zoom 2 ngón bình thường); chuột không bị ảnh hưởng. */
+  .editable-cell-display {
+    touch-action: manipulation;
+  }
+}

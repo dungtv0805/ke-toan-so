@@ -109,8 +109,10 @@ const ExecutionStatusCharts: React.FC<Props> = ({ year, startMonth, endMonth }) 
                 <Skeleton active paragraph={{ rows: 3 }} />
               ) : (
                 <Row align="middle" gutter={8}>
-                  <Col span={14}><Gauge percent={muc.tyLeDat} color={color} /></Col>
-                  <Col span={10}><Legend color={color} muc={muc} /></Col>
+                  <Col xs={24} sm={14}><Gauge percent={muc.tyLeDat} color={color} /></Col>
+                  {/* sm=10 (không phải 12): 14+10 = 24 nên 576–767px gauge và chú giải
+                      nằm chung một hàng như bản gốc `span={10}`; ≥ 768px không đổi. */}
+                  <Col xs={24} sm={10}><Legend color={color} muc={muc} /></Col>
                 </Row>
               )}
             </Card>

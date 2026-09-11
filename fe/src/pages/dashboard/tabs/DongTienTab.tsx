@@ -12,6 +12,8 @@ import { dashboardService } from '@/services/dashboardService';
 import { tienTheoTaiKhoan } from '../trialBalanceDerive';
 import { formatCurrency, nhanLatCat } from '../components/format';
 import type { TabProps } from './TabProps';
+import { useManHinh } from '@/hooks/useManHinh';
+import { banKinhDonut } from '../components/bieuDoTheoManHinh';
 
 // HEX bắt buộc: mảng này đi vào `fill=` của <Cell>, tức thuộc tính trình bày
 // của SVG, nơi hsl(var(--token)) không giải được nên lát cắt sẽ không được tô.
@@ -25,6 +27,7 @@ const PIE_PALETTE = [
 
 const Donut: React.FC<{ title: string; data: { ten: string; soTien: number }[] }> = ({ title, data }) => {
   const tong = data.reduce((s, d) => s + Math.abs(d.soTien || 0), 0);
+  const banKinh = banKinhDonut(useManHinh(), 52, 82);
   return (
   <Card title={<span className="text-sm sm:text-base"><PieChartOutlined className="text-primary mr-2" />{title}</span>}>
     <ResponsiveContainer width="100%" height={280}>
@@ -35,8 +38,7 @@ const Donut: React.FC<{ title: string; data: { ten: string; soTien: number }[] }
           nameKey="ten"
           cx="50%"
           cy="50%"
-          innerRadius={52}
-          outerRadius={82}
+          {...banKinh}
           paddingAngle={2}
           label={(entry) => nhanLatCat(entry.soTien, tong)}
           labelLine={false}

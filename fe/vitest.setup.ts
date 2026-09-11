@@ -49,3 +49,13 @@ const caiDat = (dich: typeof globalThis | Window) => {
 
 caiDat(globalThis);
 if (typeof window !== 'undefined') caiDat(window);
+
+/**
+ * jsdom mặc định `innerWidth = 1024` — rơi vào khổ MÁY TÍNH BẢNG của
+ * `config/manHinh` (768–1279), nên mọi test cũ vốn viết cho bố cục máy tính sẽ
+ * âm thầm chạy theo bố cục tablet (sidebar đè nội dung…). Đặt mặc định là màn
+ * máy tính; test nào cần khổ khác tự đặt `innerWidth` rồi phát sự kiện resize.
+ */
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'innerWidth', { value: 1440, writable: true, configurable: true });
+}

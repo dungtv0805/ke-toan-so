@@ -106,6 +106,9 @@ export const ImportKeHoachModal: React.FC<Props> = ({ open, onClose }) => {
       open={open}
       title="Nhập kế hoạch từ Excel"
       width={900}
+      // `nl-modal-vua-man`: ≤ máy tính bảng popup sát mép trên, thân tự cuộn trong khung
+      // để hàng nút Lưu/Hủy luôn nằm trong màn (responsive-nhap-lieu.css).
+      className="nl-modal-vua-man"
       onCancel={() => {
         setKetQua(null);
         setTenFile("");

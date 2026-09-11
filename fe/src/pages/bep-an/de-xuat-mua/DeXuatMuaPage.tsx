@@ -523,7 +523,7 @@ const DeXuatMuaPage: React.FC = () => {
       >
         <Form form={form} layout="vertical" size="small" className="mt-2" disabled={isReadOnly}>
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="ngayDeXuat"
                 label={fl('ngayDeXuat', 'Ngày đề xuất')}
@@ -533,7 +533,7 @@ const DeXuatMuaPage: React.FC = () => {
                 <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" placeholder="Chọn ngày" />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="nguoiDeXuat"
                 label={fl('nguoiDeXuat', 'Người đề xuất')}
@@ -542,7 +542,7 @@ const DeXuatMuaPage: React.FC = () => {
                 <Input placeholder="Nhập tên người đề xuất" />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="doiTuongMa"
                 label={fl('doiTuongMa', 'Nhà cung cấp')}

@@ -1,5 +1,6 @@
 import {
   isValidElement,
+  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -12,9 +13,11 @@ import { useColumnVisibility } from "@/components/table/useColumnVisibility";
 import { NKC_COT_PAGE_KEY } from "../../truongTheoCot";
 import type { Key } from "react";
 import { Table, Button, Space, Popconfirm, Tag, Tooltip } from "antd";
+import type { ButtonProps } from "antd";
 import {
   ReloadOutlined,
   FileExcelOutlined,
+  ImportOutlined,
   DeleteOutlined,
   PrinterOutlined,
 } from "@ant-design/icons";
@@ -23,6 +26,8 @@ import { bangKeMuaVaoService, bangKeBanRaService } from "@/services/taxService";
 import { useCotCoGian } from "@/hooks/useCotCoGian";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useManHinh } from "@/hooks/useManHinh";
+import { ghimTheoManHinh } from "@/components/table/ghimTheoManHinh";
 import {
   getNkcDoiTuongMa,
   getNkcDoiTuongTen,
@@ -78,6 +83,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 // Đăng ký handler in danh sách bút toán
 import "../../handler/sub-handler/print-list/print-list.handler";
+import { nutLenh } from "@/components/common/nutLenh";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("vi-VN").format(value);
@@ -877,6 +883,8 @@ export function EntryListTab() {
   const [importOpen, setImportOpen] = useState(false);
   const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
   const { withColumnFilter } = useNkcColumnFilters();
+  const manHinh = useManHinh();
+  const dienThoai = manHinh === "mobile";
 
   const { t } = useTerm();
 
@@ -1035,7 +1043,8 @@ export function EntryListTab() {
       {/* Nút lệnh đứng cùng "Thêm mới" trên hàng lọc (chia nhóm như ribbon Excel:
           Dữ liệu | In | Hiển thị), nhường cả hàng dưới cho 8 thẻ số liệu. */}
       <ToolbarSlot>
-        <Space size="small">
+        {/* Điện thoại: đang chọn dòng thì thêm nút Xóa → cho phép xuống dòng thay vì tràn. */}
+        <Space size="small" wrap={dienThoai || undefined}>
           {canDelete && selectedEntryIds.length > 0 && (
             <Popconfirm
               title={`Xóa ${selectedEntryIds.length} bút toán đã chọn?`}
@@ -1055,51 +1064,53 @@ export function EntryListTab() {
                 })
               }
             >
+              {/* Điện thoại: chỉ icon + số dòng đã chọn — Popconfirm vẫn nói rõ sẽ xóa gì. */}
               <Button
                 danger
                 size="small"
                 icon={<DeleteOutlined />}
                 loading={deletingBatch}
+                aria-label={
+                  dienThoai
+                    ? `Xóa ${selectedEntryIds.length} bút toán đã chọn`
+                    : undefined
+                }
               >
-                Xóa đã chọn ({selectedEntryIds.length})
+                {dienThoai
+                  ? selectedEntryIds.length
+                  : `Xóa đã chọn (${selectedEntryIds.length})`}
               </Button>
             </Popconfirm>
           )}
-          {canCreate && (
-            <Button
-              size="small"
-              icon={<FileExcelOutlined />}
-              onClick={() => setImportOpen(true)}
-            >
-              Import Excel
-            </Button>
-          )}
-          <Button
-            size="small"
-            icon={<FileExcelOutlined />}
-            loading={exportingExcel}
-            onClick={() => handler.executeEvent("exportExcel", {})}
-          >
-            Xuất Excel
-          </Button>
+          {canCreate &&
+            nutLenh(dienThoai, "Import Excel", {
+              size: "small",
+              // Chỉ còn icon thì Import và Xuất không được trùng icon Excel —
+              // điện thoại đổi Import sang mũi tên nhập cho khỏi bấm nhầm.
+              icon: dienThoai ? <ImportOutlined /> : <FileExcelOutlined />,
+              onClick: () => setImportOpen(true),
+            })}
+          {nutLenh(dienThoai, "Xuất Excel", {
+            size: "small",
+            icon: <FileExcelOutlined />,
+            loading: exportingExcel,
+            onClick: () => handler.executeEvent("exportExcel", {}),
+          })}
 
           <span className="xl-cmd-sep" />
 
-          <Button
-            size="small"
-            icon={<PrinterOutlined />}
-            loading={printingList}
-            onClick={() =>
+          {nutLenh(dienThoai, "In", {
+            size: "small",
+            icon: <PrinterOutlined />,
+            loading: printingList,
+            onClick: () =>
               handler.executeEvent("printList", {
                 tenCongTy: currentTenant?.tenantName,
                 // Bản in bám theo bộ chọn cột: cột nào đang hiện thì in cột đó,
                 // đúng thứ tự trên bảng.
                 cot: visibleColumns.map((c) => String(c.key ?? "")),
-              })
-            }
-          >
-            In
-          </Button>
+              }),
+          })}
 
           <span className="xl-cmd-sep" />
 
@@ -1123,7 +1134,9 @@ export function EntryListTab() {
       {/* flex-col để `.excel-table { flex: 1 }` vẫn ăn như khi Table là con trực tiếp */}
       <div ref={tableWrapRef} className="flex flex-col flex-1 min-h-0">
         <Table
-          columns={cotCoGian}
+          // Điện thoại: cột "Chức năng" ghim phải thành cột thường (hai phía cùng
+          // ghim là hết chỗ cho dữ liệu). Màn khác trả lại đúng mảng cũ.
+          columns={ghimTheoManHinh(cotCoGian, manHinh)}
           dataSource={data || []}
           rowKey="id"
           rowSelection={rowSelection}

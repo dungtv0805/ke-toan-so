@@ -83,7 +83,9 @@ const ProfilePage = () => {
                 {user.hoTen}
               </Descriptions.Item>
               <Descriptions.Item label="Email">
-                <span className="inline-flex items-center gap-2">
+                {/* Điện thoại: email dài không có chỗ ngắt → tràn khỏi ô; cho ngắt
+                    giữa chữ. Màn rộng hơn vẫn một dòng như cũ. */}
+                <span className="inline-flex items-center gap-2 dt:break-all">
                   <MailOutlined className="text-muted-foreground" />
                   {user.email}
                 </span>

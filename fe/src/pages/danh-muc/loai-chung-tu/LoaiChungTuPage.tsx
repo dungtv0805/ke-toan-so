@@ -295,6 +295,7 @@ const LoaiChungTuPage: React.FC = () => {
     <div className="space-y-3">
       <Card>
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: handleSearch,
@@ -363,7 +364,7 @@ const LoaiChungTuPage: React.FC = () => {
       >
         <Form form={form} layout="vertical" size="small" className="mt-2" initialValues={{ phanLoai: "KHAC" }}>
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="ma"
                 label={fl('ma', 'Mã loại chứng từ')}
@@ -376,7 +377,7 @@ const LoaiChungTuPage: React.FC = () => {
                 <Input placeholder="VD: THU_TIEN_MAT" />
               </Form.Item>
             </Col>
-            <Col span={16}>
+            <Col xs={24} sm={16}>
               <Form.Item
                 name="ten"
                 label={fl('ten', 'Tên loại chứng từ')}

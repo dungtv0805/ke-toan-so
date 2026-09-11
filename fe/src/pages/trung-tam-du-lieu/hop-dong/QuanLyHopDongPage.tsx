@@ -40,6 +40,8 @@ import { usePagePermission } from '@/hooks/usePagePermission';
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
+import { ghimTheoManHinh } from '@/components/table/ghimTheoManHinh';
+import { useManHinh } from '@/hooks/useManHinh';
 import GhiNhanDoanhThuSection from './GhiNhanDoanhThuSection';
 import ThuTienDonHangModal from './ThuTienDonHangModal';
 import TaoNhanhHopDongModal from './TaoNhanhHopDongModal';
@@ -155,6 +157,7 @@ export default function QuanLyHopDongPage() {
   // Tạo nhanh ghi vào danh mục Hợp đồng → xin quyền "thêm" của chính danh mục đó.
   const { canCreate: canCreateHopDong } = usePagePermission('/danh-muc/hop-dong');
   const fl = useFieldLabels('trungTamDuLieu.hopDong');
+  const manHinh = useManHinh();
 
   const [rows, setRows] = useState<TheoDoiHopDongRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -567,7 +570,9 @@ export default function QuanLyHopDongPage() {
     <div className="space-y-3">
       <SectionNav items={BAN_HANG_NAV} />
 
-      <Row gutter={[12, 12]}>
+      {/* `hd-stats`: điện thoại xếp 8 thẻ thành một dải vuốt ngang (responsive-danh-sach.css)
+          — lưới 2 cột × 4 dòng cao ~300px, đẩy bảng xuống quá nửa màn. */}
+      <Row gutter={[12, 12]} className="hd-stats">
         {[
           // 'Tiền thuế' giữ màu tím cứng — không có token tím tương ứng trong bộ token hiện tại.
           { title: 'Doanh số', value: baoCao.doanhSo, color: 'hsl(var(--blue))' },
@@ -647,7 +652,8 @@ export default function QuanLyHopDongPage() {
         />
 
         <Table<DongBang>
-          columns={groupedColumns}
+          // Điện thoại: chỉ giữ ghim "Số HĐ"; cột "Chức năng" ghim phải thành cột thường.
+          columns={ghimTheoManHinh(groupedColumns, manHinh)}
           dataSource={viewRows}
           rowKey="hopDongId"
           loading={loading}
@@ -676,7 +682,8 @@ export default function QuanLyHopDongPage() {
         title={current ? `Theo dõi: ${current.soHopDong}` : 'Theo dõi hợp đồng'}
         open={open}
         onClose={() => setOpen(false)}
-        width={760}
+        // 760px rộng hơn cả màn điện thoại → phủ kín màn.
+        width={manHinh === 'mobile' ? '100%' : 760}
         extra={
           canEdit && (
             <Button type="primary" loading={saving} onClick={handleSave}>
@@ -690,20 +697,20 @@ export default function QuanLyHopDongPage() {
             {/* Thông tin HĐ (chỉ đọc) */}
             <Card size="small" className="bg-gray-50">
               <Row gutter={12}>
-                <Col span={12}><Text type="secondary">Tên công trình:</Text> {current.tenCongTrinh}</Col>
-                <Col span={6}><Text type="secondary">Giá trị:</Text> {fmtCur(current.giaTriSauThue)}</Col>
-                <Col span={6}><Text type="secondary">Chủ đầu tư:</Text> {doiTuongMap[current.doiTuongId || ''] || '-'}</Col>
+                <Col xs={24} sm={12}><Text type="secondary">Tên công trình:</Text> {current.tenCongTrinh}</Col>
+                <Col xs={24} sm={12} md={6}><Text type="secondary">Giá trị:</Text> {fmtCur(current.giaTriSauThue)}</Col>
+                <Col xs={24} sm={12} md={6}><Text type="secondary">Chủ đầu tư:</Text> {doiTuongMap[current.doiTuongId || ''] || '-'}</Col>
               </Row>
             </Card>
 
             <Form form={form} layout="vertical" size="small">
               <Row gutter={12}>
-                <Col span={12}>
+                <Col xs={24} sm={12}>
                   <Form.Item name="phuTrachHoSo" label={fl('phuTrachHoSo', 'Phụ trách hồ sơ')}>
                     <Input placeholder="Tên người phụ trách" />
                   </Form.Item>
                 </Col>
-                <Col span={12}>
+                <Col xs={24} sm={12}>
                   <Form.Item name="trangThaiHoSo" label={fl('trangThaiHoSo', 'Trạng thái hồ sơ')}>
                     <Input placeholder="VD: Đang theo dõi" />
                   </Form.Item>
@@ -712,17 +719,17 @@ export default function QuanLyHopDongPage() {
 
               <Divider orientation="left">Quyết toán</Divider>
               <Row gutter={12}>
-                <Col span={8}>
+                <Col xs={24} sm={12} md={8}>
                   <Form.Item name={['quyetToan', 'so']} label="Số quyết toán">
                     <Input />
                   </Form.Item>
                 </Col>
-                <Col span={8}>
+                <Col xs={24} sm={12} md={8}>
                   <Form.Item name={['quyetToan', 'ngay']} label="Ngày">
                     <DatePicker format="DD/MM/YYYY" className="w-full" />
                   </Form.Item>
                 </Col>
-                <Col span={8}>
+                <Col xs={24} sm={12} md={8}>
                   <Form.Item name={['quyetToan', 'giaTri']} label="Giá trị quyết toán">
                     <InputNumber {...moneyProps} addonAfter="VNĐ" />
                   </Form.Item>
@@ -731,22 +738,22 @@ export default function QuanLyHopDongPage() {
 
               <Divider orientation="left">Bảo hành theo dõi</Divider>
               <Row gutter={12}>
-                <Col span={6}>
+                <Col xs={24} sm={12} md={6}>
                   <Form.Item name={['baoHanhTheoDoi', 'giaTri']} label="Giá trị BH">
                     <InputNumber {...moneyProps} />
                   </Form.Item>
                 </Col>
-                <Col span={6}>
+                <Col xs={24} sm={12} md={6}>
                   <Form.Item name={['baoHanhTheoDoi', 'soNgay']} label="Số ngày">
                     <InputNumber className="w-full" min={0} />
                   </Form.Item>
                 </Col>
-                <Col span={6}>
+                <Col xs={24} sm={12} md={6}>
                   <Form.Item name={['baoHanhTheoDoi', 'ngayGiaiToaBL']} label="Ngày giải tỏa BL">
                     <DatePicker format="DD/MM/YYYY" className="w-full" />
                   </Form.Item>
                 </Col>
-                <Col span={6}>
+                <Col xs={24} sm={12} md={6}>
                   <Form.Item name={['baoHanhTheoDoi', 'trangThai']} label="Trạng thái">
                     <Input />
                   </Form.Item>
@@ -758,7 +765,8 @@ export default function QuanLyHopDongPage() {
               </Form.Item>
 
               <Divider orientation="left">Các khoản thu</Divider>
-              <div className="mb-2 flex items-center justify-between gap-2">
+              {/* Điện thoại: chú thích dài + nút "Thu tiền" không đứng chung một dòng được. */}
+              <div className="mb-2 flex items-center justify-between gap-2 dt:flex-wrap">
                 <Text type="secondary" className="text-xs">
                   Thu tiền tại đây sẽ tạo phiếu thu Nợ 112 / Có 3387 gắn sẵn đơn hàng và ghi vào Sổ thu tiền.
                 </Text>
@@ -770,10 +778,11 @@ export default function QuanLyHopDongPage() {
                   />
                 )}
               </div>
-              <Table size="small" rowKey={(r) => r.id || ''} columns={receiptCols} dataSource={receipts} pagination={false} locale={{ emptyText: 'Chưa có khoản thu' }} />
+              {/* Điện thoại: cột chữ (ellipsis, không width) còn vài chục px → cho cuộn ngang. */}
+              <Table size="small" rowKey={(r) => r.id || ''} columns={receiptCols} dataSource={receipts} pagination={false} locale={{ emptyText: 'Chưa có khoản thu' }} scroll={manHinh === 'mobile' ? { x: 440 } : undefined} />
 
               <Divider orientation="left">Hóa đơn bán ra</Divider>
-              <Table size="small" rowKey={(r) => r.id || ''} columns={invoiceCols} dataSource={invoices} pagination={false} locale={{ emptyText: 'Chưa có hóa đơn' }} />
+              <Table size="small" rowKey={(r) => r.id || ''} columns={invoiceCols} dataSource={invoices} pagination={false} locale={{ emptyText: 'Chưa có hóa đơn' }} scroll={manHinh === 'mobile' ? { x: 440 } : undefined} />
 
               <Divider orientation="left">Ghi nhận doanh thu</Divider>
               <GhiNhanDoanhThuSection
@@ -803,9 +812,9 @@ export default function QuanLyHopDongPage() {
             {/* Tổng tự tính */}
             <Card size="small">
               <Row gutter={12}>
-                <Col span={8}><Title level={5} className="!mb-0">Đã thanh toán: <Text type="success">{fmtCur(daThanhToan)}</Text></Title></Col>
-                <Col span={8}><Title level={5} className="!mb-0">Đã trả hóa đơn: {fmtCur(daTraHoaDon)}</Title></Col>
-                <Col span={8}><Title level={5} className="!mb-0">Còn lại: <Text type="warning">{fmtCur(conLai)}</Text></Title></Col>
+                <Col xs={24} sm={12} md={8}><Title level={5} className="!mb-0">Đã thanh toán: <Text type="success">{fmtCur(daThanhToan)}</Text></Title></Col>
+                <Col xs={24} sm={12} md={8}><Title level={5} className="!mb-0">Đã trả hóa đơn: {fmtCur(daTraHoaDon)}</Title></Col>
+                <Col xs={24} sm={12} md={8}><Title level={5} className="!mb-0">Còn lại: <Text type="warning">{fmtCur(conLai)}</Text></Title></Col>
               </Row>
             </Card>
           </div>

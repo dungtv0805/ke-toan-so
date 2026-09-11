@@ -247,19 +247,19 @@ export const QuyChaunForm: React.FC = () => {
           <Input placeholder="Ví dụ: Thu tiền bán hàng" />
         </Form.Item>
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="taiKhoanNo" label={fl('taiKhoanNo', 'Tài khoản Nợ')} rules={[{ required: true }]}>
               <Select showSearch placeholder="Chọn TK Nợ" options={taiKhoanOptions} filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())} />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="taiKhoanCo" label={fl('taiKhoanCo', 'Tài khoản Có')} rules={[{ required: true }]}>
               <Select showSearch placeholder="Chọn TK Có" options={taiKhoanOptions} filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())} />
             </Form.Item>
           </Col>
         </Row>
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="nhomKhoanMuc"
               label={fl('nhomKhoanMuc', NHAN_TRUONG_QUY_CHUAN.nhomKhoanMuc)}
@@ -277,7 +277,7 @@ export const QuyChaunForm: React.FC = () => {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="khoanMuc"
               label={fl('khoanMuc', NHAN_TRUONG_QUY_CHUAN.khoanMuc)}
@@ -307,7 +307,7 @@ export const QuyChaunForm: React.FC = () => {
           </Col>
         </Row>
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="dongTien"
               label={fl('dongTien', NHAN_TRUONG_QUY_CHUAN.dongTien)}
@@ -322,7 +322,7 @@ export const QuyChaunForm: React.FC = () => {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="loaiChiPhi"
               label={fl('loaiChiPhi', NHAN_TRUONG_QUY_CHUAN.loaiChiPhi)}

@@ -5,6 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { dashboardService, type BreakdownSlice } from '@/services/dashboardService';
 import { formatCurrency, nhanLatCat } from './format';
+import { useManHinh } from '@/hooks/useManHinh';
+import { banKinhDonut } from './bieuDoTheoManHinh';
 
 /**
  * Sáu hue tách bạch — GIỮ NGUYÊN giá trị của --viz-1..6 trong `index.css` nhưng
@@ -46,6 +48,7 @@ function groupTopN(data: BreakdownSlice[]): BreakdownSlice[] {
 
 const Donut: React.FC<{ data: BreakdownSlice[] }> = ({ data }) => {
   const total = data.reduce((s, d) => s + Math.abs(d.soTien), 0);
+  const banKinh = banKinhDonut(useManHinh(), 44, 70);
 
   /**
    * Mặc định recharts tô nhãn bằng chính màu lát cắt — chữ vàng/hồng trên nền
@@ -83,8 +86,7 @@ const Donut: React.FC<{ data: BreakdownSlice[] }> = ({ data }) => {
           nameKey="ten"
           cx="50%"
           cy="50%"
-          innerRadius={44}
-          outerRadius={70}
+          {...banKinh}
           paddingAngle={2}
           label={nhanQuanhVanh}
           labelLine={false}

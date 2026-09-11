@@ -67,7 +67,9 @@ export function ManChonUngDung({
         </button>
       </div>
 
-      <div className="flex gap-[10px] pb-3">
+      {/* Điện thoại: 3–4 thẻ app (icon 64px) chia một hàng ~310px là tràn → lưới
+          2 cột. Từ 768px trở lên giữ một hàng như bản vẽ. */}
+      <div className="flex gap-[10px] pb-3 dt:grid dt:grid-cols-2">
         {danhSach.map((a) => {
           const dangDung = a.appId === appHienTai;
           const bat = daBat(a.appId);

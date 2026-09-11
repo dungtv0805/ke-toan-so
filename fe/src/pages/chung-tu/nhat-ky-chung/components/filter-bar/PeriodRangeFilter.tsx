@@ -55,6 +55,8 @@ export function PeriodRangeFilter() {
         showSearch
         optionFilterProp="label"
         style={{ width: 150 }}
+        // Điện thoại: bề rộng cố định thành co giãn theo dòng (responsive-danh-sach.css).
+        className="nkc-filter-bar__ky"
         value={period}
         options={NKC_PERIOD_OPTIONS}
         onChange={handlePeriodChange}
@@ -66,6 +68,7 @@ export function PeriodRangeFilter() {
             format="DD/MM/YYYY"
             placeholder="Từ ngày"
             style={{ width: 130 }}
+            className="nkc-filter-bar__ngay"
             value={from}
             onChange={(d) => emit(d, to)}
           />
@@ -74,6 +77,7 @@ export function PeriodRangeFilter() {
             format="DD/MM/YYYY"
             placeholder="Đến ngày"
             style={{ width: 130 }}
+            className="nkc-filter-bar__ngay"
             value={to}
             onChange={(d) => emit(from, d)}
           />

@@ -7,6 +7,8 @@ import {
 import { dashboardService, type CashMoneyLine } from '@/services/dashboardService';
 import { sliceToRange } from '@/components/shared/period';
 import { formatCurrency, DASH_COLORS, CHART_GRID, nhanTrieu, nhanTrieuAbs } from './format';
+import { useManHinh, useManCamUng } from '@/hooks/useManHinh';
+import { hienNhanSo } from './bieuDoTheoManHinh';
 
 interface Props { year: number; startMonth: number; endMonth: number; }
 const TEAL = DASH_COLORS.revenue;
@@ -122,6 +124,11 @@ const CashFlowChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
   const sum = (k: 'thu' | 'chi') => data.reduce((s, d) => s + (d[k] || 0), 0);
   const ton = data.length ? data[data.length - 1].soDu : 0;
   const hasData = data.some((d) => d.thu || d.chi || d.soDu);
+  const manHinh = useManHinh();
+  const coNhan = hienNhanSo(manHinh, data.length);
+  // Màn cảm ứng không có "rê chuột": popover mở bằng chạm (chạm ra ngoài thì đóng).
+  // Màn ≥1280 giữ kiểu rê chuột như cũ, kể cả laptop cảm ứng.
+  const camUng = useManCamUng();
 
   const kpiRow = (
     <div className="grid grid-cols-3 gap-3">
@@ -137,9 +144,11 @@ const CashFlowChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
         {chiTiet.length ? (
           <Popover
             placement="bottomLeft"
+            trigger={camUng && manHinh !== 'desktop' ? 'click' : 'hover'}
             title={<span className="text-xs font-semibold">Tiền đang ở đâu — Đvt: đồng</span>}
             content={<ChiTietTaiKhoan rows={chiTiet} />}
-            overlayStyle={{ maxWidth: 560 }}
+            // Điện thoại: 560px rộng hơn màn → bảng bên trong tự cuộn ngang.
+            overlayStyle={{ maxWidth: manHinh === 'mobile' ? 'calc(100vw - 16px)' : 560 }}
           >
             <div className="flex-1 cursor-help">{kpiRow}</div>
           </Popover>
@@ -165,13 +174,13 @@ const CashFlowChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
             />
             <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
             <Bar dataKey="thu" name="Thu" fill={TEAL} maxBarSize={22}>
-              <LabelList dataKey="thu" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: TEAL }} />
+              {coNhan && <LabelList dataKey="thu" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: TEAL }} />}
             </Bar>
             <Bar dataKey="chiNeg" name="Chi" fill={GRAY} maxBarSize={22}>
-              <LabelList dataKey="chiNeg" position="bottom" formatter={nhanTrieuAbs} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />
+              {coNhan && <LabelList dataKey="chiNeg" position="bottom" formatter={nhanTrieuAbs} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />}
             </Bar>
             <Line type="monotone" dataKey="soDu" name="Tồn" stroke={ORANGE} strokeWidth={2} dot={{ r: 3, fill: ORANGE }}>
-              <LabelList dataKey="soDu" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: ORANGE }} />
+              {coNhan && <LabelList dataKey="soDu" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: ORANGE }} />}
             </Line>
           </ComposedChart>
         </ResponsiveContainer>

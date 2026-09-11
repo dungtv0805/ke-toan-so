@@ -8,6 +8,7 @@ import { VaiTroItem } from "./VaiTroTable.state";
 import "./VaiTroTable.state";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
+import { useManHinh } from "@/hooks/useManHinh";
 
 interface VaiTroTableProps {
   /**
@@ -28,6 +29,7 @@ export function VaiTroTable({ renderHeader }: VaiTroTableProps) {
   const { canEdit, canDelete } = usePagePermission("/cau-hinh/vai-tro");
   const { filterable, matches, hasPinned } =
     useTableColumnFilters("cau-hinh-vai-tro");
+  const dienThoai = useManHinh() === "mobile";
 
   const handleEdit = (record: VaiTroItem) => {
     handler.executeEvent("openModal", { record });
@@ -120,7 +122,9 @@ export function VaiTroTable({ renderHeader }: VaiTroTableProps) {
         pagination={{ pageSize: 10 }}
         bordered
         // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
-        scroll={{ x: hasPinned ? "max-content" : undefined }}
+        // Điện thoại: 4 cột cố định đã 620px, không có scroll.x thì bảng tràn khỏi
+        // màn (kéo lệch cả trang) → cho cuộn ngang, chừa ~140px cho cột Mô tả.
+        scroll={{ x: hasPinned ? "max-content" : dienThoai ? 760 : undefined }}
       />
     </>
   );

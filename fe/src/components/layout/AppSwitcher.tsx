@@ -66,6 +66,9 @@ export function AppSwitcher() {
         // Bản vẽ có nút X tròn riêng trong ManChonUngDung; để antd vẽ thêm nút
         // đóng của nó nữa thì màn hiện HAI dấu X chồng nhau.
         closable={false}
+        // Móc cho responsive-cau-hinh.css: điện thoại giữ dạng hộp giữa màn thay
+        // vì toàn màn hình như popup form (chỉ có vài ô app, phủ kín màn là thừa).
+        className="man-chon-ung-dung"
       >
         <ManChonUngDung
           danhSach={list}

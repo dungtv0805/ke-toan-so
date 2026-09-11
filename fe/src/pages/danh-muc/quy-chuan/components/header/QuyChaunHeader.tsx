@@ -131,6 +131,7 @@ export const QuyChaunHeader: React.FC<QuyChaunHeaderProps> = ({ settingsButton, 
   return (
     <>
       <FilterBar
+        className="filter-bar--danh-muc"
         search={{
           value: localSearchText,
           onChange: setLocalSearchText,

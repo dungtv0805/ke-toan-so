@@ -461,6 +461,7 @@ const KhoanMucPage: React.FC = () => {
         />
 
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: setSearchText,
@@ -547,7 +548,7 @@ const KhoanMucPage: React.FC = () => {
       >
         <Form form={form} layout="vertical" size="small" className="mt-2">
           <Row gutter={12}>
-            <Col span={10}>
+            <Col xs={24} sm={12} md={10}>
               <Form.Item
                 name="ma"
                 label={fl('ma', 'Mã khoản mục')}
@@ -560,7 +561,7 @@ const KhoanMucPage: React.FC = () => {
                 <Input placeholder="VD: CP001" />
               </Form.Item>
             </Col>
-            <Col span={14}>
+            <Col xs={24} sm={14}>
               <Form.Item
                 name="loai"
                 label={fl('loai', 'Loại khoản mục')}

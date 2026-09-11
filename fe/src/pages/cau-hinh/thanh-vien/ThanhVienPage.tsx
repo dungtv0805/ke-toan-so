@@ -23,6 +23,7 @@ import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
 import type { ColumnsType } from 'antd/es/table';
 import { sapXepTheoNhan } from '@/lib/sapXep';
+import { useManHinh } from '@/hooks/useManHinh';
 
 
 const DEFAULT_PASSWORD = '123456';
@@ -50,6 +51,7 @@ const ThanhVienPage = () => {
   const tenantId = currentTenant?.tenantId;
   const canEdit = hasPermission('/cau-hinh/thanh-vien:sua');
   const { filterable, matches, hasPinned } = useTableColumnFilters('cau-hinh-thanh-vien');
+  const dienThoai = useManHinh() === 'mobile';
 
   const fetchMembers = async () => {
     if (!tenantId) return;
@@ -279,9 +281,10 @@ const ThanhVienPage = () => {
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-between items-center mb-6">
+      {/* Điện thoại: tiêu đề và nút không đứng chung một hàng được → xếp chồng. */}
+      <div className="flex justify-between items-center mb-6 dt:flex-col dt:items-start dt:gap-3 dt:mb-3">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+          <h1 className="text-2xl font-bold flex items-center gap-2 dt:text-xl">
             <TeamOutlined /> Quản lý Thành viên
           </h1>
           <p className="text-gray-500 mt-1">
@@ -303,7 +306,9 @@ const ThanhVienPage = () => {
         loading={loading}
         pagination={{ pageSize: 10 }}
         // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
-        scroll={{ x: hasPinned ? 'max-content' : undefined }}
+        // Điện thoại: họ tên + email + 2 thẻ + 3 nút không vừa 360px → cuộn ngang
+        // thay vì tràn khỏi màn.
+        scroll={{ x: hasPinned || dienThoai ? 'max-content' : undefined }}
       />
 
       {/* Add Member Modal */}

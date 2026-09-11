@@ -10,6 +10,7 @@ import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
 import { sapXepTheoNhan } from '@/lib/sapXep';
+import { useManHinh } from '@/hooks/useManHinh';
 
 const DEFAULT_PASSWORD = '123456';
 
@@ -36,6 +37,7 @@ const TenantPage = () => {
   const [form] = Form.useForm();
   const { canCreate, canEdit, canDelete } = usePagePermission("/cau-hinh/tenant");
   const { filterable, matches, hasPinned } = useTableColumnFilters('cau-hinh-tenant');
+  const dienThoai = useManHinh() === 'mobile';
 
   // Tên lĩnh vực hiển thị trên tag (fallback về code) — lọc theo đúng chữ user nhìn thấy.
   const moduleNames = (modules?: string[]) =>
@@ -337,9 +339,10 @@ const TenantPage = () => {
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-between items-center mb-6">
+      {/* Điện thoại: tiêu đề và nút không đứng chung một hàng được → xếp chồng. */}
+      <div className="flex justify-between items-center mb-6 dt:flex-col dt:items-start dt:gap-3 dt:mb-3">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+          <h1 className="text-2xl font-bold flex items-center gap-2 dt:text-xl">
             <TeamOutlined /> Quản lý Công ty (Tenant)
           </h1>
           <p className="text-gray-500 mt-1">
@@ -363,7 +366,9 @@ const TenantPage = () => {
         loading={loading}
         pagination={{ pageSize: 10 }}
         // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
-        scroll={{ x: hasPinned ? 'max-content' : undefined }}
+        // Điện thoại: 8 cột không vừa 360px → cuộn ngang. Số cố định chứ không
+        // max-content vì cột Địa chỉ `ellipsis` sẽ bị kéo dài hết cỡ chữ.
+        scroll={{ x: hasPinned ? 'max-content' : dienThoai ? 1100 : undefined }}
       />
 
       <Modal

@@ -44,8 +44,10 @@ const Pnl3LopPage: React.FC = () => {
   return (
     // nkc-page: cao hết khung, chỉ thân bảng cuộn — giống các trang báo cáo khác.
     <div className="nkc-page">
+      {/* Điện thoại: khung giữa chỉ lề 8px nên mép tràn -12px lòi ra ngoài 4px
+          mỗi bên → cả trang cuộn ngang. */}
       <div
-        className="flex flex-wrap items-center justify-between gap-2"
+        className="flex flex-wrap items-center justify-between gap-2 dt:!-mx-2 dt:!px-2"
         style={{
           marginInline: -12,
           padding: "10px 12px",

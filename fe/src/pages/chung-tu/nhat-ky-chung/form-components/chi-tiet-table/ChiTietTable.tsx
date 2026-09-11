@@ -35,6 +35,7 @@ import { QuickAddSanPhamModal } from "../../quick-add/QuickAddSanPhamModal";
 import { toast } from "sonner";
 import { sapXepTheoNhan } from "@/lib/sapXep";
 import { useCotHienThi } from "../../hooks/useCotHienThi";
+import { useManCamUng, useManHinh } from "@/hooks/useManHinh";
 
 export function ChiTietTable() {
   const handler = useNhatKyChungFormHandler();
@@ -105,6 +106,10 @@ export function ChiTietTable() {
   // Enable column resize
   useTableColumnResize("chi-tiet-excel-table");
   const hienTruong = useCotHienThi();
+  // Màn cảm ứng ≤ máy tính bảng: hai nút trong dòng to 32px (responsive-nhap-lieu.css)
+  // + lề ô 16px → cột nút 70px không đủ, nút Xóa lọt ra ngoài ô ghim phải.
+  const manHinh = useManHinh();
+  const nutTo = useManCamUng() && manHinh !== "desktop";
 
   // Track active row for keyboard navigation
   const tableRef = useRef<HTMLDivElement>(null);
@@ -919,7 +924,7 @@ export function ChiTietTable() {
     },
     {
       title: "",
-      width: 70,
+      width: nutTo ? 84 : 70,
       align: "center" as const,
       fixed: "right" as const,
       className: "excel-action-cell",
@@ -985,7 +990,10 @@ export function ChiTietTable() {
   };
 
   return (
-    <div ref={tableRef} className="excel-editable-table">
+    // `nl-bang-lap-day`: trên máy tính bảng thân bảng giãn lấp đúng phần còn lại
+    // của thẻ "Chi tiết hạch toán" thay cho `100vh - 380px` (đoán theo màn máy
+    // tính — iPad ngang cao ~740px thì bảng tràn, hàng Tổng/Thêm dòng bị cắt).
+    <div ref={tableRef} className="excel-editable-table nl-bang-lap-day">
       <Table
         columns={columnsHienThi}
         dataSource={paginatedData}

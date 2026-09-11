@@ -46,6 +46,9 @@ import { buildAccountTree, collectParentKeys, attachDoiTuongChildren, type TreeN
 import { buildSoChiTietUrl } from './utils/soChiTietLink';
 import { exportReportExcel } from '@/utils/exportReportExcel';
 import { buildTaiChinhSheets } from './taiChinhExport';
+import { useManHinh } from '@/hooks/useManHinh';
+import { ghimTheoManHinh } from '@/components/table/ghimTheoManHinh';
+import { ghimCotTen } from './utils/ghimCotTen';
 
 // ============ TYPES ============
 
@@ -145,6 +148,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
   }, [tabTheoUrl]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const manHinh = useManHinh();
 
   const [filterParams, setFilterParams] = useState<PeriodFilterParams>(() => defaultYearParams());
 
@@ -169,6 +173,10 @@ const BaoCaoTaiChinhPage: React.FC = () => {
   // Dynamic heights based on actual DOM measurements
   const [tabContentHeight, setTabContentHeight] = useState<number>(500);
   const [antTableScrollY, setAntTableScrollY] = useState<number>(400);
+  // Điện thoại: cả trang cuộn dọc (responsive.css) — khung cuộn riêng cao bằng
+  // phần còn lại của màn (sau 2 hàng thẻ số + hàng lệnh chỉ còn ~160px) thành một
+  // ô nhòm lồng trong trang đang cuộn. Bỏ trần, để bảng dài theo nội dung.
+  const khungTabCao = manHinh === 'mobile' ? undefined : tabContentHeight;
 
   useEffect(() => {
     const update = () => {
@@ -621,6 +629,10 @@ const BaoCaoTaiChinhPage: React.FC = () => {
 
   // ============ RENDER ============
 
+  // Dưới 1280px bốn nhãn tab + hàng lệnh (~880px) không vừa một dòng: rc-tabs trừ
+  // bề rộng phần "extra" khỏi thanh tab rồi dồn tab vào nút "…" — trên điện thoại
+  // là dồn HẾT. Nên ở màn hẹp hàng lệnh đứng riêng phía trên thanh tab.
+  const lenhTrenTab = manHinh !== 'desktop';
   const tabBarExtra = (
     <Space size={4} wrap style={{ justifyContent: 'flex-end' }}>
       <PeriodFilter onFilter={handleFilter} loading={loading} autoApply />
@@ -636,19 +648,21 @@ const BaoCaoTaiChinhPage: React.FC = () => {
       {/* Kỳ báo cáo KHÔNG hiện lại ở đây: PeriodFilter nằm ngay góc phải thanh tab đã cho
           thấy kỳ đang xem, thẻ lặp lại ở góc trái chỉ chiếm chỗ. getPeriodLabel vẫn dùng cho
           tên sheet Excel. */}
+      {/* Điện thoại: 2 thẻ mỗi hàng (xs=12) — 4 hàng thẻ xếp chồng đẩy bảng xuống
+          dưới nửa màn. */}
       <div style={{ flexShrink: 0 }}>
-        <Row gutter={8} style={{ marginBottom: 4 }}>
-        <Col span={6}>
+        <Row gutter={[8, 8]} style={{ marginBottom: 4 }} className="bc-the-so-gon">
+        <Col xs={12} sm={12} md={6}>
           <Card className="stat-card" size="small" bodyStyle={{ padding: '4px 12px' }}>
             <Statistic title="Tổng tài sản" value={bsState.stats?.tongTaiSan ?? 0} formatter={(val) => formatCurrencyShort(val as number)} prefix={<BankOutlined style={{ color: 'hsl(var(--blue))' }} />} valueStyle={{ fontSize: 16 }} />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} sm={12} md={6}>
           <Card className="stat-card stat-card-success" size="small" bodyStyle={{ padding: '4px 12px' }}>
             <Statistic title="Doanh thu" value={doanhThu} formatter={(val) => formatCurrencyShort(val as number)} prefix={<DollarOutlined style={{ color: 'hsl(var(--green))' }} />} valueStyle={{ fontSize: 16 }} />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} sm={12} md={6}>
           <Card className="stat-card stat-card-success" size="small" bodyStyle={{ padding: '4px 12px' }}>
             <Statistic
               title="Lợi nhuận sau thuế"
@@ -659,7 +673,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} sm={12} md={6}>
           <Card className="stat-card stat-card-warning" size="small" bodyStyle={{ padding: '4px 12px' }}>
             <Statistic
               title="Cân đối phát sinh"
@@ -674,7 +688,8 @@ const BaoCaoTaiChinhPage: React.FC = () => {
 
       <Card size="small" bodyStyle={{ padding: '0 8px 8px' }} style={{ flex: 1, overflow: 'hidden' }}>
 
-        <Tabs activeKey={activeTab} onChange={setActiveTab} type="card" tabBarExtraContent={{ right: tabBarExtra }} items={[
+        {lenhTrenTab && <div className="flex justify-end pt-2 pb-1">{tabBarExtra}</div>}
+        <Tabs activeKey={activeTab} onChange={setActiveTab} type="card" tabBarExtraContent={lenhTrenTab ? undefined : { right: tabBarExtra }} items={[
           {
             key: '1',
             label: 'Cân đối tài khoản',
@@ -685,7 +700,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
                 )}
                 <Table<TreeNode<TrialBalance>>
                   className="excel-table tb-summary"
-                  columns={trialBalanceColumns}
+                  columns={ghimTheoManHinh(trialBalanceColumns, manHinh)}
                   dataSource={trialBalanceTree}
                   rowKey="__ma"
                   expandable={{
@@ -712,7 +727,17 @@ const BaoCaoTaiChinhPage: React.FC = () => {
                     return (
                       <Table.Summary fixed>
                         <Table.Summary.Row style={{ fontWeight: 700, background: 'hsl(var(--muted))' }}>
-                          <Table.Summary.Cell index={0} colSpan={2}>Tổng cộng</Table.Summary.Cell>
+                          {/* Điện thoại chỉ ghim cột "Tài khoản" (ghimTheoManHinh), mà antd chỉ
+                              giữ ô gộp dính khi CẢ HAI cột nó phủ cùng ghim → tách đôi để chữ
+                              "Tổng cộng" đứng yên, số không trượt xuống dưới cột ghim. */}
+                          {manHinh === 'mobile' ? (
+                            <>
+                              <Table.Summary.Cell index={0}>Tổng cộng</Table.Summary.Cell>
+                              <Table.Summary.Cell index={1} />
+                            </>
+                          ) : (
+                            <Table.Summary.Cell index={0} colSpan={2}>Tổng cộng</Table.Summary.Cell>
+                          )}
                           <Table.Summary.Cell index={2} align="right">{formatCurrency(totals.soDuDauKyNo)}</Table.Summary.Cell>
                           <Table.Summary.Cell index={3} align="right">{formatCurrency(totals.soDuDauKyCo)}</Table.Summary.Cell>
                           <Table.Summary.Cell index={4} align="right">{formatCurrency(totals.phatSinhNo)}</Table.Summary.Cell>
@@ -731,14 +756,14 @@ const BaoCaoTaiChinhPage: React.FC = () => {
             key: '2',
             label: 'Cân đối kế toán',
             children: bsState.data ? (
-              <div style={{ maxHeight: tabContentHeight, overflow: 'auto' }}>
+              <div style={{ maxHeight: khungTabCao, overflow: 'auto' }}>
                 {!bsState.data.canDoi && (
                   <Alert message="Cảnh báo: Tổng tài sản và Tổng nguồn vốn không cân đối!" type="warning" showIcon style={{ marginBottom: 16 }} />
                 )}
                 <Card title="TÀI SẢN" size="small" style={{ marginBottom: 12 }}>
                   <Table<TreeNode<BalanceSheetItem>>
                     className="excel-table"
-                    columns={balanceSheetColumns}
+                    columns={ghimCotTen(balanceSheetColumns, manHinh)}
                     dataSource={taiSanTree}
                     rowKey="__ma"
                     loading={loading}
@@ -746,12 +771,15 @@ const BaoCaoTaiChinhPage: React.FC = () => {
                     size="small"
                     pagination={false}
                     expandable={{ expandedRowKeys: bsTaiSanExpanded, onExpandedRowsChange: (keys) => setBsTaiSanExpanded([...keys]) }}
+                    // Điện thoại: không có scroll.x thì 5 cột (~860px) tràn ra ngoài
+                    // Card (overflow hidden) và bị cắt, không vuốt ngang được.
+                    scroll={manHinh === 'mobile' ? { x: 'max-content' } : undefined}
                   />
                 </Card>
                 <Card title="NGUỒN VỐN" size="small">
                   <Table<TreeNode<BalanceSheetItem>>
                     className="excel-table"
-                    columns={balanceSheetColumns}
+                    columns={ghimCotTen(balanceSheetColumns, manHinh)}
                     dataSource={nguonVonTree}
                     rowKey="__ma"
                     loading={loading}
@@ -759,6 +787,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
                     size="small"
                     pagination={false}
                     expandable={{ expandedRowKeys: bsNguonVonExpanded, onExpandedRowsChange: (keys) => setBsNguonVonExpanded([...keys]) }}
+                    scroll={manHinh === 'mobile' ? { x: 'max-content' } : undefined}
                   />
                 </Card>
               </div>
@@ -768,7 +797,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
             key: '3',
             label: 'Kết quả kinh doanh',
             children: (
-              <div style={{ maxHeight: tabContentHeight, overflow: 'auto' }}>
+              <div style={{ maxHeight: khungTabCao, overflow: 'auto' }}>
                 <KqkdTable data={kqkdData?.chiTieu ?? []} loading={loading} />
               </div>
             ),
@@ -779,13 +808,13 @@ const BaoCaoTaiChinhPage: React.FC = () => {
             children: (
               <Table
                 className="excel-table"
-                columns={pnlCompColumns}
+                columns={ghimCotTen(pnlCompColumns, manHinh)}
                 dataSource={buildPnLComparisonData()}
                 rowKey="key"
                 loading={loading}
                 bordered
                 size="small"
-                scroll={{ y: antTableScrollY }}
+                scroll={{ y: antTableScrollY, x: manHinh === 'mobile' ? 'max-content' : undefined }}
                 pagination={false}
                 rowClassName={(record) => record.isSummary ? 'ant-table-row-summary' : record.isCategory ? 'ant-table-row-category' : ''}
               />

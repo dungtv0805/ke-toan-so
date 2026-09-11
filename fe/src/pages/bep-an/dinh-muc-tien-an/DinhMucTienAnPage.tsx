@@ -392,7 +392,7 @@ const DinhMucTienAnPage: React.FC = () => {
       >
         <Form form={form} layout="vertical" size="small" className="mt-2">
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="code"
                 label={fl('code', 'Mã')}
@@ -405,7 +405,7 @@ const DinhMucTienAnPage: React.FC = () => {
                 <Input placeholder="VD: DM01" />
               </Form.Item>
             </Col>
-            <Col span={16}>
+            <Col xs={24} sm={16}>
               <Form.Item
                 name="ten"
                 label={fl('ten', 'Tên định mức')}
@@ -421,7 +421,7 @@ const DinhMucTienAnPage: React.FC = () => {
           </Row>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="phamVi"
                 label={fl('phamVi', 'Phạm vi')}
@@ -434,7 +434,7 @@ const DinhMucTienAnPage: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="doiTuongMa"
                 label={fl('doiTuongMa', 'Đối tượng')}
@@ -470,7 +470,7 @@ const DinhMucTienAnPage: React.FC = () => {
           </Form.Item>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="hieuLucTu"
                 label={fl('hieuLucTu', 'Hiệu lực từ')}
@@ -479,7 +479,7 @@ const DinhMucTienAnPage: React.FC = () => {
                 <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" placeholder="Chọn ngày" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="hieuLucDen"
                 label={fl('hieuLucDen', 'Hiệu lực đến')}

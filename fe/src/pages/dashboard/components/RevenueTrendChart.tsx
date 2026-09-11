@@ -7,6 +7,8 @@ import {
 import { dashboardService } from '@/services/dashboardService';
 import { sliceToRange } from '@/components/shared/period';
 import { formatCurrency, DASH_COLORS, CHART_GRID, nhanTrieu } from './format';
+import { useManHinh } from '@/hooks/useManHinh';
+import { hienNhanSo } from './bieuDoTheoManHinh';
 
 interface Props { year: number; startMonth: number; endMonth: number; }
 
@@ -39,6 +41,7 @@ const RevenueTrendChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
   );
   const sum = (k: 'doanhThu' | 'chiPhi' | 'loiNhuan') => data.reduce((s, d) => s + (d[k] || 0), 0);
   const hasData = data.some((d) => d.doanhThu || d.chiPhi || d.loiNhuan);
+  const coNhan = hienNhanSo(useManHinh(), data.length);
 
   return (
     <Card title={<span className="text-sm sm:text-base font-semibold">KẾT QUẢ KINH DOANH</span>}>
@@ -63,13 +66,13 @@ const RevenueTrendChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
             <Tooltip formatter={(value: number) => formatCurrency(value)} labelFormatter={(l) => `${isWeekly ? 'Tuần' : 'Tháng'} ${l}`} />
             <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
             <Bar dataKey="doanhThu" name="Doanh thu" fill={TEAL} maxBarSize={26}>
-              <LabelList dataKey="doanhThu" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: TEAL }} />
+              {coNhan && <LabelList dataKey="doanhThu" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: TEAL }} />}
             </Bar>
             <Bar dataKey="chiPhi" name="Chi phí" fill={GRAY} maxBarSize={26}>
-              <LabelList dataKey="chiPhi" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />
+              {coNhan && <LabelList dataKey="chiPhi" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />}
             </Bar>
             <Line type="monotone" dataKey="loiNhuan" name="Lợi nhuận" stroke={ORANGE} strokeWidth={2} dot={{ r: 3, fill: ORANGE }}>
-              <LabelList dataKey="loiNhuan" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: ORANGE }} />
+              {coNhan && <LabelList dataKey="loiNhuan" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: ORANGE }} />}
             </Line>
           </ComposedChart>
         </ResponsiveContainer>

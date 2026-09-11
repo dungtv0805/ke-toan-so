@@ -48,6 +48,7 @@ export function FilterBar({
             }}
             onPressEnter={() => search.onSearch?.()}
             style={{ width: search.width ?? 280 }}
+            className="filter-bar-search"
             allowClear
           />
         )}

@@ -506,8 +506,10 @@ const DuAnPage: React.FC = () => {
   return (
     <div className="space-y-3">
       {/* Stats Cards */}
+      {/* Điện thoại (< 576px): 4 thẻ số liệu xếp 1 cột ăn gần hết màn đầu tiên →
+          lưới 2×2. Từ 576px trở lên giữ nguyên. */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={6}>
+        <Col xs={12} sm={6}>
           <Card className="stat-card">
             <Statistic
               title="Tổng dự án"
@@ -516,7 +518,7 @@ const DuAnPage: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={6}>
+        <Col xs={12} sm={6}>
           <Card className="stat-card">
             <Statistic
               title="Đang thực hiện"
@@ -526,7 +528,7 @@ const DuAnPage: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={6}>
+        <Col xs={12} sm={6}>
           <Card className="stat-card stat-card-success">
             <Statistic
               title="Hoàn thành"
@@ -536,7 +538,7 @@ const DuAnPage: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={6}>
+        <Col xs={12} sm={6}>
           <Card className="stat-card stat-card-warning">
             <Statistic
               title="Tạm dừng"
@@ -558,6 +560,7 @@ const DuAnPage: React.FC = () => {
         />
 
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: setSearchText,
@@ -655,7 +658,7 @@ const DuAnPage: React.FC = () => {
       >
         <Form form={form} layout="vertical" className="mt-2" size="small">
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="ma"
                 label={fl('ma', 'Mã dự án')}
@@ -668,7 +671,7 @@ const DuAnPage: React.FC = () => {
                 <Input placeholder="VD: DA001" />
               </Form.Item>
             </Col>
-            <Col span={16}>
+            <Col xs={24} sm={16}>
               <Form.Item
                 name="ten"
                 label={fl('ten', 'Tên dự án')}
@@ -699,7 +702,7 @@ const DuAnPage: React.FC = () => {
           </Form.Item>
 
           <Row gutter={12}>
-            <Col span={14}>
+            <Col xs={24} sm={14}>
               <Form.Item
                 name="thoiGian"
                 label={fl('thoiGian', 'Thời gian thực hiện')}
@@ -712,7 +715,7 @@ const DuAnPage: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={10}>
+            <Col xs={24} sm={12} md={10}>
               <Form.Item
                 name="trangThai"
                 label={fl('trangThai', 'Trạng thái')}

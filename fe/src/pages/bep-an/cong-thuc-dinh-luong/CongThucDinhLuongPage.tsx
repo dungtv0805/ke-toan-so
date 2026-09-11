@@ -374,7 +374,7 @@ const CongThucDinhLuongPage: React.FC = () => {
       >
         <Form form={form} layout="vertical" size="small" className="mt-2">
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="code"
                 label={fl('code', 'Mã')}
@@ -387,7 +387,7 @@ const CongThucDinhLuongPage: React.FC = () => {
                 <Input placeholder="VD: CT01" />
               </Form.Item>
             </Col>
-            <Col span={16}>
+            <Col xs={24} sm={16}>
               <Form.Item
                 name="ten"
                 label={fl('ten', 'Tên công thức')}
@@ -403,7 +403,7 @@ const CongThucDinhLuongPage: React.FC = () => {
           </Row>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="ganTheo"
                 label={fl('ganTheo', 'Gắn theo')}
@@ -416,7 +416,7 @@ const CongThucDinhLuongPage: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="doiTuongMa"
                 label={fl('doiTuongMa', 'Đối tượng')}

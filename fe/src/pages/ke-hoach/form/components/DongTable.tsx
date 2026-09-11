@@ -12,6 +12,7 @@ import {
 } from "../lib/keHoachFormRows";
 import type { KeHoachFormHeader } from "../form-handler/sub-handler/init/init.state";
 import { sapXepTheoNhan } from "@/lib/sapXep";
+import { useManCamUng, useManHinh } from "@/hooks/useManHinh";
 
 const toOptions = (list: MucDanhMuc[] = []) =>
   sapXepTheoNhan(list.map((m) => ({ value: m.ma, label: `${m.ma} - ${m.ten}` })));
@@ -36,6 +37,10 @@ export const DongTable: React.FC = () => {
   const [quyChuanList] = useKeHoachFormState("quyChuanList", []);
   const [header] = useKeHoachFormState("header");
   const loaiGiaoDich = (header as KeHoachFormHeader | undefined)?.loaiGiaoDich;
+  // Màn cảm ứng ≤ máy tính bảng: nút trong dòng to 32px (responsive-nhap-lieu.css)
+  // nên cột nút phải rộng ra theo, không thì nút Xóa tràn khỏi ô.
+  const manHinh = useManHinh();
+  const nutTo = useManCamUng() && manHinh !== "desktop";
 
   const sua = (key: string, field: keyof DongKeHoach, value: unknown) =>
     handler.executeEvent("suaDong", { key, field, value });
@@ -228,7 +233,7 @@ export const DongTable: React.FC = () => {
     {
       title: "",
       key: "action",
-      width: 80,
+      width: nutTo ? 88 : 80,
       fixed: "right",
       align: "center",
       render: (_, record) => (
@@ -256,7 +261,9 @@ export const DongTable: React.FC = () => {
   ];
 
   return (
-    <div>
+    // `nl-bang-lap-day`: trên máy tính bảng thân bảng giãn lấp đúng phần còn lại
+    // của thẻ thay cho `100vh - 380px` đoán theo màn máy tính.
+    <div className="nl-bang-lap-day">
       <Table<DongKeHoach>
         rowKey="key"
         size="small"
@@ -266,7 +273,7 @@ export const DongTable: React.FC = () => {
         pagination={false}
         scroll={{ x: "max-content", y: "calc(100vh - 380px)" }}
       />
-      <div className="p-2 flex gap-2">
+      <div className="p-2 flex gap-2 nl-chan-bang">
         <Button
           type="dashed"
           size="small"

@@ -94,11 +94,12 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
   return (
     // nkc-page: cao hết khung, chỉ thân bảng cuộn — giống Dữ liệu tổng hợp.
     <div className="nkc-page">
-      {/* Thanh tab bám đúng bố cục thanh tab của Tổng quan. */}
+      {/* Thanh tab bám đúng bố cục thanh tab của Tổng quan. Lề âm bằng đúng lề
+          khung nội dung: 12px, điện thoại chỉ còn 8px (responsive.css) — giữ -12
+          ở đó là thanh tràn ngang 4px mỗi bên. */}
       <div
-        className="flex flex-wrap items-center justify-between gap-2"
+        className="flex flex-wrap items-center justify-between gap-2 -mx-[12px] dt:-mx-[8px]"
         style={{
-          marginInline: -12,
           padding: "10px 12px",
           background: "hsl(var(--background))",
           borderBottom: "1px solid hsl(var(--border))",
@@ -129,7 +130,9 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
             onChange={(v) => setActiveTab(v as string)}
             options={tabOptions(loaiKeHoach)}
             size="large"
-            className="font-semibold"
+            // Bảy tab cỡ chữ 15 rộng ~650px, không xuống dòng được: điện thoại
+            // thì cho thanh tab tự vuốt ngang thay vì đẩy cả trang tràn ra.
+            className="font-semibold dt:!max-w-full dt:!overflow-x-auto"
           />
         </ConfigProvider>
         <Space wrap>

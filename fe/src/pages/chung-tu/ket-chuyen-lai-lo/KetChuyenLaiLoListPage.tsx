@@ -19,6 +19,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { SectionNav } from '@/components/layout/SectionNav';
 import { CHUNG_TU_NAV } from '@/config/sectionNavs';
 import { usePagePermission } from '@/hooks/usePagePermission';
+import { useManHinh } from '@/hooks/useManHinh';
 import { ketChuyenService, type LoKetChuyen } from '@/services/ketChuyenService';
 import { nguoiDungService } from '@/services/nguoiDungService';
 import { nhatKyChungService } from '@/services/nhatKyChungService';
@@ -45,6 +46,7 @@ const initXemBanGhi: XemBanGhiState = { open: false, soPhieu: '', loading: false
 const KetChuyenLaiLoListPage: React.FC = () => {
   const navigate = useNavigate();
   const { canCreate, canDelete } = usePagePermission('/chung-tu/ket-chuyen-lai-lo');
+  const manHinh = useManHinh();
   const [lo, setLo] = useState<LoKetChuyen[]>([]);
   const [banDoNguoiDung, setBanDoNguoiDung] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(false);
@@ -203,6 +205,10 @@ const KetChuyenLaiLoListPage: React.FC = () => {
           loading={loading}
           dataSource={lo}
           columns={columns}
+          // Bảng không khai scroll.x: 7 cột cố định đã ~1060px, hẹp hơn thế thì cột
+          // "Diễn giải" (ellipsis, không width) bị bóp về 0 và bảng tràn khỏi thẻ.
+          // Dưới 1280 cho cuộn ngang, chừa diễn giải ~200px. Máy tính giữ nguyên.
+          scroll={manHinh === 'desktop' ? undefined : { x: 1260 }}
           locale={{ emptyText: <Empty description="Chưa có lần kết chuyển nào" /> }}
         />
       </Card>
@@ -221,6 +227,8 @@ const KetChuyenLaiLoListPage: React.FC = () => {
           loading={xem.loading}
           dataSource={xem.dong}
           columns={banGhiColumns}
+          // Điện thoại: popup phủ kín màn ~390px, 3 cột số đã 340px → "Diễn giải" hết chỗ.
+          scroll={manHinh === 'mobile' ? { x: 520 } : undefined}
           pagination={false}
           locale={{ emptyText: <Empty description="Không có dữ liệu" /> }}
           summary={(data) => (

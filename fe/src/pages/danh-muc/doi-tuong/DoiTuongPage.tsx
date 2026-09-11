@@ -504,7 +504,9 @@ const DoiTuongPage: React.FC = () => {
       </div> */}
 
       {/* Stats Cards */}
-      <Row gutter={16}>
+      {/* Hàng 2×2 dưới 576px cần khoảng cách dọc — gutter chỉ ngang thì hai
+          hàng thẻ dính sát nhau. Một hàng (≥ 576px) thì khoảng dọc không có tác dụng. */}
+      <Row gutter={[16, 16]}>
         <Col xs={12} sm={6}>
           <Card className="stat-card" size="small">
             <Statistic
@@ -565,6 +567,7 @@ const DoiTuongPage: React.FC = () => {
 
         {/* Toolbar */}
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: setSearchText,
@@ -651,7 +654,7 @@ const DoiTuongPage: React.FC = () => {
       >
         <Form form={form} layout="vertical" className="mt-2" size="small">
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="loai"
                 label={fl('loai', 'Loại đối tượng')}
@@ -665,7 +668,7 @@ const DoiTuongPage: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="ma"
                 label={fl('ma', 'Mã đối tượng')}
@@ -693,7 +696,7 @@ const DoiTuongPage: React.FC = () => {
           </Form.Item>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="soDienThoai"
                 label={fl('soDienThoai', 'Số điện thoại')}
@@ -703,7 +706,7 @@ const DoiTuongPage: React.FC = () => {
                 <Input placeholder="VD: 028 1234 5678" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="email"
                 label={fl('email', 'Email')}
@@ -731,7 +734,7 @@ const DoiTuongPage: React.FC = () => {
           </Form.Item>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="maSoThue"
                 label={fl('maSoThue', 'Mã số thuế')}
@@ -743,7 +746,7 @@ const DoiTuongPage: React.FC = () => {
                 <Input placeholder="VD: 0301234567" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="nguoiLienHe"
                 label={fl('nguoiLienHe', 'Người liên hệ')}

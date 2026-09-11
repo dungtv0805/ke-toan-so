@@ -29,6 +29,7 @@ import dayjs from 'dayjs';
 import { FilterBar } from "@/components/common/FilterBar";
 import { usePagePermission } from "@/hooks/usePagePermission";
 import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
+import { useManHinh } from '@/hooks/useManHinh';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -44,6 +45,7 @@ const SoQuyPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('detail');
   const [statsCollapsed, setStatsCollapsed] = useState(false);
   const { showIntro } = useIntroAnimation(1500);
+  const dienThoai = useManHinh() === 'mobile';
 
   const fetchData = async () => {
     setLoading(true);
@@ -317,7 +319,9 @@ const SoQuyPage: React.FC = () => {
             statsCollapsed ? 'max-h-0 opacity-0 mt-0' : 'max-h-96 opacity-100 mt-4'
           }`}
         >
-          <Row gutter={16}>
+          {/* Khoảng cách dọc chỉ lộ ra dưới 576px (2 hàng thẻ); từ 576px thẻ nằm
+              một hàng nên không đổi gì. */}
+          <Row gutter={[16, 16]}>
             <Col xs={12} sm={6}>
               <Card className="stat-card" size="small">
                 <Statistic
@@ -477,6 +481,9 @@ const SoQuyPage: React.FC = () => {
                     showTotal: (total) => `Tổng ${total} ngày`,
                   }}
                   size="middle"
+                  // Điện thoại: 6 cột, 4 cột tiền đầy đủ — không có scroll.x thì bảng
+                  // ép cột và tràn khỏi Card; cho cuộn ngang như mọi bảng khác.
+                  scroll={dienThoai ? { x: 'max-content' } : undefined}
                   summary={(pageData) => {
                     const totalThu = pageData.reduce((sum, r) => sum + r.thu, 0);
                     const totalChi = pageData.reduce((sum, r) => sum + r.chi, 0);

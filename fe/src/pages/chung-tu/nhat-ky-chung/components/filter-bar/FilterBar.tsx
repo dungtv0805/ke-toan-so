@@ -13,6 +13,7 @@ import {
 import { useNkcFilterValues } from "../../hooks/useNkcFilterOptions";
 import { PeriodRangeFilter } from "./PeriodRangeFilter";
 import { useToolbarSlotRef } from "../toolbar-slot/ToolbarSlot";
+import { useManHinh } from "@/hooks/useManHinh";
 import "./FilterBar.state";
 
 /**
@@ -27,6 +28,9 @@ export function FilterBar() {
   const handler = useNhatKyChungHandler();
   const { canCreate } = usePagePermission("/chung-tu/nhat-ky-chung");
   const setToolbarSlot = useToolbarSlotRef();
+  // Điện thoại: hàng này gánh cả tìm kiếm, kỳ, xóa lọc lẫn 6–7 nút lệnh → nút chỉ
+  // còn icon (tên nút chuyển vào tooltip + aria-label) để cả cụm nằm gọn 3 dòng.
+  const dienThoai = useManHinh() === "mobile";
 
   const [searchText, setSearchText] = useNhatKyChungState("searchText", "");
   const filterValues = useNkcFilterValues();
@@ -46,6 +50,8 @@ export function FilterBar() {
           placeholder="Tìm kiếm..."
           prefix={<SearchOutlined className="text-muted-foreground" />}
           style={{ width: 180 }}
+          // Điện thoại: ô tìm chiếm trọn một dòng (responsive-danh-sach.css).
+          className="nkc-filter-bar__search"
           value={searchText}
           onChange={(e) => {
             setSearchText(e.target.value);
@@ -57,7 +63,8 @@ export function FilterBar() {
           }
         />
 
-        <span className="xl-cmd-sep" />
+        {/* Điện thoại: ô tìm đứng riêng một dòng nên vạch ngăn này thừa → CSS ẩn. */}
+        <span className="xl-cmd-sep nkc-filter-bar__sep-tim" />
 
         <PeriodRangeFilter />
 
@@ -84,16 +91,27 @@ export function FilterBar() {
         {/* Nút lệnh của bảng bút toán (Import / Xuất / In / Làm mới / Chọn cột…) được
             EntryListTab bắn vào đây để đứng cùng "Thêm mới". */}
         <div className="nkc-filter-bar__slot" ref={setToolbarSlot} />
-        {canCreate && (
-          <Button
-            type="primary"
-            size="small"
-            icon={<PlusOutlined />}
-            onClick={() => navigate("/chung-tu/nhat-ky-chung/tao-moi")}
-          >
-            Thêm mới
-          </Button>
-        )}
+        {canCreate &&
+          (dienThoai ? (
+            <Tooltip title="Thêm mới">
+              <Button
+                type="primary"
+                size="small"
+                icon={<PlusOutlined />}
+                aria-label="Thêm mới"
+                onClick={() => navigate("/chung-tu/nhat-ky-chung/tao-moi")}
+              />
+            </Tooltip>
+          ) : (
+            <Button
+              type="primary"
+              size="small"
+              icon={<PlusOutlined />}
+              onClick={() => navigate("/chung-tu/nhat-ky-chung/tao-moi")}
+            >
+              Thêm mới
+            </Button>
+          ))}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import { ModulePanel } from './ModulePanel';
 import { ModuleFlyout } from './ModuleFlyout';
 import { useSidebarState } from './useSidebarState';
 import { TimNhanhFocusContext } from './SidebarSearch';
+import { useManHinh } from '@/hooks/useManHinh';
 
 /** Bề rộng sidebar — panel mở (rail + ModulePanel) và thu gọn (chỉ rail).
  *  Nguồn duy nhất; MainLayout dùng lại để đặt giá trị mặc định cho biến CSS
@@ -25,6 +26,12 @@ export const Sidebar: React.FC = () => {
   const { thuGon, datThuGon, moduleTheoUrl, moduleDangChon, chonModule } =
     useSidebarState(user?.id, pathname);
 
+  // Máy tính bảng: rail luôn chỉ chiếm 62px, panel mở ĐÈ lên nội dung (không
+  // đẩy) rồi tự đóng khi chọn mục / bấm ra ngoài / Esc. Trạng thái đè-lên này
+  // KHÔNG lưu và KHÔNG đụng `thuGon` (lựa chọn đã lưu của màn máy tính).
+  const deLen = useManHinh() === 'tablet';
+  const [panelDeMo, datPanelDeMo] = useState(false);
+
   // URL đổi thì bỏ lựa chọn thủ công, để panel/rail bám theo trang đang xem.
   // Bấm icon rail của phân hệ nghiệp vụ KHÔNG đổi URL nên lựa chọn đó vẫn
   // sống; còn chọn một mục con trong panel hay tìm bằng Tìm nhanh (⌘K) thì
@@ -34,7 +41,17 @@ export const Sidebar: React.FC = () => {
   // `search` cũng tính: sáu mục Kế hoạch/Dự báo cùng pathname, khác `?tab=`.
   useEffect(() => {
     chonModule(undefined);
+    datPanelDeMo(false);
   }, [pathname, search, chonModule]);
+
+  useEffect(() => {
+    if (!deLen || !panelDeMo) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') datPanelDeMo(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [deLen, panelDeMo]);
 
   const moduleTheoTrang = moduleTheoUrl(pathname, search);
   const [flyout, datFlyout] = useState<ModuleId | undefined>();
@@ -50,10 +67,11 @@ export const Sidebar: React.FC = () => {
   // thẳng từ URL mới ngay khi điều hướng xong (nhờ effect ở trên), nên panel
   // tự ẩn — đây là cách gọn nhất thoả cả hai đường: vào thẳng '/' lẫn bấm
   // rail Danh mục từ một phân hệ khác.
-  const panelSeHien = !thuGon && !!current && !current.module.route;
+  const panelSeHien = (deLen ? panelDeMo : !thuGon) && !!current && !current.module.route;
   // Bề rộng phải khớp với việc panel có thật render hay không — nếu không
   // MainLayout sẽ chừa thừa 196px trống khi panel bị ẩn vì phân hệ có route.
-  const beRong = panelSeHien ? BE_RONG_MO : BE_RONG_THU_GON;
+  // Panel đè-lên (máy tính bảng) không chiếm chỗ nên chỉ tính rail.
+  const beRong = panelSeHien && !deLen ? BE_RONG_MO : BE_RONG_THU_GON;
   // useLayoutEffect (KHÔNG phải useEffect): MainLayout vẽ content bằng
   // var(--sidebar-w, 258px) NGAY LẦN VẼ ĐẦU — useEffect chạy sau khi trình
   // duyệt đã sơn khung hình đó, nên ai đang thu gọn sẽ thấy content nháy
@@ -76,7 +94,8 @@ export const Sidebar: React.FC = () => {
       if (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         if (!panelSeHien) {
-          datThuGon(false);
+          if (deLen) datPanelDeMo(true);
+          else datThuGon(false);
           if (current?.module.route) {
             const dauTien = modules.find((m) => !m.module.route);
             if (dauTien) chonModule(dauTien.module.id);
@@ -87,7 +106,7 @@ export const Sidebar: React.FC = () => {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [panelSeHien, current, modules, datThuGon, chonModule]);
+  }, [panelSeHien, deLen, current, modules, datThuGon, chonModule]);
 
   // Đổi tên khỏi `chonModule` để không trùng setter cùng tên lấy từ hook.
   const bamRail = (id: ModuleId) => {
@@ -101,6 +120,12 @@ export const Sidebar: React.FC = () => {
     if (m.module.route) {
       chonModule(undefined);
       navigate(m.module.route);
+      return;
+    }
+    if (deLen) {
+      setFocusTick(0);
+      datPanelDeMo(!(id === dangMo && panelDeMo));
+      chonModule(id);
       return;
     }
     // Bấm lại icon đang chọn → đóng/mở panel.
@@ -120,16 +145,16 @@ export const Sidebar: React.FC = () => {
   return (
     <TimNhanhFocusContext.Provider value={focusTick}>
       <aside
-        className="relative flex h-screen shrink-0"
+        className="relative flex h-screen h-dvh shrink-0"
         style={{ width: beRong }}
       >
         <SidebarRail
           modules={modules}
           activeModule={dangMo}
           onPick={bamRail}
-          onHover={thuGon ? datFlyout : undefined}
+          onHover={thuGon && !deLen ? datFlyout : undefined}
         />
-        {!thuGon && current && !current.module.route && (
+        {panelSeHien && current && !deLen && (
           <ModulePanel
             current={current}
             allModules={modules}
@@ -139,7 +164,32 @@ export const Sidebar: React.FC = () => {
             onCollapse={() => datThuGon(true)}
           />
         )}
-        {thuGon && flyoutModule && !flyoutModule.module.route && (
+        {panelSeHien && current && deLen && (
+          <>
+            {/* Lớp nền: bấm ra ngoài panel thì đóng. Nằm DƯỚI panel, phủ phần nội dung. */}
+            <button
+              type="button"
+              aria-label="Đóng menu"
+              onClick={() => datPanelDeMo(false)}
+              className="fixed inset-0 z-[1] cursor-default bg-black/20"
+              style={{ left: BE_RONG_THU_GON }}
+            />
+            <div className="absolute top-0 z-[2] flex h-full shadow-xl" style={{ left: BE_RONG_THU_GON }}>
+              <ModulePanel
+                current={current}
+                allModules={modules}
+                activePath={pathname}
+                activeSearch={search}
+                onSelect={(key) => {
+                  datPanelDeMo(false);
+                  navigate(key);
+                }}
+                onCollapse={() => datPanelDeMo(false)}
+              />
+            </div>
+          </>
+        )}
+        {thuGon && !deLen && flyoutModule && !flyoutModule.module.route && (
           <ModuleFlyout
             current={flyoutModule}
             activePath={pathname}

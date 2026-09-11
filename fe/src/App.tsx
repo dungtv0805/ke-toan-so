@@ -96,6 +96,8 @@ import {
   NotFound
 } from "./pages/loadable";
 import ThueIndexRoute from "./pages/thue/ThueIndexRoute";
+import { useManHinh, useManCamUng } from "@/hooks/useManHinh";
+import { tokenTheoManHinh } from "@/config/tokenTheoManHinh";
 
 const queryClient = new QueryClient();
 
@@ -111,7 +113,10 @@ const thuVien = (duongDan: string) => (
   </ProtectedRoute>
 );
 
-const App = () => (
+const App = () => {
+  const manHinh = useManHinh();
+  const camUng = useManCamUng();
+  return (
   <QueryClientProvider client={queryClient}>
     <ConfigProvider
       locale={viVN}
@@ -152,6 +157,8 @@ const App = () => (
           // 3.16:1 trên nền trang #F5F5F7.
           colorTextTertiary: '#8A8A8F',
           colorBgLayout: '#F5F5F7',
+          // Điện thoại / máy tính bảng cảm ứng: chữ và nút to hơn (xem tokenTheoManHinh).
+          ...tokenTheoManHinh(manHinh, camUng),
         },
         components: {
           // Card header + body padding 12px đồng bộ nhịp 12
@@ -869,6 +876,7 @@ const App = () => (
       </TooltipProvider>
     </ConfigProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

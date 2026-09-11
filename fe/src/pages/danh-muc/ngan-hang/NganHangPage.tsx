@@ -333,6 +333,7 @@ const NganHangPage: React.FC = () => {
       {/* Table */}
       <Card>
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: setSearchText,
@@ -408,7 +409,7 @@ const NganHangPage: React.FC = () => {
           initialValues={{ trangThai: true }}
         >
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="ma"
                 label={fl('ma', 'Mã tài khoản')}
@@ -421,7 +422,7 @@ const NganHangPage: React.FC = () => {
                 <Input placeholder="VD: NH001" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="soTaiKhoan"
                 label={fl('soTaiKhoan', 'Số tài khoản')}
@@ -446,7 +447,7 @@ const NganHangPage: React.FC = () => {
           </Form.Item>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="nganHang"
                 label={fl('nganHang', 'Tên ngân hàng')}
@@ -456,7 +457,7 @@ const NganHangPage: React.FC = () => {
                 <Input placeholder="VD: Ngân hàng TMCP An Bình" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="chiNhanh"
                 label={fl('chiNhanh', 'Tên chi nhánh ngân hàng')}
@@ -469,7 +470,7 @@ const NganHangPage: React.FC = () => {
           </Row>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="chuTaiKhoan"
                 label={fl('chuTaiKhoan', 'Chủ tài khoản')}
@@ -479,7 +480,7 @@ const NganHangPage: React.FC = () => {
                 <Input placeholder="Nhập chủ tài khoản" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="trangThai"
                 label={fl('trangThai', 'Trạng thái')}

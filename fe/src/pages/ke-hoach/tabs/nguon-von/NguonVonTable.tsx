@@ -21,6 +21,7 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
 import { useCotCoGian } from "@/hooks/useCotCoGian";
+import { useManHinh } from "@/hooks/useManHinh";
 import {
   NHOM_NGUON_VON_OPTIONS,
   nhanNhomNguonVon,
@@ -34,6 +35,7 @@ import {
   CAP_CHINH,
   capCot,
   cotCaNam,
+  ghimTheoManKeHoach,
   ghimTrai,
   cotQuyVaThang,
   laHangGop,
@@ -66,6 +68,7 @@ export const NguonVonTable: React.FC = () => {
   const [saving] = useNguonVonState("saving", false);
   const [hienSoDu] = useNguonVonState("hienSoDu", true);
   const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
+  const manHinh = useManHinh();
 
   const daLuu = useMemo(
     () => data.map((d) => ({ id: d.id, val: valTuDong(d) })),
@@ -339,10 +342,14 @@ export const NguonVonTable: React.FC = () => {
    * Bề rộng nằm trong state React (không sửa thẳng DOM) — nhờ vậy antd
    * tính lại được offset của các cột ghim mỗi lần kéo giãn.
    */
-  const columns = useCotCoGian(KHOA_RONG_COT, cotGoc);
+  const columns = ghimTheoManKeHoach(
+    useCotCoGian(KHOA_RONG_COT, cotGoc),
+    // Vùng ghim đủ rộng hơn cả khung iPad — xem ghimTheoManKeHoach.
+    manHinh,
+  );
 
   return (
-    <div className="excel-container">
+    <div className="excel-container kh-khung-bang">
       <div className="excel-toolbar">
         <Space size={4}>
           <Button

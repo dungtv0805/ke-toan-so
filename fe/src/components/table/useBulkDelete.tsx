@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { Button, Modal, message } from 'antd';
 import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { useManHinh } from '@/hooks/useManHinh';
 
 export interface BulkDeleteResult {
   deleted: number;
@@ -32,6 +33,7 @@ export function useBulkDelete<T extends { id: string }>({
 }: UseBulkDeleteOptions) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
+  const dienThoai = useManHinh() === 'mobile';
 
   const clearSelection = useCallback(() => setSelectedIds([]), []);
 
@@ -75,8 +77,15 @@ export function useBulkDelete<T extends { id: string }>({
 
   const bulkDeleteButton =
     enabled && selectedIds.length > 0 ? (
-      <Button danger icon={<DeleteOutlined />} loading={deleting} onClick={confirmDelete}>
-        Xóa đã chọn ({selectedIds.length})
+      // Điện thoại: chỉ icon + số lượng — nhãn đầy đủ nằm ở aria-label.
+      <Button
+        danger
+        icon={<DeleteOutlined />}
+        loading={deleting}
+        onClick={confirmDelete}
+        aria-label={dienThoai ? `Xóa đã chọn (${selectedIds.length})` : undefined}
+      >
+        {dienThoai ? selectedIds.length : `Xóa đã chọn (${selectedIds.length})`}
       </Button>
     ) : null;
 

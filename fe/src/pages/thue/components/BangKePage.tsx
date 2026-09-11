@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, type ReactNode } from "react";
 import {
   Card,
   Table,
@@ -18,6 +18,7 @@ import {
   Col,
   message,
 } from "antd";
+import type { ButtonProps } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
@@ -30,6 +31,8 @@ import { FilterBar } from "@/components/common/FilterBar";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
 import { useBulkDelete } from "@/components/table/useBulkDelete";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useManHinh } from "@/hooks/useManHinh";
+import { ghimTheoManHinh } from "@/components/table/ghimTheoManHinh";
 import {
   BangKeRecord,
   THUE_SUAT_OPTIONS,
@@ -41,6 +44,7 @@ import { ImportBangKeModal, type ImportService } from "./import/ImportBangKeModa
 import { GanChungTuModal } from "./GanChungTuModal";
 import SectionNav from "@/components/layout/SectionNav";
 import { THUE_NAV } from "@/config/sectionNavs";
+import { nutLenh } from "@/components/common/nutLenh";
 
 const { Text } = Typography;
 
@@ -79,6 +83,8 @@ const QUY_OPTIONS = [
 
 const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
   const { canCreate, canEdit, canDelete } = usePagePermission(routeKey);
+  const manHinh = useManHinh();
+  const dienThoai = manHinh === "mobile";
   const partnerLabel = variant === "mua" ? "Người bán" : "Người mua";
   const tenField = variant === "mua" ? "tenNguoiBan" : "tenNguoiMua";
   const mstField = variant === "mua" ? "mstNguoiBan" : "mstNguoiMua";
@@ -382,6 +388,9 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
       <SectionNav items={THUE_NAV} />
       <Card>
         <FilterBar
+          // `bang-ke-loc`: 3 ô lọc nằm bên phần "actions" (không phải `filters`) nên quy
+          // tắc co giãn chung không với tới — responsive-danh-sach.css xử lý riêng.
+          className="bang-ke-loc"
           search={{
             value: searchText,
             onChange: setSearchText,
@@ -435,24 +444,27 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
                 }}
                 style={{ width: 100 }}
               />
-              {canCreate && (
-                <Button icon={<ImportOutlined />} onClick={() => setImportVisible(true)}>
-                  Import Excel
-                </Button>
-              )}
+              {canCreate &&
+                nutLenh(dienThoai, "Import Excel", {
+                  icon: <ImportOutlined />,
+                  onClick: () => setImportVisible(true),
+                })}
               {bulkDeleteButton}
-              {canCreate && (
-                <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-                  Thêm hóa đơn
-                </Button>
-              )}
+              {canCreate &&
+                nutLenh(dienThoai, "Thêm hóa đơn", {
+                  type: "primary",
+                  icon: <PlusOutlined />,
+                  onClick: handleAdd,
+                })}
               {settingsButton}
             </>
           }
         />
 
         <Table
-          columns={cfgColumns}
+          // Điện thoại: cột "Thao tác" ghim phải thành cột thường. Màn khác trả lại
+          // đúng mảng cũ (dòng tổng bên dưới vẫn đếm theo cfgColumns — cùng thứ tự).
+          columns={ghimTheoManHinh(cfgColumns, manHinh)}
           dataSource={data}
           rowKey="id"
           loading={loading}
@@ -526,17 +538,17 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
           onValuesChange={handleValuesChange}
         >
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item name="ngayHoaDon" label="Ngày hóa đơn" className="mb-3" rules={[{ required: true, message: "Chọn ngày" }]}>
                 <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item name="soHoaDon" label="Số hóa đơn" className="mb-3" rules={[{ required: true, message: "Nhập số HĐ" }]}>
                 <Input placeholder="VD: 0000123" />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item name="kyHieuHoaDon" label="Ký hiệu" className="mb-3">
                 <Input placeholder="VD: 1C25TAA" />
               </Form.Item>
@@ -544,12 +556,12 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
           </Row>
 
           <Row gutter={12}>
-            <Col span={16}>
+            <Col xs={24} sm={16}>
               <Form.Item name={tenField} label={partnerLabel} className="mb-3" rules={[{ required: true, message: `Nhập tên ${partnerLabel.toLowerCase()}` }]}>
                 <Input placeholder={`Tên ${partnerLabel.toLowerCase()}`} />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item name={mstField} label="Mã số thuế" className="mb-3">
                 <Input placeholder="MST" />
               </Form.Item>
@@ -561,7 +573,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
           </Form.Item>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="giaTriChuaThue" label="Giá trị chưa thuế" className="mb-3" rules={[{ required: true, message: "Nhập giá trị" }]}>
                 <InputNumber<number>
                   style={{ width: "100%" }}
@@ -571,7 +583,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="thueSuat" label="Thuế suất" className="mb-3" rules={[{ required: true, message: "Chọn thuế suất" }]}>
                 <Select options={THUE_SUAT_OPTIONS} />
               </Form.Item>
@@ -579,7 +591,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
           </Row>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="tienThue"
                 label="Tiền thuế"
@@ -600,7 +612,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="tongThanhToan" label="Tổng thanh toán" className="mb-0">
                 <InputNumber<number>
                   style={{ width: "100%" }}

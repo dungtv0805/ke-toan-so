@@ -1,0 +1,72 @@
+/* Responsive — riêng Đợt: bao-cao. Xem docs/superpowers/specs/2026-09-11-responsive-mobile-tablet-design.md.
+   Chỉ quy tắc trong @media (max-width: 767.98px) hoặc (max-width: 1279.98px); màn ≥1280 không đổi. */
+
+@media (max-width: 767.98px), (max-width: 1279.98px) and (max-height: 540px) {
+  /* ---------- Bảng điều hành: hàng 5 tab vuốt ngang ----------
+     5 nhãn tab cỡ lớn dài ~560px. Để antd tự co thì từng nhãn bị cắt "…" (nhãn
+     có overflow:hidden) — không đọc được. Giữ nguyên bề rộng từng tab, khung
+     Segmented rộng tối đa bằng hàng và tự cuộn ngang; Dashboard.tsx đặt nó
+     xuống hàng riêng (order-last). */
+  .dashboard-page .dash-tab-chon {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .dashboard-page .dash-tab-chon::-webkit-scrollbar {
+    display: none;
+  }
+  .dashboard-page .dash-tab-chon .ant-segmented-item {
+    flex-shrink: 0;
+  }
+
+  /* ---------- Đầu Card: tiêu đề + nút lệnh ----------
+     antd đặt tiêu đề `flex: 1` (cơ sở 0) + một dòng "…": phần lệnh bên phải
+     (Segmented, Select, nút Xuất Excel…) không bao giờ xuống dòng mà ép tiêu
+     đề còn vài chữ, hoặc tràn khỏi Card. Cơ sở `auto` = đúng bề rộng chữ, nên
+     khi hai phần không vừa một hàng thì phần lệnh tự xuống hàng dưới; tiêu đề
+     quá dài thì xuống dòng thay vì cắt. */
+  .dashboard-page .ant-card-head-wrapper,
+  .bc-dau-the-gon .ant-card-head-wrapper {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .dashboard-page .ant-card-head-title,
+  .bc-dau-the-gon .ant-card-head-title {
+    flex: 1 1 auto;
+    white-space: normal;
+  }
+
+  /* ---------- Thẻ số liệu 2 cột (Col xs=12) ----------
+     Nửa màn 390px còn ~155px trong thẻ; số tiền đầy đủ "12.345.678.901 ₫" ở
+     18px (index.css ≤640) là ~170px → tràn. 16px + cho ngắt ở bất kỳ đâu để
+     màn 360px có hẹp hơn nữa thì số xuống dòng chứ không bị cắt. */
+  .bc-the-so-gon .ant-statistic-content {
+    font-size: 16px !important;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+  .bc-the-so-gon .ant-statistic-content-value {
+    font-size: 16px !important;
+  }
+
+  /* ---------- Bảng thu gọn: Báo cáo tài chính, Sổ chi tiết tài khoản ----------
+     index.css ép 11px + đệm 1–2px để máy tính thấy nhiều dòng hơn. Trên điện
+     thoại cả trang đã cuộn dọc nên không cần dồn dòng: 11px khó đọc, dòng cao
+     ~16px thì chạm vào liên kết số TK / tên TK (mở Sổ chi tiết) rất dễ trượt.
+     Bỏ qua dòng đo ẩn của antd (ant-table-measure-row) — đệm vào nó là thành
+     một dòng trống ngay dưới tiêu đề. */
+  .bctc-compact .excel-table .ant-table-thead > tr > th,
+  .bctc-compact .excel-table .ant-table-summary > tr > td,
+  .sct-compact .ant-table-thead > tr > th,
+  .sct-compact .ant-table-summary > tr > td {
+    font-size: 12px !important;
+    padding: 4px 6px !important;
+  }
+  .bctc-compact .excel-table .ant-table-tbody > tr:not(.ant-table-measure-row) > td,
+  .sct-compact .ant-table-tbody > tr:not(.ant-table-measure-row) > td {
+    font-size: 12px !important;
+    padding: 6px !important;
+    line-height: 1.35 !important;
+  }
+}
