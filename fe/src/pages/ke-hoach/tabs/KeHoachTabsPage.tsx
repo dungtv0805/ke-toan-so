@@ -36,6 +36,39 @@ const TAB_HOP_LE = [
 export const tabBanDau = (tab: string | null): string =>
   tab && (TAB_HOP_LE as readonly string[]).includes(tab) ? tab : "ban-hang";
 
+const loaiChu = (loai: LoaiKeHoach) => (loai === "DU_BAO" ? "Dự báo" : "Kế hoạch");
+
+export interface NhomPhanHe {
+  /** Các tab (bảng) thuộc phân hệ, đúng thứ tự hiện. */
+  tabs: string[];
+  tieuDe: (loai: LoaiKeHoach) => string;
+}
+
+const nhom = (tabs: string[], tieuDe: NhomPhanHe["tieuDe"]): NhomPhanHe => ({ tabs, tieuDe });
+const VON_DONG_TIEN = nhom(["dong-tien", "nguon-von"], (l) => `${loaiChu(l)} vốn & dòng tiền`);
+
+/**
+ * Menu dọc chia theo phân hệ, mỗi phân hệ có Kế hoạch / Dự báo RIÊNG (menuCatalog
+ * `keHoachTab`) — mở từ phân hệ nào thì trang chỉ còn bảng của phân hệ đó, không
+ * kèm thanh tab sang phân hệ khác.
+ *
+ * Nguồn vốn không có mục menu riêng nên ghép với Dòng tiền trong Vốn & dòng tiền
+ * (nhóm duy nhất có 2 bảng, còn giữ thanh tab). Không có `?tab` (vào thẳng trang)
+ * hoặc tab lạ → `null`: hiện đủ các tab như trước.
+ */
+const THEO_TAB: Record<string, NhomPhanHe> = {
+  "ban-hang": nhom(["ban-hang"], (l) => `${loaiChu(l)} bán hàng`),
+  "nhan-su": nhom(["nhan-su"], (l) => `${loaiChu(l)} nhân sự`),
+  kqkd: nhom(["kqkd"], (l) => `P&L ${loaiChu(l)}`),
+  "dong-tien": VON_DONG_TIEN,
+  "nguon-von": VON_DONG_TIEN,
+  "tai-san": nhom(["tai-san"], (l) => `${loaiChu(l)} tài sản`),
+  "chi-tiet": nhom(["chi-tiet"], (l) => `Chi tiết ${loaiChu(l).toLowerCase()}`),
+};
+
+export const nhomTheoPhanHe = (tab: string | null): NhomPhanHe | null =>
+  (tab && THEO_TAB[tab]) || null;
+
 /**
  * Sáu sheet của file thiết kế, một báo cáo P&L, và lưới bút toán "Chi tiết".
  *
@@ -70,6 +103,10 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
       setActiveTab(tab);
     }
   }, [searchParams]);
+  const nhomPhanHe = nhomTheoPhanHe(searchParams.get("tab"));
+  const luaChonTab = nhomPhanHe
+    ? tabOptions(loaiKeHoach).filter((o) => nhomPhanHe.tabs.includes(o.value))
+    : tabOptions(loaiKeHoach);
   const [nam, setNam] = useState(() => new Date().getFullYear());
   // Gộp nhiều phiên bản kế hoạch vào một bảng KQKD là cộng trùng — cho chọn được.
   const [phienBan, setPhienBan] = useState<string>(TAT_CA_PHIEN_BAN);
@@ -108,9 +145,11 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
         <div className="flex items-center gap-2">
           <CheckCircleOutlined className="text-primary" />
           <Text strong className="text-sm sm:text-base">
-            {loaiKeHoach === "DU_BAO" ? "Dự báo" : "Kế hoạch"}
+            {nhomPhanHe ? nhomPhanHe.tieuDe(loaiKeHoach) : loaiChu(loaiKeHoach)}
           </Text>
         </div>
+        {/* Phân hệ chỉ có một bảng thì không cần thanh tab. */}
+        {luaChonTab.length > 1 && (
         <ConfigProvider
           theme={{
             components: {
@@ -128,13 +167,14 @@ const KeHoachTabsPage: React.FC<{ loaiKeHoach: LoaiKeHoach }> = ({
           <Segmented
             value={activeTab}
             onChange={(v) => setActiveTab(v as string)}
-            options={tabOptions(loaiKeHoach)}
+            options={luaChonTab}
             size="large"
             // Bảy tab cỡ chữ 15 rộng ~650px, không xuống dòng được: điện thoại
             // thì cho thanh tab tự vuốt ngang thay vì đẩy cả trang tràn ra.
             className="font-semibold dt:!max-w-full dt:!overflow-x-auto"
           />
         </ConfigProvider>
+        )}
         <Space wrap>
           <Tooltip title="Cặp Nợ/Có dùng khi sinh dòng hạch toán kế hoạch">
             <Button
