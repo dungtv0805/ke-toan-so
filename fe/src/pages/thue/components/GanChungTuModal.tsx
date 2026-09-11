@@ -39,10 +39,27 @@ const sangDong = (d: NhatKyChung) => ({
 });
 
 /**
+ * Bút toán gợi ý cho một hóa đơn: cùng MST đối tác HOẶC cùng tên đối tác. Phải có
+ * nhánh tên: đối tượng trong danh mục hay thiếu MST (dữ liệu thật 11/09/2026 — chứng
+ * từ đúng của hóa đơn 00000012 có đối tượng MST rỗng). Bỏ trùng theo bút toán để
+ * chứng từ ra ở cả hai nguồn không bị cộng tiền hai lần khi gom theo số phiếu.
+ */
+async function taiGoiY(hd: HoaDonGan): Promise<NhatKyChung[]> {
+  const [theoMst, theoTen] = await Promise.all([
+    hd.mst ? nhatKyChungService.getEntries({ mst: hd.mst, limit: SO_DONG }) : null,
+    hd.tenDoiTac ? nhatKyChungService.getEntries({ search: hd.tenDoiTac, limit: SO_DONG }) : null,
+  ]);
+  const daCo = new Set<string>();
+  return [...(theoMst?.data ?? []), ...(theoTen?.data ?? [])].filter((b) =>
+    daCo.has(b.id) ? false : (daCo.add(b.id), true),
+  );
+}
+
+/**
  * Chọn chứng từ để gắn tay vào một dòng bảng kê.
  *
- * Mở ra là có GỢI Ý ngay: chứng từ cùng mã số thuế đối tác, khớp số tiền lên
- * đầu (xem `xepGoiY`). Bản trước mở ra bảng trống, phải gõ rồi Enter mới tìm —
+ * Mở ra là có GỢI Ý ngay: chứng từ cùng MST hoặc cùng tên đối tác (`taiGoiY`),
+ * khớp số tiền lên đầu (`xepGoiY`). Bản trước mở ra bảng trống, phải gõ rồi Enter mới tìm —
  * người dùng tưởng không chọn được chứng từ nào. Gõ thì tìm luôn (số phiếu,
  * diễn giải, tên/MST đối tượng, số đơn hàng); xoá ô tìm thì quay về gợi ý.
  */
@@ -56,8 +73,8 @@ export function GanChungTuModal({ open, hoaDon, onCancel, onChon }: Props) {
   useEffect(() => {
     if (!open || !hoaDon) return;
     const kw = tuKhoa.trim();
-    // Không có từ khóa và hóa đơn không có MST → không có gì để gợi ý.
-    if (!kw && !hoaDon.mst) {
+    // Không có từ khóa, hóa đơn thiếu cả MST lẫn tên → không có gì để gợi ý.
+    if (!kw && !hoaDon.mst && !hoaDon.tenDoiTac) {
       lanTim.current++; // bỏ lần tìm đang bay (nếu có) — nó không được đổ kết quả về nữa
       setLoading(false);
       setRows([]);
@@ -67,11 +84,11 @@ export function GanChungTuModal({ open, hoaDon, onCancel, onChon }: Props) {
     const hen = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await nhatKyChungService.getEntries(
-          kw ? { search: kw, limit: SO_DONG } : { mst: hoaDon.mst, limit: SO_DONG },
-        );
+        const but = kw
+          ? (await nhatKyChungService.getEntries({ search: kw, limit: SO_DONG })).data
+          : await taiGoiY(hoaDon);
         if (lan !== lanTim.current) return;
-        setRows(xepGoiY(gomChungTuTheoSoPhieu(res.data.map(sangDong)), hoaDon));
+        setRows(xepGoiY(gomChungTuTheoSoPhieu(but.map(sangDong)), hoaDon));
       } catch {
         if (lan === lanTim.current) message.error("Không tải được danh sách chứng từ");
       } finally {
@@ -102,9 +119,9 @@ export function GanChungTuModal({ open, hoaDon, onCancel, onChon }: Props) {
       <div className="mt-2 mb-1">
         <Text type="secondary">
           {dangGoiY
-            ? hoaDon?.mst
-              ? `Gợi ý: chứng từ của MST ${hoaDon.mst}${hoaDon.tenDoiTac ? ` (${hoaDon.tenDoiTac})` : ""} — khớp số tiền xếp trước.`
-              : "Hóa đơn chưa có MST nên không có gợi ý — gõ để tìm chứng từ."
+            ? hoaDon?.mst || hoaDon?.tenDoiTac
+              ? `Gợi ý: chứng từ của ${[hoaDon.tenDoiTac, hoaDon.mst && `MST ${hoaDon.mst}`].filter(Boolean).join(" · ")} — khớp số tiền xếp trước.`
+              : "Hóa đơn thiếu tên và MST đối tác nên không có gợi ý — gõ để tìm chứng từ."
             : "Kết quả tìm — khớp số tiền xếp trước."}
         </Text>
       </div>
