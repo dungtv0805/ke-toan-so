@@ -10,10 +10,11 @@ const dangKy = (bao: () => void) => {
   };
 };
 
-const docManHinh = (): ManHinh => manHinhTheoBeRong(window.innerWidth);
+const docManHinh = (): ManHinh => manHinhTheoBeRong(window.innerWidth, window.innerHeight);
 
 /**
- * Loại màn hình hiện tại: 'mobile' (< 768) · 'tablet' (768–1279) · 'desktop'.
+ * Loại màn hình hiện tại: 'mobile' (< 768, hoặc điện thoại xoay ngang) ·
+ * 'tablet' (768–1279) · 'desktop' — ngưỡng xem config/manHinh.ts.
  *
  * Đọc ĐỒNG BỘ ngay lần render đầu (useSyncExternalStore) — bản cũ khởi tạo
  * `false` rồi mới sửa trong useEffect, nên điện thoại vẽ sidebar desktop một

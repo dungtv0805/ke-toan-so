@@ -15,7 +15,7 @@ export function tokenTheoManHinh(manHinh: ManHinh, camUng: boolean): Partial<Tok
     return { fontSize: 13, fontSizeSM: 12, controlHeight: 36, controlHeightSM: 30, controlHeightLG: 44 };
   }
   if (manHinh === 'tablet' && camUng) {
-    return { fontSize: 12, fontSizeSM: 11, controlHeight: 32, controlHeightSM: 28, controlHeightLG: 40 };
+    return { fontSize: 12, fontSizeSM: 11, controlHeight: 32, controlHeightSM: 30, controlHeightLG: 40 };
   }
   return {};
 }

@@ -22,6 +22,15 @@ describe('manHinhTheoBeRong', () => {
     expect(manHinhTheoBeRong(1279)).toBe('tablet');
     expect(manHinhTheoBeRong(1280)).toBe('desktop');
   });
+
+  it('điện thoại XOAY NGANG (rộng 844–932, cao ≤ 540) vẫn là điện thoại', () => {
+    expect(manHinhTheoBeRong(844, 390)).toBe('mobile');
+    expect(manHinhTheoBeRong(932, 430)).toBe('mobile');
+    // iPad ngang cao ≥ 744 → vẫn máy tính bảng; màn máy tính thấp vẫn là máy tính
+    expect(manHinhTheoBeRong(1180, 820)).toBe('tablet');
+    expect(manHinhTheoBeRong(1024, 744)).toBe('tablet');
+    expect(manHinhTheoBeRong(1440, 500)).toBe('desktop');
+  });
 });
 
 describe('useManHinh', () => {

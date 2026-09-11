@@ -1,7 +1,8 @@
 /* =====================================================================
    RESPONSIVE — quy tắc TOÀN CỤC cho điện thoại / máy tính bảng.
    Điểm ngắt lấy từ src/config/manHinh.ts:
-     điện thoại   (max-width: 767.98px)   = Tailwind max-md:
+     điện thoại      (max-width: 767.98px), (max-width: 1279.98px) and (max-height: 540px)
+                     = Tailwind dt:  (gồm điện thoại XOAY NGANG — xem manHinh.ts)
      ≤ máy tính bảng (max-width: 1279.98px) = Tailwind max-xl:
    Màn ≥ 1280px là bố cục gốc — KHÔNG có quy tắc nào ở đây chạm tới nó.
    Nạp SAU index.css (main.tsx) nên cùng độ ưu tiên thì ở đây thắng.
@@ -27,7 +28,7 @@
   padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 767.98px), (max-width: 1279.98px) and (max-height: 540px) {
   /* ---------- Cả trang cuộn dọc, bảng chỉ cuộn ngang ----------
      Máy tính: trang cao đúng một màn, chỉ thân bảng cuộn. Điện thoại thấp
      (~600px, xoay ngang ~350px) mà giữ kiểu đó thì thẻ số liệu + hàng lọc ăn hết
@@ -86,6 +87,28 @@
     border: 0 !important;
     font-size: 0 !important;
     line-height: 0 !important;
+  }
+
+  /* Bảng KHÔNG khai scroll.x: antd không bọc vùng cuộn ngang, cột co tới cỡ
+     tối thiểu rồi cả bảng tràn khỏi trang. Bảng có scroll.x thì antd đã tự đặt
+     overflow cho .ant-table-content — dòng này không đổi gì. */
+  .ant-table-wrapper .ant-table-content {
+    overflow-x: auto;
+  }
+
+  /* Phân trang: ô chọn cỡ trang + ô nhảy trang đẩy thanh phân trang xuống 2–3
+     dòng. Điện thoại chỉ cần trước/sau + số trang. */
+  .ant-pagination .ant-pagination-options {
+    display: none !important;
+  }
+  .ant-table-wrapper .ant-table-pagination.ant-pagination {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  /* Thanh công cụ kiểu Excel (index.css) không bao giờ xuống dòng. */
+  .excel-toolbar {
+    flex-wrap: wrap;
   }
 
   /* ---------- Popup toàn màn hình (trừ hộp xác nhận) ----------
@@ -152,5 +175,16 @@
     flex: 1 1 150px;
     min-width: 0;
     width: auto !important;
+  }
+}
+
+/* ---------- Màn cảm ứng không phải máy tính ----------
+   Tay kéo giãn cột (useCotCoGian) đặt `touch-action: none` ở mép ô tiêu đề —
+   ngón tay vuốt ngang bắt đầu đúng chỗ đó là kéo giãn cột thay vì cuộn bảng.
+   Kéo giãn là thao tác của chuột; trên màn cảm ứng bỏ hẳn. */
+@media (max-width: 1279.98px) and (pointer: coarse) {
+  .kh-bang .kh-tay-keo,
+  .co-gian-cot .kh-tay-keo {
+    display: none;
   }
 }

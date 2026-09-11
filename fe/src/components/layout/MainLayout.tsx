@@ -252,7 +252,8 @@ const MainLayout: React.FC = () => {
           </div> */}
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-1 sm:gap-2">
+          {/* min-w-0: cho tên công ty dài co lại thay vì đẩy header tràn ngang. */}
+          <div className="flex min-w-0 items-center gap-1 sm:gap-2">
             {/* Tenant Switcher */}
             <TenantSwitcher />
 

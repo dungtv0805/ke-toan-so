@@ -1,5 +1,6 @@
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
+import plugin from "tailwindcss/plugin";
 
 export default {
   darkMode: ["class"],
@@ -146,5 +147,13 @@ export default {
       },
     },
   },
-  plugins: [tailwindcssAnimate],
+  plugins: [
+    tailwindcssAnimate,
+    // `dt:` = bố cục ĐIỆN THOẠI, khớp src/config/manHinh.ts: hẹp hơn 768px, HOẶC
+    // điện thoại xoay ngang (rộng 844–932 nhưng cao ≤ 540). `max-md:` của Tailwind
+    // chỉ nhìn bề rộng nên bỏ sót máy xoay ngang — đừng dùng nó cho bố cục điện thoại.
+    plugin(({ addVariant }) => {
+      addVariant("dt", "@media (max-width: 767.98px), (max-width: 1279.98px) and (max-height: 540px)");
+    }),
+  ],
 } satisfies Config;

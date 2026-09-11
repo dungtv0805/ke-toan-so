@@ -93,16 +93,23 @@ export function useTableColumnFilters(pageKey: string) {
             filter={filters[col.key]}
             pinned={pinnedSet.has(col.key)}
             onApply={(f) => setFilter(col.key, f)}
-            onTogglePin={() => {
-              togglePin(col.key);
-              close();
-            }}
+            // Điện thoại bỏ qua cột ghim của người dùng (xem pinnedSet) → ẩn luôn
+            // nút ghim: bấm ở đây sẽ sửa lựa chọn đã lưu của màn máy tính mà trên
+            // điện thoại không thấy tác dụng gì.
+            onTogglePin={
+              dienThoai
+                ? undefined
+                : () => {
+                    togglePin(col.key);
+                    close();
+                  }
+            }
             onClose={close}
           />
         ),
       };
     },
-    [filters, pinnedSet, setFilter, togglePin],
+    [filters, pinnedSet, setFilter, togglePin, dienThoai],
   );
 
   /** Dòng có khớp toàn bộ bộ lọc đang bật không. `getValue(row, key)` lấy ô theo key cột. */
