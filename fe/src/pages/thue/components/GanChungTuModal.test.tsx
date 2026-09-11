@@ -41,7 +41,8 @@ const HD: HoaDonGan = {
   giaTriChuaThue: 23_148_149,
 };
 
-const but = (soPhieu: string, ngay: string, soTien: number, soHopDong?: string) => ({
+const but = (soPhieu: string, ngay: string, soTien: number, soHopDong?: string, id = soPhieu) => ({
+  id,
   soPhieu,
   ngay,
   dienGiai: `Diễn giải ${soPhieu}`,
@@ -50,12 +51,18 @@ const but = (soPhieu: string, ngay: string, soTien: number, soHopDong?: string) 
 });
 
 describe("GanChungTuModal", () => {
-  beforeEach(() => getEntries.mockReset());
+  // Bọc {}: hàm trả về từ beforeEach bị vitest coi là hook dọn dẹp và gọi lại
+  // KHÔNG tham số — mockReset() trả về chính mock nên mock bị gọi rỗng.
+  beforeEach(() => {
+    getEntries.mockReset();
+  });
 
   it("mở ra là GỢI Ý ngay theo MST — không bắt gõ rồi Enter", async () => {
-    getEntries.mockResolvedValue({
-      data: [but("PC09", "2026-09-08", 5), but("PT33", "2026-09-01", 25_000_000, "DH128")],
-    });
+    getEntries.mockImplementation(async (p: { mst?: string }) =>
+      p.mst
+        ? { data: [but("PC09", "2026-09-08", 5), but("PT33", "2026-09-01", 25_000_000, "DH128")] }
+        : { data: [] },
+    );
     render(<GanChungTuModal open hoaDon={HD} onCancel={() => {}} onChon={() => {}} />);
 
     await waitFor(() => expect(screen.getByText("PT33")).toBeTruthy());
@@ -85,11 +92,32 @@ describe("GanChungTuModal", () => {
     expect(onChon).toHaveBeenCalledWith("PT01/26");
   });
 
-  it("hóa đơn không có MST: không gọi API, báo cần gõ để tìm", async () => {
-    render(
-      <GanChungTuModal open hoaDon={{ ...HD, mst: undefined }} onCancel={() => {}} onChon={() => {}} />,
+  // Dữ liệu thật (11/09/2026): đối tượng trong danh mục hay THIẾU MST → chứng từ đúng
+  // của hóa đơn không ra theo MST; phải gợi ý thêm theo tên đối tác.
+  it("gợi ý gộp cả chứng từ cùng TÊN đối tác, bỏ trùng bút toán", async () => {
+    getEntries.mockImplementation(async (p: { mst?: string; search?: string }) =>
+      p.mst
+        ? { data: [but("PT33", "2026-09-01", 1, undefined, "b1")] }
+        : { data: [but("PT33", "2026-09-01", 1, undefined, "b1"), but("PKT01", "2026-09-08", 25_000_000, "2608", "b2")] },
     );
-    expect(screen.getByText(/chưa có MST/)).toBeTruthy();
+    render(<GanChungTuModal open hoaDon={HD} onCancel={() => {}} onChon={() => {}} />);
+    await waitFor(() => expect(screen.getByText("PKT01")).toBeTruthy());
+    expect(getEntries).toHaveBeenCalledWith({ search: "Công ty A", limit: 100 });
+    // PT33 xuất hiện ở cả hai nguồn nhưng chỉ tính một lần (không cộng tiền hai lần).
+    expect(screen.getAllByText("PT33")).toHaveLength(1);
+    expect(screen.getByText("1")).toBeTruthy();
+  });
+
+  it("hóa đơn thiếu cả MST lẫn tên: không gọi API, báo cần gõ để tìm", async () => {
+    render(
+      <GanChungTuModal
+        open
+        hoaDon={{ ...HD, mst: undefined, tenDoiTac: undefined }}
+        onCancel={() => {}}
+        onChon={() => {}}
+      />,
+    );
+    expect(screen.getByText(/không có gợi ý/)).toBeTruthy();
     expect(getEntries).not.toHaveBeenCalled();
   });
 });
