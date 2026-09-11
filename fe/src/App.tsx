@@ -795,10 +795,10 @@ const App = () => (
                 <Route path="tong-hop">
                   <Route path="quy-trinh" element={thuVien("/tong-hop/quy-trinh")} />
                   <Route path="huong-dan" element={thuVien("/tong-hop/huong-dan")} />
-                  <Route path="thuc-hien" element={<ComingSoonPage />} />
                   <Route path="quyet-toan-tam-ung" element={<ComingSoonPage />} />
                   <Route path="bu-tru-cong-no" element={<ComingSoonPage />} />
                   <Route path="khoa-so" element={<ComingSoonPage />} />
+                  <Route path="so-nhat-ky-chung" element={<ComingSoonPage />} />
                 </Route>
                 <Route path="bao-cao/tai-chinh/luu-chuyen-tien-te" element={<ComingSoonPage />} />
                 <Route path="bao-cao/tai-chinh/thuyet-minh" element={<ComingSoonPage />} />

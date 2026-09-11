@@ -141,12 +141,14 @@ export const MENU_LEAVES: MenuLeaf[] = [
   ...thuVienCua('tong-hop', '/tong-hop'),
   // Sheet "TỔNG HỢP": Kế hoạch = "Chi tiết kế hoạch", Dự báo = "Chi tiết dự báo".
   ...keHoachTab('tong-hop', 'chi-tiet'),
-  { key: '/tong-hop/thuc-hien', label: 'Thực hiện', module: 'tong-hop', status: 'soon', icon: <CheckSquareOutlined /> },
+  // "Thực hiện" chính là màn Dữ liệu tổng hợp (lưới chứng từ) — giữ route + khoá
+  // quyền cũ '/chung-tu/nhat-ky-chung' để quyền đã cấp không mất.
+  { key: '/chung-tu/nhat-ky-chung', label: 'Thực hiện', module: 'tong-hop', status: 'ok', icon: <CheckSquareOutlined /> },
   { key: '/tong-hop/quyet-toan-tam-ung', label: 'Quyết toán tạm ứng', module: 'tong-hop', status: 'soon', icon: <FileTextOutlined /> },
   { key: '/tong-hop/bu-tru-cong-no', label: 'Bù trừ công nợ', module: 'tong-hop', status: 'soon', icon: <InteractionOutlined /> },
   { key: '/chung-tu/ket-chuyen-lai-lo', label: 'Kết chuyển lãi lỗ', module: 'tong-hop', status: 'ok', icon: <SwapOutlined /> },
   { key: '/tong-hop/khoa-so', label: 'Khóa sổ', module: 'tong-hop', status: 'soon', icon: <LockOutlined /> },
-  { key: '/chung-tu/nhat-ky-chung', label: 'Sổ nhật ký chung', module: 'tong-hop', status: 'ok', icon: <AuditOutlined /> },
+  { key: '/tong-hop/so-nhat-ky-chung', label: 'Sổ nhật ký chung', module: 'tong-hop', status: 'soon', icon: <AuditOutlined /> },
   { key: '/bao-cao/so-chi-tiet-tai-khoan', label: 'Sổ chi tiết tài khoản', module: 'tong-hop', status: 'ok', icon: <AccountBookOutlined /> },
   { key: '/bao-cao/so-chi-tiet-cong-no', label: 'Sổ chi tiết công nợ', module: 'tong-hop', status: 'soon', quyenDaCap: true, icon: <FileSearchOutlined /> },
   { key: '/bao-cao/bang-tong-hop', label: 'Tổng hợp công nợ', module: 'tong-hop', status: 'ok', icon: <TableOutlined /> },
