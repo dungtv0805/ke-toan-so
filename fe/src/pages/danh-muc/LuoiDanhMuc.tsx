@@ -61,10 +61,12 @@ export function LuoiDanhMuc({ nhom }: { nhom: NhomDanhMuc[] }) {
               {g.links.map((l) => {
                 const IconMuc = l.icon;
                 return (
+                  // Điện thoại: dòng 12px cao ~26px là quá nhỏ cho ngón tay → cao ~40px,
+                  // chữ 13px. Máy tính bảng trở lên y như bản vẽ.
                   <Link
                     key={l.path}
                     to={l.path}
-                    className="flex items-center gap-2.5 rounded-[7px] px-2 py-1.5 transition-colors hover:bg-[var(--nen-hover)]"
+                    className="flex items-center gap-2.5 rounded-[7px] px-2 py-1.5 transition-colors hover:bg-[var(--nen-hover)] dt:py-2.5"
                     style={{ ['--nen-hover' as string]: `${g.mau}14` }}
                   >
                     <IconMuc
@@ -72,7 +74,7 @@ export function LuoiDanhMuc({ nhom }: { nhom: NhomDanhMuc[] }) {
                       className="shrink-0 text-muted-foreground transition-colors"
                       aria-hidden
                     />
-                    <span className="flex-1 text-xs font-medium text-foreground">{l.label}</span>
+                    <span className="flex-1 text-xs font-medium text-foreground dt:text-[13px]">{l.label}</span>
                     <ChevronRight
                       size={12}
                       className="shrink-0 text-muted-foreground/50 transition-colors"

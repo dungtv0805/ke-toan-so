@@ -280,6 +280,7 @@ const BoPhanPage: React.FC = () => {
       {/* Table */}
       <Card>
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: setSearchText,

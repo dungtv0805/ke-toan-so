@@ -204,6 +204,7 @@ function ChuDauTuPageInner() {
 
       <Card className="shadow-sm">
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: setSearchText,

@@ -357,9 +357,12 @@ const SoDuDauKyPage: React.FC = () => {
   return (
     <div >
       <Card
+        // `so-du-dau-ky`: móc cho responsive-cau-hinh.css — điện thoại cho đầu thẻ
+        // xuống dòng (tiêu đề + ngày áp dụng + nút Lưu không vừa một hàng 360px).
+        className="so-du-dau-ky"
         title="Khai báo số dư đầu kỳ"
         extra={
-          <Space>
+          <Space className="dt:!flex-wrap">
             <Text>Ngày áp dụng:</Text>
             <DatePicker value={ngayApDung} format="DD/MM/YYYY" allowClear={false}
               disabled={!canEdit} onChange={(d) => d && setNgayApDung(d)} />
@@ -371,9 +374,11 @@ const SoDuDauKyPage: React.FC = () => {
           <Alert type="warning" showIcon style={{ marginBottom: 16 }}
             message={`Tổng Nợ (${formatCurrency(tongNo)}) ≠ Tổng Có (${formatCurrency(tongCo)}) — số dư đầu kỳ chưa cân đối`} />
         )}
-        <Space style={{ marginBottom: 16 }} wrap>
+        {/* Điện thoại: ô "+ Thêm tài khoản" 320px tràn thẻ → xếp dọc, ô giãn hết
+            bề ngang (Space wrap giữ bề rộng cứng của từng ô). */}
+        <Space style={{ marginBottom: 16 }} wrap className="dt:!flex dt:!flex-col dt:!items-stretch">
           <Select
-            style={{ width: 320 }} showSearch optionFilterProp="label"
+            style={{ width: 320 }} className="dt:!w-full" showSearch optionFilterProp="label"
             placeholder="+ Thêm tài khoản (chọn TK chi tiết)"
             disabled={!canEdit} value={undefined} options={accountOptions}
             onChange={(v) => v && addAccount(v)}

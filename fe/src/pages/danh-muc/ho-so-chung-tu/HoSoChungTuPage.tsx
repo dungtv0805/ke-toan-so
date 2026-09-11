@@ -271,6 +271,7 @@ const HoSoChungTuPage: React.FC = () => {
     <div className="space-y-3">
       <Card>
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: handleSearch,

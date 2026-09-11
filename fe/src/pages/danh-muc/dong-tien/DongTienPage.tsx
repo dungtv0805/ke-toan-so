@@ -385,8 +385,10 @@ const DongTienPage: React.FC = () => {
   return (
     <div className="space-y-3">
       {/* Stats Cards */}
+      {/* Điện thoại (< 576px): 4 thẻ số liệu xếp 1 cột ăn gần hết màn đầu tiên →
+          lưới 2×2. Từ 576px trở lên giữ nguyên. */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={6}>
+        <Col xs={12} sm={6}>
           <Card className="stat-card">
             <Statistic
               title="Tổng số"
@@ -398,7 +400,7 @@ const DongTienPage: React.FC = () => {
         {/* GIỮ 3 màu cứng: Kinh doanh/Đầu tư/Tài chính là 3 loại dòng tiền cần phân biệt
             trực quan với nhau (giống vai trò màu biểu đồ) — "Tài chính" dùng tím, không
             có token tương ứng trong bộ token hiện tại. */}
-        <Col xs={24} sm={6}>
+        <Col xs={12} sm={6}>
           <Card className="stat-card">
             <Statistic
               title="Kinh doanh"
@@ -408,7 +410,7 @@ const DongTienPage: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={6}>
+        <Col xs={12} sm={6}>
           <Card className="stat-card">
             <Statistic
               title="Đầu tư"
@@ -418,7 +420,7 @@ const DongTienPage: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={6}>
+        <Col xs={12} sm={6}>
           <Card className="stat-card">
             <Statistic
               title="Tài chính"
@@ -433,6 +435,7 @@ const DongTienPage: React.FC = () => {
       {/* Table */}
       <Card>
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: handleSearch,

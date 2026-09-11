@@ -504,7 +504,9 @@ const DoiTuongPage: React.FC = () => {
       </div> */}
 
       {/* Stats Cards */}
-      <Row gutter={16}>
+      {/* Hàng 2×2 dưới 576px cần khoảng cách dọc — gutter chỉ ngang thì hai
+          hàng thẻ dính sát nhau. Một hàng (≥ 576px) thì khoảng dọc không có tác dụng. */}
+      <Row gutter={[16, 16]}>
         <Col xs={12} sm={6}>
           <Card className="stat-card" size="small">
             <Statistic
@@ -565,6 +567,7 @@ const DoiTuongPage: React.FC = () => {
 
         {/* Toolbar */}
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: setSearchText,

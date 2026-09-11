@@ -272,6 +272,7 @@ const NhomKhoanMucPage: React.FC = () => {
         <Tabs activeKey={activeTab} onChange={handleTabChange} items={tabItems} className="mb-4" />
 
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: setSearchText,

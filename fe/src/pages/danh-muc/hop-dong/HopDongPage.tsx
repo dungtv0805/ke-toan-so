@@ -925,8 +925,10 @@ function HopDongPageInner() {
     <div className="space-y-3">
       {/* Cùng thanh ngang với Bán hàng / Báo cáo — vào đây từ đó thì phải có đường về. */}
       <SectionNav items={BAN_HANG_NAV} />
-      <Row gutter={16}>
-        <Col xs={24} sm={12} md={6}>
+      {/* Điện thoại: 4 thẻ số liệu xếp 1 cột ăn gần hết màn đầu tiên → lưới 2×2.
+          Khoảng dọc chỉ có tác dụng khi thẻ xuống hàng (< 768px); ≥ 768px vẫn một hàng. */}
+      <Row gutter={[16, 16]}>
+        <Col xs={12} sm={12} md={6}>
           <Card className="stat-card" size="small">
             <Statistic
               title="Tổng số"
@@ -935,7 +937,7 @@ function HopDongPageInner() {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={12} sm={12} md={6}>
           <Card className="stat-card" size="small">
             <Statistic
               title="HĐ gốc"
@@ -944,7 +946,7 @@ function HopDongPageInner() {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={12} sm={12} md={6}>
           <Card className="stat-card" size="small">
             <Statistic
               title="HĐ photo/scan"
@@ -953,7 +955,7 @@ function HopDongPageInner() {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={12} sm={12} md={6}>
           <Card className="stat-card" size="small">
             <Statistic
               title="Chưa có HĐ"
@@ -966,6 +968,7 @@ function HopDongPageInner() {
 
       <Card className="shadow-sm">
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: setSearchText,

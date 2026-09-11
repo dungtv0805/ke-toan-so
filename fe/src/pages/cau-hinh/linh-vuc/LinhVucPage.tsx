@@ -15,6 +15,7 @@ import { useTableTitleConfig } from '@/components/glossary/useTableTitleConfig';
 import { useFieldLabels } from '@/components/glossary/useFieldLabels';
 import { useTableColumnFilters } from '@/components/table/useTableColumnFilters';
 import type { ColumnsType } from 'antd/es/table';
+import { useManHinh } from '@/hooks/useManHinh';
 
 const DEFAULT_LINH_VUC_CODE = 'KE_TOAN';
 
@@ -44,6 +45,7 @@ const LinhVucPage = () => {
 
   const isAssigned = useMemo(() => buildAssignedMatcher(allModules), [allModules]);
   const { filterable, matches, hasPinned } = useTableColumnFilters('cau-hinh-linh-vuc');
+  const dienThoai = useManHinh() === 'mobile';
 
   const iconOptions = useMemo(
     () =>
@@ -269,9 +271,10 @@ const LinhVucPage = () => {
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-between items-center mb-6">
+      {/* Điện thoại: tiêu đề và nút không đứng chung một hàng được → xếp chồng. */}
+      <div className="flex justify-between items-center mb-6 dt:flex-col dt:items-start dt:gap-3 dt:mb-3">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+          <h1 className="text-2xl font-bold flex items-center gap-2 dt:text-xl">
             <AppstoreOutlined /> Quản lý Lĩnh vực
           </h1>
           <p className="text-gray-500 mt-1">
@@ -293,7 +296,8 @@ const LinhVucPage = () => {
         loading={loading}
         pagination={{ pageSize: 10 }}
         // Cột ghim (fixed) chỉ có tác dụng khi bảng cuộn ngang được → cần scroll.x.
-        scroll={{ x: hasPinned ? 'max-content' : undefined }}
+        // Điện thoại: không có scroll.x thì bảng tràn khỏi màn → cuộn ngang.
+        scroll={{ x: hasPinned || dienThoai ? 'max-content' : undefined }}
       />
 
       <Modal
@@ -328,8 +332,10 @@ const LinhVucPage = () => {
             <Input.TextArea rows={2} placeholder="Mô tả ngắn về lĩnh vực" />
           </Form.Item>
 
-          <div className="flex gap-3">
-            <Form.Item name="icon" label={fl('icon', 'Icon')} className="flex-1">
+          {/* Điện thoại: 4 ô (icon · màu · thứ tự · kích hoạt) không vừa một hàng →
+              xuống dòng, ô chọn icon chiếm trọn hàng đầu. */}
+          <div className="flex gap-3 dt:flex-wrap">
+            <Form.Item name="icon" label={fl('icon', 'Icon')} className="flex-1 dt:basis-full">
               <Select options={iconOptions} placeholder="Chọn icon" />
             </Form.Item>
             <Form.Item

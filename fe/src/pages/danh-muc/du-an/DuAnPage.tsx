@@ -506,8 +506,10 @@ const DuAnPage: React.FC = () => {
   return (
     <div className="space-y-3">
       {/* Stats Cards */}
+      {/* Điện thoại (< 576px): 4 thẻ số liệu xếp 1 cột ăn gần hết màn đầu tiên →
+          lưới 2×2. Từ 576px trở lên giữ nguyên. */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={6}>
+        <Col xs={12} sm={6}>
           <Card className="stat-card">
             <Statistic
               title="Tổng dự án"
@@ -516,7 +518,7 @@ const DuAnPage: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={6}>
+        <Col xs={12} sm={6}>
           <Card className="stat-card">
             <Statistic
               title="Đang thực hiện"
@@ -526,7 +528,7 @@ const DuAnPage: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={6}>
+        <Col xs={12} sm={6}>
           <Card className="stat-card stat-card-success">
             <Statistic
               title="Hoàn thành"
@@ -536,7 +538,7 @@ const DuAnPage: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={6}>
+        <Col xs={12} sm={6}>
           <Card className="stat-card stat-card-warning">
             <Statistic
               title="Tạm dừng"
@@ -558,6 +560,7 @@ const DuAnPage: React.FC = () => {
         />
 
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: setSearchText,

@@ -28,6 +28,7 @@ import { usePagePermission } from "@/hooks/usePagePermission";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
 import { taiLieuService, TaiLieu } from "@/services/taiLieuService";
+import { useManHinh } from "@/hooks/useManHinh";
 import UploadTaiLieuModal from "./UploadTaiLieuModal";
 import TaiLieuPreviewDrawer from "./TaiLieuPreviewDrawer";
 
@@ -92,6 +93,7 @@ export const DocumentLibraryPage: React.FC<DocumentLibraryPageProps> = ({
   const { filterable, matches, hasPinned } = useTableColumnFilters(
     `thu-vien-${category}`,
   );
+  const dienThoai = useManHinh() === "mobile";
 
   const fetchData = async () => {
     setLoading(true);
@@ -231,6 +233,20 @@ export const DocumentLibraryPage: React.FC<DocumentLibraryPageProps> = ({
     },
   ];
 
+  // Điện thoại: bảng rộng 800px trên màn ~360px → cột Thao tác (ghim phải trên máy
+  // tính, thành cột thường trên điện thoại — responsive.css) nằm tít cuối, phải vuốt
+  // hết bảng mới bấm được "Xem". Đưa nó lên ngay sau Tiêu đề để màn đầu tiên đã có
+  // đủ [loại file | tiêu đề | xem/tải/xoá]. Máy tính bảng trở lên giữ nguyên thứ tự.
+  const cotHienThi: ColumnsType<TaiLieu> = dienThoai
+    ? [
+        ...columns.slice(0, 2),
+        ...columns
+          .filter((c) => c.key === "actions")
+          .map((c) => ({ ...c, fixed: undefined })),
+        ...columns.slice(2).filter((c) => c.key !== "actions"),
+      ]
+    : columns;
+
   return (
     <div className="space-y-3">
       <Card>
@@ -260,7 +276,7 @@ export const DocumentLibraryPage: React.FC<DocumentLibraryPageProps> = ({
         />
 
         <Table
-          columns={columns}
+          columns={cotHienThi}
           dataSource={filtered}
           rowKey="_id"
           loading={loading}

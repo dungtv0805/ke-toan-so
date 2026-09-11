@@ -23,6 +23,7 @@ import {
 import { vaiTroService, VaiTroResponse } from '@/services/vaiTroService';
 import { apiErrorMessage } from '@/config/api';
 import { sapXepTheoNhan } from '@/lib/sapXep';
+import { useManHinh } from '@/hooks/useManHinh';
 
 const DEFAULT_PASSWORD = '123456';
 
@@ -44,6 +45,7 @@ const TenantMembersModal = ({ tenant, open, onClose }: Props) => {
   const [addMode, setAddMode] = useState<AddMode>('existing');
   const [addForm] = Form.useForm();
   const [editForm] = Form.useForm();
+  const dienThoai = useManHinh() === 'mobile';
 
   const fetchMembers = async () => {
     if (!tenant) return;
@@ -231,6 +233,8 @@ const TenantMembersModal = ({ tenant, open, onClose }: Props) => {
           loading={loading}
           pagination={false}
           size="small"
+          // Điện thoại: popup toàn màn 360px không chứa nổi 5 cột → cuộn ngang.
+          scroll={dienThoai ? { x: 'max-content' } : undefined}
         />
       </Modal>
 

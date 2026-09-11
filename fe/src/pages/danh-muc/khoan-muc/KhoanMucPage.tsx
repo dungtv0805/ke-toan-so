@@ -461,6 +461,7 @@ const KhoanMucPage: React.FC = () => {
         />
 
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: setSearchText,

@@ -439,6 +439,7 @@ const TaiKhoanPage: React.FC = () => {
       <Card className="shadow-sm">
         {/* Toolbar */}
         <FilterBar
+          className="filter-bar--danh-muc"
           search={{
             value: searchText,
             onChange: setSearchText,

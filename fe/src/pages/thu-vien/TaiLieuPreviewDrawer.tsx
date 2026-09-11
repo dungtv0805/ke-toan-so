@@ -130,6 +130,9 @@ const TaiLieuPreviewDrawer: React.FC<TaiLieuPreviewDrawerProps> = ({
       footer={null}
       width="90vw"
       style={{ top: 24, maxWidth: 1400, paddingBottom: 0 }}
+      // Móc cho responsive-cau-hinh.css: trên điện thoại popup đã toàn màn hình
+      // (responsive.css) nên khung xem phải cao theo màn, không theo 90vh.
+      className="tai-lieu-xem"
       styles={{ body: { padding: 0, overflow: "hidden" } }}
       destroyOnClose
     >
