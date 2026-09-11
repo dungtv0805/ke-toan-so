@@ -638,17 +638,17 @@ const BaoCaoTaiChinhPage: React.FC = () => {
           tên sheet Excel. */}
       <div style={{ flexShrink: 0 }}>
         <Row gutter={8} style={{ marginBottom: 4 }}>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={6}>
           <Card className="stat-card" size="small" bodyStyle={{ padding: '4px 12px' }}>
             <Statistic title="Tổng tài sản" value={bsState.stats?.tongTaiSan ?? 0} formatter={(val) => formatCurrencyShort(val as number)} prefix={<BankOutlined style={{ color: 'hsl(var(--blue))' }} />} valueStyle={{ fontSize: 16 }} />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={6}>
           <Card className="stat-card stat-card-success" size="small" bodyStyle={{ padding: '4px 12px' }}>
             <Statistic title="Doanh thu" value={doanhThu} formatter={(val) => formatCurrencyShort(val as number)} prefix={<DollarOutlined style={{ color: 'hsl(var(--green))' }} />} valueStyle={{ fontSize: 16 }} />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={6}>
           <Card className="stat-card stat-card-success" size="small" bodyStyle={{ padding: '4px 12px' }}>
             <Statistic
               title="Lợi nhuận sau thuế"
@@ -659,7 +659,7 @@ const BaoCaoTaiChinhPage: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={6}>
           <Card className="stat-card stat-card-warning" size="small" bodyStyle={{ padding: '4px 12px' }}>
             <Statistic
               title="Cân đối phát sinh"

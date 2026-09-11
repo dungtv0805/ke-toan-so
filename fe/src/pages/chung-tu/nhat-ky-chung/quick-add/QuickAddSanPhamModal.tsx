@@ -47,12 +47,12 @@ export function QuickAddSanPhamModal({ open, onClose, onSubmit }: Props) {
           <Input placeholder="VD: Xi măng PCB40" />
         </Form.Item>
         <Row gutter={12}>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="donVi" label="Đơn vị tính">
               <Input placeholder="VD: Cái, Kg, m³" />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="giaBan" label="Giá bán (VNĐ)">
               <InputNumber
                 style={{ width: "100%" }}

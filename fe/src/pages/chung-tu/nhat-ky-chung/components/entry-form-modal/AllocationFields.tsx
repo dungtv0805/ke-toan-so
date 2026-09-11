@@ -287,7 +287,7 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
       `}</style>
       <CollapsibleSection title="Phân bổ" defaultOpen={false} scrollOnOpen={true}>
         <Row gutter={12}>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="doiTuongId"
               label={renderLabel("Đối tượng nợ", "doiTuong")}
@@ -304,7 +304,7 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="doiTuong2Id"
               label={renderLabel("Đối tượng có", "doiTuong2")}
@@ -323,7 +323,7 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
           </Col>
         </Row>
         <Row gutter={12}>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="duAnId"
               label={renderLabel("Dự án", "duAn")}
@@ -344,7 +344,7 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="boPhanId"
               label={renderLabel("Bộ phận", "boPhan")}
@@ -367,17 +367,17 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
           </Col>
         </Row>
         <Row gutter={12}>
-          <Col span={6}>
+          <Col xs={24} sm={12} md={6}>
             <Form.Item name="chuDauTuMa" label="Mã CĐT" className="mb-2">
               <Input disabled placeholder="Tự động" />
             </Form.Item>
           </Col>
-          <Col span={6}>
+          <Col xs={24} sm={12} md={6}>
             <Form.Item name="chuDauTuTen" label="Chủ đầu tư" className="mb-2">
               <Input disabled placeholder="Tự động theo dự án" />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="doiId"
               label={renderLabel("Đội thi công", "doi")}
@@ -402,7 +402,7 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
           </Col>
         </Row>
         <Row gutter={12}>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="nhanVienId"
               label={renderLabel("Nhân viên phụ trách", "nhanVien")}
@@ -425,7 +425,7 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="sanPhamId"
               label={renderLabel("Sản phẩm/Vật tư", "sanPham")}
@@ -448,7 +448,7 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
           </Col>
         </Row>
         <Row gutter={12}>
-          <Col span={8}>
+          <Col xs={24} sm={12} md={8}>
             <Form.Item
               name="dongTienId"
               label={renderLabel("Dòng tiền", "dongTien")}
@@ -469,7 +469,7 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
               />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col xs={24} sm={12} md={8}>
             <Form.Item
               name="khoanMucId"
               label={renderLabel("Khoản mục", "khoanMuc")}
@@ -490,7 +490,7 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
               />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col xs={24} sm={12} md={8}>
             <Form.Item
               name="nhomKhuyenMaiId"
               label={renderLabel("Nhóm khuyến mại", "nhomKhuyenMai")}
@@ -513,7 +513,7 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
           </Col>
         </Row>
         <Row gutter={12}>
-          <Col span={8}>
+          <Col xs={24} sm={12} md={8}>
             <Form.Item
               name="nhomQuanLyId"
               label={renderLabel("Nhóm quản lý", "nhomQuanLy")}
@@ -534,7 +534,7 @@ export function AllocationFields({ form }: AllocationFieldsProps) {
               />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col xs={24} sm={12} md={8}>
             <Form.Item
               name="hopDongId"
               label={renderLabel("Hợp đồng", "hopDong")}

@@ -220,7 +220,7 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
 
       <Card>
         <Row gutter={24}>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Space direction="vertical" style={{ width: '100%' }} size="middle">
               <div>
                 <div><Text>Kết chuyển đến ngày</Text></div>
@@ -267,7 +267,7 @@ const KetChuyenLaiLoFormPage: React.FC = () => {
               </div>
             </Space>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Space direction="vertical" style={{ width: '100%' }} size="middle">
               <div>
                 <div><Text>Ngày hạch toán</Text></div>

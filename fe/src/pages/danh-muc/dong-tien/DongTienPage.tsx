@@ -512,7 +512,7 @@ const DongTienPage: React.FC = () => {
       >
         <Form form={form} layout="vertical" size="small" className="mt-2">
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="ma"
                 label={fl('ma', 'Mã dòng tiền')}
@@ -525,7 +525,7 @@ const DongTienPage: React.FC = () => {
                 <Input placeholder="VD: DT001" />
               </Form.Item>
             </Col>
-            <Col span={16}>
+            <Col xs={24} sm={16}>
               <Form.Item
                 name="ten"
                 label={fl('ten', 'Tên dòng tiền')}

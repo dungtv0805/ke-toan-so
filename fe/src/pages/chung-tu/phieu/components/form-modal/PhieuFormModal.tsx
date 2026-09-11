@@ -166,7 +166,7 @@ export function PhieuFormModal() {
     >
       <Form form={form} layout="vertical" size="small" className="mt-2">
         <Row gutter={12}>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="ngay"
               label={fl('ngay', 'Ngày')}
@@ -175,7 +175,7 @@ export function PhieuFormModal() {
               <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="soTien"
               label={fl('soTien', 'Số tiền')}
@@ -211,12 +211,12 @@ export function PhieuFormModal() {
         </Form.Item>
 
         <Row gutter={12}>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="nguoiGiaoDich" label={fl('nguoiGiaoDich', 'Người giao dịch')}>
               <Input placeholder="Tên người giao dịch" />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="diaChi" label={fl('diaChi', 'Địa chỉ')}>
               <Input placeholder="Địa chỉ" />
             </Form.Item>
@@ -232,7 +232,7 @@ export function PhieuFormModal() {
         </Divider>
 
         <Row gutter={12}>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="doiTuongMa" label={fl('doiTuongMa', 'Đối tượng')}>
               <Select
                 allowClear
@@ -246,7 +246,7 @@ export function PhieuFormModal() {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="taiKhoanNoMa" label={fl('taiKhoanNoMa', 'Tài khoản Nợ')}>
               <Select
                 allowClear
@@ -257,7 +257,7 @@ export function PhieuFormModal() {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="taiKhoanCoMa" label={fl('taiKhoanCoMa', 'Tài khoản Có')}>
               <Select
                 allowClear
@@ -268,7 +268,7 @@ export function PhieuFormModal() {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="duAnMa" label={fl('duAnMa', 'Dự án')}>
               <Select
                 allowClear
@@ -282,7 +282,7 @@ export function PhieuFormModal() {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="boPhanMa" label={fl('boPhanMa', 'Bộ phận')}>
               <Select
                 allowClear
@@ -296,7 +296,7 @@ export function PhieuFormModal() {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="sanPhamMa" label={fl('sanPhamMa', 'Sản phẩm')}>
               <Select
                 allowClear
@@ -310,7 +310,7 @@ export function PhieuFormModal() {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="dongTienMa" label={fl('dongTienMa', 'Dòng tiền')}>
               <Select
                 allowClear

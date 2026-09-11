@@ -371,7 +371,7 @@ const DiemDanhAnPage: React.FC = () => {
       >
         <Form form={form} layout="vertical" size="small" className="mt-2">
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="ngay"
                 label={fl('ngay', 'Ngày')}
@@ -381,7 +381,7 @@ const DiemDanhAnPage: React.FC = () => {
                 <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" placeholder="Chọn ngày" />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="lopMa"
                 label={fl('lopMa', 'Mã lớp')}
@@ -394,7 +394,7 @@ const DiemDanhAnPage: React.FC = () => {
                 <Input placeholder="VD: L01" />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="lopTen"
                 label={fl('lopTen', 'Tên lớp')}
@@ -410,7 +410,7 @@ const DiemDanhAnPage: React.FC = () => {
           </Row>
 
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="soTreDangKy"
                 label={fl('soTreDangKy', 'Số trẻ đăng ký')}
@@ -423,7 +423,7 @@ const DiemDanhAnPage: React.FC = () => {
                 <InputNumber style={{ width: "100%" }} min={0} placeholder="0" />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="soTreAnThucTe"
                 label={fl('soTreAnThucTe', 'Số trẻ ăn thực tế')}
@@ -436,7 +436,7 @@ const DiemDanhAnPage: React.FC = () => {
                 <InputNumber style={{ width: "100%" }} min={0} placeholder="0" />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="goiAnMa"
                 label={fl('goiAnMa', 'Gói ăn')}

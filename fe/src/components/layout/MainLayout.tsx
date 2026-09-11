@@ -183,11 +183,11 @@ const MainLayout: React.FC = () => {
         // Sidebar tự công bố bề rộng ra biến CSS --sidebar-w; thẻ bọc chỉ ghim
         // nó vào mép trái, không được đoán bề rộng thay nó.
         <div
+          className="h-screen h-dvh"
           style={{
             position: "fixed",
             left: 0,
             top: 0,
-            height: "100vh",
             zIndex: 100,
           }}
         >
@@ -296,14 +296,13 @@ const MainLayout: React.FC = () => {
         </Header>
 
         {/* Content */}
+        {/* Chiều cao, lề và cách cuộn theo màn hình nằm ở styles/responsive.css
+            (.app-content / .app-content-inner) — máy tính giữ nguyên 100vh-48 + lề 12. */}
         <Content
-          style={{
-            background: "hsl(var(--background))",
-            height: "calc(100vh - 48px)",
-            overflow: "auto",
-          }}
+          className="app-content"
+          style={{ background: "hsl(var(--background))" }}
         >
-          <div className="h-full" style={{ padding: 12 }}>
+          <div className="app-content-inner">
             <Outlet />
           </div>
         </Content>

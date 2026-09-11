@@ -526,17 +526,17 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
           onValuesChange={handleValuesChange}
         >
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item name="ngayHoaDon" label="Ngày hóa đơn" className="mb-3" rules={[{ required: true, message: "Chọn ngày" }]}>
                 <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item name="soHoaDon" label="Số hóa đơn" className="mb-3" rules={[{ required: true, message: "Nhập số HĐ" }]}>
                 <Input placeholder="VD: 0000123" />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item name="kyHieuHoaDon" label="Ký hiệu" className="mb-3">
                 <Input placeholder="VD: 1C25TAA" />
               </Form.Item>
@@ -544,12 +544,12 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
           </Row>
 
           <Row gutter={12}>
-            <Col span={16}>
+            <Col xs={24} sm={16}>
               <Form.Item name={tenField} label={partnerLabel} className="mb-3" rules={[{ required: true, message: `Nhập tên ${partnerLabel.toLowerCase()}` }]}>
                 <Input placeholder={`Tên ${partnerLabel.toLowerCase()}`} />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item name={mstField} label="Mã số thuế" className="mb-3">
                 <Input placeholder="MST" />
               </Form.Item>
@@ -561,7 +561,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
           </Form.Item>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="giaTriChuaThue" label="Giá trị chưa thuế" className="mb-3" rules={[{ required: true, message: "Nhập giá trị" }]}>
                 <InputNumber<number>
                   style={{ width: "100%" }}
@@ -571,7 +571,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="thueSuat" label="Thuế suất" className="mb-3" rules={[{ required: true, message: "Chọn thuế suất" }]}>
                 <Select options={THUE_SUAT_OPTIONS} />
               </Form.Item>
@@ -579,7 +579,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
           </Row>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="tienThue"
                 label="Tiền thuế"
@@ -600,7 +600,7 @@ const BangKePage: React.FC<Props> = ({ variant, service, routeKey, title }) => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="tongThanhToan" label="Tổng thanh toán" className="mb-0">
                 <InputNumber<number>
                   style={{ width: "100%" }}

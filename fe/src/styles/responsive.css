@@ -1,0 +1,156 @@
+/* =====================================================================
+   RESPONSIVE — quy tắc TOÀN CỤC cho điện thoại / máy tính bảng.
+   Điểm ngắt lấy từ src/config/manHinh.ts:
+     điện thoại   (max-width: 767.98px)   = Tailwind max-md:
+     ≤ máy tính bảng (max-width: 1279.98px) = Tailwind max-xl:
+   Màn ≥ 1280px là bố cục gốc — KHÔNG có quy tắc nào ở đây chạm tới nó.
+   Nạp SAU index.css (main.tsx) nên cùng độ ưu tiên thì ở đây thắng.
+   ===================================================================== */
+
+/* ---------- Khung app (MainLayout) — áp mọi màn, giá trị máy tính y hệt cũ ---------- */
+
+/* 100dvh: trên Safari iOS 100vh là chiều cao KHI ẨN thanh công cụ nên vùng nội
+   dung dài hơn phần nhìn thấy. Trình duyệt chưa hiểu dvh bỏ qua dòng thứ hai. */
+.app-content {
+  height: calc(100vh - 48px);
+  height: calc(100dvh - 48px);
+  overflow: auto;
+}
+
+/* Chạy như app (PWA, viewport-fit=cover): chừa tai thỏ / thanh home.
+   env() = 0 trên máy tính nên max() ra đúng 12px như cũ. */
+.app-content-inner {
+  height: 100%;
+  padding: 12px;
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+@media (max-width: 767.98px) {
+  /* ---------- Cả trang cuộn dọc, bảng chỉ cuộn ngang ----------
+     Máy tính: trang cao đúng một màn, chỉ thân bảng cuộn. Điện thoại thấp
+     (~600px, xoay ngang ~350px) mà giữ kiểu đó thì thẻ số liệu + hàng lọc ăn hết
+     chỗ, thân bảng còn vài chục px, phân trang bị cắt mất.
+     Khung giữa thôi cao 100% → mọi trang `height:100%` / `h-full` bên trong tự về
+     cao theo nội dung, không phải liệt kê từng trang. */
+  .app-content-inner {
+    height: auto;
+    min-height: 100%;
+    padding: 8px;
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  /* Trang đặt chiều cao bằng calc(100vh - …) thay vì % */
+  .nkc-page,
+  .nkc-form-page,
+  .nkc-form-page-layout,
+  .excel-container {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* antd ghi `max-height` INLINE lên thân bảng khi có scroll.y (kể cả các trang
+     tự đo bằng useTableBodyHeight) → phải !important mới đè được. */
+  .ant-table-wrapper .ant-table-body {
+    max-height: none !important;
+  }
+
+  /* ---------- Cột ghim ----------
+     Cột ghim PHẢI (thường là cột thao tác) thành cột thường. Cột ghim trái do
+     ghimTheoManHinh() xử lý trên mảng columns (CSS không biết cột nào là cột
+     định danh). Khai cả tên antd 6 (-end) lẫn antd 5 (-right). */
+  .ant-table-wrapper .ant-table-cell.ant-table-cell-fix-end,
+  .ant-table-wrapper .ant-table-cell.ant-table-cell-fix-right {
+    position: static !important;
+  }
+  .ant-table-wrapper .ant-table-cell-fix-end::after,
+  .ant-table-wrapper .ant-table-cell-fix-right::after,
+  .ant-table-wrapper .ant-table-container::after {
+    display: none !important;
+  }
+
+  /* Chữ bảng: index.css (≤640) ép tiêu đề 10px — quá nhỏ để đọc trên điện thoại. */
+  .ant-table-thead > tr > th {
+    font-size: 12px !important;
+  }
+  .ant-table-tbody > tr > td {
+    font-size: 12px !important;
+  }
+  /* Dòng đo ẩn của antd phải cao 0 — quy tắc padding 8px (≤640) của index.css
+     đè lên nó thành một dòng trống 17px ngay dưới tiêu đề. */
+  .ant-table-tbody > tr.ant-table-measure-row > td {
+    padding: 0 !important;
+    border: 0 !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+  }
+
+  /* ---------- Popup toàn màn hình (trừ hộp xác nhận) ----------
+     Form trong popup chia 2–3 cột; ở màn 390px bỏ lề 16px hai bên là thêm
+     được một ô nhập. Hộp xác nhận ngắn nên giữ dạng hộp giữa màn. */
+  .ant-modal-root .ant-modal:not(.ant-modal-confirm) {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  .ant-modal-root .ant-modal:not(.ant-modal-confirm) .ant-modal-container,
+  .ant-modal-root .ant-modal:not(.ant-modal-confirm) .ant-modal-content {
+    min-height: 100vh;
+    min-height: 100dvh;
+    border-radius: 0 !important;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .ant-modal-root .ant-modal:not(.ant-modal-confirm) .ant-modal-body {
+    flex: 1;
+  }
+  .ant-modal-root .ant-modal-centered .ant-modal:not(.ant-modal-confirm) {
+    vertical-align: top;
+  }
+
+  /* ---------- Ô nhập: 16px để iPhone không tự phóng to trang khi chạm ---------- */
+  input.ant-input,
+  .ant-input-affix-wrapper input,
+  .ant-input-number-input,
+  .ant-picker-input > input,
+  .ant-select-selection-search-input,
+  textarea.ant-input,
+  .ant-select-input,
+  input:not([type='checkbox']):not([type='radio']),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* ---------- Hàng lọc chung (components/common/FilterBar, ~44 trang) ----------
+     Ô tìm kiếm chiếm trọn một dòng; các ô lọc (Select/DatePicker bề rộng cố định
+     do trang đặt inline) chia đều phần còn lại thay vì tràn ngang. */
+  .filter-bar {
+    padding: 8px;
+    margin-bottom: 8px;
+    gap: 8px;
+  }
+  .filter-bar__main,
+  .filter-bar__actions {
+    width: 100%;
+  }
+  .filter-bar-search {
+    flex: 1 1 100%;
+    width: 100% !important;
+    max-width: none !important;
+  }
+  .filter-bar__main > .ant-select,
+  .filter-bar__main > .ant-picker,
+  .filter-bar__main > .ant-input-affix-wrapper:not(.filter-bar-search),
+  .filter-bar__main > .ant-input-number {
+    flex: 1 1 150px;
+    min-width: 0;
+    width: auto !important;
+  }
+}

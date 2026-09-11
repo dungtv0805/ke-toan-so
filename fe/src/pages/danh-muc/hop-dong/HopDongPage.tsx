@@ -502,7 +502,7 @@ function HopDongPageInner() {
       children: (
         <div className="pt-2">
           <Row gutter={16}>
-            <Col span={9}>
+            <Col xs={24} sm={12} md={9}>
               <Form.Item
                 name="soHopDong"
                 label={fl('soHopDong', 'Số hợp đồng')}
@@ -514,7 +514,7 @@ function HopDongPageInner() {
                 <Input placeholder="VD: HD-2024-001" />
               </Form.Item>
             </Col>
-            <Col span={6}>
+            <Col xs={24} sm={12} md={6}>
               <Form.Item
                 name="nam"
                 label={fl('nam', 'Năm')}
@@ -528,7 +528,7 @@ function HopDongPageInner() {
                 />
               </Form.Item>
             </Col>
-            <Col span={9}>
+            <Col xs={24} sm={12} md={9}>
               <Form.Item
                 name="ngayKy"
                 label={fl('ngayKy', 'Ngày ký')}
@@ -561,7 +561,7 @@ function HopDongPageInner() {
             />
           </Form.Item>
           <Row gutter={16}>
-            <Col span={9}>
+            <Col xs={24} sm={12} md={9}>
               <Form.Item
                 name="giaTriTruocThue"
                 label={fl('giaTriTruocThue', 'Giá trị trước thuế')}
@@ -576,12 +576,12 @@ function HopDongPageInner() {
                 />
               </Form.Item>
             </Col>
-            <Col span={7}>
+            <Col xs={24} sm={12} md={7}>
               <Form.Item name="thueSuat" label={fl('thueSuat', 'Thuế suất')}>
                 <Select options={THUE_SUAT_OPTIONS} allowClear placeholder="Chọn" />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="tienThue"
                 label={fl('tienThue', 'Tiền thuế')}
@@ -599,7 +599,7 @@ function HopDongPageInner() {
             </Col>
           </Row>
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="giaTriSauThue"
                 label={fl('giaTriSauThue', 'Giá trị sau thuế')}
@@ -616,7 +616,7 @@ function HopDongPageInner() {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="soLuongLuu"
                 label={fl('soLuongLuu', 'Số lượng lưu')}
@@ -649,7 +649,7 @@ function HopDongPageInner() {
         <div className="pt-2">
           <Divider orientation="left">Phụ lục 1</Divider>
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name={["phuLuc1", "giaTri"]}
                 label="Giá trị"
@@ -665,7 +665,7 @@ function HopDongPageInner() {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name={["phuLuc1", "ngayKy"]}
                 label="Ngày ký"
@@ -681,7 +681,7 @@ function HopDongPageInner() {
 
           <Divider orientation="left">Phụ lục 2</Divider>
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name={["phuLuc2", "giaTri"]}
                 label="Giá trị"
@@ -697,7 +697,7 @@ function HopDongPageInner() {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name={["phuLuc2", "ngayKy"]}
                 label="Ngày ký"
@@ -750,7 +750,7 @@ function HopDongPageInner() {
             />
           </Form.Item>
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="nguoiKy"
                 label={fl('nguoiKy', 'Người ký')}
@@ -758,7 +758,7 @@ function HopDongPageInner() {
                 <Input placeholder="Nhập tên người ký" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="chucVu"
                 label={fl('chucVu', 'Chức vụ')}
@@ -783,7 +783,7 @@ function HopDongPageInner() {
         <div className="pt-2">
           <Divider orientation="left">Điều khoản thanh toán</Divider>
           <Row gutter={16}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name={["dieuKhoanThanhToan", "tamUng"]}
                 label="Tạm ứng"
@@ -799,7 +799,7 @@ function HopDongPageInner() {
                 />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name={["dieuKhoanThanhToan", "thanhToanGiaiDoan"]}
                 label="Thanh toán giai đoạn"
@@ -815,7 +815,7 @@ function HopDongPageInner() {
                 />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name={["dieuKhoanThanhToan", "quyetToan"]}
                 label="Quyết toán"
@@ -835,7 +835,7 @@ function HopDongPageInner() {
 
           <Divider orientation="left">Bảo hành</Divider>
           <Row gutter={16}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name={["baoHanh", "giaTri"]}
                 label="Giá trị bảo hành"
@@ -851,7 +851,7 @@ function HopDongPageInner() {
                 />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name={["baoHanh", "thoiGian"]}
                 label="Thời gian"
@@ -859,7 +859,7 @@ function HopDongPageInner() {
                 <Input placeholder="VD: 12 tháng" />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name={["baoHanh", "hinhThuc"]}
                 label="Hình thức"
@@ -878,7 +878,7 @@ function HopDongPageInner() {
         <div className="pt-2">
           <Divider orientation="left">Tiến độ thi công</Divider>
           <Row gutter={16}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name={["tienDoThiCong", "soNgay"]}
                 label="Số ngày"
@@ -891,7 +891,7 @@ function HopDongPageInner() {
                 />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name={["tienDoThiCong", "tuNgay"]}
                 label="Từ ngày"
@@ -903,7 +903,7 @@ function HopDongPageInner() {
                 />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name={["tienDoThiCong", "denNgay"]}
                 label="Đến ngày"

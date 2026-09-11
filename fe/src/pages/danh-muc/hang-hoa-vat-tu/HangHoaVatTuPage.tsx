@@ -471,7 +471,7 @@ const HangHoaVatTuPage: React.FC = () => {
       >
         <Form form={form} layout="vertical" size="small" className="mt-2">
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="ma"
                 label={fl('ma', 'Mã')}
@@ -484,7 +484,7 @@ const HangHoaVatTuPage: React.FC = () => {
                 <Input placeholder="VD: HHVT001" />
               </Form.Item>
             </Col>
-            <Col span={16}>
+            <Col xs={24} sm={16}>
               <Form.Item
                 name="ten"
                 label={fl('ten', 'Tên hàng hóa/vật tư')}
@@ -500,7 +500,7 @@ const HangHoaVatTuPage: React.FC = () => {
           </Row>
 
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item name="tinhChat" label={fl('tinhChat', 'Tính chất')} className="mb-3">
                 <Select
                   placeholder="Chọn tính chất"
@@ -509,7 +509,7 @@ const HangHoaVatTuPage: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item name="donViTinhMa" label={fl('donViTinhMa', 'Đơn vị tính')} className="mb-3">
                 <Select
                   placeholder="Chọn đơn vị tính"
@@ -529,7 +529,7 @@ const HangHoaVatTuPage: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item name="nhomVatTuMa" label={fl('nhomVatTuMa', 'Nhóm vật tư')} className="mb-3">
                 <Select
                   placeholder="Chọn nhóm vật tư"
@@ -560,17 +560,17 @@ const HangHoaVatTuPage: React.FC = () => {
           </Form.Item>
 
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item name="tkKho" label={fl('tkKho', 'TK Kho')} className="mb-3">
                 <Input placeholder="VD: 1561" />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item name="quyCach" label={fl('quyCach', 'Quy cách')} className="mb-3">
                 <Input placeholder="Nhập quy cách" />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="donGia"
                 label={fl('donGia', 'Đơn giá (VNĐ)')}

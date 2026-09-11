@@ -34,7 +34,7 @@ export function AccountingFields({ form }: AccountingFieldsProps) {
     <>
       <CollapsibleSection title="Hạch toán" defaultOpen={true} required={true}>
         <Row gutter={12}>
-          <Col span={8}>
+          <Col xs={24} sm={12} md={8}>
             <Form.Item name="quyChuan" label="Loại giao dịch" className="mb-2">
               <Select
                 showSearch
@@ -51,7 +51,7 @@ export function AccountingFields({ form }: AccountingFieldsProps) {
               />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col xs={24} sm={12} md={8}>
             <Form.Item
               name="taiKhoanNo"
               label="TK Nợ"
@@ -69,7 +69,7 @@ export function AccountingFields({ form }: AccountingFieldsProps) {
               />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col xs={24} sm={12} md={8}>
             <Form.Item
               name="taiKhoanCo"
               label="TK Có"

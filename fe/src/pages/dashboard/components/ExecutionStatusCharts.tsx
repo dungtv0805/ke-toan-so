@@ -109,8 +109,8 @@ const ExecutionStatusCharts: React.FC<Props> = ({ year, startMonth, endMonth }) 
                 <Skeleton active paragraph={{ rows: 3 }} />
               ) : (
                 <Row align="middle" gutter={8}>
-                  <Col span={14}><Gauge percent={muc.tyLeDat} color={color} /></Col>
-                  <Col span={10}><Legend color={color} muc={muc} /></Col>
+                  <Col xs={24} sm={14}><Gauge percent={muc.tyLeDat} color={color} /></Col>
+                  <Col xs={24} sm={12} md={10}><Legend color={color} muc={muc} /></Col>
                 </Row>
               )}
             </Card>

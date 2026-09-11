@@ -379,7 +379,7 @@ const KhoPage: React.FC = () => {
       >
         <Form form={form} layout="vertical" size="small" className="mt-2">
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="ma"
                 label={fl('ma', 'Mã kho')}
@@ -392,7 +392,7 @@ const KhoPage: React.FC = () => {
                 <Input placeholder="VD: KHO001" />
               </Form.Item>
             </Col>
-            <Col span={16}>
+            <Col xs={24} sm={16}>
               <Form.Item
                 name="ten"
                 label={fl('ten', 'Tên kho')}
@@ -408,12 +408,12 @@ const KhoPage: React.FC = () => {
           </Row>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="diaChi" label={fl('diaChi', 'Địa chỉ')} className="mb-3">
                 <Input placeholder="Nhập địa chỉ kho" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="thuKho" label={fl('thuKho', 'Thủ kho')} className="mb-3">
                 <Input placeholder="Nhập tên thủ kho" />
               </Form.Item>

@@ -334,12 +334,12 @@ const NhomKhoanMucPage: React.FC = () => {
       >
         <Form form={form} layout="vertical" size="small" className="mt-2">
           <Row gutter={12}>
-            <Col span={10}>
+            <Col xs={24} sm={12} md={10}>
               <Form.Item name="ma" label={fl('ma', 'Mã nhóm')} className="mb-3" rules={[{ required: true, message: "Vui lòng nhập mã" }, { max: 20, message: "Mã tối đa 20 ký tự" }]}>
                 <Input placeholder="VD: NCP001" />
               </Form.Item>
             </Col>
-            <Col span={14}>
+            <Col xs={24} sm={14}>
               <Form.Item name="loai" label={fl('loai', 'Loại')} className="mb-3" rules={[{ required: true, message: "Vui lòng chọn loại" }]}>
                 <Select
                   placeholder="Chọn loại"

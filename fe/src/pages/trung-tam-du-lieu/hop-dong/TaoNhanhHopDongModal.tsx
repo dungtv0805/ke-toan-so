@@ -154,7 +154,7 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
           onValuesChange={onValuesChange}
         >
           <Row gutter={12}>
-            <Col span={9}>
+            <Col xs={24} sm={12} md={9}>
               <Form.Item
                 name="soHopDong"
                 label="Số hợp đồng"
@@ -166,12 +166,12 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
                 <Input placeholder="VD: HD-2026-001" />
               </Form.Item>
             </Col>
-            <Col span={6}>
+            <Col xs={24} sm={12} md={6}>
               <Form.Item name="nam" label="Năm">
                 <InputNumber className="w-full" min={1900} max={2200} controls={false} />
               </Form.Item>
             </Col>
-            <Col span={9}>
+            <Col xs={24} sm={12} md={9}>
               <Form.Item name="ngayKy" label="Ngày ký">
                 <DatePicker
                   format="DD/MM/YYYY"
@@ -195,17 +195,17 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
           </Form.Item>
 
           <Row gutter={12}>
-            <Col span={9}>
+            <Col xs={24} sm={12} md={9}>
               <Form.Item name="giaTriTruocThue" label="Giá trị trước thuế">
                 <InputNumber {...moneyProps} placeholder="0" />
               </Form.Item>
             </Col>
-            <Col span={7}>
+            <Col xs={24} sm={12} md={7}>
               <Form.Item name="thueSuat" label="Thuế suất">
                 <Select options={THUE_SUAT_OPTIONS} allowClear placeholder="Chọn" />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="tienThue"
                 label="Tiền thuế"
@@ -217,7 +217,7 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
           </Row>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="giaTriSauThue"
                 label="Giá trị sau thuế"
@@ -226,7 +226,7 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
                 <InputNumber {...moneyProps} placeholder="0" addonAfter="VNĐ" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="trangThai" label="Trạng thái">
                 <Select options={TRANG_THAI_OPTIONS} allowClear placeholder="Chọn trạng thái" />
               </Form.Item>
@@ -234,7 +234,7 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
           </Row>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="doiTuongId" label="Chủ đầu tư">
                 <Select
                   placeholder="Chọn chủ đầu tư"
@@ -245,7 +245,7 @@ export default function TaoNhanhHopDongModal({ onCreated }: Props) {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="sanPhamId" label="Sản phẩm">
                 <Select
                   placeholder="Chọn sản phẩm"

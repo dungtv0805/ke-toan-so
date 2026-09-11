@@ -655,7 +655,7 @@ const DuAnPage: React.FC = () => {
       >
         <Form form={form} layout="vertical" className="mt-2" size="small">
           <Row gutter={12}>
-            <Col span={8}>
+            <Col xs={24} sm={12} md={8}>
               <Form.Item
                 name="ma"
                 label={fl('ma', 'Mã dự án')}
@@ -668,7 +668,7 @@ const DuAnPage: React.FC = () => {
                 <Input placeholder="VD: DA001" />
               </Form.Item>
             </Col>
-            <Col span={16}>
+            <Col xs={24} sm={16}>
               <Form.Item
                 name="ten"
                 label={fl('ten', 'Tên dự án')}
@@ -699,7 +699,7 @@ const DuAnPage: React.FC = () => {
           </Form.Item>
 
           <Row gutter={12}>
-            <Col span={14}>
+            <Col xs={24} sm={14}>
               <Form.Item
                 name="thoiGian"
                 label={fl('thoiGian', 'Thời gian thực hiện')}
@@ -712,7 +712,7 @@ const DuAnPage: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={10}>
+            <Col xs={24} sm={12} md={10}>
               <Form.Item
                 name="trangThai"
                 label={fl('trangThai', 'Trạng thái')}

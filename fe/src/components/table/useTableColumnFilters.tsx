@@ -12,6 +12,7 @@ import {
   type FilterKind,
 } from './columnFilter';
 import { readPinnedKeys, savePinnedKeys, togglePinned } from './columnPin';
+import { useManHinh } from '@/hooks/useManHinh';
 
 /**
  * Lọc + cố định cột ngay tại header (antd `filterDropdown`).
@@ -56,7 +57,14 @@ export function useTableColumnFilters(pageKey: string) {
     [pageKey],
   );
 
-  const pinnedSet = useMemo(() => new Set(pinned), [pinned]);
+  // Cột ghim người dùng tự chọn là thói quen trên màn máy tính (lưu theo trình
+  // duyệt). Trên điện thoại vài cột ghim là hết chỗ — bỏ qua, chỉ còn cột ghim
+  // do trang khai sẵn (xem ghimTheoManHinh). Lựa chọn đã lưu vẫn nguyên.
+  const dienThoai = useManHinh() === 'mobile';
+  const pinnedSet = useMemo(
+    () => (dienThoai ? new Set<string>() : new Set(pinned)),
+    [pinned, dienThoai],
+  );
 
   /**
    * Gắn popover lọc + cố định vào một cột. `title` phải là chuỗi (dùng làm nhãn "Lọc ...").
@@ -107,7 +115,7 @@ export function useTableColumnFilters(pageKey: string) {
   return {
     filters,
     filtering: hasActiveFilters(filters),
-    hasPinned: pinned.length > 0,
+    hasPinned: pinnedSet.size > 0,
     filterable,
     matches,
   };

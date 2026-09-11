@@ -690,20 +690,20 @@ export default function QuanLyHopDongPage() {
             {/* Thông tin HĐ (chỉ đọc) */}
             <Card size="small" className="bg-gray-50">
               <Row gutter={12}>
-                <Col span={12}><Text type="secondary">Tên công trình:</Text> {current.tenCongTrinh}</Col>
-                <Col span={6}><Text type="secondary">Giá trị:</Text> {fmtCur(current.giaTriSauThue)}</Col>
-                <Col span={6}><Text type="secondary">Chủ đầu tư:</Text> {doiTuongMap[current.doiTuongId || ''] || '-'}</Col>
+                <Col xs={24} sm={12}><Text type="secondary">Tên công trình:</Text> {current.tenCongTrinh}</Col>
+                <Col xs={24} sm={12} md={6}><Text type="secondary">Giá trị:</Text> {fmtCur(current.giaTriSauThue)}</Col>
+                <Col xs={24} sm={12} md={6}><Text type="secondary">Chủ đầu tư:</Text> {doiTuongMap[current.doiTuongId || ''] || '-'}</Col>
               </Row>
             </Card>
 
             <Form form={form} layout="vertical" size="small">
               <Row gutter={12}>
-                <Col span={12}>
+                <Col xs={24} sm={12}>
                   <Form.Item name="phuTrachHoSo" label={fl('phuTrachHoSo', 'Phụ trách hồ sơ')}>
                     <Input placeholder="Tên người phụ trách" />
                   </Form.Item>
                 </Col>
-                <Col span={12}>
+                <Col xs={24} sm={12}>
                   <Form.Item name="trangThaiHoSo" label={fl('trangThaiHoSo', 'Trạng thái hồ sơ')}>
                     <Input placeholder="VD: Đang theo dõi" />
                   </Form.Item>
@@ -712,17 +712,17 @@ export default function QuanLyHopDongPage() {
 
               <Divider orientation="left">Quyết toán</Divider>
               <Row gutter={12}>
-                <Col span={8}>
+                <Col xs={24} sm={12} md={8}>
                   <Form.Item name={['quyetToan', 'so']} label="Số quyết toán">
                     <Input />
                   </Form.Item>
                 </Col>
-                <Col span={8}>
+                <Col xs={24} sm={12} md={8}>
                   <Form.Item name={['quyetToan', 'ngay']} label="Ngày">
                     <DatePicker format="DD/MM/YYYY" className="w-full" />
                   </Form.Item>
                 </Col>
-                <Col span={8}>
+                <Col xs={24} sm={12} md={8}>
                   <Form.Item name={['quyetToan', 'giaTri']} label="Giá trị quyết toán">
                     <InputNumber {...moneyProps} addonAfter="VNĐ" />
                   </Form.Item>
@@ -731,22 +731,22 @@ export default function QuanLyHopDongPage() {
 
               <Divider orientation="left">Bảo hành theo dõi</Divider>
               <Row gutter={12}>
-                <Col span={6}>
+                <Col xs={24} sm={12} md={6}>
                   <Form.Item name={['baoHanhTheoDoi', 'giaTri']} label="Giá trị BH">
                     <InputNumber {...moneyProps} />
                   </Form.Item>
                 </Col>
-                <Col span={6}>
+                <Col xs={24} sm={12} md={6}>
                   <Form.Item name={['baoHanhTheoDoi', 'soNgay']} label="Số ngày">
                     <InputNumber className="w-full" min={0} />
                   </Form.Item>
                 </Col>
-                <Col span={6}>
+                <Col xs={24} sm={12} md={6}>
                   <Form.Item name={['baoHanhTheoDoi', 'ngayGiaiToaBL']} label="Ngày giải tỏa BL">
                     <DatePicker format="DD/MM/YYYY" className="w-full" />
                   </Form.Item>
                 </Col>
-                <Col span={6}>
+                <Col xs={24} sm={12} md={6}>
                   <Form.Item name={['baoHanhTheoDoi', 'trangThai']} label="Trạng thái">
                     <Input />
                   </Form.Item>
@@ -803,9 +803,9 @@ export default function QuanLyHopDongPage() {
             {/* Tổng tự tính */}
             <Card size="small">
               <Row gutter={12}>
-                <Col span={8}><Title level={5} className="!mb-0">Đã thanh toán: <Text type="success">{fmtCur(daThanhToan)}</Text></Title></Col>
-                <Col span={8}><Title level={5} className="!mb-0">Đã trả hóa đơn: {fmtCur(daTraHoaDon)}</Title></Col>
-                <Col span={8}><Title level={5} className="!mb-0">Còn lại: <Text type="warning">{fmtCur(conLai)}</Text></Title></Col>
+                <Col xs={24} sm={12} md={8}><Title level={5} className="!mb-0">Đã thanh toán: <Text type="success">{fmtCur(daThanhToan)}</Text></Title></Col>
+                <Col xs={24} sm={12} md={8}><Title level={5} className="!mb-0">Đã trả hóa đơn: {fmtCur(daTraHoaDon)}</Title></Col>
+                <Col xs={24} sm={12} md={8}><Title level={5} className="!mb-0">Còn lại: <Text type="warning">{fmtCur(conLai)}</Text></Title></Col>
               </Row>
             </Card>
           </div>
