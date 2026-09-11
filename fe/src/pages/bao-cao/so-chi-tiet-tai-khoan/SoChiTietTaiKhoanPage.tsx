@@ -209,6 +209,8 @@ const SoChiTietTaiKhoanPage: React.FC = () => {
               showSearch
               placeholder="Chọn tài khoản (bắt buộc)"
               style={{ minWidth: 320, maxWidth: 520 }}
+              // Điện thoại: ô bắt buộc chiếm trọn một hàng, không bị kẹp cạnh nút.
+              className="dt:!basis-full"
               options={accountOptions}
               value={maTaiKhoans}
               onChange={setMaTaiKhoans}

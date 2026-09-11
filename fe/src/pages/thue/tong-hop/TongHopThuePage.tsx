@@ -18,6 +18,7 @@ import { taxReportService, TongHopThue } from "@/services/taxService";
 import { useTableColumnFilters } from "@/components/table/useTableColumnFilters";
 import SectionNav from "@/components/layout/SectionNav";
 import { THUE_NAV } from "@/config/sectionNavs";
+import { useManHinh } from "@/hooks/useManHinh";
 
 const { Text, Title } = Typography;
 
@@ -36,8 +37,12 @@ type Filterable = ReturnType<typeof useTableColumnFilters>["filterable"];
 const cellValue = (r: ChiTieuRow, key: string): string | undefined =>
   key === "chiTieu" ? r.chiTieu : undefined;
 
+/** Bề rộng cột "Số tiền" trên điện thoại: 220px ở màn 390px chỉ chừa ~100px cho
+ *  tên chỉ tiêu (xuống 3–4 dòng); số tiền dài nhất (~15 chữ số) vừa trong 130px. */
+const RONG_SO_TIEN_DIEN_THOAI = 130;
+
 /** 2 bảng dùng chung bố cục cột, nhưng mỗi bảng có bộ lọc + cột ghim riêng. */
-const buildColumns = (filterable: Filterable): ColumnsType<ChiTieuRow> => [
+const buildColumns = (filterable: Filterable, dienThoai = false): ColumnsType<ChiTieuRow> => [
   filterable<ChiTieuRow>({
     title: "Chỉ tiêu",
     dataIndex: "chiTieu",
@@ -48,7 +53,7 @@ const buildColumns = (filterable: Filterable): ColumnsType<ChiTieuRow> => [
     title: "Số tiền",
     dataIndex: "giaTri",
     key: "giaTri",
-    width: 220,
+    width: dienThoai ? RONG_SO_TIEN_DIEN_THOAI : 220,
     align: "right" as const,
     render: (v: number, r: ChiTieuRow) =>
       r.strong ? <Text strong>{fmt(v)}</Text> : fmt(v),
@@ -90,6 +95,7 @@ const TongHopThuePage: React.FC = () => {
   // Bảng chỉ tiêu phẳng, không có dòng tổng cộng gộp → lọc thẳng trên mảng.
   const vatFilters = useTableColumnFilters("thue-tong-hop-vat");
   const nvFilters = useTableColumnFilters("thue-tong-hop-nghia-vu");
+  const dienThoai = useManHinh() === "mobile";
 
   const vatRows: ChiTieuRow[] = [
     { key: "1", chiTieu: "Thuế GTGT đầu vào (mua vào)", giaTri: data?.vatDauVao },
@@ -156,7 +162,9 @@ const TongHopThuePage: React.FC = () => {
             className="mb-3"
             message={`Còn ${data?.soHoaDonChoBoSung} hóa đơn chưa đủ thông tin trong kỳ (cả mua vào lẫn bán ra) — chưa được tính vào số thuế`}
             action={
-              <Space size={8}>
+              // Điện thoại: hai liên kết xếp dọc — nằm ngang thì chiếm ~200px, câu
+              // cảnh báo bên cạnh bị ép xuống 6–7 dòng.
+              <Space size={8} direction={dienThoai ? "vertical" : "horizontal"}>
                 <Link to="/thue/bang-ke-mua-vao">Bảng kê mua vào</Link>
                 <Link to="/thue/bang-ke-ban-ra">Bảng kê bán ra</Link>
               </Space>
@@ -166,7 +174,7 @@ const TongHopThuePage: React.FC = () => {
 
         <Title level={5}>Thuế giá trị gia tăng</Title>
         <Table<ChiTieuRow>
-          columns={buildColumns(vatFilters.filterable)}
+          columns={buildColumns(vatFilters.filterable, dienThoai)}
           dataSource={vatView}
           rowKey="key"
           loading={loading}
@@ -179,7 +187,7 @@ const TongHopThuePage: React.FC = () => {
 
         <Title level={5}>Tổng hợp nghĩa vụ ngân sách</Title>
         <Table<ChiTieuRow>
-          columns={buildColumns(nvFilters.filterable)}
+          columns={buildColumns(nvFilters.filterable, dienThoai)}
           dataSource={nvView}
           rowKey="key"
           loading={loading}

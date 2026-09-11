@@ -22,6 +22,8 @@ import { useTableColumnFilters } from "@/components/table/useTableColumnFilters"
 import { filterTndnRows } from "./tndnFilter";
 import SectionNav from "@/components/layout/SectionNav";
 import { THUE_NAV } from "@/config/sectionNavs";
+import { useManHinh } from "@/hooks/useManHinh";
+import { RONG_COT_GHIM_DIEN_THOAI } from "@/components/table/ghimTheoManHinh";
 
 const { Text, Title } = Typography;
 
@@ -222,6 +224,12 @@ const BaoCaoTNDNPage: React.FC = () => {
   const { filterable, filters, hasPinned } = useTableColumnFilters("thue-bao-cao-tndn");
   const viewRows = useMemo(() => filterTndnRows(ROWS, filters), [filters]);
 
+  // Điện thoại: bảng rộng ~1350px, vuốt ngang là mất tên chỉ tiêu → ghim cột
+  // "Chỉ tiêu" (hẹp lại, xuống dòng). Muốn ghim nó thì cột TT đứng trước cũng
+  // phải ghim — phí chỗ ở màn 390px — nên bỏ cột TT và ghép số TT vào đầu tên
+  // ("1. Doanh thu…"). Dòng tiêu đề nhóm vẫn gộp 7 ô = trọn bảng 7 cột.
+  const dienThoai = useManHinh() === "mobile";
+
   const quarterCol = (qi: number) => ({
     title: `Quý ${qi + 1}`,
     key: `q${qi}`,
@@ -232,27 +240,31 @@ const BaoCaoTNDNPage: React.FC = () => {
     render: (_: unknown, row: RowDef) => renderQuarter(row, qi),
   });
 
+  const cotTT = {
+    title: "TT",
+    dataIndex: "tt",
+    key: "tt",
+    width: 44,
+    align: "center" as const,
+    onCell: (row: RowDef) =>
+      row.kind === "section" ? { colSpan: 0 } : {},
+  };
+
   const columns = [
-    {
-      title: "TT",
-      dataIndex: "tt",
-      key: "tt",
-      width: 44,
-      align: "center" as const,
-      onCell: (row: RowDef) =>
-        row.kind === "section" ? { colSpan: 0 } : {},
-    },
+    ...(dienThoai ? [] : [cotTT]),
     filterable<RowDef>({
       title: "Chỉ tiêu",
       dataIndex: "label",
       key: "label",
-      width: 280,
+      width: dienThoai ? RONG_COT_GHIM_DIEN_THOAI : 280,
+      fixed: dienThoai ? ("left" as const) : undefined,
       onCell: (row: RowDef) =>
         row.kind === "section" ? { colSpan: 7 } : {},
       render: (v: string, row: RowDef) => {
         if (row.kind === "section")
           return <Text strong className="text-primary">{v}</Text>;
-        return row.strong ? <Text strong>{v}</Text> : v;
+        const nhan = dienThoai && row.tt ? `${row.tt}. ${v}` : v;
+        return row.strong ? <Text strong>{nhan}</Text> : nhan;
       },
     }),
     quarterCol(0),

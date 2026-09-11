@@ -4,6 +4,8 @@ import { TeamOutlined } from '@ant-design/icons';
 import { BarChart, Bar, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatCurrency, DASH_COLORS, CHART_GRID, nhanTrieu } from './format';
 import type { DoanhSoChieuRow } from '@/services/doanhSoService';
+import { useManHinh } from '@/hooks/useManHinh';
+import { rongTrucTen } from './bieuDoTheoManHinh';
 
 /**
  * Các chiều của tab Bán hàng.
@@ -31,11 +33,12 @@ interface Props {
 
 const DoanhSoTheoChieuChart: React.FC<Props> = ({ data, dimension, onDimensionChange, loading }) => {
   const rows = data.slice(0, 10);
+  const manHinh = useManHinh();
 
   return (
     <Card
       title={<span className="text-sm sm:text-base"><TeamOutlined className="text-primary mr-2" />Doanh số theo chiều</span>}
-      extra={<Select size="small" value={dimension} onChange={onDimensionChange} options={CHIEU_BAN_HANG} style={{ width: 190 }} />}
+      extra={<Select size="small" value={dimension} onChange={onDimensionChange} options={CHIEU_BAN_HANG} style={{ width: 190 }} className="dt:!w-[160px]" />}
       loading={loading}
     >
       {rows.length === 0 ? (
@@ -45,7 +48,7 @@ const DoanhSoTheoChieuChart: React.FC<Props> = ({ data, dimension, onDimensionCh
           <BarChart data={rows} layout="vertical" margin={{ top: 8, right: 56, left: 8, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} horizontal={false} />
             <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={nhanTrieu} />
-            <YAxis type="category" dataKey="ten" width={150} tick={{ fontSize: 11 }} />
+            <YAxis type="category" dataKey="ten" width={rongTrucTen(manHinh, 150)} tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: number) => formatCurrency(v)} />
             <Bar dataKey="soTien" name="Doanh số" fill={DASH_COLORS.revenue} radius={[0, 3, 3, 0]} barSize={14}>
               <LabelList dataKey="soTien" position="right" formatter={nhanTrieu} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />

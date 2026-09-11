@@ -5,6 +5,8 @@ import { ComposedChart, Bar, Line, LabelList, XAxis, YAxis, CartesianGrid, Toolt
 import { Link } from 'react-router-dom';
 import { formatCurrency, DASH_COLORS, CHART_GRID, nhanTrieu } from './format';
 import type { DoanhSoThoiGianPoint } from '@/services/doanhSoService';
+import { useManHinh } from '@/hooks/useManHinh';
+import { hienNhanSo } from './bieuDoTheoManHinh';
 
 export type GroupBy = 'ngay' | 'thang' | 'quy' | 'nam';
 
@@ -22,11 +24,13 @@ interface Props {
   loading?: boolean;
 }
 
-const DoanhSoTheoThoiGianChart: React.FC<Props> = ({ data, groupBy, onGroupByChange, loading }) => (
+const DoanhSoTheoThoiGianChart: React.FC<Props> = ({ data, groupBy, onGroupByChange, loading }) => {
+  const coNhan = hienNhanSo(useManHinh(), data.length);
+  return (
   <Card
     title={<span className="text-sm sm:text-base"><BarChartOutlined className="text-primary mr-2" />Doanh số theo thời gian</span>}
     extra={
-      <Space>
+      <Space wrap>
         <Segmented size="small" value={groupBy} options={OPTIONS} onChange={(v) => onGroupByChange(v as GroupBy)} />
         <Link to="/bao-cao/doanh-thu" className="text-xs">Xem chi tiết</Link>
       </Space>
@@ -44,15 +48,16 @@ const DoanhSoTheoThoiGianChart: React.FC<Props> = ({ data, groupBy, onGroupByCha
           <Tooltip formatter={(v: number) => formatCurrency(v)} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
           <Bar dataKey="kyNay" name="Kỳ này" fill={DASH_COLORS.balance} radius={[3, 3, 0, 0]} barSize={18}>
-            <LabelList dataKey="kyNay" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: DASH_COLORS.balance }} />
+            {coNhan && <LabelList dataKey="kyNay" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: DASH_COLORS.balance }} />}
           </Bar>
           <Line type="monotone" dataKey="cungKy" name="Cùng kỳ năm trước" stroke={DASH_COLORS.accent} strokeWidth={2} dot={{ r: 2 }}>
-            <LabelList dataKey="cungKy" position="bottom" formatter={nhanTrieu} style={{ fontSize: 10, fill: DASH_COLORS.accent }} />
+            {coNhan && <LabelList dataKey="cungKy" position="bottom" formatter={nhanTrieu} style={{ fontSize: 10, fill: DASH_COLORS.accent }} />}
           </Line>
         </ComposedChart>
       </ResponsiveContainer>
     )}
   </Card>
-);
+  );
+};
 
 export default DoanhSoTheoThoiGianChart;

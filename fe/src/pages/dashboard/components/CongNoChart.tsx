@@ -5,6 +5,8 @@ import { LineChart, Line, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, Legen
 import { dashboardService } from '@/services/dashboardService';
 import { sliceToRange } from '@/components/shared/period';
 import { formatCurrency, DASH_COLORS, CHART_GRID, nhanTrieu } from './format';
+import { useManHinh } from '@/hooks/useManHinh';
+import { hienNhanSo } from './bieuDoTheoManHinh';
 
 interface Props { year: number; startMonth: number; endMonth: number; }
 
@@ -20,6 +22,7 @@ const CongNoChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
     [full, isWeekly, startMonth, endMonth],
   );
   const hasData = data.some((d) => d.tongPhaiThu || d.tongPhaiTra);
+  const coNhan = hienNhanSo(useManHinh(), data.length);
 
   return (
     <Card
@@ -39,10 +42,10 @@ const CongNoChart: React.FC<Props> = ({ year, startMonth, endMonth }) => {
             <Tooltip formatter={(value: number) => formatCurrency(value)} labelFormatter={(l) => `${isWeekly ? 'Tuần' : 'Tháng'} ${l}`} />
             <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
             <Line type="monotone" dataKey="tongPhaiThu" name="Tổng phải thu" stroke={DASH_COLORS.revenue} strokeWidth={2} dot={{ r: 3 }}>
-              <LabelList dataKey="tongPhaiThu" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: DASH_COLORS.revenue }} />
+              {coNhan && <LabelList dataKey="tongPhaiThu" position="top" formatter={nhanTrieu} style={{ fontSize: 10, fill: DASH_COLORS.revenue }} />}
             </Line>
             <Line type="monotone" dataKey="tongPhaiTra" name="Tổng phải trả" stroke={DASH_COLORS.expense} strokeWidth={2} dot={{ r: 3 }}>
-              <LabelList dataKey="tongPhaiTra" position="bottom" formatter={nhanTrieu} style={{ fontSize: 10, fill: DASH_COLORS.expense }} />
+              {coNhan && <LabelList dataKey="tongPhaiTra" position="bottom" formatter={nhanTrieu} style={{ fontSize: 10, fill: DASH_COLORS.expense }} />}
             </Line>
           </LineChart>
         </ResponsiveContainer>

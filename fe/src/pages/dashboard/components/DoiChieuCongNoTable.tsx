@@ -7,6 +7,7 @@ import { formatCurrency } from './format';
 import { exportReportExcel } from '@/utils/exportReportExcel';
 import { buildDoiChieuSheets } from '../doiChieuExport';
 import type { DoiChieuRow } from '../trialBalanceDerive';
+import { useManHinh } from '@/hooks/useManHinh';
 
 interface Props {
   thu: DoiChieuRow[];
@@ -37,6 +38,7 @@ interface BangProps {
 
 const BangMotBen: React.FC<BangProps> = ({ tieuDe, loai, rows, loading, kyLabel }) => {
   const [exporting, setExporting] = useState(false);
+  const manHinh = useManHinh();
   // `rows` đã được doiChieuCongNo() sắp xếp số dư cuối kỳ lớn → nhỏ.
   const hienThi = rows.slice(0, GIOI_HAN_DONG);
 
@@ -77,7 +79,9 @@ const BangMotBen: React.FC<BangProps> = ({ tieuDe, loai, rows, loading, kyLabel 
         dataSource={hienThi}
         loading={loading}
         pagination={false}
-        scroll={{ y: 360 }}
+        // Điện thoại: hai cột cố định 130 + 140 ăn gần hết 330px, cột Đối tượng
+        // (tự co) chỉ còn vài chữ → cho bảng rộng 440 và vuốt ngang.
+        scroll={{ y: 360, x: manHinh === 'mobile' ? 440 : undefined }}
       />
       {rows.length > GIOI_HAN_DONG && (
         // Cắt bớt mà không nói ra thì bảng đọc như đã liệt kê hết.

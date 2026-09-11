@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Checkbox, Row, Col } from 'antd';
+import { useManHinh } from '@/hooks/useManHinh';
 import {
   ComposedChart, Bar, Line, PieChart, Pie, Cell, LineChart,
   RadialBarChart, RadialBar, PolarAngleAxis,
@@ -26,6 +27,11 @@ const RED = '#D6453B';
 // hay đo width=0 lúc vừa mở khiến chart cột/đường vẽ trắng).
 const PW = 200;
 const PH = 84;
+// Điện thoại: popup toàn màn, 2 ô mỗi hàng → mỗi ô chỉ còn ~155px bên trong, preview
+// 200px bị khung overflow-hidden cắt mất phần phải. Vẫn là số cố định (cùng lý do trên).
+const PW_DIEN_THOAI = 140;
+
+type PreviewProps = { w: number };
 
 /** Tất cả khối báo cáo của dashboard (key + nhãn). Thứ tự = thứ tự hiển thị. */
 export const DASHBOARD_BLOCKS: { key: string; label: string }[] = [
@@ -51,24 +57,24 @@ const lineData = [
   { x: 1, a: 30, b: 18 }, { x: 2, a: 34, b: 22 }, { x: 3, a: 28, b: 26 }, { x: 4, a: 40, b: 24 },
 ];
 
-const PreviewKQKD: React.FC = () => (
-  <ComposedChart width={PW} height={PH} data={comboData} margin={{ top: 6, right: 4, left: 4, bottom: 0 }}>
+const PreviewKQKD: React.FC<PreviewProps> = ({ w }) => (
+  <ComposedChart width={w} height={PH} data={comboData} margin={{ top: 6, right: 4, left: 4, bottom: 0 }}>
     <Bar dataKey="a" fill={TEAL} maxBarSize={12} />
     <Bar dataKey="b" fill={GRAY} maxBarSize={12} />
     <Line dataKey="c" stroke={ORANGE} strokeWidth={2} dot={false} />
   </ComposedChart>
 );
 
-const PreviewDongTien: React.FC = () => (
-  <ComposedChart width={PW} height={PH} data={comboData.map((d) => ({ ...d, b: -d.b }))} margin={{ top: 6, right: 4, left: 4, bottom: 0 }}>
+const PreviewDongTien: React.FC<PreviewProps> = ({ w }) => (
+  <ComposedChart width={w} height={PH} data={comboData.map((d) => ({ ...d, b: -d.b }))} margin={{ top: 6, right: 4, left: 4, bottom: 0 }}>
     <Bar dataKey="a" fill={TEAL} maxBarSize={12} />
     <Bar dataKey="b" fill={GRAY} maxBarSize={12} />
     <Line dataKey="c" stroke={ORANGE} strokeWidth={2} dot={false} />
   </ComposedChart>
 );
 
-const PreviewDonut: React.FC = () => (
-  <PieChart width={PW} height={PH}>
+const PreviewDonut: React.FC<PreviewProps> = ({ w }) => (
+  <PieChart width={w} height={PH}>
     <Pie data={donutData} dataKey="v" cx="50%" cy="50%" innerRadius={18} outerRadius={36} paddingAngle={2}>
       {donutData.map((_, i) => (
         <Cell key={i} fill={[NAVY, GOLD, '#2F5597', '#8497B0'][i % 4]} />
@@ -77,15 +83,15 @@ const PreviewDonut: React.FC = () => (
   </PieChart>
 );
 
-const PreviewCongNo: React.FC = () => (
-  <LineChart width={PW} height={PH} data={lineData} margin={{ top: 8, right: 6, left: 6, bottom: 0 }}>
+const PreviewCongNo: React.FC<PreviewProps> = ({ w }) => (
+  <LineChart width={w} height={PH} data={lineData} margin={{ top: 8, right: 6, left: 6, bottom: 0 }}>
     <Line dataKey="a" stroke={TEAL} strokeWidth={2} dot={false} />
     <Line dataKey="b" stroke={RED} strokeWidth={2} dot={false} />
   </LineChart>
 );
 
-const PreviewCanDoi: React.FC = () => (
-  <div className="flex gap-1" style={{ width: PW, height: PH }}>
+const PreviewCanDoi: React.FC<PreviewProps> = ({ w }) => (
+  <div className="flex gap-1" style={{ width: w, height: PH }}>
     <div className="flex-1 flex flex-col">
       <div style={{ flex: 6, background: ORANGE }} />
       <div style={{ flex: 4, background: GOLD }} />
@@ -97,8 +103,8 @@ const PreviewCanDoi: React.FC = () => (
   </div>
 );
 
-const PreviewNvcs: React.FC = () => (
-  <div className="flex flex-col gap-[3px]" style={{ width: PW, height: PH, padding: 4 }}>
+const PreviewNvcs: React.FC<PreviewProps> = ({ w }) => (
+  <div className="flex flex-col gap-[3px]" style={{ width: w, height: PH, padding: 4 }}>
     <div style={{ height: 12, background: GRAY, opacity: 0.6, borderRadius: 2 }} />
     {[NAVY, TEAL, GOLD].map((c, i) => (
       <div key={i} className="flex gap-[3px]" style={{ flex: 1 }}>
@@ -110,14 +116,14 @@ const PreviewNvcs: React.FC = () => (
   </div>
 );
 
-const PreviewGauge: React.FC = () => (
-  <RadialBarChart width={PW} height={PH} cy={PH - 6} innerRadius="120%" outerRadius="160%" startAngle={180} endAngle={0} data={[{ value: 65 }]} barSize={9}>
+const PreviewGauge: React.FC<PreviewProps> = ({ w }) => (
+  <RadialBarChart width={w} height={PH} cy={PH - 6} innerRadius="120%" outerRadius="160%" startAngle={180} endAngle={0} data={[{ value: 65 }]} barSize={9}>
     <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
     <RadialBar dataKey="value" background fill={TEAL} cornerRadius={6} />
   </RadialBarChart>
 );
 
-const PREVIEWS: Record<string, React.FC> = {
+const PREVIEWS: Record<string, React.FC<PreviewProps>> = {
   kqkd: PreviewKQKD,
   dongTien: PreviewDongTien,
   tinhHinhThucHien: PreviewGauge,
@@ -137,6 +143,7 @@ interface Props {
 
 const DashboardSettingsModal: React.FC<Props> = ({ open, value, saving, onSave, onClose }) => {
   const [selected, setSelected] = useState<string[]>(value);
+  const dienThoai = useManHinh() === 'mobile';
 
   useEffect(() => {
     if (open) setSelected(value);
@@ -163,7 +170,7 @@ const DashboardSettingsModal: React.FC<Props> = ({ open, value, saving, onSave, 
           const Preview = PREVIEWS[b.key];
           const checked = selected.includes(b.key);
           return (
-            <Col xs={24} sm={12} md={8} key={b.key}>
+            <Col xs={12} sm={12} md={8} key={b.key}>
               <div
                 onClick={() => toggle(b.key, !checked)}
                 className="rounded-md border p-2 cursor-pointer h-full transition-colors"
@@ -174,7 +181,7 @@ const DashboardSettingsModal: React.FC<Props> = ({ open, value, saving, onSave, 
                   <Checkbox checked={checked} onChange={(e) => toggle(b.key, e.target.checked)} onClick={(e) => e.stopPropagation()} />
                 </div>
                 <div className="bg-muted/30 rounded flex items-center justify-center overflow-hidden" style={{ height: PH }}>
-                  {Preview && <Preview />}
+                  {Preview && <Preview w={dienThoai ? PW_DIEN_THOAI : PW} />}
                 </div>
               </div>
             </Col>

@@ -75,9 +75,12 @@ function buildDateRange(
   }
 }
 
+// Điện thoại: mỗi ô lọc co giãn chia đều hàng (tối thiểu ~120px, đủ 2 ô một
+// hàng ở màn 390px) thay vì giữ bề rộng cố định 100–160px rồi lệch hàng. Ô chọn
+// bên trong phủ kín ô (`dt:!w-full` đè `style.width`).
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1 dt:min-w-[120px] dt:flex-1">
       <label className="text-xs font-medium text-muted-foreground">{label}</label>
       {children}
     </div>
@@ -107,6 +110,7 @@ export function KqkdFilter({ onFilter, loading }: KqkdFilterProps) {
         onChange={(v) => setYear(Number(v))}
         options={yearOptions}
         style={{ width: 100 }}
+        className="dt:!w-full"
       />
     </Field>
   );
@@ -121,6 +125,7 @@ export function KqkdFilter({ onFilter, loading }: KqkdFilterProps) {
               onChange={(v) => setPeriodType(v as KqkdPeriodType)}
               options={PERIOD_OPTIONS}
               style={{ width: 140 }}
+              className="dt:!w-full"
             />
           </Field>
 
@@ -132,6 +137,7 @@ export function KqkdFilter({ onFilter, loading }: KqkdFilterProps) {
                   onChange={(v) => setMonth(Number(v))}
                   options={MONTHS}
                   style={{ width: 120 }}
+                  className="dt:!w-full"
                 />
               </Field>
               {yearField}
@@ -146,6 +152,7 @@ export function KqkdFilter({ onFilter, loading }: KqkdFilterProps) {
                   onChange={(v) => setQuarter(Number(v))}
                   options={QUARTERS}
                   style={{ width: 150 }}
+                  className="dt:!w-full"
                 />
               </Field>
               {yearField}
@@ -162,6 +169,7 @@ export function KqkdFilter({ onFilter, loading }: KqkdFilterProps) {
                   value={customFrom ? dayjs(customFrom) : null}
                   onChange={(d) => setCustomFrom(d ? d.format('YYYY-MM-DD') : '')}
                   style={{ width: 160 }}
+                  className="dt:!w-full"
                 />
               </Field>
               <Field label="Đến ngày">
@@ -170,6 +178,7 @@ export function KqkdFilter({ onFilter, loading }: KqkdFilterProps) {
                   value={customTo ? dayjs(customTo) : null}
                   onChange={(d) => setCustomTo(d ? d.format('YYYY-MM-DD') : '')}
                   style={{ width: 160 }}
+                  className="dt:!w-full"
                 />
               </Field>
             </>

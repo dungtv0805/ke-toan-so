@@ -369,7 +369,8 @@ const CongNoPhaiTraPage: React.FC = () => {
             />
           )}
           
-          <Space style={{ marginBottom: 16 }}>
+          {/* wrap: 3 nút lọc có kèm số đếm (~340px) tràn khỏi màn điện thoại. */}
+          <Space wrap style={{ marginBottom: 16 }}>
             <Button 
               type={filterStatus === 'all' ? 'primary' : 'default'}
               onClick={() => setFilterStatus('all')}
@@ -472,8 +473,8 @@ const CongNoPhaiTraPage: React.FC = () => {
         // SẮC (xanh → vàng → cam → đỏ → đỏ đậm) chứ không theo độ sáng — vốn đã không
         // đơn điệu về độ sáng từ đầu (#faad14 sáng hơn cả bậc xanh cũ). Năm bậc còn lại
         // giữ nguyên hex.
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} lg={8}>
+        <Row gutter={[16, 16]} className="bc-the-so-gon">
+          <Col xs={12} sm={12} lg={8}>
             <Card>
               <Statistic
                 title="Chưa đến hạn"
@@ -485,7 +486,7 @@ const CongNoPhaiTraPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} lg={8}>
+          <Col xs={12} sm={12} lg={8}>
             <Card>
               <Statistic
                 title="Quá hạn 1-30 ngày"
@@ -497,7 +498,7 @@ const CongNoPhaiTraPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} lg={8}>
+          <Col xs={12} sm={12} lg={8}>
             <Card>
               <Statistic
                 title="Quá hạn 31-60 ngày"
@@ -509,7 +510,7 @@ const CongNoPhaiTraPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} lg={8}>
+          <Col xs={12} sm={12} lg={8}>
             <Card>
               <Statistic
                 title="Quá hạn 61-90 ngày"
@@ -521,7 +522,7 @@ const CongNoPhaiTraPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} lg={8}>
+          <Col xs={12} sm={12} lg={8}>
             <Card>
               <Statistic
                 title="Quá hạn trên 90 ngày"
@@ -533,7 +534,7 @@ const CongNoPhaiTraPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} lg={8}>
+          <Col xs={12} sm={12} lg={8}>
             <Card>
               <Statistic
                 title="Tổng nợ quá hạn"
@@ -578,9 +579,10 @@ const CongNoPhaiTraPage: React.FC = () => {
           </Space>
         }
       >
-        {/* Stats Cards */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={4}>
+        {/* Stats Cards — điện thoại 2 thẻ mỗi hàng (xs=12) thay vì 6 hàng chồng;
+            số tiền đầy đủ nên cỡ chữ thẻ thu lại (.bc-the-so-gon). */}
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }} className="bc-the-so-gon">
+          <Col xs={12} sm={12} lg={4}>
             <Card size="small" className="stat-card">
               <Statistic
                 title="Số khoản nợ"
@@ -589,7 +591,7 @@ const CongNoPhaiTraPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} lg={4}>
+          <Col xs={12} sm={12} lg={4}>
             <Card size="small" className="stat-card">
               <Statistic
                 title="Tổng công nợ"
@@ -599,7 +601,7 @@ const CongNoPhaiTraPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} lg={4}>
+          <Col xs={12} sm={12} lg={4}>
             <Card size="small" className="stat-card stat-card-success">
               <Statistic
                 title="Đã trả"
@@ -610,7 +612,7 @@ const CongNoPhaiTraPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} lg={4}>
+          <Col xs={12} sm={12} lg={4}>
             <Card size="small" className="stat-card stat-card-destructive">
               <Statistic
                 title="Còn phải trả"
@@ -621,7 +623,7 @@ const CongNoPhaiTraPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} lg={4}>
+          <Col xs={12} sm={12} lg={4}>
             <Card size="small" className="stat-card stat-card-destructive">
               <Statistic
                 title="Số khoản quá hạn"
@@ -631,7 +633,7 @@ const CongNoPhaiTraPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} lg={4}>
+          <Col xs={12} sm={12} lg={4}>
             <Card size="small" className="stat-card stat-card-destructive">
               <Statistic
                 title="Tổng nợ quá hạn"

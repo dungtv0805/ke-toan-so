@@ -5,6 +5,8 @@ import { BarChart, Bar, LabelList, XAxis, YAxis, CartesianGrid, Tooltip, Respons
 import { useQuery } from '@tanstack/react-query';
 import { dashboardService } from '@/services/dashboardService';
 import { formatCurrency, DASH_COLORS, CHART_GRID, nhanTrieu } from './format';
+import { useManHinh } from '@/hooks/useManHinh';
+import { rongTrucTen } from './bieuDoTheoManHinh';
 
 export const CHIEU_OPTIONS = [
   { label: 'Đối tượng', value: 'doi-tuong' },
@@ -30,6 +32,7 @@ const LoiNhuanTheoChieuChart: React.FC<Props> = ({ year, startMonth, endMonth })
   });
 
   const rows = [...data].sort((a, b) => b.soTien - a.soTien).slice(0, 10);
+  const manHinh = useManHinh();
 
   return (
     <Card
@@ -44,7 +47,7 @@ const LoiNhuanTheoChieuChart: React.FC<Props> = ({ year, startMonth, endMonth })
           <BarChart data={rows} layout="vertical" margin={{ top: 8, right: 56, left: 8, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} horizontal={false} />
             <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={nhanTrieu} />
-            <YAxis type="category" dataKey="ten" width={140} tick={{ fontSize: 11 }} />
+            <YAxis type="category" dataKey="ten" width={rongTrucTen(manHinh, 140)} tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: number) => formatCurrency(v)} />
             <Bar dataKey="soTien" name="Lợi nhuận" fill={DASH_COLORS.balance} radius={[0, 3, 3, 0]} barSize={14}>
               <LabelList dataKey="soTien" position="right" formatter={nhanTrieu} style={{ fontSize: 10, fill: DASH_COLORS.muted }} />

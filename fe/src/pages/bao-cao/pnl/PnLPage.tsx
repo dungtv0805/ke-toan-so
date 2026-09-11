@@ -224,9 +224,9 @@ const PnLPage: React.FC = () => {
           </Space>
         }
       >
-        {/* Summary Cards */}
-        <Row gutter={16} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} md={6}>
+        {/* Summary Cards — điện thoại 2 thẻ mỗi hàng (xs=12) thay vì 4 hàng chồng. */}
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }} className="bc-the-so-gon">
+          <Col xs={12} sm={12} md={6}>
             <Card size="small" className="stat-card stat-card-success">
               <Statistic
                 title="Doanh thu"
@@ -237,7 +237,7 @@ const PnLPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={12} sm={12} md={6}>
             <Card size="small" className="stat-card stat-card-destructive">
               <Statistic
                 title="Chi phí"
@@ -247,7 +247,7 @@ const PnLPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={12} sm={12} md={6}>
             <Card size="small" className="stat-card stat-card-success">
               <Statistic
                 title="LN trước thuế"
@@ -257,7 +257,7 @@ const PnLPage: React.FC = () => {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={12} sm={12} md={6}>
             <Card size="small" className="stat-card stat-card-success">
               <Statistic
                 title="LN sau thuế"
