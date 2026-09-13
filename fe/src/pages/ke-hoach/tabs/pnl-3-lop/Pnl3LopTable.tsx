@@ -1,147 +1,193 @@
 import React, { useMemo } from "react";
-import { Empty, Select, Space, Table, Tooltip, Typography } from "antd";
+import { Empty, Select, Space, Table, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
 import { useManHinh } from "@/hooks/useManHinh";
 import { RONG_COT_GHIM_DIEN_THOAI } from "@/components/table/ghimTheoManHinh";
-import { capCot, CAP_CHINH, CAP_NAM, tien } from "../lib/cotChung";
+import { capCot, CAP_CHINH, CAP_NAM, CAP_QUY, CAP_THANG, tien } from "../lib/cotChung";
+import { KHOANG_QUY } from "../lib/kyCot";
 import {
   ghep3Lop,
-  KY_OPTIONS,
+  giaTriO,
+  laLopTien,
+  LOP_OPTIONS,
+  mauSoPhanTram,
   type Hang3Lop,
-  type Ky,
+  type Lop,
 } from "./lib/pnl3LopRows";
 import { usePnl3LopHandler, usePnl3LopState } from "./Pnl3LopHandlerContext";
 
 const { Text } = Typography;
 
-const phanTramText = (v: number | null) =>
-  v === null ? "—" : `${(v * 100).toFixed(1)}%`;
+const GACH = <span className="text-gray-400">-</span>;
 
-/** Dòng cấp 0 là mục La Mã — in đậm để tách khỏi nhóm và khoản mục bên dưới. */
-const oSo = (row: Hang3Lop, giaTri: number) => (
-  <span className={row.cap === 0 ? "font-semibold" : undefined}>
-    {tien(giaTri)}
-  </span>
-);
+/** Ba lớp số tiền: hiện y như bảng P&L — 0 thành gạch ngang, âm đỏ trong ngoặc. */
+const oTien = (v: number, cap: Hang3Lop["cap"]) => {
+  if (v === 0) return GACH;
+  const chu = v < 0 ? `(${tien(Math.abs(v))})` : tien(v);
+  return (
+    <span
+      className={[cap === 0 ? "font-semibold" : "", v < 0 ? "text-red-500" : ""]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {chu}
+    </span>
+  );
+};
+
+/**
+ * Lớp CHÊNH LỆCH (Thực hiện − Kế hoạch). Xanh là làm hơn kế hoạch, đỏ là hụt —
+ * giữ đúng quy ước màu và dấu minus thật (−) của bảng cũ.
+ *
+ * Không gắn tooltip từng ô: bảng có tới 19 cột kỳ, 19 tooltip mỗi dòng chỉ làm
+ * vướng chuột. Câu giải thích đặt một lần ở thanh công cụ.
+ */
+const oChenhLech = (v: number) => {
+  if (v === 0) return GACH;
+  const duong = v > 0;
+  return (
+    <span
+      className={
+        duong ? "text-green-600 font-semibold" : "text-red-500 font-semibold"
+      }
+    >
+      {duong ? "+" : "−"}
+      {tien(Math.abs(v))}
+    </span>
+  );
+};
+
+/** Lớp % ĐẠT. `null` = kỳ đó chưa lập kế hoạch nên không có gì để đạt. */
+const oPhanTramDat = (v: number | null) => {
+  if (v === null) return <span className="text-gray-400">—</span>;
+  return (
+    <span className={v < 0 ? "text-red-500" : undefined}>
+      {`${(v * 100).toFixed(1)}%`}
+    </span>
+  );
+};
+
+/** Cột "%" — tỷ lệ trên doanh thu thuần cả năm của chính lớp đang xem. */
+const oPhanTramDoanhThu = (v: number | null) => {
+  if (v === null || v === 0) return GACH;
+  const chu = `${(Math.abs(v) * 100).toFixed(1)}%`;
+  return (
+    <span className={v < 0 ? "text-red-500" : undefined}>
+      {v < 0 ? `(${chu})` : chu}
+    </span>
+  );
+};
 
 export const Pnl3LopTable: React.FC = () => {
   const handler = usePnl3LopHandler();
   const [baoCao] = usePnl3LopState("baoCao", null);
   const [loading] = usePnl3LopState("loading", false);
-  const [ky] = usePnl3LopState("ky", "NAM");
+  const [lop] = usePnl3LopState("lop", "chenhLech");
   const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
   // Điện thoại: cột "Chỉ tiêu" 380px là cả màn chỉ thấy tên, vuốt sang thì mất
   // tên → ghim trái và hẹp lại (tên dài xuống dòng, không cắt "…").
   const dienThoai = useManHinh() === "mobile";
 
   const rows = useMemo<Hang3Lop[]>(
-    () => (baoCao ? ghep3Lop(baoCao, ky as Ky) : []),
-    [baoCao, ky],
+    () => (baoCao ? ghep3Lop(baoCao) : []),
+    [baoCao],
   );
 
-  const columns: ColumnsType<Hang3Lop> = [
-    {
-      title: "Chỉ tiêu",
-      dataIndex: "nhan",
-      key: "nhan",
-      width: dienThoai ? RONG_COT_GHIM_DIEN_THOAI : 380,
-      fixed: dienThoai ? ("left" as const) : undefined,
-      ...capCot(CAP_CHINH),
-      render: (v: string, row: Hang3Lop) => (
-        <span className={row.cap === 0 ? "font-semibold" : undefined}>{v}</span>
-      ),
-    },
-    {
-      title: "Kế hoạch",
-      key: "keHoach",
-      width: 160,
-      align: "right",
-      ...capCot(CAP_NAM),
-      render: (_: unknown, row: Hang3Lop) => oSo(row, row.keHoach),
-    },
-    {
-      title: "Dự báo",
-      key: "duBao",
-      width: 160,
-      align: "right",
-      ...capCot(CAP_NAM),
-      render: (_: unknown, row: Hang3Lop) => oSo(row, row.duBao),
-    },
-    {
-      title: "Thực hiện",
-      key: "thucHien",
-      width: 160,
-      align: "right",
-      ...capCot(CAP_NAM),
-      render: (_: unknown, row: Hang3Lop) => oSo(row, row.thucHien),
-    },
-    {
-      title: "Chênh lệch",
-      key: "chenhLech",
-      width: 160,
-      align: "right",
-      render: (_: unknown, row: Hang3Lop) => {
-        if (row.chenhLech === 0) return null;
-        const duong = row.chenhLech > 0;
-        return (
-          <Tooltip
-            title={
-              duong
-                ? "Thực hiện cao hơn kế hoạch"
-                : "Thực hiện thấp hơn kế hoạch"
-            }
-          >
-            <span
-              className={
-                duong
-                  ? "text-green-600 font-semibold"
-                  : "text-red-500 font-semibold"
-              }
-            >
-              {duong ? "+" : "−"}
-              {tien(Math.abs(row.chenhLech))}
-            </span>
-          </Tooltip>
-        );
+  const columns = useMemo<ColumnsType<Hang3Lop>>(() => {
+    const lopXem = lop as Lop;
+    const mauSo = baoCao ? mauSoPhanTram(baoCao, lopXem) : 0;
+
+    /** Một ô bất kỳ: lấy giá trị theo khoảng tháng rồi vẽ theo lớp đang xem. */
+    const o = (row: Hang3Lop, tu: number, den: number) => {
+      const v = giaTriO(row, lopXem, tu, den);
+      if (lopXem === "phanTramDat") return oPhanTramDat(v);
+      if (lopXem === "chenhLech") return oChenhLech(v ?? 0);
+      return oTien(v ?? 0, row.cap);
+    };
+
+    const cotKy = (
+      title: string,
+      tu: number,
+      den: number,
+      width: number,
+      cap: string,
+    ) => ({
+      title,
+      key: `${tu}-${den}`,
+      width,
+      align: "right" as const,
+      ...capCot(cap),
+      render: (_: unknown, row: Hang3Lop) => o(row, tu, den),
+    });
+
+    return [
+      {
+        title: "Chỉ tiêu",
+        dataIndex: "nhan",
+        key: "nhan",
+        width: dienThoai ? RONG_COT_GHIM_DIEN_THOAI : 380,
+        fixed: dienThoai ? ("left" as const) : undefined,
+        ...capCot(CAP_CHINH),
+        render: (v: string, row: Hang3Lop) => (
+          <span className={row.cap === 0 ? "font-semibold" : undefined}>{v}</span>
+        ),
       },
-    },
-    {
-      title: "% đạt",
-      key: "phanTramDat",
-      width: 100,
-      align: "right",
-      render: (_: unknown, row: Hang3Lop) => (
-        <Tooltip
-          title={
-            row.phanTramDat === null
-              ? "Chưa lập kế hoạch cho chỉ tiêu này nên không tính được tỷ lệ"
-              : undefined
-          }
-        >
-          <span>{phanTramText(row.phanTramDat)}</span>
-        </Tooltip>
-      ),
-    },
-  ];
+      cotKy("Năm", 0, 12, 140, CAP_NAM),
+      // Tỷ lệ trên doanh thu thuần chỉ có nghĩa với số tiền của MỘT lớp. Chênh
+      // lệch và % đạt không phải số tiền của lớp nào — bỏ hẳn cột đi thay vì
+      // vẽ một cột toàn gạch ngang.
+      ...(laLopTien(lopXem)
+        ? [
+            {
+              title: "%",
+              key: "phanTramDoanhThu",
+              width: 80,
+              align: "right" as const,
+              ...capCot(CAP_NAM),
+              render: (_: unknown, row: Hang3Lop) => {
+                if (mauSo === 0) return oPhanTramDoanhThu(null);
+                return oPhanTramDoanhThu((giaTriO(row, lopXem, 0, 12) ?? 0) / mauSo);
+              },
+            },
+          ]
+        : []),
+      cotKy("6 tháng đầu", 0, 6, 140, CAP_NAM),
+      cotKy("6 tháng cuối", 6, 12, 140, CAP_NAM),
+      {
+        title: "Quý",
+        key: "quy",
+        children: KHOANG_QUY.map(([tu, den], i) =>
+          cotKy(`Q${i + 1}`, tu, den, 130, CAP_QUY),
+        ),
+      },
+      {
+        title: "Tháng",
+        key: "thang",
+        children: Array.from({ length: 12 }, (_, i) =>
+          cotKy(`T${i + 1}`, i, i + 1, 130, CAP_THANG),
+        ),
+      },
+    ];
+  }, [baoCao, dienThoai, lop]);
 
   return (
     <div className="excel-container">
       <div className="excel-toolbar dt:flex-wrap">
         <Space size={8}>
           <Text type="secondary" className="text-xs">
-            Kỳ xem
+            Xem
           </Text>
           <Select
             size="small"
             style={{ width: 140 }}
-            value={ky}
-            options={KY_OPTIONS}
-            onChange={(v) => handler.executeEvent("doiKy", { ky: v as Ky })}
+            value={lop}
+            options={LOP_OPTIONS}
+            onChange={(v) => handler.executeEvent("doiLop", { lop: v as Lop })}
           />
         </Space>
         <span className="text-xs text-gray-500">
-          Chênh lệch và % đạt so Thực hiện với Kế hoạch
+          Chênh lệch và % đạt so Thực hiện với Kế hoạch, tính riêng trong từng kỳ
         </span>
       </div>
 
@@ -155,7 +201,16 @@ export const Pnl3LopTable: React.FC = () => {
           dataSource={rows}
           pagination={false}
           className="excel-table kh-bang"
+          // Mặc định đóng hết: mở trang chỉ thấy các dòng mục, như bảng P&L.
+          expandable={{ defaultExpandedRowKeys: [] }}
           scroll={{ x: "max-content", y: tableBodyHeight }}
+          rowClassName={(row) =>
+            row.key === "HOA_VON"
+              ? "kh-hang-hoa-von"
+              : row.cap === 0
+                ? "kh-hang-tong"
+                : ""
+          }
           locale={{ emptyText: <Empty description="Chưa có số liệu" /> }}
         />
       </div>

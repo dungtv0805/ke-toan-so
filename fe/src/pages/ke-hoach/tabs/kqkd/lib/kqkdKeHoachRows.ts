@@ -2,6 +2,8 @@ import type {
   KqkdKeHoachDong,
   KqkdKeHoachReport,
 } from "@/services/kqkdKeHoachService";
+// Phép cộng theo kỳ và công thức hòa vốn dùng chung với bảng P&L so sánh ba lớp.
+import { congKhoang, hoaVonKhoang, KHOANG_QUY, so } from "../../lib/kyCot";
 
 /** Một hàng của bảng KQKD kế hoạch. BE chỉ trả 12 tháng, phần còn lại tính ở đây. */
 export interface HangKqkd {
@@ -20,17 +22,9 @@ export interface HangKqkd {
   children?: HangKqkd[];
 }
 
-const so = (v?: number) => Number(v) || 0;
-
-const cong = (thang: number[], tu: number, den: number) => {
-  let tong = 0;
-  for (let i = tu; i < den; i++) tong += so(thang[i]);
-  return tong;
-};
-
 function dungHang(dong: KqkdKeHoachDong, mauSo: number): HangKqkd {
   const thang = Array.from({ length: 12 }, (_, i) => so(dong.thang?.[i]));
-  const nam = cong(thang, 0, 12);
+  const nam = congKhoang(thang, 0, 12);
   const con = (dong.con ?? []).map((c) => dungHang(c, mauSo));
 
   return {
@@ -38,9 +32,9 @@ function dungHang(dong: KqkdKeHoachDong, mauSo: number): HangKqkd {
     nhan: dong.soLaMa ? `${dong.soLaMa}. ${dong.ten}` : dong.ten,
     cap: dong.cap,
     thang,
-    quy: [0, 1, 2, 3].map((q) => cong(thang, q * 3, q * 3 + 3)),
-    sauThangDau: cong(thang, 0, 6),
-    sauThangCuoi: cong(thang, 6, 12),
+    quy: KHOANG_QUY.map(([tu, den]) => congKhoang(thang, tu, den)),
+    sauThangDau: congKhoang(thang, 0, 6),
+    sauThangCuoi: congKhoang(thang, 6, 12),
     nam,
     // Cùng một mẫu số cho cả bảng: doanh thu thuần cả năm, đúng cột "% DT thuần"
     // của trang Báo cáo KQKD.
@@ -51,32 +45,11 @@ function dungHang(dong: KqkdKeHoachDong, mauSo: number): HangKqkd {
 }
 
 /**
- * Doanh thu hòa vốn = tổng định phí / (1 − tổng biến phí / doanh thu thuần).
- *
- * Tính cho MỘT kỳ (một khoảng tháng), không cộng dồn được từ các kỳ nhỏ hơn:
- * nó là tỷ số nên hòa vốn cả năm khác tổng hòa vốn 12 tháng.
- *
- * Trả 0 khi không xác định được — doanh thu bằng 0, hoặc biến phí đã ăn hết
- * doanh thu (tỷ lệ số dư đảm phí ≤ 0, bán bao nhiêu cũng không hòa vốn). Cột
- * hiển thị vẽ số 0 thành dấu gạch ngang, đúng ý "chưa có số".
- */
-const hoaVon = (dinhPhi: number, bienPhi: number, doanhThu: number): number => {
-  if (doanhThu <= 0) return 0;
-  const tyLeSoDuDamPhi = 1 - bienPhi / doanhThu;
-  if (tyLeSoDuDamPhi <= 0) return 0;
-  return dinhPhi / tyLeSoDuDamPhi;
-};
-
-/**
  * Dòng cuối bảng. Mỗi cột tính riêng từ ba dãy 12 tháng BE trả về, cùng phạm vi
  * tháng với cột tương ứng của các dòng trên.
  */
 function dungHangHoaVon(report: KqkdKeHoachReport, mauSo: number): HangKqkd {
-  const dinhPhi = report.dinhPhiThang;
-  const bienPhi = report.bienPhiThang;
-  const doanhThu = report.doanhThuThuanThang;
-  const tinh = (tu: number, den: number) =>
-    hoaVon(cong(dinhPhi, tu, den), cong(bienPhi, tu, den), cong(doanhThu, tu, den));
+  const tinh = (tu: number, den: number) => hoaVonKhoang(report, tu, den);
 
   const nam = tinh(0, 12);
   return {
@@ -84,7 +57,7 @@ function dungHangHoaVon(report: KqkdKeHoachReport, mauSo: number): HangKqkd {
     nhan: "DOANH THU HÒA VỐN",
     cap: 0,
     thang: Array.from({ length: 12 }, (_, i) => tinh(i, i + 1)),
-    quy: [0, 1, 2, 3].map((q) => tinh(q * 3, q * 3 + 3)),
+    quy: KHOANG_QUY.map(([tu, den]) => tinh(tu, den)),
     sauThangDau: tinh(0, 6),
     sauThangCuoi: tinh(6, 12),
     nam,
