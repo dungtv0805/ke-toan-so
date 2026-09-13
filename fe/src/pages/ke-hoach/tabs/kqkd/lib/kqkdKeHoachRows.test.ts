@@ -1,196 +1,194 @@
 import { describe, expect, it } from "vitest";
-import { dungBangKqkd } from "./kqkdKeHoachRows";
+import {
+  dungBangKqkd,
+  giaTri,
+  phanTramDS,
+  tyTrong,
+  type HangKqkd,
+} from "./kqkdKeHoachRows";
 import type { KqkdKeHoachReport } from "@/services/kqkdKeHoachService";
 
-const thang = (...v: number[]) =>
-  Array.from({ length: 12 }, (_, i) => v[i] ?? 0);
+const m = (...v: number[]) => {
+  const a = Array(12).fill(0);
+  v.forEach((x, i) => (a[i] = x));
+  return a;
+};
 
-const baoCao = (
+const bc = (
   dong: KqkdKeHoachReport["dong"],
-  doanhThuThuanNam = 0,
-  hoaVon: Partial<
-    Pick<
-      KqkdKeHoachReport,
-      "doanhThuThuanThang" | "dinhPhiThang" | "bienPhiThang"
-    >
-  > = {},
+  them: Partial<KqkdKeHoachReport> = {},
 ): KqkdKeHoachReport => ({
   nam: 2026,
   dong,
-  doanhThuThuanNam,
-  doanhThuThuanThang: thang(),
-  dinhPhiThang: thang(),
-  bienPhiThang: thang(),
-  ...hoaVon,
+  doanhThuThuanNam: 0,
+  doanhThuThuanThang: Array(12).fill(0),
+  dinhPhiThang: Array(12).fill(0),
+  bienPhiThang: Array(12).fill(0),
+  ...them,
 });
 
-/** Dòng hòa vốn luôn là dòng cuối bảng. */
-const dongHoaVon = (r: KqkdKeHoachReport) => dungBangKqkd(r).at(-1)!;
+const T1 = [0, 1] as const;
+const Q1 = [0, 3] as const;
+const NAM = [0, 12] as const;
+
+const theoKey = (hang: HangKqkd[], key: string) =>
+  hang.find((h) => h.key === key)!;
 
 describe("dungBangKqkd", () => {
-  it("quý là tổng đúng ba tháng của quý đó", () => {
-    const [hang] = dungBangKqkd(
-      baoCao([
-        { key: "01", ten: "DOANH THU", cap: 0, thang: thang(1, 2, 3, 10, 0, 0, 0, 0, 0, 0, 0, 100) },
-      ]),
-    );
-    expect(hang.quy).toEqual([6, 10, 0, 100]);
-  });
-
-  it("sáu tháng đầu là T1–T6, sáu tháng cuối là T7–T12", () => {
-    const [hang] = dungBangKqkd(
-      baoCao([
-        { key: "01", ten: "DOANH THU", cap: 0, thang: thang(1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2) },
-      ]),
-    );
-    expect(hang.sauThangDau).toBe(6);
-    expect(hang.sauThangCuoi).toBe(12);
-    expect(hang.nam).toBe(18);
-  });
-
-  it("phần trăm chia cho doanh thu thuần cả năm", () => {
-    const [hang] = dungBangKqkd(
-      baoCao(
-        [{ key: "20", ten: "LỢI NHUẬN GỘP", cap: 0, thang: thang(250) }],
-        1000,
-      ),
-    );
-    expect(hang.phanTram).toBeCloseTo(0.25);
-  });
-
-  it("doanh thu thuần bằng 0 thì phần trăm là null, không chia cho 0", () => {
-    const [hang] = dungBangKqkd(
-      baoCao([{ key: "20", ten: "LỢI NHUẬN GỘP", cap: 0, thang: thang(250) }], 0),
-    );
-    expect(hang.phanTram).toBeNull();
-  });
-
   it("nhãn dòng cấp 0 ghép số La Mã, dòng con giữ nguyên tên", () => {
-    const [hang] = dungBangKqkd(
-      baoCao([
+    const hang = dungBangKqkd(
+      bc([
         {
           key: "01",
           soLaMa: "I",
           ten: "DOANH THU",
           cap: 0,
-          thang: thang(10),
-          con: [{ key: "01:N1", ten: "Nội thất", cap: 1, thang: thang(10) }],
+          thang: m(10),
+          con: [{ key: "01:N1", ten: "Nhóm 1", cap: 1, thang: m(6) }],
         },
       ]),
     );
-    expect(hang.nhan).toBe("I. DOANH THU");
-    expect(hang.children![0].nhan).toBe("Nội thất");
+    expect(hang[0].nhan).toBe("I. DOANH THU");
+    expect(hang[0].children![0].nhan).toBe("Nhóm 1");
   });
 
   it("dòng không có số La Mã chỉ hiện tên", () => {
-    const [hang] = dungBangKqkd(
-      baoCao([{ key: "31", ten: "THU NHẬP KHÁC", cap: 0, thang: thang(5) }]),
+    const hang = dungBangKqkd(
+      bc([{ key: "50", ten: "LỢI NHUẬN KHÁC", cap: 0, thang: m(1) }]),
     );
-    expect(hang.nhan).toBe("THU NHẬP KHÁC");
-  });
-
-  it("dòng có mảng tháng ngắn hơn 12 coi như 0, không văng lỗi", () => {
-    const [hang] = dungBangKqkd(
-      baoCao([{ key: "01", ten: "DOANH THU", cap: 0, thang: [5, 5] }]),
-    );
-    expect(hang.nam).toBe(10);
-    expect(hang.quy).toEqual([10, 0, 0, 0]);
+    expect(hang[0].nhan).toBe("LỢI NHUẬN KHÁC");
   });
 
   it("dòng con rỗng thì không gắn children — antd sẽ không vẽ nút mở", () => {
-    const [hang] = dungBangKqkd(
-      baoCao([{ key: "21", ten: "DOANH THU TÀI CHÍNH", cap: 0, thang: thang(1), con: [] }]),
+    const hang = dungBangKqkd(
+      bc([{ key: "01", ten: "DOANH THU", cap: 0, thang: m(1), con: [] }]),
     );
-    expect(hang.children).toBeUndefined();
+    expect(hang[0].children).toBeUndefined();
+  });
+
+  it("dòng có mảng tháng ngắn hơn 12 coi như 0, không văng lỗi", () => {
+    const hang = dungBangKqkd(
+      bc([{ key: "01", ten: "DOANH THU", cap: 0, thang: [5, 5] }]),
+    );
+    expect(giaTri(hang[0], ...NAM)).toBe(10);
+  });
+});
+
+describe("giaTri — cộng đúng khoảng tháng của từng kỳ", () => {
+  const hang = dungBangKqkd(
+    bc([{ key: "01", ten: "DOANH THU", cap: 0, thang: m(10, 20, 30, 40) }]),
+  );
+
+  it("tháng lấy đúng một tháng, quý là ba tháng, năm là mười hai tháng", () => {
+    expect(giaTri(hang[0], ...T1)).toBe(10);
+    expect(giaTri(hang[0], ...Q1)).toBe(60);
+    expect(giaTri(hang[0], ...NAM)).toBe(100);
+  });
+
+  it("sáu tháng đầu là T1–T6, sáu tháng cuối là T7–T12", () => {
+    expect(giaTri(hang[0], 0, 6)).toBe(100);
+    expect(giaTri(hang[0], 6, 12)).toBe(0);
+  });
+});
+
+describe("phanTramDS — chia cho doanh thu thuần CỦA CHÍNH KỲ", () => {
+  const baoCao = bc(
+    [{ key: "25", ten: "GIÁ VỐN", cap: 0, thang: m(100, 300) }],
+    { doanhThuThuanThang: m(1000, 1000) },
+  );
+  const hang = dungBangKqkd(baoCao);
+
+  it("mỗi kỳ một mẫu số riêng, không dùng doanh thu cả năm", () => {
+    expect(phanTramDS(baoCao, hang[0], ...T1)).toBeCloseTo(0.1);
+    expect(phanTramDS(baoCao, hang[0], 1, 2)).toBeCloseTo(0.3);
+    expect(phanTramDS(baoCao, hang[0], ...NAM)).toBeCloseTo(0.2);
+  });
+
+  it("kỳ chưa có doanh thu thì không chia được", () => {
+    expect(phanTramDS(baoCao, hang[0], 5, 6)).toBeNull();
+  });
+});
+
+describe("tyTrong — tỷ lệ trên dòng cha", () => {
+  const hang = dungBangKqkd(
+    bc([
+      {
+        key: "25",
+        ten: "GIÁ VỐN",
+        cap: 0,
+        thang: m(1000),
+        con: [
+          { key: "25:CD", ten: "Cố định", cap: 1, thang: m(250) },
+          { key: "25:BD", ten: "Biến đổi", cap: 1, thang: m(750) },
+        ],
+      },
+      { key: "02", ten: "CÁC KHOẢN GIẢM TRỪ", cap: 0, thang: m(0) },
+    ]),
+  );
+
+  it("dòng con cộng lại đúng 100% của dòng cha", () => {
+    const [cd, bd] = theoKey(hang, "25").children!;
+    expect(tyTrong(cd, ...T1)).toBeCloseTo(0.25);
+    expect(tyTrong(bd, ...T1)).toBeCloseTo(0.75);
+  });
+
+  it("dòng mục La Mã là gốc của nhóm nên bằng 100%", () => {
+    expect(tyTrong(theoKey(hang, "25"), ...T1)).toBe(1);
+  });
+
+  it("dòng KHÔNG PHÁT SINH để trống chứ không phải 100%", () => {
+    expect(tyTrong(theoKey(hang, "02"), ...T1)).toBeNull();
+  });
+
+  it("dòng hòa vốn đứng ngoài mọi nhóm nên không có tỷ trọng", () => {
+    expect(tyTrong(hang.at(-1)!, ...NAM)).toBeNull();
   });
 });
 
 describe("dòng DOANH THU HÒA VỐN", () => {
+  const baoCao = bc([], {
+    doanhThuThuanThang: m(1000, 1000),
+    dinhPhiThang: m(40, 40),
+    bienPhiThang: m(600, 900),
+  });
+  const hang = dungBangKqkd(baoCao);
+
   it("là dòng cuối cùng của bảng, cấp 0, không có dòng con", () => {
-    const bang = dungBangKqkd(
-      baoCao([{ key: "01", ten: "DOANH THU", cap: 0, thang: thang(10) }]),
-    );
-    const cuoi = bang.at(-1)!;
-    expect(bang).toHaveLength(2);
-    expect(cuoi.key).toBe("HOA_VON");
-    expect(cuoi.nhan).toBe("DOANH THU HÒA VỐN");
-    expect(cuoi.cap).toBe(0);
-    expect(cuoi.children).toBeUndefined();
+    const hv = hang.at(-1)!;
+    expect(hv.key).toBe("HOA_VON");
+    expect(hv.nhan).toBe("DOANH THU HÒA VỐN");
+    expect(hv.cap).toBe(0);
+    expect(hv.children).toBeUndefined();
   });
 
   it("áp đúng công thức định phí / (1 − biến phí / doanh thu)", () => {
-    // T1: DT 1000, biến phí 600 -> tỷ lệ số dư đảm phí 0.4; định phí 200 -> 500.
-    const hv = dongHoaVon(
-      baoCao([], 1000, {
-        doanhThuThuanThang: thang(1000),
-        bienPhiThang: thang(600),
-        dinhPhiThang: thang(200),
-      }),
-    );
-    expect(hv.thang[0]).toBeCloseTo(500);
-    expect(hv.nam).toBeCloseTo(500);
+    // T1: 40 / (1 − 600/1000) = 100.
+    expect(giaTri(hang.at(-1)!, ...T1)).toBeCloseTo(100, 6);
   });
 
   it("mỗi cột tính lại từ số của chính kỳ đó, KHÔNG cộng dồn 12 tháng", () => {
-    // Hai tháng giống hệt nhau: hòa vốn từng tháng 500, cả năm 1000 (không phải
-    // 500 vì tử số cộng đôi, cũng không phải tổng 12 ô tháng = 1000 tình cờ ở
-    // đây — quý 1 mới là chỗ phân biệt rõ).
-    const hv = dongHoaVon(
-      baoCao([], 2000, {
-        doanhThuThuanThang: thang(1000, 1000),
-        bienPhiThang: thang(600, 600),
-        dinhPhiThang: thang(200, 200),
-      }),
-    );
-    expect(hv.thang[0]).toBeCloseTo(500);
-    expect(hv.thang[1]).toBeCloseTo(500);
-    expect(hv.quy[0]).toBeCloseTo(1000); // 400 / 0.4
-    expect(hv.sauThangDau).toBeCloseTo(1000);
-    expect(hv.sauThangCuoi).toBe(0);
-  });
-
-  it("tỷ lệ định phí/biến phí lệch nhau giữa các tháng thì hòa vốn năm không bằng tổng tháng", () => {
-    const hv = dongHoaVon(
-      baoCao([], 1200, {
-        doanhThuThuanThang: thang(1000, 200),
-        bienPhiThang: thang(500, 180),
-        dinhPhiThang: thang(100, 100),
-      }),
-    );
-    expect(hv.thang[0]).toBeCloseTo(200); // 100 / 0.5
-    expect(hv.thang[1]).toBeCloseTo(1000); // 100 / 0.1
-    // Năm: định phí 200, biến phí 680, DT 1200 -> 200 / (1 − 680/1200)
-    expect(hv.nam).toBeCloseTo(461.538, 2);
-    expect(hv.nam).not.toBeCloseTo(1200); // tổng hai ô tháng
+    const hv = hang.at(-1)!;
+    const t1 = giaTri(hv, ...T1); // 100
+    const t2 = giaTri(hv, 1, 2); // 40 / (1 − 900/1000) = 400
+    const q1 = giaTri(hv, ...Q1); // 80 / (1 − 1500/2000) = 320
+    expect(t2).toBeCloseTo(400, 6);
+    expect(q1).toBeCloseTo(320, 6);
+    expect(q1).not.toBe(t1 + t2);
   });
 
   it("doanh thu bằng 0 thì trả 0 — không chia cho 0, không ra Infinity", () => {
-    const hv = dongHoaVon(baoCao([], 0, { dinhPhiThang: thang(200) }));
-    expect(hv.thang[0]).toBe(0);
-    expect(hv.nam).toBe(0);
-    expect(hv.phanTram).toBeNull();
+    const rong = dungBangKqkd(bc([], { dinhPhiThang: m(40) }));
+    expect(giaTri(rong.at(-1)!, ...T1)).toBe(0);
   });
 
   it("biến phí ăn hết doanh thu thì trả 0 — không ra số âm đánh lừa", () => {
-    const hv = dongHoaVon(
-      baoCao([], 1000, {
-        doanhThuThuanThang: thang(1000),
-        bienPhiThang: thang(1200),
-        dinhPhiThang: thang(200),
+    const het = dungBangKqkd(
+      bc([], {
+        doanhThuThuanThang: m(1000),
+        dinhPhiThang: m(40),
+        bienPhiThang: m(1200),
       }),
     );
-    expect(hv.thang[0]).toBe(0);
-    expect(hv.nam).toBe(0);
-  });
-
-  it("phần trăm là hòa vốn năm trên doanh thu thuần năm", () => {
-    const hv = dongHoaVon(
-      baoCao([], 1000, {
-        doanhThuThuanThang: thang(1000),
-        bienPhiThang: thang(600),
-        dinhPhiThang: thang(200),
-      }),
-    );
-    expect(hv.phanTram).toBeCloseTo(0.5); // 500 / 1000
+    expect(giaTri(het.at(-1)!, ...T1)).toBe(0);
   });
 });

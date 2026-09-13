@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { congKhoang, hoaVon, hoaVonKhoang, KHOANG_QUY } from './kyCot';
+import {
+  congKhoang,
+  COT_KY,
+  hoaVon,
+  hoaVonKhoang,
+  KHOANG_QUY,
+  tyLeTrenCha,
+  tyLeTrenDoanhThu,
+} from './kyCot';
 
 const thang = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
@@ -55,5 +63,55 @@ describe('hoaVonKhoang', () => {
     expect(t2).toBeCloseTo(400, 6);
     expect(q1).toBeCloseTo(320, 6);
     expect(q1).not.toBe(t1 + t2);
+  });
+});
+
+describe('COT_KY', () => {
+  it('đi từ rộng tới hẹp: năm → 6 tháng → quý → tháng', () => {
+    expect(COT_KY.map((c) => c.title)).toEqual([
+      'Cả năm', '6 tháng đầu', '6 tháng cuối',
+      'QUÝ I', 'QUÝ II', 'QUÝ III', 'QUÝ IV',
+      'T1', 'T2', 'T3', 'T4', 'T5', 'T6',
+      'T7', 'T8', 'T9', 'T10', 'T11', 'T12',
+    ]);
+  });
+
+  it('khoá cột duy nhất — antd đòi vậy', () => {
+    expect(new Set(COT_KY.map((c) => c.key)).size).toBe(COT_KY.length);
+  });
+});
+
+describe('tyLeTrenDoanhThu', () => {
+  const doanhThu = [1000, 500, ...Array(10).fill(0)];
+
+  it('chia cho doanh thu của CHÍNH KỲ, không phải cả năm', () => {
+    expect(tyLeTrenDoanhThu(100, doanhThu, 0, 1)).toBeCloseTo(0.1);
+    expect(tyLeTrenDoanhThu(100, doanhThu, 0, 2)).toBeCloseTo(100 / 1500);
+  });
+
+  it('kỳ chưa có doanh thu thì không chia được', () => {
+    expect(tyLeTrenDoanhThu(100, doanhThu, 5, 6)).toBeNull();
+  });
+});
+
+describe('tyLeTrenCha', () => {
+  const cha = [400, 0, ...Array(10).fill(0)];
+
+  it('dòng con lấy tỷ lệ trên dòng cha cùng kỳ', () => {
+    expect(tyLeTrenCha(100, cha, 0, 1)).toBeCloseTo(0.25);
+  });
+
+  it('dòng không có cha là gốc của nhóm nên bằng 100%', () => {
+    expect(tyLeTrenCha(100, undefined, 0, 1)).toBe(1);
+  });
+
+  it('dòng KHÔNG PHÁT SINH để trống, không phải 100%', () => {
+    // Cột toàn "100,0%" nằm cạnh ô số tiền trống thì gây hiểu nhầm.
+    expect(tyLeTrenCha(0, undefined, 0, 1)).toBeNull();
+    expect(tyLeTrenCha(0, cha, 0, 1)).toBeNull();
+  });
+
+  it('dòng cha bằng 0 thì không chia được', () => {
+    expect(tyLeTrenCha(100, cha, 1, 2)).toBeNull();
   });
 });
