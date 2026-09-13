@@ -2652,6 +2652,15 @@ body.col-resizing .ant-table * {
   background-color: #fafafa;
 }
 
+/* Chế độ tối: nền hàng chẵn của `.excel-table` là `hsl(var(--muted) / 0.3)` —
+   TRONG MỜ, đúng cái bệnh mô tả ở trên. Ở vùng cuộn thì không sao, nhưng ô ghim
+   đè lên phần đang cuộn nên phải hợp màu sẵn thành màu đục. */
+.dark .kh-bang .ant-table-tbody > tr:nth-child(even) > td.ant-table-cell-fix-start,
+.dark .kh-bang .ant-table-tbody > tr:nth-child(even) > td.ant-table-cell-fix-left {
+  background-color: hsl(var(--card));
+  background-color: color-mix(in srgb, hsl(var(--muted)) 30%, hsl(var(--card)));
+}
+
 .kh-bang .ant-table-tbody > tr:hover > td.ant-table-cell-fix-start,
 .kh-bang .ant-table-tbody > tr:hover > td.ant-table-cell-fix-left {
   background-color: var(--xl-green-tint) !important;

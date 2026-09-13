@@ -39,6 +39,12 @@ describe("KqkdTable — ghim hàng tiêu đề", () => {
     expect(container.querySelector(".ant-table-body")).toBeTruthy();
   });
 
+  it("mang class kh-bang — cột ghim (điện thoại) mới có nền đục", () => {
+    // Mọi quy tắc "ô ghim phải đục" trong index.css đều khai dưới `.kh-bang`.
+    const { container } = render(<KqkdTable data={data} loading={false} />);
+    expect(container.querySelector(".ant-table-wrapper.kh-bang")).toBeTruthy();
+  });
+
   it("không truyền thì giữ nguyên nếp cũ: một bảng, cuộn theo trang", () => {
     const { container } = render(<KqkdTable data={data} loading={false} />);
     expect(container.querySelector(".ant-table-header")).toBeNull();
