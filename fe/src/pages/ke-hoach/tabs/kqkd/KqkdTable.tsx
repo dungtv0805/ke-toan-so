@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
+import { useManHinh } from "@/hooks/useManHinh";
+import { RONG_COT_GHIM_DIEN_THOAI } from "@/components/table/ghimTheoManHinh";
 import { useKqkdState } from "./KqkdHandlerContext";
 // Hai thư mục `lib` khác nhau: `./lib` là của riêng tab KQKD, `../lib` dùng chung
 // cho cả ba tab bảng.
@@ -33,12 +35,20 @@ const oPhanTram = (v: number | null) => {
   );
 };
 
-const columns: ColumnsType<HangKqkd> = [
+/**
+ * Bảng có 19 cột kỳ nên phải dựng cột theo cỡ màn: cột "Chỉ tiêu" GHIM TRÁI ở
+ * mọi cỡ màn — vuốt sang cột tháng mà mất tên dòng thì bảng vô dụng, đúng như
+ * file Excel đóng băng cột tên chỉ tiêu.
+ *
+ * Điện thoại còn hẹp cột lại cho vừa màn (tên dài xuống dòng, không cắt "…").
+ */
+export const cotKqkd = (dienThoai: boolean): ColumnsType<HangKqkd> => [
   {
     title: "Chỉ tiêu",
     dataIndex: "nhan",
     key: "nhan",
-    width: 320,
+    width: dienThoai ? RONG_COT_GHIM_DIEN_THOAI : 320,
+    fixed: "left",
     render: (nhan: string, row) => (
       <span className={row.cap === 0 ? "font-semibold" : undefined}>
         {nhan}
@@ -106,6 +116,8 @@ export const KqkdTable: React.FC = () => {
   // trang Kế hoạch, nên bảng đứng trong trang P&L Thực hiện (đầu trang mỏng hơn
   // nhiều) sẽ hụt cả trăm pixel. Bảng anh em Pnl3LopTable đã đo như vậy sẵn.
   const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
+  const dienThoai = useManHinh() === "mobile";
+  const columns = useMemo(() => cotKqkd(dienThoai), [dienThoai]);
 
   return (
     // Khung flex-1 thế chỗ `.excel-table` (vốn là flex-1) — máy tính vẫn thấy

@@ -3,6 +3,7 @@ import { Alert, Button, message } from "antd";
 import { ExportOutlined } from "@ant-design/icons";
 import { KqkdHandlerProvider, useKqkdHandler, useKqkdState } from "./KqkdHandlerContext";
 import { usePagePermission } from "@/hooks/usePagePermission";
+import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
 import { KqkdFilter, type KqkdFilterParams } from "./components/KqkdFilter";
 import { KqkdTable } from "./components/KqkdTable";
 import type { KqkdReport } from "@/services/kqkdService";
@@ -23,6 +24,7 @@ interface Props {
 
 function KqkdPageInner({ loaiTruKhauHao, duongDanQuyen, tieuDe }: Props) {
   const handler = useKqkdHandler();
+  const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
   const { canExport } = usePagePermission(duongDanQuyen ?? "/bao-cao/kqkd");
   const [kqkdData] = useKqkdState("kqkdData") as [KqkdReport | null, unknown];
   const [loading] = useKqkdState("loading") as [boolean, unknown];
@@ -105,7 +107,15 @@ function KqkdPageInner({ loaiTruKhauHao, duongDanQuyen, tieuDe }: Props) {
         </div>
       )}
 
-      <KqkdTable data={kqkdData?.chiTieu ?? []} loading={loading} />
+      {/* Đo chiều cao còn lại của màn để thân bảng cuộn riêng — tiêu đề ghim
+          lại, không trôi mất khi đọc tới các chỉ tiêu cuối. */}
+      <div ref={tableWrapRef}>
+        <KqkdTable
+          data={kqkdData?.chiTieu ?? []}
+          loading={loading}
+          chieuCaoThan={tableBodyHeight}
+        />
+      </div>
     </div>
   );
 }
