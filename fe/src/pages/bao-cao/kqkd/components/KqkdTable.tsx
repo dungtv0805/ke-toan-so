@@ -111,7 +111,11 @@ export function KqkdTable({ data, loading, chieuCaoThan }: KqkdTableProps) {
   const manHinh = useManHinh();
   return (
     <Table<KqkdChiTieu>
-      className="excel-table"
+      // `kh-bang` KHÔNG chỉ là màu bảng kế hoạch: mọi quy tắc "ô ghim phải
+      // đục nền" trong index.css đều khai dưới lớp này. Bảng có cột ghim
+      // mà thiếu nó thì phần bảng đang cuộn hiện xuyên qua ô ghim, chữ
+      // chồng lên nhau.
+      className="excel-table kh-bang"
       columns={cotKqkdTheoManHinh(manHinh)}
       dataSource={data}
       rowKey="ma"

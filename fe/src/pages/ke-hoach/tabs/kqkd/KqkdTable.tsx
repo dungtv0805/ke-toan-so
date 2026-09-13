@@ -124,7 +124,11 @@ export const KqkdTable: React.FC = () => {
     // bảng chiếm đúng vùng cũ, không lệch pixel nào.
     <div ref={tableWrapRef} className="flex flex-col flex-1 min-h-0">
       <Table<HangKqkd>
-        className="excel-table"
+        // `kh-bang` KHÔNG chỉ là màu bảng kế hoạch: mọi quy tắc "ô ghim phải
+        // đục nền" trong index.css đều khai dưới lớp này. Bảng có cột ghim
+        // mà thiếu nó thì phần bảng đang cuộn hiện xuyên qua ô ghim, chữ
+        // chồng lên nhau.
+        className="excel-table kh-bang"
         columns={columns}
         dataSource={hang}
         rowKey="key"
