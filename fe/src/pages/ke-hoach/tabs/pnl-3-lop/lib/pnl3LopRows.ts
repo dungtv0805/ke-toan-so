@@ -18,46 +18,24 @@ import type {
   KqkdKeHoachDong,
   KqkdKeHoachReport,
 } from "@/services/kqkd3LopService";
-import { congKhoang, hoaVonKhoang, so, type NguonHoaVon } from "../../lib/kyCot";
+import {
+  congKhoang,
+  hoaVonKhoang,
+  so,
+  tyLeTrenCha,
+  tyLeTrenDoanhThu,
+  type NguonHoaVon,
+} from "../../lib/kyCot";
+
+// Bộ cột kỳ dùng chung với bảng P&L một lớp — xuất lại để nơi gọi cũ khỏi phải
+// biết nó đã dọn sang `lib/kyCot`.
+export { COT_KY, type CotKy } from "../../lib/kyCot";
 
 /** Ba lớp số liệu gốc. Hai khối "vs" là phép trừ giữa chúng, không phải lớp thứ tư. */
 export type LopTien = "keHoach" | "duBao" | "thucHien";
 
 /** Mốc để so THỰC HIỆN với: kế hoạch hoặc dự báo. */
 export type Moc = "keHoach" | "duBao";
-
-/** Một cột kỳ của bảng: khoảng tháng [tu, den), chỉ số 0 là T1. */
-export interface CotKy {
-  key: string;
-  title: string;
-  tu: number;
-  den: number;
-}
-
-const SO_LA_MA_QUY = ["I", "II", "III", "IV"];
-
-/**
- * Thứ tự cột đi từ RỘNG tới HẸP, đúng như bảng P&L: cả năm → 6 tháng → quý →
- * tháng. Mở bảng ra là thấy ngay bức tranh cả năm, muốn soi chi tiết thì vuốt
- * dần sang phải.
- */
-export const COT_KY: CotKy[] = [
-  { key: "nam", title: "Cả năm", tu: 0, den: 12 },
-  { key: "s1", title: "6 tháng đầu", tu: 0, den: 6 },
-  { key: "s2", title: "6 tháng cuối", tu: 6, den: 12 },
-  ...[0, 1, 2, 3].map((q) => ({
-    key: `q${q + 1}`,
-    title: `QUÝ ${SO_LA_MA_QUY[q]}`,
-    tu: q * 3,
-    den: q * 3 + 3,
-  })),
-  ...Array.from({ length: 12 }, (_, t) => ({
-    key: `t${t + 1}`,
-    title: `T${t + 1}`,
-    tu: t,
-    den: t + 1,
-  })),
-];
 
 export interface Hang3Lop {
   key: string;
@@ -242,9 +220,12 @@ export function phanTramDS(
   tu: number,
   den: number,
 ): number | null {
-  const doanhThu = congKhoang(bc[lop].doanhThuThuanThang, tu, den);
-  if (doanhThu === 0) return null;
-  return giaTri(row, lop, tu, den) / doanhThu;
+  return tyLeTrenDoanhThu(
+    giaTri(row, lop, tu, den),
+    bc[lop].doanhThuThuanThang,
+    tu,
+    den,
+  );
 }
 
 /**
@@ -260,9 +241,7 @@ export function tyTrong(
   tu: number,
   den: number,
 ): number | null {
+  // Dòng hòa vốn đứng ngoài mọi nhóm nên không có tỷ trọng.
   if (row.nguonHoaVon) return null;
-  if (!row.cha) return 1;
-  const mauSo = congKhoang(row.cha[lop], tu, den);
-  if (mauSo === 0) return null;
-  return congKhoang(row[lop], tu, den) / mauSo;
+  return tyLeTrenCha(congKhoang(row[lop], tu, den), row.cha?.[lop], tu, den);
 }

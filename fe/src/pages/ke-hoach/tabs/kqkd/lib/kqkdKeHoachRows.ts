@@ -2,73 +2,107 @@ import type {
   KqkdKeHoachDong,
   KqkdKeHoachReport,
 } from "@/services/kqkdKeHoachService";
-// Phép cộng theo kỳ và công thức hòa vốn dùng chung với bảng P&L so sánh ba lớp.
-import { congKhoang, hoaVonKhoang, KHOANG_QUY, so } from "../../lib/kyCot";
+import {
+  congKhoang,
+  hoaVonKhoang,
+  so,
+  tyLeTrenCha,
+  tyLeTrenDoanhThu,
+  type NguonHoaVon,
+} from "../../lib/kyCot";
 
-/** Một hàng của bảng KQKD kế hoạch. BE chỉ trả 12 tháng, phần còn lại tính ở đây. */
+/**
+ * Một hàng của bảng P&L. BE chỉ trả 12 số tháng; mọi kỳ khác (quý, 6 tháng, cả
+ * năm) đều cộng tại chỗ từ 12 số đó — xem `giaTri`.
+ *
+ * Cố ý KHÔNG gộp sẵn theo kỳ: cột của bảng là các kỳ, mỗi kỳ lại có ba ô
+ * (Số tiền · %DS · Tỷ trọng) cần mẫu số riêng, nên giữ nguyên liệu gọn hơn
+ * nhiều so với dựng sẵn ba con số cho mười chín kỳ.
+ */
 export interface HangKqkd {
   key: string;
   /** Chuỗi hiện ở cột Chỉ tiêu — cấp 0 ghép số La Mã, cấp dưới giữ nguyên tên. */
   nhan: string;
   cap: 0 | 1 | 2;
+  /** Đúng 12 phần tử, chỉ số 0 là T1. */
   thang: number[];
-  /** Bốn quý, mỗi quý là tổng ba tháng. */
-  quy: number[];
-  sauThangDau: number;
-  sauThangCuoi: number;
-  nam: number;
-  /** Tỷ lệ trên doanh thu thuần cả năm; `null` khi mẫu số bằng 0. */
-  phanTram: number | null;
+  /** 12 tháng của DÒNG CHA — mẫu số của cột "Tỷ trọng". */
+  cha?: number[];
+  /**
+   * Chỉ dòng DOANH THU HÒA VỐN mới có. Hòa vốn là TỶ SỐ nên không cộng dồn từ
+   * 12 số tháng được — phải giữ nguyên liệu để mỗi kỳ tính lại.
+   */
+  nguonHoaVon?: NguonHoaVon;
   children?: HangKqkd[];
 }
 
-function dungHang(dong: KqkdKeHoachDong, mauSo: number): HangKqkd {
-  const thang = Array.from({ length: 12 }, (_, i) => so(dong.thang?.[i]));
-  const nam = congKhoang(thang, 0, 12);
-  const con = (dong.con ?? []).map((c) => dungHang(c, mauSo));
+const chuanHoa12 = (thang?: number[]): number[] =>
+  Array.from({ length: 12 }, (_, i) => so(thang?.[i]));
+
+function dungHang(dong: KqkdKeHoachDong): HangKqkd {
+  const thang = chuanHoa12(dong.thang);
+  const con = (dong.con ?? []).map((c) => ({ ...dungHang(c), cha: thang }));
 
   return {
     key: dong.key,
     nhan: dong.soLaMa ? `${dong.soLaMa}. ${dong.ten}` : dong.ten,
     cap: dong.cap,
     thang,
-    quy: KHOANG_QUY.map(([tu, den]) => congKhoang(thang, tu, den)),
-    sauThangDau: congKhoang(thang, 0, 6),
-    sauThangCuoi: congKhoang(thang, 6, 12),
-    nam,
-    // Cùng một mẫu số cho cả bảng: doanh thu thuần cả năm, đúng cột "% DT thuần"
-    // của trang Báo cáo KQKD.
-    phanTram: mauSo === 0 ? null : nam / mauSo,
     // Mảng rỗng vẫn làm antd vẽ nút mở/đóng — bỏ hẳn trường đi.
     ...(con.length > 0 ? { children: con } : {}),
   };
 }
 
-/**
- * Dòng cuối bảng. Mỗi cột tính riêng từ ba dãy 12 tháng BE trả về, cùng phạm vi
- * tháng với cột tương ứng của các dòng trên.
- */
-function dungHangHoaVon(report: KqkdKeHoachReport, mauSo: number): HangKqkd {
-  const tinh = (tu: number, den: number) => hoaVonKhoang(report, tu, den);
-
-  const nam = tinh(0, 12);
+/** Dòng cuối bảng. Mỗi cột tính riêng từ ba dãy 12 tháng BE trả về. */
+function dungHangHoaVon(report: KqkdKeHoachReport): HangKqkd {
   return {
     key: "HOA_VON",
     nhan: "DOANH THU HÒA VỐN",
     cap: 0,
-    thang: Array.from({ length: 12 }, (_, i) => tinh(i, i + 1)),
-    quy: KHOANG_QUY.map(([tu, den]) => tinh(tu, den)),
-    sauThangDau: tinh(0, 6),
-    sauThangCuoi: tinh(6, 12),
-    nam,
-    phanTram: mauSo === 0 ? null : nam / mauSo,
+    // Dãy này không dùng để tính hòa vốn (xem `nguonHoaVon`) — để rỗng cho đúng
+    // kiểu dữ liệu.
+    thang: Array(12).fill(0),
+    nguonHoaVon: {
+      doanhThuThuanThang: report.doanhThuThuanThang,
+      dinhPhiThang: report.dinhPhiThang,
+      bienPhiThang: report.bienPhiThang,
+    },
   };
 }
 
 export function dungBangKqkd(report: KqkdKeHoachReport): HangKqkd[] {
-  const mauSo = so(report.doanhThuThuanNam);
-  return [
-    ...report.dong.map((d) => dungHang(d, mauSo)),
-    dungHangHoaVon(report, mauSo),
-  ];
+  return [...report.dong.map(dungHang), dungHangHoaVon(report)];
+}
+
+/** Cột "Số tiền" của một kỳ: tổng khoảng tháng [tu, den). */
+export function giaTri(row: HangKqkd, tu: number, den: number): number {
+  return row.nguonHoaVon
+    ? hoaVonKhoang(row.nguonHoaVon, tu, den)
+    : congKhoang(row.thang, tu, den);
+}
+
+/** Cột "%DS": tỷ lệ trên doanh thu thuần của chính kỳ đó. */
+export function phanTramDS(
+  report: KqkdKeHoachReport,
+  row: HangKqkd,
+  tu: number,
+  den: number,
+): number | null {
+  return tyLeTrenDoanhThu(
+    giaTri(row, tu, den),
+    report.doanhThuThuanThang,
+    tu,
+    den,
+  );
+}
+
+/** Cột "Tỷ trọng": tỷ lệ trên dòng cha trong cùng kỳ. */
+export function tyTrong(
+  row: HangKqkd,
+  tu: number,
+  den: number,
+): number | null {
+  // Dòng hòa vốn đứng ngoài mọi nhóm nên không có tỷ trọng.
+  if (row.nguonHoaVon) return null;
+  return tyLeTrenCha(congKhoang(row.thang, tu, den), row.cha, tu, den);
 }

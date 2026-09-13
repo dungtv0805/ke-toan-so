@@ -266,3 +266,17 @@ describe('tyTrong — tỷ lệ trên dòng cha', () => {
     expect(tyTrong(hv, 'keHoach', 0, 12)).toBeNull();
   });
 });
+
+describe('tyTrong — dòng không phát sinh', () => {
+  it('để trống chứ không phải 100%', () => {
+    // Trước đây mọi dòng cấp 0 đều hiện 100,0% kể cả khi ô Số tiền để trống —
+    // nhìn như có phát sinh.
+    const kq = ghep3Lop({
+      nam: 2026,
+      keHoach: bc([d('02', 'CÁC KHOẢN GIẢM TRỪ', m(0))]),
+      duBao: bc([]),
+      thucHien: bc([]),
+    });
+    expect(tyTrong(kq[0], 'keHoach', 0, 1)).toBeNull();
+  });
+});
