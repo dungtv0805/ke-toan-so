@@ -199,3 +199,62 @@ describe('KeHoachService.getKqkd', () => {
     expect(res.data.dong.find((d) => d.key === '01')!.con![0].ten).toBe('Chưa phân nhóm');
   });
 });
+
+describe('KeHoachService.getKqkd — nguồn THỰC HIỆN', () => {
+  const serviceClientRong = () => ({
+    getSanPham: jest.fn(() => Promise.resolve({ success: true, data: [] })),
+    getNhomSanPham: jest.fn(() => Promise.resolve({ success: true, data: [] })),
+    getNhomKhoanMuc: jest.fn(() => Promise.resolve({ success: true, data: [] })),
+  });
+
+  it('đọc chung_tu chứ không đọc ke_hoach', async () => {
+    const keHoach = repo();
+    const chungTu = repo();
+
+    await dungService(keHoach, chungTu, 't9', serviceClientRong()).getKqkd(
+      2026,
+      'THUC_HIEN',
+    );
+
+    expect(keHoach.aggregate).not.toHaveBeenCalled();
+    const match = matchDauTien(chungTu);
+    expect(match).toMatchObject({ tenantId: 't9' });
+    const ngay = match.ngay as { $gte: Date; $lte: Date };
+    expect(ngay.$gte.getUTCFullYear()).toBe(2026);
+    expect(ngay.$gte.getUTCMonth()).toBe(0);
+    expect(ngay.$lte.getUTCMonth()).toBe(11);
+  });
+
+  it('không áp loaiKeHoach/phiên bản lên chứng từ thực tế', async () => {
+    const chungTu = repo();
+
+    await dungService(repo(), chungTu, 't9', serviceClientRong()).getKqkd(
+      2026,
+      'THUC_HIEN',
+      'KH gốc',
+    );
+
+    const match = matchDauTien(chungTu);
+    expect(match).not.toHaveProperty('loaiKeHoach');
+    expect(match).not.toHaveProperty('phienBan');
+  });
+
+  it('dựng cây bằng đúng hàm của kế hoạch nên cùng khoá, cùng chỉ tiêu', async () => {
+    const chungTu = repo([
+      {
+        ngay: new Date('2026-05-10T00:00:00.000Z'),
+        soTien: 700,
+        danhMuc: { taiKhoanCo: { ma: '511' } },
+      },
+    ]);
+
+    const res = await dungService(repo(), chungTu, 't9', serviceClientRong()).getKqkd(
+      2026,
+      'THUC_HIEN',
+    );
+
+    expect(res.success).toBe(true);
+    expect(res.data.doanhThuThuanNam).toBe(700);
+    expect(res.data.dong.find((d) => d.key === '01')!.thang[4]).toBe(700);
+  });
+});

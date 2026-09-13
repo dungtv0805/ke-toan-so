@@ -9,9 +9,13 @@ export class KqkdQueryDto {
   @Max(2999)
   nam: number;
 
+  /**
+   * Nguồn số liệu của báo cáo. 'THUC_HIEN' không phải một loại kế hoạch: nó đọc
+   * `chung_tu` (số thực tế) và bỏ qua `phienBan`.
+   */
   @IsOptional()
-  @IsIn(['KE_HOACH', 'DU_BAO'])
-  loaiKeHoach?: LoaiKeHoach;
+  @IsIn(['KE_HOACH', 'DU_BAO', 'THUC_HIEN'])
+  loaiKeHoach?: LoaiKeHoach | 'THUC_HIEN';
 
   /** Bỏ trống = gộp mọi phiên bản. */
   @IsOptional()

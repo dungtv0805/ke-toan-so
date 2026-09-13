@@ -1,9 +1,9 @@
 import { BaseEvents } from "@/common";
-import type { LoaiKeHoach } from "@/services/keHoachService";
+import type { NguonKqkd } from "@/services/kqkdKeHoachService";
 
 export interface KqkdInitEvent extends BaseEvents {
   init: {
-    params: { nam: number; loaiKeHoach: LoaiKeHoach; phienBan?: string };
+    params: { nam: number; loaiKeHoach: NguonKqkd; phienBan?: string };
     result: void;
   };
 }

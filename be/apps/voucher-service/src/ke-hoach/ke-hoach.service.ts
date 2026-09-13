@@ -163,8 +163,14 @@ export class KeHoachService {
   }
 
   /**
-   * Báo cáo KQKD của số KẾ HOẠCH — cùng bản đồ chỉ tiêu với báo cáo KQKD bên
-   * Báo cáo tài chính, chỉ khác nguồn: đọc `ke_hoach` thay vì `chung_tu`.
+   * Báo cáo KQKD theo MỘT nguồn số liệu.
+   *
+   * `KE_HOACH` / `DU_BAO` đọc `ke_hoach`; `THUC_HIEN` đọc `chung_tu` — chứng từ
+   * thực tế không mang `loaiKeHoach` lẫn `phienBan` nên chỉ lọc theo kỳ.
+   *
+   * Cả ba nguồn đi qua đúng một `buildKqkdKeHoach` với cùng bản đồ chỉ tiêu, nên
+   * P&L Thực hiện không thể lệch cách tính so với P&L Kế hoạch hay so với lớp
+   * Thực hiện của bảng so sánh ba lớp.
    *
    * Trả về 12 số tháng cho mỗi dòng; năm, 6 tháng, quý và % do phía hiển thị cộng.
    */
@@ -174,43 +180,24 @@ export class KeHoachService {
     phienBan?: string,
     authToken?: string,
   ): Promise<{ success: boolean; data: KqkdKeHoachReport }> {
-    const match = this.theoTenant({
-      loaiKeHoach,
-      ...(phienBan ? { phienBan } : {}),
-      ngay: {
-        $gte: new Date(Date.UTC(nam, 0, 1)),
-        $lte: new Date(Date.UTC(nam, 11, 31, 23, 59, 59, 999)),
-      },
-    });
-
+    const khoangNam = {
+      $gte: new Date(Date.UTC(nam, 0, 1)),
+      $lte: new Date(Date.UTC(nam, 11, 31, 23, 59, 59, 999)),
+    };
     const tenantId = this.tenantContext.getCurrentTenantId();
 
     const [rows, danhMuc] = await Promise.all([
-      this.keHoachRepository
-        .aggregate([
-          { $match: match },
-          {
-            $project: {
-              ngay: 1,
-              soTien: 1,
-              'danhMuc.taiKhoanNo.ma': 1,
-              'danhMuc.taiKhoanCo.ma': 1,
-              'danhMuc.sanPham.ma': 1,
-              'danhMuc.sanPham.ten': 1,
-              'danhMuc.khoanMuc.ma': 1,
-              'danhMuc.khoanMuc.ten': 1,
-              'danhMuc.khoanMuc.nhom': 1,
-            },
-          },
-        ])
-        .toArray() as Promise<unknown[]>,
+      loaiKeHoach === 'THUC_HIEN'
+        ? this.docButToanKqkd(this.chungTuRepository, { ngay: khoangNam })
+        : this.docButToanKqkd(this.keHoachRepository, {
+            loaiKeHoach,
+            ...(phienBan ? { phienBan } : {}),
+            ngay: khoangNam,
+          }),
       this.napDanhMucKqkd(authToken, tenantId),
     ]);
 
-    return {
-      success: true,
-      data: buildKqkdKeHoach(rows as DongKeHoachKqkd[], danhMuc, nam),
-    };
+    return { success: true, data: buildKqkdKeHoach(rows, danhMuc, nam) };
   }
 
   /**

@@ -1,7 +1,9 @@
 import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
-import { kqkdKeHoachService } from "@/services/kqkdKeHoachService";
-import type { LoaiKeHoach } from "@/services/keHoachService";
+import {
+  kqkdKeHoachService,
+  type NguonKqkd,
+} from "@/services/kqkdKeHoachService";
 import { dungBangKqkd } from "../../../lib/kqkdKeHoachRows";
 import type { KqkdEvents, KqkdStates } from "../../kqkd.handler";
 import "./init.event";
@@ -12,7 +14,7 @@ export class KqkdInitHandler extends CSubHanlder<KqkdEvents, KqkdStates> {
   @HandlerDecorator("init")
   async init(params: {
     nam: number;
-    loaiKeHoach: LoaiKeHoach;
+    loaiKeHoach: NguonKqkd;
     phienBan?: string;
   }): Promise<void> {
     this.khoiTaoMacDinh();

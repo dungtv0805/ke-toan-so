@@ -1,11 +1,12 @@
 import React, { useEffect } from "react";
-import type { LoaiKeHoach } from "@/services/keHoachService";
+import type { NguonKqkd } from "@/services/kqkdKeHoachService";
 import { KqkdHandlerProvider, useKqkdHandler } from "./KqkdHandlerContext";
 import { KqkdTable } from "./KqkdTable";
 
 interface Props {
   nam: number;
-  loaiKeHoach: LoaiKeHoach;
+  /** 'KE_HOACH' | 'DU_BAO' đọc số kế hoạch; 'THUC_HIEN' đọc chứng từ thực tế. */
+  loaiKeHoach: NguonKqkd;
   phienBan?: string;
 }
 
