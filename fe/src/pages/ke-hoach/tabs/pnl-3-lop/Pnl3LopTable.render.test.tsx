@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeAll } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { Pnl3LopTab } from "./Pnl3LopTab";
 
 const thang = (...v: number[]) => {
@@ -59,73 +59,73 @@ beforeAll(() => {
 });
 
 describe("Pnl3LopTable", () => {
-  it("cột xếp theo tháng → quý của chính ba tháng đó → 6 tháng → cả năm", async () => {
+  it("hàng tiêu đề trên cùng là các kỳ, xếp từ rộng tới hẹp như bảng P&L", async () => {
     const { container } = render(<Pnl3LopTab nam={2026} />);
 
     await waitFor(() => expect(screen.getByText("I. DOANH THU")).toBeTruthy());
 
-    // Hàng tiêu đề THỨ NHẤT là hàng tên kỳ; hàng thứ hai là Số tiền/%DS/Tỷ trọng.
+    // Hàng 1 = tên kỳ, hàng 2 = tên khối, hàng 3 = tên cột.
     const tieuDe = Array.from(
       container.querySelectorAll(".ant-table-thead tr:first-child th"),
     ).map((th) => th.textContent?.trim());
-    // Ba tháng rồi tới quý của chính chúng, hết bốn quý mới tới 6 tháng và năm.
-    expect(tieuDe.slice(0, 6)).toEqual([
+    expect(tieuDe).toEqual([
       "Chỉ tiêu",
-      "T1",
-      "T2",
-      "T3",
+      "Cả năm",
+      "6 tháng đầu",
+      "6 tháng cuối",
       "QUÝ I",
-      "T4",
+      "QUÝ II",
+      "QUÝ III",
+      "QUÝ IV",
+      "T1", "T2", "T3", "T4", "T5", "T6",
+      "T7", "T8", "T9", "T10", "T11", "T12",
     ]);
-    expect(tieuDe.slice(-3)).toEqual(["6 tháng đầu", "6 tháng cuối", "Cả năm"]);
-    // Không còn cụm "Quý"/"Tháng" gộp của bố cục cũ, cũng không còn ô chọn kỳ.
-    expect(tieuDe).not.toContain("Quý");
-    expect(tieuDe).not.toContain("Tháng");
+    // Không còn ô chọn kỳ lẫn ô chọn lớp — bảng bày hết.
     expect(screen.queryByText("Kỳ xem")).toBeNull();
-    expect(screen.getByText("Xem")).toBeTruthy();
+    expect(screen.queryByText("Xem")).toBeNull();
   });
 
-  it("mặc định hiện lớp Thực hiện — đúng dạng bảng nghiệp vụ", async () => {
+  it("mỗi kỳ có đủ năm khối: ba lớp số liệu + hai khối so sánh", async () => {
+    const { container } = render(<Pnl3LopTab nam={2026} />);
+    await waitFor(() => expect(screen.getByText("I. DOANH THU")).toBeTruthy());
+
+    // Đếm trong MỘT thead: antd vẽ hai bảng (header cố định + thân) nên mỗi
+    // tiêu đề xuất hiện hai lần trong DOM.
+    const thead = container.querySelector(".ant-table-thead") as HTMLElement;
+    const dem = (nhan: string) =>
+      Array.from(thead.querySelectorAll("th")).filter(
+        (th) => th.textContent?.trim() === nhan,
+      ).length;
+
+    for (const khoi of [
+      "KẾ HOẠCH",
+      "DỰ BÁO",
+      "THỰC HIỆN",
+      "THỰC HIỆN vs KẾ HOẠCH",
+      "THỰC HIỆN vs DỰ BÁO",
+    ]) {
+      expect(dem(khoi)).toBe(19);
+    }
+    // 19 kỳ × 5 khối, mỗi khối một cột GIÁ TRỊ.
+    expect(dem("GIÁ TRỊ")).toBe(19 * 5);
+    // %DS và Tỷ trọng chỉ có ở ba lớp số liệu; Tỷ lệ chỉ ở hai khối so sánh.
+    expect(dem("%DS")).toBe(19 * 3);
+    expect(dem("Tỷ trọng")).toBe(19 * 3);
+    expect(dem("Tỷ lệ")).toBe(19 * 2);
+  });
+
+  it("hiện số của cả ba lớp và số so sánh trên cùng một dòng", async () => {
     render(<Pnl3LopTab nam={2026} />);
     await waitFor(() => expect(screen.getByText("I. DOANH THU")).toBeTruthy());
-    // Thực hiện T1 = 70; chưa có số chênh lệch nào.
+
+    // T1: kế hoạch 100, thực hiện 70 → chênh lệch (30).
+    expect(screen.getAllByText("100").length).toBeGreaterThan(0);
     expect(screen.getAllByText("70").length).toBeGreaterThan(0);
-    expect(screen.queryByText("−30")).toBeNull();
+    expect(screen.getAllByText("(30)").length).toBeGreaterThan(0);
   });
 
   it("có dòng DOANH THU HÒA VỐN ở cuối bảng", async () => {
     render(<Pnl3LopTab nam={2026} />);
     await waitFor(() => expect(screen.getByText("DOANH THU HÒA VỐN")).toBeTruthy());
-  });
-
-  it("đổi sang lớp Chênh lệch: mỗi kỳ rút còn một cột, bỏ %DS/Tỷ trọng", async () => {
-    const { container } = render(<Pnl3LopTab nam={2026} />);
-    await waitFor(() => expect(screen.getByText("I. DOANH THU")).toBeTruthy());
-
-    fireEvent.mouseDown(container.querySelector(".ant-select") as HTMLElement);
-    fireEvent.click(await screen.findByTitle("Chênh lệch"));
-
-    // Cả năm −130, T1 −30, T2 −100.
-    await waitFor(() => expect(screen.getAllByText("−30").length).toBeGreaterThan(0));
-    expect(screen.getAllByText("−130").length).toBeGreaterThan(0);
-    expect(screen.queryByText("%DS")).toBeNull();
-    expect(screen.queryByText("Tỷ trọng")).toBeNull();
-  });
-
-  it("lớp Thực hiện: mỗi kỳ là cụm Số tiền · %DS · Tỷ trọng", async () => {
-    const { container } = render(<Pnl3LopTab nam={2026} />);
-    await waitFor(() => expect(screen.getAllByText("70").length).toBeGreaterThan(0));
-    // 19 kỳ, mỗi kỳ một bộ ba cột. Đếm trong MỘT thead: antd vẽ hai bảng
-    // (header cố định + thân) nên mỗi tiêu đề xuất hiện hai lần trong DOM.
-    const thead = container.querySelector(".ant-table-thead") as HTMLElement;
-    const demNhan = (nhan: string) =>
-      Array.from(thead.querySelectorAll("th")).filter(
-        (th) => th.textContent?.trim() === nhan,
-      ).length;
-    expect(demNhan("Số tiền")).toBe(19);
-    expect(demNhan("%DS")).toBe(19);
-    expect(demNhan("Tỷ trọng")).toBe(19);
-    // Không còn số chênh lệch nào trên bảng.
-    expect(screen.queryByText("−30")).toBeNull();
   });
 });

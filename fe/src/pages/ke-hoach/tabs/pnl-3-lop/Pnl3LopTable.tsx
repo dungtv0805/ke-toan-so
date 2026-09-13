@@ -1,29 +1,30 @@
 import React, { useMemo } from "react";
-import { Empty, Select, Space, Table, Typography } from "antd";
+import { Empty, Table, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
 import { useManHinh } from "@/hooks/useManHinh";
 import { RONG_COT_GHIM_DIEN_THOAI } from "@/components/table/ghimTheoManHinh";
 import { capCot, CAP_CHINH, CAP_NAM, CAP_QUY, CAP_THANG, tien } from "../lib/cotChung";
 import {
+  chenhLech,
   COT_KY,
   ghep3Lop,
-  giaTriO,
-  laLopTien,
-  LOP_OPTIONS,
+  giaTri,
   phanTramDS,
+  tyLeChenhLech,
   tyTrong,
   type CotKy,
   type Hang3Lop,
-  type Lop,
+  type LopTien,
+  type Moc,
 } from "./lib/pnl3LopRows";
-import { usePnl3LopHandler, usePnl3LopState } from "./Pnl3LopHandlerContext";
+import { usePnl3LopState } from "./Pnl3LopHandlerContext";
 
 const { Text } = Typography;
 
 const GACH = <span className="text-gray-400">-</span>;
 
-/** Ba lớp số tiền: hiện y như bảng P&L — 0 thành gạch ngang, âm đỏ trong ngoặc. */
+/** Ô GIÁ TRỊ: 0 thành gạch ngang, âm đỏ trong ngoặc — đúng quy ước bảng P&L. */
 const oTien = (v: number, cap: Hang3Lop["cap"]) => {
   if (v === 0) return GACH;
   const chu = v < 0 ? `(${tien(Math.abs(v))})` : tien(v);
@@ -34,38 +35,6 @@ const oTien = (v: number, cap: Hang3Lop["cap"]) => {
         .join(" ")}
     >
       {chu}
-    </span>
-  );
-};
-
-/**
- * Lớp CHÊNH LỆCH (Thực hiện − Kế hoạch). Xanh là làm hơn kế hoạch, đỏ là hụt —
- * giữ đúng quy ước màu và dấu minus thật (−) của bảng cũ.
- *
- * Không gắn tooltip từng ô: bảng có tới 19 cột kỳ, 19 tooltip mỗi dòng chỉ làm
- * vướng chuột. Câu giải thích đặt một lần ở thanh công cụ.
- */
-const oChenhLech = (v: number) => {
-  if (v === 0) return GACH;
-  const duong = v > 0;
-  return (
-    <span
-      className={
-        duong ? "text-green-600 font-semibold" : "text-red-500 font-semibold"
-      }
-    >
-      {duong ? "+" : "−"}
-      {tien(Math.abs(v))}
-    </span>
-  );
-};
-
-/** Lớp % ĐẠT. `null` = kỳ đó chưa lập kế hoạch nên không có gì để đạt. */
-const oPhanTramDat = (v: number | null) => {
-  if (v === null) return <span className="text-gray-400">—</span>;
-  return (
-    <span className={v < 0 ? "text-red-500" : undefined}>
-      {`${(v * 100).toFixed(1)}%`}
     </span>
   );
 };
@@ -81,16 +50,44 @@ const oTyLe = (v: number | null) => {
   );
 };
 
+/** Ô Tỷ lệ của hai khối so sánh: hụt thì đỏ và mang dấu trừ thật (−). */
+const oTyLeSoSanh = (v: number | null) => {
+  if (v === null) return <span className="text-gray-400">—</span>;
+  if (v === 0) return GACH;
+  const chu = `${(Math.abs(v) * 100).toFixed(1)}%`;
+  return (
+    <span className={v < 0 ? "text-red-500 font-semibold" : "text-green-600"}>
+      {v < 0 ? `−${chu}` : chu}
+    </span>
+  );
+};
+
+const LOP_TIEN: { lop: LopTien; nhan: string }[] = [
+  { lop: "keHoach", nhan: "KẾ HOẠCH" },
+  { lop: "duBao", nhan: "DỰ BÁO" },
+  { lop: "thucHien", nhan: "THỰC HIỆN" },
+];
+
+const KHOI_SO_SANH: { moc: Moc; nhan: string }[] = [
+  { moc: "keHoach", nhan: "THỰC HIỆN vs KẾ HOẠCH" },
+  { moc: "duBao", nhan: "THỰC HIỆN vs DỰ BÁO" },
+];
+
+// Tô nền theo cấp kỳ: tháng nhạt nhất, quý đậm hơn, 6 tháng và cả năm đậm nhất
+// — mắt bám được ranh giới giữa các cụm trong 19 cụm cột.
+const capCuaKy = (ky: CotKy) => {
+  const soThang = ky.den - ky.tu;
+  if (soThang === 1) return CAP_THANG;
+  if (soThang === 3) return CAP_QUY;
+  return CAP_NAM;
+};
+
 export const Pnl3LopTable: React.FC = () => {
-  const handler = usePnl3LopHandler();
   const [baoCao] = usePnl3LopState("baoCao", null);
   const [loading] = usePnl3LopState("loading", false);
-  // Mặc định Thực hiện: mở trang là thấy ngay bảng số tiền đầy đủ
-  // (Số tiền · %DS · Tỷ trọng), đổi sang Chênh lệch khi cần soi kế hoạch.
-  const [lop] = usePnl3LopState("lop", "thucHien");
   const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
   // Điện thoại: cột "Chỉ tiêu" 380px là cả màn chỉ thấy tên, vuốt sang thì mất
-  // tên → ghim trái và hẹp lại (tên dài xuống dòng, không cắt "…").
+  // tên → hẹp lại (tên dài xuống dòng, không cắt "…").
   const dienThoai = useManHinh() === "mobile";
 
   const rows = useMemo<Hang3Lop[]>(
@@ -99,73 +96,74 @@ export const Pnl3LopTable: React.FC = () => {
   );
 
   const columns = useMemo<ColumnsType<Hang3Lop>>(() => {
-    const lopXem = lop as Lop;
-    const laTien = laLopTien(lopXem);
-
-    /** Ô SỐ TIỀN (hoặc chênh lệch / % đạt) của một kỳ. */
-    const oGiaTri = (row: Hang3Lop, ky: CotKy) => {
-      const v = giaTriO(row, lopXem, ky.tu, ky.den);
-      if (lopXem === "phanTramDat") return oPhanTramDat(v);
-      if (lopXem === "chenhLech") return oChenhLech(v ?? 0);
-      return oTien(v ?? 0, row.cap);
-    };
-
     /**
-     * Mỗi kỳ là một cụm cột. Ba lớp số tiền có đủ Số tiền · %DS · Tỷ trọng;
-     * Chênh lệch và % đạt thì hai cột tỷ lệ kia vô nghĩa (chênh lệch không phải
-     * số tiền của lớp nào, % đạt đã là tỷ lệ rồi) nên cụm rút còn một cột.
+     * Một kỳ = một cụm ba tầng tiêu đề, đúng như bảng Excel nghiệp vụ:
+     *   kỳ → khối (KẾ HOẠCH / DỰ BÁO / THỰC HIỆN / hai khối so sánh) → cột.
      */
-    const cumKy = (ky: CotKy, cap: string) => {
-      const cot = {
-        width: 130,
-        align: "right" as const,
-        ...capCot(cap),
-      };
-      if (!laTien) {
-        return {
-          ...cot,
-          title: ky.title,
-          key: ky.key,
-          render: (_: unknown, row: Hang3Lop) => oGiaTri(row, ky),
-        };
-      }
+    const cumKy = (ky: CotKy) => {
+      const cap = capCuaKy(ky);
+      const nen = capCot(cap);
+      const oSo = { width: 130, align: "right" as const, ...nen };
+      const oTyLeCot = { width: 80, align: "right" as const, ...nen };
+
       return {
         title: ky.title,
         key: ky.key,
-        ...capCot(cap),
+        ...nen,
         children: [
-          {
-            ...cot,
-            title: "Số tiền",
-            key: `${ky.key}-tien`,
-            render: (_: unknown, row: Hang3Lop) => oGiaTri(row, ky),
-          },
-          {
-            ...cot,
-            width: 80,
-            title: "%DS",
-            key: `${ky.key}-ds`,
-            render: (_: unknown, row: Hang3Lop) =>
-              oTyLe(baoCao ? phanTramDS(baoCao, row, lopXem, ky.tu, ky.den) : null),
-          },
-          {
-            ...cot,
-            width: 80,
-            title: "Tỷ trọng",
-            key: `${ky.key}-tt`,
-            render: (_: unknown, row: Hang3Lop) =>
-              oTyLe(tyTrong(row, lopXem, ky.tu, ky.den)),
-          },
+          ...LOP_TIEN.map(({ lop, nhan }) => ({
+            title: nhan,
+            key: `${ky.key}-${lop}`,
+            ...nen,
+            children: [
+              {
+                ...oSo,
+                title: "GIÁ TRỊ",
+                key: `${ky.key}-${lop}-gt`,
+                render: (_: unknown, row: Hang3Lop) =>
+                  oTien(giaTri(row, lop, ky.tu, ky.den), row.cap),
+              },
+              {
+                ...oTyLeCot,
+                title: "%DS",
+                key: `${ky.key}-${lop}-ds`,
+                render: (_: unknown, row: Hang3Lop) =>
+                  oTyLe(
+                    baoCao ? phanTramDS(baoCao, row, lop, ky.tu, ky.den) : null,
+                  ),
+              },
+              {
+                ...oTyLeCot,
+                title: "Tỷ trọng",
+                key: `${ky.key}-${lop}-tt`,
+                render: (_: unknown, row: Hang3Lop) =>
+                  oTyLe(tyTrong(row, lop, ky.tu, ky.den)),
+              },
+            ],
+          })),
+          ...KHOI_SO_SANH.map(({ moc, nhan }) => ({
+            title: nhan,
+            key: `${ky.key}-vs-${moc}`,
+            ...nen,
+            children: [
+              {
+                ...oSo,
+                title: "GIÁ TRỊ",
+                key: `${ky.key}-vs-${moc}-gt`,
+                render: (_: unknown, row: Hang3Lop) =>
+                  oTien(chenhLech(row, moc, ky.tu, ky.den), row.cap),
+              },
+              {
+                ...oTyLeCot,
+                title: "Tỷ lệ",
+                key: `${ky.key}-vs-${moc}-tl`,
+                render: (_: unknown, row: Hang3Lop) =>
+                  oTyLeSoSanh(tyLeChenhLech(row, moc, ky.tu, ky.den)),
+              },
+            ],
+          })),
         ],
       };
-    };
-
-    // Tô nền theo cấp kỳ: tháng nhạt nhất, quý đậm hơn, 6 tháng và cả năm đậm
-    // nhất — mắt bám được ranh giới giữa các cụm trong 19 cụm cột.
-    const capCuaKy = (ky: CotKy) => {
-      if (ky.den - ky.tu === 1) return CAP_THANG;
-      if (ky.den - ky.tu === 3) return CAP_QUY;
-      return CAP_NAM;
     };
 
     return [
@@ -174,34 +172,26 @@ export const Pnl3LopTable: React.FC = () => {
         dataIndex: "nhan",
         key: "nhan",
         width: dienThoai ? RONG_COT_GHIM_DIEN_THOAI : 380,
-        fixed: dienThoai ? ("left" as const) : undefined,
+        // Ghim ở MỌI cỡ màn, không riêng điện thoại: bảng rộng hơn hai chục
+        // nghìn pixel, vuốt sang kỳ sau mà mất tên chỉ tiêu thì vô dụng —
+        // đúng như file Excel đóng băng cột "Tên chỉ tiêu".
+        fixed: "left" as const,
         ...capCot(CAP_CHINH),
         render: (v: string, row: Hang3Lop) => (
           <span className={row.cap === 0 ? "font-semibold" : undefined}>{v}</span>
         ),
       },
-      ...COT_KY.map((ky) => cumKy(ky, capCuaKy(ky))),
+      ...COT_KY.map(cumKy),
     ];
-  }, [baoCao, dienThoai, lop]);
+  }, [baoCao, dienThoai]);
 
   return (
     <div className="excel-container">
       <div className="excel-toolbar dt:flex-wrap">
-        <Space size={8}>
-          <Text type="secondary" className="text-xs">
-            Xem
-          </Text>
-          <Select
-            size="small"
-            style={{ width: 140 }}
-            value={lop}
-            options={LOP_OPTIONS}
-            onChange={(v) => handler.executeEvent("doiLop", { lop: v as Lop })}
-          />
-        </Space>
-        <span className="text-xs text-gray-500">
-          Chênh lệch và % đạt so Thực hiện với Kế hoạch, tính riêng trong từng kỳ
-        </span>
+        <Text type="secondary" className="text-xs">
+          Mỗi kỳ bày đủ Kế hoạch · Dự báo · Thực hiện và hai khối so sánh. Tỷ lệ
+          là chênh lệch chia cho mốc — vượt hay hụt bao nhiêu phần trăm.
+        </Text>
       </div>
 
       <div ref={tableWrapRef} className="flex flex-col flex-1 min-h-0">
