@@ -8,6 +8,15 @@ import { RONG_COT_GHIM_DIEN_THOAI } from '@/components/table/ghimTheoManHinh';
 interface KqkdTableProps {
   data: KqkdChiTieu[];
   loading: boolean;
+  /**
+   * Chiều cao THÂN bảng. Truyền vào thì antd tách hàng tiêu đề ra bảng riêng và
+   * chỉ thân cuộn — tiêu đề đứng yên khi đọc xuống cuối báo cáo.
+   *
+   * Để trống thì bảng cao hết cỡ và cuộn theo trang như cũ: trang Báo cáo tài
+   * chính đã bọc bảng trong khung cuộn riêng của tab, thêm một tầng cuộn nữa
+   * chỉ làm rối.
+   */
+  chieuCaoThan?: number;
 }
 
 const formatNumber = (value: number): string => {
@@ -98,7 +107,7 @@ export function cotKqkdTheoManHinh(manHinh: ManHinh): ColumnsType<KqkdChiTieu> {
     );
 }
 
-export function KqkdTable({ data, loading }: KqkdTableProps) {
+export function KqkdTable({ data, loading, chieuCaoThan }: KqkdTableProps) {
   const manHinh = useManHinh();
   return (
     <Table<KqkdChiTieu>
@@ -110,7 +119,7 @@ export function KqkdTable({ data, loading }: KqkdTableProps) {
       size="small"
       bordered
       pagination={false}
-      scroll={{ x: 1200 }}
+      scroll={{ x: 1200, y: chieuCaoThan }}
       rowClassName={(row) =>
         row.isBold || row.isCalculated ? 'kqkd-row-bold' : ''
       }
