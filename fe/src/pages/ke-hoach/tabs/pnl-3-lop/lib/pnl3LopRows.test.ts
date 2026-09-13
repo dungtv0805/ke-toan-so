@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  chenhLech,
   COT_KY,
   ghep3Lop,
-  giaTriO,
-  LOP_OPTIONS,
-  mauSoPhanTram,
+  giaTri,
   phanTramDS,
+  tyLeChenhLech,
   tyTrong,
 } from './pnl3LopRows';
 import type { Kqkd3LopReport, KqkdKeHoachDong } from '@/services/kqkd3LopService';
@@ -37,18 +37,6 @@ const T1 = [0, 1] as const;
 const NAM = [0, 12] as const;
 const Q1 = [0, 3] as const;
 
-describe('LOP_OPTIONS', () => {
-  it('đúng năm lớp xem: ba lớp số tiền + chênh lệch + % đạt', () => {
-    expect(LOP_OPTIONS.map((o) => o.value)).toEqual([
-      'keHoach',
-      'duBao',
-      'thucHien',
-      'chenhLech',
-      'phanTramDat',
-    ]);
-  });
-});
-
 describe('ghep3Lop — ghép cây', () => {
   it('ghép ba lớp theo khoá, giữ nguyên cấu trúc cây', () => {
     const kq = ghep3Lop({
@@ -59,9 +47,9 @@ describe('ghep3Lop — ghép cây', () => {
     });
     // Dòng cuối là hòa vốn — chỉ tiêu thật là dòng đầu.
     expect(kq[0].key).toBe('01');
-    expect(giaTriO(kq[0], 'keHoach', ...T1)).toBe(100);
-    expect(giaTriO(kq[0], 'duBao', ...T1)).toBe(90);
-    expect(giaTriO(kq[0], 'thucHien', ...T1)).toBe(80);
+    expect(giaTri(kq[0], 'keHoach', ...T1)).toBe(100);
+    expect(giaTri(kq[0], 'duBao', ...T1)).toBe(90);
+    expect(giaTri(kq[0], 'thucHien', ...T1)).toBe(80);
   });
 
   it('dòng chỉ có ở Thực hiện vẫn hiện, kế hoạch bằng 0', () => {
@@ -73,8 +61,8 @@ describe('ghep3Lop — ghép cây', () => {
       thucHien: bc([d('01', 'DOANH THU', m(80)), d('99', 'PHÁT SINH MỚI', m(5))]),
     });
     expect(kq.map((r) => r.key)).toEqual(['01', '99', 'HOA_VON']);
-    expect(giaTriO(kq[1], 'keHoach', ...T1)).toBe(0);
-    expect(giaTriO(kq[1], 'thucHien', ...T1)).toBe(5);
+    expect(giaTri(kq[1], 'keHoach', ...T1)).toBe(0);
+    expect(giaTri(kq[1], 'thucHien', ...T1)).toBe(5);
   });
 
   it('ghép cả cấp con', () => {
@@ -91,8 +79,8 @@ describe('ghep3Lop — ghép cây', () => {
     });
     const con = kq[0].children!;
     expect(con.map((c) => c.key)).toEqual(['01:N1', '01:N2']);
-    expect(giaTriO(con[0], 'keHoach', ...T1)).toBe(60);
-    expect(giaTriO(con[1], 'thucHien', ...T1)).toBe(30);
+    expect(giaTri(con[0], 'keHoach', ...T1)).toBe(60);
+    expect(giaTri(con[1], 'thucHien', ...T1)).toBe(30);
   });
 
   it('không gắn children khi không có dòng con — antd khỏi vẽ nút mở thừa', () => {
@@ -106,7 +94,7 @@ describe('ghep3Lop — ghép cây', () => {
   });
 });
 
-describe('giaTriO — từng lớp, từng kỳ', () => {
+describe('giaTri / chenhLech / tyLeChenhLech — từng kỳ', () => {
   const baoCao = {
     nam: 2026,
     keHoach: bc([d('01', 'DOANH THU', m(100, 100, 100))]),
@@ -116,31 +104,37 @@ describe('giaTriO — từng lớp, từng kỳ', () => {
   const hang = ghep3Lop(baoCao)[0];
 
   it('mỗi kỳ cộng đúng khoảng tháng của kỳ đó', () => {
-    expect(giaTriO(hang, 'thucHien', ...T1)).toBe(70);
-    expect(giaTriO(hang, 'thucHien', ...Q1)).toBe(150);
-    expect(giaTriO(hang, 'thucHien', ...NAM)).toBe(150);
-    expect(giaTriO(hang, 'keHoach', ...Q1)).toBe(300);
+    expect(giaTri(hang, 'thucHien', ...T1)).toBe(70);
+    expect(giaTri(hang, 'thucHien', ...Q1)).toBe(150);
+    expect(giaTri(hang, 'thucHien', ...NAM)).toBe(150);
+    expect(giaTri(hang, 'keHoach', ...Q1)).toBe(300);
   });
 
-  it('chênh lệch là Thực hiện − Kế hoạch CỦA CHÍNH KỲ ĐÓ', () => {
-    expect(giaTriO(hang, 'chenhLech', ...T1)).toBe(-30);
-    expect(giaTriO(hang, 'chenhLech', ...Q1)).toBe(-150);
+  it('THỰC HIỆN vs KẾ HOẠCH: hiệu số TRONG CHÍNH KỲ ĐÓ', () => {
+    expect(chenhLech(hang, 'keHoach', ...T1)).toBe(-30);
+    expect(chenhLech(hang, 'keHoach', ...Q1)).toBe(-150);
   });
 
-  it('% đạt tính riêng từng kỳ, không phải chia tổng cả năm', () => {
-    expect(giaTriO(hang, 'phanTramDat', ...T1)).toBeCloseTo(0.7);
-    expect(giaTriO(hang, 'phanTramDat', ...Q1)).toBeCloseTo(0.5);
+  it('THỰC HIỆN vs DỰ BÁO: so với dự báo chứ không phải kế hoạch', () => {
+    expect(chenhLech(hang, 'duBao', ...T1)).toBe(-20);
+    expect(chenhLech(hang, 'duBao', ...Q1)).toBe(-120);
   });
 
-  it('kế hoạch kỳ đó bằng 0 thì % đạt không xác định', () => {
+  it('Tỷ lệ là chênh lệch chia cho MỐC, không phải Thực hiện chia Kế hoạch', () => {
+    // T1: (70 − 100) / 100 = −30%, KHÔNG phải 70%.
+    expect(tyLeChenhLech(hang, 'keHoach', ...T1)).toBeCloseTo(-0.3);
+    expect(tyLeChenhLech(hang, 'duBao', ...T1)).toBeCloseTo(-20 / 90);
+  });
+
+  it('mốc bằng 0 thì không có tỷ lệ', () => {
     const kq = ghep3Lop({
       nam: 2026,
       keHoach: bc([d('01', 'DOANH THU', m(0))]),
       duBao: bc([]),
       thucHien: bc([d('01', 'DOANH THU', m(50))]),
     });
-    expect(giaTriO(kq[0], 'phanTramDat', ...T1)).toBeNull();
-    expect(giaTriO(kq[0], 'chenhLech', ...T1)).toBe(50);
+    expect(tyLeChenhLech(kq[0], 'keHoach', ...T1)).toBeNull();
+    expect(chenhLech(kq[0], 'keHoach', ...T1)).toBe(50);
   });
 });
 
@@ -167,51 +161,30 @@ describe('dòng DOANH THU HÒA VỐN', () => {
   });
 
   it('KHÔNG cộng dồn: quý tính lại từ ba dãy của chính quý', () => {
-    const t1 = giaTriO(hang, 'keHoach', ...T1)!; // 40 / (1 − 600/1000) = 100
-    const t2 = giaTriO(hang, 'keHoach', 1, 2)!; // 40 / (1 − 900/1000) = 400
-    const q1 = giaTriO(hang, 'keHoach', ...Q1)!; // 80 / (1 − 1500/2000) = 320
+    const t1 = giaTri(hang, 'keHoach', ...T1); // 40 / (1 − 600/1000) = 100
+    const t2 = giaTri(hang, 'keHoach', 1, 2); // 40 / (1 − 900/1000) = 400
+    const q1 = giaTri(hang, 'keHoach', ...Q1); // 80 / (1 − 1500/2000) = 320
     expect(t1).toBeCloseTo(100, 6);
     expect(t2).toBeCloseTo(400, 6);
     expect(q1).toBeCloseTo(320, 6);
     expect(q1).not.toBe(t1 + t2);
   });
 
-  it('chênh lệch và % đạt so hòa vốn Thực hiện với hòa vốn Kế hoạch', () => {
+  it('so sánh cũng lấy trên hòa vốn của từng lớp', () => {
     // T1: kế hoạch 100, thực hiện 80 / (1 − 600/1000) = 200.
-    expect(giaTriO(hang, 'thucHien', ...T1)).toBeCloseTo(200, 6);
-    expect(giaTriO(hang, 'chenhLech', ...T1)).toBeCloseTo(100, 6);
-    expect(giaTriO(hang, 'phanTramDat', ...T1)).toBeCloseTo(2, 6);
-  });
-});
-
-describe('mauSoPhanTram', () => {
-  const baoCao = {
-    nam: 2026,
-    keHoach: bc([], { doanhThuThuanNam: 1000 }),
-    duBao: bc([], { doanhThuThuanNam: 900 }),
-    thucHien: bc([], { doanhThuThuanNam: 800 }),
-  };
-
-  it('lấy doanh thu thuần cả năm CỦA ĐÚNG LỚP đang xem', () => {
-    expect(mauSoPhanTram(baoCao, 'keHoach')).toBe(1000);
-    expect(mauSoPhanTram(baoCao, 'duBao')).toBe(900);
-    expect(mauSoPhanTram(baoCao, 'thucHien')).toBe(800);
-  });
-
-  it('chênh lệch và % đạt không có mẫu số — cột % không áp dụng', () => {
-    expect(mauSoPhanTram(baoCao, 'chenhLech')).toBe(0);
-    expect(mauSoPhanTram(baoCao, 'phanTramDat')).toBe(0);
+    expect(giaTri(hang, 'thucHien', ...T1)).toBeCloseTo(200, 6);
+    expect(chenhLech(hang, 'keHoach', ...T1)).toBeCloseTo(100, 6);
+    expect(tyLeChenhLech(hang, 'keHoach', ...T1)).toBeCloseTo(1, 6);
   });
 });
 
 describe('COT_KY — thứ tự cột', () => {
-  it('quý đứng ngay sau ba tháng của chính nó, rồi mới tới 6 tháng và cả năm', () => {
+  it('đi từ rộng tới hẹp như bảng P&L: năm → 6 tháng → quý → tháng', () => {
     expect(COT_KY.map((c) => c.title)).toEqual([
-      'T1', 'T2', 'T3', 'QUÝ I',
-      'T4', 'T5', 'T6', 'QUÝ II',
-      'T7', 'T8', 'T9', 'QUÝ III',
-      'T10', 'T11', 'T12', 'QUÝ IV',
-      '6 tháng đầu', '6 tháng cuối', 'Cả năm',
+      'Cả năm', '6 tháng đầu', '6 tháng cuối',
+      'QUÝ I', 'QUÝ II', 'QUÝ III', 'QUÝ IV',
+      'T1', 'T2', 'T3', 'T4', 'T5', 'T6',
+      'T7', 'T8', 'T9', 'T10', 'T11', 'T12',
     ]);
   });
 

@@ -6,8 +6,9 @@
  *
  * Bảng giữ nguyên 12 số tháng của từng lớp chứ không gộp sẵn theo một kỳ: cột
  * của bảng là các KỲ (Năm · 6 tháng · quý · tháng, đúng bộ cột của bảng P&L),
- * còn người dùng chọn đang xem LỚP nào. Vì vậy giá trị mỗi ô phải tính tại chỗ
- * từ khoảng tháng của đúng cột đó — xem `giaTriO`.
+ * mỗi kỳ bày đủ năm khối: KẾ HOẠCH · DỰ BÁO · THỰC HIỆN · THỰC HIỆN vs KẾ
+ * HOẠCH · THỰC HIỆN vs DỰ BÁO. Giá trị mỗi ô tính tại chỗ từ khoảng tháng của
+ * đúng cột đó.
  *
  * Thuần, không đụng React.
  */
@@ -19,27 +20,11 @@ import type {
 } from "@/services/kqkd3LopService";
 import { congKhoang, hoaVonKhoang, so, type NguonHoaVon } from "../../lib/kyCot";
 
-/** Lớp số liệu đang xem — chọn ở thanh công cụ, quyết định nội dung mọi ô. */
-export type Lop =
-  | "keHoach"
-  | "duBao"
-  | "thucHien"
-  | "chenhLech"
-  | "phanTramDat";
-
-export const LOP_OPTIONS: { value: Lop; label: string }[] = [
-  { value: "keHoach", label: "Kế hoạch" },
-  { value: "duBao", label: "Dự báo" },
-  { value: "thucHien", label: "Thực hiện" },
-  { value: "chenhLech", label: "Chênh lệch" },
-  { value: "phanTramDat", label: "% đạt" },
-];
-
-/** Ba lớp mang số tiền; hai lớp còn lại là kết quả so sánh, định dạng khác hẳn. */
+/** Ba lớp số liệu gốc. Hai khối "vs" là phép trừ giữa chúng, không phải lớp thứ tư. */
 export type LopTien = "keHoach" | "duBao" | "thucHien";
 
-export const laLopTien = (lop: Lop): lop is LopTien =>
-  lop === "keHoach" || lop === "duBao" || lop === "thucHien";
+/** Mốc để so THỰC HIỆN với: kế hoạch hoặc dự báo. */
+export type Moc = "keHoach" | "duBao";
 
 /** Một cột kỳ của bảng: khoảng tháng [tu, den), chỉ số 0 là T1. */
 export interface CotKy {
@@ -52,28 +37,26 @@ export interface CotKy {
 const SO_LA_MA_QUY = ["I", "II", "III", "IV"];
 
 /**
- * Thứ tự cột đúng như bảng Excel nghiệp vụ đang dùng: ba tháng rồi tới QUÝ của
- * chính ba tháng đó, hết bốn quý mới tới 6 tháng đầu, 6 tháng cuối và cả năm.
- *
- * Xếp vậy để đọc liền mạch theo thời gian — quý nằm ngay chỗ nó cộng xong, chứ
- * không phải dồn hết quý về một cụm rồi tháng về một cụm khác.
+ * Thứ tự cột đi từ RỘNG tới HẸP, đúng như bảng P&L: cả năm → 6 tháng → quý →
+ * tháng. Mở bảng ra là thấy ngay bức tranh cả năm, muốn soi chi tiết thì vuốt
+ * dần sang phải.
  */
 export const COT_KY: CotKy[] = [
-  ...[0, 1, 2, 3].flatMap((q) => [
-    ...[0, 1, 2].map((i) => {
-      const t = q * 3 + i;
-      return { key: `t${t + 1}`, title: `T${t + 1}`, tu: t, den: t + 1 };
-    }),
-    {
-      key: `q${q + 1}`,
-      title: `QUÝ ${SO_LA_MA_QUY[q]}`,
-      tu: q * 3,
-      den: q * 3 + 3,
-    },
-  ]),
+  { key: "nam", title: "Cả năm", tu: 0, den: 12 },
   { key: "s1", title: "6 tháng đầu", tu: 0, den: 6 },
   { key: "s2", title: "6 tháng cuối", tu: 6, den: 12 },
-  { key: "nam", title: "Cả năm", tu: 0, den: 12 },
+  ...[0, 1, 2, 3].map((q) => ({
+    key: `q${q + 1}`,
+    title: `QUÝ ${SO_LA_MA_QUY[q]}`,
+    tu: q * 3,
+    den: q * 3 + 3,
+  })),
+  ...Array.from({ length: 12 }, (_, t) => ({
+    key: `t${t + 1}`,
+    title: `T${t + 1}`,
+    tu: t,
+    den: t + 1,
+  })),
 ];
 
 export interface Hang3Lop {
@@ -195,9 +178,13 @@ export function ghep3Lop(bc: Kqkd3LopReport): Hang3Lop[] {
     dungHangHoaVon(bc),
   ];
 }
-
-/** Số tiền của MỘT lớp gốc trong khoảng tháng [tu, den). */
-function giaTriLopTien(
+/**
+ * Số tiền của MỘT lớp trong khoảng tháng [tu, den).
+ *
+ * Dòng hòa vốn là tỷ số nên không cộng dồn được — tính lại từ ba dãy nguyên
+ * liệu của chính khoảng đó.
+ */
+export function giaTri(
   row: Hang3Lop,
   lop: LopTien,
   tu: number,
@@ -207,39 +194,36 @@ function giaTriLopTien(
     ? hoaVonKhoang(row.nguonHoaVon[lop], tu, den)
     : congKhoang(row[lop], tu, den);
 }
-
 /**
- * Giá trị một ô: lớp đang xem, trong khoảng tháng [tu, den) của cột đó.
+ * Khối "THỰC HIỆN vs KẾ HOẠCH" / "THỰC HIỆN vs DỰ BÁO", cột GIÁ TRỊ.
  *
- * Chênh lệch và % đạt tính TRONG CHÍNH KỲ ĐÓ, không phải lấy số cả năm chia ra
- * — tháng 3 hụt kế hoạch mà cả năm vẫn đạt là chuyện thường, bảng phải chỉ ra
- * được đúng tháng hụt.
- *
- * Trả `null` chỉ ở một trường hợp: % đạt mà kế hoạch kỳ đó bằng 0 (chưa lập kế
- * hoạch thì không có gì để đạt).
+ * Tính TRONG CHÍNH KỲ ĐÓ, không phải lấy số cả năm chia ra — tháng 3 hụt kế
+ * hoạch mà cả năm vẫn đạt là chuyện thường, bảng phải chỉ ra được tháng hụt.
  */
-export function giaTriO(
+export function chenhLech(
   row: Hang3Lop,
-  lop: Lop,
+  moc: Moc,
   tu: number,
   den: number,
-): number | null {
-  if (laLopTien(lop)) return giaTriLopTien(row, lop, tu, den);
-  const kh = giaTriLopTien(row, "keHoach", tu, den);
-  const th = giaTriLopTien(row, "thucHien", tu, den);
-  if (lop === "chenhLech") return th - kh;
-  return kh === 0 ? null : th / kh;
+): number {
+  return giaTri(row, "thucHien", tu, den) - giaTri(row, moc, tu, den);
 }
 
 /**
- * Mẫu số của cột "%": doanh thu thuần cả năm của ĐÚNG lớp đang xem.
+ * Cột "Tỷ lệ" của hai khối so sánh: CHÊNH LỆCH chia cho mốc — vượt hay hụt bao
+ * nhiêu phần trăm, KHÔNG phải Thực hiện / Kế hoạch.
  *
- * Chênh lệch và % đạt không phải số tiền của một lớp nào nên không có tỷ lệ
- * trên doanh thu — trả 0 để phía hiển thị ẩn hẳn cột đi.
+ * `null` khi mốc bằng 0: chưa lập kế hoạch thì không có gì để so.
  */
-export function mauSoPhanTram(bc: Kqkd3LopReport, lop: Lop): number {
-  if (!laLopTien(lop)) return 0;
-  return so(bc[lop].doanhThuThuanNam);
+export function tyLeChenhLech(
+  row: Hang3Lop,
+  moc: Moc,
+  tu: number,
+  den: number,
+): number | null {
+  const goc = giaTri(row, moc, tu, den);
+  if (goc === 0) return null;
+  return chenhLech(row, moc, tu, den) / goc;
 }
 
 /**
@@ -260,7 +244,7 @@ export function phanTramDS(
 ): number | null {
   const doanhThu = congKhoang(bc[lop].doanhThuThuanThang, tu, den);
   if (doanhThu === 0) return null;
-  return giaTriLopTien(row, lop, tu, den) / doanhThu;
+  return giaTri(row, lop, tu, den) / doanhThu;
 }
 
 /**
