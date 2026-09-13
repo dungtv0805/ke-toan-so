@@ -59,25 +59,38 @@ beforeAll(() => {
 });
 
 describe("Pnl3LopTable", () => {
-  it("dựng đủ bộ cột kỳ như bảng P&L, không còn ô chọn kỳ", async () => {
-    render(<Pnl3LopTab nam={2026} />);
+  it("cột xếp theo tháng → quý của chính ba tháng đó → 6 tháng → cả năm", async () => {
+    const { container } = render(<Pnl3LopTab nam={2026} />);
 
     await waitFor(() => expect(screen.getByText("I. DOANH THU")).toBeTruthy());
 
-    for (const tieuDe of ["Năm", "6 tháng đầu", "6 tháng cuối", "Quý", "Tháng", "Q1", "Q4", "T1", "T12"]) {
-      expect(screen.getAllByText(tieuDe).length).toBeGreaterThan(0);
-    }
-    // Lớp mặc định là Chênh lệch — không có cột "%" trên doanh thu.
+    // Hàng tiêu đề THỨ NHẤT là hàng tên kỳ; hàng thứ hai là Số tiền/%DS/Tỷ trọng.
+    const tieuDe = Array.from(
+      container.querySelectorAll(".ant-table-thead tr:first-child th"),
+    ).map((th) => th.textContent?.trim());
+    // Ba tháng rồi tới quý của chính chúng, hết bốn quý mới tới 6 tháng và năm.
+    expect(tieuDe.slice(0, 6)).toEqual([
+      "Chỉ tiêu",
+      "T1",
+      "T2",
+      "T3",
+      "QUÝ I",
+      "T4",
+    ]);
+    expect(tieuDe.slice(-3)).toEqual(["6 tháng đầu", "6 tháng cuối", "Cả năm"]);
+    // Không còn cụm "Quý"/"Tháng" gộp của bố cục cũ, cũng không còn ô chọn kỳ.
+    expect(tieuDe).not.toContain("Quý");
+    expect(tieuDe).not.toContain("Tháng");
     expect(screen.queryByText("Kỳ xem")).toBeNull();
     expect(screen.getByText("Xem")).toBeTruthy();
   });
 
-  it("mặc định hiện lớp Chênh lệch: T1 hụt 30 so kế hoạch", async () => {
+  it("mặc định hiện lớp Thực hiện — đúng dạng bảng nghiệp vụ", async () => {
     render(<Pnl3LopTab nam={2026} />);
     await waitFor(() => expect(screen.getByText("I. DOANH THU")).toBeTruthy());
-    // Cả năm −130, T1 −30, T2 −100.
-    expect(screen.getAllByText("−30").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("−130").length).toBeGreaterThan(0);
+    // Thực hiện T1 = 70; chưa có số chênh lệch nào.
+    expect(screen.getAllByText("70").length).toBeGreaterThan(0);
+    expect(screen.queryByText("−30")).toBeNull();
   });
 
   it("có dòng DOANH THU HÒA VỐN ở cuối bảng", async () => {
@@ -85,16 +98,33 @@ describe("Pnl3LopTable", () => {
     await waitFor(() => expect(screen.getByText("DOANH THU HÒA VỐN")).toBeTruthy());
   });
 
-  it("đổi sang lớp Thực hiện: hiện số tiền và cột % trên doanh thu", async () => {
+  it("đổi sang lớp Chênh lệch: mỗi kỳ rút còn một cột, bỏ %DS/Tỷ trọng", async () => {
     const { container } = render(<Pnl3LopTab nam={2026} />);
     await waitFor(() => expect(screen.getByText("I. DOANH THU")).toBeTruthy());
 
     fireEvent.mouseDown(container.querySelector(".ant-select") as HTMLElement);
-    fireEvent.click(await screen.findByTitle("Thực hiện"));
+    fireEvent.click(await screen.findByTitle("Chênh lệch"));
 
+    // Cả năm −130, T1 −30, T2 −100.
+    await waitFor(() => expect(screen.getAllByText("−30").length).toBeGreaterThan(0));
+    expect(screen.getAllByText("−130").length).toBeGreaterThan(0);
+    expect(screen.queryByText("%DS")).toBeNull();
+    expect(screen.queryByText("Tỷ trọng")).toBeNull();
+  });
+
+  it("lớp Thực hiện: mỗi kỳ là cụm Số tiền · %DS · Tỷ trọng", async () => {
+    const { container } = render(<Pnl3LopTab nam={2026} />);
     await waitFor(() => expect(screen.getAllByText("70").length).toBeGreaterThan(0));
-    // Cột "%" chỉ xuất hiện với ba lớp số tiền.
-    expect(screen.getAllByText("%").length).toBeGreaterThan(0);
+    // 19 kỳ, mỗi kỳ một bộ ba cột. Đếm trong MỘT thead: antd vẽ hai bảng
+    // (header cố định + thân) nên mỗi tiêu đề xuất hiện hai lần trong DOM.
+    const thead = container.querySelector(".ant-table-thead") as HTMLElement;
+    const demNhan = (nhan: string) =>
+      Array.from(thead.querySelectorAll("th")).filter(
+        (th) => th.textContent?.trim() === nhan,
+      ).length;
+    expect(demNhan("Số tiền")).toBe(19);
+    expect(demNhan("%DS")).toBe(19);
+    expect(demNhan("Tỷ trọng")).toBe(19);
     // Không còn số chênh lệch nào trên bảng.
     expect(screen.queryByText("−30")).toBeNull();
   });

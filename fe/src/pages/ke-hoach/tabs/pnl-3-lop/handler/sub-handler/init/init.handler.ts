@@ -39,7 +39,7 @@ export class Pnl3LopInitHandler extends CSubHanlder<
     const mac: [string, unknown][] = [
       ["baoCao", null],
       ["loading", false],
-      ["lop", "chenhLech"],
+      ["lop", "thucHien"],
     ];
     for (const [key, value] of mac) {
       if (!this.hasState(key)) this.setState(key, value);
