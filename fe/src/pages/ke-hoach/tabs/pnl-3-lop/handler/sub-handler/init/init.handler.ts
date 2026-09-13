@@ -2,7 +2,7 @@ import { HandlerDecorator, RegisterHandler } from "@/common";
 import { CSubHanlder } from "@/common/c-handler/core/sub-handler.ts/sub-handler";
 import { kqkd3LopService } from "@/services/kqkd3LopService";
 import type { Pnl3LopEvents, Pnl3LopStates } from "../../pnl-3-lop.handler";
-import type { Ky } from "../../../lib/pnl3LopRows";
+import type { Lop } from "../../../lib/pnl3LopRows";
 import "./init.event";
 import "./init.state";
 
@@ -29,17 +29,17 @@ export class Pnl3LopInitHandler extends CSubHanlder<
     }
   }
 
-  @HandlerDecorator("doiKy")
-  doiKy(params: { ky: Ky }): void {
-    // Đổi kỳ chỉ đổi cách cắt 12 số đã có — không gọi lại API.
-    this.setState("ky", params.ky);
+  @HandlerDecorator("doiLop")
+  doiLop(params: { lop: Lop }): void {
+    // Đổi lớp chỉ đổi cách đọc 12 số đã có — không gọi lại API.
+    this.setState("lop", params.lop);
   }
 
   private khoiTaoMacDinh(): void {
     const mac: [string, unknown][] = [
       ["baoCao", null],
       ["loading", false],
-      ["ky", "NAM"],
+      ["lop", "chenhLech"],
     ];
     for (const [key, value] of mac) {
       if (!this.hasState(key)) this.setState(key, value);
