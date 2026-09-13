@@ -1,289 +1,66 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Card,
-  Table,
-  Button,
-  Space,
-  Statistic,
-  Row,
-  Col,
-  Tabs,
-  Select,
-  Tag,
-  message,
-} from 'antd';
-import {
-  ReloadOutlined,
-  ExportOutlined,
-  RiseOutlined,
-  FallOutlined,
-  LineChartOutlined,
-  DollarOutlined,
-} from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
-import {
-  pnlService,
-  PnLSummary,
-  PnLGroupedData,
-  PnLItem,
-} from '@/services/pnlService';
-import { usePagePermission } from "@/hooks/usePagePermission";
-import { FilterBar } from "@/components/common/FilterBar";
-import { exportReportExcel } from "@/utils/exportReportExcel";
-import { buildPnLSheets } from "./pnlExport";
+import React, { useMemo, useState } from "react";
+import { Select, Space, Typography } from "antd";
+import { PieChartOutlined } from "@ant-design/icons";
+import { KqkdTab } from "@/pages/ke-hoach/tabs/kqkd/KqkdTab";
 
-const PERIOD_LABEL: Record<string, string> = {
-  thangNay: "Tháng này",
-  thangTruoc: "Tháng trước",
-  luyKe: "Lũy kế năm",
-};
+const { Text } = Typography;
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(value);
-
-const formatCurrencyShort = (value: number) => {
-  if (Math.abs(value) >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)} tỷ`;
-  if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(0)} tr`;
-  return formatCurrency(value);
-};
-
-type PnLRow = {
-  key: string;
-  khoanMuc: string;
-  soTien: number;
-  isCategory?: boolean;
-  isSummary?: boolean;
-};
-
+/**
+ * P&L THỰC HIỆN — bảng P&L của số thực tế.
+ *
+ * Dùng lại NGUYÊN `KqkdTab` của trang Kế hoạch, chỉ đổi nguồn sang 'THUC_HIEN'.
+ * Cố ý không nhân bản bảng: cùng một component, cùng một hàm dựng dòng, và BE
+ * cũng chạy cùng một `buildKqkdKeHoach` — nên P&L Kế hoạch, P&L Thực hiện và
+ * lớp Thực hiện của trang So sánh không thể lệch nhau một dòng nào.
+ *
+ * Bản cũ của trang này là bảng một cột "Số tiền" theo kỳ Tháng này / Tháng
+ * trước / Lũy kế, lấy từ `pnlService` — khác hẳn khung chỉ tiêu của Kế hoạch nên
+ * không so được. Đã bỏ.
+ */
 const PnLPage: React.FC = () => {
-  const { canExport } = usePagePermission("/bao-cao/pnl");
-  const [groupedData, setGroupedData] = useState<PnLGroupedData[]>([]);
-  const [summary, setSummary] = useState<PnLSummary | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState<'thangNay' | 'thangTruoc' | 'luyKe'>('thangNay');
-  const [exporting, setExporting] = useState(false);
+  const [nam, setNam] = useState(() => new Date().getFullYear());
 
-  const handleExport = async () => {
-    const sheets = buildPnLSheets(groupedData, summary, PERIOD_LABEL[selectedPeriod]);
-    if (sheets.length === 0) { message.warning("Không có dữ liệu để xuất"); return; }
-    setExporting(true);
-    try {
-      await exportReportExcel("Bao cao lai lo PnL", sheets);
-      message.success("Đã xuất Excel");
-    } catch (e) {
-      console.error("export excel error", e);
-      message.error("Xuất Excel thất bại");
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [grouped, summaryData] = await Promise.all([
-        pnlService.getGroupedPnLData(selectedPeriod),
-        pnlService.getSummary(selectedPeriod),
-      ]);
-      setGroupedData(grouped);
-      setSummary(summaryData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedPeriod]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const buildTableData = (): PnLRow[] => {
-    const rows: PnLRow[] = [];
-
-    groupedData.forEach((group, gIndex) => {
-      // Category header
-      rows.push({
-        key: `cat-${gIndex}`,
-        khoanMuc: group.category.name,
-        soTien: group.subtotal,
-        isCategory: true,
-      });
-
-      // Items
-      group.items.forEach((item: PnLItem, iIndex: number) => {
-        rows.push({
-          key: `item-${gIndex}-${iIndex}`,
-          khoanMuc: `   ${item.ma} - ${item.ten}`,
-          soTien: item.soTien,
-        });
-      });
-    });
-
-    // Lợi nhuận trước thuế
-    const loiNhuanTruocThue = summary?.loiNhuanTruocThue ?? 0;
-    rows.push({
-      key: 'profit-before-tax',
-      khoanMuc: 'LỢI NHUẬN TRƯỚC THUẾ',
-      soTien: loiNhuanTruocThue,
-      isSummary: true,
-    });
-
-    // Thuế
-    rows.push({
-      key: 'tax',
-      khoanMuc: '   Thuế TNDN (20%)',
-      soTien: -(summary?.thue ?? 0),
-    });
-
-    // Lợi nhuận sau thuế
-    rows.push({
-      key: 'net-profit',
-      khoanMuc: 'LỢI NHUẬN SAU THUẾ',
-      soTien: summary?.loiNhuanSauThue ?? 0,
-      isSummary: true,
-    });
-
-    return rows;
-  };
-
-  const columns: ColumnsType<PnLRow> = [
-    {
-      title: 'Khoản mục',
-      dataIndex: 'khoanMuc',
-      key: 'khoanMuc',
-      width: 400,
-      render: (text: string, record: PnLRow) => (
-        <span style={{
-          fontWeight: record.isCategory || record.isSummary ? 600 : 400,
-          color: record.isSummary ? 'hsl(var(--blue))' : 'inherit',
-        }}>
-          {text}
-        </span>
-      ),
-    },
-    {
-      title: 'Số tiền',
-      dataIndex: 'soTien',
-      key: 'soTien',
-      width: 200,
-      align: 'right',
-      render: (value: number, record: PnLRow) => (
-        <span style={{
-          color: value < 0 ? 'hsl(var(--red))' : value > 0 ? 'hsl(var(--green))' : 'inherit',
-          fontWeight: record.isCategory || record.isSummary ? 600 : 400,
-        }}>
-          {value !== 0 ? formatCurrency(value) : '-'}
-        </span>
-      ),
-    },
-  ];
-
-  const currentYear = new Date().getFullYear();
+  const namOptions = useMemo(() => {
+    const namNay = new Date().getFullYear();
+    return Array.from({ length: 7 }, (_, i) => namNay - 3 + i).map((y) => ({
+      label: `Năm ${y}`,
+      value: y,
+    }));
+  }, []);
 
   return (
-    <div>
-      <FilterBar
-        className="mb-3"
-        filters={
-          <Select
-            value={selectedPeriod}
-            onChange={setSelectedPeriod}
-            style={{ width: 150 }}
-            options={[
-              { value: 'thangNay', label: 'Tháng này' },
-              { value: 'thangTruoc', label: 'Tháng trước' },
-              { value: 'luyKe', label: 'Lũy kế năm' },
-            ]}
-          />
-        }
-        actions={
-          <>
-            {canExport && (
-              <Button icon={<ExportOutlined />} onClick={handleExport} loading={exporting}>
-                Xuất Excel
-              </Button>
-            )}
-            <Button type="primary" icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>
-              Làm mới
-            </Button>
-          </>
-        }
-      />
-
-      <Card
-        title={
-          <Space>
-            <LineChartOutlined />
-            <span>Báo cáo Lãi lỗ (P&L)</span>
-            <Tag color="blue">Năm {currentYear}</Tag>
-          </Space>
-        }
+    // nkc-page: cao hết khung, chỉ thân bảng cuộn — giống các trang báo cáo khác.
+    <div className="nkc-page">
+      {/* Điện thoại: khung giữa chỉ lề 8px nên mép tràn -12px lòi ra ngoài 4px
+          mỗi bên → cả trang cuộn ngang. */}
+      <div
+        className="flex flex-wrap items-center justify-between gap-2 dt:!-mx-2 dt:!px-2"
+        style={{
+          marginInline: -12,
+          padding: "10px 12px",
+          background: "hsl(var(--background))",
+          borderBottom: "1px solid hsl(var(--border))",
+        }}
       >
-        {/* Summary Cards — điện thoại 2 thẻ mỗi hàng (xs=12) thay vì 4 hàng chồng. */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }} className="bc-the-so-gon">
-          <Col xs={12} sm={12} md={6}>
-            <Card size="small" className="stat-card stat-card-success">
-              <Statistic
-                title="Doanh thu"
-                value={summary?.tongDoanhThu ?? 0}
-                formatter={(val) => formatCurrencyShort(val as number)}
-                valueStyle={{ color: 'hsl(var(--blue))' }}
-                prefix={<DollarOutlined />}
-              />
-            </Card>
-          </Col>
-          <Col xs={12} sm={12} md={6}>
-            <Card size="small" className="stat-card stat-card-destructive">
-              <Statistic
-                title="Chi phí"
-                value={summary?.tongChiPhi ?? 0}
-                formatter={(val) => formatCurrencyShort(val as number)}
-                valueStyle={{ color: 'hsl(var(--red))' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={12} sm={12} md={6}>
-            <Card size="small" className="stat-card stat-card-success">
-              <Statistic
-                title="LN trước thuế"
-                value={summary?.loiNhuanTruocThue ?? 0}
-                formatter={(val) => formatCurrencyShort(val as number)}
-                valueStyle={{ color: (summary?.loiNhuanTruocThue ?? 0) >= 0 ? 'hsl(var(--blue))' : 'hsl(var(--red))' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={12} sm={12} md={6}>
-            <Card size="small" className="stat-card stat-card-success">
-              <Statistic
-                title="LN sau thuế"
-                value={summary?.loiNhuanSauThue ?? 0}
-                formatter={(val) => formatCurrencyShort(val as number)}
-                valueStyle={{ color: (summary?.loiNhuanSauThue ?? 0) >= 0 ? 'hsl(var(--green))' : 'hsl(var(--red))' }}
-                prefix={(summary?.loiNhuanSauThue ?? 0) >= 0 ? <RiseOutlined /> : <FallOutlined />}
-                suffix={<span style={{ fontSize: 12 }}>({(summary?.tyLeLoiNhuanRong ?? 0).toFixed(1)}%)</span>}
-              />
-            </Card>
-          </Col>
-        </Row>
+        <div className="flex items-center gap-2">
+          <PieChartOutlined className="text-primary" />
+          <Text strong className="text-sm sm:text-base">
+            P&L Thực hiện
+          </Text>
+        </div>
+        <Space wrap>
+          <Select
+            value={nam}
+            onChange={setNam}
+            options={namOptions}
+            style={{ width: 140 }}
+          />
+        </Space>
+      </div>
 
-        <Table
-          columns={columns}
-          dataSource={buildTableData()}
-          rowKey="key"
-          loading={loading}
-          pagination={false}
-          size="middle"
-          bordered
-          rowClassName={(record) =>
-            record.isSummary ? 'bg-blue-50' : record.isCategory ? 'bg-gray-50' : ''
-          }
-        />
-      </Card>
+      <div className="flex flex-col flex-1 min-h-0 pt-2">
+        <KqkdTab nam={nam} loaiKeHoach="THUC_HIEN" />
+      </div>
     </div>
   );
 };

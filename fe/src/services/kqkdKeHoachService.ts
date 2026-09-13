@@ -2,6 +2,15 @@ import { ServiceBase } from './base/service-base';
 import { chuanHoaThang } from './keHoachBanHangService';
 import type { LoaiKeHoach } from './keHoachService';
 
+/**
+ * Nguồn số liệu của báo cáo P&L.
+ *
+ * 'THUC_HIEN' KHÔNG phải một loại kế hoạch — BE hiểu nó là "đọc chứng từ thực
+ * tế". Khai riêng ở đây thay vì nới `LoaiKeHoach`, vì `LoaiKeHoach` đi khắp
+ * module Kế hoạch (lưu, sửa, lọc phiên bản) và số thực hiện không thuộc về đó.
+ */
+export type NguonKqkd = LoaiKeHoach | 'THUC_HIEN';
+
 export interface KqkdKeHoachDong {
   key: string;
   ma?: string;
@@ -42,11 +51,14 @@ class KqkdKeHoachService extends ServiceBase {
 
   async layBaoCao(
     nam: number,
-    loaiKeHoach: LoaiKeHoach,
+    loaiKeHoach: NguonKqkd,
     phienBan?: string,
   ): Promise<KqkdKeHoachReport> {
+    // Chứng từ thực tế không mang phiên bản: gửi kèm chỉ khiến BE lọc rỗng nếu
+    // có ngày nó đọc tới trường này.
+    const locPhienBan = phienBan && loaiKeHoach !== 'THUC_HIEN';
     const res = await this.get<KqkdKeHoachReport>({
-      params: { nam, loaiKeHoach, ...(phienBan ? { phienBan } : {}) },
+      params: { nam, loaiKeHoach, ...(locPhienBan ? { phienBan } : {}) },
     });
     return {
       nam: res?.nam ?? nam,

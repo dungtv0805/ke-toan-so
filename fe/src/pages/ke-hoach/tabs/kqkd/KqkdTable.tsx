@@ -2,7 +2,6 @@ import React from "react";
 import { Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
-import { useManHinh } from "@/hooks/useManHinh";
 import { useKqkdState } from "./KqkdHandlerContext";
 // Hai thư mục `lib` khác nhau: `./lib` là của riêng tab KQKD, `../lib` dùng chung
 // cho cả ba tab bảng.
@@ -101,10 +100,11 @@ const columns: ColumnsType<HangKqkd> = [
 export const KqkdTable: React.FC = () => {
   const [hang] = useKqkdState("hang", []);
   const [loading] = useKqkdState("loading", false);
-  // Máy tính giữ con số đoán sẵn cũ. Màn hẹp hơn thì thanh tab phía trên xuống
-  // 2–3 dòng, `100vh - 260px` cao hơn chỗ còn lại và mấy dòng cuối bị khung
-  // `overflow:hidden` cắt mất — đo theo viewport thật như các tab bảng khác.
-  const laMayTinh = useManHinh() === "desktop";
+  const [nguon] = useKqkdState("loaiKeHoach", "KE_HOACH");
+  // Đo theo viewport thật ở MỌI cỡ màn, không còn nhánh `100vh - 260px` cho máy
+  // tính: con số đó đoán theo chiều cao thanh công cụ + thanh tab của riêng
+  // trang Kế hoạch, nên bảng đứng trong trang P&L Thực hiện (đầu trang mỏng hơn
+  // nhiều) sẽ hụt cả trăm pixel. Bảng anh em Pnl3LopTable đã đo như vậy sẵn.
   const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
 
   return (
@@ -122,10 +122,7 @@ export const KqkdTable: React.FC = () => {
         pagination={false}
         // Mặc định đóng hết: mở trang chỉ thấy các dòng mục.
         expandable={{ defaultExpandedRowKeys: [] }}
-        scroll={{
-          x: "max-content",
-          y: laMayTinh ? "calc(100vh - 260px)" : tableBodyHeight,
-        }}
+        scroll={{ x: "max-content", y: tableBodyHeight }}
         rowClassName={(row) =>
           row.key === "HOA_VON"
             ? "kh-hang-hoa-von"
@@ -133,7 +130,12 @@ export const KqkdTable: React.FC = () => {
               ? "kh-hang-tong"
               : ""
         }
-        locale={{ emptyText: "Chưa có dòng kế hoạch nào trong năm" }}
+        locale={{
+          emptyText:
+            nguon === "THUC_HIEN"
+              ? "Chưa có chứng từ nào trong năm"
+              : "Chưa có dòng kế hoạch nào trong năm",
+        }}
       />
     </div>
   );
