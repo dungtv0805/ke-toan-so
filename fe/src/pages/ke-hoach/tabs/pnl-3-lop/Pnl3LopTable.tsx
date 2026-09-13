@@ -106,7 +106,11 @@ export const Pnl3LopTable: React.FC = () => {
       return oTien(v ?? 0, row.cap);
     };
 
+    // `key` khai tay chứ không suy từ khoảng tháng: antd đòi khoá duy nhất
+    // trong CẢ bảng, mà hai cột khác tên vẫn có thể trùng khoảng nếu sau này
+    // thêm kỳ mới.
     const cotKy = (
+      key: string,
       title: string,
       tu: number,
       den: number,
@@ -114,7 +118,7 @@ export const Pnl3LopTable: React.FC = () => {
       cap: string,
     ) => ({
       title,
-      key: `${tu}-${den}`,
+      key,
       width,
       align: "right" as const,
       ...capCot(cap),
@@ -133,7 +137,7 @@ export const Pnl3LopTable: React.FC = () => {
           <span className={row.cap === 0 ? "font-semibold" : undefined}>{v}</span>
         ),
       },
-      cotKy("Năm", 0, 12, 140, CAP_NAM),
+      cotKy("nam", "Năm", 0, 12, 140, CAP_NAM),
       // Tỷ lệ trên doanh thu thuần chỉ có nghĩa với số tiền của MỘT lớp. Chênh
       // lệch và % đạt không phải số tiền của lớp nào — bỏ hẳn cột đi thay vì
       // vẽ một cột toàn gạch ngang.
@@ -152,20 +156,20 @@ export const Pnl3LopTable: React.FC = () => {
             },
           ]
         : []),
-      cotKy("6 tháng đầu", 0, 6, 140, CAP_NAM),
-      cotKy("6 tháng cuối", 6, 12, 140, CAP_NAM),
+      cotKy("s1", "6 tháng đầu", 0, 6, 140, CAP_NAM),
+      cotKy("s2", "6 tháng cuối", 6, 12, 140, CAP_NAM),
       {
         title: "Quý",
         key: "quy",
         children: KHOANG_QUY.map(([tu, den], i) =>
-          cotKy(`Q${i + 1}`, tu, den, 130, CAP_QUY),
+          cotKy(`q${i + 1}`, `Q${i + 1}`, tu, den, 130, CAP_QUY),
         ),
       },
       {
         title: "Tháng",
         key: "thang",
         children: Array.from({ length: 12 }, (_, i) =>
-          cotKy(`T${i + 1}`, i, i + 1, 130, CAP_THANG),
+          cotKy(`t${i + 1}`, `T${i + 1}`, i, i + 1, 130, CAP_THANG),
         ),
       },
     ];
