@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { ghep3Lop, giaTriO, LOP_OPTIONS, mauSoPhanTram } from './pnl3LopRows';
+import {
+  COT_KY,
+  ghep3Lop,
+  giaTriO,
+  LOP_OPTIONS,
+  mauSoPhanTram,
+  phanTramDS,
+  tyTrong,
+} from './pnl3LopRows';
 import type { Kqkd3LopReport, KqkdKeHoachDong } from '@/services/kqkd3LopService';
 
 const m = (...v: number[]) => {
@@ -193,5 +201,95 @@ describe('mauSoPhanTram', () => {
   it('chênh lệch và % đạt không có mẫu số — cột % không áp dụng', () => {
     expect(mauSoPhanTram(baoCao, 'chenhLech')).toBe(0);
     expect(mauSoPhanTram(baoCao, 'phanTramDat')).toBe(0);
+  });
+});
+
+describe('COT_KY — thứ tự cột', () => {
+  it('quý đứng ngay sau ba tháng của chính nó, rồi mới tới 6 tháng và cả năm', () => {
+    expect(COT_KY.map((c) => c.title)).toEqual([
+      'T1', 'T2', 'T3', 'QUÝ I',
+      'T4', 'T5', 'T6', 'QUÝ II',
+      'T7', 'T8', 'T9', 'QUÝ III',
+      'T10', 'T11', 'T12', 'QUÝ IV',
+      '6 tháng đầu', '6 tháng cuối', 'Cả năm',
+    ]);
+  });
+
+  it('mỗi cột mang đúng khoảng tháng của kỳ đó', () => {
+    const theo = (title: string) => COT_KY.find((c) => c.title === title)!;
+    expect(theo('T1')).toMatchObject({ tu: 0, den: 1 });
+    expect(theo('QUÝ I')).toMatchObject({ tu: 0, den: 3 });
+    expect(theo('QUÝ IV')).toMatchObject({ tu: 9, den: 12 });
+    expect(theo('6 tháng đầu')).toMatchObject({ tu: 0, den: 6 });
+    expect(theo('6 tháng cuối')).toMatchObject({ tu: 6, den: 12 });
+    expect(theo('Cả năm')).toMatchObject({ tu: 0, den: 12 });
+  });
+
+  it('khoá cột duy nhất — antd đòi vậy', () => {
+    expect(new Set(COT_KY.map((c) => c.key)).size).toBe(COT_KY.length);
+  });
+});
+
+describe('phanTramDS — tỷ lệ trên doanh thu thuần CỦA CHÍNH KỲ ĐÓ', () => {
+  const baoCao = {
+    nam: 2026,
+    keHoach: bc([d('25', 'GIÁ VỐN', m(100, 300))], {
+      doanhThuThuanThang: m(1000, 1000),
+    }),
+    duBao: bc([]),
+    thucHien: bc([d('25', 'GIÁ VỐN', m(500, 500))], {
+      doanhThuThuanThang: m(1000, 0),
+    }),
+  };
+  const hang = ghep3Lop(baoCao)[0];
+
+  it('lấy doanh thu thuần của đúng lớp và đúng kỳ', () => {
+    expect(phanTramDS(baoCao, hang, 'keHoach', 0, 1)).toBeCloseTo(0.1);
+    expect(phanTramDS(baoCao, hang, 'keHoach', 0, 2)).toBeCloseTo(0.2);
+    expect(phanTramDS(baoCao, hang, 'thucHien', 0, 1)).toBeCloseTo(0.5);
+  });
+
+  it('kỳ chưa có doanh thu thì không chia được', () => {
+    expect(phanTramDS(baoCao, hang, 'thucHien', 1, 2)).toBeNull();
+  });
+});
+
+describe('tyTrong — tỷ lệ trên dòng cha', () => {
+  const baoCao = {
+    nam: 2026,
+    keHoach: bc([
+      d('25', 'GIÁ VỐN', m(1000), [
+        d('25:CD', 'Chi phí cố định', m(250)),
+        d('25:BD', 'Chi phí biến đổi', m(750)),
+      ]),
+    ]),
+    duBao: bc([]),
+    thucHien: bc([]),
+  };
+  const [cha] = ghep3Lop(baoCao);
+
+  it('dòng con lấy tỷ lệ trên dòng cha cùng kỳ', () => {
+    const [cd, bd] = cha.children!;
+    expect(tyTrong(cd, 'keHoach', 0, 1)).toBeCloseTo(0.25);
+    expect(tyTrong(bd, 'keHoach', 0, 1)).toBeCloseTo(0.75);
+  });
+
+  it('dòng mục La Mã là gốc của nhóm bên dưới nên bằng 100%', () => {
+    expect(tyTrong(cha, 'keHoach', 0, 1)).toBe(1);
+  });
+
+  it('dòng cha bằng 0 thì không chia được', () => {
+    const [c] = ghep3Lop({
+      nam: 2026,
+      keHoach: bc([d('25', 'GIÁ VỐN', m(0), [d('25:BD', 'Biến đổi', m(0))])]),
+      duBao: bc([]),
+      thucHien: bc([]),
+    });
+    expect(tyTrong(c.children![0], 'keHoach', 0, 1)).toBeNull();
+  });
+
+  it('dòng hòa vốn không có tỷ trọng — nó không thuộc nhóm nào', () => {
+    const hv = ghep3Lop(baoCao).at(-1)!;
+    expect(tyTrong(hv, 'keHoach', 0, 12)).toBeNull();
   });
 });

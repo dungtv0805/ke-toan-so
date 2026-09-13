@@ -5,13 +5,15 @@ import { useTableBodyHeight } from "@/hooks/useTableBodyHeight";
 import { useManHinh } from "@/hooks/useManHinh";
 import { RONG_COT_GHIM_DIEN_THOAI } from "@/components/table/ghimTheoManHinh";
 import { capCot, CAP_CHINH, CAP_NAM, CAP_QUY, CAP_THANG, tien } from "../lib/cotChung";
-import { KHOANG_QUY } from "../lib/kyCot";
 import {
+  COT_KY,
   ghep3Lop,
   giaTriO,
   laLopTien,
   LOP_OPTIONS,
-  mauSoPhanTram,
+  phanTramDS,
+  tyTrong,
+  type CotKy,
   type Hang3Lop,
   type Lop,
 } from "./lib/pnl3LopRows";
@@ -68,8 +70,8 @@ const oPhanTramDat = (v: number | null) => {
   );
 };
 
-/** Cột "%" — tỷ lệ trên doanh thu thuần cả năm của chính lớp đang xem. */
-const oPhanTramDoanhThu = (v: number | null) => {
+/** Ô tỷ lệ (%DS, Tỷ trọng): 0 và "không chia được" đều hiện gạch ngang. */
+const oTyLe = (v: number | null) => {
   if (v === null || v === 0) return GACH;
   const chu = `${(Math.abs(v) * 100).toFixed(1)}%`;
   return (
@@ -83,7 +85,9 @@ export const Pnl3LopTable: React.FC = () => {
   const handler = usePnl3LopHandler();
   const [baoCao] = usePnl3LopState("baoCao", null);
   const [loading] = usePnl3LopState("loading", false);
-  const [lop] = usePnl3LopState("lop", "chenhLech");
+  // Mặc định Thực hiện: mở trang là thấy ngay bảng số tiền đầy đủ
+  // (Số tiền · %DS · Tỷ trọng), đổi sang Chênh lệch khi cần soi kế hoạch.
+  const [lop] = usePnl3LopState("lop", "thucHien");
   const { ref: tableWrapRef, height: tableBodyHeight } = useTableBodyHeight();
   // Điện thoại: cột "Chỉ tiêu" 380px là cả màn chỉ thấy tên, vuốt sang thì mất
   // tên → ghim trái và hẹp lại (tên dài xuống dòng, không cắt "…").
@@ -96,34 +100,73 @@ export const Pnl3LopTable: React.FC = () => {
 
   const columns = useMemo<ColumnsType<Hang3Lop>>(() => {
     const lopXem = lop as Lop;
-    const mauSo = baoCao ? mauSoPhanTram(baoCao, lopXem) : 0;
+    const laTien = laLopTien(lopXem);
 
-    /** Một ô bất kỳ: lấy giá trị theo khoảng tháng rồi vẽ theo lớp đang xem. */
-    const o = (row: Hang3Lop, tu: number, den: number) => {
-      const v = giaTriO(row, lopXem, tu, den);
+    /** Ô SỐ TIỀN (hoặc chênh lệch / % đạt) của một kỳ. */
+    const oGiaTri = (row: Hang3Lop, ky: CotKy) => {
+      const v = giaTriO(row, lopXem, ky.tu, ky.den);
       if (lopXem === "phanTramDat") return oPhanTramDat(v);
       if (lopXem === "chenhLech") return oChenhLech(v ?? 0);
       return oTien(v ?? 0, row.cap);
     };
 
-    // `key` khai tay chứ không suy từ khoảng tháng: antd đòi khoá duy nhất
-    // trong CẢ bảng, mà hai cột khác tên vẫn có thể trùng khoảng nếu sau này
-    // thêm kỳ mới.
-    const cotKy = (
-      key: string,
-      title: string,
-      tu: number,
-      den: number,
-      width: number,
-      cap: string,
-    ) => ({
-      title,
-      key,
-      width,
-      align: "right" as const,
-      ...capCot(cap),
-      render: (_: unknown, row: Hang3Lop) => o(row, tu, den),
-    });
+    /**
+     * Mỗi kỳ là một cụm cột. Ba lớp số tiền có đủ Số tiền · %DS · Tỷ trọng;
+     * Chênh lệch và % đạt thì hai cột tỷ lệ kia vô nghĩa (chênh lệch không phải
+     * số tiền của lớp nào, % đạt đã là tỷ lệ rồi) nên cụm rút còn một cột.
+     */
+    const cumKy = (ky: CotKy, cap: string) => {
+      const cot = {
+        width: 130,
+        align: "right" as const,
+        ...capCot(cap),
+      };
+      if (!laTien) {
+        return {
+          ...cot,
+          title: ky.title,
+          key: ky.key,
+          render: (_: unknown, row: Hang3Lop) => oGiaTri(row, ky),
+        };
+      }
+      return {
+        title: ky.title,
+        key: ky.key,
+        ...capCot(cap),
+        children: [
+          {
+            ...cot,
+            title: "Số tiền",
+            key: `${ky.key}-tien`,
+            render: (_: unknown, row: Hang3Lop) => oGiaTri(row, ky),
+          },
+          {
+            ...cot,
+            width: 80,
+            title: "%DS",
+            key: `${ky.key}-ds`,
+            render: (_: unknown, row: Hang3Lop) =>
+              oTyLe(baoCao ? phanTramDS(baoCao, row, lopXem, ky.tu, ky.den) : null),
+          },
+          {
+            ...cot,
+            width: 80,
+            title: "Tỷ trọng",
+            key: `${ky.key}-tt`,
+            render: (_: unknown, row: Hang3Lop) =>
+              oTyLe(tyTrong(row, lopXem, ky.tu, ky.den)),
+          },
+        ],
+      };
+    };
+
+    // Tô nền theo cấp kỳ: tháng nhạt nhất, quý đậm hơn, 6 tháng và cả năm đậm
+    // nhất — mắt bám được ranh giới giữa các cụm trong 19 cụm cột.
+    const capCuaKy = (ky: CotKy) => {
+      if (ky.den - ky.tu === 1) return CAP_THANG;
+      if (ky.den - ky.tu === 3) return CAP_QUY;
+      return CAP_NAM;
+    };
 
     return [
       {
@@ -137,41 +180,7 @@ export const Pnl3LopTable: React.FC = () => {
           <span className={row.cap === 0 ? "font-semibold" : undefined}>{v}</span>
         ),
       },
-      cotKy("nam", "Năm", 0, 12, 140, CAP_NAM),
-      // Tỷ lệ trên doanh thu thuần chỉ có nghĩa với số tiền của MỘT lớp. Chênh
-      // lệch và % đạt không phải số tiền của lớp nào — bỏ hẳn cột đi thay vì
-      // vẽ một cột toàn gạch ngang.
-      ...(laLopTien(lopXem)
-        ? [
-            {
-              title: "%",
-              key: "phanTramDoanhThu",
-              width: 80,
-              align: "right" as const,
-              ...capCot(CAP_NAM),
-              render: (_: unknown, row: Hang3Lop) => {
-                if (mauSo === 0) return oPhanTramDoanhThu(null);
-                return oPhanTramDoanhThu((giaTriO(row, lopXem, 0, 12) ?? 0) / mauSo);
-              },
-            },
-          ]
-        : []),
-      cotKy("s1", "6 tháng đầu", 0, 6, 140, CAP_NAM),
-      cotKy("s2", "6 tháng cuối", 6, 12, 140, CAP_NAM),
-      {
-        title: "Quý",
-        key: "quy",
-        children: KHOANG_QUY.map(([tu, den], i) =>
-          cotKy(`q${i + 1}`, `Q${i + 1}`, tu, den, 130, CAP_QUY),
-        ),
-      },
-      {
-        title: "Tháng",
-        key: "thang",
-        children: Array.from({ length: 12 }, (_, i) =>
-          cotKy(`t${i + 1}`, `T${i + 1}`, i, i + 1, 130, CAP_THANG),
-        ),
-      },
+      ...COT_KY.map((ky) => cumKy(ky, capCuaKy(ky))),
     ];
   }, [baoCao, dienThoai, lop]);
 

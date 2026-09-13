@@ -36,8 +36,45 @@ export const LOP_OPTIONS: { value: Lop; label: string }[] = [
 ];
 
 /** Ba lớp mang số tiền; hai lớp còn lại là kết quả so sánh, định dạng khác hẳn. */
-export const laLopTien = (lop: Lop): boolean =>
+export type LopTien = "keHoach" | "duBao" | "thucHien";
+
+export const laLopTien = (lop: Lop): lop is LopTien =>
   lop === "keHoach" || lop === "duBao" || lop === "thucHien";
+
+/** Một cột kỳ của bảng: khoảng tháng [tu, den), chỉ số 0 là T1. */
+export interface CotKy {
+  key: string;
+  title: string;
+  tu: number;
+  den: number;
+}
+
+const SO_LA_MA_QUY = ["I", "II", "III", "IV"];
+
+/**
+ * Thứ tự cột đúng như bảng Excel nghiệp vụ đang dùng: ba tháng rồi tới QUÝ của
+ * chính ba tháng đó, hết bốn quý mới tới 6 tháng đầu, 6 tháng cuối và cả năm.
+ *
+ * Xếp vậy để đọc liền mạch theo thời gian — quý nằm ngay chỗ nó cộng xong, chứ
+ * không phải dồn hết quý về một cụm rồi tháng về một cụm khác.
+ */
+export const COT_KY: CotKy[] = [
+  ...[0, 1, 2, 3].flatMap((q) => [
+    ...[0, 1, 2].map((i) => {
+      const t = q * 3 + i;
+      return { key: `t${t + 1}`, title: `T${t + 1}`, tu: t, den: t + 1 };
+    }),
+    {
+      key: `q${q + 1}`,
+      title: `QUÝ ${SO_LA_MA_QUY[q]}`,
+      tu: q * 3,
+      den: q * 3 + 3,
+    },
+  ]),
+  { key: "s1", title: "6 tháng đầu", tu: 0, den: 6 },
+  { key: "s2", title: "6 tháng cuối", tu: 6, den: 12 },
+  { key: "nam", title: "Cả năm", tu: 0, den: 12 },
+];
 
 export interface Hang3Lop {
   key: string;
@@ -52,7 +89,13 @@ export interface Hang3Lop {
    * 12 số tháng được — phải giữ nguyên liệu (định phí / biến phí / doanh thu)
    * để mỗi cột tính lại trong đúng khoảng tháng của nó.
    */
-  nguonHoaVon?: Record<"keHoach" | "duBao" | "thucHien", NguonHoaVon>;
+  nguonHoaVon?: Record<LopTien, NguonHoaVon>;
+  /**
+   * Ba dãy 12 tháng của DÒNG CHA — mẫu số của cột "Tỷ trọng". Giữ bản sao tham
+   * chiếu thay vì trỏ ngược lên cả dòng cha: không tạo vòng tham chiếu, và chỉ
+   * cần đúng thứ dùng tới.
+   */
+  cha?: Record<LopTien, number[]>;
   children?: Hang3Lop[];
 }
 
@@ -99,15 +142,21 @@ function ghepMuc(
     const th = bTh.get(key);
     const mau = kh ?? db ?? th!;
 
-    const con = ghepMuc(kh?.con, db?.con, th?.con);
+    const keHoach = chuanHoa12(kh?.thang);
+    const duBao = chuanHoa12(db?.thang);
+    const thucHien = chuanHoa12(th?.thang);
+    const con = ghepMuc(kh?.con, db?.con, th?.con).map((c) => ({
+      ...c,
+      cha: { keHoach, duBao, thucHien },
+    }));
 
     return {
       key,
       nhan: mau.soLaMa ? `${mau.soLaMa}. ${mau.ten}` : mau.ten,
       cap: mau.cap,
-      keHoach: chuanHoa12(kh?.thang),
-      duBao: chuanHoa12(db?.thang),
-      thucHien: chuanHoa12(th?.thang),
+      keHoach,
+      duBao,
+      thucHien,
       // Mảng rỗng vẫn làm antd vẽ nút mở/đóng — bỏ hẳn trường đi.
       ...(con.length > 0 ? { children: con } : {}),
     };
@@ -150,7 +199,7 @@ export function ghep3Lop(bc: Kqkd3LopReport): Hang3Lop[] {
 /** Số tiền của MỘT lớp gốc trong khoảng tháng [tu, den). */
 function giaTriLopTien(
   row: Hang3Lop,
-  lop: "keHoach" | "duBao" | "thucHien",
+  lop: LopTien,
   tu: number,
   den: number,
 ): number {
@@ -175,9 +224,7 @@ export function giaTriO(
   tu: number,
   den: number,
 ): number | null {
-  if (laLopTien(lop)) {
-    return giaTriLopTien(row, lop as "keHoach" | "duBao" | "thucHien", tu, den);
-  }
+  if (laLopTien(lop)) return giaTriLopTien(row, lop, tu, den);
   const kh = giaTriLopTien(row, "keHoach", tu, den);
   const th = giaTriLopTien(row, "thucHien", tu, den);
   if (lop === "chenhLech") return th - kh;
@@ -192,5 +239,46 @@ export function giaTriO(
  */
 export function mauSoPhanTram(bc: Kqkd3LopReport, lop: Lop): number {
   if (!laLopTien(lop)) return 0;
-  return so(bc[lop as "keHoach" | "duBao" | "thucHien"].doanhThuThuanNam);
+  return so(bc[lop].doanhThuThuanNam);
+}
+
+/**
+ * Cột "%DS": tỷ lệ trên DOANH THU THUẦN CỦA CHÍNH KỲ ĐÓ, theo lớp đang xem.
+ *
+ * Khác cột "%" của bảng P&L một lớp (luôn chia cho doanh thu thuần cả năm):
+ * ở đây mỗi cột là một kỳ độc lập, chia cho doanh thu cả năm thì tháng nào
+ * cũng ra con số bé tí, không so được giữa các tháng.
+ *
+ * `null` khi kỳ đó chưa có doanh thu — không chia được.
+ */
+export function phanTramDS(
+  bc: Kqkd3LopReport,
+  row: Hang3Lop,
+  lop: LopTien,
+  tu: number,
+  den: number,
+): number | null {
+  const doanhThu = congKhoang(bc[lop].doanhThuThuanThang, tu, den);
+  if (doanhThu === 0) return null;
+  return giaTriLopTien(row, lop, tu, den) / doanhThu;
+}
+
+/**
+ * Cột "Tỷ trọng": tỷ lệ trên DÒNG CHA trong cùng kỳ — các dòng con của một mục
+ * cộng lại đúng 100%.
+ *
+ * Dòng mục La Mã không có cha: nó chính là gốc của nhóm bên dưới nên bằng 100%.
+ * Dòng DOANH THU HÒA VỐN đứng ngoài mọi nhóm nên không có tỷ trọng.
+ */
+export function tyTrong(
+  row: Hang3Lop,
+  lop: LopTien,
+  tu: number,
+  den: number,
+): number | null {
+  if (row.nguonHoaVon) return null;
+  if (!row.cha) return 1;
+  const mauSo = congKhoang(row.cha[lop], tu, den);
+  if (mauSo === 0) return null;
+  return congKhoang(row[lop], tu, den) / mauSo;
 }
