@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CongTyCongThue, HoaDonCongThue } from '@app/entities';
@@ -68,7 +73,20 @@ export class HoaDonCongThueService {
     ban.tenCongTy = dto.tenCongTy ?? ban.tenCongTy ?? '';
     ban.tenDangNhap = dto.tenDangNhap || ban.tenDangNhap || dto.mst;
     if (dto.kyKeKhai) ban.kyKeKhai = dto.kyKeKhai;
-    if (dto.matKhau) ban.matKhauMaHoa = encrypt(dto.matKhau);
+    if (dto.matKhau) {
+      // Thiếu CONG_THUE_KEY là lỗi CẤU HÌNH máy chủ, không phải lỗi người nhập.
+      // Để nguyên Error trần thì bộ lọc toàn cục biến nó thành 500 "An
+      // unexpected error occurred" — kế toán chỉ thấy "lưu không được" và không
+      // có cách nào tự biết phải làm gì.
+      try {
+        ban.matKhauMaHoa = encrypt(dto.matKhau);
+      } catch {
+        throw new ServiceUnavailableException(
+          'Máy chủ chưa cấu hình khóa mã hóa mật khẩu cổng Thuế (CONG_THUE_KEY). ' +
+            'Báo quản trị hệ thống. Trong lúc chờ, vẫn thêm được mã số thuế nếu bỏ trống ô mật khẩu.',
+        );
+      }
+    }
 
     // TypeORM KHÔNG áp `default:` khi insert vào MongoDB — phải tự đặt, nếu
     // không cột nằm im ở null và mọi bộ lọc theo nó đều trượt.

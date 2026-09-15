@@ -12,6 +12,7 @@ services:
       - ./env/db.env
       - ./env/jwt.env
       - ./env/services.env
+      - ./env/tax.env
     networks:
       - chimseo
     healthcheck:
