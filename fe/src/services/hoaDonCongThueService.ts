@@ -365,6 +365,27 @@ class HoaDonCongThueService extends ServiceBase {
     URL.revokeObjectURL(url);
   }
 
+  /**
+   * Lấy PDF về dạng objectURL để xem ngay trong khung bên cạnh.
+   * Nhớ gọi URL.revokeObjectURL khi đổi sang hóa đơn khác.
+   */
+  async xemPdf(
+    mst: string,
+    khoa: { mstNguoiBan: string; kyHieu: string; soHoaDon: string },
+  ): Promise<string> {
+    const token = getAuthToken();
+    const p = new URLSearchParams(khoa).toString();
+    const res = await fetch(
+      `${API_CONFIG.BASE_URL}/tax/hoa-don-cong-thue/cong-ty/${mst}/hoa-don/pdf?${p}`,
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+    );
+    if (!res.ok) {
+      const loi = await res.json().catch(() => null);
+      throw new Error(loi?.error?.message || 'Không xem được hóa đơn này');
+    }
+    return URL.createObjectURL(await res.blob());
+  }
+
   daTaiFileGoc(mst: string, tuNgay: string, denNgay: string): Promise<{ tong: number; daCoFile: number }> {
     return this.get({ endpoint: `/cong-ty/${mst}/file-goc`, params: { tuNgay, denNgay } });
   }

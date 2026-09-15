@@ -12,6 +12,8 @@ import {
   Typography,
   Alert,
   Progress,
+  Row,
+  Col,
   message,
 } from 'antd';
 import {
@@ -80,6 +82,10 @@ const HoaDonCongThuePage: React.FC = () => {
   const [dangTaiVe, setDangTaiVe] = useState<string | null>(null);
   const [xemHoaDon, setXemHoaDon] = useState<{ mst: string; ds: HoaDonTho[] } | null>(null);
   const [dangXemHoaDon, setDangXemHoaDon] = useState(false);
+  // Hóa đơn đang xem ở khung bên phải + objectURL của bản PDF.
+  const [dangChon, setDangChon] = useState<HoaDonTho | null>(null);
+  const [urlPdf, setUrlPdf] = useState<string | null>(null);
+  const [dangMoPdf, setDangMoPdf] = useState(false);
   const [dangXuatExcel, setDangXuatExcel] = useState<string | null>(null);
   const [luotPdf, setLuotPdf] = useState<LuotTaoPdf | null>(null);
   const hoiPdfRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -398,6 +404,38 @@ const HoaDonCongThuePage: React.FC = () => {
     }
   }
 
+  /**
+   * Mở bản thể hiện của một hóa đơn ở khung bên phải.
+   *
+   * Thu hồi objectURL cũ trước khi tạo cái mới — mỗi bản PDF vài trăm KB, không
+   * thu hồi thì lướt vài chục hóa đơn là trình duyệt phình bộ nhớ.
+   */
+  async function moXem(h: HoaDonTho) {
+    if (!xemHoaDon) return;
+    setDangChon(h);
+    setDangMoPdf(true);
+    try {
+      const url = await hoaDonCongThueService.xemPdf(xemHoaDon.mst, {
+        mstNguoiBan: String(h.mstNguoiBan ?? ''),
+        kyHieu: String(h.kyHieu ?? ''),
+        soHoaDon: String(h.soHoaDon ?? ''),
+      });
+      setUrlPdf((cu) => {
+        if (cu) URL.revokeObjectURL(cu);
+        return url;
+      });
+    } catch (e: any) {
+      message.error(e?.message || 'Không xem được hóa đơn này');
+      setUrlPdf(null);
+    } finally {
+      setDangMoPdf(false);
+    }
+  }
+
+  useEffect(() => () => {
+    if (urlPdf) URL.revokeObjectURL(urlPdf);
+  }, [urlPdf]);
+
   /** Tải riêng một hóa đơn. MST lấy từ lượt chạy đang mở, không phải từ dòng. */
   async function taiLe(
     m: { mstNguoiBan: string; kyHieu: string; soHoaDon: string },
@@ -535,7 +573,7 @@ const HoaDonCongThuePage: React.FC = () => {
     {
       title: '',
       key: 'tai',
-      width: 150,
+      width: 210,
       align: 'right' as const,
       render: (_: unknown, h: HoaDonTho) => {
         const khoa = {
@@ -545,12 +583,28 @@ const HoaDonCongThuePage: React.FC = () => {
         };
         return (
           <Space size={4}>
+            <Tooltip title={h.coFileGoc ? 'Xem bản thể hiện ở khung bên phải' : 'Chưa tải bản gốc về máy chủ'}>
+              <Button
+                size="small"
+                type="link"
+                disabled={!h.coFileGoc}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  moXem(h);
+                }}
+              >
+                Xem
+              </Button>
+            </Tooltip>
             <Tooltip title={h.coFileGoc ? 'Tải bản gốc XML có chữ ký số' : 'Chưa tải bản gốc về máy chủ'}>
               <Button
                 size="small"
                 icon={<FileZipOutlined />}
                 disabled={!h.coFileGoc}
-                onClick={() => taiLe(khoa, 'zip')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  taiLe(khoa, 'zip');
+                }}
               >
                 XML
               </Button>
@@ -560,7 +614,10 @@ const HoaDonCongThuePage: React.FC = () => {
                 size="small"
                 icon={<FilePdfOutlined />}
                 disabled={!h.coFileGoc}
-                onClick={() => taiLe(khoa, 'pdf')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  taiLe(khoa, 'pdf');
+                }}
               >
                 PDF
               </Button>
@@ -667,31 +724,112 @@ const HoaDonCongThuePage: React.FC = () => {
 
       {xemHoaDon && (
         <Card
+          styles={{ body: { padding: 12 } }}
           title={`Hóa đơn ${xemHoaDon.mst} · ${khoang[0].format('DD/MM/YYYY')} – ${khoang[1].format('DD/MM/YYYY')}`}
           extra={
-            <Space>
-              <Text type="secondary">
-                {`${xemHoaDon.ds.length} hóa đơn · ` +
-                  `${xemHoaDon.ds.filter((h) => h.coFileGoc).length} đã có bản gốc · ` +
-                  `${xemHoaDon.ds.filter((h) => h.coPdf).length} đã có PDF`}
-              </Text>
+            <Space wrap>
+              <Button
+                size="small"
+                icon={<FileExcelOutlined />}
+                onClick={() => xuatExcel({ mst: xemHoaDon.mst } as CongTyCongThue, 'mua-vao')}
+              >
+                Tải Excel
+              </Button>
+              <Button
+                size="small"
+                icon={<DownloadOutlined />}
+                onClick={() => taiVeMay({ mst: xemHoaDon.mst } as CongTyCongThue)}
+              >
+                Tải XML hàng loạt
+              </Button>
+              <Button
+                size="small"
+                icon={<FilePdfOutlined />}
+                onClick={() => taiVePdf({ mst: xemHoaDon.mst } as CongTyCongThue)}
+              >
+                Tải PDF hàng loạt
+              </Button>
               <Button size="small" onClick={() => setXemHoaDon(null)}>
                 Đóng
               </Button>
             </Space>
           }
         >
-          <Table
-            rowKey={(h) => `${h.mstNguoiBan}_${h.kyHieu}_${h.soHoaDon}`}
-            size="small"
-            dataSource={xemHoaDon.ds}
-            columns={cotHoaDon}
-            pagination={xemHoaDon.ds.length > 20 ? { pageSize: 20, size: 'small' } : false}
-            scroll={{ x: 'max-content' }}
-            locale={{
-              emptyText: 'Chưa có hóa đơn nào trong khoảng này. Bấm "Tải hàng loạt" để lấy từ cổng Thuế.',
-            }}
-          />
+          {/* Thanh đếm: nhìn một cái là biết còn thiếu bao nhiêu. */}
+          <Space size="large" wrap style={{ marginBottom: 10 }}>
+            <Text type="secondary">
+              Tổng: <Text strong>{xemHoaDon.ds.length}</Text>
+            </Text>
+            <Text type="secondary">
+              Có bản gốc: <Text strong>{xemHoaDon.ds.filter((h) => h.coFileGoc).length}</Text>
+            </Text>
+            <Text type="secondary">
+              Có PDF: <Text strong>{xemHoaDon.ds.filter((h) => h.coPdf).length}</Text>
+            </Text>
+            <Text type="secondary">
+              Máy tính tiền:{' '}
+              <Text strong>{xemHoaDon.ds.filter((h) => h.nhom === 'may-tinh-tien').length}</Text>
+            </Text>
+          </Space>
+
+          {/* Trái: danh sách. Phải: bản thể hiện của hóa đơn đang chọn. */}
+          <Row gutter={12}>
+            <Col xs={24} lg={13}>
+              <Table
+                rowKey={(h) => `${h.mstNguoiBan}_${h.kyHieu}_${h.soHoaDon}`}
+                size="small"
+                dataSource={xemHoaDon.ds}
+                columns={cotHoaDon}
+                pagination={xemHoaDon.ds.length > 15 ? { pageSize: 15, size: 'small' } : false}
+                scroll={{ x: 'max-content' }}
+                rowClassName={(h) =>
+                  dangChon &&
+                  h.mstNguoiBan === dangChon.mstNguoiBan &&
+                  h.kyHieu === dangChon.kyHieu &&
+                  String(h.soHoaDon) === String(dangChon.soHoaDon)
+                    ? 'ant-table-row-selected'
+                    : ''
+                }
+                onRow={(h) => ({
+                  onClick: () => h.coFileGoc && moXem(h),
+                  style: { cursor: h.coFileGoc ? 'pointer' : 'default' },
+                })}
+                locale={{
+                  emptyText:
+                    'Chưa có hóa đơn nào trong khoảng này. Bấm "Tải hàng loạt" để lấy từ cổng Thuế.',
+                }}
+              />
+            </Col>
+
+            <Col xs={24} lg={11}>
+              <div
+                style={{
+                  border: '1px solid #f0f0f0',
+                  borderRadius: 8,
+                  height: 620,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  background: '#fafafa',
+                }}
+              >
+                {dangMoPdf ? (
+                  <Text type="secondary">Đang dựng bản thể hiện…</Text>
+                ) : urlPdf ? (
+                  <iframe
+                    title="Bản thể hiện hóa đơn"
+                    src={urlPdf}
+                    style={{ width: '100%', height: '100%', border: 0 }}
+                  />
+                ) : (
+                  <Text type="secondary" style={{ padding: 16, textAlign: 'center' }}>
+                    Chọn một hóa đơn đã có bản gốc ở bên trái để xem bản thể hiện tại đây.
+                  </Text>
+                )}
+              </div>
+            </Col>
+          </Row>
         </Card>
       )}
 
