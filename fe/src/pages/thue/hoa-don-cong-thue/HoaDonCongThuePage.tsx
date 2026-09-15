@@ -27,6 +27,7 @@ import {
   FileExcelOutlined,
   FilePdfOutlined,
   UnorderedListOutlined,
+  KeyOutlined,
 } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -80,6 +81,8 @@ const HoaDonCongThuePage: React.FC = () => {
   const [captcha, setCaptcha] = useState<{ mst: string; sessionId: string; svg: string } | null>(null);
   const [maCaptcha, setMaCaptcha] = useState('');
   const [dangGui, setDangGui] = useState(false);
+  const [moToken, setMoToken] = useState<string | null>(null);
+  const [token, setToken] = useState('');
   const [luotFile, setLuotFile] = useState<LuotTaiFile | null>(null);
   const [dangTaiVe, setDangTaiVe] = useState<string | null>(null);
   const [xemHoaDon, setXemHoaDon] = useState<{ mst: string; ds: HoaDonTho[] } | null>(null);
@@ -180,6 +183,24 @@ const HoaDonCongThuePage: React.FC = () => {
       message.success(`Đã đăng nhập ${mst}`);
     } catch (e: any) {
       message.error(e?.message || 'Sai mã captcha hoặc mật khẩu');
+    } finally {
+      setDangGui(false);
+    }
+  }
+
+  /** Nhận token từ phiên trình duyệt của kế toán khi cổng chặn đăng nhập bằng máy. */
+  async function guiToken() {
+    if (!moToken || !token.trim()) return;
+    setDangGui(true);
+    try {
+      await hoaDonCongThueService.datToken(moToken, token.trim());
+      const mst = moToken;
+      setMoToken(null);
+      setToken('');
+      await nap();
+      message.success(`Đã nhận token cho ${mst}, dùng được khoảng một giờ`);
+    } catch (e: any) {
+      message.error(e?.message || 'Token không dùng được');
     } finally {
       setDangGui(false);
     }
@@ -366,6 +387,11 @@ const HoaDonCongThuePage: React.FC = () => {
               onClick={() => xuatExcel(c, 'mua-vao')}
             >
               Excel
+            </Button>
+          </Tooltip>
+          <Tooltip title="Dùng khi cổng Thuế chặn đăng nhập bằng máy: dán token từ phiên trình duyệt">
+            <Button size="small" icon={<KeyOutlined />} onClick={() => setMoToken(c.mst)}>
+              Token
             </Button>
           </Tooltip>
           <Tooltip title="Xem danh sách hóa đơn của khoảng ngày đang chọn">
@@ -916,6 +942,58 @@ const HoaDonCongThuePage: React.FC = () => {
           </Row>
         </Card>
       )}
+
+      <Modal
+        open={Boolean(moToken)}
+        title={`Dùng token từ trình duyệt — ${moToken ?? ''}`}
+        onCancel={() => setMoToken(null)}
+        onOk={guiToken}
+        okText="Dùng token này"
+        cancelText="Hủy"
+        confirmLoading={dangGui}
+        width={620}
+        destroyOnClose
+      >
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: 12 }}
+          message="Khi nào cần dùng cách này"
+          description={
+            <>
+              Cổng Thuế chặn đăng nhập tự động (báo &quot;Hệ thống phát hiện hành vi không hợp
+              lệ&quot;) nhưng vẫn nhận token hợp lệ cho các thao tác lấy dữ liệu. Bạn đăng nhập bằng
+              tay trên cổng rồi đưa token sang đây là làm việc tiếp được.
+            </>
+          }
+        />
+        <Space direction="vertical" size={6} style={{ width: '100%' }}>
+          <Text>
+            <Text strong>1.</Text> Mở{' '}
+            <a href="https://hoadondientu.gdt.gov.vn/" target="_blank" rel="noreferrer">
+              hoadondientu.gdt.gov.vn
+            </a>{' '}
+            và đăng nhập như bình thường.
+          </Text>
+          <Text>
+            <Text strong>2.</Text> Nhấn <Text code>F12</Text> → tab <Text strong>Application</Text> →{' '}
+            <Text strong>Local Storage</Text> → chọn địa chỉ cổng Thuế → tìm dòng{' '}
+            <Text code>token</Text> và chép giá trị.
+          </Text>
+          <Text>
+            <Text strong>3.</Text> Dán vào ô dưới đây.
+          </Text>
+          <Input.TextArea
+            rows={4}
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          />
+          <Text type="secondary">
+            Token sống khoảng một giờ và chỉ nằm trong bộ nhớ máy chủ, không ghi xuống cơ sở dữ liệu.
+          </Text>
+        </Space>
+      </Modal>
 
       {luotPdf && (
         <Card

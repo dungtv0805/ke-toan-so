@@ -109,6 +109,32 @@ export class PhienCongThueService {
     this.tokens.delete(this.khoa(tenantId, mst));
   }
 
+  /**
+   * Nhận token lấy từ phiên trình duyệt của chính kế toán.
+   *
+   * Đường vào dự phòng cho lúc cổng Thuế chặn đăng nhập bằng máy: từ
+   * 15/09/2026 endpoint authenticate trả 403 "Hệ thống phát hiện hành vi không
+   * hợp lệ" cho mọi client không phải trình duyệt thật, trong khi các endpoint
+   * dữ liệu vẫn nhận token bình thường. Người dùng đăng nhập bằng tay trên cổng
+   * rồi đưa token sang đây là chạy tiếp được.
+   *
+   * Không lưu xuống cơ sở dữ liệu: token sống khoảng một giờ, giữ trong bộ nhớ
+   * tiến trình đúng như token do mình tự đăng nhập.
+   */
+  datTokenTay(tenantId: string, mst: string, token: string): { mst: string; hetHanLuc: string } {
+    const sach = String(token ?? '').trim().replace(/^Bearer\s+/i, '');
+    // Token của cổng là JWT: ba phần ngăn bằng dấu chấm. Kiểm sơ để người dùng
+    // dán nhầm cả dòng "Authorization: ..." hay một chuỗi bất kỳ thì biết ngay.
+    if (!/^[\w-]+\.[\w-]+\.[\w-]+$/.test(sach)) {
+      throw new GdtError(
+        'Token không đúng định dạng. Hãy chép đúng giá trị token từ cổng Thuế (chuỗi ba phần ngăn bằng dấu chấm).',
+        { code: 'CAN_MAT_KHAU' },
+      );
+    }
+    this.giuToken(tenantId, mst, sach);
+    return { mst, hetHanLuc: new Date(Date.now() + TOKEN_TTL_MS).toISOString() };
+  }
+
   private giuToken(tenantId: string, mst: string, token: string) {
     this.tokens.set(this.khoa(tenantId, mst), { token, hetHan: Date.now() + TOKEN_TTL_MS });
     return token;

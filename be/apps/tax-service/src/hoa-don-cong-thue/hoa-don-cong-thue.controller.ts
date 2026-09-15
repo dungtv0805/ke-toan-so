@@ -127,6 +127,18 @@ export class HoaDonCongThueController {
     return { success: true, data: ket };
   }
 
+  /**
+   * Đặt token lấy từ phiên trình duyệt — dùng khi cổng Thuế chặn đăng nhập bằng máy.
+   */
+  @Post('cong-ty/:mst/token')
+  @Roles(...QUAN_TRI_ROLES)
+  async datToken(@Param('mst') mst: string, @Body() dto: { token: string }) {
+    return {
+      success: true,
+      data: this.phien.datTokenTay(this.tenantId, mst, dto?.token ?? ''),
+    };
+  }
+
   // ---------------------------------------------------------- Đồng bộ
 
   @Post('cong-ty/:mst/dong-bo')

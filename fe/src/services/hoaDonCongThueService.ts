@@ -195,6 +195,11 @@ class HoaDonCongThueService extends ServiceBase {
     return this.post({ matKhau }, { endpoint: `/cong-ty/${mst}/dang-nhap` });
   }
 
+  /** Đặt token lấy từ phiên trình duyệt — dùng khi cổng chặn đăng nhập bằng máy. */
+  datToken(mst: string, token: string): Promise<{ mst: string; hetHanLuc: string }> {
+    return this.post({ token }, { endpoint: `/cong-ty/${mst}/token` });
+  }
+
   guiCaptcha(sessionId: string, giaTri: string, matKhau?: string): Promise<{ trangThai: string }> {
     return this.post({ giaTri, matKhau }, { endpoint: `/captcha/${sessionId}` });
   }
