@@ -175,6 +175,15 @@ class HoaDonCongThueService extends ServiceBase {
 
   // --------------------------------------------------------- Đăng nhập
 
+  /** Cổng Thuế có đang chặn không — để giao diện nói rõ thay vì để người dùng đoán. */
+  tinhTrangCongThue(): Promise<{
+    dangBiChan: boolean;
+    lanChanCuoi: string | null;
+    soPhutTruoc: number | null;
+  }> {
+    return this.get({ endpoint: '/cong-thue/tinh-trang' });
+  }
+
   trangThaiPhien(): Promise<TrangThaiPhien[]> {
     return this.get<TrangThaiPhien[]>({ endpoint: '/phien' });
   }

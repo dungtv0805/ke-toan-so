@@ -26,6 +26,19 @@ export const tuning = {
   breakerCooldownMs: 60_000,
 };
 
+/**
+ * Lần gần nhất cổng Thuế trả 403 (tường lửa chặn).
+ *
+ * Giữ lại để giao diện nói được "cổng đang chặn" thay vì để kế toán ngồi đoán
+ * xem lỗi ở phần mềm hay ở cổng — hôm 15/09/2026 cổng chặn mọi request đăng
+ * nhập suốt một buổi, kể cả từ trình duyệt thật.
+ */
+let lanChanCuoi: { luc: string; loi: string } | null = null;
+
+export function chanCuoi() {
+  return lanChanCuoi;
+}
+
 /** Lỗi có kèm status để lớp trên phân biệt sai mật khẩu / sai captcha / hết hạn token. */
 export class GdtError extends Error {
   status: number;
@@ -204,6 +217,9 @@ export async function request(url: string, options: RequestOptions = {}): Promis
 
         if (!res.ok) {
           const text = await res.text().catch(() => '');
+          if (res.status === 403) {
+            lanChanCuoi = { luc: new Date().toISOString(), loi: text.slice(0, 200) };
+          }
           let parsed: any = null;
           try {
             parsed = JSON.parse(text);

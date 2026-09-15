@@ -23,6 +23,7 @@ import { TaoPdfService } from './tao-pdf.service';
 import { XuatExcelService } from './xuat-excel.service';
 import { GdtLoiInterceptor } from './cong-thue/gdt-loi.interceptor';
 import { taoZip } from './cong-thue/tao-zip';
+import { chanCuoi } from './cong-thue/http';
 
 const KE_TOAN_ROLES = [
   'ADMIN',
@@ -257,6 +258,27 @@ export class HoaDonCongThueController {
       `attachment; filename="hoa-don-pdf_${mst}_${q.tuNgay}_${q.denNgay}.zip"`,
     );
     taoZip(muc).pipe(res);
+  }
+
+  /**
+   * Tình trạng cổng Thuế nhìn từ phía mình.
+   *
+   * Không tự gọi cổng để dò: chỉ báo lại lần bị chặn gần nhất mà các thao tác
+   * THẬT đã gặp. Dò thêm chỉ làm tăng tải lên cổng đúng lúc nó đang chặn.
+   */
+  @Get('cong-thue/tinh-trang')
+  @Roles(...KE_TOAN_ROLES)
+  async tinhTrangCongThue() {
+    const chan = chanCuoi();
+    const phut = chan ? (Date.now() - new Date(chan.luc).getTime()) / 60000 : Infinity;
+    return {
+      success: true,
+      data: {
+        dangBiChan: phut < 30,
+        lanChanCuoi: chan?.luc ?? null,
+        soPhutTruoc: Number.isFinite(phut) ? Math.round(phut) : null,
+      },
+    };
   }
 
   /**

@@ -71,6 +71,7 @@ const HoaDonCongThuePage: React.FC = () => {
   const [congTy, setCongTy] = useState<CongTyCongThue[]>([]);
   const [phien, setPhien] = useState<TrangThaiPhien[]>([]);
   const [dangTai, setDangTai] = useState(true);
+  const [congChan, setCongChan] = useState<{ dangBiChan: boolean; soPhutTruoc: number | null } | null>(null);
 
   const [khoang, setKhoang] = useState<[Dayjs, Dayjs]>([dayjs().startOf('month'), dayjs()]);
   const [luot, setLuot] = useState<LuotChay | null>(null);
@@ -100,6 +101,10 @@ const HoaDonCongThuePage: React.FC = () => {
       ]);
       setCongTy(ds ?? []);
       setPhien(ph ?? []);
+      hoaDonCongThueService
+        .tinhTrangCongThue()
+        .then(setCongChan)
+        .catch(() => undefined);
     } catch (e: any) {
       message.error(e?.message || 'Không tải được danh sách');
     } finally {
@@ -691,6 +696,22 @@ const HoaDonCongThuePage: React.FC = () => {
 
   return (
     <div className="space-y-3">
+      {congChan?.dangBiChan && (
+        <Alert
+          type="warning"
+          showIcon
+          message="Cổng Thuế đang chặn truy cập"
+          description={
+            <>
+              Lần bị chặn gần nhất cách đây {congChan.soPhutTruoc} phút. Đây là tường lửa phía cổng
+              Thuế, <Text strong>không phải lỗi phần mềm và không phải sai mật khẩu</Text> — đã kiểm
+              chứng bằng trình duyệt thật với captcha thật, từ hai địa chỉ mạng khác nhau. Hãy ngừng
+              bấm Đăng nhập khoảng 15–30 phút. Các chức năng không cần cổng (xem danh sách, kết xuất
+              Excel, xem và tải file đã tải) vẫn dùng bình thường.
+            </>
+          }
+        />
+      )}
       <Card
         title="Hóa đơn cổng Thuế"
         extra={nutLenh(gon, 'Cấu hình mã số thuế', {
