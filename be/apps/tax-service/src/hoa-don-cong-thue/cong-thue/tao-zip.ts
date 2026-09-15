@@ -54,6 +54,13 @@ export interface MucZip {
  *   File không đọc được thì BỎ QUA, không làm hỏng cả gói — thà thiếu một hóa
  *   đơn còn hơn trả về file ZIP vỡ mà người dùng không mở được cái nào.
  */
+/** Gom cả gói vào bộ nhớ. Dùng khi cần một Buffer trọn vẹn, ví dụ để ghi .xlsx. */
+export async function taoZipBuffer(muc: MucZip[]): Promise<Buffer> {
+  const phan: Buffer[] = [];
+  for await (const c of taoZip(muc)) phan.push(c as Buffer);
+  return Buffer.concat(phan);
+}
+
 export function taoZip(muc: MucZip[]): Readable {
   return Readable.from(
     (async function* () {

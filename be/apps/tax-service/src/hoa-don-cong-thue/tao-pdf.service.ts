@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import fs from 'node:fs';
 import { HoaDonCongThue } from '@app/entities';
 import { pdfTuZip, coChromium } from './cong-thue/pdf';
-import { ngayHomSau } from './ky';
+import { ngayHomSau, kyVN } from './ky';
 
 export type TrangThaiMucPdf = 'cho' | 'xong' | 'bo_qua' | 'loi';
 
@@ -186,7 +186,7 @@ export class TaoPdfService {
     const pdf = this.duongDanPdf(hd.duongDanFileGoc);
     if (!fs.existsSync(pdf)) fs.writeFileSync(pdf, await pdfTuZip(hd.duongDanFileGoc));
 
-    const ky = hd.ngayLap ? new Date(hd.ngayLap).toISOString().slice(0, 7) : 'khong-ro-ky';
+    const ky = kyVN(hd.ngayLap);
     const an = (v: unknown) => String(v ?? 'khong-ro').replace(/[<>:"/\\|?*\x00-\x1f]/g, '-');
     return {
       ten: `${ky}_${an(hd.chieu)}_${an(hd.mstNguoiBan)}_${an(hd.kyHieu)}_${an(hd.soHoaDon)}.pdf`,
@@ -206,7 +206,7 @@ export class TaoPdfService {
       .map((hd) => ({ hd, pdf: this.duongDanPdf(hd.duongDanFileGoc) }))
       .filter((x) => fs.existsSync(x.pdf))
       .map(({ hd, pdf }) => {
-        const ky = hd.ngayLap ? new Date(hd.ngayLap).toISOString().slice(0, 7) : 'khong-ro-ky';
+        const ky = kyVN(hd.ngayLap);
         const an = (s: unknown) => String(s ?? 'khong-ro').replace(/[<>:"/\\|?*\x00-\x1f]/g, '-');
         return {
           ten: `${ky}_${an(hd.chieu)}_${an(hd.mstNguoiBan)}_${an(hd.kyHieu)}_${an(hd.soHoaDon)}.pdf`,

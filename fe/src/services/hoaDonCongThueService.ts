@@ -369,6 +369,33 @@ class HoaDonCongThueService extends ServiceBase {
    * Lấy PDF về dạng objectURL để xem ngay trong khung bên cạnh.
    * Nhớ gọi URL.revokeObjectURL khi đổi sang hóa đơn khác.
    */
+  /** Excel tổng hợp (1 dòng/hóa đơn) hoặc chi tiết (1 dòng/mặt hàng). */
+  async taiExcel(
+    mst: string,
+    tuNgay: string,
+    denNgay: string,
+    loai: 'tong-hop' | 'chi-tiet',
+  ): Promise<void> {
+    const token = getAuthToken();
+    const res = await fetch(
+      `${API_CONFIG.BASE_URL}/tax/hoa-don-cong-thue/cong-ty/${mst}/excel/${loai}` +
+        `?tuNgay=${tuNgay}&denNgay=${denNgay}`,
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+    );
+    if (!res.ok) {
+      const loi = await res.json().catch(() => null);
+      throw new Error(loi?.error?.message || 'Không kết xuất được Excel');
+    }
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${loai}_${mst}_${tuNgay}_${denNgay}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
   async xemPdf(
     mst: string,
     khoa: { mstNguoiBan: string; kyHieu: string; soHoaDon: string },

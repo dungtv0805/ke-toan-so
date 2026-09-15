@@ -63,3 +63,23 @@ export function cuaSoThang(tuNgay: string, denNgay: string): Array<{ tuNgay: str
   }
   return ds;
 }
+
+/**
+ * Ngày theo giờ Việt Nam, dạng 'yyyy-MM-dd'.
+ *
+ * Cổng Thuế lưu ngày lập là nửa đêm giờ Việt Nam, tức '2026-09-08T17:00:00Z'
+ * cho ngày 09/09. Gọi thẳng toISOString() sẽ ra 08/09 — LỆCH MỘT NGÀY, và ở
+ * ranh giới tháng thì hóa đơn rơi sang kỳ trước. Cộng 7 giờ rồi mới cắt chuỗi
+ * cho ra đúng ngày, kể cả khi nguồn lưu theo nửa đêm UTC.
+ */
+export function ngayVN(v: Date | string | null | undefined): string {
+  if (!v) return '';
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Date(d.getTime() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+/** Kỳ 'yyyy-MM' theo giờ Việt Nam. */
+export function kyVN(v: Date | string | null | undefined): string {
+  return ngayVN(v).slice(0, 7) || 'khong-ro-ky';
+}

@@ -7,7 +7,7 @@ import { HoaDonCongThue } from '@app/entities';
 import { PhienCongThueService } from './cong-thue/phien.service';
 import { createTokenKeeper } from './cong-thue/token-keeper';
 import * as gdt from './cong-thue/gdt-client';
-import { ngayHomSau } from './ky';
+import { ngayHomSau, kyVN } from './ky';
 
 const NHOM_NAMESPACE: Record<string, string> = {
   thuong: 'query',
@@ -89,7 +89,7 @@ export class TaiFileGocService {
    * Tải lại sẽ ghi đè đúng file cũ thay vì sinh bản sao "(1)", "(2)".
    */
   private duongDan(hd: HoaDonCongThue): string {
-    const ky = hd.ngayLap ? new Date(hd.ngayLap).toISOString().slice(0, 7) : 'khong-ro-ky';
+    const ky = kyVN(hd.ngayLap);
     const ten = [this.an(hd.mstNguoiBan), this.an(hd.kyHieu), this.an(hd.soHoaDon)].join('_');
     return path.join(this.thuMucGoc, this.an(hd.mst), ky, this.an(hd.chieu), `${ten}.zip`);
   }
@@ -277,7 +277,7 @@ export class TaiFileGocService {
       .filter((hd) => this.daCoFile(hd));
 
     return ds.map((hd) => {
-      const ky = hd.ngayLap ? new Date(hd.ngayLap).toISOString().slice(0, 7) : 'khong-ro-ky';
+      const ky = kyVN(hd.ngayLap);
       return {
         ten: `${ky}_${this.an(hd.chieu)}_${this.an(hd.mstNguoiBan)}_${this.an(hd.kyHieu)}_${this.an(hd.soHoaDon)}.zip`,
         duongDan: hd.duongDanFileGoc,
@@ -303,7 +303,7 @@ export class TaiFileGocService {
     );
     if (!hd || !this.daCoFile(hd)) return null;
 
-    const ky = hd.ngayLap ? new Date(hd.ngayLap).toISOString().slice(0, 7) : 'khong-ro-ky';
+    const ky = kyVN(hd.ngayLap);
     return {
       ten: `${ky}_${this.an(hd.chieu)}_${this.an(hd.mstNguoiBan)}_${this.an(hd.kyHieu)}_${this.an(hd.soHoaDon)}.zip`,
       duongDan: hd.duongDanFileGoc,

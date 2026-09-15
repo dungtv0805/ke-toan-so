@@ -8,6 +8,7 @@ import { TaiHangLoatService } from './tai-hang-loat.service';
 import { LichTaiService } from './lich-tai.service';
 import { TaiFileGocService } from './tai-file-goc.service';
 import { TaoPdfService } from './tao-pdf.service';
+import { XuatExcelService } from './xuat-excel.service';
 
 @Module({
   imports: [DatabaseModule.forFeature([CongTyCongThue, HoaDonCongThue])],
@@ -19,6 +20,7 @@ import { TaoPdfService } from './tao-pdf.service';
     LichTaiService,
     TaiFileGocService,
     TaoPdfService,
+    XuatExcelService,
   ],
   exports: [HoaDonCongThueService, TaiHangLoatService],
 })

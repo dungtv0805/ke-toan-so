@@ -20,6 +20,7 @@ import { PhienCongThueService } from './cong-thue/phien.service';
 import { TaiHangLoatService } from './tai-hang-loat.service';
 import { TaiFileGocService } from './tai-file-goc.service';
 import { TaoPdfService } from './tao-pdf.service';
+import { XuatExcelService } from './xuat-excel.service';
 import { GdtLoiInterceptor } from './cong-thue/gdt-loi.interceptor';
 import { taoZip } from './cong-thue/tao-zip';
 
@@ -58,6 +59,7 @@ export class HoaDonCongThueController {
     private readonly taiHangLoat: TaiHangLoatService,
     private readonly taiFileGoc: TaiFileGocService,
     private readonly taoPdf: TaoPdfService,
+    private readonly xuatExcelService: XuatExcelService,
     private readonly tenantContext: TenantContextService,
   ) {}
 
@@ -255,6 +257,42 @@ export class HoaDonCongThueController {
       `attachment; filename="hoa-don-pdf_${mst}_${q.tuNgay}_${q.denNgay}.zip"`,
     );
     taoZip(muc).pipe(res);
+  }
+
+  /**
+   * Excel tổng hợp: một dòng một hóa đơn. Dựng từ dữ liệu đã tải, không gọi
+   * lại cổng Thuế — cổng có giới hạn nhịp và có lúc chặn bằng tường lửa.
+   */
+  @Get('cong-ty/:mst/excel/tong-hop')
+  @Roles(...KE_TOAN_ROLES)
+  async excelTongHop(
+    @Param('mst') mst: string,
+    @Query() q: { tuNgay: string; denNgay: string },
+    @Res() res: Response,
+  ) {
+    const buf = await this.xuatExcelService.tongHop(mst, q.tuNgay, q.denNgay);
+    this.guiExcel(res, `tong-hop_${mst}_${q.tuNgay}_${q.denNgay}.xlsx`, buf);
+  }
+
+  /** Excel chi tiết: một dòng một mặt hàng, đọc từ XML gốc đã tải. */
+  @Get('cong-ty/:mst/excel/chi-tiet')
+  @Roles(...KE_TOAN_ROLES)
+  async excelChiTiet(
+    @Param('mst') mst: string,
+    @Query() q: { tuNgay: string; denNgay: string },
+    @Res() res: Response,
+  ) {
+    const buf = await this.xuatExcelService.chiTiet(mst, q.tuNgay, q.denNgay);
+    this.guiExcel(res, `chi-tiet_${mst}_${q.tuNgay}_${q.denNgay}.xlsx`, buf);
+  }
+
+  private guiExcel(res: Response, ten: string, buf: Buffer) {
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="${ten}"`);
+    res.end(buf);
   }
 
   /** Tải file gốc (ZIP chứa XML ký số) của ĐÚNG MỘT hóa đơn. */

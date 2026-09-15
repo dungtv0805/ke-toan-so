@@ -5,6 +5,7 @@ import {
   Button,
   Modal,
   Input,
+  Select,
   DatePicker,
   Space,
   Tag,
@@ -404,6 +405,18 @@ const HoaDonCongThuePage: React.FC = () => {
     }
   }
 
+  async function taiExcel(loai: 'tong-hop' | 'chi-tiet') {
+    if (!xemHoaDon) return;
+    const dong = message.loading('Đang kết xuất Excel…', 0);
+    try {
+      await hoaDonCongThueService.taiExcel(xemHoaDon.mst, tuNgay(), denNgay(), loai);
+    } catch (e: any) {
+      message.error(e?.message || 'Không kết xuất được Excel');
+    } finally {
+      dong();
+    }
+  }
+
   /**
    * Mở bản thể hiện của một hóa đơn ở khung bên phải.
    *
@@ -525,14 +538,34 @@ const HoaDonCongThuePage: React.FC = () => {
    * Danh sách hóa đơn kèm tình trạng file của TỪNG hóa đơn.
    * Đây mới là chỗ trả lời "cái nào lỗi, cái nào không".
    */
+  const NHAN_TRANG_THAI_HD: Record<string, string> = {
+    '1': 'Mới',
+    '2': 'Thay thế',
+    '3': 'Bị thay thế',
+    '4': 'Điều chỉnh',
+    '5': 'Đã cấp mã',
+    '6': 'Bị điều chỉnh',
+    '7': 'Đã hủy',
+    '8': 'Xóa bỏ',
+  };
+
+  /** Danh sách hóa đơn: mỗi dòng xem/tải được ngay, không phải đi vòng. */
   const cotHoaDon = [
     {
-      title: 'Số hóa đơn',
-      dataIndex: 'soHoaDon',
-      width: 120,
-      render: (v: string) => <Text strong style={{ fontVariantNumeric: 'tabular-nums' }}>{v || '—'}</Text>,
+      title: 'STT',
+      key: 'stt',
+      width: 60,
+      render: (_: unknown, __: HoaDonTho, i: number) => i + 1,
     },
     { title: 'Ký hiệu', dataIndex: 'kyHieu', width: 95 },
+    {
+      title: 'Số HĐ',
+      dataIndex: 'soHoaDon',
+      width: 95,
+      render: (v: string) => (
+        <Text strong style={{ fontVariantNumeric: 'tabular-nums' }}>{v || '—'}</Text>
+      ),
+    },
     {
       title: 'Ngày lập',
       dataIndex: 'ngayLap',
@@ -540,40 +573,53 @@ const HoaDonCongThuePage: React.FC = () => {
       render: (v: string) => (v ? dayjs(v).format('DD/MM/YYYY') : '—'),
     },
     {
-      title: 'Người bán',
+      title: 'Thông tin người bán',
       key: 'nguoiBan',
       render: (_: unknown, h: HoaDonTho) => (
         <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>MST: {h.mstNguoiBan}</Text>
           <div>{h.tenNguoiBan || '—'}</div>
-          <Text type="secondary" style={{ fontSize: 12 }}>{h.mstNguoiBan}</Text>
         </div>
       ),
     },
     {
-      title: 'Tổng thanh toán',
-      dataIndex: 'tongThanhToan',
-      width: 140,
+      title: 'Chưa thuế',
+      dataIndex: 'giaTriChuaThue',
+      width: 120,
       align: 'right' as const,
       render: (v: number) => <Text style={{ fontVariantNumeric: 'tabular-nums' }}>{tien(v)}</Text>,
     },
     {
-      title: 'Bản gốc XML',
-      key: 'coFileGoc',
-      width: 120,
-      render: (_: unknown, h: HoaDonTho) =>
-        h.coFileGoc ? <Tag color="green">Đã có</Tag> : <Tag color="orange">Chưa tải</Tag>,
+      title: 'Tiền thuế',
+      dataIndex: 'tienThue',
+      width: 110,
+      align: 'right' as const,
+      render: (v: number) => <Text style={{ fontVariantNumeric: 'tabular-nums' }}>{tien(v)}</Text>,
     },
     {
-      title: 'Bản PDF',
-      key: 'coPdf',
-      width: 110,
-      render: (_: unknown, h: HoaDonTho) =>
-        h.coPdf ? <Tag color="green">Đã có</Tag> : <Tag>Chưa dựng</Tag>,
+      title: 'Thanh toán',
+      dataIndex: 'tongThanhToan',
+      width: 130,
+      align: 'right' as const,
+      render: (v: number) => (
+        <Text strong style={{ fontVariantNumeric: 'tabular-nums' }}>{tien(v)}</Text>
+      ),
+    },
+    {
+      title: 'Trạng thái',
+      key: 'trangThai',
+      width: 115,
+      render: (_: unknown, h: HoaDonTho) => {
+        const ma = String((h as any).trangThaiXuLy ?? h.trangThai ?? '');
+        const nhan = NHAN_TRANG_THAI_HD[ma] ?? (ma || '—');
+        const mau = ma === '7' || ma === '8' ? 'red' : ma === '5' ? 'green' : 'default';
+        return <Tag color={mau}>{nhan}</Tag>;
+      },
     },
     {
       title: '',
-      key: 'tai',
-      width: 210,
+      key: 'thaoTac',
+      width: 170,
       align: 'right' as const,
       render: (_: unknown, h: HoaDonTho) => {
         const khoa = {
@@ -581,44 +627,24 @@ const HoaDonCongThuePage: React.FC = () => {
           kyHieu: String(h.kyHieu ?? ''),
           soHoaDon: String(h.soHoaDon ?? ''),
         };
+        const chua = !h.coFileGoc;
         return (
-          <Space size={4}>
-            <Tooltip title={h.coFileGoc ? 'Xem bản thể hiện ở khung bên phải' : 'Chưa tải bản gốc về máy chủ'}>
-              <Button
-                size="small"
-                type="link"
-                disabled={!h.coFileGoc}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  moXem(h);
-                }}
-              >
-                Xem
-              </Button>
-            </Tooltip>
-            <Tooltip title={h.coFileGoc ? 'Tải bản gốc XML có chữ ký số' : 'Chưa tải bản gốc về máy chủ'}>
-              <Button
-                size="small"
-                icon={<FileZipOutlined />}
-                disabled={!h.coFileGoc}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  taiLe(khoa, 'zip');
-                }}
-              >
+          <Space size={0}>
+            <Tooltip title={chua ? 'Chưa tải bản gốc về máy chủ' : 'Tải bản gốc XML có chữ ký số'}>
+              <Button size="small" type="link" disabled={chua}
+                onClick={(e) => { e.stopPropagation(); taiLe(khoa, 'zip'); }}>
                 XML
               </Button>
             </Tooltip>
-            <Tooltip title={h.coFileGoc ? 'Tải bản thể hiện PDF, dựng ngay nếu chưa có' : 'Phải tải bản gốc trước'}>
-              <Button
-                size="small"
-                icon={<FilePdfOutlined />}
-                disabled={!h.coFileGoc}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  taiLe(khoa, 'pdf');
-                }}
-              >
+            <Tooltip title={chua ? 'Chưa tải bản gốc về máy chủ' : 'Xem ngay ở khung bên phải'}>
+              <Button size="small" type="link" disabled={chua}
+                onClick={(e) => { e.stopPropagation(); moXem(h); }}>
+                Xem
+              </Button>
+            </Tooltip>
+            <Tooltip title={chua ? 'Chưa tải bản gốc về máy chủ' : 'Tải bản thể hiện PDF'}>
+              <Button size="small" type="link" disabled={chua}
+                onClick={(e) => { e.stopPropagation(); taiLe(khoa, 'pdf'); }}>
                 PDF
               </Button>
             </Tooltip>
@@ -725,30 +751,67 @@ const HoaDonCongThuePage: React.FC = () => {
       {xemHoaDon && (
         <Card
           styles={{ body: { padding: 12 } }}
-          title={`Hóa đơn ${xemHoaDon.mst} · ${khoang[0].format('DD/MM/YYYY')} – ${khoang[1].format('DD/MM/YYYY')}`}
+          title={
+            <Space wrap>
+              <Text>Hóa đơn</Text>
+              {/* Mỗi màn hình chỉ xem MỘT tài khoản thuế: trộn nhiều mã số thuế
+                  vào một bảng là mời gọi nhầm lẫn khi đối chiếu tờ khai. */}
+              <Select
+                size="small"
+                style={{ minWidth: 260 }}
+                value={xemHoaDon.mst}
+                onChange={(mst) => {
+                  const c = congTy.find((x) => x.mst === mst);
+                  if (c) moDanhSachHoaDon(c);
+                }}
+                options={congTy.map((c) => ({
+                  value: c.mst,
+                  label: c.tenCongTy ? `${c.mst} — ${c.tenCongTy}` : c.mst,
+                }))}
+              />
+              <Text type="secondary">
+                {`${khoang[0].format('DD/MM/YYYY')} – ${khoang[1].format('DD/MM/YYYY')}`}
+              </Text>
+            </Space>
+          }
           extra={
             <Space wrap>
-              <Button
-                size="small"
-                icon={<FileExcelOutlined />}
-                onClick={() => xuatExcel({ mst: xemHoaDon.mst } as CongTyCongThue, 'mua-vao')}
-              >
-                Tải Excel
-              </Button>
-              <Button
-                size="small"
-                icon={<DownloadOutlined />}
-                onClick={() => taiVeMay({ mst: xemHoaDon.mst } as CongTyCongThue)}
-              >
-                Tải XML hàng loạt
-              </Button>
-              <Button
-                size="small"
-                icon={<FilePdfOutlined />}
-                onClick={() => taiVePdf({ mst: xemHoaDon.mst } as CongTyCongThue)}
-              >
-                Tải PDF hàng loạt
-              </Button>
+              <Tooltip title="Gói toàn bộ bản thể hiện PDF của kỳ thành một file ZIP">
+                <Button
+                  size="small"
+                  icon={<FilePdfOutlined />}
+                  onClick={() => taiVePdf({ mst: xemHoaDon.mst } as CongTyCongThue)}
+                >
+                  Tải PDF gốc hàng loạt
+                </Button>
+              </Tooltip>
+              <Tooltip title="Một dòng một mặt hàng, đọc từ file XML gốc đã tải">
+                <Button
+                  size="small"
+                  icon={<FileExcelOutlined />}
+                  onClick={() => taiExcel('chi-tiet')}
+                >
+                  Tải Excel chi tiết
+                </Button>
+              </Tooltip>
+              <Tooltip title="Một dòng một hóa đơn, kèm dòng cộng cuối bảng">
+                <Button
+                  size="small"
+                  icon={<FileExcelOutlined />}
+                  onClick={() => taiExcel('tong-hop')}
+                >
+                  Tải Excel tổng hợp
+                </Button>
+              </Tooltip>
+              <Tooltip title="Tải các file XML bản gốc có chữ ký số">
+                <Button
+                  size="small"
+                  icon={<DownloadOutlined />}
+                  onClick={() => taiVeMay({ mst: xemHoaDon.mst } as CongTyCongThue)}
+                >
+                  Tải XML
+                </Button>
+              </Tooltip>
               <Button size="small" onClick={() => setXemHoaDon(null)}>
                 Đóng
               </Button>
