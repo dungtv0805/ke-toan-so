@@ -22,6 +22,7 @@ import {
   PlayCircleOutlined,
   DownloadOutlined,
   FileExcelOutlined,
+  FilePdfOutlined,
 } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -35,6 +36,7 @@ import {
   type TrangThaiMuc,
   type TrangThaiPhien,
   type LuotTaiFile,
+  type LuotTaoPdf,
 } from '@/services/hoaDonCongThueService';
 
 const { Text } = Typography;
@@ -74,6 +76,8 @@ const HoaDonCongThuePage: React.FC = () => {
   const [luotFile, setLuotFile] = useState<LuotTaiFile | null>(null);
   const [dangTaiVe, setDangTaiVe] = useState<string | null>(null);
   const [dangXuatExcel, setDangXuatExcel] = useState<string | null>(null);
+  const [luotPdf, setLuotPdf] = useState<LuotTaoPdf | null>(null);
+  const hoiPdfRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hoiFileRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const nap = useCallback(async () => {
@@ -192,6 +196,45 @@ const HoaDonCongThuePage: React.FC = () => {
     }
   }
 
+  /** Dựng PDF cho cả kỳ; chạy nền nên chỉ cần theo dõi tiến độ. */
+  async function taoPdf(c: CongTyCongThue) {
+    try {
+      setLuotPdf(await hoaDonCongThueService.taoPdf(c.mst, tuNgay(), denNgay()));
+    } catch (e: any) {
+      message.error(e?.message || 'Không bắt đầu dựng PDF được');
+    }
+  }
+
+  async function taiVePdf(c: CongTyCongThue) {
+    try {
+      await hoaDonCongThueService.taiVePdf(c.mst, tuNgay(), denNgay());
+    } catch (e: any) {
+      message.error(e?.message || 'Không tải được PDF');
+    }
+  }
+
+  useEffect(() => {
+    if (!luotPdf || luotPdf.trangThai !== 'dang_chay') {
+      if (hoiPdfRef.current) clearInterval(hoiPdfRef.current);
+      return;
+    }
+    hoiPdfRef.current = setInterval(async () => {
+      const moi = await hoaDonCongThueService.luotTaoPdf(luotPdf.id).catch(() => null);
+      if (!moi) return;
+      setLuotPdf(moi);
+      if (moi.trangThai === 'xong') {
+        message.success(
+          `Đã dựng ${moi.daTao} bản PDF` +
+            (moi.boQua ? `, ${moi.boQua} bản đã có sẵn` : '') +
+            (moi.loi.length ? `, ${moi.loi.length} lỗi` : ''),
+        );
+      }
+    }, 2000);
+    return () => {
+      if (hoiPdfRef.current) clearInterval(hoiPdfRef.current);
+    };
+  }, [luotPdf?.id, luotPdf?.trangThai]);
+
   // Hỏi tiến độ tải file mỗi 2 giây cho tới khi xong.
   useEffect(() => {
     if (!luotFile || luotFile.trangThai !== 'dang_chay') {
@@ -286,6 +329,16 @@ const HoaDonCongThuePage: React.FC = () => {
               onClick={() => xuatExcel(c, 'mua-vao')}
             >
               Excel
+            </Button>
+          </Tooltip>
+          <Tooltip title="Dựng bản thể hiện PDF từ file gốc đã tải, rồi tải cả gói về máy">
+            <Button
+              size="small"
+              icon={<FilePdfOutlined />}
+              loading={luotPdf?.mst === c.mst && luotPdf.trangThai === 'dang_chay'}
+              onClick={() => taoPdf(c)}
+            >
+              PDF
             </Button>
           </Tooltip>
         </Space>
@@ -386,6 +439,34 @@ const HoaDonCongThuePage: React.FC = () => {
           locale={{ emptyText: 'Chưa khai báo mã số thuế nào — vào Cấu hình để thêm' }}
         />
       </Card>
+
+      {luotPdf && (
+        <Card
+          title={`Dựng bản thể hiện PDF — ${luotPdf.mst}`}
+          extra={
+            <Button
+              size="small"
+              type="primary"
+              icon={<DownloadOutlined />}
+              disabled={luotPdf.trangThai === 'dang_chay'}
+              onClick={() => taiVePdf({ mst: luotPdf.mst } as CongTyCongThue)}
+            >
+              Tải gói PDF về máy
+            </Button>
+          }
+        >
+          <Progress
+            percent={luotPdf.tong ? Math.round((luotPdf.daXuLy / luotPdf.tong) * 100) : 100}
+            size="small"
+            status={luotPdf.trangThai === 'dang_chay' ? 'active' : undefined}
+          />
+          <Text type="secondary">
+            {`Đã dựng ${luotPdf.daTao}/${luotPdf.tong} bản`}
+            {luotPdf.boQua ? ` · ${luotPdf.boQua} bản đã có sẵn` : ''}
+            {luotPdf.loi.length ? ` · ${luotPdf.loi.length} lỗi: ${luotPdf.loi[0].message}` : ''}
+          </Text>
+        </Card>
+      )}
 
       {luotFile && (
         <Card

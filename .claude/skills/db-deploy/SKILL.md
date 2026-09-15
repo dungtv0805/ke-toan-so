@@ -86,6 +86,18 @@ Container chạy user `nestjs` uid=1001 gid=65533. `/app/node_modules` writable 
 | `nest-winston`, `winston`, `winston-daily-rotate-file` | Ghi log ra file | 2026-06-22 |
 | `@resvg/resvg-js` | Rasterize captcha SVG cổng Thuế để tự giải | 2026-09-15 |
 
+### Gói HỆ THỐNG cài bằng apk (không phải npm — không dính bẫy prune)
+| Gói | Dùng cho | Thêm lúc |
+|---|---|---|
+| `chromium`, `font-noto`, `unzip` | Dựng bản thể hiện PDF hóa đơn từ `invoice.html` trong gói ZIP của cổng Thuế | 2026-09-15 |
+
+```bash
+ssh kt 'docker exec -u root digital-book-app apk add --no-cache chromium font-noto unzip'
+ssh kt 'docker commit digital-book-app localhost/digital-book:latest'   # BẮT BUỘC, nếu không `docker compose up -d` là mất
+```
+`apk add` KHÔNG đụng tới `/app/node_modules` nên an toàn hơn `npm install`, nhưng vẫn phải
+`docker commit` mới giữ được. Image tăng từ ~950 MB lên ~1.9 GB — chủ yếu do Chromium.
+
 ## Đọc log nhanh trên server (chưa có Loki)
 Có script `logs.sh` tại `/root/chimseo/digital-book-be/logs.sh` (source: `be/scripts/logs.sh`), cần `jq`:
 ```bash

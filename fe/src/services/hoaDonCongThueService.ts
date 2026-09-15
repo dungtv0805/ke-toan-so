@@ -89,6 +89,19 @@ export interface LuotTaiFile {
   loi: Array<{ soHoaDon: string; message: string }>;
 }
 
+export interface LuotTaoPdf {
+  id: number;
+  mst: string;
+  tuNgay: string;
+  denNgay: string;
+  trangThai: 'dang_chay' | 'xong';
+  tong: number;
+  daXuLy: number;
+  daTao: number;
+  boQua: number;
+  loi: Array<{ soHoaDon: string; message: string }>;
+}
+
 export interface KetQuaDongBo {
   mst: string;
   timThay: number;
@@ -254,6 +267,38 @@ class HoaDonCongThueService extends ServiceBase {
     const a = document.createElement('a');
     a.href = url;
     a.download = `hoa-don_${chieu}_${mst}_${tuNgay}_${denNgay}.${zip ? 'zip' : 'xlsx'}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // ---------------------------------------------------------------- PDF
+
+  /** Dựng bản thể hiện PDF từ file gốc đã tải. Trả về ngay, chạy ở nền. */
+  taoPdf(mst: string, tuNgay: string, denNgay: string): Promise<LuotTaoPdf> {
+    return this.post({ tuNgay, denNgay }, { endpoint: `/cong-ty/${mst}/pdf` });
+  }
+
+  luotTaoPdf(id: number): Promise<LuotTaoPdf | null> {
+    return this.get({ endpoint: `/pdf/${id}` });
+  }
+
+  async taiVePdf(mst: string, tuNgay: string, denNgay: string): Promise<void> {
+    const token = getAuthToken();
+    const res = await fetch(
+      `${API_CONFIG.BASE_URL}/tax/hoa-don-cong-thue/cong-ty/${mst}/pdf/tai-ve` +
+        `?tuNgay=${tuNgay}&denNgay=${denNgay}`,
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+    );
+    if (!res.ok) {
+      const loi = await res.json().catch(() => null);
+      throw new Error(loi?.error?.message || 'Không tải được PDF');
+    }
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hoa-don-pdf_${mst}_${tuNgay}_${denNgay}.zip`;
     document.body.appendChild(a);
     a.click();
     a.remove();

@@ -18,6 +18,7 @@ import { HoaDonCongThueService } from './hoa-don-cong-thue.service';
 import { PhienCongThueService } from './cong-thue/phien.service';
 import { TaiHangLoatService } from './tai-hang-loat.service';
 import { TaiFileGocService } from './tai-file-goc.service';
+import { TaoPdfService } from './tao-pdf.service';
 import { GdtLoiInterceptor } from './cong-thue/gdt-loi.interceptor';
 import { taoZip } from './cong-thue/tao-zip';
 
@@ -55,6 +56,7 @@ export class HoaDonCongThueController {
     private readonly phien: PhienCongThueService,
     private readonly taiHangLoat: TaiHangLoatService,
     private readonly taiFileGoc: TaiFileGocService,
+    private readonly taoPdf: TaoPdfService,
     private readonly tenantContext: TenantContextService,
   ) {}
 
@@ -204,6 +206,56 @@ export class HoaDonCongThueController {
    * Một cửa sổ tháng trả thẳng file .xlsx; nhiều cửa sổ thì gói ZIP, vì cổng
    * giới hạn mỗi truy vấn tối đa một tháng nên khoảng dài buộc phải cắt nhỏ.
    */
+  /**
+   * Dựng bản thể hiện PDF cho các hóa đơn đã có file gốc trong kỳ.
+   *
+   * TRẢ VỀ NGAY, dựng ở nền: mỗi hóa đơn tốn một, hai giây cho Chromium dàn
+   * trang nên trăm hóa đơn là vài phút, dài hơn hẳn 30 giây chờ của client.
+   */
+  @Post('cong-ty/:mst/pdf')
+  @Roles(...KE_TOAN_ROLES)
+  async batDauTaoPdf(
+    @Param('mst') mst: string,
+    @Body() dto: { tuNgay: string; denNgay: string; taoLai?: boolean },
+  ) {
+    return { success: true, data: await this.taoPdf.batDau(this.tenantId, { mst, ...dto }) };
+  }
+
+  @Get('pdf/:id')
+  @Roles(...KE_TOAN_ROLES)
+  async trangThaiTaoPdf(@Param('id') id: string) {
+    return { success: true, data: this.taoPdf.trangThai(Number(id)) };
+  }
+
+  @Get('cong-ty/:mst/pdf/gan-nhat')
+  @Roles(...KE_TOAN_ROLES)
+  async luotTaoPdfGanNhat(@Param('mst') mst: string) {
+    return { success: true, data: this.taoPdf.ganNhat(this.tenantId, mst) };
+  }
+
+  /** Tải về máy toàn bộ PDF đã dựng của kỳ, gói trong một file ZIP. */
+  @Get('cong-ty/:mst/pdf/tai-ve')
+  @Roles(...KE_TOAN_ROLES)
+  async taiVePdf(
+    @Param('mst') mst: string,
+    @Query() q: { tuNgay: string; denNgay: string },
+    @Res() res: Response,
+  ) {
+    const muc = await this.taoPdf.danhSachPdf(mst, q.tuNgay, q.denNgay);
+    if (!muc.length) {
+      throw new NotFoundException(
+        'Chưa có bản PDF nào trong khoảng này. Bấm "PDF" để dựng từ file gốc trước.',
+      );
+    }
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="hoa-don-pdf_${mst}_${q.tuNgay}_${q.denNgay}.zip"`,
+    );
+    taoZip(muc).pipe(res);
+  }
+
   @Get('cong-ty/:mst/excel')
   @Roles(...KE_TOAN_ROLES)
   async xuatExcel(
