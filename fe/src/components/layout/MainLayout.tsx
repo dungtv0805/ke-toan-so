@@ -20,6 +20,7 @@ import {
   CopyOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import { ChanLoi } from "@/components/shared/ChanLoi";
 import type { MenuProps } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
 import { TenantSwitcher } from "./TenantSwitcher";
@@ -310,7 +311,11 @@ const MainLayout: React.FC = () => {
           style={{ background: "hsl(var(--background))" }}
         >
           <div className="app-content-inner">
-            <Outlet />
+            {/* Trang con hỏng thì chỉ vùng nội dung báo lỗi, sidebar và menu
+                vẫn dùng được — thay vì cả màn hình trắng tinh không thông tin. */}
+            <ChanLoi>
+              <Outlet />
+            </ChanLoi>
           </div>
         </Content>
       </Layout>
