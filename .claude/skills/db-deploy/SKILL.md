@@ -63,6 +63,29 @@ ssh kt 'docker run --rm --entrypoint sh localhost/digital-book:latest -c "ls /ap
 ```
 Container chạy user `nestjs` uid=1001 gid=65533. `/app/node_modules` writable bởi uid này.
 
+> ⚠️ **BẪY (gặp thật 2026-09-15): `npm install <pkg-moi>` XÓA các gói `--no-save` đã cài trước đó.**
+> npm đối chiếu `node_modules` với `package.json` và dọn những gói nó coi là thừa. Cài
+> `@resvg/resvg-js` một mình đã cuốn bay `nest-winston`, `winston`,
+> `winston-daily-rotate-file` → tax-service crash-loop `Cannot find module 'nest-winston'`,
+> gateway trả 502.
+>
+> **Luôn cài LẠI TOÀN BỘ danh sách trong một lệnh**, không cài lẻ:
+> ```bash
+> ssh kt 'docker exec digital-book-app sh -c "cd /app && npm install --no-save --no-package-lock --legacy-peer-deps \
+>   nest-winston winston winston-daily-rotate-file @resvg/resvg-js"'
+> ```
+> Sau khi cài, **kiểm tra đủ gói TRƯỚC khi `docker commit`** — commit lúc thiếu là bake luôn
+> trạng thái hỏng vào image:
+> ```bash
+> ssh kt 'docker exec digital-book-app sh -c "for m in nest-winston winston winston-daily-rotate-file @resvg/resvg-js; do [ -d /app/node_modules/$m ] && echo \"CO $m\" || echo \"MAT $m\"; done"'
+> ```
+
+### Danh sách gói runtime cài ngoài package.json (cập nhật khi thêm)
+| Gói | Dùng cho | Thêm lúc |
+|---|---|---|
+| `nest-winston`, `winston`, `winston-daily-rotate-file` | Ghi log ra file | 2026-06-22 |
+| `@resvg/resvg-js` | Rasterize captcha SVG cổng Thuế để tự giải | 2026-09-15 |
+
 ## Đọc log nhanh trên server (chưa có Loki)
 Có script `logs.sh` tại `/root/chimseo/digital-book-be/logs.sh` (source: `be/scripts/logs.sh`), cần `jq`:
 ```bash
