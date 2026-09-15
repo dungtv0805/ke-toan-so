@@ -152,6 +152,12 @@ const MainLayout: React.FC = () => {
         onClick: () => navigate("/cau-hinh/thanh-vien"),
       }] : []),
     ] : []),
+    ...(canManageConfig ? [{
+      key: "hoa-don-cong-thue",
+      icon: <SafetyCertificateOutlined />,
+      label: "Hóa đơn cổng Thuế",
+      onClick: () => navigate("/cau-hinh/hoa-don-cong-thue"),
+    }] : []),
     ...(user?.isSuperAdmin ? [{
       key: "tenant",
       icon: <TeamOutlined />,

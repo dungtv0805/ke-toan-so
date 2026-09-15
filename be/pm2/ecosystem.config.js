@@ -120,5 +120,20 @@ module.exports = {
       merge_logs: true,
       time: true,
     },
+    {
+      name: 'tax-service',
+      script: 'dist/apps/tax-service/main.js',
+      instances: 1,
+      exec_mode: 'fork',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3009,
+      },
+      max_memory_restart: '256M',
+      error_file: '/dev/stderr',
+      out_file: '/dev/stdout',
+      merge_logs: true,
+      time: true,
+    },
   ],
 };

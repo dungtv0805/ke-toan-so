@@ -8,6 +8,7 @@ import { BangKeMuaVaoModule } from './bang-ke-mua-vao/bang-ke-mua-vao.module';
 import { BangKeBanRaModule } from './bang-ke-ban-ra/bang-ke-ban-ra.module';
 import { DieuChinhThueModule } from './dieu-chinh-thue/dieu-chinh-thue.module';
 import { BaoCaoModule } from './bao-cao/bao-cao.module';
+import { HoaDonCongThueModule } from './hoa-don-cong-thue/hoa-don-cong-thue.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { BaoCaoModule } from './bao-cao/bao-cao.module';
     BangKeBanRaModule,
     DieuChinhThueModule,
     BaoCaoModule,
+    HoaDonCongThueModule,
   ],
 })
 export class TaxServiceModule {}

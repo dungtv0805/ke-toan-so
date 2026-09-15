@@ -346,6 +346,15 @@ export const BangKeMuaVaoPage = loadable(() => import('./thue/bang-ke-mua-vao/Ba
   fallback: <PageLoader />
 });
 
+export const HoaDonCongThuePage = loadable(() => import('./thue/hoa-don-cong-thue/HoaDonCongThuePage'), {
+  fallback: <PageLoader />,
+});
+
+export const CauHinhHoaDonCongThuePage = loadable(
+  () => import('./cau-hinh/hoa-don-cong-thue/CauHinhHoaDonCongThuePage'),
+  { fallback: <PageLoader /> },
+);
+
 export const BangKeBanRaPage = loadable(() => import('./thue/bang-ke-ban-ra/BangKeBanRaPage'), {
   fallback: <PageLoader />
 });

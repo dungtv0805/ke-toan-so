@@ -90,6 +90,8 @@ import {
   SoThuTienPage,
   SoHoaDonBanRaPage,
   BangKeMuaVaoPage,
+  HoaDonCongThuePage,
+  CauHinhHoaDonCongThuePage,
   BangKeBanRaPage,
   TongHopThuePage,
   BaoCaoTNDNPage,
@@ -633,6 +635,14 @@ const App = () => {
                     }
                   />
                   <Route
+                    path="hoa-don-cong-thue"
+                    element={
+                      <ProtectedRoute requiredPermission="/thue/hoa-don-cong-thue:xem">
+                        <HoaDonCongThuePage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="bang-ke-ban-ra"
                     element={
                       <ProtectedRoute requiredPermission="/thue/bang-ke-ban-ra:xem">
@@ -758,6 +768,10 @@ const App = () => {
 
                 {/* Cấu hình */}
                 <Route path="cau-hinh">
+                  <Route
+                    path="hoa-don-cong-thue"
+                    element={<CauHinhHoaDonCongThuePage />}
+                  />
                   <Route
                     path="phan-quyen"
                     element={

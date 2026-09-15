@@ -1,6 +1,10 @@
 import './bang-ke-mua-vao.entity';
 import './bang-ke-ban-ra.entity';
 import './dieu-chinh-thue.entity';
+import './cong-ty-cong-thue.entity';
+import './hoa-don-cong-thue.entity';
 export * from './bang-ke-mua-vao.entity';
 export * from './bang-ke-ban-ra.entity';
 export * from './dieu-chinh-thue.entity';
+export * from './cong-ty-cong-thue.entity';
+export * from './hoa-don-cong-thue.entity';

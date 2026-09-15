@@ -74,6 +74,7 @@ export const PERMISSION_MODULES = [
   '/thue/tong-hop',
   '/thue/bang-ke-mua-vao',
   '/thue/bang-ke-ban-ra',
+  '/thue/hoa-don-cong-thue',
   '/quy-trinh',
   '/chinh-sach',
   '/bieu-mau',

@@ -7,6 +7,7 @@ const services = [
   { name: 'payable-service', port: 3005 },
   { name: 'reporting-service', port: 3006 },
   { name: 'config-service', port: 3007 },
+  { name: 'tax-service', port: 3009 },
 ];
 
 module.exports = {

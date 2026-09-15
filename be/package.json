@@ -15,7 +15,7 @@
     "build:payable": "nest build payable-service",
     "build:reporting": "nest build reporting-service",
     "build:config": "nest build config-service",
-    "build:all": "npm run build:gateway && npm run build:auth && npm run build:master-data && npm run build:voucher && npm run build:cash-book && npm run build:payable && npm run build:reporting && npm run build:config",
+    "build:all": "npm run build:gateway && npm run build:auth && npm run build:master-data && npm run build:voucher && npm run build:cash-book && npm run build:payable && npm run build:reporting && npm run build:config && npm run build:tax",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -68,7 +68,8 @@
     "migrate:reclassify-loai": "env-cmd -e db -- node scripts/reclassify-chung-tu-loai.js",
     "migrate:reclassify-loai:dry-run": "env-cmd -e db -- node scripts/reclassify-chung-tu-loai.js",
     "migrate:p2-split": "env-cmd -e db -- node scripts/migrate-p2-split.js",
-    "migrate:p2-split:dry-run": "env-cmd -e db -- node scripts/migrate-p2-split.js --dry-run"
+    "migrate:p2-split:dry-run": "env-cmd -e db -- node scripts/migrate-p2-split.js --dry-run",
+    "build:tax": "nest build tax-service"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

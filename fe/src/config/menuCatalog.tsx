@@ -7,7 +7,7 @@ import {
   AccountBookOutlined, FileSearchOutlined, ProfileOutlined, TableOutlined,
   AuditOutlined, SwapOutlined, ScheduleOutlined, CreditCardOutlined,
   WalletOutlined, FileProtectOutlined, FileTextOutlined, BarChartOutlined,
-  FileAddOutlined,
+  FileAddOutlined, CloudDownloadOutlined,
   FileDoneOutlined, SafetyCertificateOutlined, FundOutlined,
   NodeIndexOutlined, QuestionCircleOutlined, FormOutlined, FolderOpenOutlined,
   PayCircleOutlined, LockOutlined, InteractionOutlined, BankOutlined,
@@ -255,6 +255,7 @@ export const MENU_LEAVES: MenuLeaf[] = [
   { key: '/thue/tong-hop', label: 'Tổng hợp', module: 'thue', status: 'ok', icon: <TableOutlined /> },
   { key: '/thue/bang-ke-mua-vao', label: 'Bảng kê mua vào', module: 'thue', status: 'ok', icon: <FileAddOutlined /> },
   { key: '/thue/bang-ke-ban-ra', label: 'Bảng kê bán ra', module: 'thue', status: 'ok', icon: <FileDoneOutlined /> },
+  { key: '/thue/hoa-don-cong-thue', label: 'Hóa đơn cổng Thuế', module: 'thue', status: 'ok', icon: <CloudDownloadOutlined /> },
 
   // ===== Hai cổng yêu cầu — phân hệ 1 mục, bấm rail vào thẳng =====
   { key: '/cong-yeu-cau/thanh-toan', label: 'Cổng yêu cầu thanh toán', module: 'yc-thanh-toan', status: 'soon', icon: <PayCircleOutlined /> },
