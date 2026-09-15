@@ -181,9 +181,20 @@ export async function request(url: string, options: RequestOptions = {}): Promis
         }
 
         if (res.status === 401) {
-          throw new GdtError('Token hết hạn hoặc không hợp lệ', {
+          // Cổng dùng 401 cho CẢ token hết hạn LẪN sai mật khẩu/captcha lúc đăng
+          // nhập, nhưng thân phản hồi có nói rõ là cái nào. Vứt thân đi thì lớp
+          // trên chỉ còn đoán, và người dùng nhận một câu chung chung vô dụng.
+          const text = await res.text().catch(() => '');
+          let parsed: any = null;
+          try {
+            parsed = JSON.parse(text);
+          } catch {
+            /* thân không phải JSON, giữ nguyên text */
+          }
+          throw new GdtError(parsed?.message || 'Token hết hạn hoặc không hợp lệ', {
             status: 401,
             code: 'UNAUTHORIZED',
+            body: parsed ?? text.slice(0, 500),
           });
         }
 

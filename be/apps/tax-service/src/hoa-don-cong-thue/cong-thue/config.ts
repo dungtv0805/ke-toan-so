@@ -43,9 +43,12 @@ export function listUrl(
   type: string,
   { size = 50, state = null, search = '' }: { size?: number; state?: string | null; search?: string },
 ): string {
+  // KHÔNG encode `state` và `search`: giao diện cổng Thuế ghép thẳng hai giá
+  // trị này vào URL, và bộ phân tích phía cổng đọc chuỗi thô. Encode các ký tự
+  // '=' ';' '/' ':' thành %3D %3B %2F %3A là cổng trả "Truy vấn không hợp lệ.".
   const params = [`sort=tdlap:desc`, `size=${size}`];
-  if (state) params.push(`state=${encodeURIComponent(state)}`);
-  if (search) params.push(`search=${encodeURIComponent(search)}`);
+  if (state) params.push(`state=${state}`);
+  if (search) params.push(`search=${search}`);
   return `${BASE_URL}/${namespace}/invoices/${type}?${params.join('&')}`;
 }
 

@@ -214,6 +214,12 @@ export class TaiFileGocService {
     } finally {
       l.trangThai = 'xong';
       l.ketThucLuc = new Date().toISOString();
+      this.logger.log(
+        `Tải file gốc ${l.mst} (${l.tuNgay}..${l.denNgay}): ` +
+          `${l.daTai}/${l.loNay} file, ${(l.bytes / 1024 / 1024).toFixed(1)} MB, ` +
+          `bỏ qua ${l.boQua}, còn lại ${l.conLai}` +
+          (l.loi.length ? `, ${l.loi.length} lỗi: ${l.loi[0].message}` : ''),
+      );
     }
   }
 

@@ -195,9 +195,26 @@ export class TaiHangLoatService {
           m.ghiChu = err?.message ?? String(err);
         }
       }
+
+      // Kết quả lượt chạy chỉ nằm trong bộ nhớ và mất khi service khởi động
+      // lại. Không ghi ra log thì sau đó không ai dựng lại được chuyện gì đã
+      // xảy ra — kể cả chính mình lúc đi tìm nguyên nhân.
+      const dong =
+        `Lượt ${luot.id} · ${m.mst}: ${m.trangThai}` +
+        ` (tìm thấy ${m.timThay}, thêm ${m.themMoi}, thiếu ${m.thieu})` +
+        (m.ghiChu ? ` — ${m.ghiChu}` : '');
+      if (m.trangThai === 'loi') this.logger.error(dong);
+      else this.logger.log(dong);
     }
 
     luot.trangThai = 'xong';
     luot.ketThucLuc = new Date().toISOString();
+
+    const dem = (t: TrangThaiMuc) => luot.muc.filter((x) => x.trangThai === t).length;
+    this.logger.log(
+      `Lượt ${luot.id} kết thúc (${luot.tuNgay}..${luot.denNgay}): ` +
+        `${dem('xong')} xong, ${dem('loi')} lỗi, ${dem('can_captcha')} cần captcha, ` +
+        `${dem('bo_qua')} bỏ qua trên tổng ${luot.muc.length} mã số thuế`,
+    );
   }
 }

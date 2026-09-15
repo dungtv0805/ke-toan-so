@@ -193,8 +193,8 @@ export class HoaDonCongThueService {
 
     for (const cuaSo of cuaSoThang(tuNgay, denNgay)) {
       const search = gdt.buildSearch({
-        from: gdt.toPortalDate(cuaSo.tuNgay),
-        to: gdt.toPortalDate(cuaSo.denNgay),
+        from: gdt.toPortalDate(cuaSo.tuNgay, 'dau'),
+        to: gdt.toPortalDate(cuaSo.denNgay, 'cuoi'),
       });
 
       for (const type of INVOICE_TYPES) {
@@ -208,6 +208,12 @@ export class HoaDonCongThueService {
             ketQua.timThay += items.length;
             ketQua.themMoi += luu.themMoi;
             ketQua.capNhat += luu.capNhat;
+
+            this.logger.log(
+              `${mst} ${cuaSo.tuNgay}..${cuaSo.denNgay} ${type}/${namespace}: ` +
+                `cổng báo ${Number(total) || 0}, lấy ${items.length}, ` +
+                `thêm ${luu.themMoi}, cập nhật ${luu.capNhat}`,
+            );
 
             // Cổng báo có bao nhiêu, ta lấy được bao nhiêu. Lệch nghĩa là vòng
             // lật trang đứt giữa chừng - kiểu mất dữ liệu KHÔNG ném ra lỗi nào.
@@ -226,6 +232,14 @@ export class HoaDonCongThueService {
         }
       }
     }
+
+    // Việc này chạy ở nền, không ai đang nhìn màn hình: không ghi log thì sau
+    // đó không có cách nào biết cổng Thuế đã trả về những gì.
+    this.logger.log(
+      `Đồng bộ xong ${mst} (${tuNgay}..${denNgay}): tìm thấy ${ketQua.timThay}, ` +
+        `thêm ${ketQua.themMoi}, cập nhật ${ketQua.capNhat}, thiếu ${ketQua.thieu}` +
+        (ketQua.loi.length ? `, ${ketQua.loi.length} lỗi: ${ketQua.loi.map((l) => l.message).join('; ')}` : ''),
+    );
 
     return ketQua;
   }

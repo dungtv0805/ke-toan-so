@@ -1,10 +1,21 @@
-import { Controller, Get, Post, Put, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
 import { TenantContextService } from '@app/core';
 import { HoaDonCongThueService } from './hoa-don-cong-thue.service';
 import { PhienCongThueService } from './cong-thue/phien.service';
 import { TaiHangLoatService } from './tai-hang-loat.service';
 import { TaiFileGocService } from './tai-file-goc.service';
+import { GdtLoiInterceptor } from './cong-thue/gdt-loi.interceptor';
 
 const KE_TOAN_ROLES = [
   'ADMIN',
@@ -32,6 +43,8 @@ const QUAN_TRI_ROLES = ['ADMIN', 'KE_TOAN_TRUONG'];
  */
 @Controller('hoa-don-cong-thue')
 @UseGuards(JwtGuard, RoleGuard)
+// Lỗi cổng Thuế phải tới được người dùng nguyên văn, không bị gói thành 500.
+@UseInterceptors(GdtLoiInterceptor)
 export class HoaDonCongThueController {
   constructor(
     private readonly service: HoaDonCongThueService,

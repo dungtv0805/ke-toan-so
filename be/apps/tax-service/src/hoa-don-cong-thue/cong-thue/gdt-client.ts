@@ -43,12 +43,23 @@ export function buildSearch({
   return clauses.join(';');
 }
 
-/** Chuyển Date hoặc 'yyyy-MM-dd' sang 'dd/MM/yyyy' mà cổng yêu cầu. */
-export function toPortalDate(value: string | Date): string {
+/**
+ * Chuyển Date hoặc 'yyyy-MM-dd' sang mốc thời gian mà cổng Thuế yêu cầu:
+ * 'dd/MM/yyyyT00:00:00' cho đầu khoảng, 'dd/MM/yyyyT23:59:59' cho cuối khoảng.
+ *
+ * PHẦN GIỜ LÀ BẮT BUỘC. Gửi ngày trần 'dd/MM/yyyy' thì cổng trả về đúng một câu
+ * "Truy vấn không hợp lệ." và không có hóa đơn nào. Đây là định dạng lấy từ
+ * chính giao diện cổng: `format('DD/MM/YYYY[T]00:00:00')`.
+ *
+ * Cuối khoảng lấy 23:59:59 nên hóa đơn lập trong ngày cuối kỳ vẫn nằm trong
+ * kết quả — chặn trên 00:00:00 sẽ bỏ sót trọn ngày đó.
+ */
+export function toPortalDate(value: string | Date, bien: 'dau' | 'cuoi' = 'dau'): string {
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) throw new Error(`Ngày không hợp lệ: ${String(value)}`);
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+  const gio = bien === 'cuoi' ? '23:59:59' : '00:00:00';
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}T${gio}`;
 }
 
 /** Lấy captcha mới. `content` là chuỗi SVG. */
@@ -81,10 +92,16 @@ export async function authenticate({
     // 401 thành "token hết hạn", nhưng lúc đăng nhập thì chưa hề có token -
     // giữ nguyên thông báo đó sẽ khiến người dùng đi sửa nhầm chỗ.
     if (err instanceof GdtError && err.status === 401) {
-      throw new GdtError('Đăng nhập thất bại: sai tài khoản, mật khẩu hoặc mã captcha', {
-        status: 401,
-        code: 'LOGIN_FAILED',
-      });
+      // Nói LẠI nguyên văn lời cổng Thuế. Cổng phân biệt được "sai mã captcha"
+      // với "sai tên đăng nhập hoặc mật khẩu", còn mình gộp cả hai thành một
+      // câu thì kế toán không biết nên gõ lại captcha hay đi sửa mật khẩu.
+      const cong = String((err.body as any)?.message || '').trim();
+      throw new GdtError(
+        cong
+          ? `Cổng Thuế từ chối đăng nhập: ${cong}`
+          : 'Đăng nhập thất bại: sai tài khoản, mật khẩu hoặc mã captcha',
+        { status: 401, code: 'LOGIN_FAILED', body: err.body },
+      );
     }
     throw err;
   }
