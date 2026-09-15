@@ -1,103 +1,106 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
+  Card,
   Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { useToast } from '@/components/ui/use-toast';
+  Button,
+  Modal,
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Switch,
+  Space,
+  Tag,
+  Tooltip,
+  Popconfirm,
+  TimePicker,
+  Typography,
+  Alert,
+  message,
+} from 'antd';
+import {
+  PlusOutlined,
+  EditOutlined,
+  KeyOutlined,
+} from '@ant-design/icons';
+import dayjs from 'dayjs';
+import { useManHinh } from '@/hooks/useManHinh';
+import { nutLenh } from '@/components/common/nutLenh';
 import {
   hoaDonCongThueService,
   type CongTyCongThue,
 } from '@/services/hoaDonCongThueService';
 
-const RONG = { mst: '', tenCongTy: '', tenDangNhap: '', matKhau: '', kyKeKhai: 'thang' };
+const { Text } = Typography;
 
 /**
  * Cấu hình tải hóa đơn cổng Thuế — khai báo từng công ty.
  *
  * Đây là chỗ đặt MỘT LẦN rồi hiếm khi sửa: mã số thuế, mật khẩu cổng Thuế, kỳ
  * kê khai và lịch tải riêng. Việc hằng ngày — đăng nhập captcha, tải hàng loạt
- * — nằm ở menu Thuế › Hóa đơn cổng Thuế, vì kế toán viên làm việc đó mỗi sáng
- * và không nên phải có quyền cấu hình mới vào được.
+ * — nằm ở Thuế › Hóa đơn cổng Thuế, vì kế toán viên làm việc đó mỗi sáng và
+ * không nên phải có quyền cấu hình mới vào được.
  */
 const CauHinhHoaDonCongThuePage: React.FC = () => {
-  const { toast } = useToast();
+  const gon = useManHinh() === 'mobile';
+  const [form] = Form.useForm();
+
   const [ds, setDs] = useState<CongTyCongThue[]>([]);
   const [dangTai, setDangTai] = useState(true);
-
-  const [suaMo, setSuaMo] = useState(false);
-  const [form, setForm] = useState({ ...RONG });
-  const [laThem, setLaThem] = useState(true);
+  const [mo, setMo] = useState(false);
+  const [dangSua, setDangSua] = useState<CongTyCongThue | null>(null);
 
   const nap = useCallback(async () => {
+    setDangTai(true);
     try {
       setDs((await hoaDonCongThueService.danhSachCongTy()) ?? []);
     } catch (e: any) {
-      toast({ title: 'Không tải được danh sách', description: e?.message, variant: 'destructive' });
+      message.error(e?.message || 'Không tải được danh sách');
     } finally {
       setDangTai(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     nap();
   }, [nap]);
 
   function moThem() {
-    setForm({ ...RONG });
-    setLaThem(true);
-    setSuaMo(true);
+    setDangSua(null);
+    form.resetFields();
+    form.setFieldsValue({ kyKeKhai: 'thang' });
+    setMo(true);
   }
 
   function moSua(c: CongTyCongThue) {
-    setForm({
+    setDangSua(c);
+    form.setFieldsValue({
       mst: c.mst,
-      tenCongTy: c.tenCongTy ?? '',
-      tenDangNhap: c.tenDangNhap ?? '',
+      tenCongTy: c.tenCongTy,
+      tenDangNhap: c.tenDangNhap,
+      kyKeKhai: c.kyKeKhai,
       matKhau: '',
-      kyKeKhai: c.kyKeKhai ?? 'thang',
     });
-    setLaThem(false);
-    setSuaMo(true);
+    setMo(true);
   }
 
   async function luu() {
     try {
+      const v = await form.validateFields();
       await hoaDonCongThueService.luuCongTy({
-        mst: form.mst.trim(),
-        tenCongTy: form.tenCongTy.trim(),
-        tenDangNhap: form.tenDangNhap.trim() || form.mst.trim(),
+        mst: String(v.mst).trim(),
+        tenCongTy: v.tenCongTy?.trim(),
+        tenDangNhap: v.tenDangNhap?.trim() || String(v.mst).trim(),
         // Để trống khi sửa = giữ nguyên mật khẩu cũ, không phải xóa đi.
-        matKhau: form.matKhau || null,
-        kyKeKhai: form.kyKeKhai,
+        matKhau: v.matKhau || null,
+        kyKeKhai: v.kyKeKhai,
       });
-      setSuaMo(false);
+      setMo(false);
       await nap();
-      toast({ title: laThem ? 'Đã thêm mã số thuế' : 'Đã cập nhật' });
+      message.success(dangSua ? 'Đã cập nhật' : 'Đã thêm mã số thuế');
     } catch (e: any) {
-      toast({ title: 'Lưu không được', description: e?.message, variant: 'destructive' });
+      if (e?.errorFields) return;
+      message.error(e?.message || 'Lưu không được');
     }
   }
 
@@ -105,9 +108,9 @@ const CauHinhHoaDonCongThuePage: React.FC = () => {
     try {
       await hoaDonCongThueService.quenMatKhau(c.mst);
       await nap();
-      toast({ title: `Đã xóa mật khẩu đã lưu của ${c.mst}` });
+      message.success(`Đã xóa mật khẩu đã lưu của ${c.mst}`);
     } catch (e: any) {
-      toast({ title: 'Không xóa được', description: e?.message, variant: 'destructive' });
+      message.error(e?.message || 'Không xóa được');
     }
   }
 
@@ -121,208 +124,211 @@ const CauHinhHoaDonCongThuePage: React.FC = () => {
       });
       await nap();
     } catch (e: any) {
-      toast({ title: 'Không đặt được lịch', description: e?.message, variant: 'destructive' });
+      message.error(e?.message || 'Không đặt được lịch');
       await nap();
     }
   }
 
+  const columns = [
+    {
+      title: 'Mã số thuế',
+      dataIndex: 'mst',
+      width: 130,
+      render: (v: string) => <Text strong style={{ fontVariantNumeric: 'tabular-nums' }}>{v}</Text>,
+    },
+    { title: 'Công ty', dataIndex: 'tenCongTy', render: (v: string) => v || <Text type="secondary">—</Text> },
+    {
+      title: 'Kỳ kê khai',
+      dataIndex: 'kyKeKhai',
+      width: 110,
+      render: (v: string) => (v === 'quy' ? 'Theo quý' : 'Theo tháng'),
+    },
+    {
+      title: 'Mật khẩu',
+      dataIndex: 'coLuuMatKhau',
+      width: 120,
+      render: (v: boolean) =>
+        v ? <Tag color="green">Đã lưu</Tag> : <Tag>Không lưu</Tag>,
+    },
+    {
+      title: 'Tự động tải',
+      dataIndex: 'tuDongTai',
+      width: 110,
+      render: (v: boolean, c: CongTyCongThue) => (
+        <Tooltip title={c.coLuuMatKhau ? '' : 'Phải lưu mật khẩu mới tự tải được'}>
+          <Switch
+            size="small"
+            checked={v}
+            disabled={!c.coLuuMatKhau}
+            onChange={(x) => doiLich(c, { tuDongTai: x })}
+          />
+        </Tooltip>
+      ),
+    },
+    {
+      title: 'Giờ chạy',
+      dataIndex: 'gioChay',
+      width: 120,
+      render: (v: string, c: CongTyCongThue) => (
+        <TimePicker
+          size="small"
+          format="HH:mm"
+          allowClear={false}
+          disabled={!c.tuDongTai}
+          value={v ? dayjs(v, 'HH:mm') : null}
+          onChange={(d) => d && doiLich(c, { gioChay: d.format('HH:mm') })}
+          style={{ width: 100 }}
+        />
+      ),
+    },
+    {
+      title: 'Kéo lại',
+      dataIndex: 'soNgayKeoLai',
+      width: 120,
+      render: (v: number, c: CongTyCongThue) => (
+        <InputNumber
+          size="small"
+          min={1}
+          max={90}
+          value={v}
+          disabled={!c.tuDongTai}
+          addonAfter="ngày"
+          onChange={(x) => x && doiLich(c, { soNgayKeoLai: Number(x) })}
+          style={{ width: 110 }}
+        />
+      ),
+    },
+    {
+      title: '',
+      key: 'thaoTac',
+      width: 90,
+      align: 'right' as const,
+      render: (_: unknown, c: CongTyCongThue) => (
+        <Space size={0}>
+          <Tooltip title="Sửa">
+            <Button type="text" icon={<EditOutlined />} onClick={() => moSua(c)} />
+          </Tooltip>
+          {c.coLuuMatKhau && (
+            <Popconfirm
+              title="Xóa mật khẩu đã lưu?"
+              description="Từ đó mỗi phiên kế toán phải tự nhập mật khẩu, và lịch tự động sẽ tắt."
+              okText="Xóa"
+              cancelText="Hủy"
+              okButtonProps={{ danger: true }}
+              onConfirm={() => quenMatKhau(c)}
+            >
+              <Tooltip title="Xóa mật khẩu đã lưu">
+                <Button type="text" icon={<KeyOutlined />} danger />
+              </Tooltip>
+            </Popconfirm>
+          )}
+        </Space>
+      ),
+    },
+  ];
+
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">Hóa đơn cổng Thuế</h1>
-          <p className="text-sm text-muted-foreground">
-            Khai báo mã số thuế và lịch tải riêng cho từng công ty. Việc tải hằng ngày nằm ở
-            Thuế › Hóa đơn cổng Thuế.
-          </p>
-        </div>
-        <Button onClick={moThem}>Thêm mã số thuế</Button>
-      </div>
+    <div className="space-y-3">
+      <Card
+        title="Hóa đơn cổng Thuế"
+        extra={nutLenh(gon, 'Thêm mã số thuế', {
+          type: 'primary',
+          icon: <PlusOutlined />,
+          onClick: moThem,
+        })}
+      >
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: 12 }}
+          message="Khai báo một lần, dùng dài"
+          description={
+            <>
+              Đây là nơi khai báo mã số thuế và lịch tải riêng cho từng công ty. Việc tải hằng ngày
+              — đăng nhập captcha, tải hàng loạt — nằm ở <Text strong>Thuế › Hóa đơn cổng Thuế</Text>.
+            </>
+          }
+        />
 
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Mã số thuế</TableHead>
-              <TableHead>Công ty</TableHead>
-              <TableHead>Kỳ kê khai</TableHead>
-              <TableHead>Mật khẩu</TableHead>
-              <TableHead>Tự động tải</TableHead>
-              <TableHead>Giờ chạy</TableHead>
-              <TableHead>Kéo lại</TableHead>
-              <TableHead className="text-right">Thao tác</TableHead>
-            </TableRow>
-          </TableHeader>
+        <Table
+          rowKey="mst"
+          size="small"
+          loading={dangTai}
+          dataSource={ds}
+          columns={columns}
+          pagination={false}
+          scroll={{ x: 'max-content' }}
+          locale={{ emptyText: 'Chưa khai báo mã số thuế nào' }}
+        />
+      </Card>
 
-          <TableBody>
-            {dangTai && (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
-                  Đang tải…
-                </TableCell>
-              </TableRow>
-            )}
+      <Card size="small">
+        <Space direction="vertical" size={6}>
+          <Text type="secondary">
+            <Text strong>Hai chế độ mật khẩu.</Text> Có lưu thì mỗi phiên chỉ cần gõ captcha, và mới
+            đặt được lịch tự động. Không lưu thì kế toán nhập mật khẩu mỗi phiên, hệ thống không giữ
+            lại gì — an toàn hơn cho công ty nhạy cảm, nhưng máy không tự tải thay bạn được.
+          </Text>
+          <Text type="secondary">
+            <Text strong>Kéo lại N ngày là có chủ đích.</Text> Hóa đơn lên cổng Thuế trễ vài ngày so
+            với ngày lập, và hóa đơn bị thay thế hay điều chỉnh về sau cũng cần cập nhật lại. Cơ chế
+            chống trùng đảm bảo không sinh bản ghi thừa.
+          </Text>
+        </Space>
+      </Card>
 
-            {!dangTai && ds.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
-                  Chưa khai báo mã số thuế nào.
-                </TableCell>
-              </TableRow>
-            )}
+      <Modal
+        open={mo}
+        title={dangSua ? `Sửa ${dangSua.mst}` : 'Thêm mã số thuế'}
+        onCancel={() => setMo(false)}
+        onOk={luu}
+        okText="Lưu"
+        cancelText="Hủy"
+        destroyOnClose
+      >
+        <Form form={form} layout="vertical" preserve={false}>
+          <Form.Item
+            name="mst"
+            label="Mã số thuế"
+            rules={[{ required: true, message: 'Nhập mã số thuế' }]}
+          >
+            <Input disabled={Boolean(dangSua)} inputMode="numeric" />
+          </Form.Item>
 
-            {ds.map((c) => (
-              <TableRow key={c.mst}>
-                <TableCell className="font-mono">{c.mst}</TableCell>
-                <TableCell>{c.tenCongTy || '—'}</TableCell>
-                <TableCell>{c.kyKeKhai === 'quy' ? 'Quý' : 'Tháng'}</TableCell>
-                <TableCell>
-                  {c.coLuuMatKhau ? (
-                    <span className="text-emerald-700">Đã lưu</span>
-                  ) : (
-                    <span className="text-muted-foreground">Không lưu</span>
-                  )}
-                </TableCell>
+          <Form.Item name="tenCongTy" label="Tên công ty">
+            <Input />
+          </Form.Item>
 
-                <TableCell>
-                  <Switch
-                    checked={c.tuDongTai}
-                    disabled={!c.coLuuMatKhau}
-                    onCheckedChange={(v) => doiLich(c, { tuDongTai: v })}
-                  />
-                </TableCell>
+          <Form.Item
+            name="tenDangNhap"
+            label="Tên đăng nhập cổng Thuế"
+            extra="Để trống thì dùng chính mã số thuế"
+          >
+            <Input />
+          </Form.Item>
 
-                <TableCell>
-                  <Input
-                    type="time"
-                    className="w-28"
-                    value={c.gioChay}
-                    disabled={!c.tuDongTai}
-                    onChange={(e) => doiLich(c, { gioChay: e.target.value })}
-                  />
-                </TableCell>
+          <Form.Item name="kyKeKhai" label="Kỳ kê khai">
+            <Select
+              options={[
+                { value: 'thang', label: 'Theo tháng' },
+                { value: 'quy', label: 'Theo quý' },
+              ]}
+            />
+          </Form.Item>
 
-                <TableCell>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={90}
-                    className="w-20"
-                    value={c.soNgayKeoLai}
-                    disabled={!c.tuDongTai}
-                    onChange={(e) => doiLich(c, { soNgayKeoLai: Number(e.target.value) })}
-                  />
-                </TableCell>
-
-                <TableCell className="space-x-2 text-right">
-                  <Button size="sm" variant="outline" onClick={() => moSua(c)}>
-                    Sửa
-                  </Button>
-                  {c.coLuuMatKhau && (
-                    <Button size="sm" variant="ghost" onClick={() => quenMatKhau(c)}>
-                      Xóa mật khẩu
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground space-y-2">
-        <p>
-          <strong>Hai chế độ mật khẩu.</strong> Có lưu thì mỗi phiên chỉ cần gõ captcha, và mới đặt
-          được lịch tự động. Không lưu thì kế toán nhập mật khẩu mỗi phiên, hệ thống không giữ lại
-          gì — an toàn hơn cho công ty nhạy cảm, nhưng máy không tự tải thay bạn được.
-        </p>
-        <p>
-          <strong>Kéo lại N ngày là có chủ đích.</strong> Hóa đơn lên cổng Thuế trễ vài ngày so với
-          ngày lập, và hóa đơn bị thay thế hay điều chỉnh về sau cũng cần cập nhật lại. Cơ chế chống
-          trùng đảm bảo không sinh bản ghi thừa.
-        </p>
-      </div>
-
-      {/* ------------------------------------------------- Thêm / sửa MST */}
-      <Dialog open={suaMo} onOpenChange={setSuaMo}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{laThem ? 'Thêm mã số thuế' : `Sửa ${form.mst}`}</DialogTitle>
-            <DialogDescription>
-              Mật khẩu được mã hóa trước khi lưu và không bao giờ trả ra API.
-              {!laThem && ' Để trống ô mật khẩu nghĩa là giữ nguyên mật khẩu cũ.'}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3">
-            <div>
-              <Label htmlFor="mst">Mã số thuế</Label>
-              <Input
-                id="mst"
-                value={form.mst}
-                disabled={!laThem}
-                onChange={(e) => setForm({ ...form, mst: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="ten">Tên công ty</Label>
-              <Input
-                id="ten"
-                value={form.tenCongTy}
-                onChange={(e) => setForm({ ...form, tenCongTy: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="tdn">Tên đăng nhập cổng Thuế</Label>
-              <Input
-                id="tdn"
-                placeholder="Để trống thì dùng chính mã số thuế"
-                value={form.tenDangNhap}
-                onChange={(e) => setForm({ ...form, tenDangNhap: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="ky">Kỳ kê khai</Label>
-              <Select
-                value={form.kyKeKhai}
-                onValueChange={(v) => setForm({ ...form, kyKeKhai: v })}
-              >
-                <SelectTrigger id="ky">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="thang">Theo tháng</SelectItem>
-                  <SelectItem value="quy">Theo quý</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="mk">Mật khẩu cổng Thuế</Label>
-              <Input
-                id="mk"
-                type="password"
-                autoComplete="new-password"
-                placeholder={laThem ? 'Để trống nếu không muốn lưu' : 'Để trống = giữ nguyên'}
-                value={form.matKhau}
-                onChange={(e) => setForm({ ...form, matKhau: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSuaMo(false)}>
-              Hủy
-            </Button>
-            <Button onClick={luu} disabled={!form.mst.trim()}>
-              Lưu
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <Form.Item
+            name="matKhau"
+            label="Mật khẩu cổng Thuế"
+            extra={
+              dangSua
+                ? 'Để trống = giữ nguyên mật khẩu cũ'
+                : 'Để trống nếu không muốn hệ thống lưu mật khẩu'
+            }
+          >
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

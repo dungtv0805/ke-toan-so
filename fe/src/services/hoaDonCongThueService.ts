@@ -71,6 +71,16 @@ export interface LuotChay {
   muc: MucChay[];
 }
 
+export interface KetQuaTaiFile {
+  mst: string;
+  tong: number;
+  boQua: number;
+  daTai: number;
+  bytes: number;
+  conLai: number;
+  loi: Array<{ soHoaDon: string; message: string }>;
+}
+
 export interface KetQuaDongBo {
   mst: string;
   timThay: number;
@@ -157,6 +167,20 @@ class HoaDonCongThueService extends ServiceBase {
 
   chayTiep(id: number, gom?: TrangThaiMuc[]): Promise<{ daChay: number; hetLuot: number }> {
     return this.post({ gom }, { endpoint: `/tai-hang-loat/${id}/chay-tiep` });
+  }
+
+  // ------------------------------------------------------------ File gốc
+
+  /**
+   * Tải gói ZIP chứa XML có chữ ký số — bản gốc hợp pháp theo Nghị định
+   * 123/2020. Cổng Thuế không có bản PDF để tải.
+   */
+  taiFileGoc(mst: string, tuNgay: string, denNgay: string): Promise<KetQuaTaiFile> {
+    return this.post({ tuNgay, denNgay }, { endpoint: `/cong-ty/${mst}/file-goc` });
+  }
+
+  daTaiFileGoc(mst: string, tuNgay: string, denNgay: string): Promise<{ tong: number; daCoFile: number }> {
+    return this.get({ endpoint: `/cong-ty/${mst}/file-goc`, params: { tuNgay, denNgay } });
   }
 }
 

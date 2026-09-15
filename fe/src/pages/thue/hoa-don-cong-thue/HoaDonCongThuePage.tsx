@@ -1,35 +1,50 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
+  Card,
   Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { useToast } from '@/components/ui/use-toast';
+  Button,
+  Modal,
+  Input,
+  DatePicker,
+  Space,
+  Tag,
+  Tooltip,
+  Typography,
+  Alert,
+  Progress,
+  message,
+} from 'antd';
+import {
+  CloudDownloadOutlined,
+  LoginOutlined,
+  SettingOutlined,
+  FileZipOutlined,
+  PlayCircleOutlined,
+} from '@ant-design/icons';
+import dayjs, { type Dayjs } from 'dayjs';
+import { useNavigate } from 'react-router-dom';
+import { useManHinh } from '@/hooks/useManHinh';
+import { nutLenh } from '@/components/common/nutLenh';
 import {
   hoaDonCongThueService,
   NHAN_TRANG_THAI,
   type CongTyCongThue,
   type LuotChay,
+  type TrangThaiMuc,
   type TrangThaiPhien,
 } from '@/services/hoaDonCongThueService';
 
-const homNay = () => new Date().toISOString().slice(0, 10);
-const dauThangNay = () => `${new Date().toISOString().slice(0, 7)}-01`;
+const { Text } = Typography;
+const { RangePicker } = DatePicker;
+
+const MAU_TRANG_THAI: Record<TrangThaiMuc, string> = {
+  cho: 'default',
+  dang_chay: 'processing',
+  xong: 'success',
+  can_captcha: 'warning',
+  bo_qua: 'default',
+  loi: 'error',
+};
 
 /**
  * Tải hóa đơn điện tử từ cổng Thuế.
@@ -39,20 +54,21 @@ const dauThangNay = () => `${new Date().toISOString().slice(0, 7)}-01`;
  * kế vì thế xoay quanh việc gom captcha lại cho gọn thay vì giấu nó đi.
  */
 const HoaDonCongThuePage: React.FC = () => {
-  const { toast } = useToast();
+  const gon = useManHinh() === 'mobile';
   const navigate = useNavigate();
 
   const [congTy, setCongTy] = useState<CongTyCongThue[]>([]);
   const [phien, setPhien] = useState<TrangThaiPhien[]>([]);
   const [dangTai, setDangTai] = useState(true);
 
-  const [khoang, setKhoang] = useState({ tuNgay: dauThangNay(), denNgay: homNay() });
+  const [khoang, setKhoang] = useState<[Dayjs, Dayjs]>([dayjs().startOf('month'), dayjs()]);
   const [luot, setLuot] = useState<LuotChay | null>(null);
   const hoiRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [captcha, setCaptcha] = useState<{ mst: string; sessionId: string; svg: string } | null>(null);
   const [maCaptcha, setMaCaptcha] = useState('');
   const [dangGui, setDangGui] = useState(false);
+  const [dangTaiFile, setDangTaiFile] = useState<string | null>(null);
 
   const nap = useCallback(async () => {
     try {
@@ -63,11 +79,11 @@ const HoaDonCongThuePage: React.FC = () => {
       setCongTy(ds ?? []);
       setPhien(ph ?? []);
     } catch (e: any) {
-      toast({ title: 'Không tải được danh sách', description: e?.message, variant: 'destructive' });
+      message.error(e?.message || 'Không tải được danh sách');
     } finally {
       setDangTai(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     nap();
@@ -91,6 +107,8 @@ const HoaDonCongThuePage: React.FC = () => {
   }, [luot?.id, luot?.trangThai]);
 
   const daDangNhap = (mst: string) => phien.find((p) => p.mst === mst)?.daDangNhap ?? false;
+  const tuNgay = () => khoang[0].format('YYYY-MM-DD');
+  const denNgay = () => khoang[1].format('YYYY-MM-DD');
 
   async function moDangNhap(c: CongTyCongThue) {
     try {
@@ -100,7 +118,7 @@ const HoaDonCongThuePage: React.FC = () => {
         setMaCaptcha('');
       }
     } catch (e: any) {
-      toast({ title: 'Không lấy được mã captcha', description: e?.message, variant: 'destructive' });
+      message.error(e?.message || 'Không lấy được mã captcha');
     }
   }
 
@@ -109,11 +127,12 @@ const HoaDonCongThuePage: React.FC = () => {
     setDangGui(true);
     try {
       await hoaDonCongThueService.guiCaptcha(captcha.sessionId, maCaptcha.trim());
+      const mst = captcha.mst;
       setCaptcha(null);
       await nap();
-      toast({ title: `Đã đăng nhập ${captcha.mst}` });
+      message.success(`Đã đăng nhập ${mst}`);
     } catch (e: any) {
-      toast({ title: 'Sai mã captcha hoặc mật khẩu', description: e?.message, variant: 'destructive' });
+      message.error(e?.message || 'Sai mã captcha hoặc mật khẩu');
     } finally {
       setDangGui(false);
     }
@@ -121,205 +140,265 @@ const HoaDonCongThuePage: React.FC = () => {
 
   async function taiHangLoat() {
     try {
-      const l = await hoaDonCongThueService.taiHangLoat({ ...khoang });
-      setLuot(l);
+      setLuot(await hoaDonCongThueService.taiHangLoat({ tuNgay: tuNgay(), denNgay: denNgay() }));
     } catch (e: any) {
-      toast({ title: 'Không bắt đầu được', description: e?.message, variant: 'destructive' });
+      message.error(e?.message || 'Không bắt đầu được');
+    }
+  }
+
+  /**
+   * Tải file gốc: gói ZIP chứa XML có chữ ký số.
+   *
+   * Đây mới là bản gốc hợp pháp theo Nghị định 123/2020. Cổng Thuế KHÔNG có
+   * endpoint PDF — bản PDF trên giao diện cổng là do trình duyệt tự dựng HTML
+   * rồi in ra, nên không có file PDF nào để tải về.
+   */
+  async function taiFileGoc(c: CongTyCongThue) {
+    setDangTaiFile(c.mst);
+    try {
+      const r = await hoaDonCongThueService.taiFileGoc(c.mst, tuNgay(), denNgay());
+      const mb = (r.bytes / 1024 / 1024).toFixed(1);
+      message.success(
+        `${c.mst}: tải ${r.daTai} file gốc (${mb} MB)` +
+          (r.conLai ? `, còn ${r.conLai} hóa đơn chưa tải` : '') +
+          (r.loi.length ? `, ${r.loi.length} hóa đơn lỗi` : ''),
+      );
+    } catch (e: any) {
+      message.error(e?.message || 'Không tải được file gốc');
+    } finally {
+      setDangTaiFile(null);
     }
   }
 
   const canCaptcha = (luot?.muc ?? []).filter((m) => m.trangThai === 'can_captcha');
+  const xong = (luot?.muc ?? []).filter((m) => m.trangThai === 'xong').length;
+  const tong = luot?.muc.length ?? 0;
+
+  const cotCongTy = [
+    {
+      title: 'Mã số thuế',
+      dataIndex: 'mst',
+      width: 130,
+      render: (v: string) => <Text strong style={{ fontVariantNumeric: 'tabular-nums' }}>{v}</Text>,
+    },
+    { title: 'Công ty', dataIndex: 'tenCongTy', render: (v: string) => v || <Text type="secondary">—</Text> },
+    {
+      title: 'Phiên cổng Thuế',
+      key: 'phien',
+      width: 150,
+      render: (_: unknown, c: CongTyCongThue) =>
+        daDangNhap(c.mst) ? <Tag color="green">Đang kết nối</Tag> : <Tag color="orange">Chưa đăng nhập</Tag>,
+    },
+    {
+      title: 'Lịch tải riêng',
+      key: 'lich',
+      width: 210,
+      render: (_: unknown, c: CongTyCongThue) =>
+        c.tuDongTai ? (
+          <Text>{`${c.gioChay} hằng ngày, kéo lại ${c.soNgayKeoLai} ngày`}</Text>
+        ) : (
+          <Text type="secondary">Tắt</Text>
+        ),
+    },
+    {
+      title: '',
+      key: 'thaoTac',
+      width: 200,
+      align: 'right' as const,
+      render: (_: unknown, c: CongTyCongThue) => (
+        <Space size={4}>
+          <Button size="small" icon={<LoginOutlined />} onClick={() => moDangNhap(c)}>
+            {daDangNhap(c.mst) ? 'Đăng nhập lại' : 'Đăng nhập'}
+          </Button>
+          <Tooltip title="Tải gói ZIP chứa XML có chữ ký số cho khoảng ngày đang chọn">
+            <Button
+              size="small"
+              icon={<FileZipOutlined />}
+              loading={dangTaiFile === c.mst}
+              disabled={!daDangNhap(c.mst)}
+              onClick={() => taiFileGoc(c)}
+            >
+              File gốc
+            </Button>
+          </Tooltip>
+        </Space>
+      ),
+    },
+  ];
+
+  const cotPhieuChay = [
+    {
+      title: 'Mã số thuế',
+      dataIndex: 'mst',
+      width: 130,
+      render: (v: string) => <Text style={{ fontVariantNumeric: 'tabular-nums' }}>{v}</Text>,
+    },
+    { title: 'Công ty', dataIndex: 'tenCongTy' },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'trangThai',
+      width: 140,
+      render: (v: TrangThaiMuc) => <Tag color={MAU_TRANG_THAI[v]}>{NHAN_TRANG_THAI[v]}</Tag>,
+    },
+    {
+      title: 'Hóa đơn',
+      dataIndex: 'timThay',
+      width: 100,
+      align: 'right' as const,
+      render: (v: number) => (v ? v.toLocaleString('vi-VN') : '—'),
+    },
+    {
+      title: 'Thêm mới',
+      dataIndex: 'themMoi',
+      width: 100,
+      align: 'right' as const,
+      render: (v: number) => (v ? v.toLocaleString('vi-VN') : '—'),
+    },
+    {
+      title: 'Ghi chú',
+      dataIndex: 'ghiChu',
+      render: (v: string) => (v ? <Text type="secondary">{v}</Text> : ''),
+    },
+  ];
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">Hóa đơn cổng Thuế</h1>
-          <p className="text-sm text-muted-foreground">
-            Đăng nhập cổng Thuế và tải hóa đơn. Khai báo mã số thuế, mật khẩu và lịch tải nằm ở
-            Cấu hình.
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => navigate('/cau-hinh/hoa-don-cong-thue')}>
-          Cấu hình mã số thuế
-        </Button>
-      </div>
-
-      {/* ------------------------------------------------ Danh sách MST */}
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Mã số thuế</TableHead>
-              <TableHead>Công ty</TableHead>
-              <TableHead>Mật khẩu</TableHead>
-              <TableHead>Phiên cổng Thuế</TableHead>
-              <TableHead>Lịch tải riêng</TableHead>
-              <TableHead className="text-right">Thao tác</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {dangTai && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  Đang tải…
-                </TableCell>
-              </TableRow>
-            )}
-
-            {!dangTai && congTy.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  Chưa khai báo mã số thuế nào. Thêm một mã để bắt đầu.
-                </TableCell>
-              </TableRow>
-            )}
-
-            {congTy.map((c) => (
-              <TableRow key={c.mst}>
-                <TableCell className="font-mono">{c.mst}</TableCell>
-                <TableCell>{c.tenCongTy || '—'}</TableCell>
-                <TableCell>
-                  {c.coLuuMatKhau ? (
-                    <span className="text-emerald-700">Đã lưu</span>
-                  ) : (
-                    <span className="text-muted-foreground">Không lưu</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {daDangNhap(c.mst) ? (
-                    <span className="text-emerald-700">Đang kết nối</span>
-                  ) : (
-                    <span className="text-amber-700">Chưa đăng nhập</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {c.tuDongTai
-                    ? `${c.gioChay} hằng ngày, kéo lại ${c.soNgayKeoLai} ngày`
-                    : <span className="text-muted-foreground">Tắt</span>}
-                </TableCell>
-                <TableCell className="space-x-2 text-right">
-                  <Button size="sm" variant="outline" onClick={() => moDangNhap(c)}>
-                    {daDangNhap(c.mst) ? 'Đăng nhập lại' : 'Đăng nhập'}
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* ------------------------------------------------- Tải hàng loạt */}
-      <div className="rounded-lg border p-4 space-y-3">
-        <div className="flex flex-wrap items-end gap-3">
-          <div>
-            <Label htmlFor="tu">Từ ngày</Label>
-            <Input
-              id="tu"
-              type="date"
-              value={khoang.tuNgay}
-              onChange={(e) => setKhoang({ ...khoang, tuNgay: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label htmlFor="den">Đến ngày</Label>
-            <Input
-              id="den"
-              type="date"
-              value={khoang.denNgay}
-              onChange={(e) => setKhoang({ ...khoang, denNgay: e.target.value })}
-            />
-          </div>
-          <Button onClick={taiHangLoat} disabled={luot?.trangThai === 'dang_chay'}>
-            {luot?.trangThai === 'dang_chay' ? 'Đang tải…' : `Tải ${congTy.length} mã số thuế`}
+    <div className="space-y-3">
+      <Card
+        title="Hóa đơn cổng Thuế"
+        extra={nutLenh(gon, 'Cấu hình mã số thuế', {
+          icon: <SettingOutlined />,
+          onClick: () => navigate('/cau-hinh/hoa-don-cong-thue'),
+        })}
+      >
+        <Space wrap style={{ marginBottom: 12 }}>
+          <RangePicker
+            value={khoang}
+            format="DD/MM/YYYY"
+            allowClear={false}
+            onChange={(v) => v && setKhoang(v as [Dayjs, Dayjs])}
+          />
+          <Button
+            type="primary"
+            icon={<CloudDownloadOutlined />}
+            loading={luot?.trangThai === 'dang_chay'}
+            onClick={taiHangLoat}
+            disabled={congTy.length === 0}
+          >
+            {`Tải ${congTy.length} mã số thuế`}
           </Button>
-          {canCaptcha.length > 0 && (
+          {canCaptcha.length > 0 && luot && (
             <Button
-              variant="outline"
+              icon={<PlayCircleOutlined />}
               onClick={async () => {
-                await hoaDonCongThueService.chayTiep(luot!.id);
-                const moi = await hoaDonCongThueService.luotChay(luot!.id);
+                await hoaDonCongThueService.chayTiep(luot.id);
+                const moi = await hoaDonCongThueService.luotChay(luot.id);
                 if (moi) setLuot(moi);
               }}
             >
-              Chạy tiếp {canCaptcha.length} mã đã xác thực
+              {`Chạy tiếp ${canCaptcha.length} mã đã xác thực`}
             </Button>
           )}
-        </div>
+        </Space>
 
-        <p className="text-sm text-muted-foreground">
-          Cổng Thuế bắt nhập captcha cho mỗi phiên, nên mã nào chưa đăng nhập sẽ được xếp vào hàng
-          chờ thay vì làm dừng cả lượt chạy. Đăng nhập xong thì bấm chạy tiếp cho đúng phần còn thiếu.
-        </p>
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: 12 }}
+          message="Captcha là nút thắt, không phải tốc độ mạng"
+          description="Mã nào chưa đăng nhập sẽ được xếp vào hàng chờ thay vì làm dừng cả lượt chạy. Đăng nhập xong thì bấm chạy tiếp cho đúng phần còn thiếu."
+        />
 
-        {luot && (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Mã số thuế</TableHead>
-                <TableHead>Công ty</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead className="text-right">Hóa đơn</TableHead>
-                <TableHead className="text-right">Thêm mới</TableHead>
-                <TableHead>Ghi chú</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {luot.muc.map((m) => (
-                <TableRow key={m.mst}>
-                  <TableCell className="font-mono">{m.mst}</TableCell>
-                  <TableCell>{m.tenCongTy}</TableCell>
-                  <TableCell>{NHAN_TRANG_THAI[m.trangThai]}</TableCell>
-                  <TableCell className="text-right tabular-nums">{m.timThay || '—'}</TableCell>
-                  <TableCell className="text-right tabular-nums">{m.themMoi || '—'}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{m.ghiChu || ''}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+        <Table
+          rowKey="mst"
+          size="small"
+          loading={dangTai}
+          dataSource={congTy}
+          columns={cotCongTy}
+          pagination={false}
+          scroll={{ x: 'max-content' }}
+          locale={{ emptyText: 'Chưa khai báo mã số thuế nào — vào Cấu hình để thêm' }}
+        />
+      </Card>
 
-      {/* -------------------------------------------------------- Captcha */}
-      <Dialog open={Boolean(captcha)} onOpenChange={(o) => !o && setCaptcha(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Nhập mã captcha — {captcha?.mst}</DialogTitle>
-            <DialogDescription>
-              Cổng Thuế yêu cầu mã này cho mỗi phiên đăng nhập. Token sống khoảng một giờ nên mỗi mã
-              số thuế chỉ phải gõ một lần mỗi phiên làm việc.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3">
-            {/* SVG do máy chủ NGOÀI sinh ra: nhúng qua <img> chứ không đưa thẳng
-                vào DOM, vì nội dung SVG có thể chứa script. */}
-            {captcha && (
-              <img
-                alt="Mã captcha từ cổng Thuế"
-                className="h-20 w-full rounded border bg-white object-contain"
-                src={`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(captcha.svg)))}`}
-              />
-            )}
-            <Input
-              autoFocus
-              value={maCaptcha}
-              placeholder="Gõ mã trong ảnh"
-              onChange={(e) => setMaCaptcha(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && guiCaptcha()}
+      {luot && (
+        <Card
+          title="Phiếu chạy"
+          extra={
+            <Text type="secondary">
+              {luot.trangThai === 'dang_chay' ? 'Đang chạy' : 'Đã xong'} · {luot.tuNgay} → {luot.denNgay}
+            </Text>
+          }
+        >
+          {tong > 0 && (
+            <Progress
+              percent={Math.round((xong / tong) * 100)}
+              size="small"
+              status={luot.trangThai === 'dang_chay' ? 'active' : undefined}
+              style={{ marginBottom: 12 }}
             />
-          </div>
+          )}
+          <Table
+            rowKey="mst"
+            size="small"
+            dataSource={luot.muc}
+            columns={cotPhieuChay}
+            pagination={false}
+            scroll={{ x: 'max-content' }}
+          />
+        </Card>
+      )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCaptcha(null)}>
-              Hủy
-            </Button>
-            <Button onClick={guiCaptcha} disabled={!maCaptcha.trim() || dangGui}>
-              {dangGui ? 'Đang đăng nhập…' : 'Đăng nhập'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <Card size="small">
+        <Text type="secondary">
+          <Text strong>File gốc là XML, không phải PDF.</Text> Nút “File gốc” tải gói ZIP chứa XML có
+          chữ ký số — bản có giá trị pháp lý theo Nghị định 123/2020. Cổng Thuế không có endpoint PDF:
+          bản PDF bạn thấy trên giao diện cổng là do trình duyệt tự dựng rồi in ra.
+        </Text>
+      </Card>
+
+      <Modal
+        open={Boolean(captcha)}
+        title={`Nhập mã captcha — ${captcha?.mst ?? ''}`}
+        onCancel={() => setCaptcha(null)}
+        onOk={guiCaptcha}
+        okText="Đăng nhập"
+        cancelText="Hủy"
+        confirmLoading={dangGui}
+        okButtonProps={{ disabled: !maCaptcha.trim() }}
+        destroyOnClose
+      >
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Text type="secondary">
+            Cổng Thuế yêu cầu mã này cho mỗi phiên đăng nhập. Token sống khoảng một giờ nên mỗi mã số
+            thuế chỉ phải gõ một lần mỗi phiên làm việc.
+          </Text>
+
+          {/* SVG do máy chủ NGOÀI sinh ra: nhúng qua <img> chứ không đưa thẳng
+              vào DOM, vì nội dung SVG có thể chứa script. */}
+          {captcha && (
+            <img
+              alt="Mã captcha từ cổng Thuế"
+              style={{
+                width: '100%',
+                height: 88,
+                objectFit: 'contain',
+                background: '#fff',
+                border: '1px solid #f0f0f0',
+                borderRadius: 6,
+              }}
+              src={`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(captcha.svg)))}`}
+            />
+          )}
+
+          <Input
+            autoFocus
+            value={maCaptcha}
+            placeholder="Gõ mã trong ảnh"
+            onChange={(e) => setMaCaptcha(e.target.value)}
+            onPressEnter={guiCaptcha}
+          />
+        </Space>
+      </Modal>
     </div>
   );
 };

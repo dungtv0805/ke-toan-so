@@ -4,6 +4,7 @@ import { TenantContextService } from '@app/core';
 import { HoaDonCongThueService } from './hoa-don-cong-thue.service';
 import { PhienCongThueService } from './cong-thue/phien.service';
 import { TaiHangLoatService } from './tai-hang-loat.service';
+import { TaiFileGocService } from './tai-file-goc.service';
 
 const KE_TOAN_ROLES = [
   'ADMIN',
@@ -36,6 +37,7 @@ export class HoaDonCongThueController {
     private readonly service: HoaDonCongThueService,
     private readonly phien: PhienCongThueService,
     private readonly taiHangLoat: TaiHangLoatService,
+    private readonly taiFileGoc: TaiFileGocService,
     private readonly tenantContext: TenantContextService,
   ) {}
 
@@ -144,6 +146,33 @@ export class HoaDonCongThueController {
   async chayTiep(@Param('id') id: string, @Body() dto: { gom?: string[] }) {
     const ket = await this.taiHangLoat.chayTiep(Number(id), { gom: dto?.gom as any });
     return { success: true, data: ket };
+  }
+
+  // ------------------------------------------------------- File gốc
+
+  /**
+   * Tải file gốc (ZIP chứa XML có chữ ký số) cho các hóa đơn của một khoảng.
+   *
+   * Cổng Thuế không có endpoint PDF: bản PDF trên giao diện cổng là do trình
+   * duyệt tự dựng HTML rồi in ra. XML mới là bản gốc có giá trị pháp lý.
+   */
+  @Post('cong-ty/:mst/file-goc')
+  @Roles(...QUAN_TRI_ROLES)
+  async taiFileGocKhoang(
+    @Param('mst') mst: string,
+    @Body() dto: { tuNgay: string; denNgay: string; gioiHan?: number; taiLai?: boolean },
+  ) {
+    const ket = await this.taiFileGoc.taiKhoang(this.tenantId, { mst, ...dto });
+    return { success: true, data: ket };
+  }
+
+  @Get('cong-ty/:mst/file-goc')
+  @Roles(...KE_TOAN_ROLES)
+  async daTaiFileGoc(@Param('mst') mst: string, @Query() q: any) {
+    return {
+      success: true,
+      data: await this.taiFileGoc.daTaiBaoNhieu(mst, q.tuNgay, q.denNgay),
+    };
   }
 
   @Get('cong-ty/:mst/hoa-don')
