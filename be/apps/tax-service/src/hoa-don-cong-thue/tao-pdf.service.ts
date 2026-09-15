@@ -163,6 +163,37 @@ export class TaoPdfService {
     }
   }
 
+  /**
+   * PDF của ĐÚNG MỘT hóa đơn, dựng ngay nếu chưa có.
+   *
+   * Làm đồng bộ được vì một hóa đơn chỉ tốn một, hai giây — vẫn nằm gọn trong
+   * 30 giây chờ của client. Chỉ khi dựng cả kỳ mới cần chạy nền.
+   */
+  async pdfMotHoaDon(
+    mst: string,
+    khoa: { mstNguoiBan: string; kyHieu: string; soHoaDon: string },
+  ): Promise<{ ten: string; noiDung: Buffer } | null> {
+    const ds = await this.hoaDonRepo.find({ where: { mst } as any });
+    const hd = ds.find(
+      (x) =>
+        x.isActive !== false &&
+        String(x.mstNguoiBan ?? '') === khoa.mstNguoiBan &&
+        String(x.kyHieu ?? '') === khoa.kyHieu &&
+        String(x.soHoaDon ?? '') === khoa.soHoaDon,
+    );
+    if (!hd?.duongDanFileGoc || !fs.existsSync(hd.duongDanFileGoc)) return null;
+
+    const pdf = this.duongDanPdf(hd.duongDanFileGoc);
+    if (!fs.existsSync(pdf)) fs.writeFileSync(pdf, await pdfTuZip(hd.duongDanFileGoc));
+
+    const ky = hd.ngayLap ? new Date(hd.ngayLap).toISOString().slice(0, 7) : 'khong-ro-ky';
+    const an = (v: unknown) => String(v ?? 'khong-ro').replace(/[<>:"/\\|?*\x00-\x1f]/g, '-');
+    return {
+      ten: `${ky}_${an(hd.chieu)}_${an(hd.mstNguoiBan)}_${an(hd.kyHieu)}_${an(hd.soHoaDon)}.pdf`,
+      noiDung: fs.readFileSync(pdf),
+    };
+  }
+
   /** Các file PDF đã dựng trong kỳ, để gói lại cho người dùng tải về. */
   async danhSachPdf(
     mst: string,

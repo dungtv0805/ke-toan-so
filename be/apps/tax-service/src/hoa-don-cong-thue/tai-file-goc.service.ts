@@ -285,6 +285,31 @@ export class TaiFileGocService {
     });
   }
 
+  /**
+   * Tìm file gốc của ĐÚNG MỘT hóa đơn theo bộ khóa tự nhiên.
+   * Dùng cho nút tải lẻ từng dòng trên bảng chi tiết.
+   */
+  async timMotFile(
+    mst: string,
+    khoa: { mstNguoiBan: string; kyHieu: string; soHoaDon: string },
+  ): Promise<{ ten: string; duongDan: string } | null> {
+    const ds = await this.hoaDonRepo.find({ where: { mst } as any });
+    const hd = ds.find(
+      (x) =>
+        x.isActive !== false &&
+        String(x.mstNguoiBan ?? '') === khoa.mstNguoiBan &&
+        String(x.kyHieu ?? '') === khoa.kyHieu &&
+        String(x.soHoaDon ?? '') === khoa.soHoaDon,
+    );
+    if (!hd || !this.daCoFile(hd)) return null;
+
+    const ky = hd.ngayLap ? new Date(hd.ngayLap).toISOString().slice(0, 7) : 'khong-ro-ky';
+    return {
+      ten: `${ky}_${this.an(hd.chieu)}_${this.an(hd.mstNguoiBan)}_${this.an(hd.kyHieu)}_${this.an(hd.soHoaDon)}.zip`,
+      duongDan: hd.duongDanFileGoc,
+    };
+  }
+
   /** Bao nhiêu hóa đơn trong khoảng đã có file gốc trên đĩa. */
   async daTaiBaoNhieu(
     mst: string,

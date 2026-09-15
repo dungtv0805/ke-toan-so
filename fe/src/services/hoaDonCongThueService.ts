@@ -46,6 +46,11 @@ export interface HoaDonTho {
   tienThue: number;
   tongThanhToan: number;
   trangThai?: string;
+  /** Đã tải được bản gốc (ZIP chứa XML ký số) về máy chủ chưa. */
+  coFileGoc?: boolean;
+  /** Đã dựng bản thể hiện PDF chưa. */
+  coPdf?: boolean;
+  kichThuocFileGoc?: number;
 }
 
 export type TrangThaiMuc = 'cho' | 'dang_chay' | 'xong' | 'can_captcha' | 'bo_qua' | 'loi';
@@ -323,6 +328,37 @@ class HoaDonCongThueService extends ServiceBase {
     const a = document.createElement('a');
     a.href = url;
     a.download = `hoa-don-pdf_${mst}_${tuNgay}_${denNgay}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  luotTaoPdfGanNhat(mst: string): Promise<LuotTaoPdf | null> {
+    return this.get({ endpoint: `/cong-ty/${mst}/pdf/gan-nhat` });
+  }
+
+  /** Tải file của ĐÚNG MỘT hóa đơn: 'zip' là bản gốc ký số, 'pdf' là bản thể hiện. */
+  async taiMotHoaDon(
+    mst: string,
+    khoa: { mstNguoiBan: string; kyHieu: string; soHoaDon: string },
+    loai: 'zip' | 'pdf',
+  ): Promise<void> {
+    const token = getAuthToken();
+    const p = new URLSearchParams(khoa).toString();
+    const res = await fetch(
+      `${API_CONFIG.BASE_URL}/tax/hoa-don-cong-thue/cong-ty/${mst}/hoa-don/` +
+        `${loai === 'pdf' ? 'pdf' : 'file-goc'}?${p}`,
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+    );
+    if (!res.ok) {
+      const loi = await res.json().catch(() => null);
+      throw new Error(loi?.error?.message || 'Không tải được hóa đơn này');
+    }
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${khoa.mstNguoiBan}_${khoa.kyHieu}_${khoa.soHoaDon}.${loai}`;
     document.body.appendChild(a);
     a.click();
     a.remove();

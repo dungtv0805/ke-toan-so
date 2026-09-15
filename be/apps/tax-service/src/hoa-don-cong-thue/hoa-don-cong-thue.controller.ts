@@ -12,6 +12,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import fs from 'node:fs';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
 import { TenantContextService } from '@app/core';
 import { HoaDonCongThueService } from './hoa-don-cong-thue.service';
@@ -254,6 +255,38 @@ export class HoaDonCongThueController {
       `attachment; filename="hoa-don-pdf_${mst}_${q.tuNgay}_${q.denNgay}.zip"`,
     );
     taoZip(muc).pipe(res);
+  }
+
+  /** Tải file gốc (ZIP chứa XML ký số) của ĐÚNG MỘT hóa đơn. */
+  @Get('cong-ty/:mst/hoa-don/file-goc')
+  @Roles(...KE_TOAN_ROLES)
+  async taiMotFileGoc(
+    @Param('mst') mst: string,
+    @Query() q: { mstNguoiBan: string; kyHieu: string; soHoaDon: string },
+    @Res() res: Response,
+  ) {
+    const f = await this.taiFileGoc.timMotFile(mst, q);
+    if (!f) throw new NotFoundException('Hóa đơn này chưa có file gốc, hãy bấm "File gốc" trước');
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${f.ten}"`);
+    fs.createReadStream(f.duongDan).pipe(res);
+  }
+
+  /** Bản thể hiện PDF của ĐÚNG MỘT hóa đơn, dựng ngay nếu chưa có. */
+  @Get('cong-ty/:mst/hoa-don/pdf')
+  @Roles(...KE_TOAN_ROLES)
+  async taiMotPdf(
+    @Param('mst') mst: string,
+    @Query() q: { mstNguoiBan: string; kyHieu: string; soHoaDon: string },
+    @Res() res: Response,
+  ) {
+    const f = await this.taoPdf.pdfMotHoaDon(mst, q);
+    if (!f) throw new NotFoundException('Hóa đơn này chưa có file gốc, hãy bấm "File gốc" trước');
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${f.ten}"`);
+    res.end(f.noiDung);
   }
 
   @Get('cong-ty/:mst/excel')

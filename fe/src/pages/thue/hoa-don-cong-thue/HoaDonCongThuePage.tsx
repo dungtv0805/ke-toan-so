@@ -23,6 +23,7 @@ import {
   DownloadOutlined,
   FileExcelOutlined,
   FilePdfOutlined,
+  UnorderedListOutlined,
 } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -38,6 +39,7 @@ import {
   type LuotTaiFile,
   type LuotTaoPdf,
   type TrangThaiMucFile,
+  type HoaDonTho,
 } from '@/services/hoaDonCongThueService';
 
 const { Text } = Typography;
@@ -76,6 +78,8 @@ const HoaDonCongThuePage: React.FC = () => {
   const [dangGui, setDangGui] = useState(false);
   const [luotFile, setLuotFile] = useState<LuotTaiFile | null>(null);
   const [dangTaiVe, setDangTaiVe] = useState<string | null>(null);
+  const [xemHoaDon, setXemHoaDon] = useState<{ mst: string; ds: HoaDonTho[] } | null>(null);
+  const [dangXemHoaDon, setDangXemHoaDon] = useState(false);
   const [dangXuatExcel, setDangXuatExcel] = useState<string | null>(null);
   const [luotPdf, setLuotPdf] = useState<LuotTaoPdf | null>(null);
   const hoiPdfRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -100,6 +104,26 @@ const HoaDonCongThuePage: React.FC = () => {
     nap();
     hoaDonCongThueService.luotGanNhat().then(setLuot).catch(() => undefined);
   }, [nap]);
+
+  /**
+   * Khôi phục lượt tải file và lượt dựng PDF gần nhất khi mở lại trang.
+   *
+   * Không có bước này thì tải lại trang là bảng chi tiết biến mất, dù việc vẫn
+   * đang chạy ở máy chủ — nhìn hệt như chưa từng bấm gì.
+   */
+  useEffect(() => {
+    if (!congTy.length) return;
+    for (const c of congTy) {
+      hoaDonCongThueService
+        .luotTaiFileGanNhat(c.mst)
+        .then((l) => l && setLuotFile((cu) => (cu && cu.id >= l.id ? cu : l)))
+        .catch(() => undefined);
+      hoaDonCongThueService
+        .luotTaoPdfGanNhat(c.mst)
+        .then((l) => l && setLuotPdf((cu) => (cu && cu.id >= l.id ? cu : l)))
+        .catch(() => undefined);
+    }
+  }, [congTy]);
 
   // Lượt chạy diễn ra ở phía máy chủ nên đóng tab không làm hỏng nó; ở đây chỉ
   // hỏi tiến độ cho tới khi xong.
@@ -332,6 +356,16 @@ const HoaDonCongThuePage: React.FC = () => {
               Excel
             </Button>
           </Tooltip>
+          <Tooltip title="Xem danh sách hóa đơn của khoảng ngày đang chọn">
+            <Button
+              size="small"
+              icon={<UnorderedListOutlined />}
+              loading={dangXemHoaDon && xemHoaDon?.mst === c.mst}
+              onClick={() => moDanhSachHoaDon(c)}
+            >
+              Hóa đơn
+            </Button>
+          </Tooltip>
           <Tooltip title="Dựng bản thể hiện PDF từ file gốc đã tải, rồi tải cả gói về máy">
             <Button
               size="small"
@@ -346,6 +380,40 @@ const HoaDonCongThuePage: React.FC = () => {
       ),
     },
   ];
+
+  /** Mở danh sách hóa đơn của một công ty trong khoảng ngày đang chọn. */
+  async function moDanhSachHoaDon(c: CongTyCongThue) {
+    setDangXemHoaDon(true);
+    try {
+      const ds = await hoaDonCongThueService.hoaDon(c.mst, {
+        tuNgay: tuNgay(),
+        denNgay: denNgay(),
+        limit: 500,
+      });
+      setXemHoaDon({ mst: c.mst, ds: ds ?? [] });
+    } catch (e: any) {
+      message.error(e?.message || 'Không tải được danh sách hóa đơn');
+    } finally {
+      setDangXemHoaDon(false);
+    }
+  }
+
+  /** Tải riêng một hóa đơn. MST lấy từ lượt chạy đang mở, không phải từ dòng. */
+  async function taiLe(
+    m: { mstNguoiBan: string; kyHieu: string; soHoaDon: string },
+    loai: 'zip' | 'pdf',
+  ) {
+    const mst = xemHoaDon?.mst || luotFile?.mst || luotPdf?.mst;
+    if (!mst) return;
+    const dong = message.loading(loai === 'pdf' ? 'Đang dựng PDF...' : 'Đang tải...', 0);
+    try {
+      await hoaDonCongThueService.taiMotHoaDon(mst, m, loai);
+    } catch (e: any) {
+      message.error(e?.message || 'Không tải được hóa đơn này');
+    } finally {
+      dong();
+    }
+  }
 
   const MAU_MUC: Record<TrangThaiMucFile, string> = {
     cho: 'default',
@@ -390,6 +458,116 @@ const HoaDonCongThuePage: React.FC = () => {
       dataIndex: 'ghiChu',
       render: (v: string | null) =>
         v ? <Text type="secondary">{v}</Text> : <Text type="secondary">—</Text>,
+    },
+    {
+      title: 'Tải lẻ',
+      key: 'taiLe',
+      width: 150,
+      align: 'right' as const,
+      render: (_: unknown, m: { mstNguoiBan: string; kyHieu: string; soHoaDon: string }) => (
+        <Space size={4}>
+          <Tooltip title="Tải file gốc (ZIP chứa XML có chữ ký số) của riêng hóa đơn này">
+            <Button size="small" icon={<FileZipOutlined />} onClick={() => taiLe(m, 'zip')}>
+              XML
+            </Button>
+          </Tooltip>
+          <Tooltip title="Tải bản thể hiện PDF của riêng hóa đơn này, dựng ngay nếu chưa có">
+            <Button size="small" icon={<FilePdfOutlined />} onClick={() => taiLe(m, 'pdf')}>
+              PDF
+            </Button>
+          </Tooltip>
+        </Space>
+      ),
+    },
+  ];
+
+  const tien = (v: number) => (v ?? 0).toLocaleString('vi-VN');
+
+  /**
+   * Danh sách hóa đơn kèm tình trạng file của TỪNG hóa đơn.
+   * Đây mới là chỗ trả lời "cái nào lỗi, cái nào không".
+   */
+  const cotHoaDon = [
+    {
+      title: 'Số hóa đơn',
+      dataIndex: 'soHoaDon',
+      width: 120,
+      render: (v: string) => <Text strong style={{ fontVariantNumeric: 'tabular-nums' }}>{v || '—'}</Text>,
+    },
+    { title: 'Ký hiệu', dataIndex: 'kyHieu', width: 95 },
+    {
+      title: 'Ngày lập',
+      dataIndex: 'ngayLap',
+      width: 105,
+      render: (v: string) => (v ? dayjs(v).format('DD/MM/YYYY') : '—'),
+    },
+    {
+      title: 'Người bán',
+      key: 'nguoiBan',
+      render: (_: unknown, h: HoaDonTho) => (
+        <div>
+          <div>{h.tenNguoiBan || '—'}</div>
+          <Text type="secondary" style={{ fontSize: 12 }}>{h.mstNguoiBan}</Text>
+        </div>
+      ),
+    },
+    {
+      title: 'Tổng thanh toán',
+      dataIndex: 'tongThanhToan',
+      width: 140,
+      align: 'right' as const,
+      render: (v: number) => <Text style={{ fontVariantNumeric: 'tabular-nums' }}>{tien(v)}</Text>,
+    },
+    {
+      title: 'Bản gốc XML',
+      key: 'coFileGoc',
+      width: 120,
+      render: (_: unknown, h: HoaDonTho) =>
+        h.coFileGoc ? <Tag color="green">Đã có</Tag> : <Tag color="orange">Chưa tải</Tag>,
+    },
+    {
+      title: 'Bản PDF',
+      key: 'coPdf',
+      width: 110,
+      render: (_: unknown, h: HoaDonTho) =>
+        h.coPdf ? <Tag color="green">Đã có</Tag> : <Tag>Chưa dựng</Tag>,
+    },
+    {
+      title: '',
+      key: 'tai',
+      width: 150,
+      align: 'right' as const,
+      render: (_: unknown, h: HoaDonTho) => {
+        const khoa = {
+          mstNguoiBan: String(h.mstNguoiBan ?? ''),
+          kyHieu: String(h.kyHieu ?? ''),
+          soHoaDon: String(h.soHoaDon ?? ''),
+        };
+        return (
+          <Space size={4}>
+            <Tooltip title={h.coFileGoc ? 'Tải bản gốc XML có chữ ký số' : 'Chưa tải bản gốc về máy chủ'}>
+              <Button
+                size="small"
+                icon={<FileZipOutlined />}
+                disabled={!h.coFileGoc}
+                onClick={() => taiLe(khoa, 'zip')}
+              >
+                XML
+              </Button>
+            </Tooltip>
+            <Tooltip title={h.coFileGoc ? 'Tải bản thể hiện PDF, dựng ngay nếu chưa có' : 'Phải tải bản gốc trước'}>
+              <Button
+                size="small"
+                icon={<FilePdfOutlined />}
+                disabled={!h.coFileGoc}
+                onClick={() => taiLe(khoa, 'pdf')}
+              >
+                PDF
+              </Button>
+            </Tooltip>
+          </Space>
+        );
+      },
     },
   ];
 
@@ -486,6 +664,36 @@ const HoaDonCongThuePage: React.FC = () => {
           locale={{ emptyText: 'Chưa khai báo mã số thuế nào — vào Cấu hình để thêm' }}
         />
       </Card>
+
+      {xemHoaDon && (
+        <Card
+          title={`Hóa đơn ${xemHoaDon.mst} · ${khoang[0].format('DD/MM/YYYY')} – ${khoang[1].format('DD/MM/YYYY')}`}
+          extra={
+            <Space>
+              <Text type="secondary">
+                {`${xemHoaDon.ds.length} hóa đơn · ` +
+                  `${xemHoaDon.ds.filter((h) => h.coFileGoc).length} đã có bản gốc · ` +
+                  `${xemHoaDon.ds.filter((h) => h.coPdf).length} đã có PDF`}
+              </Text>
+              <Button size="small" onClick={() => setXemHoaDon(null)}>
+                Đóng
+              </Button>
+            </Space>
+          }
+        >
+          <Table
+            rowKey={(h) => `${h.mstNguoiBan}_${h.kyHieu}_${h.soHoaDon}`}
+            size="small"
+            dataSource={xemHoaDon.ds}
+            columns={cotHoaDon}
+            pagination={xemHoaDon.ds.length > 20 ? { pageSize: 20, size: 'small' } : false}
+            scroll={{ x: 'max-content' }}
+            locale={{
+              emptyText: 'Chưa có hóa đơn nào trong khoảng này. Bấm "Tải hàng loạt" để lấy từ cổng Thuế.',
+            }}
+          />
+        </Card>
+      )}
 
       {luotPdf && (
         <Card

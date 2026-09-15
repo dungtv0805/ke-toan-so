@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import fs from 'node:fs';
 import { CongTyCongThue, HoaDonCongThue } from '@app/entities';
 import { buildHoaDonKey } from '../shared/tax-helpers';
 import { PhienCongThueService } from './cong-thue/phien.service';
@@ -370,12 +371,27 @@ export class HoaDonCongThueService {
     const tu = q.tuNgay ? new Date(`${q.tuNgay}T00:00:00`) : null;
     const den = q.denNgay ? new Date(`${ngayHomSau(q.denNgay)}T00:00:00`) : null;
 
-    return ds.filter((hd) => {
+    const trongKy = ds.filter((hd) => {
       if (!hd.ngayLap) return !tu && !den;
       const n = new Date(hd.ngayLap);
       if (tu && n < tu) return false;
       if (den && n >= den) return false;
       return true;
+    });
+
+    // Kèm tình trạng file cho TỪNG hóa đơn. Danh sách mà không nói hóa đơn nào
+    // đã có bản gốc, hóa đơn nào chưa, thì người dùng không biết phải làm gì
+    // tiếp — và đó đúng là chỗ trước đây còn thiếu.
+    return trongKy.map((hd) => {
+      const zip = hd.duongDanFileGoc;
+      const coFileGoc = Boolean(zip) && fs.existsSync(zip);
+      const pdf = zip ? zip.replace(/\.zip$/i, '.pdf') : '';
+      return {
+        ...hd,
+        coFileGoc,
+        coPdf: Boolean(pdf) && fs.existsSync(pdf),
+        kichThuocFileGoc: coFileGoc ? fs.statSync(zip).size : 0,
+      };
     });
   }
 }
