@@ -32,6 +32,7 @@ import {
   type LuotChay,
   type TrangThaiMuc,
   type TrangThaiPhien,
+  type LuotTaiFile,
 } from '@/services/hoaDonCongThueService';
 
 const { Text } = Typography;
@@ -68,7 +69,8 @@ const HoaDonCongThuePage: React.FC = () => {
   const [captcha, setCaptcha] = useState<{ mst: string; sessionId: string; svg: string } | null>(null);
   const [maCaptcha, setMaCaptcha] = useState('');
   const [dangGui, setDangGui] = useState(false);
-  const [dangTaiFile, setDangTaiFile] = useState<string | null>(null);
+  const [luotFile, setLuotFile] = useState<LuotTaiFile | null>(null);
+  const hoiFileRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const nap = useCallback(async () => {
     try {
@@ -154,21 +156,37 @@ const HoaDonCongThuePage: React.FC = () => {
    * rồi in ra, nên không có file PDF nào để tải về.
    */
   async function taiFileGoc(c: CongTyCongThue) {
-    setDangTaiFile(c.mst);
     try {
-      const r = await hoaDonCongThueService.taiFileGoc(c.mst, tuNgay(), denNgay());
-      const mb = (r.bytes / 1024 / 1024).toFixed(1);
-      message.success(
-        `${c.mst}: tải ${r.daTai} file gốc (${mb} MB)` +
-          (r.conLai ? `, còn ${r.conLai} hóa đơn chưa tải` : '') +
-          (r.loi.length ? `, ${r.loi.length} hóa đơn lỗi` : ''),
-      );
+      // Trả về ngay một lượt chạy nền — không có gì để timeout.
+      setLuotFile(await hoaDonCongThueService.taiFileGoc(c.mst, tuNgay(), denNgay()));
     } catch (e: any) {
-      message.error(e?.message || 'Không tải được file gốc');
-    } finally {
-      setDangTaiFile(null);
+      message.error(e?.message || 'Không bắt đầu tải được');
     }
   }
+
+  // Hỏi tiến độ tải file mỗi 2 giây cho tới khi xong.
+  useEffect(() => {
+    if (!luotFile || luotFile.trangThai !== 'dang_chay') {
+      if (hoiFileRef.current) clearInterval(hoiFileRef.current);
+      return;
+    }
+    hoiFileRef.current = setInterval(async () => {
+      const moi = await hoaDonCongThueService.luotTaiFile(luotFile.id).catch(() => null);
+      if (!moi) return;
+      setLuotFile(moi);
+      if (moi.trangThai === 'xong') {
+        const mb = (moi.bytes / 1024 / 1024).toFixed(1);
+        message.success(
+          `${moi.mst}: tải ${moi.daTai} file gốc (${mb} MB)` +
+            (moi.conLai ? `, còn ${moi.conLai} hóa đơn chưa tải` : '') +
+            (moi.loi.length ? `, ${moi.loi.length} hóa đơn lỗi` : ''),
+        );
+      }
+    }, 2000);
+    return () => {
+      if (hoiFileRef.current) clearInterval(hoiFileRef.current);
+    };
+  }, [luotFile?.id, luotFile?.trangThai]);
 
   const canCaptcha = (luot?.muc ?? []).filter((m) => m.trangThai === 'can_captcha');
   const xong = (luot?.muc ?? []).filter((m) => m.trangThai === 'xong').length;
@@ -214,8 +232,8 @@ const HoaDonCongThuePage: React.FC = () => {
             <Button
               size="small"
               icon={<FileZipOutlined />}
-              loading={dangTaiFile === c.mst}
-              disabled={!daDangNhap(c.mst)}
+              loading={luotFile?.mst === c.mst && luotFile.trangThai === 'dang_chay'}
+              disabled={!daDangNhap(c.mst) || luotFile?.trangThai === 'dang_chay'}
               onClick={() => taiFileGoc(c)}
             >
               File gốc
@@ -319,6 +337,29 @@ const HoaDonCongThuePage: React.FC = () => {
           locale={{ emptyText: 'Chưa khai báo mã số thuế nào — vào Cấu hình để thêm' }}
         />
       </Card>
+
+      {luotFile && (
+        <Card
+          title={`Tải file gốc — ${luotFile.mst}`}
+          extra={
+            <Text type="secondary">
+              {luotFile.trangThai === 'dang_chay' ? 'Đang tải' : 'Đã xong'} · {luotFile.tong} hóa đơn
+              trong kỳ, {luotFile.boQua} đã có sẵn
+            </Text>
+          }
+        >
+          <Progress
+            percent={luotFile.loNay ? Math.round((luotFile.daXuLy / luotFile.loNay) * 100) : 100}
+            size="small"
+            status={luotFile.trangThai === 'dang_chay' ? 'active' : undefined}
+          />
+          <Text type="secondary">
+            {`Đã tải ${luotFile.daTai}/${luotFile.loNay} file · ${(luotFile.bytes / 1024 / 1024).toFixed(1)} MB`}
+            {luotFile.conLai ? ` · còn ${luotFile.conLai} hóa đơn cho lượt sau` : ''}
+            {luotFile.loi.length ? ` · ${luotFile.loi.length} lỗi` : ''}
+          </Text>
+        </Card>
+      )}
 
       {luot && (
         <Card

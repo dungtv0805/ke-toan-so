@@ -167,8 +167,23 @@ export class HoaDonCongThueController {
     @Param('mst') mst: string,
     @Body() dto: { tuNgay: string; denNgay: string; gioiHan?: number; taiLai?: boolean },
   ) {
-    const ket = await this.taiFileGoc.taiKhoang(this.tenantId, { mst, ...dto });
-    return { success: true, data: ket };
+    // Trả về NGAY; việc tải chạy nền. Cổng Thuế bị giới hạn 300ms giữa các
+    // request nên vài trăm hóa đơn mất hàng phút, dài hơn hẳn timeout 30 giây
+    // của client. Giao diện hỏi tiến độ bằng GET .../file-goc/:id.
+    const luot = await this.taiFileGoc.batDau(this.tenantId, { mst, ...dto });
+    return { success: true, data: luot };
+  }
+
+  @Get('cong-ty/:mst/file-goc/gan-nhat')
+  @Roles(...KE_TOAN_ROLES)
+  async luotTaiFileGanNhat(@Param('mst') mst: string) {
+    return { success: true, data: this.taiFileGoc.ganNhat(this.tenantId, mst) };
+  }
+
+  @Get('file-goc/:id')
+  @Roles(...KE_TOAN_ROLES)
+  async luotTaiFile(@Param('id') id: string) {
+    return { success: true, data: this.taiFileGoc.trangThai(Number(id)) };
   }
 
   @Get('cong-ty/:mst/file-goc')

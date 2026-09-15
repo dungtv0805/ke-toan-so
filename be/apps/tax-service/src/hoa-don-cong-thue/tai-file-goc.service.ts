@@ -14,14 +14,26 @@ const NHOM_NAMESPACE: Record<string, string> = {
   'may-tinh-tien': 'sco-query',
 };
 
-export interface KetQuaTaiFile {
+export interface LuotTaiFile {
+  id: number;
+  tenantId: string;
   mst: string;
+  tuNgay: string;
+  denNgay: string;
+  trangThai: 'dang_chay' | 'xong';
+  /** Tổng số hóa đơn trong khoảng. */
   tong: number;
-  boQua: number;
+  /** Đã xử lý bao nhiêu trong lô lần này — dùng để vẽ thanh tiến độ. */
+  daXuLy: number;
+  /** Kích thước lô lần này (tổng trừ phần đã có file). */
+  loNay: number;
   daTai: number;
+  boQua: number;
   bytes: number;
   conLai: number;
   loi: Array<{ soHoaDon: string; message: string }>;
+  batDauLuc: string;
+  ketThucLuc: string | null;
 }
 
 /**
@@ -71,31 +83,31 @@ export class TaiFileGocService {
     return Boolean(hd.duongDanFileGoc) && fs.existsSync(hd.duongDanFileGoc);
   }
 
+  /** Các lượt tải đang/đã chạy, giữ trong bộ nhớ tiến trình như phiếu chạy. */
+  private readonly luot = new Map<number, LuotTaiFile>();
+  private demId = 0;
+
   /**
-   * Tải file gốc cho các hóa đơn của một khoảng ngày.
+   * Bắt đầu tải file gốc cho một khoảng ngày.
    *
-   * Bỏ qua hóa đơn đã có file, nên bấm lại nhiều lần chỉ tải phần còn thiếu.
-   * Một hóa đơn lỗi không chặn những cái sau; cần captcha thì dừng hẳn thay vì
-   * nện cổng hàng trăm request vô vọng.
+   * TRẢ VỀ NGAY, việc tải diễn ra ở nền. Đây không phải chuyện tiện lợi mà là
+   * bắt buộc: cổng Thuế bị giới hạn 300ms giữa các request, nên 300 hóa đơn
+   * mất ít nhất 90 giây — trong khi client chỉ chờ 30 giây (API_CONFIG.TIMEOUT).
+   * Làm đồng bộ thì trình duyệt báo lỗi trong lúc server vẫn đang tải, người
+   * dùng không biết đường nào mà lần.
+   *
+   * Giao diện hỏi tiến độ bằng trangThai(id).
    */
-  async taiKhoang(
+  async batDau(
     tenantId: string,
     {
       mst,
       tuNgay,
       denNgay,
-      gioiHan = 300,
+      gioiHan = 500,
       taiLai = false,
     }: { mst: string; tuNgay: string; denNgay: string; gioiHan?: number; taiLai?: boolean },
-  ): Promise<KetQuaTaiFile> {
-    const giuToken = createTokenKeeper({
-      phien: {
-        layToken: () => this.phien.layToken(tenantId, mst),
-        boToken: () => this.phien.boToken(tenantId, mst),
-      },
-      mst,
-    });
-
+  ): Promise<LuotTaiFile> {
     const tatCa = (await this.hoaDonRepo.find({ where: { mst } as any }))
       .filter((hd) => hd.isActive !== false)
       .filter((hd) => this.trongKhoang(hd, tuNgay, denNgay));
@@ -103,54 +115,106 @@ export class TaiFileGocService {
     const canTai = taiLai ? tatCa : tatCa.filter((hd) => !this.daCoFile(hd));
     const lo = canTai.slice(0, gioiHan);
 
-    const ketQua: KetQuaTaiFile = {
+    const l: LuotTaiFile = {
+      id: ++this.demId,
+      tenantId,
       mst,
+      tuNgay,
+      denNgay,
+      trangThai: 'dang_chay',
       tong: tatCa.length,
-      boQua: tatCa.length - canTai.length,
+      daXuLy: 0,
+      loNay: lo.length,
       daTai: 0,
+      boQua: tatCa.length - canTai.length,
       bytes: 0,
       conLai: canTai.length - lo.length,
       loi: [],
+      batDauLuc: new Date().toISOString(),
+      ketThucLuc: null,
     };
+    this.luot.set(l.id, l);
 
-    for (const hd of lo) {
-      try {
-        const dich = this.duongDan(hd);
-        if (!taiLai && fs.existsSync(dich)) {
+    void this.chay(l, lo, taiLai);
+    return l;
+  }
+
+  trangThai(id: number): LuotTaiFile | null {
+    return this.luot.get(Number(id)) ?? null;
+  }
+
+  /** Lượt tải file gần nhất của một mã số thuế, để giao diện mở lại đúng chỗ. */
+  ganNhat(tenantId: string, mst: string): LuotTaiFile | null {
+    let ket: LuotTaiFile | null = null;
+    for (const l of this.luot.values()) {
+      if (l.tenantId === tenantId && l.mst === mst && (!ket || l.id > ket.id)) ket = l;
+    }
+    return ket;
+  }
+
+  /**
+   * Vòng tải thật. KHÔNG BAO GIỜ ném lỗi ra ngoài — lỗi ghi vào lượt chạy để
+   * giao diện đọc, vì không còn ai đang chờ request này nữa.
+   */
+  private async chay(l: LuotTaiFile, lo: HoaDonCongThue[], taiLai: boolean) {
+    try {
+      const giuToken = createTokenKeeper({
+        phien: this.phien.boGiuToken(l.tenantId, l.mst),
+        mst: l.mst,
+      });
+
+      for (const hd of lo) {
+        try {
+          const dich = this.duongDan(hd);
+          if (!taiLai && fs.existsSync(dich)) {
+            hd.duongDanFileGoc = dich;
+            await this.hoaDonRepo.save(hd);
+            l.boQua++;
+            continue;
+          }
+
+          const buffer: Buffer = await giuToken.chay((token) =>
+            gdt.downloadXml({
+              token,
+              namespace: NHOM_NAMESPACE[hd.nhom] ?? 'query',
+              query: {
+                nbmst: String(hd.mstNguoiBan ?? ''),
+                khhdon: String(hd.kyHieu ?? ''),
+                shdon: String(hd.soHoaDon ?? ''),
+                khmshdon: String(hd.mauSo ?? ''),
+              },
+            }),
+          );
+
+          fs.mkdirSync(path.dirname(dich), { recursive: true });
+          fs.writeFileSync(dich, buffer);
+
           hd.duongDanFileGoc = dich;
           await this.hoaDonRepo.save(hd);
-          ketQua.boQua++;
-          continue;
+
+          l.daTai++;
+          l.bytes += buffer.length;
+        } catch (err: any) {
+          // Cần người nhập captcha thì mọi hóa đơn còn lại cũng hỏng y hệt:
+          // dừng hẳn thay vì nện cổng thêm hàng trăm request vô vọng.
+          if (err?.code === 'CHUA_DANG_NHAP' || err?.code === 'CAN_MAT_KHAU') {
+            l.loi.push({ soHoaDon: '', message: 'Phiên cổng Thuế đã hết, cần đăng nhập lại' });
+            break;
+          }
+          l.loi.push({
+            soHoaDon: String(hd.soHoaDon ?? ''),
+            message: err?.message ?? String(err),
+          });
+        } finally {
+          l.daXuLy++;
         }
-
-        const buffer: Buffer = await giuToken.chay((token) =>
-          gdt.downloadXml({
-            token,
-            namespace: NHOM_NAMESPACE[hd.nhom] ?? 'query',
-            query: {
-              nbmst: String(hd.mstNguoiBan ?? ''),
-              khhdon: String(hd.kyHieu ?? ''),
-              shdon: String(hd.soHoaDon ?? ''),
-              khmshdon: String(hd.mauSo ?? ''),
-            },
-          }),
-        );
-
-        fs.mkdirSync(path.dirname(dich), { recursive: true });
-        fs.writeFileSync(dich, buffer);
-
-        hd.duongDanFileGoc = dich;
-        await this.hoaDonRepo.save(hd);
-
-        ketQua.daTai++;
-        ketQua.bytes += buffer.length;
-      } catch (err: any) {
-        if (err?.code === 'CHUA_DANG_NHAP' || err?.code === 'CAN_MAT_KHAU') throw err;
-        ketQua.loi.push({ soHoaDon: String(hd.soHoaDon ?? ''), message: err?.message ?? String(err) });
       }
+    } catch (err: any) {
+      l.loi.push({ soHoaDon: '', message: err?.message ?? String(err) });
+    } finally {
+      l.trangThai = 'xong';
+      l.ketThucLuc = new Date().toISOString();
     }
-
-    return ketQua;
   }
 
   /** Bao nhiêu hóa đơn trong khoảng đã có file gốc trên đĩa. */

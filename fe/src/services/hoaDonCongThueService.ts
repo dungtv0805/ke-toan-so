@@ -71,11 +71,18 @@ export interface LuotChay {
   muc: MucChay[];
 }
 
-export interface KetQuaTaiFile {
+export interface LuotTaiFile {
+  id: number;
   mst: string;
+  tuNgay: string;
+  denNgay: string;
+  trangThai: 'dang_chay' | 'xong';
   tong: number;
-  boQua: number;
+  /** Đã xử lý bao nhiêu trong lô lần này — để vẽ thanh tiến độ. */
+  daXuLy: number;
+  loNay: number;
   daTai: number;
+  boQua: number;
   bytes: number;
   conLai: number;
   loi: Array<{ soHoaDon: string; message: string }>;
@@ -175,8 +182,17 @@ class HoaDonCongThueService extends ServiceBase {
    * Tải gói ZIP chứa XML có chữ ký số — bản gốc hợp pháp theo Nghị định
    * 123/2020. Cổng Thuế không có bản PDF để tải.
    */
-  taiFileGoc(mst: string, tuNgay: string, denNgay: string): Promise<KetQuaTaiFile> {
+  /** Trả về NGAY một lượt chạy nền; hỏi tiến độ bằng luotTaiFile(id). */
+  taiFileGoc(mst: string, tuNgay: string, denNgay: string): Promise<LuotTaiFile> {
     return this.post({ tuNgay, denNgay }, { endpoint: `/cong-ty/${mst}/file-goc` });
+  }
+
+  luotTaiFile(id: number): Promise<LuotTaiFile | null> {
+    return this.get({ endpoint: `/file-goc/${id}` });
+  }
+
+  luotTaiFileGanNhat(mst: string): Promise<LuotTaiFile | null> {
+    return this.get({ endpoint: `/cong-ty/${mst}/file-goc/gan-nhat` });
   }
 
   daTaiFileGoc(mst: string, tuNgay: string, denNgay: string): Promise<{ tong: number; daCoFile: number }> {
