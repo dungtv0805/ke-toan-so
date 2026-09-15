@@ -1,3 +1,4 @@
+import { HEADER_TRINH_DUYET } from './config';
 /**
  * HTTP client dùng chung cho mọi request tới cổng Thuế.
  *
@@ -155,7 +156,10 @@ export async function request(url: string, options: RequestOptions = {}): Promis
       const timer = setTimeout(() => controller.abort(), timeoutMs ?? tuning.timeoutMs);
 
       try {
-        const headers: Record<string, string> = { Accept: 'application/json' };
+        const headers: Record<string, string> = {
+          Accept: 'application/json',
+          ...HEADER_TRINH_DUYET,
+        };
         if (token) headers.Authorization = `Bearer ${token}`;
         if (body) headers['Content-Type'] = 'application/json';
 

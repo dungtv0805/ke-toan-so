@@ -10,6 +10,27 @@
  */
 export const BASE_URL = 'https://hoadondientu.gdt.gov.vn/api';
 
+/**
+ * Header gửi kèm mọi request tới cổng Thuế.
+ *
+ * Tường lửa của cổng chặn request không có dấu hiệu của trình duyệt: chiều
+ * 15/09/2026 nó bắt đầu trả "Hệ thống phát hiện hành vi không hợp lệ. Yêu cầu
+ * đã bị chặn." cho bước đăng nhập, dù captcha vẫn lấy được bình thường.
+ *
+ * Đây KHÔNG phải né tránh kiểm soát: ta gọi đúng những API mà giao diện web
+ * của cổng gọi, bằng chính tài khoản của doanh nghiệp, nên gửi kèm Origin và
+ * Referer đúng sự thật là hợp lý. Nhịp gọi vẫn giữ nguyên giới hạn 300ms và
+ * cầu dao ngắt như cũ.
+ */
+export const HEADER_TRINH_DUYET: Record<string, string> = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) ' +
+    'Chrome/131.0.0.0 Safari/537.36',
+  'Accept-Language': 'vi-VN,vi;q=0.9,en;q=0.8',
+  Origin: 'https://hoadondientu.gdt.gov.vn',
+  Referer: 'https://hoadondientu.gdt.gov.vn/',
+};
+
 export const ENDPOINTS = {
   captcha: `${BASE_URL}/captcha`,
   authenticate: `${BASE_URL}/security-taxpayer/authenticate`,

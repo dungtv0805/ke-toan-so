@@ -60,6 +60,18 @@ function doiSangHttp(err: GdtError): HttpException {
     return new HttpException(err.message, HttpStatus.SERVICE_UNAVAILABLE);
   }
 
+  // 403 của cổng là tường lửa chặn, KHÔNG phải sai mật khẩu. Phân biệt chỗ này
+  // quan trọng: bấm lại liên tục chỉ làm bị chặn lâu hơn, còn đi đổi mật khẩu
+  // thì sửa nhầm chỗ.
+  if (err.status === 403) {
+    return new HttpException(
+      `${err.message} Đây là tường lửa của cổng Thuế chặn tạm thời, không phải sai mật khẩu. ` +
+        'Hãy ngừng thử khoảng 15–30 phút rồi đăng nhập lại. Các chức năng không cần cổng ' +
+        '(xem danh sách, kết xuất Excel, xem và tải file đã tải) vẫn dùng bình thường.',
+      HttpStatus.SERVICE_UNAVAILABLE,
+    );
+  }
+
   // Còn lại là cổng Thuế trả về thứ mình không hiểu. 502 nói đúng bản chất:
   // hỏng ở hệ thống bên ngoài, không phải ở Kế toán số.
   return new HttpException(
