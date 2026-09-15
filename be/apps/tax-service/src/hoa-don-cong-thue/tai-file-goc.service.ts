@@ -14,6 +14,19 @@ const NHOM_NAMESPACE: Record<string, string> = {
   'may-tinh-tien': 'sco-query',
 };
 
+export type TrangThaiMucFile = 'cho' | 'xong' | 'bo_qua' | 'loi';
+
+/** Một dòng cho MỘT hóa đơn, để giao diện chỉ đúng file nào hỏng. */
+export interface MucFile {
+  soHoaDon: string;
+  kyHieu: string;
+  mstNguoiBan: string;
+  ngayLap: string | null;
+  trangThai: TrangThaiMucFile;
+  bytes: number;
+  ghiChu: string | null;
+}
+
 export interface LuotTaiFile {
   id: number;
   tenantId: string;
@@ -32,6 +45,8 @@ export interface LuotTaiFile {
   bytes: number;
   conLai: number;
   loi: Array<{ soHoaDon: string; message: string }>;
+  /** Trạng thái TỪNG hóa đơn trong lô lần này. */
+  muc: MucFile[];
   batDauLuc: string;
   ketThucLuc: string | null;
 }
@@ -130,6 +145,15 @@ export class TaiFileGocService {
       bytes: 0,
       conLai: canTai.length - lo.length,
       loi: [],
+      muc: lo.map((hd) => ({
+        soHoaDon: String(hd.soHoaDon ?? ''),
+        kyHieu: String(hd.kyHieu ?? ''),
+        mstNguoiBan: String(hd.mstNguoiBan ?? ''),
+        ngayLap: hd.ngayLap ? new Date(hd.ngayLap).toISOString().slice(0, 10) : null,
+        trangThai: 'cho',
+        bytes: 0,
+        ghiChu: null,
+      })),
       batDauLuc: new Date().toISOString(),
       ketThucLuc: null,
     };
@@ -163,13 +187,17 @@ export class TaiFileGocService {
         mst: l.mst,
       });
 
-      for (const hd of lo) {
+      for (let i = 0; i < lo.length; i++) {
+        const hd = lo[i];
+        const m = l.muc[i];
         try {
           const dich = this.duongDan(hd);
           if (!taiLai && fs.existsSync(dich)) {
             hd.duongDanFileGoc = dich;
             await this.hoaDonRepo.save(hd);
             l.boQua++;
+            m.trangThai = 'bo_qua';
+            m.ghiChu = 'File đã có sẵn trên máy chủ';
             continue;
           }
 
@@ -194,17 +222,26 @@ export class TaiFileGocService {
 
           l.daTai++;
           l.bytes += buffer.length;
+          m.trangThai = 'xong';
+          m.bytes = buffer.length;
         } catch (err: any) {
           // Cần người nhập captcha thì mọi hóa đơn còn lại cũng hỏng y hệt:
           // dừng hẳn thay vì nện cổng thêm hàng trăm request vô vọng.
           if (err?.code === 'CHUA_DANG_NHAP' || err?.code === 'CAN_MAT_KHAU') {
-            l.loi.push({ soHoaDon: '', message: 'Phiên cổng Thuế đã hết, cần đăng nhập lại' });
+            const message = 'Phiên cổng Thuế đã hết, cần đăng nhập lại';
+            l.loi.push({ soHoaDon: '', message });
+            // Dừng hẳn, nhưng nói rõ những dòng còn lại vì sao không chạy chứ
+            // không để chúng treo vô hạn ở trạng thái 'cho'.
+            for (let j = i; j < l.muc.length; j++) {
+              l.muc[j].trangThai = 'loi';
+              l.muc[j].ghiChu = message;
+            }
             break;
           }
-          l.loi.push({
-            soHoaDon: String(hd.soHoaDon ?? ''),
-            message: err?.message ?? String(err),
-          });
+          const message = err?.message ?? String(err);
+          l.loi.push({ soHoaDon: String(hd.soHoaDon ?? ''), message });
+          m.trangThai = 'loi';
+          m.ghiChu = message;
         } finally {
           l.daXuLy++;
         }

@@ -6,6 +6,18 @@ import { HoaDonCongThue } from '@app/entities';
 import { pdfTuZip, coChromium } from './cong-thue/pdf';
 import { ngayHomSau } from './ky';
 
+export type TrangThaiMucPdf = 'cho' | 'xong' | 'bo_qua' | 'loi';
+
+/** Một dòng cho MỘT hóa đơn, để giao diện chỉ đúng file nào hỏng. */
+export interface MucPdf {
+  soHoaDon: string;
+  kyHieu: string;
+  mstNguoiBan: string;
+  ngayLap: string | null;
+  trangThai: TrangThaiMucPdf;
+  ghiChu: string | null;
+}
+
 export interface LuotTaoPdf {
   id: number;
   tenantId: string;
@@ -19,6 +31,8 @@ export interface LuotTaoPdf {
   daTao: number;
   boQua: number;
   loi: Array<{ soHoaDon: string; message: string }>;
+  /** Trạng thái TỪNG hóa đơn. Con số tổng không cho biết file nào hỏng. */
+  muc: MucPdf[];
   batDauLuc: string;
   ketThucLuc: string | null;
 }
@@ -69,6 +83,14 @@ export class TaoPdfService {
       daTao: 0,
       boQua: 0,
       loi: [],
+      muc: ds.map((hd) => ({
+        soHoaDon: String(hd.soHoaDon ?? ''),
+        kyHieu: String(hd.kyHieu ?? ''),
+        mstNguoiBan: String(hd.mstNguoiBan ?? ''),
+        ngayLap: hd.ngayLap ? new Date(hd.ngayLap).toISOString().slice(0, 10) : null,
+        trangThai: 'cho',
+        ghiChu: null,
+      })),
       batDauLuc: new Date().toISOString(),
       ketThucLuc: null,
     };
@@ -94,24 +116,36 @@ export class TaoPdfService {
   private async chay(l: LuotTaoPdf, ds: HoaDonCongThue[], taoLai: boolean) {
     try {
       if (!coChromium()) {
-        l.loi.push({
-          soHoaDon: '',
-          message: 'Máy chủ chưa cài Chromium nên không dựng được PDF',
-        });
+        const message = 'Máy chủ chưa cài Chromium nên không dựng được PDF';
+        l.loi.push({ soHoaDon: '', message });
+        // Đánh dấu từng dòng thay vì để treo ở 'cho': người dùng phải thấy
+        // được vì sao không dòng nào chạy.
+        for (const m of l.muc) {
+          m.trangThai = 'loi';
+          m.ghiChu = message;
+        }
         return;
       }
 
-      for (const hd of ds) {
+      for (let i = 0; i < ds.length; i++) {
+        const hd = ds[i];
+        const m = l.muc[i];
         try {
           const dich = this.duongDanPdf(hd.duongDanFileGoc);
           if (!taoLai && fs.existsSync(dich)) {
             l.boQua++;
+            m.trangThai = 'bo_qua';
+            m.ghiChu = 'Đã có bản PDF từ trước';
             continue;
           }
           fs.writeFileSync(dich, await pdfTuZip(hd.duongDanFileGoc));
           l.daTao++;
+          m.trangThai = 'xong';
         } catch (err: any) {
-          l.loi.push({ soHoaDon: String(hd.soHoaDon ?? ''), message: err?.message ?? String(err) });
+          const message = err?.message ?? String(err);
+          l.loi.push({ soHoaDon: String(hd.soHoaDon ?? ''), message });
+          m.trangThai = 'loi';
+          m.ghiChu = message;
         } finally {
           l.daXuLy++;
         }

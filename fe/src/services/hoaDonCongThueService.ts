@@ -72,6 +72,18 @@ export interface LuotChay {
   muc: MucChay[];
 }
 
+export type TrangThaiMucFile = 'cho' | 'xong' | 'bo_qua' | 'loi';
+
+export interface MucTaiFile {
+  soHoaDon: string;
+  kyHieu: string;
+  mstNguoiBan: string;
+  ngayLap: string | null;
+  trangThai: TrangThaiMucFile;
+  bytes: number;
+  ghiChu: string | null;
+}
+
 export interface LuotTaiFile {
   id: number;
   mst: string;
@@ -87,6 +99,17 @@ export interface LuotTaiFile {
   bytes: number;
   conLai: number;
   loi: Array<{ soHoaDon: string; message: string }>;
+  /** Trạng thái từng hóa đơn — biết đúng file nào hỏng. */
+  muc: MucTaiFile[];
+}
+
+export interface MucTaoPdf {
+  soHoaDon: string;
+  kyHieu: string;
+  mstNguoiBan: string;
+  ngayLap: string | null;
+  trangThai: TrangThaiMucFile;
+  ghiChu: string | null;
 }
 
 export interface LuotTaoPdf {
@@ -100,6 +123,7 @@ export interface LuotTaoPdf {
   daTao: number;
   boQua: number;
   loi: Array<{ soHoaDon: string; message: string }>;
+  muc: MucTaoPdf[];
 }
 
 export interface KetQuaDongBo {

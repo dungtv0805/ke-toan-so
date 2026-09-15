@@ -37,6 +37,7 @@ import {
   type TrangThaiPhien,
   type LuotTaiFile,
   type LuotTaoPdf,
+  type TrangThaiMucFile,
 } from '@/services/hoaDonCongThueService';
 
 const { Text } = Typography;
@@ -346,6 +347,52 @@ const HoaDonCongThuePage: React.FC = () => {
     },
   ];
 
+  const MAU_MUC: Record<TrangThaiMucFile, string> = {
+    cho: 'default',
+    xong: 'success',
+    bo_qua: 'default',
+    loi: 'error',
+  };
+  const NHAN_MUC: Record<TrangThaiMucFile, string> = {
+    cho: 'Chờ',
+    xong: 'Xong',
+    bo_qua: 'Bỏ qua',
+    loi: 'Lỗi',
+  };
+
+  /**
+   * Cột dùng chung cho bảng chi tiết của cả tải file gốc lẫn dựng PDF.
+   * Con số tổng không cho biết hóa đơn nào hỏng — bảng này mới cho biết.
+   */
+  const cotMuc = [
+    {
+      title: 'Số hóa đơn',
+      dataIndex: 'soHoaDon',
+      width: 120,
+      render: (v: string) => <Text style={{ fontVariantNumeric: 'tabular-nums' }}>{v || '—'}</Text>,
+    },
+    { title: 'Ký hiệu', dataIndex: 'kyHieu', width: 100 },
+    { title: 'MST người bán', dataIndex: 'mstNguoiBan', width: 130 },
+    {
+      title: 'Ngày lập',
+      dataIndex: 'ngayLap',
+      width: 110,
+      render: (v: string | null) => (v ? dayjs(v).format('DD/MM/YYYY') : '—'),
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'trangThai',
+      width: 110,
+      render: (v: TrangThaiMucFile) => <Tag color={MAU_MUC[v]}>{NHAN_MUC[v]}</Tag>,
+    },
+    {
+      title: 'Ghi chú',
+      dataIndex: 'ghiChu',
+      render: (v: string | null) =>
+        v ? <Text type="secondary">{v}</Text> : <Text type="secondary">—</Text>,
+    },
+  ];
+
   const cotPhieuChay = [
     {
       title: 'Mã số thuế',
@@ -463,8 +510,19 @@ const HoaDonCongThuePage: React.FC = () => {
           <Text type="secondary">
             {`Đã dựng ${luotPdf.daTao}/${luotPdf.tong} bản`}
             {luotPdf.boQua ? ` · ${luotPdf.boQua} bản đã có sẵn` : ''}
-            {luotPdf.loi.length ? ` · ${luotPdf.loi.length} lỗi: ${luotPdf.loi[0].message}` : ''}
+            {luotPdf.loi.length ? ` · ${luotPdf.loi.length} lỗi` : ''}
           </Text>
+
+          <Table
+            rowKey={(m) => `${m.mstNguoiBan}_${m.kyHieu}_${m.soHoaDon}`}
+            size="small"
+            style={{ marginTop: 12 }}
+            dataSource={luotPdf.muc}
+            columns={cotMuc}
+            pagination={luotPdf.muc.length > 20 ? { pageSize: 20, size: 'small' } : false}
+            scroll={{ x: 'max-content' }}
+            locale={{ emptyText: 'Không có hóa đơn nào đã tải file gốc trong khoảng này' }}
+          />
         </Card>
       )}
 
@@ -488,6 +546,17 @@ const HoaDonCongThuePage: React.FC = () => {
             {luotFile.conLai ? ` · còn ${luotFile.conLai} hóa đơn cho lượt sau` : ''}
             {luotFile.loi.length ? ` · ${luotFile.loi.length} lỗi` : ''}
           </Text>
+
+          <Table
+            rowKey={(m) => `${m.mstNguoiBan}_${m.kyHieu}_${m.soHoaDon}`}
+            size="small"
+            style={{ marginTop: 12 }}
+            dataSource={luotFile.muc}
+            columns={cotMuc}
+            pagination={luotFile.muc.length > 20 ? { pageSize: 20, size: 'small' } : false}
+            scroll={{ x: 'max-content' }}
+            locale={{ emptyText: 'Không có hóa đơn nào cần tải trong khoảng này' }}
+          />
         </Card>
       )}
 
