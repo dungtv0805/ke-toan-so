@@ -77,7 +77,12 @@ export class HoaDonCongThueController {
   @Get('phien')
   @Roles(...KE_TOAN_ROLES)
   async trangThaiPhien() {
-    return { success: true, data: await this.phien.trangThai(this.tenantId) };
+    return {
+      success: true,
+      data: await this.phien.trangThai(this.tenantId),
+      // Giao diện đổi lời nhắc theo đây: bật tự giải thì không hiện ô nhập mã.
+      tuGiaiCaptcha: this.phien.tuGiaiCaptcha,
+    };
   }
 
   @Post('cong-ty/:mst/dang-nhap')

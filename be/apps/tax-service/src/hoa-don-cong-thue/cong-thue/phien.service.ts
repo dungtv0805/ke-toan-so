@@ -7,6 +7,7 @@ import { TOKEN_TTL_MS, CAPTCHA_TTL_MS } from './config';
 import { GdtError } from './http';
 import * as gdt from './gdt-client';
 import { decrypt } from './crypto';
+import { taoSolver, type CaptchaSolver } from './captcha';
 
 /**
  * Quản lý phiên đăng nhập vào cổng Thuế cho nhiều mã số thuế cùng lúc.
@@ -41,10 +42,27 @@ export class PhienCongThueService {
     { khoa: string; mst: string; captchaKey: string; matKhau: string | null; hetHan: number }
   >();
 
+  /** Bộ giải captcha, chọn theo biến môi trường. Mặc định là nhập tay. */
+  private readonly solver: CaptchaSolver = taoSolver();
+
+  /**
+   * Số lần thử lại khi dịch vụ giải SAI mã.
+   *
+   * Dịch vụ trả phí chỉ đúng khoảng 90-95%, nên một lần sai là chuyện bình
+   * thường chứ không phải sự cố. Mỗi lần thử lại phải lấy captcha MỚI: mã cũ đã
+   * bị cổng Thuế tiêu thụ, gửi lại cũng vô ích.
+   */
+  private readonly SO_LAN_THU_CAPTCHA = 3;
+
   constructor(
     @InjectRepository(CongTyCongThue)
     private readonly congTyRepo: Repository<CongTyCongThue>,
   ) {}
+
+  /** Đang bật tự giải captcha hay không — giao diện dùng để đổi lời nhắc. */
+  get tuGiaiCaptcha(): boolean {
+    return this.solver.ten !== 'nhap-tay';
+  }
 
   private khoa(tenantId: string, mst: string) {
     return `${tenantId || 'khong-ro'}:${mst}`;
@@ -130,18 +148,48 @@ export class PhienCongThueService {
     // /captcha là làm phiền cổng Thuế một cách vô ích.
     await this.layThongTinDangNhap(tenantId, mst, matKhau);
 
-    const captcha = await gdt.getCaptcha();
-    const sessionId = crypto.randomUUID();
+    const { tenDangNhap, matKhau: mk } = await this.layThongTinDangNhap(tenantId, mst, matKhau);
 
-    this.dangCho.set(sessionId, {
-      khoa: this.khoa(tenantId, mst),
-      mst,
-      captchaKey: captcha.key,
-      matKhau,
-      hetHan: Date.now() + CAPTCHA_TTL_MS,
+    // Bật tự giải thì thử vài lần rồi mới chịu thua: dịch vụ sai mã là chuyện
+    // thường, và mỗi lần thử phải xin captcha MỚI vì mã cũ đã bị tiêu thụ.
+    for (let lan = 0; lan < this.SO_LAN_THU_CAPTCHA; lan++) {
+      const captcha = await gdt.getCaptcha();
+      const daGiai = await this.solver.giai(captcha.content);
+
+      if (!daGiai) {
+        // Không tự giải được (chế độ nhập tay, hoặc dịch vụ hỏng): nhường cho người.
+        const sessionId = crypto.randomUUID();
+        this.dangCho.set(sessionId, {
+          khoa: this.khoa(tenantId, mst),
+          mst,
+          captchaKey: captcha.key,
+          matKhau,
+          hetHan: Date.now() + CAPTCHA_TTL_MS,
+        });
+        return { trangThai: 'can_captcha', mst, sessionId, captchaSvg: captcha.content };
+      }
+
+      try {
+        const token = await gdt.authenticate({
+          username: tenDangNhap,
+          password: mk,
+          captchaKey: captcha.key,
+          captchaValue: daGiai,
+        });
+        this.giuToken(tenantId, mst, token);
+        return { trangThai: 'da_dang_nhap', mst };
+      } catch (err: any) {
+        // Cổng trả LOGIN_FAILED cho CẢ sai captcha lẫn sai mật khẩu. Thử lại
+        // chỉ có nghĩa với trường hợp đầu; sai mật khẩu thì thử bao nhiêu lần
+        // cũng hỏng, nhưng ta không phân biệt được nên vẫn giới hạn số lần.
+        if (err?.code !== 'LOGIN_FAILED' || lan === this.SO_LAN_THU_CAPTCHA - 1) throw err;
+        this.logger.warn(`MST ${mst}: giải captcha sai, thử lại lần ${lan + 2}`);
+      }
+    }
+
+    throw new GdtError(`MST ${mst}: thử ${this.SO_LAN_THU_CAPTCHA} lần mà không đăng nhập được`, {
+      code: 'LOGIN_FAILED',
     });
-
-    return { trangThai: 'can_captcha', mst, sessionId, captchaSvg: captcha.content };
   }
 
   /**
@@ -201,9 +249,14 @@ export class PhienCongThueService {
     return {
       layToken: () => this.layToken(tenantId, mst),
       boToken: () => this.boToken(tenantId, mst),
-      // Việc chạy nền không tự gõ captcha được, nên chỉ đăng nhập lại được khi
-      // công ty có lưu mật khẩu VÀ đã bật dịch vụ giải captcha tự động.
-      batDauDangNhap: undefined,
+      /**
+       * Đăng nhập lại giữa chừng khi cổng từ chối token.
+       *
+       * Chỉ chạy trọn vẹn khi BẬT tự giải captcha; ở chế độ nhập tay nó trả
+       * 'can_captcha' và TokenKeeper ném CHUA_DANG_NHAP để lớp trên xếp mã số
+       * thuế này vào hàng chờ — đúng hành vi cũ, không hồi quy.
+       */
+      batDauDangNhap: (m: string) => this.batDauDangNhap(tenantId, m),
     };
   }
 }

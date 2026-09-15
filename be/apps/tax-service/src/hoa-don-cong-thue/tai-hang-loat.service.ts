@@ -152,11 +152,18 @@ export class TaiHangLoatService {
           if (!congTy?.matKhauMaHoa) {
             m.trangThai = 'bo_qua';
             m.ghiChu = 'Không lưu mật khẩu nên không tự đăng nhập được';
-          } else {
+            continue;
+          }
+
+          // Có lưu mật khẩu thì thử đăng nhập. Bật tự giải captcha thì bước này
+          // xong luôn và không cần ai; chế độ nhập tay trả 'can_captcha' và mã
+          // này được xếp vào hàng chờ - KHÔNG làm dừng các mã còn lại.
+          const ket = await this.phien.batDauDangNhap(luot.tenantId, m.mst);
+          if (ket.trangThai !== 'da_dang_nhap') {
             m.trangThai = 'can_captcha';
             m.ghiChu = 'Cần nhập mã captcha';
+            continue;
           }
-          continue;
         }
 
         const ket = await this.hoaDon.dongBo(luot.tenantId, {
