@@ -42,6 +42,17 @@ export class PhienCongThueService {
     { khoa: string; mst: string; captchaKey: string; matKhau: string | null; hetHan: number }
   >();
 
+  /**
+   * Nhật ký các lần đăng nhập, để tự kìm nhịp.
+   *
+   * Ngày 15/09/2026 hệ thống gọi đăng nhập 40 lần trong một ngày, riêng một giờ
+   * là 20 lần — cổng Thuế bật cơ chế chống truy cập tự động và chặn thẳng mọi
+   * client không phải trình duyệt. Token sống cả giờ nên không có lý do gì phải
+   * đăng nhập dày như vậy; giới hạn ở đây là để bảo vệ chính người dùng khỏi bị
+   * cổng đánh dấu.
+   */
+  private readonly lanDangNhap = new Map<string, number[]>();
+
   /** Bộ giải captcha, chọn theo biến môi trường. Mặc định là nhập tay. */
   private readonly solver: CaptchaSolver = taoSolver();
 
@@ -135,6 +146,26 @@ export class PhienCongThueService {
     return { mst, hetHanLuc: new Date(Date.now() + TOKEN_TTL_MS).toISOString() };
   }
 
+  /** Ném lỗi nếu đăng nhập quá dày — giữ cho cổng Thuế không đánh dấu tài khoản. */
+  private kiemNhipDangNhap(tenantId: string, mst: string) {
+    const khoa = this.khoa(tenantId, mst);
+    const gio = Date.now() - 60 * 60 * 1000;
+    const ds = (this.lanDangNhap.get(khoa) ?? []).filter((t) => t > gio);
+
+    if (ds.length >= 6) {
+      const cho = Math.ceil((ds[0] + 60 * 60 * 1000 - Date.now()) / 60000);
+      throw new GdtError(
+        `Đã đăng nhập cổng Thuế ${ds.length} lần trong một giờ cho ${mst}. Tạm dừng ${cho} phút ` +
+          'để cổng không đánh dấu tài khoản là truy cập tự động. Token hiện có vẫn dùng được, ' +
+          'và các chức năng không cần cổng vẫn chạy bình thường.',
+        { status: 429, code: 'QUA_NHIEU_LAN' },
+      );
+    }
+
+    ds.push(Date.now());
+    this.lanDangNhap.set(khoa, ds);
+  }
+
   private giuToken(tenantId: string, mst: string, token: string) {
     this.tokens.set(this.khoa(tenantId, mst), { token, hetHan: Date.now() + TOKEN_TTL_MS });
     return token;
@@ -169,6 +200,7 @@ export class PhienCongThueService {
     { matKhau = null }: { matKhau?: string | null } = {},
   ): Promise<{ trangThai: string; mst: string; sessionId?: string; captchaSvg?: string }> {
     this.donHetHan();
+    this.kiemNhipDangNhap(tenantId, mst);
 
     // Kiểm tra mật khẩu TRƯỚC khi xin captcha: thiếu mật khẩu mà vẫn gọi
     // /captcha là làm phiền cổng Thuế một cách vô ích.
