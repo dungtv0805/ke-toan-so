@@ -1,4 +1,5 @@
-import { ServiceBase } from './base/service-base';
+import { ServiceBase, getAuthToken } from './base/service-base';
+import { API_CONFIG } from '@/config/api';
 
 /**
  * Tải hóa đơn điện tử từ cổng Thuế (hoadondientu.gdt.gov.vn).
@@ -193,6 +194,70 @@ class HoaDonCongThueService extends ServiceBase {
 
   luotTaiFileGanNhat(mst: string): Promise<LuotTaiFile | null> {
     return this.get({ endpoint: `/cong-ty/${mst}/file-goc/gan-nhat` });
+  }
+
+  /**
+   * Tải về máy toàn bộ file gốc của một kỳ, gói trong một file ZIP.
+   *
+   * Dùng fetch + objectURL chứ không phải thẻ <a href> thuần: endpoint cần
+   * header Authorization, mà thẻ <a> thì không gửi được header.
+   */
+  async taiVeFileGoc(mst: string, tuNgay: string, denNgay: string): Promise<void> {
+    const token = getAuthToken();
+    const res = await fetch(
+      `${API_CONFIG.BASE_URL}/tax/hoa-don-cong-thue/cong-ty/${mst}/file-goc/tai-ve` +
+        `?tuNgay=${tuNgay}&denNgay=${denNgay}`,
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+    );
+
+    if (!res.ok) {
+      // Lỗi ở đây vẫn là JSON của GlobalExceptionFilter, không phải file ZIP.
+      const loi = await res.json().catch(() => null);
+      throw new Error(loi?.error?.message || 'Không tải được file gốc');
+    }
+
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hoa-don-goc_${mst}_${tuNgay}_${denNgay}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Kết xuất Excel do CỔNG THUẾ sinh ra. Một tháng trả .xlsx, nhiều tháng trả
+   * .zip chứa nhiều .xlsx (cổng giới hạn mỗi truy vấn tối đa một tháng).
+   */
+  async xuatExcel(
+    mst: string,
+    tuNgay: string,
+    denNgay: string,
+    chieu: 'mua-vao' | 'ban-ra',
+  ): Promise<void> {
+    const token = getAuthToken();
+    const res = await fetch(
+      `${API_CONFIG.BASE_URL}/tax/hoa-don-cong-thue/cong-ty/${mst}/excel` +
+        `?tuNgay=${tuNgay}&denNgay=${denNgay}&chieu=${chieu}`,
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+    );
+
+    if (!res.ok) {
+      const loi = await res.json().catch(() => null);
+      throw new Error(loi?.error?.message || 'Không kết xuất được Excel');
+    }
+
+    const blob = await res.blob();
+    const zip = blob.type === 'application/zip';
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hoa-don_${chieu}_${mst}_${tuNgay}_${denNgay}.${zip ? 'zip' : 'xlsx'}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
 
   daTaiFileGoc(mst: string, tuNgay: string, denNgay: string): Promise<{ tong: number; daCoFile: number }> {

@@ -20,6 +20,8 @@ import {
   SettingOutlined,
   FileZipOutlined,
   PlayCircleOutlined,
+  DownloadOutlined,
+  FileExcelOutlined,
 } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -70,6 +72,8 @@ const HoaDonCongThuePage: React.FC = () => {
   const [maCaptcha, setMaCaptcha] = useState('');
   const [dangGui, setDangGui] = useState(false);
   const [luotFile, setLuotFile] = useState<LuotTaiFile | null>(null);
+  const [dangTaiVe, setDangTaiVe] = useState<string | null>(null);
+  const [dangXuatExcel, setDangXuatExcel] = useState<string | null>(null);
   const hoiFileRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const nap = useCallback(async () => {
@@ -164,6 +168,30 @@ const HoaDonCongThuePage: React.FC = () => {
     }
   }
 
+  /** Gói toàn bộ file gốc đã tải của kỳ thành một ZIP và lưu xuống máy. */
+  async function taiVeMay(c: CongTyCongThue) {
+    setDangTaiVe(c.mst);
+    try {
+      await hoaDonCongThueService.taiVeFileGoc(c.mst, tuNgay(), denNgay());
+    } catch (e: any) {
+      message.error(e?.message || 'Không tải về được');
+    } finally {
+      setDangTaiVe(null);
+    }
+  }
+
+  /** Kết xuất Excel lấy thẳng từ cổng Thuế, cần phiên cổng còn hiệu lực. */
+  async function xuatExcel(c: CongTyCongThue, chieu: 'mua-vao' | 'ban-ra') {
+    setDangXuatExcel(c.mst);
+    try {
+      await hoaDonCongThueService.xuatExcel(c.mst, tuNgay(), denNgay(), chieu);
+    } catch (e: any) {
+      message.error(e?.message || 'Không kết xuất được Excel');
+    } finally {
+      setDangXuatExcel(null);
+    }
+  }
+
   // Hỏi tiến độ tải file mỗi 2 giây cho tới khi xong.
   useEffect(() => {
     if (!luotFile || luotFile.trangThai !== 'dang_chay') {
@@ -237,6 +265,27 @@ const HoaDonCongThuePage: React.FC = () => {
               onClick={() => taiFileGoc(c)}
             >
               File gốc
+            </Button>
+          </Tooltip>
+          <Tooltip title="Lưu về máy các file gốc đã tải của khoảng ngày đang chọn">
+            <Button
+              size="small"
+              icon={<DownloadOutlined />}
+              loading={dangTaiVe === c.mst}
+              onClick={() => taiVeMay(c)}
+            >
+              Tải về máy
+            </Button>
+          </Tooltip>
+          <Tooltip title="Kết xuất Excel do chính cổng Thuế sinh ra (hóa đơn mua vào)">
+            <Button
+              size="small"
+              icon={<FileExcelOutlined />}
+              loading={dangXuatExcel === c.mst}
+              disabled={!daDangNhap(c.mst)}
+              onClick={() => xuatExcel(c, 'mua-vao')}
+            >
+              Excel
             </Button>
           </Tooltip>
         </Space>

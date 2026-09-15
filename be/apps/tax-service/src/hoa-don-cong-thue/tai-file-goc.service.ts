@@ -223,6 +223,31 @@ export class TaiFileGocService {
     }
   }
 
+  /**
+   * Danh sách file gốc đã tải trong khoảng, để gói lại cho người dùng tải về.
+   *
+   * Tên trong gói ZIP phẳng và tự mô tả — người nhận mở ra là biết hóa đơn nào
+   * của kỳ nào, không phải lần theo cây thư mục.
+   */
+  async danhSachFile(
+    mst: string,
+    tuNgay: string,
+    denNgay: string,
+  ): Promise<Array<{ ten: string; duongDan: string }>> {
+    const ds = (await this.hoaDonRepo.find({ where: { mst } as any }))
+      .filter((hd) => hd.isActive !== false)
+      .filter((hd) => this.trongKhoang(hd, tuNgay, denNgay))
+      .filter((hd) => this.daCoFile(hd));
+
+    return ds.map((hd) => {
+      const ky = hd.ngayLap ? new Date(hd.ngayLap).toISOString().slice(0, 7) : 'khong-ro-ky';
+      return {
+        ten: `${ky}_${this.an(hd.chieu)}_${this.an(hd.mstNguoiBan)}_${this.an(hd.kyHieu)}_${this.an(hd.soHoaDon)}.zip`,
+        duongDan: hd.duongDanFileGoc,
+      };
+    });
+  }
+
   /** Bao nhiêu hóa đơn trong khoảng đã có file gốc trên đĩa. */
   async daTaiBaoNhieu(
     mst: string,

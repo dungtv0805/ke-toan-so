@@ -168,6 +168,55 @@ export class HoaDonCongThueService {
    * Khoảng ngày còn được cắt theo THÁNG, nên đơn vị công việc nhỏ nhất là một ô
    * (tháng × chiều × nhóm). Hỏng một ô không làm mất các ô khác.
    */
+  /**
+   * Kết xuất Excel LẤY TỪ CỔNG, không phải tự dựng lại từ dữ liệu trong máy.
+   *
+   * Làm vậy vì file cổng sinh ra mới là thứ khớp với bản cơ quan thuế nắm giữ —
+   * tự dựng lại là tự chuốc lấy việc phải bám theo mọi lần cổng đổi cột.
+   *
+   * Cổng giới hạn mỗi truy vấn tối đa 1 tháng nên khoảng dài phải cắt ra, mỗi
+   * cửa sổ là một file Excel riêng.
+   */
+  async xuatExcel(
+    tenantId: string,
+    { mst, tuNgay, denNgay, chieu }: { mst: string; tuNgay: string; denNgay: string; chieu: string },
+  ): Promise<Array<{ ten: string; noiDung: Buffer }>> {
+    const giuToken = createTokenKeeper({
+      phien: {
+        layToken: () => this.phien.layToken(tenantId, mst),
+        boToken: () => this.phien.boToken(tenantId, mst),
+      },
+      mst,
+    });
+
+    const type = chieu === 'ban-ra' ? 'sold' : 'purchase';
+    const ket: Array<{ ten: string; noiDung: Buffer }> = [];
+
+    for (const cuaSo of cuaSoThang(tuNgay, denNgay)) {
+      const search = gdt.buildSearch({
+        from: gdt.toPortalDate(cuaSo.tuNgay, 'dau'),
+        to: gdt.toPortalDate(cuaSo.denNgay, 'cuoi'),
+      });
+
+      for (const namespace of NAMESPACES) {
+        const noiDung = await giuToken.chay((token) =>
+          gdt.downloadExcel({ token, namespace, type, search }),
+        );
+        const nhom = namespace === 'sco-query' ? 'may-tinh-tien' : 'thuong';
+        ket.push({
+          ten: `${mst}_${chieu}_${nhom}_${cuaSo.tuNgay}_${cuaSo.denNgay}.xlsx`,
+          noiDung,
+        });
+      }
+    }
+
+    this.logger.log(
+      `Kết xuất Excel ${mst} ${chieu} (${tuNgay}..${denNgay}): ${ket.length} file, ` +
+        `${ket.reduce((t, f) => t + f.noiDung.length, 0)} byte`,
+    );
+    return ket;
+  }
+
   async dongBo(
     tenantId: string,
     { mst, tuNgay, denNgay }: { mst: string; tuNgay: string; denNgay: string },

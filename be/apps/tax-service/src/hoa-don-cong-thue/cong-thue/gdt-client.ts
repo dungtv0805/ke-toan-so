@@ -4,7 +4,7 @@
  * Đây là lớp DUY NHẤT biết về giao thức của cổng. Mọi phần khác chỉ nói chuyện
  * qua các hàm ở đây, nên khi cổng đổi API thì chỉ sửa file này và config.ts.
  */
-import { ENDPOINTS, listUrl, detailUrl, exportXmlUrl } from './config';
+import { ENDPOINTS, listUrl, detailUrl, exportXmlUrl, exportExcelUrl } from './config';
 import { request, GdtError } from './http';
 
 export interface HoaDonTho {
@@ -207,6 +207,21 @@ export async function downloadXml({
   query: Record<string, string>;
 }): Promise<Buffer> {
   return request(exportXmlUrl(namespace, query), { token, raw: true });
+}
+
+/** Kết xuất Excel do CỔNG sinh ra, không phải mình tự dựng lại. */
+export async function downloadExcel({
+  token,
+  namespace,
+  type,
+  search,
+}: {
+  token: string;
+  namespace: string;
+  type: string;
+  search: string;
+}): Promise<Buffer> {
+  return request(exportExcelUrl(namespace, type, search), { token, raw: true });
 }
 
 /** Tham số định danh một hóa đơn, dùng cho detail và export-xml. */

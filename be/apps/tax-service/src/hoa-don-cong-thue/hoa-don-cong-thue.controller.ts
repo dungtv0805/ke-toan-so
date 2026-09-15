@@ -8,7 +8,10 @@ import {
   Query,
   UseGuards,
   UseInterceptors,
+  Res,
+  NotFoundException,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { JwtGuard, RoleGuard, Roles } from '@app/auth';
 import { TenantContextService } from '@app/core';
 import { HoaDonCongThueService } from './hoa-don-cong-thue.service';
@@ -16,6 +19,7 @@ import { PhienCongThueService } from './cong-thue/phien.service';
 import { TaiHangLoatService } from './tai-hang-loat.service';
 import { TaiFileGocService } from './tai-file-goc.service';
 import { GdtLoiInterceptor } from './cong-thue/gdt-loi.interceptor';
+import { taoZip } from './cong-thue/tao-zip';
 
 const KE_TOAN_ROLES = [
   'ADMIN',
@@ -185,6 +189,72 @@ export class HoaDonCongThueController {
     // của client. Giao diện hỏi tiến độ bằng GET .../file-goc/:id.
     const luot = await this.taiFileGoc.batDau(this.tenantId, { mst, ...dto });
     return { success: true, data: luot };
+  }
+
+  /**
+   * Tải về máy toàn bộ file gốc đã có của một kỳ, gói trong MỘT file ZIP.
+   *
+   * Trả luồng trực tiếp chứ không bọc trong { success, data }: đây là file nhị
+   * phân, không phải JSON. Giao diện phải gọi bằng fetch kèm header JWT rồi
+   * dựng objectURL — thẻ <a download> thuần không gửi được token.
+   */
+  /**
+   * Kết xuất Excel danh sách hóa đơn, lấy trực tiếp từ cổng Thuế.
+   *
+   * Một cửa sổ tháng trả thẳng file .xlsx; nhiều cửa sổ thì gói ZIP, vì cổng
+   * giới hạn mỗi truy vấn tối đa một tháng nên khoảng dài buộc phải cắt nhỏ.
+   */
+  @Get('cong-ty/:mst/excel')
+  @Roles(...KE_TOAN_ROLES)
+  async xuatExcel(
+    @Param('mst') mst: string,
+    @Query() q: { tuNgay: string; denNgay: string; chieu?: string },
+    @Res() res: Response,
+  ) {
+    const chieu = q.chieu === 'ban-ra' ? 'ban-ra' : 'mua-vao';
+    const files = await this.service.xuatExcel(this.tenantId, {
+      mst,
+      tuNgay: q.tuNgay,
+      denNgay: q.denNgay,
+      chieu,
+    });
+
+    if (files.length === 1) {
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+      res.setHeader('Content-Disposition', `attachment; filename="${files[0].ten}"`);
+      res.end(files[0].noiDung);
+      return;
+    }
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="excel_${mst}_${chieu}_${q.tuNgay}_${q.denNgay}.zip"`,
+    );
+    taoZip(files.map((f) => ({ ten: f.ten, noiDung: f.noiDung }))).pipe(res);
+  }
+
+  @Get('cong-ty/:mst/file-goc/tai-ve')
+  @Roles(...KE_TOAN_ROLES)
+  async taiVeFileGoc(
+    @Param('mst') mst: string,
+    @Query() q: { tuNgay: string; denNgay: string },
+    @Res() res: Response,
+  ) {
+    const muc = await this.taiFileGoc.danhSachFile(mst, q.tuNgay, q.denNgay);
+    if (!muc.length) {
+      throw new NotFoundException(
+        'Chưa có file gốc nào trong khoảng này. Bấm "File gốc" để tải từ cổng Thuế trước.',
+      );
+    }
+
+    const ten = `hoa-don-goc_${mst}_${q.tuNgay}_${q.denNgay}.zip`;
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${ten}"`);
+    taoZip(muc).pipe(res);
   }
 
   @Get('cong-ty/:mst/file-goc/gan-nhat')

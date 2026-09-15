@@ -56,6 +56,18 @@ export function detailUrl(namespace: string, query: Record<string, string>): str
   return `${BASE_URL}/${namespace}/invoices/detail?${new URLSearchParams(query).toString()}`;
 }
 
+/**
+ * URL kết xuất Excel của chính cổng Thuế. Cổng dùng hai endpoint khác nhau cho
+ * mua vào và bán ra — đã kiểm chứng thật, cả hai trả về file .xlsx
+ * (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet).
+ *
+ * `search` gửi THÔ, giống hệt endpoint danh sách.
+ */
+export function exportExcelUrl(namespace: string, type: string, search: string): string {
+  const duoi = type === 'sold' ? 'export-excel-sold' : 'export-excel';
+  return `${BASE_URL}/${namespace}/invoices/${duoi}?sort=tdlap:desc&search=${search}`;
+}
+
 export function exportXmlUrl(namespace: string, query: Record<string, string>): string {
   return `${BASE_URL}/${namespace}/invoices/export-xml?${new URLSearchParams(query).toString()}`;
 }
