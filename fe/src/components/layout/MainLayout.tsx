@@ -11,6 +11,7 @@ import {
 import {
   TeamOutlined,
   SettingOutlined,
+  AuditOutlined,
   UserOutlined,
   LogoutOutlined,
   DownloadOutlined,
@@ -24,6 +25,7 @@ import { ChanLoi } from "@/components/shared/ChanLoi";
 import type { MenuProps } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
 import { TenantSwitcher } from "./TenantSwitcher";
+import { ChuongThongBao } from "./ChuongThongBao";
 import { AppSwitcher } from "./AppSwitcher";
 import { OIconApp } from "@/components/icons/OIconApp";
 import { CURRENT_APP_ID } from "@/services/identitySession";
@@ -152,6 +154,12 @@ const MainLayout: React.FC = () => {
         label: "Quản lý Thành viên",
         onClick: () => navigate("/cau-hinh/thanh-vien"),
       }] : []),
+      ...(hasPermission('/cau-hinh/phe-duyet:xem') || user?.isSuperAdmin ? [{
+        key: "phe-duyet",
+        icon: <AuditOutlined />,
+        label: "Thiết lập phê duyệt",
+        onClick: () => navigate("/cau-hinh/phe-duyet"),
+      }] : []),
     ] : []),
     ...(canManageConfig ? [{
       key: "hoa-don-cong-thue",
@@ -261,6 +269,11 @@ const MainLayout: React.FC = () => {
           {/* Right: Actions */}
           {/* min-w-0: cho tên công ty dài co lại thay vì đẩy header tràn ngang. */}
           <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+            {/* Chuông thông báo phê duyệt — mục 13 tài liệu phê duyệt nghiệp vụ.
+                Đây là lối vào hằng ngày của "Chờ tôi duyệt"; mục trên sidebar
+                (Tổng hợp › Phê duyệt) là lối vào chính thức. */}
+            <ChuongThongBao />
+
             {/* Tenant Switcher */}
             <TenantSwitcher />
 

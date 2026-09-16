@@ -104,4 +104,21 @@ export class NhatKyChungQueryDto {
   @IsOptional()
   @IsString()
   kiemSoat?: string;
+
+  /**
+   * Cho phép trả về cả chứng từ CHƯA duyệt xong — mục 12.
+   *
+   * Mặc định tắt: mọi báo cáo gọi qua ServiceClient đều không truyền tham số
+   * này nên tự động chỉ nhận số liệu chính thức. Chỉ màn nhập liệu (Dữ liệu
+   * tổng hợp, Phiếu thu, Phiếu chi) truyền `1` để người lập còn thấy phiếu
+   * nháp của mình.
+   */
+  @IsOptional()
+  @IsString()
+  baoGomChuaDuyet?: string;
+
+  /** Lọc theo trạng thái phê duyệt. Chỉ có tác dụng khi `baoGomChuaDuyet=1`. */
+  @IsOptional()
+  @IsString()
+  trangThaiPheDuyet?: string;
 }

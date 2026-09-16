@@ -12,7 +12,7 @@ import {
   NodeIndexOutlined, QuestionCircleOutlined, FormOutlined, FolderOpenOutlined,
   PayCircleOutlined, LockOutlined, InteractionOutlined, BankOutlined,
   GoldOutlined, CheckSquareOutlined, PercentageOutlined, CalendarOutlined,
-  SolutionOutlined, FileSyncOutlined,
+  SolutionOutlined, FileSyncOutlined, FieldTimeOutlined,
 } from '@ant-design/icons';
 import { DANH_MUC_GROUPS, DANH_MUC_ROUTES } from './danhMucCatalog';
 
@@ -148,6 +148,11 @@ export const MENU_LEAVES: MenuLeaf[] = [
   { key: '/tong-hop/bu-tru-cong-no', label: 'Bù trừ công nợ', module: 'tong-hop', status: 'soon', icon: <InteractionOutlined /> },
   { key: '/chung-tu/ket-chuyen-lai-lo', label: 'Kết chuyển lãi lỗ', module: 'tong-hop', status: 'ok', icon: <SwapOutlined /> },
   { key: '/tong-hop/khoa-so', label: 'Khóa sổ', module: 'tong-hop', status: 'soon', icon: <LockOutlined /> },
+  // Phê duyệt nghiệp vụ — docs/Yeu_cau_chuc_nang_phe_duyet_nghiep_vu_Master_CEO.docx.
+  // Đặt ở Tổng hợp vì đây là khâu kiểm soát của kế toán; lối vào hằng ngày là
+  // chuông thông báo trên thanh tiêu đề, mục menu này là lối vào chính thức.
+  { key: '/phe-duyet/cho-toi-duyet', label: 'Chờ tôi duyệt', module: 'tong-hop', cluster: 'PHÊ DUYỆT', status: 'ok', icon: <AuditOutlined /> },
+  { key: '/phe-duyet/bao-cao-toc-do', label: 'Tốc độ xử lý', module: 'tong-hop', cluster: 'PHÊ DUYỆT', status: 'ok', icon: <FieldTimeOutlined /> },
   { key: '/tong-hop/so-nhat-ky-chung', label: 'Sổ nhật ký chung', module: 'tong-hop', status: 'soon', icon: <AuditOutlined /> },
   { key: '/bao-cao/so-chi-tiet-tai-khoan', label: 'Sổ chi tiết tài khoản', module: 'tong-hop', status: 'ok', icon: <AccountBookOutlined /> },
   { key: '/bao-cao/so-chi-tiet-cong-no', label: 'Sổ chi tiết công nợ', module: 'tong-hop', status: 'soon', quyenDaCap: true, icon: <FileSearchOutlined /> },

@@ -104,6 +104,10 @@ export const PERMISSION_MODULES = [
   '/cau-hinh/vai-tro',
   '/cau-hinh/phan-quyen',
   '/cau-hinh/thanh-vien',
+  // Phê duyệt nghiệp vụ
+  '/phe-duyet/cho-toi-duyet',
+  '/phe-duyet/bao-cao-toc-do',
+  '/cau-hinh/phe-duyet',
 ];
 
 const PERMISSION_ACTIONS = ['xem', 'them', 'sua', 'xoa', 'xuat'];

@@ -77,6 +77,9 @@ import {
   HoSoChungTuPage,
   PhanQuyenPage,
   VaiTroPage,
+  ChoToiDuyetPage,
+  BaoCaoTocDoPheDuyetPage,
+  CauHinhPheDuyetPage,
   ThanhVienPage,
   TenantPage,
   LinhVucPage,
@@ -797,6 +800,14 @@ const App = () => {
                     }
                   />
                   <Route
+                    path="phe-duyet"
+                    element={
+                      <ProtectedRoute requiredPermission="/cau-hinh/phe-duyet:xem">
+                        <CauHinhPheDuyetPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="tenant"
                     element={<TenantPage />}
                   />
@@ -813,6 +824,28 @@ const App = () => {
                 {/* Mục đã lên sidebar nhưng chưa có màn hình — ra thẳng trang "đang phát triển".
                     Danh sách sinh từ menuCatalog; thêm mục soon mới thì thêm một dòng ở đây.
                     Quy trình / Hướng dẫn mỗi phân hệ là trang THẬT (thư viện riêng). */}
+                {/* Phê duyệt nghiệp vụ — docs/Yeu_cau_chuc_nang_phe_duyet_nghiep_vu_Master_CEO.docx.
+                    Chi tiết một nghiệp vụ mở bằng `?id=` trên chính trang Chờ tôi
+                    duyệt, không tách route riêng — thông báo dẫn thẳng vào được mà
+                    không sinh thêm khoá quyền. */}
+                <Route path="phe-duyet">
+                  <Route
+                    path="cho-toi-duyet"
+                    element={
+                      <ProtectedRoute requiredPermission="/phe-duyet/cho-toi-duyet:xem">
+                        <ChoToiDuyetPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="bao-cao-toc-do"
+                    element={
+                      <ProtectedRoute requiredPermission="/phe-duyet/bao-cao-toc-do:xem">
+                        <BaoCaoTocDoPheDuyetPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                </Route>
                 <Route path="tong-hop">
                   <Route path="quy-trinh" element={thuVien("/tong-hop/quy-trinh")} />
                   <Route path="huong-dan" element={thuVien("/tong-hop/huong-dan")} />

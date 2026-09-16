@@ -10,6 +10,7 @@ import { VaiTro_Module } from './vai-tro/vai-tro.module';
 import { PhieuTemplate_Module } from './phieu-template/phieu-template.module';
 import { TaiLieu_Module } from './tai-lieu/tai-lieu.module';
 import { ImportDanhMucModule } from './import-danh-muc/import-danh-muc.module';
+import { PheDuyet_Module } from './phe-duyet/phe-duyet.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ImportDanhMucModule } from './import-danh-muc/import-danh-muc.module';
     PhieuTemplate_Module,
     TaiLieu_Module,
     ImportDanhMucModule,
+    PheDuyet_Module,
   ],
 })
 export class ConfigServiceModule {}

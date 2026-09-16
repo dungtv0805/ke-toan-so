@@ -12,6 +12,8 @@ import keysTruocDoi from './__snapshots__/permission-keys-truoc-doi.json';
 import routeTruocDoi from './__snapshots__/route-permissions-truoc-doi.json';
 import maTranTruocDoi from '@/pages/cau-hinh/phan-quyen/constants/__snapshots__/matrix-keys-truoc-doi.json';
 import khoaMoi from './__snapshots__/khoa-moi-menu-tai-chinh.json';
+import khoaMoiPheDuyet from './__snapshots__/khoa-moi-phe-duyet.json';
+import khoaMoiPheDuyetCauHinh from './__snapshots__/khoa-moi-phe-duyet-cau-hinh.json';
 import khoaBo from './__snapshots__/khoa-bo-menu-tai-chinh.json';
 
 /**
@@ -97,7 +99,18 @@ function keyQuyenDaCo(): Set<string> {
  *   triển" mà sheet bỏ khỏi menu — không ai mất một trang đang chạy thật.
  * Hai danh sách viết TAY, không sinh lại: thêm/bớt khoá nào khác là test đỏ.
  */
-const KHOA_MOI = new Set(khoaMoi as string[]);
+/**
+ * Mỗi đợt thêm trang khai khoá mới bằng MỘT file snapshot riêng, không sửa file
+ * của đợt trước — để sau còn truy được khoá nào sinh ở đợt nào.
+ * - `khoa-moi-phe-duyet.json`: 2 khoá sinh TỪ MENU của chức năng Phê duyệt.
+ *   Khoá trang cấu hình `/cau-hinh/phe-duyet` để ở file riêng vì nó vào từ nút
+ *   bánh răng, `permissionKeys()` không sinh ra nó — gộp vào đây là test
+ *   "danh sách không thừa" đỏ.
+ */
+const KHOA_MOI = new Set([
+  ...(khoaMoi as string[]),
+  ...(khoaMoiPheDuyet as string[]),
+]);
 const KHOA_BO = new Set(khoaBo as string[]);
 
 const ROUTES = docRouteTuApp();
@@ -225,7 +238,12 @@ describe('routePermissions — ảnh chụp đóng băng', () => {
   });
 
   it('route mới thêm chỉ được dùng khoá quyền ĐÃ TỒN TẠI', () => {
-    const daCo = new Set([...(maTranTruocDoi as string[]), ...Object.keys(cu), ...KHOA_MOI]);
+      const daCo = new Set([
+      ...(maTranTruocDoi as string[]),
+      ...Object.keys(cu),
+      ...KHOA_MOI,
+      ...(khoaMoiPheDuyetCauHinh as string[]),
+    ]);
     const la = Object.keys(routePermissions).filter((k) => !daCo.has(k));
     expect(la).toEqual([]);
   });
@@ -242,7 +260,11 @@ const THEO_SHEET: Record<string, string[]> = {
   'phan-tich': ['P&L Kế hoạch', 'P&L Dự báo', 'P&L', 'So sánh', 'P&L không khấu hao', 'Công nợ', 'Dòng tiền', 'Tồn kho', 'Khả năng thanh toán', 'Chỉ số tài chính'],
   'tong-hop': [
     'Quy trình', 'Hướng dẫn', 'Kế hoạch', 'Dự báo', 'Thực hiện', 'Quyết toán tạm ứng', 'Bù trừ công nợ',
-    'Kết chuyển lãi lỗ', 'Khóa sổ', 'Sổ nhật ký chung', 'Sổ chi tiết tài khoản', 'Sổ chi tiết công nợ',
+    'Kết chuyển lãi lỗ', 'Khóa sổ',
+    // Cụm PHÊ DUYỆT — không có trong sheet "Menu tài chính"; thêm theo tài liệu
+    // docs/Yeu_cau_chuc_nang_phe_duyet_nghiep_vu_Master_CEO.docx.
+    'Chờ tôi duyệt', 'Tốc độ xử lý',
+    'Sổ nhật ký chung', 'Sổ chi tiết tài khoản', 'Sổ chi tiết công nợ',
     'Tổng hợp công nợ', 'Hệ thống tài khoản', 'Quy chuẩn hạch toán', 'Tài khoản kết chuyển',
     'Bảng cân đối kế toán', 'Kết quả kinh doanh', 'Bảng cân đối tài khoản', 'Lưu chuyển tiền tệ', 'Thuyết minh',
   ],

@@ -70,6 +70,7 @@ const PHAN_HE_CAU_HINH: PermissionModule = {
     { key: '/cau-hinh/vai-tro', label: 'Quản lý Vai trò' },
     { key: '/cau-hinh/phan-quyen', label: 'Phân quyền' },
     { key: '/cau-hinh/thanh-vien', label: 'Quản lý Thành viên' },
+    { key: '/cau-hinh/phe-duyet', label: 'Thiết lập phê duyệt' },
   ],
 };
 

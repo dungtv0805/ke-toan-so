@@ -7,6 +7,8 @@ import { DANH_MUC_ROUTES } from '@/config/danhMucCatalog';
 import maTranTruocDoi from './__snapshots__/matrix-keys-truoc-doi.json';
 import routeTruocDoi from '@/config/__snapshots__/route-permissions-truoc-doi.json';
 import khoaMoi from '@/config/__snapshots__/khoa-moi-menu-tai-chinh.json';
+import khoaMoiPheDuyet from '@/config/__snapshots__/khoa-moi-phe-duyet.json';
+import khoaMoiPheDuyetCauHinh from '@/config/__snapshots__/khoa-moi-phe-duyet-cau-hinh.json';
 import khoaBo from '@/config/__snapshots__/khoa-bo-menu-tai-chinh.json';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -117,7 +119,13 @@ describe('ma trận — không cấp lại, không đánh rơi', () => {
   });
 
   it('không sinh khoá quyền chưa từng tồn tại (trừ 18 khoá thư viện phân hệ)', () => {
-    const moi = new Set(khoaMoi as string[]);
+    // Mỗi đợt thêm trang đăng ký khoá mới bằng MỘT file snapshot riêng, không
+    // sửa file của đợt trước — để về sau còn truy được khoá nào sinh ở đợt nào.
+    const moi = new Set([
+      ...(khoaMoi as string[]),
+      ...(khoaMoiPheDuyet as string[]),
+      ...(khoaMoiPheDuyetCauHinh as string[]),
+    ]);
     const la = moiKey().filter((k) => !KHOA_DA_CO.has(k) && !moi.has(k));
     expect(la).toEqual([]);
   });

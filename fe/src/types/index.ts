@@ -464,6 +464,9 @@ export interface ChungTuResponse {
   danhMuc?: DanhMuc;
   hoSoChungTu?: HoSoChungTuItem[];
   kiemSoat?: KiemSoatChungTu;
+  /** Trạng thái phê duyệt BE trả kèm chứng từ — mục 12. Chứng từ cũ không có. */
+  trangThaiPheDuyet?: string;
+  phienBanPheDuyet?: number;
 }
 
 // ===== SNAPSHOT INTERFACES (Legacy - kept for backward compatibility) =====
@@ -664,6 +667,14 @@ export interface NhatKyChung {
   // Kiểm soát hồ sơ hạch toán
   hoSoChungTu?: HoSoChungTuItem[];
   kiemSoat?: KiemSoatChungTu;
+  /**
+   * Trạng thái phê duyệt của chứng từ — mục 12 tài liệu phê duyệt nghiệp vụ.
+   * KHÔNG bắt buộc: chứng từ tạo trước khi có tính năng này không mang trường
+   * nào, và lưới phải hiện chúng là "Chính thức" chứ không phải ô trống.
+   */
+  trangThaiPheDuyet?: string;
+  /** Tăng mỗi lần chứng từ bị sửa nội dung trọng yếu — mục 11. */
+  phienBanPheDuyet?: number;
 }
 
 // ===== SỔ QUỸ =====

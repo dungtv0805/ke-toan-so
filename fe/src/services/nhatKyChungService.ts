@@ -82,6 +82,11 @@ export interface GetEntriesParams {
   kiemSoat?: string;
   /** Mã số thuế đối tượng — khớp bên Nợ HOẶC bên Có (gợi ý gắn chứng từ ở bảng kê thuế). */
   mst?: string;
+  /**
+   * Lọc theo trạng thái phê duyệt. Bỏ trống = lấy mọi trạng thái (mặc định của
+   * các màn nhập liệu). 'CHUA_GUI' = chứng từ chưa từng gửi duyệt.
+   */
+  trangThaiPheDuyet?: string;
 }
 
 /** Các tiêu chí lọc gửi lên BE (không gồm phân trang). */
@@ -106,6 +111,7 @@ const FILTER_KEYS = [
   'nguoiGiaoDich',
   'kiemSoat',
   'mst',
+  'trangThaiPheDuyet',
 ] as const satisfies readonly (keyof GetEntriesParams)[];
 
 function toQueryParams(params: GetEntriesParams): Record<string, string> {
@@ -114,6 +120,19 @@ function toQueryParams(params: GetEntriesParams): Record<string, string> {
     const value = params[key];
     if (value) query[key] = String(value);
   }
+
+  /**
+   * Service này phục vụ các màn NHẬP LIỆU (Nhật ký chung, Kết chuyển, gán
+   * chứng từ cho hóa đơn, ghi nhận doanh thu hợp đồng), nên phải thấy cả
+   * chứng từ chưa duyệt — người lập không nhìn thấy phiếu nháp của chính
+   * mình thì không sửa và không gửi duyệt được.
+   *
+   * Báo cáo tài chính KHÔNG đi qua đây: chúng gọi reporting-service, và
+   * reporting-service không truyền cờ này nên tự động chỉ nhận số chính thức
+   * (xem `apDungLocPheDuyet` bên voucher-service).
+   */
+  query.baoGomChuaDuyet = '1';
+
   return query;
 }
 
@@ -215,6 +234,8 @@ class NhatKyChungService extends ServiceBase {
       danhMuc,
       hoSoChungTu: item.hoSoChungTu,
       kiemSoat: item.kiemSoat,
+      trangThaiPheDuyet: item.trangThaiPheDuyet,
+      phienBanPheDuyet: item.phienBanPheDuyet,
     };
   }
 

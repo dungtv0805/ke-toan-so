@@ -366,3 +366,19 @@ export const TongHopThuePage = loadable(() => import('./thue/tong-hop/TongHopThu
 export const BaoCaoTNDNPage = loadable(() => import('./thue/bao-cao-tndn/BaoCaoTNDNPage'), {
   fallback: <PageLoader />
 });
+
+// Phê duyệt nghiệp vụ
+export const ChoToiDuyetPage = loadable(
+  () => import('./phe-duyet/cho-toi-duyet/ChoToiDuyetPage'),
+  { fallback: <PageLoader /> },
+);
+
+export const BaoCaoTocDoPheDuyetPage = loadable(
+  () => import('./phe-duyet/bao-cao-toc-do/BaoCaoTocDoPage'),
+  { fallback: <PageLoader /> },
+);
+
+export const CauHinhPheDuyetPage = loadable(
+  () => import('./cau-hinh/phe-duyet/CauHinhPheDuyetPage'),
+  { fallback: <PageLoader /> },
+);

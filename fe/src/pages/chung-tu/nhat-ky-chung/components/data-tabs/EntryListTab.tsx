@@ -72,6 +72,7 @@ import { DetailPopover } from "./DetailPopover";
 import { EditableCell, SelectOption } from "../editable-cell";
 import { BienTapHoSoCell } from "../BienTapHoSoCell";
 import { KiemSoatCell } from "../KiemSoatCell";
+import { PheDuyetCell } from "../PheDuyetCell";
 import dayjs from "dayjs";
 import type { TablePaginationConfig } from "antd/es/table";
 import type { ColumnType } from "antd/es/table";
@@ -192,6 +193,16 @@ const getColumnDefinitions = (
     align: "center" as const,
     render: (_: unknown, record: NhatKyChung) => (
       <KiemSoatCell entry={record} onSaved={onRefresh} />
+    ),
+  },
+  {
+    // Khác cột "Kiểm soát" bên cạnh: cột đó nói hồ sơ có hợp lệ về thuế không,
+    // cột này nói chứng từ đã đi hết luồng ký duyệt chưa (mục 10, 12).
+    title: "Phê duyệt",
+    key: "pheDuyet",
+    align: "center" as const,
+    render: (_: unknown, record: NhatKyChung) => (
+      <PheDuyetCell entry={record} onSaved={onRefresh} />
     ),
   },
   {

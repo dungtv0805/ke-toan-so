@@ -1,5 +1,6 @@
 import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '../base.entity';
+import type { TrangThaiPheDuyet } from '../phe-duyet/trang-thai';
 
 // PHIEU_THU -> Phiếu thu, PHIEU_CHI -> Phiếu chi, KHAC -> chỉ hiện ở Nhật ký chung
 export type LoaiChungTu = 'PHIEU_THU' | 'PHIEU_CHI' | 'KHAC';
@@ -201,6 +202,24 @@ export class ChungTu extends BaseEntity {
   /** Mã dòng danh mục Tài khoản kết chuyển đã sinh ra bút toán này. */
   @Column({ nullable: true })
   maKetChuyen?: string;
+
+  /**
+   * Trạng thái phê duyệt đã denormalize từ `quy_trinh_phe_duyet` — mục 12.
+   *
+   * Nguồn sự thật của luồng duyệt vẫn là bảng quy trình; cột này chỉ để lọc
+   * báo cáo cho rẻ (mọi báo cáo đều đi qua các pipeline aggregate ở
+   * `nhat-ky-chung.service.ts`, `$lookup` mỗi lần thì đắt).
+   *
+   * `undefined` = chứng từ có TRƯỚC khi có tính năng phê duyệt. Những bản ghi
+   * này vẫn phải lên báo cáo, nếu không thì bật tính năng là mọi báo cáo về 0.
+   * Script `scripts/backfill-trang-thai-phe-duyet.js` gắn CHINH_THUC cho chúng.
+   */
+  @Column({ nullable: true })
+  trangThaiPheDuyet?: TrangThaiPheDuyet;
+
+  /** Phiên bản nghiệp vụ, tăng mỗi lần sửa nội dung trọng yếu — mục 11. */
+  @Column({ nullable: true })
+  phienBanPheDuyet?: number;
 }
 
 export interface ChungTuEntities {

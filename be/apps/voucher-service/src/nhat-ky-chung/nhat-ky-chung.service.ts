@@ -34,6 +34,12 @@ import {
   DonHangCuaPhieu,
 } from './helpers';
 import { VoucherNumberService, LoaiResolverService } from '../shared';
+import { apDungLocPheDuyet } from './helpers/loc-phe-duyet.helper';
+import {
+  PheDuyetClientService,
+  kiemTraQuyenSua,
+  kiemTraQuyenXoa,
+} from '../phe-duyet';
 
 @Injectable()
 export class NhatKyChungService {
@@ -43,7 +49,24 @@ export class NhatKyChungService {
     private readonly voucherNumberService: VoucherNumberService,
     private readonly tenantContext: TenantContextService,
     private readonly loaiResolver: LoaiResolverService,
+    private readonly pheDuyetClient: PheDuyetClientService,
   ) {}
+
+  /**
+   * Áp bộ lọc phê duyệt cho các truy vấn đến từ màn hình — mục 12.
+   *
+   * Tách riêng vì ba hàm `getEntries` / `getStats` / `getSummary` nhận tham số
+   * từ người dùng, khác các hàm phục vụ báo cáo (luôn chặn cứng).
+   */
+  private locTheoPheDuyet(
+    mongoQuery: Record<string, unknown>,
+    query: NhatKyChungQueryDto,
+  ): Record<string, unknown> {
+    return apDungLocPheDuyet(mongoQuery, {
+      baoGomChuaDuyet: query.baoGomChuaDuyet === '1',
+      trangThaiPheDuyet: query.trangThaiPheDuyet,
+    });
+  }
 
   async getEntries(query: NhatKyChungQueryDto): Promise<{
     success: boolean;
@@ -52,7 +75,7 @@ export class NhatKyChungService {
   }> {
     const { page = 1, limit = 15 } = query;
     const skip = (page - 1) * limit;
-    const mongoQuery = buildMongoQuery(query);
+    const mongoQuery = this.locTheoPheDuyet(buildMongoQuery(query), query);
     const tenantId = this.tenantContext.getCurrentTenantId();
     if (tenantId) mongoQuery['tenantId'] = tenantId;
 
@@ -84,7 +107,7 @@ export class NhatKyChungService {
   async getStats(
     query: NhatKyChungQueryDto,
   ): Promise<NhatKyChungStatsResponse> {
-    const mongoQuery = buildMongoQuery(query);
+    const mongoQuery = this.locTheoPheDuyet(buildMongoQuery(query), query);
     const tenantId = this.tenantContext.getCurrentTenantId();
     if (tenantId) mongoQuery['tenantId'] = tenantId;
 
@@ -139,9 +162,9 @@ export class NhatKyChungService {
     success: boolean;
     data: string[];
   }> {
-    const match: Record<string, unknown> = {
+    const match: Record<string, unknown> = apDungLocPheDuyet({
       nguoiGiaoDich: { $nin: [null, ''] },
-    };
+    });
     const tenantId = this.tenantContext.getCurrentTenantId();
     if (tenantId) match['tenantId'] = tenantId;
 
@@ -182,10 +205,10 @@ export class NhatKyChungService {
   }> {
     const pipeline: object[] = [
       {
-        $match: {
+        $match: apDungLocPheDuyet({
           ...(tenantId ? { tenantId } : {}),
           ngay: { $lte: endDate },
-        },
+        }),
       },
       {
         $facet: {
@@ -273,10 +296,10 @@ export class NhatKyChungService {
   ): Promise<{ success: boolean; data: DoiTuongBucket[] }> {
     const pipeline: object[] = [
       {
-        $match: {
+        $match: apDungLocPheDuyet({
           ...(tenantId ? { tenantId } : {}),
           ngay: { $lte: endDate },
-        },
+        }),
       },
       {
         $facet: {
@@ -351,11 +374,11 @@ export class NhatKyChungService {
     const end = new Date(Date.UTC(nam, 11, 31, 23, 59, 59, 999));
     const pipeline: object[] = [
       {
-        $match: {
+        $match: apDungLocPheDuyet({
           ...(tenantId ? { tenantId } : {}),
           'kiemSoat.trangThai': 'KHONG_DUOC_TRU',
           ngay: { $gte: start, $lte: end },
-        },
+        }),
       },
       {
         $group: {
@@ -394,13 +417,13 @@ export class NhatKyChungService {
     const docs = await this.chungTuRepository
       .aggregate([
         {
-          $match: {
+          $match: apDungLocPheDuyet({
             ...(tenantId ? { tenantId } : {}),
             $or: [
               { 'danhMuc.hopDong.soHopDong': { $nin: [null, ''] } },
               { 'danhMuc.taiKhoanCo.ma': { $regex: '^511' } },
             ],
-          },
+          }),
         },
         {
           $project: {
@@ -433,11 +456,11 @@ export class NhatKyChungService {
     const docs = await this.chungTuRepository
       .aggregate([
         {
-          $match: {
+          $match: apDungLocPheDuyet({
             ...(tenantId ? { tenantId } : {}),
             soPhieu: { $in: soPhieuList },
             'danhMuc.hopDong.soHopDong': { $nin: [null, ''] },
-          },
+          }),
         },
         { $sort: { soPhieu: 1, _id: 1 } },
         {
@@ -510,9 +533,24 @@ export class NhatKyChungService {
       throw new NotFoundException(`Không tìm thấy bút toán với ID ${id}`);
     }
 
-    if ((chungTu as any).trangThai === 'DA_DUYET') {
-      throw new ForbiddenException('Không thể sửa bút toán đã duyệt');
+    // Mục 11. Thay cho cờ `trangThai === 'DA_DUYET'` cũ — cờ đó chưa bao giờ
+    // được ghi vào chứng từ nên câu lệnh này trước đây không chặn được gì.
+    const quyenSua = kiemTraQuyenSua(
+      chungTu,
+      this.tenantContext.getCurrentUserId(),
+    );
+    if (!quyenSua.choPhep) {
+      throw new ForbiddenException(quyenSua.lyDo);
     }
+
+    // Chụp lại TRƯỚC khi gán để so trường trọng yếu. Phải là bản sao: `chungTu`
+    // bị sửa tại chỗ ngay bên dưới, giữ tham chiếu là so chính nó với chính nó.
+    const truoc = {
+      soTien: chungTu.soTien,
+      noiDung: chungTu.noiDung,
+      ngay: chungTu.ngay,
+      danhMuc: chungTu.danhMuc,
+    };
 
     if (updateDto.ngay) {
       chungTu.ngay = new Date(updateDto.ngay);
@@ -549,6 +587,18 @@ export class NhatKyChungService {
     }
 
     const saved = await this.chungTuRepository.save(chungTu);
+
+    // Engine tự quyết có phải duyệt lại không (nó so đúng 6 trường trọng yếu).
+    // Chứng từ chưa từng gửi duyệt thì lời gọi này là no-op bên kia.
+    if (quyenSua.phaiDuyetLai) {
+      await this.pheDuyetClient.baoDaSua(id, truoc, {
+        soTien: saved.soTien,
+        noiDung: saved.noiDung,
+        ngay: saved.ngay,
+        danhMuc: saved.danhMuc,
+      });
+    }
+
     return { success: true, data: saved };
   }
 
@@ -562,8 +612,9 @@ export class NhatKyChungService {
       throw new NotFoundException(`Không tìm thấy bút toán với ID ${id}`);
     }
 
-    if ((chungTu as any).trangThai === 'DA_DUYET') {
-      throw new ForbiddenException('Không thể xóa bút toán đã duyệt');
+    const quyenXoa = kiemTraQuyenXoa(chungTu);
+    if (!quyenXoa.choPhep) {
+      throw new ForbiddenException(quyenXoa.lyDo);
     }
 
     await this.chungTuRepository.remove(chungTu);
@@ -572,7 +623,7 @@ export class NhatKyChungService {
 
   /**
    * Xóa hàng loạt theo danh sách id.
-   * Bỏ qua các bút toán đã duyệt (DA_DUYET) thay vì fail cả lô.
+   * Bỏ qua bút toán đang chờ duyệt hoặc đã chính thức (mục 11) thay vì fail cả lô.
    * Repository tự lọc theo tenant nên chỉ xóa được dữ liệu của tenant hiện tại.
    */
   async removeBatch(
@@ -589,9 +640,7 @@ export class NhatKyChungService {
       where: { _id: { $in: objectIds } as any },
     });
 
-    const deletable = entries.filter(
-      (e) => (e as any).trangThai !== 'DA_DUYET',
-    );
+    const deletable = entries.filter((e) => kiemTraQuyenXoa(e).choPhep);
     const skipped = entries.length - deletable.length;
 
     if (deletable.length > 0) {
@@ -858,7 +907,7 @@ export class NhatKyChungService {
     type: SummaryType,
     query: NhatKyChungQueryDto,
   ): Promise<SummaryResponse> {
-    const mongoQuery = buildMongoQuery(query);
+    const mongoQuery = this.locTheoPheDuyet(buildMongoQuery(query), query);
     const aggregationPipeline = buildSummaryAggregation(type, mongoQuery);
 
     const result = await this.chungTuRepository

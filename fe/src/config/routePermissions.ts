@@ -18,6 +18,10 @@ const QUYEN_CAU_HINH: Record<string, string> = {
   '/cau-hinh/phan-quyen': '/cau-hinh/phan-quyen:xem',
   '/cau-hinh/vai-tro': '/cau-hinh/vai-tro:xem',
   '/cau-hinh/thanh-vien': '/cau-hinh/thanh-vien:xem',
+  // Thiết lập luồng phê duyệt (mục 3, 4). Trang MỚI nên không ai đang có khoá
+  // này — phải cấp cho vai trò quản trị sau khi deploy, nếu không chính admin
+  // cũng không vào được để gán người giữ vị trí.
+  '/cau-hinh/phe-duyet': '/cau-hinh/phe-duyet:xem',
 };
 
 /**
