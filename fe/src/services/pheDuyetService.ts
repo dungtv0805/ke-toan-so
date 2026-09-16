@@ -1,4 +1,5 @@
-import { ServiceBase } from './base/service-base';
+import { API_CONFIG } from '@/config/api';
+import { getAuthToken, ServiceBase } from './base/service-base';
 
 /**
  * Phê duyệt nghiệp vụ — docs/Yeu_cau_chuc_nang_phe_duyet_nghiep_vu_Master_CEO.docx.
@@ -49,13 +50,16 @@ export interface BuocPheDuyet {
 }
 
 export interface HoSoPheDuyet {
+  id: string;
   ten: string;
   loai?: string;
   so?: string;
   ngayChungTu?: string;
   nguon: 'TAI_LEN' | 'LIEN_KET_NOI_BO';
-  fileUrl?: string;
+  storageKey?: string;
   fileTen?: string;
+  mimeType?: string;
+  size?: number;
   doiTuongIdLienKet?: string;
   nguoiGanId?: string;
   nguoiGanTen?: string;
@@ -205,8 +209,54 @@ class PheDuyetService extends ServiceBase {
     return this.post({ yKien }, { endpoint: `/${id}/tu-choi` });
   }
 
-  async themHoSo(id: string, hoSo: HoSoPheDuyet): Promise<QuyTrinhPheDuyet> {
+  /** Gắn chứng từ đã có trên hệ thống — mục 8. */
+  async themHoSoLienKet(
+    id: string,
+    hoSo: {
+      ten: string;
+      loai?: string;
+      so?: string;
+      ngayChungTu?: string;
+      doiTuongIdLienKet: string;
+    },
+  ): Promise<QuyTrinhPheDuyet> {
     return this.post(hoSo, { endpoint: `/${id}/ho-so` });
+  }
+
+  /** Tải file hồ sơ lên — mục 8. */
+  async taiLenHoSo(
+    id: string,
+    file: File,
+    thongTin: { ten?: string; loai?: string; so?: string; ngayChungTu?: string } = {},
+  ): Promise<QuyTrinhPheDuyet> {
+    const form = new FormData();
+    form.append('file', file);
+    for (const [k, v] of Object.entries(thongTin)) {
+      if (v) form.append(k, v);
+    }
+    // KHÔNG tự đặt Content-Type: trình duyệt phải tự sinh boundary của
+    // multipart, đặt tay là server không tách được phần file.
+    return this.post(form, { endpoint: `/${id}/ho-so/tai-len` });
+  }
+
+  async xoaHoSo(id: string, hoSoId: string): Promise<QuyTrinhPheDuyet> {
+    return this.delete({ endpoint: `/${id}/ho-so/${hoSoId}` });
+  }
+
+  /**
+   * Tải file hồ sơ về dạng blob URL để mở trong tab mới.
+   *
+   * Phải fetch tay: endpoint đòi header JWT mà thẻ <a href> không gửi được
+   * header. Nhớ gọi URL.revokeObjectURL khi dùng xong.
+   */
+  async moFileHoSo(id: string, hoSoId: string): Promise<string> {
+    const token = getAuthToken();
+    const res = await fetch(
+      `${API_CONFIG.BASE_URL}/config/phe-duyet/${id}/ho-so/${hoSoId}/file`,
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+    );
+    if (!res.ok) throw new Error('Không tải được file hồ sơ');
+    return URL.createObjectURL(await res.blob());
   }
 
   /** Trạng thái của nhiều chứng từ một lượt — lưới gọi một request cho cả trang. */

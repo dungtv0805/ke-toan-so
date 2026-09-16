@@ -1,13 +1,19 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
   Put,
   Query,
+  Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { JwtGuard } from '@app/auth';
 import { TenantContextService } from '@app/core';
 import type {
@@ -212,10 +218,49 @@ export class PheDuyetController {
     return { success: true, data };
   }
 
-  /** Gắn hồ sơ/chứng từ kèm theo — mục 8. */
+  /** Gắn chứng từ đã có trên hệ thống — mục 8, hình thức "liên kết nội bộ". */
   @Post(':id/ho-so')
-  async themHoSo(@Param('id') id: string, @Body() body: HoSoPheDuyet) {
-    const data = await this.pheDuyet.themHoSo(id, body);
+  async themHoSo(
+    @Param('id') id: string,
+    @Body() body: Omit<HoSoPheDuyet, 'id' | 'nguon' | 'storageKey'>,
+  ) {
+    const data = await this.pheDuyet.themHoSoLienKet(id, body);
+    return { success: true, data };
+  }
+
+  /** Tải file hồ sơ lên — mục 8, hình thức "tải file". */
+  @Post(':id/ho-so/tai-len')
+  @UseInterceptors(FileInterceptor('file'))
+  async taiLenHoSo(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body()
+    body: { ten?: string; loai?: string; so?: string; ngayChungTu?: string },
+  ) {
+    const data = await this.pheDuyet.taiLenHoSo(id, file, body ?? {});
+    return { success: true, data };
+  }
+
+  @Get(':id/ho-so/:hoSoId/file')
+  async taiFileHoSo(
+    @Param('id') id: string,
+    @Param('hoSoId') hoSoId: string,
+    @Res() res: Response,
+  ) {
+    const { hoSo, stream } = await this.pheDuyet.docFileHoSo(id, hoSoId);
+    res.setHeader('Content-Type', hoSo.mimeType ?? 'application/octet-stream');
+    // `inline` để PDF và ảnh mở thẳng trong trình duyệt — người duyệt cần liếc
+    // qua hoá đơn chứ không phải tải về từng file.
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="${encodeURIComponent(hoSo.fileTen ?? hoSo.ten)}"`,
+    );
+    stream.pipe(res);
+  }
+
+  @Delete(':id/ho-so/:hoSoId')
+  async xoaHoSo(@Param('id') id: string, @Param('hoSoId') hoSoId: string) {
+    const data = await this.pheDuyet.xoaHoSo(id, hoSoId);
     return { success: true, data };
   }
 }

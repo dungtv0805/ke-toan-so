@@ -33,14 +33,24 @@ export interface BuocPheDuyet {
  * nội bộ tới chứng từ đã tạo trên hệ thống (`doiTuongIdLienKet`).
  */
 export interface HoSoPheDuyet {
+  /**
+   * Định danh riêng của dòng hồ sơ. Cần vì hồ sơ lưu nhúng trong mảng: dùng chỉ
+   * số mảng để tải/xoá file thì xoá một dòng ở giữa là mọi link phía sau trỏ
+   * sai file.
+   */
+  id: string;
   ten: string;
   loai?: string;
   so?: string;
   ngayChungTu?: Date;
   /** 'TAI_LEN' hoặc 'LIEN_KET_NOI_BO'. */
   nguon: 'TAI_LEN' | 'LIEN_KET_NOI_BO';
-  fileUrl?: string;
+  /** Khoá file trong GridFS bucket `phe_duyet_files` (chỉ khi nguon=TAI_LEN). */
+  storageKey?: string;
   fileTen?: string;
+  mimeType?: string;
+  size?: number;
+  /** ID chứng từ đã có trên hệ thống (chỉ khi nguon=LIEN_KET_NOI_BO). */
   doiTuongIdLienKet?: string;
   nguoiGanId?: string;
   nguoiGanTen?: string;

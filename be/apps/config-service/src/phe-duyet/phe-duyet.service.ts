@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,6 +9,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository, Repository } from 'typeorm';
 import { ObjectId } from 'mongodb';
 import { TenantContextService } from '@app/core';
+import { STORAGE_SERVICE } from '@app/storage';
+import type { StorageService } from '@app/storage';
 import {
   HoSoPheDuyet,
   KetQuaXuLy,
@@ -20,6 +23,7 @@ import { CauHinhPheDuyetService } from './cau-hinh.service';
 import { DongBoTrangThaiService } from './dong-bo-trang-thai.service';
 import { ThongBaoService } from './thong-bao.service';
 import { ViTriPheDuyetService } from './vi-tri.service';
+import { kiemTraFile } from './ho-so.helper';
 import {
   apDungDuyet,
   apDungTraLai,
@@ -67,6 +71,7 @@ export class PheDuyetService {
     private readonly thongBao: ThongBaoService,
     private readonly dongBo: DongBoTrangThaiService,
     private readonly tenantContext: TenantContextService,
+    @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
   ) {}
 
   private userId(): string {
@@ -464,18 +469,118 @@ export class PheDuyetService {
     return { phaiDuyetLai: true, truongDaDoi };
   }
 
-  /** Gắn hồ sơ/chứng từ kèm theo — mục 8. */
-  async themHoSo(id: string, hoSo: HoSoPheDuyet): Promise<QuyTrinhPheDuyet> {
+  /**
+   * Gắn CHỨNG TỪ NỘI BỘ đã có trên hệ thống — hình thức thứ hai của mục 8.
+   *
+   * Lưu bằng ID, không sao chép nội dung: chứng từ gốc sửa thì hồ sơ đính kèm
+   * trỏ sang bản mới, không giữ ảnh chụp cũ.
+   */
+  async themHoSoLienKet(
+    id: string,
+    hoSo: Omit<HoSoPheDuyet, 'id' | 'nguon' | 'storageKey'>,
+  ): Promise<QuyTrinhPheDuyet> {
     const qt = await this.chiTiet(id);
+    if (!hoSo.doiTuongIdLienKet) {
+      throw new BadRequestException('Thiếu chứng từ cần liên kết');
+    }
+    return this.ghiThemHoSo(qt, {
+      ...hoSo,
+      id: new ObjectId().toHexString(),
+      nguon: 'LIEN_KET_NOI_BO',
+    });
+  }
+
+  /** Tải file hồ sơ lên — hình thức thứ nhất của mục 8. */
+  async taiLenHoSo(
+    id: string,
+    file: Express.Multer.File,
+    thongTin: { ten?: string; loai?: string; so?: string; ngayChungTu?: string },
+  ): Promise<QuyTrinhPheDuyet> {
+    kiemTraFile(file);
+    const qt = await this.chiTiet(id);
+
+    const tenantId = this.tenantContext.getCurrentTenantId() ?? '';
+    const luu = await this.storage.save(file.buffer, {
+      filename: file.originalname,
+      mimeType: file.mimetype,
+      tenantId,
+    });
+
+    return this.ghiThemHoSo(qt, {
+      id: new ObjectId().toHexString(),
+      // Mục 8 đòi lưu TÊN hồ sơ; người dùng bỏ trống thì lấy tên file.
+      ten: thongTin.ten?.trim() || file.originalname,
+      loai: thongTin.loai,
+      so: thongTin.so,
+      ngayChungTu: thongTin.ngayChungTu
+        ? new Date(thongTin.ngayChungTu)
+        : undefined,
+      nguon: 'TAI_LEN',
+      storageKey: luu.storageKey,
+      fileTen: file.originalname,
+      mimeType: file.mimetype,
+      size: luu.size,
+    });
+  }
+
+  private async ghiThemHoSo(
+    qt: QuyTrinhPheDuyet,
+    hoSo: HoSoPheDuyet,
+  ): Promise<QuyTrinhPheDuyet> {
+    // Mục 8 đòi lưu người tải/gắn và thời điểm — đóng dấu ở server, không tin
+    // giá trị client gửi lên.
     qt.hoSo = [
       ...(qt.hoSo ?? []),
       {
         ...hoSo,
         nguoiGanId: this.userId(),
+        nguoiGanTen: this.tenantContext.getCurrentEmail(),
         thoiDiemGan: new Date(),
       },
     ];
     return this.quyTrinhRepo.save(qt);
+  }
+
+  /** Đọc file hồ sơ để tải về/xem. */
+  async docFileHoSo(
+    id: string,
+    hoSoId: string,
+  ): Promise<{ hoSo: HoSoPheDuyet; stream: NodeJS.ReadableStream }> {
+    const qt = await this.chiTiet(id);
+    const hoSo = (qt.hoSo ?? []).find((h) => h.id === hoSoId);
+    if (!hoSo) throw new NotFoundException('Không tìm thấy hồ sơ');
+    if (!hoSo.storageKey) {
+      throw new BadRequestException('Hồ sơ này là liên kết nội bộ, không có file');
+    }
+    const tenantId = this.tenantContext.getCurrentTenantId() ?? '';
+    return { hoSo, stream: await this.storage.stream(hoSo.storageKey, tenantId) };
+  }
+
+  /**
+   * Gỡ hồ sơ.
+   *
+   * KHÔNG cho gỡ khi nghiệp vụ đã chính thức: hồ sơ là căn cứ của chữ ký đã
+   * đặt, gỡ đi là phá mất vết kiểm toán (mục 8 đòi truy được phiên bản hồ sơ
+   * đã được duyệt).
+   */
+  async xoaHoSo(id: string, hoSoId: string): Promise<QuyTrinhPheDuyet> {
+    const qt = await this.chiTiet(id);
+    if (qt.trangThai === 'CHINH_THUC' || qt.trangThai === 'DA_KIEM_SOAT') {
+      throw new BadRequestException(
+        'Nghiệp vụ đã phê duyệt xong, không gỡ được hồ sơ đã dùng làm căn cứ duyệt.',
+      );
+    }
+
+    const hoSo = (qt.hoSo ?? []).find((h) => h.id === hoSoId);
+    if (!hoSo) throw new NotFoundException('Không tìm thấy hồ sơ');
+
+    qt.hoSo = (qt.hoSo ?? []).filter((h) => h.id !== hoSoId);
+    const daLuu = await this.quyTrinhRepo.save(qt);
+
+    // Xoá file sau khi đã lưu bản ghi: ngược lại mà lưu hỏng thì mất file mà
+    // dòng hồ sơ vẫn còn, bấm xem ra lỗi.
+    if (hoSo.storageKey) await this.storage.delete(hoSo.storageKey);
+    return daLuu;
   }
 
   /**

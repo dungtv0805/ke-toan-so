@@ -7,7 +7,6 @@ import {
   Drawer,
   Empty,
   Input,
-  List,
   Space,
   Spin,
   Table,
@@ -19,16 +18,12 @@ import type { ColumnsType } from "antd/es/table";
 import {
   CheckOutlined,
   CloseOutlined,
-  LinkOutlined,
   PaperClipOutlined,
   RollbackOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
-import type {
-  BuocPheDuyet,
-  HoSoPheDuyet,
-  LichSuPheDuyet,
-} from "@/services/pheDuyetService";
+import type { BuocPheDuyet, LichSuPheDuyet } from "@/services/pheDuyetService";
+import { HoSoDinhKem } from "../ho-so/HoSoDinhKem";
 import { formatCurrency } from "@/pages/chung-tu/phieu/lib/format";
 import {
   dinhDangThoiLuong,
@@ -233,41 +228,14 @@ export function ChiTietDrawer() {
             <Divider titlePlacement="start" plain>
               <PaperClipOutlined /> Hồ sơ / chứng từ kèm theo
             </Divider>
-            {!chiTiet.hoSo?.length ? (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có hồ sơ đính kèm" />
-            ) : (
-              <List<HoSoPheDuyet>
-                size="small"
-                bordered
-                dataSource={chiTiet.hoSo}
-                renderItem={(h) => (
-                  <List.Item
-                    actions={[
-                      h.fileUrl ? (
-                        <a href={h.fileUrl} target="_blank" rel="noreferrer">
-                          Xem file
-                        </a>
-                      ) : h.doiTuongIdLienKet ? (
-                        <Tag icon={<LinkOutlined />}>Chứng từ nội bộ</Tag>
-                      ) : null,
-                    ]}
-                  >
-                    <List.Item.Meta
-                      title={h.ten}
-                      description={[
-                        h.loai,
-                        h.so && `số ${h.so}`,
-                        h.ngayChungTu && dayjs(h.ngayChungTu).format("DD/MM/YYYY"),
-                        h.nguoiGanTen && `gắn bởi ${h.nguoiGanTen}`,
-                        h.thoiDiemGan && dayjs(h.thoiDiemGan).format("DD/MM/YYYY HH:mm"),
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    />
-                  </List.Item>
-                )}
-              />
-            )}
+            <HoSoDinhKem
+              quyTrinh={chiTiet}
+              onThayDoi={(moi) => handler.executeEvent("capNhatChiTiet", { quyTrinh: moi })}
+              chiXem={
+                chiTiet.trangThai === "CHINH_THUC" ||
+                chiTiet.trangThai === "DA_KIEM_SOAT"
+              }
+            />
           </div>
 
           <div>

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '@app/database';
+import { StorageModule } from '@app/storage';
 import {
   CauHinhPheDuyet,
   ChungTu,
@@ -39,6 +40,9 @@ import { ViTriPheDuyetService } from './vi-tri.service';
       VaiTro,
       ChungTu,
     ]),
+    // Bucket GridFS RIÊNG: file hồ sơ phê duyệt không lẫn với thư viện tài
+    // liệu (`tai_lieu_files`) hay file hợp đồng.
+    StorageModule.forBucket('phe_duyet_files'),
   ],
   controllers: [PheDuyetController, ThongBaoController],
   providers: [

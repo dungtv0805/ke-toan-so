@@ -23,6 +23,8 @@ interface Kho {
   quyTrinh: Partial<QuyTrinhPheDuyet>[];
   thongBao: { userId: string; loai: string }[];
   daGhiTrangThai: { doiTuongId: string; trangThai: string }[];
+  fileDaLuu: string[];
+  fileDaXoa: string[];
 }
 
 function dungService(opts: {
@@ -36,6 +38,8 @@ function dungService(opts: {
     quyTrinh: opts.quyTrinh ?? [],
     thongBao: [],
     daGhiTrangThai: [],
+    fileDaLuu: [],
+    fileDaXoa: [],
   };
 
   const nguoiTheoViTri =
@@ -85,6 +89,16 @@ function dungService(opts: {
     {
       getCurrentUserId: () => opts.userId,
       getCurrentEmail: () => `${opts.userId}@x.vn`,
+      getCurrentTenantId: () => 't1',
+    } as never,
+    {
+      save: async (_b: Buffer, o: { filename: string }) => {
+        const key = `key-${o.filename}`;
+        kho.fileDaLuu.push(key);
+        return { storageKey: key, size: 123 };
+      },
+      stream: async () => ({}) as never,
+      delete: async (k: string) => kho.fileDaXoa.push(k),
     } as never,
   );
 
@@ -385,5 +399,122 @@ describe('sauKhiSua — nghiệm thu 8: sửa trọng yếu thì phải duyệt 
     const { service } = dungService({ userId: 'x', viTriCuaToi: [], quyTrinh: [] });
     const kq = await service.sauKhiSua('CHUNG_TU', 'ct-la', goc, { ...goc, soTien: 999 });
     expect(kq).toEqual({ phaiDuyetLai: false, truongDaDoi: [] });
+  });
+});
+
+
+describe('hồ sơ đính kèm — nghiệm thu 6 (mục 8)', () => {
+  const file = (over: Partial<Express.Multer.File> = {}) =>
+    ({
+      originalname: 'hoa-don-123.pdf',
+      mimetype: 'application/pdf',
+      size: 2048,
+      buffer: Buffer.from('x'),
+      ...over,
+    }) as Express.Multer.File;
+
+  const dangCho = (): Partial<QuyTrinhPheDuyet> => ({
+    id: ID_QT,
+    doiTuongId: 'ct1',
+    loaiDoiTuong: 'CHUNG_TU',
+    trangThai: 'CHO_PHE_DUYET',
+    phienBan: 1,
+    hoSo: [],
+    buoc: [
+      { thuTu: 1, viTriTen: 'Phụ trách phòng ban', batBuoc: true, trangThai: 'DANG_CHO', batDauCho: new Date() },
+    ] as never,
+  });
+
+  it('tải file lên: lưu vào kho file và ghi đủ trường mục 8 liệt kê', async () => {
+    const { service, kho } = dungService({
+      userId: 'ke-toan',
+      viTriCuaToi: [],
+      quyTrinh: [dangCho()],
+    });
+
+    const qt = await service.taiLenHoSo(ID_QT, file(), {
+      ten: 'Hóa đơn GTGT',
+      loai: 'Hóa đơn',
+      so: '0001234',
+      ngayChungTu: '2026-09-10',
+    });
+
+    expect(kho.fileDaLuu).toEqual(['key-hoa-don-123.pdf']);
+    expect(qt.hoSo).toHaveLength(1);
+    expect(qt.hoSo[0]).toMatchObject({
+      ten: 'Hóa đơn GTGT',
+      loai: 'Hóa đơn',
+      so: '0001234',
+      nguon: 'TAI_LEN',
+      fileTen: 'hoa-don-123.pdf',
+      mimeType: 'application/pdf',
+      nguoiGanId: 'ke-toan',
+    });
+    expect(qt.hoSo[0].id).toBeTruthy();
+    expect(qt.hoSo[0].thoiDiemGan).toBeInstanceOf(Date);
+  });
+
+  it('bỏ trống tên thì lấy tên file, không để hồ sơ không tên', async () => {
+    const { service } = dungService({ userId: 'x', viTriCuaToi: [], quyTrinh: [dangCho()] });
+    const qt = await service.taiLenHoSo(ID_QT, file(), {});
+    expect(qt.hoSo[0].ten).toBe('hoa-don-123.pdf');
+  });
+
+  it('file sai định dạng bị chặn TRƯỚC khi ghi vào kho file', async () => {
+    const { service, kho } = dungService({ userId: 'x', viTriCuaToi: [], quyTrinh: [dangCho()] });
+    await expect(
+      service.taiLenHoSo(ID_QT, file({ mimetype: 'application/x-msdownload' }), {}),
+    ).rejects.toThrow(/không hỗ trợ/i);
+    expect(kho.fileDaLuu).toEqual([]);
+  });
+
+  it('người gắn và thời điểm đóng dấu ở server, không tin client gửi lên', async () => {
+    const { service } = dungService({ userId: 'that-su-la-toi', viTriCuaToi: [], quyTrinh: [dangCho()] });
+    const qt = await service.themHoSoLienKet(ID_QT, {
+      ten: 'Phiếu chi PC001',
+      doiTuongIdLienKet: 'ct-khac',
+      nguoiGanId: 'gia-mao',
+      nguoiGanTen: 'Kẻ khác',
+    } as never);
+    expect(qt.hoSo[0].nguoiGanId).toBe('that-su-la-toi');
+  });
+
+  it('liên kết nội bộ mà không có chứng từ đích thì bị chặn', async () => {
+    const { service } = dungService({ userId: 'x', viTriCuaToi: [], quyTrinh: [dangCho()] });
+    await expect(
+      service.themHoSoLienKet(ID_QT, { ten: 'Rỗng' } as never),
+    ).rejects.toThrow(/thiếu chứng từ/i);
+  });
+
+  it('gỡ hồ sơ khi còn chờ duyệt: xoá cả dòng lẫn file', async () => {
+    const { service, kho } = dungService({ userId: 'x', viTriCuaToi: [], quyTrinh: [dangCho()] });
+    const sauKhiThem = await service.taiLenHoSo(ID_QT, file(), {});
+    const hoSoId = sauKhiThem.hoSo[0].id;
+
+    const qt = await service.xoaHoSo(ID_QT, hoSoId);
+    expect(qt.hoSo).toHaveLength(0);
+    expect(kho.fileDaXoa).toEqual(['key-hoa-don-123.pdf']);
+  });
+
+  it('KHÔNG gỡ được hồ sơ của nghiệp vụ đã chính thức — phá vết kiểm toán', async () => {
+    const q = dangCho();
+    q.trangThai = 'CHINH_THUC';
+    q.hoSo = [{ id: 'hs1', ten: 'Hóa đơn', nguon: 'TAI_LEN', storageKey: 'k1' }] as never;
+
+    const { service, kho } = dungService({ userId: 'x', viTriCuaToi: [], quyTrinh: [q] });
+    await expect(service.xoaHoSo(ID_QT, 'hs1')).rejects.toThrow(/đã phê duyệt xong/i);
+    expect(kho.fileDaXoa).toEqual([]);
+  });
+
+  it('gỡ hồ sơ không tồn tại thì báo không tìm thấy', async () => {
+    const { service } = dungService({ userId: 'x', viTriCuaToi: [], quyTrinh: [dangCho()] });
+    await expect(service.xoaHoSo(ID_QT, 'khong-co')).rejects.toThrow(/không tìm thấy/i);
+  });
+
+  it('xin file của hồ sơ liên kết nội bộ thì báo rõ là không có file', async () => {
+    const q = dangCho();
+    q.hoSo = [{ id: 'hs1', ten: 'PC001', nguon: 'LIEN_KET_NOI_BO', doiTuongIdLienKet: 'ct9' }] as never;
+    const { service } = dungService({ userId: 'x', viTriCuaToi: [], quyTrinh: [q] });
+    await expect(service.docFileHoSo(ID_QT, 'hs1')).rejects.toThrow(/liên kết nội bộ/i);
   });
 });
