@@ -159,6 +159,16 @@ Bán hàng (lệch sheet "Menu tài chính"). Thứ tự ưu tiên khi vào `/th
 | Thanh vien | `/cau-hinh/thanh-vien` | ACTIVE | config:3007 |
 | Tenant | `/cau-hinh/tenant` | ACTIVE | master-data:3002 |
 | Linh vuc | `/cau-hinh/linh-vuc` | ACTIVE (SuperAdmin) | master-data:3002 |
+| Thiet lap phe duyet | `/cau-hinh/phe-duyet` | ACTIVE | config:3007 |
+
+### PHE DUYET NGHIEP VU (nam trong phan he Tong hop tren sidebar)
+| Menu Item | Route | Status | API |
+|-----------|-------|--------|-----|
+| Cho toi duyet | `/phe-duyet/cho-toi-duyet` | ACTIVE | config:3007 |
+| Toc do xu ly | `/phe-duyet/bao-cao-toc-do` | ACTIVE | config:3007 |
+
+Chi tiet mot nghiep vu mo bang `?id=` tren chinh trang Cho toi duyet (khong co
+route rieng). Chuong thong bao tren thanh tieu de la loi vao hang ngay.
 
 ## Summary
 

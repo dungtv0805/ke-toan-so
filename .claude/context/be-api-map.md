@@ -398,3 +398,48 @@ Same pattern as /phai-thu (with summary-by-supplier instead)
 **loaiPhieu values:** `NK` (Nhập kho — mẫu 01-VT), `XK` (Xuất kho — mẫu 02-VT), `CK` (Chuyển kho — mẫu 03XKNB3)
 
 **Collections:** `phieu_kho`, `phieu_kho_sequence` (auto-increment so phieu per loaiPhieu)
+
+## Phê duyệt nghiệp vụ (config-service 3007)
+
+Engine phê duyệt nhiều cấp theo `docs/Yeu_cau_chuc_nang_phe_duyet_nghiep_vu_Master_CEO.docx`.
+Đặt ở config-service vì danh mục Vị trí phân quyền (`vai_tro`) và người dùng ở đây.
+Gateway đã route sẵn `/config/*` nên KHÔNG phải sửa gateway.
+
+### /phe-duyet
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /phe-duyet/cau-hinh | Ma trận mục 4: danh sách vị trí của công ty + cấu hình từng loại nghiệp vụ |
+| PUT | /phe-duyet/cau-hinh | Lưu luồng duyệt của MỘT loại nghiệp vụ (`loaiNghiepVuMa` = `loai_giao_dich.ma`) |
+| GET | /phe-duyet/vi-tri | Danh sách vị trí + ai đang đảm nhiệm |
+| PUT | /phe-duyet/vi-tri | Ghi đè toàn bộ danh sách người của MỘT vị trí |
+| POST | /phe-duyet/gui-duyet | Sinh quy trình, mở cấp 1, bắn thông báo (mục 5) |
+| GET | /phe-duyet/cho-toi-duyet | Chỉ nghiệp vụ đang đến lượt vị trí tôi giữ (mục 6) |
+| POST | /phe-duyet/trang-thai | Trạng thái hàng loạt theo `doiTuongIds` — lưới chứng từ gọi 1 lần/trang |
+| POST | /phe-duyet/sau-khi-sua | voucher-service gọi khi chứng từ bị sửa (mục 11) |
+| GET | /phe-duyet/bao-cao-toc-do | Báo cáo tốc độ xử lý (mục 15) |
+| GET | /phe-duyet/theo-doi-tuong/:doiTuongId | Quy trình theo ID nghiệp vụ gốc |
+| GET | /phe-duyet/:id | Chi tiết + lịch sử (mục 7) |
+| POST | /phe-duyet/:id/duyet | Duyệt, mở cấp kế |
+| POST | /phe-duyet/:id/tra-lai | Yêu cầu bổ sung — BẮT BUỘC có `yKien` |
+| POST | /phe-duyet/:id/tu-choi | Từ chối — BẮT BUỘC có `yKien` |
+| POST | /phe-duyet/:id/ho-so | Gắn hồ sơ/chứng từ kèm theo (mục 8) |
+
+### /thong-bao
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /thong-bao | 30 thông báo mới nhất của tôi |
+| GET | /thong-bao/chua-doc | Số chưa đọc (chuông hỏi mỗi 60 giây) |
+| POST | /thong-bao/:id/da-doc | Đánh dấu đã đọc |
+| POST | /thong-bao/da-doc-tat-ca | Đánh dấu đã đọc hết |
+
+**Collections:** `cau_hinh_phe_duyet`, `vi_tri_phe_duyet_nguoi_dung`,
+`quy_trinh_phe_duyet`, `lich_su_phe_duyet` (chỉ ghi thêm), `thong_bao`.
+
+**Ảnh hưởng tới voucher-service:** `chung_tu` có thêm `trangThaiPheDuyet` +
+`phienBanPheDuyet`. Mọi `$match` trong `nhat-ky-chung.service.ts` đi qua
+`apDungLocPheDuyet()` — mặc định CHỈ trả chứng từ `CHINH_THUC` hoặc chứng từ cũ
+(không có trường). Màn nhập liệu truyền `baoGomChuaDuyet=1` để thấy phiếu nháp.
+config-service GHI THẲNG cột trạng thái xuống `chung_tu` (chung 1 MongoDB),
+không qua HTTP — xem `DongBoTrangThaiService`.
+
+**BẮT BUỘC khi deploy:** chạy `be/scripts/backfill-trang-thai-phe-duyet.js`.
