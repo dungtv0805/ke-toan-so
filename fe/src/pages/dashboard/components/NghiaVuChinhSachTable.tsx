@@ -3,6 +3,11 @@ import { Card, Table, Skeleton, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useQuery } from '@tanstack/react-query';
 import { taxReportService } from '@/services/taxService';
+import {
+  dinhDangSoNghiaVu as fmt,
+  kieuDongNghiaVu,
+  KIEU_O_TIEU_DE_NHOM,
+} from '@/lib/bangNghiaVu';
 
 interface Props {
   year: number;
@@ -19,21 +24,6 @@ interface FlatRow {
   q4: number;
   luyKe: number;
 }
-
-const nf = new Intl.NumberFormat('vi-VN');
-const fmt = (v: number) => (v ? nf.format(v) : '');
-
-// Dòng tổng/derived + chi phí không được trừ → in đậm.
-const BOLD_ROWS = new Set([
-  'Tổng CP phát sinh',
-  'Lợi nhuận trước thuế',
-  'Thu nhập tính thuế',
-  'Lợi nhuận sau thuế',
-  'Chi phí không được trừ',
-]);
-// Dòng chữ đỏ (đậm): "... phải nộp" + "Chi phí không được trừ".
-const isRedRow = (chiTieu: string) =>
-  chiTieu.includes('phải nộp') || chiTieu === 'Chi phí không được trừ';
 
 const NghiaVuChinhSachTable: React.FC<Props> = ({ year }) => {
   const { data, isLoading } = useQuery({
@@ -84,10 +74,7 @@ const NghiaVuChinhSachTable: React.FC<Props> = ({ year }) => {
         width: 48,
         onCell: (row) =>
           row.isHeader
-            ? {
-                colSpan: 7,
-                style: { background: 'hsl(var(--muted) / 0.5)' },
-              }
+            ? { colSpan: 7, style: KIEU_O_TIEU_DE_NHOM }
             : {},
         render: (v: string, row) =>
           row.isHeader ? (
@@ -134,18 +121,9 @@ const NghiaVuChinhSachTable: React.FC<Props> = ({ year }) => {
           size="small"
           bordered
           scroll={{ x: 'max-content' }}
-          onRow={(row) => {
-            if (row.isHeader) return {};
-            const red = isRedRow(row.chiTieu);
-            const bold = red || BOLD_ROWS.has(row.chiTieu);
-            if (!bold && !red) return {};
-            return {
-              style: {
-                ...(bold ? { fontWeight: 600 } : {}),
-                ...(red ? { color: 'hsl(var(--red))' } : {}),
-              },
-            };
-          }}
+          onRow={(row) =>
+            row.isHeader ? {} : { style: kieuDongNghiaVu(row.chiTieu) }
+          }
         />
       )}
     </Card>

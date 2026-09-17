@@ -234,4 +234,31 @@ describe('BaoCaoTNDNPage', () => {
     expect(within(rTncn).getAllByRole('spinbutton').length).toBe(4);
     expect(within(rTncn).getAllByText('Tổng: 3.500.000').length).toBe(2);
   });
+
+  it('trình bày y hệt bảng ở Tổng quan', async () => {
+    const { container } = render(<BaoCaoTNDNPage />);
+    await waitFor(() => expect(screen.getByText('THUẾ TNDN')).toBeTruthy());
+
+    // 1. Ô bằng 0 để TRỐNG, không in "0" — quý 1/3/4 của "Giá vốn" đều rỗng.
+    const oGiaVon = [...dong('Giá vốn').querySelectorAll('td')].map((td) =>
+      td.textContent?.trim(),
+    );
+    expect(oGiaVon).toEqual(['2', 'Giá vốn', '', '', '', '', '']);
+
+    // 2. Dòng "… phải nộp" in đỏ, dòng tổng in đậm.
+    expect(dong('Thuế TNDN phải nộp').getAttribute('style')).toContain('--red');
+    expect(dong('VAT còn phải nộp').getAttribute('style')).toContain('--red');
+    expect(dong('Tổng CP phát sinh').getAttribute('style')).toContain('font-weight: 600');
+    expect(dong('Giá vốn').getAttribute('style') || '').not.toContain('--red');
+
+    // 3. Tiêu đề phân hệ: một ô gộp trọn bảng, nền xám, chữ căn giữa.
+    const oTieuDe = screen.getByText('THUẾ GTGT').closest('td')!;
+    expect(oTieuDe.getAttribute('colspan')).toBe('7');
+    expect(oTieuDe.getAttribute('style')).toContain('text-align: center');
+
+    // 4. Không còn cột Ghi chú và dòng Thuế suất — bảng ở Tổng quan không có.
+    expect(screen.queryByText('Ghi chú')).toBeNull();
+    expect(screen.queryByText('Thuế suất TNDN')).toBeNull();
+    expect(container.querySelectorAll('thead th').length).toBe(7);
+  });
 });
