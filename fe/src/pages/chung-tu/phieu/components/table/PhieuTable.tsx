@@ -11,7 +11,8 @@ import { toast } from "sonner";
 import { usePhieuState, usePhieuHandler, usePhieuConfig } from "../../PhieuHandlerContext";
 import { formatCurrency } from "../../lib/format";
 import { usePrintPhieu } from "../../lib/usePrintPhieu";
-import { ChungTu } from "@/types";
+import { ChungTu, type NhatKyChung } from "@/types";
+import { PheDuyetCell } from "@/pages/chung-tu/nhat-ky-chung/components/PheDuyetCell";
 
 const { Text } = Typography;
 
@@ -141,6 +142,20 @@ export function usePhieuTableColumns(): ColumnType<ChungTu>[] {
             </Tooltip>
           </Popconfirm>
         </Space>
+      ),
+    },
+    {
+      // Cùng ô "Phê duyệt" với màn Dữ liệu tổng hợp — hai màn cùng thao tác trên
+      // `chung_tu` nên phải cùng cách gửi duyệt và cùng cách hiện trạng thái.
+      title: "Phê duyệt",
+      key: "pheDuyet",
+      align: "center" as const,
+      width: 150,
+      render: (_: unknown, row: ChungTu) => (
+        <PheDuyetCell
+          entry={row as unknown as NhatKyChung}
+          onSaved={() => handler.executeEvent("refresh", {})}
+        />
       ),
     },
   ];

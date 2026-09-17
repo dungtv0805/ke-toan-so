@@ -12,6 +12,17 @@ import { SummaryTabs } from "./components/summary/SummaryTabs";
 import { TemplateModal } from "./components/template-modal/TemplateModal";
 import { ImportExcelModal } from "./import/ImportExcelModal";
 import { useTableTitleConfig } from "@/components/glossary/useTableTitleConfig";
+import { diTruCot } from "@/components/table/diTruCot";
+
+/**
+ * Bảng phiếu thu/chi có thêm cột "Phê duyệt" → phải nâng phiên bản khoá ẩn/hiện
+ * cột, nếu không ai từng mở "Chọn cột" sẽ không bao giờ thấy cột mới
+ * (`useTableTitleConfig` lưu danh sách key ĐƯỢC HIỆN, y như bảng Nhật ký chung).
+ * `diTruCot` chép lựa chọn cũ sang nên không ai bị đổ lại toàn bộ cột.
+ */
+const PHIEU_COT_KEY = "chungTu.phieu";
+const PHIEU_COT_VER = "v2";
+diTruCot(PHIEU_COT_KEY, `${PHIEU_COT_KEY}.${PHIEU_COT_VER}`, ["pheDuyet"]);
 
 function PhieuListPageInner() {
   const handler = usePhieuHandler();
@@ -19,7 +30,9 @@ function PhieuListPageInner() {
   const [importModalOpen, setImportModalOpen] = usePhieuState("importModalOpen", false);
 
   const rawColumns = usePhieuTableColumns();
-  const { columns: cfgColumns, settingsButton } = useTableTitleConfig('chungTu.phieu', rawColumns);
+  const { columns: cfgColumns, settingsButton } = useTableTitleConfig(PHIEU_COT_KEY, rawColumns, {
+    visibilityVersion: PHIEU_COT_VER,
+  });
 
   useEffect(() => {
     handler.executeEvent("init", { config });

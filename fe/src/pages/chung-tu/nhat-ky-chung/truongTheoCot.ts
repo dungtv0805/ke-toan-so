@@ -1,3 +1,5 @@
+import { diTruCot } from "@/components/table/diTruCot";
+
 /**
  * Bảng "Dữ liệu tổng hợp" hiện cột nào thì trang Thêm/Sửa chứng từ hiện đúng
  * những ô đó.
@@ -8,7 +10,21 @@
  * Nguồn dữ liệu là lựa chọn cột đã lưu của bảng danh sách (localStorage, khoá
  * `NKC_COT_PAGE_KEY`), nên hai màn không bao giờ lệch nhau.
  */
-export const NKC_COT_PAGE_KEY = "nkc.entryList.v3";
+const NKC_COT_PAGE_KEY_CU = "nkc.entryList.v3";
+
+/**
+ * Nâng lên `.v4` vì bảng có thêm cột "Phê duyệt".
+ *
+ * Lựa chọn cột lưu theo danh sách key ĐƯỢC HIỆN, nên cột mới không thể có trong
+ * danh sách người dùng đã lưu — giữ nguyên khoá thì ai từng mở "Chọn cột" sẽ
+ * không bao giờ thấy cột mới, và cũng không có cách nào tự bật lên.
+ *
+ * `diTruCot` chép lựa chọn từ `.v3` sang và chỉ thêm đúng cột mới, nên khác các
+ * lần nâng khoá trước: người dùng KHÔNG bị đổ lại hơn 40 cột.
+ */
+export const NKC_COT_PAGE_KEY = "nkc.entryList.v4";
+
+diTruCot(NKC_COT_PAGE_KEY_CU, NKC_COT_PAGE_KEY, ["pheDuyet"]);
 
 /**
  * Ô trong trang Thêm/Sửa (key cột của bảng chi tiết, hoặc tên trường ở phần đầu
