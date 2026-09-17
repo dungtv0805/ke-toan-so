@@ -15,6 +15,7 @@ import {
   taxReportService,
   BaoCaoTNDN,
   DieuChinhThue,
+  NghiaVuChinhSach,
   TNDNQuyData,
 } from "@/services/taxService";
 import { usePagePermission } from "@/hooks/usePagePermission";
@@ -38,17 +39,26 @@ const autoTotalStyle: React.CSSProperties = {
   textOverflow: "ellipsis",
 };
 
-type CalcKey = keyof TNDNQuyData;
 type InputKey = keyof Omit<DieuChinhThue, "nam">;
 
 interface RowDef {
   key: string;
   tt?: string;
   label: string;
-  kind: "calc" | "input" | "rate" | "section";
-  calcKey?: CalcKey;
+  kind: "calc" | "input" | "rate" | "section" | "nvcs";
+  /** kind 'calc': lấy số từ báo cáo TNDN (dùng được cho cả 1 quý lẫn dòng lũy kế). */
+  sel?: (q: TNDNQuyData) => number;
+  /** kind 'input': field trong bản ghi điều chỉnh thuế. */
   inputKey?: InputKey;
+  /** kind 'nvcs': số lấy thẳng từ bảng nghĩa vụ chính sách. */
+  vals?: number[];
+  valLuyKe?: number;
+  /** kind 'input': dòng "Tổng:" dưới ô nhập, khi nguồn không phải cpKhongTruAuto. */
+  tongVals?: number[];
+  tongLuyKe?: number;
   strong?: boolean;
+  /** Thụt vào — dòng chi tiết nằm dưới một dòng tổng. */
+  indent?: boolean;
   note?: string;
 }
 
@@ -60,35 +70,40 @@ const NHOM_INDEX: Record<string, number> = {
   cpkdtTaiChinhKhac: 3,
 };
 
-const ROWS: RowDef[] = [
-  { key: "r1", tt: "1", label: "Doanh thu thuần bán hàng", kind: "calc", calcKey: "dt511", note: "Có TK 511" },
-  { key: "r2", tt: "2", label: "Doanh thu tài chính, lãi tiền gửi/cho vay", kind: "calc", calcKey: "dt515", note: "Có TK 515" },
-  { key: "r3", tt: "3", label: "Thu nhập chịu thuế TNDN khác", kind: "calc", calcKey: "dt711", note: "Có TK 711" },
-  { key: "r4", tt: "4", label: "Giá vốn hàng bán", kind: "calc", calcKey: "cp632", note: "Nợ TK 632" },
-  { key: "r5", tt: "5", label: "Chi phí bán hàng", kind: "calc", calcKey: "cp641", note: "Nợ TK 641" },
-  { key: "r6", tt: "6", label: "Chi phí quản lý doanh nghiệp", kind: "calc", calcKey: "cp642", note: "Nợ TK 642" },
-  { key: "r7", tt: "7", label: "Chi phí khác", kind: "calc", calcKey: "cp811", note: "Nợ TK 811" },
-  { key: "rTong", label: "Tổng chi phí ghi nhận", kind: "calc", calcKey: "tongChiPhi", strong: true, note: "632+641+642+811" },
-  { key: "rA", tt: "A", label: "Lợi nhuận kế toán trước thuế", kind: "calc", calcKey: "lnTruocThue", strong: true },
-  { key: "sec1", label: "Các khoản chi phí không được trừ", kind: "section" },
-  { key: "i1", tt: "1", label: "Chi phí dịch vụ, hàng hóa mua vào", kind: "input", inputKey: "cpkdtDichVuHangHoa" },
-  { key: "i2", tt: "2", label: "Chi phí về TSCĐ, CCDC, CPTT", kind: "input", inputKey: "cpkdtTscdCcdc" },
-  { key: "i3", tt: "3", label: "Chi phí nhân công, bảo hiểm", kind: "input", inputKey: "cpkdtNhanCong" },
-  { key: "i4", tt: "4", label: "Chi phí tài chính, chi phí khác", kind: "input", inputKey: "cpkdtTaiChinhKhac" },
+/**
+ * Nhóm THUẾ TNDN — dựng theo đúng bố cục bảng "Tình hình thực hiện nghĩa vụ
+ * chính sách" ở Tổng quan (11 chỉ tiêu, doanh thu gộp 511+515+711), chỉ khác là
+ * chèn thêm các ô nhập điều chỉnh vì đây là nơi duy nhất nhập được.
+ */
+const ROWS_TNDN: RowDef[] = [
+  { key: "sec-tndn", label: "THUẾ TNDN", kind: "section" },
+  { key: "r1", tt: "1", label: "Doanh thu thuần", kind: "calc", sel: (q) => q.dt511 + q.dt515 + q.dt711, note: "Có TK 511 + 515 + 711" },
+  { key: "r2", tt: "2", label: "Giá vốn", kind: "calc", sel: (q) => q.cp632, note: "Nợ TK 632" },
+  { key: "r3", tt: "3", label: "Chi phí bán hàng", kind: "calc", sel: (q) => q.cp641, note: "Nợ TK 641" },
+  { key: "r4", tt: "4", label: "Chi phí quản lý", kind: "calc", sel: (q) => q.cp642, note: "Nợ TK 642" },
+  { key: "r5", tt: "5", label: "Chi phí khác", kind: "calc", sel: (q) => q.cp811, note: "Nợ TK 811" },
+  { key: "r6", tt: "6", label: "Tổng CP phát sinh", kind: "calc", sel: (q) => q.tongChiPhi, strong: true, note: "632 + 641 + 642 + 811" },
+  { key: "r7", tt: "7", label: "Lợi nhuận trước thuế", kind: "calc", sel: (q) => q.lnTruocThue, strong: true },
+  { key: "r8", tt: "8", label: "Chi phí không được trừ", kind: "calc", sel: (q) => q.chiPhiKhongTru, strong: true, note: "Tự tính từ chứng từ + số nhập thêm bên dưới" },
+  { key: "i1", label: "Chi phí dịch vụ, hàng hóa mua vào", kind: "input", inputKey: "cpkdtDichVuHangHoa", indent: true },
+  { key: "i2", label: "Chi phí về TSCĐ, CCDC, CPTT", kind: "input", inputKey: "cpkdtTscdCcdc", indent: true },
+  { key: "i3", label: "Chi phí nhân công, bảo hiểm", kind: "input", inputKey: "cpkdtNhanCong", indent: true },
+  { key: "i4", label: "Chi phí tài chính, chi phí khác", kind: "input", inputKey: "cpkdtTaiChinhKhac", indent: true },
   { key: "iMien", label: "Thu nhập miễn thuế", kind: "input", inputKey: "thuNhapMienThue" },
   { key: "iLo", label: "Lỗ được chuyển", kind: "input", inputKey: "loDuocChuyen" },
-  { key: "rB", tt: "B", label: "Thu nhập tính thuế TNDN", kind: "calc", calcKey: "thuNhapTinhThue", strong: true, note: "LN trước thuế + CP không trừ − TN miễn − lỗ chuyển" },
+  { key: "r9", tt: "9", label: "Thu nhập tính thuế", kind: "calc", sel: (q) => q.thuNhapTinhThue, strong: true, note: "LN trước thuế + CP không trừ − TN miễn − lỗ chuyển" },
   { key: "rRate", label: "Thuế suất TNDN", kind: "rate", note: "Bậc thang theo doanh thu lũy kế" },
-  { key: "rThue", tt: "16", label: "Thuế TNDN hiện hành phải nộp", kind: "calc", calcKey: "thueTNDN", strong: true },
-  { key: "rLnST", tt: "17", label: "Lợi nhuận sau thuế", kind: "calc", calcKey: "lnSauThue", strong: true },
-  { key: "sec2", label: "Nghĩa vụ ngân sách khác — đã tự lấy từ sổ, ô dưới chỉ nhập phần điều chỉnh thêm", kind: "section" },
-  { key: "iTNCN", label: "Thuế TNCN phải nộp", kind: "input", inputKey: "thueTNCN", note: "Tự lấy Có TK 3335 + số nhập thêm" },
-  { key: "iBhxh", label: "Bảo hiểm xã hội (3383)", kind: "input", inputKey: "bhxh3383", note: "Tự lấy Có TK 3383 + số nhập thêm" },
-  { key: "iBhyt", label: "Bảo hiểm y tế (3384)", kind: "input", inputKey: "bhyt3384", note: "Tự lấy Có TK 3384 + số nhập thêm" },
-  // inputKey giữ tên cũ bhtn3386 (khỏi phải chuyển dữ liệu đã lưu); nguồn tự
-  // tính là TK 3385 — theo hệ thống tài khoản, 3386 là nhận ký quỹ, ký cược.
-  { key: "iBhtn", label: "Bảo hiểm thất nghiệp (3385)", kind: "input", inputKey: "bhtn3386", note: "Tự lấy Có TK 3385 + số nhập thêm" },
+  { key: "r10", tt: "10", label: "Thuế TNDN phải nộp", kind: "calc", sel: (q) => q.thueTNDN, strong: true },
+  { key: "r11", tt: "11", label: "Lợi nhuận sau thuế", kind: "calc", sel: (q) => q.lnSauThue, strong: true },
 ];
+
+/** Ghi chú cho các dòng GTGT — dựng động từ API nên tra theo tên chỉ tiêu. */
+const GHI_CHU_GTGT: Record<string, string> = {
+  "VAT còn kỳ trước": "Số còn được khấu trừ chuyển sang từ quý trước",
+  "VAT bán ra": "Bảng kê bán ra",
+  "VAT mua vào": "Bảng kê mua vào",
+  "VAT còn phải nộp": "VAT bán ra − VAT mua vào",
+};
 
 const BaoCaoTNDNPage: React.FC = () => {
   const { canEdit } = usePagePermission("/thue/bao-cao-tndn");
@@ -97,16 +112,19 @@ const BaoCaoTNDNPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [bao, setBao] = useState<BaoCaoTNDN | null>(null);
   const [dc, setDc] = useState<DieuChinhThue | null>(null);
+  const [nvcs, setNvcs] = useState<NghiaVuChinhSach | null>(null);
 
   const fetchData = async (namArg = nam) => {
     setLoading(true);
     try {
-      const [b, d] = await Promise.all([
+      const [b, d, n] = await Promise.all([
         taxReportService.getBaoCaoTNDN(namArg),
         taxReportService.getDieuChinh(namArg),
+        taxReportService.getNghiaVuChinhSach(namArg),
       ]);
       setBao(b);
       setDc(d);
+      setNvcs(n);
     } catch {
       message.error("Không thể tải báo cáo TNDN");
     } finally {
@@ -140,33 +158,70 @@ const BaoCaoTNDNPage: React.FC = () => {
     }
   };
 
-  const calcCell = (row: RowDef, qi: number): number =>
-    bao?.quy?.[qi]?.[row.calcKey as CalcKey] != null
-      ? Number(bao.quy[qi][row.calcKey as CalcKey])
-      : 0;
+  // Nhóm THUẾ GTGT: chỉ để xem nên dựng thẳng từ bảng nghĩa vụ chính sách —
+  // có gì hiện nấy, khỏi phải sửa hai chỗ khi backend thêm bớt chỉ tiêu.
+  const rowsGtgt = useMemo<RowDef[]>(() => {
+    const sec = nvcs?.sections?.find((s) => s.ma === "GTGT");
+    if (!sec?.rows?.length) return [];
+    return [
+      { key: "sec-gtgt", label: sec.tieuDe, kind: "section" },
+      ...sec.rows.map<RowDef>((r, i) => ({
+        key: `gtgt-${i}`,
+        tt: r.tt,
+        label: r.chiTieu,
+        kind: "nvcs",
+        vals: [r.q1, r.q2, r.q3, r.q4],
+        valLuyKe: r.luyKe,
+        strong: r.chiTieu.includes("phải nộp"),
+        note: GHI_CHU_GTGT[r.chiTieu],
+      })),
+    ];
+  }, [nvcs]);
+
+  // Nhóm THUẾ TNCN: có ô nhập điều chỉnh nên định nghĩa cố định; số "Tổng"
+  // (đã gồm phần tự lấy từ Có TK 3335) lấy từ bảng nghĩa vụ chính sách.
+  const rowsTncn = useMemo<RowDef[]>(() => {
+    const sec = nvcs?.sections?.find((s) => s.ma === "TNCN");
+    const r = sec?.rows?.[0];
+    return [
+      { key: "sec-tncn", label: sec?.tieuDe ?? "THUẾ TNCN", kind: "section" },
+      {
+        key: "iTNCN",
+        tt: r?.tt ?? "1",
+        label: r?.chiTieu ?? "Thuế TNCN phải nộp",
+        kind: "input",
+        inputKey: "thueTNCN",
+        strong: true,
+        note: "Tự lấy Có TK 3335 + số nhập thêm",
+        ...(r
+          ? { tongVals: [r.q1, r.q2, r.q3, r.q4], tongLuyKe: r.luyKe }
+          : {}),
+      },
+    ];
+  }, [nvcs]);
+
+  const calcCell = (row: RowDef, qi: number): number => {
+    const q = bao?.quy?.[qi];
+    return q && row.sel ? Number(row.sel(q)) || 0 : 0;
+  };
 
   const calcLuyKe = (row: RowDef): number =>
-    bao?.luyKe?.[row.calcKey as CalcKey] != null
-      ? Number(bao.luyKe[row.calcKey as CalcKey])
-      : 0;
+    bao?.luyKe && row.sel ? Number(row.sel(bao.luyKe)) || 0 : 0;
 
-  const renderQuarter = (row: RowDef, qi: number) => {
-    if (row.kind === "section") return null;
-    if (row.kind === "calc") {
-      const v = calcCell(row, qi);
-      return row.strong ? <Text strong>{fmt(v)}</Text> : fmt(v);
-    }
-    if (row.kind === "rate") {
-      const r = bao?.quy?.[qi]?.thueSuat ?? 0;
-      return `${Math.round(r * 100)}%`;
-    }
-    // input
-    const arr = (dc?.[row.inputKey as InputKey] as number[]) || [0, 0, 0, 0];
+  /** Số "Tổng:" dưới ô nhập — cpKhongTruAuto cho 4 nhóm CP, tongVals cho dòng khác. */
+  const tongCuaOnhap = (row: RowDef, qi: number | "luyKe"): number | null => {
     const nhomIdx = NHOM_INDEX[row.inputKey as string];
-    const autoTotal =
-      nhomIdx !== undefined
-        ? (bao?.quy?.[qi]?.cpKhongTruAuto?.[nhomIdx] ?? 0)
-        : null;
+    if (nhomIdx !== undefined) {
+      const src = qi === "luyKe" ? bao?.luyKe : bao?.quy?.[qi];
+      return src?.cpKhongTruAuto?.[nhomIdx] ?? 0;
+    }
+    if (qi === "luyKe") return row.tongLuyKe ?? null;
+    return row.tongVals?.[qi] ?? null;
+  };
+
+  const renderOnhap = (row: RowDef, qi: number) => {
+    const arr = (dc?.[row.inputKey as InputKey] as number[]) || [0, 0, 0, 0];
+    const autoTotal = tongCuaOnhap(row, qi);
     return (
       <div>
         <InputNumber
@@ -188,10 +243,31 @@ const BaoCaoTNDNPage: React.FC = () => {
     );
   };
 
+  const renderQuarter = (row: RowDef, qi: number) => {
+    if (row.kind === "section") return null;
+    if (row.kind === "calc") {
+      const v = calcCell(row, qi);
+      return row.strong ? <Text strong>{fmt(v)}</Text> : fmt(v);
+    }
+    if (row.kind === "nvcs") {
+      const v = row.vals?.[qi] ?? 0;
+      return row.strong ? <Text strong>{fmt(v)}</Text> : fmt(v);
+    }
+    if (row.kind === "rate") {
+      const r = bao?.quy?.[qi]?.thueSuat ?? 0;
+      return `${Math.round(r * 100)}%`;
+    }
+    return renderOnhap(row, qi);
+  };
+
   const renderLuyKe = (row: RowDef) => {
     if (row.kind === "section") return null;
     if (row.kind === "calc") {
       const v = calcLuyKe(row);
+      return row.strong ? <Text strong>{fmt(v)}</Text> : fmt(v);
+    }
+    if (row.kind === "nvcs") {
+      const v = row.valLuyKe ?? 0;
       return row.strong ? <Text strong>{fmt(v)}</Text> : fmt(v);
     }
     if (row.kind === "rate") {
@@ -199,11 +275,7 @@ const BaoCaoTNDNPage: React.FC = () => {
       return `${Math.round(r * 100)}%`;
     }
     const arr = (dc?.[row.inputKey as InputKey] as number[]) || [0, 0, 0, 0];
-    const nhomIdxLK = NHOM_INDEX[row.inputKey as string];
-    const autoTotalLK =
-      nhomIdxLK !== undefined
-        ? (bao?.luyKe?.cpKhongTruAuto?.[nhomIdxLK] ?? 0)
-        : null;
+    const autoTotalLK = tongCuaOnhap(row, "luyKe");
     const sumManual = arr.reduce((s, x) => s + (x || 0), 0);
     return (
       <div style={{ textAlign: "right" }}>
@@ -220,13 +292,18 @@ const BaoCaoTNDNPage: React.FC = () => {
   // Lọc theo cột ở header + cố định cột. Bảng có dòng tiêu đề nhóm (kind: 'section') nên
   // việc lọc do `filterTndnRows` lo (ẩn luôn tiêu đề nhóm khi nhóm rỗng).
   const { filterable, filters, hasPinned } = useTableColumnFilters("thue-bao-cao-tndn");
-  const viewRows = useMemo(() => filterTndnRows(ROWS, filters), [filters]);
+  const allRows = useMemo<RowDef[]>(
+    () => [...ROWS_TNDN, ...rowsGtgt, ...rowsTncn],
+    [rowsGtgt, rowsTncn],
+  );
+  const viewRows = useMemo(() => filterTndnRows(allRows, filters), [allRows, filters]);
 
   // Điện thoại: bảng rộng ~1350px, vuốt ngang là mất tên chỉ tiêu → ghim cột
   // "Chỉ tiêu" (hẹp lại, xuống dòng). Muốn ghim nó thì cột TT đứng trước cũng
   // phải ghim — phí chỗ ở màn 390px — nên bỏ cột TT và ghép số TT vào đầu tên
-  // ("1. Doanh thu…"). Dòng tiêu đề nhóm vẫn gộp 7 ô = trọn bảng 7 cột.
+  // ("1. Doanh thu…"). Dòng tiêu đề nhóm gộp trọn số cột đang hiển thị.
   const dienThoai = useManHinh() === "mobile";
+  const soCot = dienThoai ? 7 : 8;
 
   const quarterCol = (qi: number) => ({
     title: `Quý ${qi + 1}`,
@@ -257,12 +334,17 @@ const BaoCaoTNDNPage: React.FC = () => {
       width: dienThoai ? RONG_COT_GHIM_DIEN_THOAI : 280,
       fixed: dienThoai ? ("left" as const) : undefined,
       onCell: (row: RowDef) =>
-        row.kind === "section" ? { colSpan: 7 } : {},
+        row.kind === "section" ? { colSpan: soCot } : {},
       render: (v: string, row: RowDef) => {
         if (row.kind === "section")
           return <Text strong className="text-primary">{v}</Text>;
         const nhan = dienThoai && row.tt ? `${row.tt}. ${v}` : v;
-        return row.strong ? <Text strong>{nhan}</Text> : nhan;
+        const noiDung = row.strong ? <Text strong>{nhan}</Text> : nhan;
+        return row.indent ? (
+          <span style={{ paddingLeft: 16 }}>{noiDung}</span>
+        ) : (
+          noiDung
+        );
       },
     }),
     quarterCol(0),
@@ -294,7 +376,7 @@ const BaoCaoTNDNPage: React.FC = () => {
       <Card>
         <Space className="mb-4" wrap>
           <Title level={5} className="!mb-0">
-            Báo cáo nhanh thuế TNDN
+            Tình hình thực hiện nghĩa vụ thuế
           </Title>
           <Text strong>Năm:</Text>
           <InputNumber
