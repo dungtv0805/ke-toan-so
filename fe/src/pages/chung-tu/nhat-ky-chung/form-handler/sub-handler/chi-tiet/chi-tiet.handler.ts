@@ -4,7 +4,8 @@ import { v4 as uuidv4 } from "uuid";
 import "./chi-tiet.event";
 import { NhatKyChungFormStates, NhatKyChungFormEvents } from "../../nhat-ky-chung-form.handler";
 import { ChungTuChiTiet } from "../init/init.state";
-import { QuyChuan } from "@/types";
+import { QuyChuan, DongTien, KhoanMuc } from "@/types";
+import { apDungQuyChuan } from "../../lib/apDungQuyChuan";
 
 @RegisterHandler("nhat-ky-chung-form")
 export class ChiTietFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyChungFormStates> {
@@ -111,17 +112,19 @@ export class ChiTietFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatK
       (qc) => qc.nghiepVu === nghiepVu
     );
 
+    const danhMuc = {
+      dongTienList: (this.getState("dongTienList") as DongTien[]) || [],
+      khoanMucList: (this.getState("khoanMucList") as KhoanMuc[]) || [],
+    };
+
     const updatedList = chiTietList.map((item) => {
       if (item.key === key) {
-        return {
-          ...item,
-          nghiepVu: nghiepVu,
-          nghiepVuTen: nghiepVu,
-          // Auto-fill TK Nợ/Có và nội dung từ quy chuẩn
-          taiKhoanNo: quyChuan?.taiKhoanNo || item.taiKhoanNo,
-          taiKhoanCo: quyChuan?.taiKhoanCo || item.taiKhoanCo,
-          noiDung: quyChuan?.moTa || item.noiDung,
-        };
+        // Chép ĐỦ thiết lập của quy chuẩn: TK Nợ/Có, mô tả, Dòng tiền, Khoản mục.
+        return apDungQuyChuan(
+          { ...item, nghiepVu, nghiepVuTen: nghiepVu },
+          quyChuan,
+          danhMuc,
+        );
       }
       return item;
     });

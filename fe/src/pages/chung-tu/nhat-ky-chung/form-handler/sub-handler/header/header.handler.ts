@@ -4,7 +4,8 @@ import "./header.event";
 import { NhatKyChungFormStates, NhatKyChungFormEvents } from "../../nhat-ky-chung-form.handler";
 import { ChungTuHeader, ChungTuChiTiet } from "../init/init.state";
 import { LoaiChungTuType } from "@/services/loaiChungTuService";
-import { QuyChuan } from "@/types";
+import { QuyChuan, DongTien, KhoanMuc } from "@/types";
+import { apDungQuyChuan } from "../../lib/apDungQuyChuan";
 
 @RegisterHandler("nhat-ky-chung-form")
 export class HeaderFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKyChungFormStates> {
@@ -72,14 +73,15 @@ export class HeaderFormHandler extends CSubHanlder<NhatKyChungFormEvents, NhatKy
     );
 
     if (quyChuan && chiTietList.length > 0) {
-      // Auto-fill TK Nợ/Có và nội dung cho dòng đầu tiên
-      const updatedChiTiet = [...chiTietList];
-      updatedChiTiet[0] = {
-        ...updatedChiTiet[0],
-        taiKhoanNo: quyChuan.taiKhoanNo || updatedChiTiet[0].taiKhoanNo,
-        taiKhoanCo: quyChuan.taiKhoanCo || updatedChiTiet[0].taiKhoanCo,
-        noiDung: quyChuan.moTa || updatedChiTiet[0].noiDung,
+      // Chép ĐỦ thiết lập của quy chuẩn cho dòng đầu tiên, gồm cả Dòng tiền và
+      // Khoản mục — hai trường này trước đây bị bỏ quên nên kế toán khai ở quy
+      // chuẩn rồi vẫn phải chọn tay lại trên từng chứng từ.
+      const danhMuc = {
+        dongTienList: (this.getState("dongTienList") as DongTien[]) || [],
+        khoanMucList: (this.getState("khoanMucList") as KhoanMuc[]) || [],
       };
+      const updatedChiTiet = [...chiTietList];
+      updatedChiTiet[0] = apDungQuyChuan(updatedChiTiet[0], quyChuan, danhMuc);
       this.setState("chiTietList", updatedChiTiet);
     }
   }
