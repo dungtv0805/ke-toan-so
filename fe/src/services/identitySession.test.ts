@@ -71,4 +71,22 @@ describe('identitySession', () => {
       expect(fetchMock).not.toHaveBeenCalled();
     });
   });
+
+  describe('urlManChonUngDung', () => {
+    it('kèm ?tenant= công ty đang làm việc', async () => {
+      vi.stubEnv('VITE_IDENTITY_URL', 'https://id.example.com/');
+      const { urlManChonUngDung } = await import('./identitySession');
+      expect(urlManChonUngDung('t 1')).toBe('https://id.example.com/?tenant=t%201');
+    });
+    it('không có công ty → chỉ trang chủ portal', async () => {
+      vi.stubEnv('VITE_IDENTITY_URL', 'https://id.example.com');
+      const { urlManChonUngDung } = await import('./identitySession');
+      expect(urlManChonUngDung()).toBe('https://id.example.com/');
+    });
+    it('chưa cấu hình identity → rỗng', async () => {
+      vi.stubEnv('VITE_IDENTITY_URL', '');
+      const { urlManChonUngDung } = await import('./identitySession');
+      expect(urlManChonUngDung('t1')).toBe('');
+    });
+  });
 });

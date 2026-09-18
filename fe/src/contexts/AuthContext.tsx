@@ -4,7 +4,7 @@ import { authService } from '@/services/authService';
 import { setAuthToken, getAuthToken, clearAuthToken, setCurrentTenant, getCurrentTenant, clearCurrentTenant } from '@/services/base/service-base';
 import { ssoHandoff } from '@/services/ssoHandoff';
 import { redirectToIdentityLogin } from '@/services/identityRedirect';
-import { refreshFromIdentity, decodeTenantId, isIdentityConfigured } from '@/services/identitySession';
+import { refreshFromIdentity, decodeTenantId, isIdentityConfigured, urlManChonUngDung } from '@/services/identitySession';
 import { ApiError, ApiErrorType } from '@/config/api';
 import { getAvailableModuleCodes } from '@/config/modules';
 import { linhVucService, type LinhVuc } from '@/services/linhVucService';
@@ -274,6 +274,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Chỉ bật khi thật sự sắp điều hướng; chạy dev không có identity thì vẫn
       // rơi về LoginPage như cũ.
       const sapDieuHuong = !!(import.meta.env.VITE_IDENTITY_URL as string | undefined);
+      // Lấy trước khi dọn: đăng nhập lại ở portal phải về đúng công ty vừa làm.
+      const congTyDangLam = getCurrentTenant()?.tenantId;
       if (sapDieuHuong) setIsLoggingOut(true);
 
       setUser(null);
@@ -293,7 +295,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch {
           /* bỏ qua — vẫn điều hướng về Portal */
         }
-        window.location.href = identityUrl;
+        window.location.href = urlManChonUngDung(congTyDangLam) || identityUrl;
       }
     }
   }, []);

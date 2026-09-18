@@ -269,13 +269,14 @@ const MainLayout: React.FC = () => {
           {/* Right: Actions */}
           {/* min-w-0: cho tên công ty dài co lại thay vì đẩy header tràn ngang. */}
           <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+            {/* Tenant Switcher */}
+            <TenantSwitcher />
+
             {/* Chuông thông báo phê duyệt — mục 13 tài liệu phê duyệt nghiệp vụ.
+                Đứng cạnh nút cấu hình, không đứng trước tên công ty.
                 Đây là lối vào hằng ngày của "Chờ tôi duyệt"; mục trên sidebar
                 (Tổng hợp › Phê duyệt) là lối vào chính thức. */}
             <ChuongThongBao />
-
-            {/* Tenant Switcher */}
-            <TenantSwitcher />
 
             {/* Settings dropdown with gear icon */}
             {user && settingsMenuItems && settingsMenuItems.length > 0 && (

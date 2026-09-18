@@ -1,5 +1,6 @@
 import { Button } from 'antd';
 import { urlManChonUngDung } from '@/services/identitySession';
+import { getCurrentTenant } from '@/services/base/service-base';
 import { IconLuoiApp } from '@/components/icons/IconLuoiApp';
 
 /**
@@ -15,7 +16,8 @@ import { IconLuoiApp } from '@/components/icons/IconLuoiApp';
  * về, ẩn luôn nút thay vì để một lối cụt.
  */
 export function AppSwitcher() {
-  const url = urlManChonUngDung();
+  // Đổi công ty trong app là reload trang, nên đọc lúc vẽ là đủ tươi.
+  const url = urlManChonUngDung(getCurrentTenant()?.tenantId);
   if (!url) return null;
 
   return (

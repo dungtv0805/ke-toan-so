@@ -43,9 +43,14 @@ export function decodeTenantId(token: string | null): string | null {
  * sống, nên không cần đường dẫn riêng.
  *
  * '' nếu chưa cấu hình identity — chỗ gọi tự quyết định ẩn lối vào.
+ * `tenantId` = công ty đang làm việc, portal sẽ ghi nhớ làm công ty gần nhất.
  */
-export function urlManChonUngDung(): string {
-  return IDENTITY_URL ? `${IDENTITY_URL.replace(/\/+$/, '')}/` : '';
+export function urlManChonUngDung(tenantId?: string | null): string {
+  if (!IDENTITY_URL) return '';
+  const goc = `${IDENTITY_URL.replace(/\/+$/, '')}/`;
+  // Báo portal công ty đang làm việc: đổi công ty trong app này portal không hay
+  // biết, thiếu `?tenant=` thì ra portal lại bị chọn sẵn công ty cũ.
+  return tenantId ? `${goc}?tenant=${encodeURIComponent(tenantId)}` : goc;
 }
 
 /** identity SSO có được cấu hình không (dev để trống → fallback login cục bộ). */
