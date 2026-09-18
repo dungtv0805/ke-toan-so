@@ -3,7 +3,7 @@ import type { ReactElement } from 'react';
 /**
  * Glyph của từng app — trắng đặc, không viền, không đổ bóng.
  *
- * SINH TỪ: ke-toan-so/design/icons/<appId>.svg. Sửa icon thì sửa file SVG
+ * SINH TỪ: ke-toan-so/design/icons/<appId>.svg (nguồn nằm ở repo ke-toan-so). Sửa icon thì sửa file SVG
  * trước rồi sinh lại; đừng sửa thẳng ở file này.
  *
  * BẢN SAO Ở: identity-service/portal/src/components/AppGlyphs.tsx
@@ -49,6 +49,20 @@ function GlyphNhanSu({ size }: GlyphProps) {
   );
 }
 
+function GlyphDieuHanh({ size }: GlyphProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden focusable="false">
+      <g fill="#FFFFFF">
+        {/* Mặt đồng hồ điều hành: cung nửa vòng + kim chỉ + trục. */}
+        <path d="M3 17.1 A9 9 0 0 1 21 17.1 L17.4 17.1 A5.4 5.4 0 0 0 6.6 17.1 Z" />
+        <rect x="11.05" y="9.4" width="1.9" height="7.7" rx="0.95" transform="rotate(38 12 17.1)" />
+        <circle cx="12" cy="17.1" r="2.1" />
+        <rect x="4.2" y="19.2" width="15.6" height="1.8" rx="0.9" />
+      </g>
+    </svg>
+  );
+}
+
 /** App chưa có glyph riêng: bốn ô vuông, đủ để không vỡ bố cục. */
 function GlyphMacDinh({ size }: GlyphProps) {
   return (
@@ -65,6 +79,7 @@ export const GLYPH_APP: Record<string, (p: GlyphProps) => ReactElement> = {
   'ke-toan': GlyphKeToan,
   'giao-viec': GlyphGiaoViec,
   'nhan-su': GlyphNhanSu,
+  'dieu-hanh': GlyphDieuHanh,
 };
 
 export function layGlyphApp(appId: string) {

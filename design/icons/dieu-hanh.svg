@@ -1,0 +1,11 @@
+<!-- Glyph app "Điều hành" — mặt đồng hồ điều hành (cung + kim + trục + chân đế).
+     Nguồn của GlyphDieuHanh trong fe/src/components/icons/AppGlyphs.tsx và bản
+     sao ở identity-service/portal/src/components/AppGlyphs.tsx. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g fill="#FFFFFF">
+    <path d="M3 17.1 A9 9 0 0 1 21 17.1 L17.4 17.1 A5.4 5.4 0 0 0 6.6 17.1 Z"/>
+    <rect x="11.05" y="9.4" width="1.9" height="7.7" rx="0.95" transform="rotate(38 12 17.1)"/>
+    <circle cx="12" cy="17.1" r="2.1"/>
+    <rect x="4.2" y="19.2" width="15.6" height="1.8" rx="0.9"/>
+  </g>
+</svg>

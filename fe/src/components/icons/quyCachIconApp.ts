@@ -21,6 +21,9 @@ export const MAU_APP: Record<string, MauApp> = {
   'ke-toan': { dau: '#1FD1A3', cuoi: '#0E7490', nen: '#E9FBF5' },
   'giao-viec': { dau: '#4F8CFF', cuoi: '#7C3AED', nen: '#F0F3FF' },
   'nhan-su': { dau: '#FFA63D', cuoi: '#F2536D', nen: '#FFF3EC' },
+  // Tông vàng của thương hiệu Master CEO (chữ trên banner), tách khỏi cam→đỏ
+  // của 'nhan-su' bằng đuôi nâu thay vì hồng.
+  'dieu-hanh': { dau: '#F5B301', cuoi: '#A15C07', nen: '#FFF6E5' },
 };
 
 /**

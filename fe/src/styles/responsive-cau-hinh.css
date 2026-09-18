@@ -86,25 +86,4 @@
   .so-du-dau-ky > .ant-card-head .ant-card-head-title {
     flex-basis: 100%;
   }
-
-  /* ---------- Chọn ứng dụng (AppSwitcher) — giữ dạng hộp giữa màn ----------
-     responsive.css cho mọi popup (trừ hộp xác nhận) toàn màn hình vì form chia cột
-     cần chỗ. Màn chọn app chỉ có vài thẻ — phủ kín màn trông như lạc sang trang
-     khác. Ghi đè bằng bộ chọn cụ thể hơn (cùng !important thì độ ưu tiên cao thắng),
-     trả lại hộp bo góc; đệm dưới 20px để chân "tên công ty" chạm mép như bản vẽ. */
-  .ant-modal-root .ant-modal.man-chon-ung-dung:not(.ant-modal-confirm) {
-    width: calc(100vw - 24px) !important;
-    max-width: 420px !important;
-    margin: 0 auto !important;
-    top: 0 !important;
-    padding-bottom: 0 !important;
-  }
-  .ant-modal-root .ant-modal.man-chon-ung-dung:not(.ant-modal-confirm) .ant-modal-container {
-    min-height: 0;
-    border-radius: 14px !important;
-    padding-bottom: 20px;
-  }
-  .ant-modal-root .ant-modal-centered .ant-modal.man-chon-ung-dung:not(.ant-modal-confirm) {
-    vertical-align: middle;
-  }
 }
