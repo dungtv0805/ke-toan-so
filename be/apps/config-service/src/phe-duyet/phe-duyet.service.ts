@@ -30,6 +30,7 @@ import {
   apDungTuChoi,
   buocDangCho,
   datLaiTuDau,
+  idCua,
   sinhBuocTuCauHinh,
   thayDoiTrongYeu,
   tinhThoiGianXuLyGiay,
@@ -95,7 +96,7 @@ export class PheDuyetService {
   ): Promise<void> {
     await this.lichSuRepo.save(
       this.lichSuRepo.create({
-        quyTrinhId: qt.id,
+        quyTrinhId: idCua(qt),
         loaiDoiTuong: qt.loaiDoiTuong,
         doiTuongId: qt.doiTuongId,
         loaiNghiepVuMa: qt.loaiNghiepVuMa,
@@ -134,8 +135,8 @@ export class PheDuyetService {
         loai: 'DEN_LUOT_DUYET' as const,
         tieuDe: `Chờ bạn duyệt: ${qt.soPhieu ?? qt.loaiNghiepVuTen ?? 'nghiệp vụ'}`,
         noiDung: qt.noiDung,
-        duongDan: `/phe-duyet/cho-toi-duyet?id=${qt.id}`,
-        quyTrinhId: qt.id,
+        duongDan: `/phe-duyet/cho-toi-duyet?id=${idCua(qt)}`,
+        quyTrinhId: idCua(qt),
       })),
     );
   }
@@ -157,8 +158,8 @@ export class PheDuyetService {
       loai,
       tieuDe,
       noiDung: yKien ?? qt.noiDung,
-      duongDan: `/phe-duyet/cho-toi-duyet?id=${qt.id}`,
-      quyTrinhId: qt.id,
+      duongDan: `/phe-duyet/cho-toi-duyet?id=${idCua(qt)}`,
+      quyTrinhId: idCua(qt),
     });
   }
 
@@ -600,7 +601,7 @@ export class PheDuyetService {
     for (const qt of ds) {
       ra[qt.doiTuongId] = {
         trangThai: qt.trangThai,
-        quyTrinhId: qt.id,
+        quyTrinhId: idCua(qt) ?? '',
         viTriCanDuyet: buocDangCho(qt.buoc)?.viTriTen,
       };
     }

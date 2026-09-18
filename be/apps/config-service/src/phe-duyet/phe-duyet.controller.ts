@@ -1,8 +1,12 @@
 import {
   Body,
+  CallHandler,
   Controller,
   Delete,
+  ExecutionContext,
   Get,
+  Injectable,
+  NestInterceptor,
   Param,
   Post,
   Put,
@@ -14,6 +18,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
+import { map, type Observable } from 'rxjs';
 import { JwtGuard } from '@app/auth';
 import { TenantContextService } from '@app/core';
 import type {
@@ -26,9 +31,19 @@ import { PheDuyetService } from './phe-duyet.service';
 import { ThongBaoService } from './thong-bao.service';
 import { TocDoService } from './toc-do.service';
 import { ViTriPheDuyetService } from './vi-tri.service';
+import { kemId } from './helpers';
+
+/** Mọi response phê duyệt đều mang `id` — xem `kemId`. */
+@Injectable()
+class KemIdInterceptor implements NestInterceptor {
+  intercept(_ctx: ExecutionContext, next: CallHandler): Observable<unknown> {
+    return next.handle().pipe(map(kemId));
+  }
+}
 
 @Controller('phe-duyet')
 @UseGuards(JwtGuard)
+@UseInterceptors(KemIdInterceptor)
 export class PheDuyetController {
   constructor(
     private readonly pheDuyet: PheDuyetService,
@@ -267,6 +282,7 @@ export class PheDuyetController {
 
 @Controller('thong-bao')
 @UseGuards(JwtGuard)
+@UseInterceptors(KemIdInterceptor)
 export class ThongBaoController {
   constructor(
     private readonly thongBao: ThongBaoService,
