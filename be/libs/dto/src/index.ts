@@ -10,6 +10,7 @@ import './linh-vuc';
 import './nganh';
 import './user';
 import './reporting';
+import './khoa-so';
 
 // Re-export all types
 export * from './auth';
@@ -21,3 +22,4 @@ export * from './linh-vuc';
 export * from './nganh';
 export * from './user';
 export * from './reporting';
+export * from './khoa-so';
