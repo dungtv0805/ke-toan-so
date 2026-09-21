@@ -58,6 +58,7 @@ import {
   NhatKyChungFormPage,
   KetChuyenLaiLoListPage,
   KetChuyenLaiLoFormPage,
+  KhoaSoPage,
   SoQuyPage,
   CongNoPhaiThuPage,
   CongNoPhaiTraPage,
@@ -851,7 +852,14 @@ const App = () => {
                   <Route path="huong-dan" element={thuVien("/tong-hop/huong-dan")} />
                   <Route path="quyet-toan-tam-ung" element={<ComingSoonPage />} />
                   <Route path="bu-tru-cong-no" element={<ComingSoonPage />} />
-                  <Route path="khoa-so" element={<ComingSoonPage />} />
+                  <Route
+                    path="khoa-so"
+                    element={
+                      <ProtectedRoute requiredPermission="/tong-hop/khoa-so:xem">
+                        <KhoaSoPage />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route path="so-nhat-ky-chung" element={<ComingSoonPage />} />
                 </Route>
                 <Route path="bao-cao/tai-chinh/luu-chuyen-tien-te" element={<ComingSoonPage />} />

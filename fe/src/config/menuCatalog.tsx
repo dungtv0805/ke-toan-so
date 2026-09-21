@@ -147,7 +147,7 @@ export const MENU_LEAVES: MenuLeaf[] = [
   { key: '/tong-hop/quyet-toan-tam-ung', label: 'Quyết toán tạm ứng', module: 'tong-hop', status: 'soon', icon: <FileTextOutlined /> },
   { key: '/tong-hop/bu-tru-cong-no', label: 'Bù trừ công nợ', module: 'tong-hop', status: 'soon', icon: <InteractionOutlined /> },
   { key: '/chung-tu/ket-chuyen-lai-lo', label: 'Kết chuyển lãi lỗ', module: 'tong-hop', status: 'ok', icon: <SwapOutlined /> },
-  { key: '/tong-hop/khoa-so', label: 'Khóa sổ', module: 'tong-hop', status: 'soon', icon: <LockOutlined /> },
+  { key: '/tong-hop/khoa-so', label: 'Khóa sổ', module: 'tong-hop', status: 'ok', icon: <LockOutlined /> },
   // Phê duyệt nghiệp vụ — docs/Yeu_cau_chuc_nang_phe_duyet_nghiep_vu_Master_CEO.docx.
   // Đặt ở Tổng hợp vì đây là khâu kiểm soát của kế toán; lối vào hằng ngày là
   // chuông thông báo trên thanh tiêu đề, mục menu này là lối vào chính thức.

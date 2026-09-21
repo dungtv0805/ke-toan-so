@@ -182,6 +182,10 @@ export const KetChuyenLaiLoFormPage = loadable(() => import('./chung-tu/ket-chuy
   fallback: <PageLoader />
 });
 
+export const KhoaSoPage = loadable(() => import('./tong-hop/khoa-so/KhoaSoPage'), {
+  fallback: <PageLoader />
+});
+
 // Kế hoạch & Dự báo — cùng một trang, khác `loaiKeHoach` (xem KeHoachPage)
 export const KeHoachPage = loadable(() => import('./ke-hoach/KeHoachPage'), {
   fallback: <PageLoader />
