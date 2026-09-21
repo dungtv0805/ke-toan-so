@@ -8,7 +8,7 @@ import { MongoRepository } from 'typeorm';
 import { ChungTu, LoaiChungTu } from '@app/entities';
 import { PaginatedResult } from '@app/dto';
 import { TenantContextService } from '@app/core';
-import { ServiceClientService } from '@app/service-client';
+import { ServiceClient } from '@app/service-client';
 import {
   NhatKyChungQueryDto,
   NhatKyChungStatsResponse,
@@ -52,7 +52,7 @@ export class NhatKyChungService {
     private readonly tenantContext: TenantContextService,
     private readonly loaiResolver: LoaiResolverService,
     private readonly pheDuyetClient: PheDuyetClientService,
-    private readonly serviceClient: ServiceClientService,
+    private readonly serviceClient: ServiceClient,
   ) {}
 
   /**

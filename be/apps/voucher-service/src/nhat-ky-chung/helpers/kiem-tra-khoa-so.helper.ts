@@ -1,4 +1,4 @@
-import { ServiceClientService } from '@app/service-client';
+import { ServiceClient } from '@app/service-client';
 
 export interface KetQuaKiemTraKhoaSo {
   choPhep: boolean;
@@ -6,29 +6,35 @@ export interface KetQuaKiemTraKhoaSo {
 }
 
 export async function kiemTraKhoaSo(
-  serviceClient: ServiceClientService,
+  serviceClient: ServiceClient,
   params: {
     loaiChungTuMa?: string;
     chiNhanhId?: string;
     ngayChungTu: Date;
-    userId: string;
+    userId?: string;
   },
 ): Promise<KetQuaKiemTraKhoaSo> {
+  if (!params.userId) {
+    return { choPhep: true };
+  }
+
   try {
     const result = await serviceClient.post<{
       biKhoa: boolean;
       lyDo?: string;
     }>('config', '/khoa-so/kiem-tra', {
-      loaiChungTuMa: params.loaiChungTuMa,
-      chiNhanhId: params.chiNhanhId,
-      ngayChungTu: params.ngayChungTu,
-      userId: params.userId,
+      body: {
+        loaiChungTuMa: params.loaiChungTuMa,
+        chiNhanhId: params.chiNhanhId,
+        ngayChungTu: params.ngayChungTu,
+        userId: params.userId,
+      },
     });
 
-    if (result.biKhoa) {
+    if (result.data?.biKhoa) {
       return {
         choPhep: false,
-        lyDo: `Chứng từ đã bị khóa sổ. ${result.lyDo || ''}`,
+        lyDo: `Chứng từ đã bị khóa sổ. ${result.data.lyDo || ''}`,
       };
     }
   } catch {

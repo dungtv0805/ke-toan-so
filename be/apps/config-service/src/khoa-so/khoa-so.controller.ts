@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard, CurrentUser, UserPayload } from '@app/auth';
+import { JwtGuard, CurrentUser, type UserPayload } from '@app/auth';
 import {
   CreateKhoaSoDto,
   KhoaSoCauHinhDto,
@@ -19,7 +19,7 @@ import {
 import { KhoaSoService } from './khoa-so.service';
 
 @Controller('khoa-so')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtGuard)
 export class KhoaSoController {
   constructor(private readonly khoaSoService: KhoaSoService) {}
 
@@ -45,7 +45,7 @@ export class KhoaSoController {
     @Body() dto: CreateKhoaSoDto,
     @CurrentUser() user: UserPayload,
   ) {
-    const data = await this.khoaSoService.create(dto, user.userId);
+    const data = await this.khoaSoService.create(dto, user.id);
     return { success: true, data };
   }
 
