@@ -11,6 +11,7 @@ import { PhieuTemplate_Module } from './phieu-template/phieu-template.module';
 import { TaiLieu_Module } from './tai-lieu/tai-lieu.module';
 import { ImportDanhMucModule } from './import-danh-muc/import-danh-muc.module';
 import { PheDuyet_Module } from './phe-duyet/phe-duyet.module';
+import { KhoaSo_Module } from './khoa-so/khoa-so.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { PheDuyet_Module } from './phe-duyet/phe-duyet.module';
     TaiLieu_Module,
     ImportDanhMucModule,
     PheDuyet_Module,
+    KhoaSo_Module,
   ],
 })
 export class ConfigServiceModule {}
