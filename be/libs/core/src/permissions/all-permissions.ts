@@ -23,6 +23,7 @@ export const PERMISSION_MODULES = [
   '/tong-hop/quy-trinh',
   '/tong-hop/huong-dan',
   '/chung-tu/ket-chuyen-lai-lo',
+  '/tong-hop/khoa-so',
   '/chung-tu/nhat-ky-chung',
   '/bao-cao/so-chi-tiet-tai-khoan',
   '/bao-cao/so-chi-tiet-cong-no',
@@ -112,6 +113,9 @@ export const PERMISSION_MODULES = [
 
 const PERMISSION_ACTIONS = ['xem', 'them', 'sua', 'xoa', 'xuat'];
 
+// Special permissions not tied to menu paths
+export const SPECIAL_PERMISSIONS = ['khoa-so:bypass'];
+
 export function generateAllPermissions(): string[] {
   const permissions: string[] = [];
   for (const mod of PERMISSION_MODULES) {
@@ -119,5 +123,7 @@ export function generateAllPermissions(): string[] {
       permissions.push(`${mod}:${action}`);
     }
   }
+  // Add special permissions
+  permissions.push(...SPECIAL_PERMISSIONS);
   return permissions;
 }
