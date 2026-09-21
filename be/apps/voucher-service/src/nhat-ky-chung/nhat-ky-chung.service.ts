@@ -8,6 +8,7 @@ import { MongoRepository } from 'typeorm';
 import { ChungTu, LoaiChungTu } from '@app/entities';
 import { PaginatedResult } from '@app/dto';
 import { TenantContextService } from '@app/core';
+import { ServiceClientService } from '@app/service-client';
 import {
   NhatKyChungQueryDto,
   NhatKyChungStatsResponse,
@@ -32,6 +33,7 @@ import {
   donHangTheoSoPhieu,
   DongDonHang,
   DonHangCuaPhieu,
+  kiemTraKhoaSo,
 } from './helpers';
 import { VoucherNumberService, LoaiResolverService } from '../shared';
 import { apDungLocPheDuyet } from './helpers/loc-phe-duyet.helper';
@@ -50,6 +52,7 @@ export class NhatKyChungService {
     private readonly tenantContext: TenantContextService,
     private readonly loaiResolver: LoaiResolverService,
     private readonly pheDuyetClient: PheDuyetClientService,
+    private readonly serviceClient: ServiceClientService,
   ) {}
 
   /**
@@ -543,6 +546,17 @@ export class NhatKyChungService {
       throw new ForbiddenException(quyenSua.lyDo);
     }
 
+    // Kiểm tra khóa sổ
+    const quyenKhoaSo = await kiemTraKhoaSo(this.serviceClient, {
+      loaiChungTuMa: chungTu.danhMuc?.loaiChungTu?.ma,
+      chiNhanhId: undefined,
+      ngayChungTu: chungTu.ngay,
+      userId: this.tenantContext.getCurrentUserId(),
+    });
+    if (!quyenKhoaSo.choPhep) {
+      throw new ForbiddenException(quyenKhoaSo.lyDo);
+    }
+
     // Chụp lại TRƯỚC khi gán để so trường trọng yếu. Phải là bản sao: `chungTu`
     // bị sửa tại chỗ ngay bên dưới, giữ tham chiếu là so chính nó với chính nó.
     const truoc = {
@@ -615,6 +629,17 @@ export class NhatKyChungService {
     const quyenXoa = kiemTraQuyenXoa(chungTu);
     if (!quyenXoa.choPhep) {
       throw new ForbiddenException(quyenXoa.lyDo);
+    }
+
+    // Kiểm tra khóa sổ
+    const quyenKhoaSo = await kiemTraKhoaSo(this.serviceClient, {
+      loaiChungTuMa: chungTu.danhMuc?.loaiChungTu?.ma,
+      chiNhanhId: undefined,
+      ngayChungTu: chungTu.ngay,
+      userId: this.tenantContext.getCurrentUserId(),
+    });
+    if (!quyenKhoaSo.choPhep) {
+      throw new ForbiddenException(quyenKhoaSo.lyDo);
     }
 
     await this.chungTuRepository.remove(chungTu);
