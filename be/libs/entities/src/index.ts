@@ -15,3 +15,4 @@ export * from './menu-catalog';
 export * from './tax';
 export * from './mam-non';
 export * from './phe-duyet';
+export * from './khoa-so';
