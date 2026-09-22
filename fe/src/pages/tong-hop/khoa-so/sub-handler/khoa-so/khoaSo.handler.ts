@@ -1,17 +1,17 @@
-import { RegisterHandler, HandlerDecorator } from '@/common';
-import { KhoaSoHandler } from '../../khoaSoHandler';
+import { HandlerDecorator, RegisterHandler } from '@/common';
+import { CSubHanlder } from '@/common/c-handler/core/sub-handler.ts/sub-handler';
 import { khoaSoService, CreateKhoaSoDto, KhoaSoCauHinhDto } from '@/services/khoaSoService';
 import { message } from 'antd';
 import './khoaSo.event';
 
-@RegisterHandler(KhoaSoHandler)
-export class KhoaSoActionsHandler {
+@RegisterHandler('khoa-so-context')
+export class KhoaSoActionsHandler extends CSubHanlder {
   @HandlerDecorator('createKhoaSo')
-  async handleCreate(handler: KhoaSoHandler, dto: CreateKhoaSoDto) {
+  async handleCreate(dto: CreateKhoaSoDto): Promise<void> {
     try {
       await khoaSoService.create(dto);
       message.success('Khóa sổ thành công');
-      handler.executeEvent('init');
+      this.executeEvent('init');
     } catch (error) {
       message.error('Khóa sổ thất bại');
       throw error;
@@ -19,11 +19,11 @@ export class KhoaSoActionsHandler {
   }
 
   @HandlerDecorator('deleteKhoaSo')
-  async handleDelete(handler: KhoaSoHandler, id: string) {
+  async handleDelete(id: string): Promise<void> {
     try {
       await khoaSoService.remove(id);
       message.success('Bỏ khóa sổ thành công');
-      handler.executeEvent('init');
+      this.executeEvent('init');
     } catch (error) {
       message.error('Bỏ khóa sổ thất bại');
       throw error;
@@ -31,10 +31,10 @@ export class KhoaSoActionsHandler {
   }
 
   @HandlerDecorator('saveCauHinh')
-  async handleSaveCauHinh(handler: KhoaSoHandler, dto: KhoaSoCauHinhDto) {
+  async handleSaveCauHinh(dto: KhoaSoCauHinhDto): Promise<void> {
     try {
       const res = await khoaSoService.saveCauHinh(dto);
-      handler.setState('cauHinh', res.data);
+      this.setState('cauHinh', res.data);
       message.success('Lưu cấu hình thành công');
     } catch (error) {
       message.error('Lưu cấu hình thất bại');

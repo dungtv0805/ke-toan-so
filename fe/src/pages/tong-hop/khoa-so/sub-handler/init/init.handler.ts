@@ -1,15 +1,15 @@
-import { RegisterHandler, HandlerDecorator } from '@/common';
-import { KhoaSoHandler } from '../../khoaSoHandler';
+import { HandlerDecorator, RegisterHandler } from '@/common';
+import { CSubHanlder } from '@/common/c-handler/core/sub-handler.ts/sub-handler';
 import { khoaSoService } from '@/services/khoaSoService';
 import { loaiChungTuService } from '@/services/loaiChungTuService';
 import { nguoiDungService } from '@/services/nguoiDungService';
 import './init.event';
 
-@RegisterHandler(KhoaSoHandler)
-export class InitHandler {
+@RegisterHandler('khoa-so-context')
+export class InitHandler extends CSubHanlder {
   @HandlerDecorator('init')
-  async handle(handler: KhoaSoHandler) {
-    handler.setState('loading', true);
+  async init(): Promise<void> {
+    this.setState('loading', true);
 
     try {
       const [listRes, cauHinhRes, loaiChungTuRes, nguoiDungRes] = await Promise.all([
@@ -19,14 +19,14 @@ export class InitHandler {
         nguoiDungService.getAll(),
       ]);
 
-      handler.setState('list', listRes.data || []);
-      handler.setState('cauHinh', cauHinhRes.data);
-      handler.setState('loaiChungTuList', loaiChungTuRes.data || []);
-      handler.setState('nguoiDungList', nguoiDungRes.data || []);
+      this.setState('list', listRes.data || []);
+      this.setState('cauHinh', cauHinhRes.data);
+      this.setState('loaiChungTuList', loaiChungTuRes.data || []);
+      this.setState('nguoiDungList', nguoiDungRes.data || []);
     } catch (error) {
       console.error('Init error:', error);
     } finally {
-      handler.setState('loading', false);
+      this.setState('loading', false);
     }
   }
 }
