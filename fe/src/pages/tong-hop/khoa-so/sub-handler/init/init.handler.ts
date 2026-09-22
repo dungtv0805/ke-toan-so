@@ -12,7 +12,7 @@ export class InitHandler extends CSubHanlder {
     this.setState('loading', true);
 
     try {
-      const [listRes, cauHinhRes, loaiChungTuRes, nguoiDungRes] = await Promise.all([
+      const [listRes, cauHinhRes, loaiChungTuList, nguoiDungRes] = await Promise.all([
         khoaSoService.getList(),
         khoaSoService.getCauHinh(),
         loaiChungTuService.getAll(),
@@ -21,7 +21,7 @@ export class InitHandler extends CSubHanlder {
 
       this.setState('list', listRes.data || []);
       this.setState('cauHinh', cauHinhRes.data);
-      this.setState('loaiChungTuList', loaiChungTuRes.data || []);
+      this.setState('loaiChungTuList', loaiChungTuList || []);
       this.setState('nguoiDungList', nguoiDungRes.data || []);
     } catch (error) {
       console.error('Init error:', error);

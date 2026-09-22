@@ -15,27 +15,11 @@ function KhoaSoPageContent() {
   }, [handler]);
 
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-semibold">Khóa sổ</h1>
-        <Space>
-          <Button
-            icon={<SettingOutlined />}
-            onClick={() => handler.setState('showCauHinhDialog', true)}
-          >
-            Thiết lập tự động
-          </Button>
-          <Button
-            type="primary"
-            icon={<LockOutlined />}
-            onClick={() => handler.setState('showKhoaSoDialog', true)}
-          >
-            Khóa sổ
-          </Button>
-        </Space>
-      </div>
-
-      <KhoaSoList />
+    <div className="space-y-3">
+      <KhoaSoList
+        onThietLapTuDong={() => handler.setState('showCauHinhDialog', true)}
+        onKhoaSo={() => handler.setState('showKhoaSoDialog', true)}
+      />
       <ThietLapTuDongDialog />
       <KhoaSoTheoLoaiDialog />
     </div>
